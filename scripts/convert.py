@@ -8,5 +8,6 @@ def from_fourcharcode(code):
 def from_fourcharcode2(code):
     return int.from_bytes(code.encode('utf8'), 'big')
 
+assert int.from_bytes(b'.mp3', byteorder='big') == 778924083
 
 assert from_fourcharcode('.mp3') == 778924083

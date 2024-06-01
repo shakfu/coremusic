@@ -23,7 +23,7 @@
 
 - [gist coreaudio code](https://gist.github.com/ChunMinChang/47b8712ed57b96721eec18dede39d2f9)
 
-- [Audio APIs, Part 1: Core Audio / macOS](https://bastibe.de/2017-06-17-audio-apis-coreaudio.html)
+- [Audio APIs, Part 1: Core Audio / macOS](https://bastibe.de/2017-06-17-audio-apis-coreaudio.html) author of py[SoundCard](https://github.com/bastibe/SoundCard)
 
 - [SO: callback never called](https://stackoverflow.com/questions/19434413/coreaudio-audioqueue-callback-function-never-called-no-errors-reported) - SO: CoreAudio AudioQueue callback function never called, no errors reported
 
