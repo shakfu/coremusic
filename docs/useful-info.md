@@ -9,6 +9,8 @@
 
 - [CoreAudio Overview](https://developer.apple.com/library/archive/documentation/MusicAudio/Conceptual/CoreAudioOverview/CoreAudioEssentials/CoreAudioEssentials.html) - Apple Docs
 
+- [Chapter 5: Learning CoreAudio](https://www.pearson.de/media/muster/ext/9780321636959.pdf)
+
 - [github-topics-audiounit](https://github.com/topics/audiounit) - github topics for 'audiounit'
 
 - [github-topics-audiounits](https://github.com/topics/audio-units) - github topics for 'audiounits'
@@ -23,7 +25,7 @@
 
 - [gist coreaudio code](https://gist.github.com/ChunMinChang/47b8712ed57b96721eec18dede39d2f9)
 
-- [Audio APIs, Part 1: Core Audio / macOS](https://bastibe.de/2017-06-17-audio-apis-coreaudio.html) author of py[SoundCard](https://github.com/bastibe/SoundCard)
+- [Audio APIs, Part 1: Core Audio / macOS](https://bastibe.de/2017-06-17-audio-apis-coreaudio.html) from author of py[SoundCard](https://github.com/bastibe/SoundCard)
 
 - [SO: callback never called](https://stackoverflow.com/questions/19434413/coreaudio-audioqueue-callback-function-never-called-no-errors-reported) - SO: CoreAudio AudioQueue callback function never called, no errors reported
 
@@ -41,6 +43,10 @@
 ## Examples
 
 - [audio-unit-gist](https://gist.github.com/gcatlin/0dd61f19d40804173d015c01a80461b8) - Core Audio sine wave example
+
+- [audiounittest](https://gist.github.com/jsbain/0db690ed392ce35ec05fdb45bb2b3306) - Gist using ctypes to test audiounit
+
+- [ausine](https://github.com/joostvdm/ausine/blob/main/ausine.py) - Build an Audio Unit in Python on iOS
 
 - [LPF](https://github.com/bradhowes/LPF) - AUv3 AudioUnit low-pass filter for iOS and macOS
 
