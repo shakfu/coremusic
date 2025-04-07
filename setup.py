@@ -1,6 +1,5 @@
 import os
-# from distutils.core import setup
-# from distutils.extension import Extension
+
 from setuptools import setup, Extension
 
 
@@ -16,21 +15,22 @@ os.environ['LDFLAGS'] = " ".join([
 
 extensions = [
     Extension("coreaudio", ["coreaudio.pyx"],
-        # define_macros = [
-        #     ('PD', 1),
-        # ],
-        include_dirs=[
-            # "../libpd_wrapper",
+        define_macros = [
+            ('PD', 1),
         ],
+
+        include_dirs=[],
+
         libraries = [
             'm',
             'dl',
             'pthread',
-            # 'portaudio', # requires portaudio to be installed system-wide
+
         ],
+
         library_dirs=[],
-        extra_objects=[
-        ],
+
+        extra_objects=[],
     ),
 ]
 

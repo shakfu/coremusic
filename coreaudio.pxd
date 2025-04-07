@@ -22,33 +22,46 @@ cdef extern from "CoreFoundation/CFBase.h":
     ctypedef int64_t        SInt64
     ctypedef SInt32         OSStatus
 
-
-cdef extern from *:
-    cdef enum Dummy:
-        Plug = 1886156135
+# see headers/corefoundation/CFAvaiability.h for CF_ENUM explanation
 
 
-# cdef extern from "CoreAudio/AudioHardware.h":
-
-#     cdef enum AudioObjectPropertySelector:
-#         kAudioDevicePropertyPlugIn = 1886156135
-        # kAudioDevicePropertyDeviceHasChanged
-        # kAudioDevicePropertyDeviceIsRunningSomewhere
-        # kAudioDeviceProcessorOverload
-        # kAudioDevicePropertyIOStoppedAbnormally
-        # kAudioDevicePropertyHogMode
-        # kAudioDevicePropertyBufferFrameSize
-        # kAudioDevicePropertyBufferFrameSizeRange
-        # kAudioDevicePropertyUsesVariableBufferFrameSizes
-        # kAudioDevicePropertyIOCycleUsage
-        # kAudioDevicePropertyStreamConfiguration
-        # kAudioDevicePropertyIOProcStreamUsage
-        # kAudioDevicePropertyActualSampleRate
-        # kAudioDevicePropertyClockDevice
-        # kAudioDevicePropertyIOThreadOSWorkgroup
-        # kAudioDevicePropertyProcessMute
+# cdef extern from *:
+#     cdef enum Dummy:
+#         Plug = 1886156135
 
 
+cdef extern from "CoreAudio/AudioHardwareBase.h":
+    ctypedef UInt32 AudioObjectID
+    ctypedef UInt32 AudioClassID
+    # ctypedef UInt32 AudioObjectPropertySelector
+    ctypedef UInt32 AudioObjectPropertyScope
+    ctypedef UInt32 AudioObjectPropertyElement
+
+    ctypedef struct AudioObjectPropertyAddress:
+        AudioObjectPropertySelector mSelector
+        AudioObjectPropertyScope    mScope
+        AudioObjectPropertyElement  mElement
+
+
+cdef extern from "CoreAudio/AudioHardware.h":
+
+    ctypedef enum AudioObjectPropertySelector:
+        kAudioObjectPropertyCreator             = 1869638759
+        kAudioObjectPropertyListenerAdded       = 1818850145
+        kAudioObjectPropertyListenerRemoved     = 1818850162
+
+    ctypedef OSStatus (*AudioObjectPropertyListenerProc)(AudioObjectID inObjectID, UInt32 inNumberAddresses, const AudioObjectPropertyAddress* inAddresses, void* inClientData)
+    ctypedef void (*AudioObjectPropertyListenerBlock)( UInt32 inNumberAddresses, const AudioObjectPropertyAddress* inAddresses)
+
+    cdef void AudioObjectShow(AudioObjectID inObjectID)
+    cdef Boolean AudioObjectHasProperty(AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress) 
+    cdef OSStatus AudioObjectIsPropertySettable(AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress, Boolean* outIsSettable)   
+    cdef OSStatus AudioObjectGetPropertyDataSize(AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress, UInt32 inQualifierDataSize, const void* inQualifierData, UInt32* outDataSize)
+    cdef OSStatus AudioObjectGetPropertyData(AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress, UInt32 inQualifierDataSize, const void* inQualifierData, UInt32* ioDataSize, void* outData)
+    cdef OSStatus AudioObjectSetPropertyData( AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress, UInt32 inQualifierDataSize, const void* inQualifierData, UInt32 inDataSize, const void* inData)
+    cdef OSStatus AudioObjectAddPropertyListener( AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress, AudioObjectPropertyListenerProc inListener, void* inClientData)
+    cdef OSStatus AudioObjectRemovePropertyListener( AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress, AudioObjectPropertyListenerProc inListener, void*  inClientData)
+    # cdef OSStatus AudioObjectAddPropertyListenerBlock( AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress, dispatch_queue_t  inDispatchQueue, AudioObjectPropertyListenerBlock inListener)
 
 cdef extern from "CoreAudio/CoreAudio.h":
     
