@@ -12,13 +12,8 @@ def fc(code: str) -> int:
 
 
 s = """
-    kAudioAggregateDevicePropertyFullSubDeviceList = 'grup',
-    kAudioAggregateDevicePropertyActiveSubDeviceList = 'agrp',
-    kAudioAggregateDevicePropertyComposition = 'acom',
-    kAudioAggregateDevicePropertyMainSubDevice = 'amst',
-    kAudioAggregateDevicePropertyClockDevice = 'apcd',
-    kAudioAggregateDevicePropertyTapList = 'tap#',
-    kAudioAggregateDevicePropertySubTapList = 'atap',
+    kAudioTransportManagerCreateEndPointDevice = 'cdev',
+    kAudioTransportManagerDestroyEndPointDevice = 'ddev'
 """
 
 s = s.replace(',','').replace("'", "")

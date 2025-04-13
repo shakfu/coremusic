@@ -22,6 +22,59 @@ cdef extern from "CoreFoundation/CFBase.h":
     ctypedef int64_t        SInt64
     ctypedef SInt32         OSStatus
 
+    ctypedef CFDictionaryRef
+
+cdef extern from "CoreAudio/CoreAudioTypes.h":
+
+    ctypedef enum SMPTETimeType:
+        kSMPTETimeType24        = 0
+        kSMPTETimeType25        = 1
+        kSMPTETimeType30Drop    = 2
+        kSMPTETimeType30        = 3
+        kSMPTETimeType2997      = 4
+        kSMPTETimeType2997Drop  = 5
+        kSMPTETimeType60        = 6
+        kSMPTETimeType5994      = 7
+        kSMPTETimeType60Drop    = 8
+        kSMPTETimeType5994Drop  = 9
+        kSMPTETimeType50        = 10
+        kSMPTETimeType2398      = 11
+
+    ctypedef enum SMPTETimeFlags:
+        kSMPTETimeUnknown   = 0
+        kSMPTETimeValid     = 1
+        kSMPTETimeRunning   = 2
+
+    ctypedef struct SMPTETime:
+        SInt16          mSubframes
+        SInt16          mSubframeDivisor
+        UInt32          mCounter
+        SMPTETimeType   mType
+        SMPTETimeFlags  mFlags
+        SInt16          mHours
+        SInt16          mMinutes
+        SInt16          mSeconds
+        SInt16          mFrames
+
+    ctypedef enum AudioTimeStampFlags:
+        kAudioTimeStampNothingValid         = 0
+        kAudioTimeStampSampleTimeValid      = 1
+        kAudioTimeStampHostTimeValid        = 2
+        kAudioTimeStampRateScalarValid      = 4
+        kAudioTimeStampWordClockTimeValid   = 8
+        kAudioTimeStampSMPTETimeValid       = 16
+        kAudioTimeStampSampleHostTimeValid  = 3
+
+    ctypedef struct AudioTimeStamp:
+        Float64             mSampleTime
+        UInt64              mHostTime
+        Float64             mRateScalar
+        UInt64              mWordClockTime
+        SMPTETime           mSMPTETime
+        AudioTimeStampFlags mFlags
+        UInt32              mReserved
+
+
 # see headers/corefoundation/CFAvaiability.h for CF_ENUM explanation
 
 
@@ -44,6 +97,9 @@ cdef extern from "CoreAudio/AudioHardwareBase.h":
 
 
 cdef extern from "CoreAudio/AudioHardware.h":
+
+    ctypedef enum:
+        kAudioObjectSystemObject = 1
 
     ctypedef enum:
         kAudioObjectPropertyCreator             = 1869638759
@@ -70,8 +126,30 @@ cdef extern from "CoreAudio/AudioHardware.h":
     ctypedef UInt32 AudioHardwarePowerHint
 
     ctypedef enum:
-        kAudioHardwarePowerHintNone = 0,
+        kAudioHardwarePowerHintNone = 0
         kAudioHardwarePowerHintFavorSavingPower = 1
+
+    cdef OSStatus AudioHardwareUnload()
+
+    cdef OSStatus AudioHardwareCreateAggregateDevice( CFDictionaryRef inDescription, AudioObjectID* outDeviceID)
+    cdef OSStatus AudioHardwareDestroyAggregateDevice(AudioObjectID inDeviceID)
+
+    ctypedef enum :
+        kAudioPlugInCreateAggregateDevice = 1667327847
+        kAudioPlugInDestroyAggregateDevice = 1684105063
+
+    ctypedef enum :
+        kAudioTransportManagerCreateEndPointDevice = 1667523958
+        kAudioTransportManagerDestroyEndPointDevice = 1684301174
+    
+    ctypedef OSStatus (*AudioDeviceIOProc)( AudioObjectID inDevice,
+                            const AudioTimeStamp* inNow,
+                            const AudioBufferList* inInputData,
+                            const AudioTimeStamp* inInputTime,
+                            AudioBufferList* outOutputData,
+                            const AudioTimeStamp* inOutputTime,
+                            void* inClientData)
+
 
     ctypedef enum:
         kAudioHardwarePropertyMixStereoToMono = 1937010031
@@ -101,7 +179,6 @@ cdef extern from "CoreAudio/AudioHardware.h":
 
 
     ctypedef enum:
-
         kAudioDevicePropertyPlugIn = 1886156135
         kAudioDevicePropertyDeviceHasChanged = 1684629094
         kAudioDevicePropertyDeviceIsRunningSomewhere = 1735356005
@@ -121,7 +198,6 @@ cdef extern from "CoreAudio/AudioHardware.h":
 
 
     ctypedef enum:
-
         kAudioDevicePropertyJackIsConnected = 1784767339
         kAudioDevicePropertyVolumeScalar = 1987013741
         kAudioDevicePropertyVolumeDecibels = 1987013732
