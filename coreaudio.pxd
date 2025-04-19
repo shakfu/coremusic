@@ -150,8 +150,24 @@ cdef extern from "CoreAudio/AudioHardware.h":
                             const AudioTimeStamp* inOutputTime,
                             void* inClientData)
 
+    ctypedef AudioDeviceIOProc AudioDeviceIOProcID
+
+    cdef OSStatus AudioDeviceCreateIOProcID( AudioObjectID inDevice, AudioDeviceIOProc inProc, void* inClientData, AudioDeviceIOProcID * outIOProcID)
+    # cdef OSStatus AudioDeviceCreateIOProcIDWithBlock( AudioDeviceIOProcID * outIOProcID, AudioObjectID inDevice, dispatch_queue_t inDispatchQueue, AudioDeviceIOBlock inIOBlock)
+    cdef OSStatus AudioDeviceDestroyIOProcID( AudioObjectID inDevice, AudioDeviceIOProcID inIOProcID)
+    cdef OSStatus AudioDeviceStart( AudioObjectID inDevice, AudioDeviceIOProcID inProcID)
+    cdef OSStatus AudioDeviceStartAtTime( AudioObjectID inDevice, AudioDeviceIOProcID inProcID, AudioTimeStamp* ioRequestedStartTime, UInt32 inFlags)
+    cdef OSStatus AudioDeviceStop( AudioObjectID inDevice, AudioDeviceIOProcID inProcID)
+    cdef OSStatus AudioDeviceGetCurrentTime( AudioObjectID inDevice, AudioTimeStamp* outTime)
+    cdef OSStatus AudioDeviceTranslateTime( AudioObjectID inDevice, const AudioTimeStamp* inTime, AudioTimeStamp* outTime)
+    cdef OSStatus AudioDeviceGetNearestStartTime( AudioObjectID inDevice, AudioTimeStamp* ioRequestedStartTime, UInt32 inFlags)
 
     ctypedef enum:
+        kAudioHardwarePropertyDevices = 1684370979
+        kAudioHardwarePropertyDefaultInputDevice = 1682533920
+        kAudioHardwarePropertyDefaultOutputDevice = 1682929012
+        kAudioHardwarePropertyDefaultSystemOutputDevice = 1934587252
+        kAudioHardwarePropertyTranslateUIDToDevice = 1969841252
         kAudioHardwarePropertyMixStereoToMono = 1937010031
         kAudioHardwarePropertyPlugInList = 1886152483
         kAudioHardwarePropertyTranslateBundleIDToPlugIn = 1651074160
@@ -249,7 +265,6 @@ cdef extern from "CoreAudio/AudioHardware.h":
         kAudioDevicePropertyVoiceActivityDetectionState = 1983997011
 
     ctypedef enum:
-
         kAudioAggregateDevicePropertyFullSubDeviceList = 1735554416
         kAudioAggregateDevicePropertyActiveSubDeviceList = 1634169456
         kAudioAggregateDevicePropertyComposition = 1633906541
@@ -257,6 +272,10 @@ cdef extern from "CoreAudio/AudioHardware.h":
         kAudioAggregateDevicePropertyClockDevice = 1634755428
         kAudioAggregateDevicePropertyTapList = 1952542755
         kAudioAggregateDevicePropertySubTapList = 1635017072
+
+
+
+
 
 cdef extern from "CoreAudio/CoreAudio.h":
     
