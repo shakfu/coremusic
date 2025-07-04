@@ -23,6 +23,8 @@ def int_to_fourchar(n: int) -> str:
         + chr((n & 255))
     )
 
+def audio_object_show(int object_id):
+    ca.AudioObjectShow(object_id)
 
 def audio_hardware_unload() -> int:
     return ca.AudioHardwareUnload()
