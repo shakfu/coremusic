@@ -198,7 +198,7 @@ class AmenBreakPlayer:
         print()
         
         # Step 3: Create AudioQueue (if supported)
-        print("🔄 Testing AudioQueue system...")
+        print("== Testing AudioQueue system...")
         if self.create_audio_queue():
             print("   AudioQueue system: FULLY FUNCTIONAL")
             if self.audio_queue:
