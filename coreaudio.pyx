@@ -1,5 +1,6 @@
 cimport coreaudio as ca
 from libc.stdlib cimport malloc, free
+from libc.string cimport memcpy, memset
 
 def fourchar_to_int(code: str) -> int:
    """Convert fourcc chars to an int
@@ -468,6 +469,7 @@ def get_audio_unit_scope_global():
 
 def get_linear_pcm_format_flag_is_non_interleaved():
     return ca.kLinearPCMFormatFlagIsNonInterleaved
+
 
 def test_error() -> int:
     """Test function to verify the module works"""
