@@ -512,4 +512,163 @@ cdef extern from "AudioToolbox/AudioFile.h":
         AudioQueueParameterValue mValue
 
 
+cdef extern from "AudioToolbox/AudioComponent.h":
+    
+    ctypedef struct OpaqueAudioComponent
+    ctypedef OpaqueAudioComponent* AudioComponent
+    ctypedef struct OpaqueAudioComponentInstance  
+    ctypedef OpaqueAudioComponentInstance* AudioComponentInstance
+    
+    ctypedef struct AudioComponentDescription:
+        UInt32 componentType
+        UInt32 componentSubType  
+        UInt32 componentManufacturer
+        UInt32 componentFlags
+        UInt32 componentFlagsMask
+    
+    ctypedef OSStatus (*AudioComponentFactoryFunction)(AudioComponentDescription* inDescription, AudioComponent inComponent, AudioComponentInstance* outInstance)
+    ctypedef void (*AudioComponentInitializer)(AudioComponentInstance inInstance)
+    
+    # AudioComponent constants
+    ctypedef enum:
+        kAudioComponentType_Output = 1635086197          # 'auou'
+        kAudioComponentType_MusicDevice = 1635085685     # 'aumu'
+        kAudioComponentType_MusicEffect = 1635085670     # 'aumf'
+        kAudioComponentType_FormatConverter = 1635083875 # 'aufc'
+        kAudioComponentType_Effect = 1635083896          # 'aufx'
+        kAudioComponentType_Mixer = 1635085688           # 'aumx'
+        kAudioComponentType_Panner = 1635086446          # 'aupn'
+        kAudioComponentType_Generator = 1635084142       # 'augn'
+        kAudioComponentType_OfflineEffect = 1635085676   # 'auol'
+        kAudioComponentType_MIDIProcessor = 1635085673   # 'aumi'
+        
+        kAudioComponentSubType_DefaultOutput = 1684366880        # 'def '
+        kAudioComponentSubType_HALOutput = 1634230896            # 'ahal'
+        kAudioComponentSubType_SystemOutput = 1937339252         # 'sys '
+        kAudioComponentSubType_GenericOutput = 1734700658       # 'genr'
+        
+        kAudioComponentManufacturer_Apple = 1634758764  # 'appl'
+    
+    # AudioComponent functions
+    cdef AudioComponent AudioComponentFindNext(AudioComponent inComponent, const AudioComponentDescription* inDesc)
+    cdef OSStatus AudioComponentCopyName(AudioComponent inComponent, CFStringRef* outName)  
+    cdef OSStatus AudioComponentGetDescription(AudioComponent inComponent, AudioComponentDescription* outDesc)
+    cdef OSStatus AudioComponentGetVersion(AudioComponent inComponent, UInt32* outVersion)
+    cdef OSStatus AudioComponentInstanceNew(AudioComponent inComponent, AudioComponentInstance* outInstance)
+    cdef OSStatus AudioComponentInstanceDispose(AudioComponentInstance inInstance)
+    cdef OSStatus AudioComponentInstanceCanDo(AudioComponentInstance inInstance, SInt16 inSelectorID)
+
+
+cdef extern from "AudioToolbox/AudioUnitProperties.h":
+    pass
+
+cdef extern from "AudioToolbox/AUComponent.h":
+    
+    # AudioUnit is typedef'd as AudioComponentInstance
+    ctypedef AudioComponentInstance AudioUnit
+    
+    # AudioUnit Types (same as AudioComponent types but with different name)
+    ctypedef enum:
+        kAudioUnitType_Output = 1635086197               # 'auou'
+        kAudioUnitType_MusicDevice = 1635085685          # 'aumu' 
+        kAudioUnitType_MusicEffect = 1635085670          # 'aumf'
+        kAudioUnitType_FormatConverter = 1635083875      # 'aufc'
+        kAudioUnitType_Effect = 1635083896               # 'aufx'
+        kAudioUnitType_Mixer = 1635085688                # 'aumx'
+        kAudioUnitType_Panner = 1635086446               # 'aupn'
+        kAudioUnitType_Generator = 1635084142            # 'augn'
+        kAudioUnitType_OfflineEffect = 1635085676        # 'auol'
+        kAudioUnitType_MIDIProcessor = 1635085673        # 'aumi'
+        
+        kAudioUnitSubType_DefaultOutput = 1684366880     # 'def '
+        kAudioUnitSubType_HALOutput = 1634230896         # 'ahal'
+        kAudioUnitSubType_SystemOutput = 1937339252      # 'sys '
+        kAudioUnitSubType_GenericOutput = 1734700658     # 'genr'
+        
+        kAudioUnitManufacturer_Apple = 1634758764        # 'appl'
+    
+    # AudioUnit Property IDs
+    ctypedef UInt32 AudioUnitPropertyID
+    ctypedef UInt32 AudioUnitScope
+    ctypedef UInt32 AudioUnitElement
+    ctypedef UInt32 AudioUnitParameterID
+    ctypedef Float32 AudioUnitParameterValue
+    
+    ctypedef enum:
+        # Global scope properties
+        kAudioUnitProperty_ClassInfo = 0
+        kAudioUnitProperty_MakeConnection = 1
+        kAudioUnitProperty_SampleRate = 2
+        kAudioUnitProperty_ParameterList = 3
+        kAudioUnitProperty_ParameterInfo = 4
+        kAudioUnitProperty_CPULoad = 6
+        kAudioUnitProperty_StreamFormat = 8
+        kAudioUnitProperty_ElementCount = 11
+        kAudioUnitProperty_Latency = 12
+        kAudioUnitProperty_SupportedNumChannels = 13
+        kAudioUnitProperty_MaximumFramesPerSlice = 14
+        kAudioUnitProperty_ParameterValueStrings = 16
+        kAudioUnitProperty_AudioChannelLayout = 19
+        kAudioUnitProperty_TailTime = 20
+        kAudioUnitProperty_BypassEffect = 21
+        kAudioUnitProperty_LastRenderError = 22
+        kAudioUnitProperty_SetRenderCallback = 23
+        kAudioUnitProperty_FactoryPresets = 24
+        kAudioUnitProperty_RenderQuality = 26
+        kAudioUnitProperty_HostCallbacks = 27
+        kAudioUnitProperty_InPlaceProcessing = 29
+        kAudioUnitProperty_ElementName = 30
+        kAudioUnitProperty_SupportedChannelLayoutTags = 32
+        kAudioUnitProperty_PresentPreset = 36
+        
+    # AudioUnit Scopes
+    ctypedef enum:
+        kAudioUnitScope_Global = 0
+        kAudioUnitScope_Input = 1
+        kAudioUnitScope_Output = 2
+        kAudioUnitScope_Group = 3
+        kAudioUnitScope_Part = 4
+        kAudioUnitScope_Note = 5
+        kAudioUnitScope_Layer = 6
+        kAudioUnitScope_LayerItem = 7
+    
+    # Render callback function type
+    ctypedef UInt32 AudioUnitRenderActionFlags
+    ctypedef OSStatus (*AURenderCallback)(void* inRefCon, 
+                                           AudioUnitRenderActionFlags* ioActionFlags,
+                                           const AudioTimeStamp* inTimeStamp,
+                                           UInt32 inBusNumber,
+                                           UInt32 inNumberFrames, 
+                                           AudioBufferList* ioData)
+    
+    ctypedef struct AURenderCallbackStruct:
+        AURenderCallback inputProc
+        void* inputProcRefCon
+    
+    # AudioUnit functions
+    cdef OSStatus AudioUnitInitialize(AudioUnit inUnit)
+    cdef OSStatus AudioUnitUninitialize(AudioUnit inUnit)
+    cdef OSStatus AudioUnitGetPropertyInfo(AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, UInt32* outDataSize, Boolean* outWritable)
+    cdef OSStatus AudioUnitGetProperty(AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, void* outData, UInt32* ioDataSize)
+    cdef OSStatus AudioUnitSetProperty(AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, const void* inData, UInt32 inDataSize)
+    cdef OSStatus AudioUnitAddPropertyListener(AudioUnit inUnit, AudioUnitPropertyID inID, void* inProc, void* inProcUserData)
+    cdef OSStatus AudioUnitRemovePropertyListener(AudioUnit inUnit, AudioUnitPropertyID inID, void* inProc)
+    cdef OSStatus AudioUnitRemovePropertyListenerWithUserData(AudioUnit inUnit, AudioUnitPropertyID inID, void* inProc, void* inProcUserData)
+    cdef OSStatus AudioUnitAddRenderNotify(AudioUnit inUnit, AURenderCallback inProc, void* inProcUserData)
+    cdef OSStatus AudioUnitRemoveRenderNotify(AudioUnit inUnit, AURenderCallback inProc, void* inProcUserData)
+    cdef OSStatus AudioUnitGetParameter(AudioUnit inUnit, AudioUnitParameterID inID, AudioUnitScope inScope, AudioUnitElement inElement, AudioUnitParameterValue* outValue)
+    cdef OSStatus AudioUnitSetParameter(AudioUnit inUnit, AudioUnitParameterID inID, AudioUnitScope inScope, AudioUnitElement inElement, AudioUnitParameterValue inValue, UInt32 inBufferOffsetInFrames)
+    cdef OSStatus AudioUnitScheduleParameters(AudioUnit inUnit, const void* inParameterEvent, UInt32 inNumParamEvents)
+    cdef OSStatus AudioUnitRender(AudioUnit inUnit, AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inOutputBusNumber, UInt32 inNumberFrames, AudioBufferList* ioData)
+    cdef OSStatus AudioUnitProcess(AudioUnit inUnit, AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData)
+    cdef OSStatus AudioUnitProcessMultiple(AudioUnit inUnit, AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, UInt32 inNumberInputBufferLists, const AudioBufferList** inInputBufferLists, UInt32 inNumberOutputBufferLists, AudioBufferList** ioOutputBufferLists)
+    cdef OSStatus AudioUnitReset(AudioUnit inUnit, AudioUnitScope inScope, AudioUnitElement inElement)
+
+
+cdef extern from "AudioToolbox/AudioOutputUnit.h":
+    
+    cdef OSStatus AudioOutputUnitStart(AudioUnit ci)
+    cdef OSStatus AudioOutputUnitStop(AudioUnit ci)
+
+
     

@@ -292,6 +292,183 @@ def get_audio_file_property_data_format():
 def get_audio_file_property_maximum_packet_size():
     return ca.kAudioFilePropertyMaximumPacketSize
 
+
+# AudioComponent Functions
+def audio_component_find_next(description_dict):
+    """Find an audio component matching the description"""
+    cdef ca.AudioComponentDescription desc
+    cdef ca.AudioComponent component
+    
+    desc.componentType = description_dict.get('type', 0)
+    desc.componentSubType = description_dict.get('subtype', 0) 
+    desc.componentManufacturer = description_dict.get('manufacturer', 0)
+    desc.componentFlags = description_dict.get('flags', 0)
+    desc.componentFlagsMask = description_dict.get('flags_mask', 0)
+    
+    component = ca.AudioComponentFindNext(NULL, &desc)
+    
+    if component == NULL:
+        return None
+    return <long>component
+
+
+def audio_component_instance_new(long component_id):
+    """Create a new instance of an audio component"""
+    cdef ca.AudioComponent component = <ca.AudioComponent>component_id
+    cdef ca.AudioComponentInstance instance
+    
+    cdef ca.OSStatus status = ca.AudioComponentInstanceNew(component, &instance)
+    if status != 0:
+        raise RuntimeError(f"AudioComponentInstanceNew failed with status: {status}")
+    
+    return <long>instance
+
+
+def audio_component_instance_dispose(long instance_id):
+    """Dispose of an audio component instance"""
+    cdef ca.AudioComponentInstance instance = <ca.AudioComponentInstance>instance_id
+    
+    cdef ca.OSStatus status = ca.AudioComponentInstanceDispose(instance)
+    if status != 0:
+        raise RuntimeError(f"AudioComponentInstanceDispose failed with status: {status}")
+    
+    return status
+
+
+# AudioUnit Functions  
+def audio_unit_initialize(long audio_unit_id):
+    """Initialize an audio unit"""
+    cdef ca.AudioUnit unit = <ca.AudioUnit>audio_unit_id
+    
+    cdef ca.OSStatus status = ca.AudioUnitInitialize(unit)
+    if status != 0:
+        raise RuntimeError(f"AudioUnitInitialize failed with status: {status}")
+    
+    return status
+
+
+def audio_unit_uninitialize(long audio_unit_id):
+    """Uninitialize an audio unit"""
+    cdef ca.AudioUnit unit = <ca.AudioUnit>audio_unit_id
+    
+    cdef ca.OSStatus status = ca.AudioUnitUninitialize(unit)
+    if status != 0:
+        raise RuntimeError(f"AudioUnitUninitialize failed with status: {status}")
+    
+    return status
+
+
+def audio_unit_set_property(long audio_unit_id, int property_id, int scope, int element, data):
+    """Set a property on an audio unit"""
+    cdef ca.AudioUnit unit = <ca.AudioUnit>audio_unit_id
+    cdef ca.OSStatus status
+    
+    if isinstance(data, bytes):
+        # Handle raw bytes data
+        status = ca.AudioUnitSetProperty(unit, 
+                                         <ca.AudioUnitPropertyID>property_id,
+                                         <ca.AudioUnitScope>scope,
+                                         <ca.AudioUnitElement>element,
+                                         <const char*>data,
+                                         <ca.UInt32>len(data))
+    else:
+        raise ValueError("data must be bytes")
+    
+    if status != 0:
+        raise RuntimeError(f"AudioUnitSetProperty failed with status: {status}")
+    
+    return status
+
+
+def audio_unit_get_property(long audio_unit_id, int property_id, int scope, int element):
+    """Get a property from an audio unit"""
+    cdef ca.AudioUnit unit = <ca.AudioUnit>audio_unit_id
+    cdef ca.UInt32 data_size = 0
+    cdef ca.Boolean writable = 0
+    cdef ca.OSStatus status
+    
+    # Get the size of the property
+    status = ca.AudioUnitGetPropertyInfo(unit,
+                                         <ca.AudioUnitPropertyID>property_id,
+                                         <ca.AudioUnitScope>scope,
+                                         <ca.AudioUnitElement>element,
+                                         &data_size,
+                                         &writable)
+    if status != 0:
+        raise RuntimeError(f"AudioUnitGetPropertyInfo failed with status: {status}")
+    
+    # Allocate buffer and get the property
+    cdef char* buffer = <char*>malloc(data_size)
+    if not buffer:
+        raise MemoryError("Could not allocate buffer for property data")
+    
+    try:
+        status = ca.AudioUnitGetProperty(unit,
+                                         <ca.AudioUnitPropertyID>property_id,
+                                         <ca.AudioUnitScope>scope,
+                                         <ca.AudioUnitElement>element,
+                                         buffer,
+                                         &data_size)
+        
+        if status != 0:
+            raise RuntimeError(f"AudioUnitGetProperty failed with status: {status}")
+        
+        return buffer[:data_size]
+        
+    finally:
+        free(buffer)
+
+
+def audio_output_unit_start(long audio_unit_id):
+    """Start an output audio unit"""
+    cdef ca.AudioUnit unit = <ca.AudioUnit>audio_unit_id
+    
+    cdef ca.OSStatus status = ca.AudioOutputUnitStart(unit)
+    if status != 0:
+        raise RuntimeError(f"AudioOutputUnitStart failed with status: {status}")
+    
+    return status
+
+
+def audio_output_unit_stop(long audio_unit_id):
+    """Stop an output audio unit"""
+    cdef ca.AudioUnit unit = <ca.AudioUnit>audio_unit_id
+    
+    cdef ca.OSStatus status = ca.AudioOutputUnitStop(unit)
+    if status != 0:
+        raise RuntimeError(f"AudioOutputUnitStop failed with status: {status}")
+    
+    return status
+
+
+# AudioUnit constant getter functions
+def get_audio_unit_type_output():
+    return ca.kAudioUnitType_Output
+
+def get_audio_unit_subtype_default_output():
+    return ca.kAudioUnitSubType_DefaultOutput
+
+def get_audio_unit_manufacturer_apple():
+    return ca.kAudioUnitManufacturer_Apple
+
+def get_audio_unit_property_stream_format():
+    return ca.kAudioUnitProperty_StreamFormat
+
+def get_audio_unit_property_set_render_callback():
+    return ca.kAudioUnitProperty_SetRenderCallback
+
+def get_audio_unit_scope_input():
+    return ca.kAudioUnitScope_Input
+
+def get_audio_unit_scope_output():
+    return ca.kAudioUnitScope_Output
+
+def get_audio_unit_scope_global():
+    return ca.kAudioUnitScope_Global
+
+def get_linear_pcm_format_flag_is_non_interleaved():
+    return ca.kLinearPCMFormatFlagIsNonInterleaved
+
 def test_error() -> int:
     """Test function to verify the module works"""
     return ca.kAudio_UnimplementedError
