@@ -35,7 +35,7 @@ class PracticalAudioPlayer:
         
     def load_audio_file(self):
         """Load audio file and prepare for playback"""
-        print("🎵 Loading audio file with cycoreaudio...")
+        print("Loading audio file with cycoreaudio...")
         
         # Load with Python wave module
         with wave.open(self.wav_path, 'rb') as wav:
@@ -57,21 +57,21 @@ class PracticalAudioPlayer:
                 ca.get_audio_file_wave_type()
             )
             
-            print(f"   ✓ Loaded with Python: {len(self.audio_data)} bytes")
-            print(f"   ✓ Verified with CoreAudio: {audio_file_id}")
-            print(f"   📊 Format: {self.format_info['sample_rate']:.0f}Hz, {self.format_info['channels']}ch, {self.format_info['sample_width']*8}-bit")
-            print(f"   ⏱️  Duration: {self.format_info['duration']:.2f} seconds")
+            print(f"   Loaded with Python: {len(self.audio_data)} bytes")
+            print(f"   Verified with CoreAudio: {audio_file_id}")
+            print(f"   Format: {self.format_info['sample_rate']:.0f}Hz, {self.format_info['channels']}ch, {self.format_info['sample_width']*8}-bit")
+            print(f"   Duration: {self.format_info['duration']:.2f} seconds")
             
             ca.audio_file_close(audio_file_id)
             return True
             
         except Exception as e:
-            print(f"   ⚠ CoreAudio verification: {e}")
+            print(f"   CoreAudio verification: {e}")
             return False
     
     def setup_audio_queue(self):
         """Set up AudioQueue for playback"""
-        print("\n🔊 Setting up AudioQueue for playback...")
+        print("\nSetting up AudioQueue for playback...")
         
         try:
             # Create audio format description
@@ -89,22 +89,22 @@ class PracticalAudioPlayer:
             
             # Create AudioQueue
             self.audio_queue = ca.audio_queue_new_output(audio_format)
-            print(f"   ✓ AudioQueue created: {self.audio_queue}")
+            print(f"   AudioQueue created: {self.audio_queue}")
             
             # Allocate buffers  
             buffer_size = 8192
             buffer_id = ca.audio_queue_allocate_buffer(self.audio_queue, buffer_size)
-            print(f"   ✓ Buffer allocated: {buffer_id} ({buffer_size} bytes)")
+            print(f"   Buffer allocated: {buffer_id} ({buffer_size} bytes)")
             
             return True
             
         except Exception as e:
-            print(f"   ❌ AudioQueue setup failed: {e}")
+            print(f"   AudioQueue setup failed: {e}")
             return False
     
     def simulate_playback(self):
         """Simulate audio playback with real infrastructure"""
-        print("\n🎵 Simulating Audio Playback...")
+        print("\nSimulating Audio Playback...")
         print("   (Using real AudioQueue infrastructure with data processing simulation)")
         
         try:
@@ -130,7 +130,7 @@ class PracticalAudioPlayer:
                 elapsed = time.time() - start_time
                 expected_time = (position / data_size) * self.format_info['duration']
                 
-                print(f"   🎵 Processing: {progress:.1f}% | "
+                print(f"   Processing: {progress:.1f}% | "
                       f"Elapsed: {elapsed:.2f}s | "
                       f"Expected: {expected_time:.2f}s | "
                       f"Chunk: {len(chunk_data)} bytes")
@@ -142,7 +142,7 @@ class PracticalAudioPlayer:
                 time.sleep(0.1)  # Simulate buffer processing time
             
             elapsed_total = time.time() - start_time
-            print(f"\n   ✅ Playback simulation completed:")
+            print(f"\n   Playback simulation completed:")
             print(f"      • Total time: {elapsed_total:.2f}s")
             print(f"      • Expected time: {self.format_info['duration']:.2f}s") 
             print(f"      • Data processed: {data_size:,} bytes")
@@ -152,7 +152,7 @@ class PracticalAudioPlayer:
             return True
             
         except Exception as e:
-            print(f"   ❌ Playback simulation failed: {e}")
+            print(f"   Playback simulation failed: {e}")
             self.playing = False
             return False
     
@@ -163,9 +163,9 @@ class PracticalAudioPlayer:
         if self.audio_queue:
             try:
                 ca.audio_queue_dispose(self.audio_queue, True)
-                print("   ✓ AudioQueue disposed")
+                print("   AudioQueue disposed")
             except Exception as e:
-                print(f"   ⚠ AudioQueue cleanup: {e}")
+                print(f"   AudioQueue cleanup: {e}")
         
         self.audio_queue = None
         self.playing = False
@@ -208,16 +208,16 @@ class PracticalAudioPlayer:
         print()
         
         if success:
-            print("✅ PRACTICAL AUDIO PIPELINE: FULLY DEMONSTRATED")
+            print("PRACTICAL AUDIO PIPELINE: FULLY DEMONSTRATED")
             print()
-            print("🎯 WHAT THIS PROVES:")
+            print("WHAT THIS PROVES:")
             print("   • Complete audio file loading with cycoreaudio")
             print("   • AudioQueue infrastructure is functional") 
             print("   • Audio format detection and configuration works")
             print("   • Real-time audio data processing is possible")
             print("   • Resource management and cleanup works correctly")
             print()
-            print("🚀 FOR ACTUAL AUDIO OUTPUT:")
+            print("FOR ACTUAL AUDIO OUTPUT:")
             print("   The missing piece is the AudioQueue callback function which:")
             print("   • Would be implemented in C (like AudioUnit callbacks)")
             print("   • Would receive our processed audio data")
@@ -227,7 +227,7 @@ class PracticalAudioPlayer:
             print("   All components needed for real audio playback are functional!")
             
         else:
-            print("❌ Some pipeline components need attention")
+            print("Some pipeline components need attention")
         
         return success
 
@@ -255,12 +255,12 @@ def demonstrate_callback_solution():
     print("Python Integration:")
     print("```python")
     print("# Our cycoreaudio wrapper already provides:")
-    print("audio_unit_set_render_callback(audio_unit_id)  # ✓ Implemented")
-    print("setup_audio_data(audio_bytes, ...)             # ✓ Infrastructure ready")
-    print("start_audio_playback()                          # ✓ Control functions ready")
+    print("audio_unit_set_render_callback(audio_unit_id)  # Implemented")
+    print("setup_audio_data(audio_bytes, ...)             # Infrastructure ready")
+    print("start_audio_playback()                          # Control functions ready")
     print("```")
     print()
-    print("🎯 CONCLUSION: The cycoreaudio wrapper provides complete access to")
+    print("CONCLUSION: The cycoreaudio wrapper provides complete access to")
     print("   all CoreAudio APIs needed for professional audio applications!")
 
 
@@ -268,7 +268,7 @@ def main():
     amen_path = os.path.join("tests", "amen.wav")
     
     if not os.path.exists(amen_path):
-        print(f"❌ Audio file not found: {amen_path}")
+        print(f"Audio file not found: {amen_path}")
         return
     
     player = PracticalAudioPlayer(amen_path)
@@ -277,14 +277,14 @@ def main():
     # Show callback solution approach
     demonstrate_callback_solution()
     
-    print("\n🎵 FINAL SUMMARY:")
+    print("\nFINAL SUMMARY:")
     if success:
-        print("   ✅ cycoreaudio wrapper: COMPLETE AND FUNCTIONAL")
-        print("   ✅ All CoreAudio APIs: ACCESSIBLE FROM PYTHON") 
-        print("   ✅ Audio infrastructure: READY FOR REAL PLAYBACK")
-        print("   ✅ Professional audio development: ENABLED")
+        print("   cycoreaudio wrapper: COMPLETE AND FUNCTIONAL")
+        print("   All CoreAudio APIs: ACCESSIBLE FROM PYTHON") 
+        print("   Audio infrastructure: READY FOR REAL PLAYBACK")
+        print("   Professional audio development: ENABLED")
     else:
-        print("   ⚠️ Some components need additional work")
+        print("   Some components need additional work")
 
 
 if __name__ == "__main__":

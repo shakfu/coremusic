@@ -37,9 +37,9 @@ def demonstrate_audiounit_api():
     
     component_id = ca.audio_component_find_next(description)
     if component_id:
-        print(f"   ✓ Found default output AudioComponent: {component_id}")
+        print(f"   Found default output AudioComponent: {component_id}")
     else:
-        print("   ✗ Could not find default output AudioComponent")
+        print("   Could not find default output AudioComponent")
         return
     print()
     
@@ -47,34 +47,34 @@ def demonstrate_audiounit_api():
     print("3. AudioUnit Instance Management:")
     try:
         audio_unit = ca.audio_component_instance_new(component_id)
-        print(f"   ✓ Created AudioUnit instance: {audio_unit}")
+        print(f"   Created AudioUnit instance: {audio_unit}")
         
         # 4. Show we can initialize/uninitialize
         print("\n4. AudioUnit Lifecycle:")
         ca.audio_unit_initialize(audio_unit)
-        print("   ✓ AudioUnit initialized")
+        print("   AudioUnit initialized")
         
         ca.audio_unit_uninitialize(audio_unit)
-        print("   ✓ AudioUnit uninitialized")
+        print("   AudioUnit uninitialized")
         
         # 5. Show we can start/stop (should fail since not initialized)
         print("\n5. AudioUnit Control:")
         try:
             ca.audio_output_unit_start(audio_unit)
-            print("   ✓ AudioUnit started")
+            print("   AudioUnit started")
             
             ca.audio_output_unit_stop(audio_unit)
-            print("   ✓ AudioUnit stopped")
+            print("   AudioUnit stopped")
         except Exception as e:
-            print(f"   ⚠ Start/stop failed (expected - not initialized): {e}")
+            print(f"   Start/stop failed (expected - not initialized): {e}")
         
         # 6. Show we can dispose
         print("\n6. AudioUnit Cleanup:")
         ca.audio_component_instance_dispose(audio_unit)
-        print("   ✓ AudioUnit disposed")
+        print("   AudioUnit disposed")
         
     except Exception as e:
-        print(f"   ✗ AudioUnit operations failed: {e}")
+        print(f"   AudioUnit operations failed: {e}")
         return
     
     print()
@@ -86,7 +86,7 @@ def demonstrate_audiounit_api():
         try:
             # Load file info
             with wave.open(amen_path, 'rb') as wav:
-                print(f"   ✓ WAV file: {amen_path}")
+                print(f"   WAV file: {amen_path}")
                 print(f"     - Sample rate: {wav.getframerate()} Hz")
                 print(f"     - Channels: {wav.getnchannels()}")
                 print(f"     - Sample width: {wav.getsampwidth()} bytes")
@@ -98,34 +98,34 @@ def demonstrate_audiounit_api():
                 ca.get_audio_file_read_permission(),
                 ca.get_audio_file_wave_type()
             )
-            print(f"   ✓ Opened with CoreAudio AudioFile API: {audio_file_id}")
+            print(f"   Opened with CoreAudio AudioFile API: {audio_file_id}")
             
             # Read some audio data
             packet_data, packets_read = ca.audio_file_read_packets(audio_file_id, 0, 100)
-            print(f"   ✓ Read {packets_read} packets ({len(packet_data)} bytes) of audio data")
+            print(f"   Read {packets_read} packets ({len(packet_data)} bytes) of audio data")
             
             ca.audio_file_close(audio_file_id)
-            print("   ✓ Closed AudioFile")
+            print("   Closed AudioFile")
             
         except Exception as e:
-            print(f"   ✗ Audio file operations failed: {e}")
+            print(f"   Audio file operations failed: {e}")
     else:
-        print(f"   ✗ Audio file not found: {amen_path}")
+        print(f"   Audio file not found: {amen_path}")
     
     print()
     
     # 8. Summary
     print("8. Summary:")
-    print("   ✓ Complete AudioUnit API access through cycoreaudio wrapper")
-    print("   ✓ AudioComponent discovery and instantiation")
-    print("   ✓ AudioUnit lifecycle management")  
-    print("   ✓ Audio file reading and format detection")
-    print("   ✓ All CoreAudio constants and types accessible")
+    print("   Complete AudioUnit API access through cycoreaudio wrapper")
+    print("   AudioComponent discovery and instantiation")
+    print("   AudioUnit lifecycle management")  
+    print("   Audio file reading and format detection")
+    print("   All CoreAudio constants and types accessible")
     print()
-    print("🎵 The cycoreaudio wrapper now provides comprehensive access")
+    print("The cycoreaudio wrapper now provides comprehensive access")
     print("   to AudioUnit, AudioComponent, AudioFile, and AudioQueue APIs!")
     print()
-    print("📝 To implement actual audio playback, the next step would be:")
+    print("To implement actual audio playback, the next step would be:")
     print("   - Implement C render callback functions (complex in Python)")
     print("   - Or use higher-level audio libraries that can consume our data")
     print("   - Or create a C extension that bridges the callback mechanism")

@@ -13,7 +13,7 @@ import coreaudio as ca
 def create_sine_wave_audiounit():
     """Create a simple sine wave generator using AudioUnit"""
     
-    print("🎵 Creating Real Audio Output with AudioUnit...")
+    print("Creating Real Audio Output with AudioUnit...")
     
     # 1. Find the default output AudioUnit
     description = {
@@ -28,11 +28,11 @@ def create_sine_wave_audiounit():
     if component_id is None:
         raise RuntimeError("Could not find default output AudioUnit")
     
-    print(f"✓ Found AudioComponent: {component_id}")
+    print(f"Found AudioComponent: {component_id}")
     
     # 2. Create AudioUnit instance
     audio_unit = ca.audio_component_instance_new(component_id)
-    print(f"✓ Created AudioUnit: {audio_unit}")
+    print(f"Created AudioUnit: {audio_unit}")
     
     # 3. Configure audio format (stereo, 44.1kHz, 16-bit)
     format_data = struct.pack('<dLLLLLLLL',
@@ -56,13 +56,13 @@ def create_sine_wave_audiounit():
             0,
             format_data
         )
-        print("✓ Configured audio format")
+        print("Configured audio format")
     except Exception as e:
-        print(f"⚠ Format config failed: {e} (continuing with defaults)")
+        print(f"Format config failed: {e} (continuing with defaults)")
     
     # 4. Initialize the AudioUnit
     ca.audio_unit_initialize(audio_unit)
-    print("✓ AudioUnit initialized")
+    print("AudioUnit initialized")
     
     return audio_unit
 
@@ -75,34 +75,34 @@ def test_real_audio_output():
         # Create AudioUnit
         audio_unit = create_sine_wave_audiounit()
         
-        print("🎯 ATTEMPTING REAL AUDIO OUTPUT...")
+        print("ATTEMPTING REAL AUDIO OUTPUT...")
         print("   Note: This will test our AudioUnit infrastructure")
         print("   without the complex callback mechanism.\n")
         
         # Start the AudioUnit (this may produce a brief audio click/pop)
-        print("🔊 Starting AudioUnit...")
+        print("Starting AudioUnit...")
         ca.audio_output_unit_start(audio_unit)
-        print("✓ AudioUnit started!")
+        print("AudioUnit started!")
         
-        print("\n🎵 AudioUnit is now active for 2 seconds...")
+        print("\nAudioUnit is now active for 2 seconds...")
         print("   (You might hear a brief system sound or silence)")
         time.sleep(2)
         
         # Stop the AudioUnit
-        print("🛑 Stopping AudioUnit...")
+        print("Stopping AudioUnit...")
         ca.audio_output_unit_stop(audio_unit)
-        print("✓ AudioUnit stopped")
+        print("AudioUnit stopped")
         
         # Clean up
         print("🧹 Cleaning up...")
         ca.audio_unit_uninitialize(audio_unit)
         ca.audio_component_instance_dispose(audio_unit)
-        print("✓ AudioUnit disposed")
+        print("AudioUnit disposed")
         
         return True
         
     except Exception as e:
-        print(f"❌ Audio output test failed: {e}")
+        print(f"Audio output test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -114,7 +114,7 @@ def demonstrate_amen_wav_loading():
     
     amen_path = os.path.join("tests", "amen.wav")
     if not os.path.exists(amen_path):
-        print(f"❌ {amen_path} not found")
+        print(f"{amen_path} not found")
         return False
     
     try:
@@ -135,23 +135,23 @@ def demonstrate_amen_wav_loading():
         
         if len(format_data) >= 40:
             asbd = struct.unpack('<dLLLLLLLL', format_data[:40])
-            print(f"✓ Sample Rate: {asbd[0]} Hz")
-            print(f"✓ Channels: {asbd[6]}")
-            print(f"✓ Bits per Channel: {asbd[7]}")
-            print(f"✓ Format: {ca.int_to_fourchar(asbd[1])}")
+            print(f"Sample Rate: {asbd[0]} Hz")
+            print(f"Channels: {asbd[6]}")
+            print(f"Bits per Channel: {asbd[7]}")
+            print(f"Format: {ca.int_to_fourchar(asbd[1])}")
         
         # Read some audio data
         audio_data, packets_read = ca.audio_file_read_packets(audio_file_id, 0, 1000)
-        print(f"✓ Read {packets_read} packets ({len(audio_data)} bytes)")
-        print(f"✓ First 16 bytes: {audio_data[:16].hex()}")
+        print(f"Read {packets_read} packets ({len(audio_data)} bytes)")
+        print(f"First 16 bytes: {audio_data[:16].hex()}")
         
         ca.audio_file_close(audio_file_id)
-        print("✓ File operations completed successfully")
+        print("File operations completed successfully")
         
         return True
         
     except Exception as e:
-        print(f"❌ Amen.wav analysis failed: {e}")
+        print(f"Amen.wav analysis failed: {e}")
         return False
 
 def main():
@@ -170,31 +170,31 @@ def main():
     print("🎵" * 50)
     
     if audio_success:
-        print("✅ AUDIOUNIT SYSTEM: FULLY FUNCTIONAL")
+        print("AUDIOUNIT SYSTEM: FULLY FUNCTIONAL")
         print("   • AudioComponent discovery: WORKING")
         print("   • AudioUnit creation: WORKING")
         print("   • AudioUnit configuration: WORKING")
         print("   • AudioUnit lifecycle: WORKING")
         print("   • Audio output capability: VERIFIED")
     else:
-        print("❌ AudioUnit system has issues")
+        print("AudioUnit system has issues")
     
     if file_success:
-        print("\n✅ AUDIO FILE SYSTEM: FULLY FUNCTIONAL")
+        print("\nAUDIO FILE SYSTEM: FULLY FUNCTIONAL")
         print("   • AudioFile opening: WORKING")
         print("   • Format detection: WORKING")
         print("   • Data reading: WORKING")
         print("   • Property access: WORKING")
     else:
-        print("\n❌ Audio file system has issues")
+        print("\nAudio file system has issues")
     
-    print("\n🎯 WHAT THIS PROVES:")
+    print("\nWHAT THIS PROVES:")
     print("   • Complete CoreAudio framework access")
     print("   • Real audio hardware interaction")
     print("   • Professional audio development capability")
     print("   • File format support and data access")
     
-    print("\n🚀 NEXT LEVEL AUDIO PLAYBACK:")
+    print("\nNEXT LEVEL AUDIO PLAYBACK:")
     print("   The infrastructure is 100% complete for:")
     print("   • Real-time audio callbacks")
     print("   • Custom audio effects")

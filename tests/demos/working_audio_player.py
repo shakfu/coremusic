@@ -36,7 +36,7 @@ class ComprehensiveAudioPlayer:
         
     def load_audio_file(self):
         """Load amen.wav and extract format information"""
-        print("🎵 Loading audio file...")
+        print("Loading audio file...")
         
         with wave.open(self.wav_path, 'rb') as wav:
             self.format_info = {
@@ -50,15 +50,15 @@ class ComprehensiveAudioPlayer:
             # Load raw audio data
             self.audio_data = wav.readframes(wav.getnframes())
             
-        print(f"   📊 Format: {self.format_info['sample_rate']}Hz, {self.format_info['channels']}ch, {self.format_info['sample_width']*8}-bit")
-        print(f"   ⏱️  Duration: {self.format_info['frame_count'] / self.format_info['sample_rate']:.2f} seconds")
-        print(f"   💾 Data size: {len(self.audio_data)} bytes")
+        print(f"   Format: {self.format_info['sample_rate']}Hz, {self.format_info['channels']}ch, {self.format_info['sample_width']*8}-bit")
+        print(f"   Duration: {self.format_info['frame_count'] / self.format_info['sample_rate']:.2f} seconds")
+        print(f"   Data size: {len(self.audio_data)} bytes")
         
         return True
     
     def verify_coreaudio_access(self):
         """Verify CoreAudio file access and format detection"""
-        print("\n🔍 Verifying CoreAudio file access...")
+        print("\nVerifying CoreAudio file access...")
         
         try:
             # Open with CoreAudio AudioFile API
@@ -76,24 +76,24 @@ class ComprehensiveAudioPlayer:
             
             if len(format_data) >= 40:
                 asbd = struct.unpack('<dLLLLLLLL', format_data[:40])
-                print(f"   ✓ CoreAudio format: {asbd[0]}Hz, {asbd[6]}ch, {asbd[7]}-bit")
-                print(f"   ✓ Format ID: {ca.int_to_fourchar(asbd[1])}")
+                print(f"   CoreAudio format: {asbd[0]}Hz, {asbd[6]}ch, {asbd[7]}-bit")
+                print(f"   Format ID: {ca.int_to_fourchar(asbd[1])}")
                 
             # Read audio packets via CoreAudio
             packet_data, packets_read = ca.audio_file_read_packets(audio_file_id, 0, 1000)
-            print(f"   ✓ Read {packets_read} packets ({len(packet_data)} bytes)")
+            print(f"   Read {packets_read} packets ({len(packet_data)} bytes)")
             
             ca.audio_file_close(audio_file_id)
-            print("   ✅ CoreAudio file access: FULLY FUNCTIONAL")
+            print("   CoreAudio file access: FULLY FUNCTIONAL")
             return True
             
         except Exception as e:
-            print(f"   ❌ CoreAudio file access failed: {e}")
+            print(f"   CoreAudio file access failed: {e}")
             return False
     
     def demonstrate_audiounit_infrastructure(self):
         """Demonstrate complete AudioUnit infrastructure for callbacks"""
-        print("\n🎛️  AudioUnit Callback Infrastructure Test...")
+        print("\nAudioUnit Callback Infrastructure Test...")
         
         try:
             # Step 1: AudioComponent Discovery
@@ -109,11 +109,11 @@ class ComprehensiveAudioPlayer:
             if not component_id:
                 raise RuntimeError("Could not find default output AudioUnit")
             
-            print(f"   ✓ AudioComponent discovery: {component_id}")
+            print(f"   AudioComponent discovery: {component_id}")
             
             # Step 2: AudioUnit Creation
             audio_unit = ca.audio_component_instance_new(component_id)
-            print(f"   ✓ AudioUnit instantiation: {audio_unit}")
+            print(f"   AudioUnit instantiation: {audio_unit}")
             
             # Step 3: AudioUnit Format Configuration
             format_data = struct.pack('<dLLLLLLLL',
@@ -137,35 +137,35 @@ class ComprehensiveAudioPlayer:
                     0,
                     format_data
                 )
-                print("   ✓ AudioUnit format configuration: SUCCESS")
+                print("   AudioUnit format configuration: SUCCESS")
             except Exception as e:
-                print(f"   ⚠ Format configuration: {e} (proceeding)")
+                print(f"   Format configuration: {e} (proceeding)")
             
             # Step 4: AudioUnit Initialization
             ca.audio_unit_initialize(audio_unit)
-            print("   ✓ AudioUnit initialization: SUCCESS")
+            print("   AudioUnit initialization: SUCCESS")
             
             # Step 5: AudioUnit Hardware Control
-            print("   🔊 Testing hardware audio control...")
+            print("   Testing hardware audio control...")
             ca.audio_output_unit_start(audio_unit)
-            print("   ✓ AudioUnit start: SUCCESS")
+            print("   AudioUnit start: SUCCESS")
             
-            print("     🎵 AudioUnit active for 2 seconds...")
+            print("     AudioUnit active for 2 seconds...")
             print("       (This proves complete hardware audio access)")
             time.sleep(2)
             
             ca.audio_output_unit_stop(audio_unit)
-            print("   ✓ AudioUnit stop: SUCCESS")
+            print("   AudioUnit stop: SUCCESS")
             
             # Step 6: Cleanup
             ca.audio_unit_uninitialize(audio_unit)
             ca.audio_component_instance_dispose(audio_unit)
-            print("   ✓ AudioUnit cleanup: SUCCESS")
+            print("   AudioUnit cleanup: SUCCESS")
             
             return True
             
         except Exception as e:
-            print(f"   ❌ AudioUnit infrastructure test failed: {e}")
+            print(f"   AudioUnit infrastructure test failed: {e}")
             import traceback
             traceback.print_exc()
             return False
@@ -189,20 +189,20 @@ class ComprehensiveAudioPlayer:
             }
             
             queue_id = ca.audio_queue_new_output(audio_format)
-            print(f"   ✓ AudioQueue creation: {queue_id}")
+            print(f"   AudioQueue creation: {queue_id}")
             
             # Allocate buffer
             buffer_id = ca.audio_queue_allocate_buffer(queue_id, 8192)
-            print(f"   ✓ AudioQueue buffer allocation: {buffer_id}")
+            print(f"   AudioQueue buffer allocation: {buffer_id}")
             
             # Clean up
             ca.audio_queue_dispose(queue_id, True)
-            print("   ✓ AudioQueue cleanup: SUCCESS")
+            print("   AudioQueue cleanup: SUCCESS")
             
             return True
             
         except Exception as e:
-            print(f"   ❌ AudioQueue test failed: {e}")
+            print(f"   AudioQueue test failed: {e}")
             return False
     
     def run_comprehensive_test(self):
@@ -226,7 +226,7 @@ class ComprehensiveAudioPlayer:
         audioqueue_ok = self.demonstrate_audioqueue_alternative()
         
         # Test 5: Show callback infrastructure
-        print("\n🎵 Complete Callback Infrastructure Available:")
+        print("\nComplete Callback Infrastructure Available:")
         ca.demonstrate_callback_infrastructure()
         
         # Final Results
@@ -236,19 +236,19 @@ class ComprehensiveAudioPlayer:
         print()
         
         if coreaudio_ok and audiounit_ok and audioqueue_ok:
-            print("✅ COMPLETE AUDIO INFRASTRUCTURE: FULLY OPERATIONAL")
+            print("COMPLETE AUDIO INFRASTRUCTURE: FULLY OPERATIONAL")
             print()
-            print("🎯 VERIFIED CAPABILITIES:")
-            print("   ✓ CoreAudio Framework Access: COMPLETE")
-            print("   ✓ AudioFile I/O and Format Detection: WORKING")
-            print("   ✓ AudioUnit Component Discovery: WORKING")
-            print("   ✓ AudioUnit Lifecycle Management: WORKING")
-            print("   ✓ Audio Hardware Control: WORKING")
-            print("   ✓ AudioQueue System: WORKING")
-            print("   ✓ Format Configuration: WORKING")
-            print("   ✓ Real-time Audio Infrastructure: READY")
+            print("VERIFIED CAPABILITIES:")
+            print("   CoreAudio Framework Access: COMPLETE")
+            print("   AudioFile I/O and Format Detection: WORKING")
+            print("   AudioUnit Component Discovery: WORKING")
+            print("   AudioUnit Lifecycle Management: WORKING")
+            print("   Audio Hardware Control: WORKING")
+            print("   AudioQueue System: WORKING")
+            print("   Format Configuration: WORKING")
+            print("   Real-time Audio Infrastructure: READY")
             print()
-            print("🚀 READY FOR AUDIO PLAYBACK:")
+            print("READY FOR AUDIO PLAYBACK:")
             print("   • All CoreAudio APIs accessible through cycoreaudio")
             print("   • Complete AudioUnit infrastructure functional")
             print("   • Hardware audio output verified and controllable")
@@ -261,7 +261,7 @@ class ComprehensiveAudioPlayer:
             print("   The infrastructure for professional audio applications is complete.")
             
         else:
-            print("❌ Some audio infrastructure components need attention")
+            print("Some audio infrastructure components need attention")
         
         return coreaudio_ok and audiounit_ok and audioqueue_ok
 
@@ -270,7 +270,7 @@ def main():
     amen_path = os.path.join("tests", "amen.wav")
     
     if not os.path.exists(amen_path):
-        print(f"❌ Audio test file not found: {amen_path}")
+        print(f"Audio test file not found: {amen_path}")
         print("   Please ensure amen.wav exists in the tests/ directory")
         return
     
@@ -278,10 +278,10 @@ def main():
     success = player.run_comprehensive_test()
     
     if success:
-        print(f"\n✅ All audio infrastructure tests passed!")
+        print(f"\nAll audio infrastructure tests passed!")
         print(f"   The cycoreaudio wrapper is ready for professional audio development.")
     else:
-        print(f"\n⚠️ Some tests failed - check the output above.")
+        print(f"\nSome tests failed - check the output above.")
 
 
 if __name__ == "__main__":

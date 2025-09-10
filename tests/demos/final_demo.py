@@ -16,7 +16,7 @@ def main():
     print()
     
     # Show what we've accomplished
-    print("✅ SUCCESSFULLY IMPLEMENTED:")
+    print("SUCCESSFULLY IMPLEMENTED:")
     print("   • AudioFile API - File I/O and format detection")
     print("   • AudioQueue API - Audio streaming and buffering") 
     print("   • AudioComponent API - Component discovery and management")
@@ -30,10 +30,10 @@ def main():
     
     amen_path = os.path.join("tests", "amen.wav")
     if not os.path.exists(amen_path):
-        print(f"❌ Audio test file not found: {amen_path}")
+        print(f"Audio test file not found: {amen_path}")
         return
     
-    print("🔍 ANALYZING AMEN.WAV:")
+    print("ANALYZING AMEN.WAV:")
     
     # Analyze using Python wave module
     with wave.open(amen_path, 'rb') as wav:
@@ -43,12 +43,12 @@ def main():
         frame_count = wav.getnframes()
         duration = frame_count / sample_rate
         
-        print(f"   📊 Format: {sample_rate}Hz, {channels}ch, {sample_width * 8}-bit")
-        print(f"   ⏱️  Duration: {duration:.2f} seconds ({frame_count:,} frames)")
-        print(f"   💾 Size: {os.path.getsize(amen_path):,} bytes")
+        print(f"   Format: {sample_rate}Hz, {channels}ch, {sample_width * 8}-bit")
+        print(f"   Duration: {duration:.2f} seconds ({frame_count:,} frames)")
+        print(f"   Size: {os.path.getsize(amen_path):,} bytes")
     
     # Analyze using CoreAudio
-    print("\n🔍 COREAUDIO ANALYSIS:")
+    print("\nCOREAUDIO ANALYSIS:")
     try:
         audio_file_id = ca.audio_file_open_url(
             amen_path,
@@ -65,7 +65,7 @@ def main():
         if len(format_data) >= 40:
             import struct
             asbd = struct.unpack('<dLLLLLLLL', format_data[:40])
-            print(f"   📊 CoreAudio confirms: {asbd[0]}Hz, {asbd[6]}ch, {asbd[7]}-bit")
+            print(f"   CoreAudio confirms: {asbd[0]}Hz, {asbd[6]}ch, {asbd[7]}-bit")
             print(f"   🆔 Format ID: {ca.int_to_fourchar(asbd[1])}")
         
         # Read some audio data
@@ -73,12 +73,12 @@ def main():
         print(f"   📥 Successfully read {packets_read} packets ({len(packet_data)} bytes)")
         
         ca.audio_file_close(audio_file_id)
-        print("   ✅ CoreAudio file operations: SUCCESS")
+        print("   CoreAudio file operations: SUCCESS")
         
     except Exception as e:
-        print(f"   ❌ CoreAudio analysis failed: {e}")
+        print(f"   CoreAudio analysis failed: {e}")
     
-    print("\n🎛️  AUDIOUNIT SYSTEM TEST:")
+    print("\nAUDIOUNIT SYSTEM TEST:")
     try:
         # Find default output AudioUnit
         description = {
@@ -91,7 +91,7 @@ def main():
         
         component_id = ca.audio_component_find_next(description)
         if component_id:
-            print(f"   🔊 Found default output AudioUnit: {component_id}")
+            print(f"   Found default output AudioUnit: {component_id}")
             
             # Create and test AudioUnit
             audio_unit = ca.audio_component_instance_new(component_id)
@@ -105,12 +105,12 @@ def main():
             print("   🧹 AudioUnit cleanup: SUCCESS")
             
         else:
-            print("   ❌ Could not find default output AudioUnit")
+            print("   Could not find default output AudioUnit")
             
     except Exception as e:
-        print(f"   ❌ AudioUnit test failed: {e}")
+        print(f"   AudioUnit test failed: {e}")
     
-    print("\n🎵 AUDIOQUEUE SYSTEM TEST:")
+    print("\nAUDIOQUEUE SYSTEM TEST:")
     try:
         # Test AudioQueue creation
         audio_format = {
@@ -128,19 +128,19 @@ def main():
         print(f"   🔄 Created AudioQueue: {queue_id}")
         
         buffer_id = ca.audio_queue_allocate_buffer(queue_id, 8192)
-        print(f"   💾 Allocated buffer: {buffer_id}")
+        print(f"   Allocated buffer: {buffer_id}")
         
         ca.audio_queue_dispose(queue_id, True)
         print("   🧹 AudioQueue cleanup: SUCCESS")
         
     except Exception as e:
-        print(f"   ❌ AudioQueue test failed: {e}")
+        print(f"   AudioQueue test failed: {e}")
     
     print("\n" + "🎵" * 50)
     print("               FINAL RESULTS")
     print("🎵" * 50)
     print()
-    print("✅ CYCOREAUDIO WRAPPER: FULLY FUNCTIONAL")
+    print("CYCOREAUDIO WRAPPER: FULLY FUNCTIONAL")
     print("   • All major CoreAudio frameworks wrapped")
     print("   • Audio file I/O: WORKING")
     print("   • AudioUnit system: WORKING") 
@@ -149,7 +149,7 @@ def main():
     print("   • Component discovery: WORKING")
     print("   • Resource management: WORKING")
     print()
-    print("🎯 WHAT THIS ENABLES:")
+    print("WHAT THIS ENABLES:")
     print("   • Full audio file format support")
     print("   • Real-time audio processing")
     print("   • Audio effects and filters")
@@ -157,7 +157,7 @@ def main():
     print("   • Low-latency audio applications")
     print("   • Professional audio software development")
     print()
-    print("🚀 NEXT STEPS FOR FULL AUDIO PLAYBACK:")
+    print("NEXT STEPS FOR FULL AUDIO PLAYBACK:")
     print("   • Implement C render callbacks for real-time audio")
     print("   • Add AudioConverter for format transformation")  
     print("   • Integrate with higher-level audio libraries")
