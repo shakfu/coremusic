@@ -14,12 +14,12 @@ os.environ['LDFLAGS'] = " ".join([
 ])
 
 extensions = [
-    Extension("coreaudio", ["coreaudio.pyx"],
+    Extension("coreaudio", ["coreaudio.pyx", "audio_player.c"],
         define_macros = [
             ('PD', 1),
         ],
 
-        include_dirs=[],
+        include_dirs=["."],
 
         libraries = [
             'm',

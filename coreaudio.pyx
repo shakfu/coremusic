@@ -479,6 +479,13 @@ def get_linear_pcm_format_flag_is_non_interleaved():
 # complete AudioUnit setup that's ready for callback integration.
 
 
+# ===== WORKING AUDIO PLAYER IMPLEMENTATION =====
+
+# The C audio player integration has been moved to actual_audio_player.py
+# which provides a working demonstration of real audio playback using
+# our cycoreaudio wrapper infrastructure.
+
+
 def demonstrate_callback_infrastructure():
     """
     Demonstrate that we have all the infrastructure needed for audio callbacks.

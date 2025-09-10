@@ -671,4 +671,8 @@ cdef extern from "AudioToolbox/AudioOutputUnit.h":
     cdef OSStatus AudioOutputUnitStop(AudioUnit ci)
 
 
+# C audio player integration is available in the separate audio_player.c/h files
+# and demonstrated in actual_audio_player.py
+
+
     
