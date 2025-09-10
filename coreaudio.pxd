@@ -325,4 +325,191 @@ cdef extern from "CoreAudio/CoreAudio.h":
 
     cdef Float64    kAudioStreamAnyRate = 0.0
 
+    ctypedef enum:
+        kAudioFormatLinearPCM = 1819304813
+        kLinearPCMFormatFlagIsFloat = 1
+        kLinearPCMFormatFlagIsBigEndian = 2
+        kLinearPCMFormatFlagIsSignedInteger = 4
+        kLinearPCMFormatFlagIsPacked = 8
+        kLinearPCMFormatFlagIsAlignedHigh = 16
+        kLinearPCMFormatFlagIsNonInterleaved = 32
+        kLinearPCMFormatFlagIsNonMixable = 64
+
+
+cdef extern from "CoreFoundation/CoreFoundation.h":
+    ctypedef struct __CFURL
+    ctypedef __CFURL* CFURLRef
+    ctypedef struct __CFRunLoop
+    ctypedef __CFRunLoop* CFRunLoopRef
+    ctypedef struct __CFString
+    ctypedef __CFString* CFStringRef
+    ctypedef UInt8 AudioFilePermissions
+    ctypedef long CFIndex
+    ctypedef void* CFAllocatorRef
+    ctypedef void* CFTypeRef
+    
+    cdef CFURLRef CFURLCreateFromFileSystemRepresentation(CFAllocatorRef allocator, const UInt8* buffer, CFIndex bufLen, Boolean isDirectory)
+    cdef void CFRelease(CFTypeRef cf)
+    cdef CFAllocatorRef kCFAllocatorDefault
+
+
+cdef extern from "AudioToolbox/AudioQueue.h":
+    
+    ctypedef UInt32 AudioQueuePropertyID
+    ctypedef UInt32 AudioQueueParameterID
+    ctypedef Float32 AudioQueueParameterValue
+    ctypedef struct OpaqueAudioQueue
+    ctypedef OpaqueAudioQueue* AudioQueueRef
+    ctypedef struct OpaqueAudioQueueTimeline
+    ctypedef OpaqueAudioQueueTimeline* AudioQueueTimelineRef
+    
+    ctypedef struct AudioQueueBuffer:
+        UInt32 mAudioDataBytesCapacity
+        void* mAudioData
+        UInt32 mAudioDataByteSize
+        void* mUserData
+        UInt32 mPacketDescriptionCapacity
+        # AudioStreamPacketDescription* mPacketDescriptions
+        UInt32 mPacketDescriptionCount
+    
+    ctypedef AudioQueueBuffer* AudioQueueBufferRef
+    
+    ctypedef void (*AudioQueueOutputCallback)(void* inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer)
+    ctypedef void (*AudioQueueInputCallback)(void* inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer, const AudioTimeStamp* inStartTime, UInt32 inNumberPacketDescriptions)
+    
+    ctypedef enum:
+        kAudioQueueErr_InvalidBuffer = -66687
+        kAudioQueueErr_BufferEmpty = -66686
+        kAudioQueueErr_DisposalPending = -66685
+        kAudioQueueErr_InvalidProperty = -66684
+        kAudioQueueErr_InvalidPropertySize = -66683
+        kAudioQueueErr_InvalidParameter = -66682
+        kAudioQueueErr_CannotStart = -66681
+        kAudioQueueErr_InvalidDevice = -66680
+        kAudioQueueErr_BufferInQueue = -66679
+        kAudioQueueErr_InvalidRunState = -66678
+        kAudioQueueErr_InvalidQueueType = -66677
+        kAudioQueueErr_Permissions = -66676
+        kAudioQueueErr_InvalidPropertyValue = -66675
+        kAudioQueueErr_PrimeTimedOut = -66674
+        kAudioQueueErr_CodecNotFound = -66673
+        kAudioQueueErr_InvalidCodecAccess = -66672
+        kAudioQueueErr_QueueInvalidated = -66671
+        kAudioQueueErr_TooManyTaps = -66670
+        kAudioQueueErr_InvalidTapContext = -66669
+        kAudioQueueErr_RecordUnderrun = -66668
+        kAudioQueueErr_InvalidTapType = -66667
+        kAudioQueueErr_BufferEnqueuedTwice = -66666
+        kAudioQueueErr_CannotStartYet = -66665
+        kAudioQueueErr_EnqueueDuringReset = -66632
+        kAudioQueueErr_InvalidOfflineMode = -66626
+    
+    cdef OSStatus AudioQueueNewOutput(const AudioStreamBasicDescription* inFormat, AudioQueueOutputCallback inCallbackProc, void* inUserData, CFRunLoopRef inCallbackRunLoop, CFStringRef inCallbackRunLoopMode, UInt32 inFlags, AudioQueueRef* outAQ)
+    cdef OSStatus AudioQueueNewInput(const AudioStreamBasicDescription* inFormat, AudioQueueInputCallback inCallbackProc, void* inUserData, CFRunLoopRef inCallbackRunLoop, CFStringRef inCallbackRunLoopMode, UInt32 inFlags, AudioQueueRef* outAQ)
+    cdef OSStatus AudioQueueDispose(AudioQueueRef inAQ, Boolean inImmediate)
+    cdef OSStatus AudioQueueAllocateBuffer(AudioQueueRef inAQ, UInt32 inBufferByteSize, AudioQueueBufferRef* outBuffer)
+    cdef OSStatus AudioQueueAllocateBufferWithPacketDescriptions(AudioQueueRef inAQ, UInt32 inBufferByteSize, UInt32 inNumberPacketDescriptions, AudioQueueBufferRef* outBuffer)
+    cdef OSStatus AudioQueueFreeBuffer(AudioQueueRef inAQ, AudioQueueBufferRef inBuffer)
+    cdef OSStatus AudioQueueEnqueueBuffer(AudioQueueRef inAQ, AudioQueueBufferRef inBuffer, UInt32 inNumPacketDescs, const void* inPacketDescs)
+    cdef OSStatus AudioQueueEnqueueBufferWithParameters(AudioQueueRef inAQ, AudioQueueBufferRef inBuffer, UInt32 inNumPacketDescs, const void* inPacketDescs, UInt32 inTrimFramesAtStart, UInt32 inTrimFramesAtEnd, UInt32 inNumParamValues, const AudioQueueParameterEvent* inParamValues, const AudioTimeStamp* inStartTime, AudioTimeStamp* outActualStartTime)
+    cdef OSStatus AudioQueueStart(AudioQueueRef inAQ, const AudioTimeStamp* inStartTime)
+    cdef OSStatus AudioQueuePrime(AudioQueueRef inAQ, UInt32 inNumberOfFramesToPrepare, UInt32* outNumberOfFramesPrepared)
+    cdef OSStatus AudioQueueStop(AudioQueueRef inAQ, Boolean inImmediate)
+    cdef OSStatus AudioQueuePause(AudioQueueRef inAQ)
+    cdef OSStatus AudioQueueFlush(AudioQueueRef inAQ)
+    cdef OSStatus AudioQueueReset(AudioQueueRef inAQ)
+    cdef OSStatus AudioQueueGetCurrentTime(AudioQueueRef inAQ, AudioQueueTimelineRef inTimeline, AudioTimeStamp* outTimeStamp, Boolean* outTimelineDiscontinuity)
+
+
+cdef extern from "AudioToolbox/AudioFile.h":
+    
+    ctypedef UInt32 AudioFileTypeID
+    ctypedef UInt32 AudioFilePropertyID
+    ctypedef UInt32 AudioFileFlags
+    ctypedef struct OpaqueAudioFileID
+    ctypedef OpaqueAudioFileID* AudioFileID
+    
+    ctypedef enum:
+        kAudioFileAIFFType = 1095321158  # 'AIFF'
+        kAudioFileAIFCType = 1095321155  # 'AIFC'
+        kAudioFileWAVEType = 1463899717  # 'WAVE'
+        kAudioFileRF64Type = 1380333108  # 'RF64'
+        kAudioFileBW64Type = 1112493108  # 'BW64'
+        kAudioFileWave64Type = 1463900518  # 'W64f'
+        kAudioFileSoundDesigner2Type = 1399075686  # 'Sd2f'
+        kAudioFileNextType = 1315264596  # 'NeXT'
+        kAudioFileMP3Type = 1297106739  # 'MPG3'
+        kAudioFileMP2Type = 1297106738  # 'MPG2'
+        kAudioFileMP1Type = 1297106737  # 'MPG1'
+        kAudioFileAC3Type = 1633889587  # 'ac-3'
+        kAudioFileAAC_ADTSType = 1633973363  # 'adts'
+        kAudioFileMPEG4Type = 1836069990  # 'mp4f'
+        kAudioFileM4AType = 1832149350  # 'm4af'
+        kAudioFileM4BType = 1832149606  # 'm4bf'
+        kAudioFileCAFType = 1667327590  # 'caff'
+        kAudioFile3GPType = 862417008   # '3gpp'
+        kAudioFile3GP2Type = 862416690  # '3gp2'
+        kAudioFileAMRType = 1634562662  # 'amrf'
+        kAudioFileFLACType = 1718378851 # 'flac'
+        kAudioFileLATMInLOASType = 1819238259 # 'loas'
+    
+    ctypedef enum:
+        kAudioFileReadPermission = 1
+        kAudioFileWritePermission = 2
+        kAudioFileReadWritePermission = 3
+    
+    ctypedef enum:
+        kAudioFilePropertyFileFormat = 1717988724         # 'ffmt'
+        kAudioFilePropertyDataFormat = 1684103783         # 'dfmt'
+        kAudioFilePropertyIsOptimized = 1869640813        # 'optm'
+        kAudioFilePropertyMagicCookieData = 1835493731    # 'mgic'
+        kAudioFilePropertyAudioDataByteCount = 1650683508 # 'bcnt'
+        kAudioFilePropertyAudioDataPacketCount = 1885564532 # 'pcnt'
+        kAudioFilePropertyMaximumPacketSize = 1886616691  # 'psze'
+        kAudioFilePropertyDataOffset = 1685022310         # 'doff'
+        kAudioFilePropertyChannelLayout = 1668112500      # 'cmap'
+        kAudioFilePropertyDeferSizeUpdates = 1684238953   # 'dszu'
+        kAudioFilePropertyDataFormatName = 1718512996     # 'fnme'
+        kAudioFilePropertyMarkerList = 1835756403         # 'mkls'
+        kAudioFilePropertyRegionList = 1919380595         # 'rgls'
+        kAudioFilePropertyPacketToFrame = 1886086770      # 'pkfr'
+        kAudioFilePropertyFrameToPacket = 1718775151      # 'frpk'
+        kAudioFilePropertyPacketToByte = 1886085753       # 'pkby'
+        kAudioFilePropertyByteToPacket = 1652125803       # 'bypk'
+        kAudioFilePropertyChunkIDs = 1667787108           # 'chid'
+        kAudioFilePropertyInfoDictionary = 1768842863     # 'info'
+        kAudioFilePropertyPacketTableInfo = 1886283375    # 'pnfo'
+        kAudioFilePropertyFormatList = 1718383476         # 'flst'
+        kAudioFilePropertyPacketSizeUpperBound = 1886090093 # 'pkub'
+        kAudioFilePropertyReserveDuration = 1920365423    # 'rsrv'
+        kAudioFilePropertyEstimatedDuration = 1701082482  # 'edur'
+        kAudioFilePropertyBitRate = 1651663220            # 'brat'
+        kAudioFilePropertyID3Tag = 1768174180             # 'id3 '
+        kAudioFilePropertySourceBitDepth = 1935832164     # 'sbtd'
+        kAudioFilePropertyAlbumArtwork = 1635015020       # 'aart'
+        kAudioFilePropertyAudioTrackCount = 1635017588    # 'atct'
+        kAudioFilePropertyUseAudioTrack = 1969385580      # 'uatk'
+    
+    cdef OSStatus AudioFileOpenURL(CFURLRef inFileRef, AudioFilePermissions inPermissions, AudioFileTypeID inFileTypeHint, AudioFileID* outAudioFile)
+    cdef OSStatus AudioFileClose(AudioFileID inAudioFile)
+    cdef OSStatus AudioFileOptimize(AudioFileID inAudioFile)
+    cdef OSStatus AudioFileReadBytes(AudioFileID inAudioFile, Boolean inUseCache, SInt64 inStartingByte, UInt32* ioNumBytes, void* outBuffer)
+    cdef OSStatus AudioFileWriteBytes(AudioFileID inAudioFile, Boolean inUseCache, SInt64 inStartingByte, UInt32* ioNumBytes, const void* inBuffer)
+    cdef OSStatus AudioFileReadPackets(AudioFileID inAudioFile, Boolean inUseCache, UInt32* ioNumBytes, void* outPacketDescriptions, SInt64 inStartingPacket, UInt32* ioNumPackets, void* outBuffer)
+    cdef OSStatus AudioFileReadPacketData(AudioFileID inAudioFile, Boolean inUseCache, UInt32* ioNumBytes, void* outPacketDescriptions, SInt64 inStartingPacket, UInt32* ioNumPackets, void* outBuffer)
+    cdef OSStatus AudioFileWritePackets(AudioFileID inAudioFile, Boolean inUseCache, UInt32 inNumBytes, const void* inPacketDescriptions, SInt64 inStartingPacket, UInt32* ioNumPackets, const void* inBuffer)
+    cdef OSStatus AudioFileCountUserData(AudioFileID inAudioFile, UInt32 inUserDataID, UInt32* outNumberItems)
+    cdef OSStatus AudioFileGetUserDataSize(AudioFileID inAudioFile, UInt32 inUserDataID, UInt32 inIndex, UInt32* outUserDataSize)
+    cdef OSStatus AudioFileGetUserData(AudioFileID inAudioFile, UInt32 inUserDataID, UInt32 inIndex, UInt32* ioUserDataSize, void* outUserData)
+    cdef OSStatus AudioFileSetUserData(AudioFileID inAudioFile, UInt32 inUserDataID, UInt32 inIndex, UInt32 inUserDataSize, const void* inUserData)
+    cdef OSStatus AudioFileRemoveUserData(AudioFileID inAudioFile, UInt32 inUserDataID, UInt32 inIndex)
+    cdef OSStatus AudioFileGetPropertyInfo(AudioFileID inAudioFile, AudioFilePropertyID inPropertyID, UInt32* outDataSize, UInt32* isWritable)
+    cdef OSStatus AudioFileGetProperty(AudioFileID inAudioFile, AudioFilePropertyID inPropertyID, UInt32* ioDataSize, void* outPropertyData)
+    cdef OSStatus AudioFileSetProperty(AudioFileID inAudioFile, AudioFilePropertyID inPropertyID, UInt32 inDataSize, const void* inPropertyData)
+
+    ctypedef struct AudioQueueParameterEvent:
+        AudioQueueParameterID mID
+        AudioQueueParameterValue mValue
+
+
     

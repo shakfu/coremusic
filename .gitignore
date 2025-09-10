@@ -34,3 +34,7 @@ __pycache__
 *.exe
 *.out
 *.app
+
+# claude
+.claude
+CLAUDE.md
