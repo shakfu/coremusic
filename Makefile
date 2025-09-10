@@ -7,7 +7,7 @@ coreaudio:
 	@rm -rf ./build ./coreaudio.c
 
 test:
-	@python3 tests/test_coreaudio.py
+	@pytest
 
 clean:
 	@rm -rf build
