@@ -1,4 +1,5 @@
 cimport coreaudio as ca
+cimport audio_player as ap
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy, memset
 
@@ -481,7 +482,7 @@ def get_linear_pcm_format_flag_is_non_interleaved():
 
 # ===== WORKING AUDIO PLAYER IMPLEMENTATION =====
 
-# The C audio player integration has been moved to actual_audio_player.py
+# The C audio player integration has been moved to audio_player.c
 # which provides a working demonstration of real audio playback using
 # our cycoreaudio wrapper infrastructure.
 
@@ -508,6 +509,92 @@ def demonstrate_callback_infrastructure():
     print("   • All low-level CoreAudio APIs are now available through cycoreaudio")
     
     return True
+
+
+# ===== AUDIOPLAYER EXTENSION CLASS =====
+
+cdef class AudioPlayer:
+    """Python wrapper for the C audio_player implementation"""
+    cdef ap.AudioOutput audio_output
+    cdef bint initialized
+    
+    def __init__(self):
+        """Initialize the AudioPlayer"""
+        memset(&self.audio_output, 0, sizeof(ap.AudioOutput))
+        self.initialized = False
+    
+    def load_file(self, str file_path):
+        """Load an audio file for playback"""
+        cdef bytes path_bytes = file_path.encode('utf-8')
+        cdef ca.CFURLRef url_ref = ca.CFURLCreateFromFileSystemRepresentation(
+            ca.kCFAllocatorDefault,
+            <const ca.UInt8*>path_bytes,
+            len(path_bytes),
+            False
+        )
+        
+        if url_ref == NULL:
+            raise ValueError(f"Could not create URL for file: {file_path}")
+        
+        cdef ca.OSStatus result = ap.LoadAudioFile(url_ref, &self.audio_output.playerData)
+        ca.CFRelease(url_ref)
+        
+        if result != 0:  # noErr is 0
+            raise RuntimeError(f"Failed to load audio file: {result}")
+        
+        return result
+    
+    def setup_output(self):
+        """Setup the audio output unit"""
+        cdef ca.OSStatus result = ap.SetupAudioOutput(&self.audio_output)
+        if result != 0:  # noErr is 0
+            raise RuntimeError(f"Failed to setup audio output: {result}")
+        self.initialized = True
+        return result
+    
+    def start(self):
+        """Start audio playback"""
+        if not self.initialized:
+            raise RuntimeError("AudioPlayer not initialized. Call setup_output() first.")
+        
+        cdef ca.OSStatus result = ap.StartAudioOutput(&self.audio_output)
+        if result != 0:  # noErr is 0
+            raise RuntimeError(f"Failed to start audio output: {result}")
+        return result
+    
+    def stop(self):
+        """Stop audio playback"""
+        if not self.initialized:
+            return 0  # noErr is 0
+            
+        cdef ca.OSStatus result = ap.StopAudioOutput(&self.audio_output)
+        if result != 0:  # noErr is 0
+            raise RuntimeError(f"Failed to stop audio output: {result}")
+        return result
+    
+    def set_looping(self, bint loop):
+        """Enable/disable looping playback"""
+        ap.SetLooping(&self.audio_output.playerData, loop)
+    
+    def reset_playback(self):
+        """Reset playback to beginning"""
+        ap.ResetPlayback(&self.audio_output.playerData)
+    
+    def is_playing(self):
+        """Check if audio is currently playing"""
+        return bool(ap.IsPlaying(&self.audio_output.playerData))
+    
+    def get_progress(self):
+        """Get current playback progress as a float (0.0 to 1.0)"""
+        return ap.GetPlaybackProgress(&self.audio_output.playerData)
+    
+    def __dealloc__(self):
+        """Clean up resources when the object is destroyed"""
+        if self.initialized:
+            ap.StopAudioOutput(&self.audio_output)
+        ap.DisposeAudioPlayer(&self.audio_output.playerData)
+        if self.initialized:
+            ap.DisposeAudioOutput(&self.audio_output)
 
 
 def test_error() -> int:
