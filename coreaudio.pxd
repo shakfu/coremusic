@@ -8,6 +8,8 @@ cdef extern from *:
     ctypedef long int64_t
     cdef char[] FOURCC_ARGS(SInt32)
 
+# -----------------------------------------------------------------------------
+
 cdef extern from "CoreFoundation/CFBase.h":
     ctypedef float          Float32
     ctypedef double         Float64
@@ -23,6 +25,89 @@ cdef extern from "CoreFoundation/CFBase.h":
     ctypedef SInt32         OSStatus
 
     ctypedef CFDictionaryRef
+    ctypedef UInt32          FourCharCode
+    ctypedef FourCharCode    OSType
+
+cdef extern from "CoreFoundation/CoreFoundation.h":
+    ctypedef struct __CFURL
+    ctypedef __CFURL* CFURLRef
+    ctypedef struct __CFRunLoop
+    ctypedef __CFRunLoop* CFRunLoopRef
+    ctypedef struct __CFString
+    ctypedef __CFString* CFStringRef
+    ctypedef UInt8 AudioFilePermissions
+    ctypedef long CFIndex
+    ctypedef void* CFAllocatorRef
+    ctypedef void* CFTypeRef
+    
+    cdef CFURLRef CFURLCreateFromFileSystemRepresentation(CFAllocatorRef allocator, const UInt8* buffer, CFIndex bufLen, Boolean isDirectory)
+    cdef void CFRelease(CFTypeRef cf)
+    cdef CFAllocatorRef kCFAllocatorDefault
+
+# -----------------------------------------------------------------------------
+
+cdef extern from "CoreAudioTypes/CoreAudioBaseTypes.h":
+    ctypedef UInt32 AudioChannelLayoutTag
+    ctypedef UInt32 AudioChannelLabel
+
+    ctypedef enum AudioChannelFlags:
+        kAudioChannelFlags_AllOff                   = 0
+        kAudioChannelFlags_RectangularCoordinates   = 1
+        kAudioChannelFlags_SphericalCoordinates     = 2
+        kAudioChannelFlags_Meters                   = 4
+
+    ctypedef enum AudioChannelBitmap:
+        kAudioChannelBit_Left                       = 1
+        kAudioChannelBit_Right                      = 2
+        kAudioChannelBit_Center                     = 4
+        kAudioChannelBit_LFEScreen                  = 8
+        kAudioChannelBit_LeftSurround               = 16
+        kAudioChannelBit_RightSurround              = 32
+        kAudioChannelBit_LeftCenter                 = 64
+        kAudioChannelBit_RightCenter                = 128
+        kAudioChannelBit_CenterSurround             = 256      # WAVE: "Back Center"
+        kAudioChannelBit_LeftSurroundDirect         = 512
+        kAudioChannelBit_RightSurroundDirect        = 1024
+        kAudioChannelBit_TopCenterSurround          = 2048
+        kAudioChannelBit_VerticalHeightLeft         = 4096     # WAVE: "Top Front Left"
+        kAudioChannelBit_VerticalHeightCenter       = 8192     # WAVE: "Top Front Center"
+        kAudioChannelBit_VerticalHeightRight        = 16384    # WAVE: "Top Front Right"
+        kAudioChannelBit_TopBackLeft                = 32768
+        kAudioChannelBit_TopBackCenter              = 65536
+        kAudioChannelBit_TopBackRight               = 131072
+        kAudioChannelBit_LeftTopFront               = 4096  # 262144
+        kAudioChannelBit_CenterTopFront             = 8192  # 524288
+        kAudioChannelBit_RightTopFront              = 16384 # 1048576
+        kAudioChannelBit_LeftTopMiddle              = 2097152
+        kAudioChannelBit_CenterTopMiddle            = 2048  # 4194304
+        kAudioChannelBit_RightTopMiddle             = 8388608
+        kAudioChannelBit_LeftTopRear                = 16777216
+        kAudioChannelBit_CenterTopRear              = 33554432
+        kAudioChannelBit_RightTopRear               = 67108864
+
+    ctypedef struct AudioChannelDescription:
+        AudioChannelLabel   mChannelLabel
+        AudioChannelFlags   mChannelFlags
+        Float32             mCoordinates[3]
+
+    ctypedef struct  AudioStreamPacketDescription:
+        SInt64  mStartOffset
+        UInt32  mVariableFramesInPacket
+        UInt32  mDataByteSize
+
+    ctypedef struct AudioClassDescription:
+        OSType  mType
+        OSType  mSubType
+        OSType  mManufacturer
+
+    ctypedef struct AudioChannelLayout:
+        AudioChannelLayoutTag       mChannelLayoutTag
+        AudioChannelBitmap          mChannelBitmap
+        UInt32                      mNumberChannelDescriptions
+        # this is a variable length array of mNumberChannelDescriptions elements
+        AudioChannelDescription     mChannelDescriptions[1]
+
+# -----------------------------------------------------------------------------
 
 cdef extern from "CoreAudio/CoreAudioTypes.h":
 
@@ -73,14 +158,6 @@ cdef extern from "CoreAudio/CoreAudioTypes.h":
         SMPTETime           mSMPTETime
         AudioTimeStampFlags mFlags
         UInt32              mReserved
-
-
-# see headers/corefoundation/CFAvaiability.h for CF_ENUM explanation
-
-
-# cdef extern from *:
-#     cdef enum Dummy:
-#         Plug = 1886156135
 
 
 cdef extern from "CoreAudio/AudioHardwareBase.h":
@@ -274,9 +351,6 @@ cdef extern from "CoreAudio/AudioHardware.h":
         kAudioAggregateDevicePropertySubTapList = 1635017072
 
 
-
-
-
 cdef extern from "CoreAudio/CoreAudio.h":
     
     # from CoreAudiBaseTypes.h
@@ -336,22 +410,8 @@ cdef extern from "CoreAudio/CoreAudio.h":
         kLinearPCMFormatFlagIsNonMixable = 64
 
 
-cdef extern from "CoreFoundation/CoreFoundation.h":
-    ctypedef struct __CFURL
-    ctypedef __CFURL* CFURLRef
-    ctypedef struct __CFRunLoop
-    ctypedef __CFRunLoop* CFRunLoopRef
-    ctypedef struct __CFString
-    ctypedef __CFString* CFStringRef
-    ctypedef UInt8 AudioFilePermissions
-    ctypedef long CFIndex
-    ctypedef void* CFAllocatorRef
-    ctypedef void* CFTypeRef
-    
-    cdef CFURLRef CFURLCreateFromFileSystemRepresentation(CFAllocatorRef allocator, const UInt8* buffer, CFIndex bufLen, Boolean isDirectory)
-    cdef void CFRelease(CFTypeRef cf)
-    cdef CFAllocatorRef kCFAllocatorDefault
 
+# -----------------------------------------------------------------------------
 
 cdef extern from "AudioToolbox/AudioQueue.h":
     
@@ -562,6 +622,7 @@ cdef extern from "AudioToolbox/AudioComponent.h":
 cdef extern from "AudioToolbox/AudioUnitProperties.h":
     pass
 
+
 cdef extern from "AudioToolbox/AUComponent.h":
     
     # AudioUnit is typedef'd as AudioComponentInstance
@@ -669,6 +730,415 @@ cdef extern from "AudioToolbox/AudioOutputUnit.h":
     
     cdef OSStatus AudioOutputUnitStart(AudioUnit ci)
     cdef OSStatus AudioOutputUnitStop(AudioUnit ci)
+
+# -----------------------------------------------------------------------------
+
+cdef extern from "AudioToolbox/AudioConverter.h":
+    
+    # AudioConverter types
+    ctypedef struct OpaqueAudioConverter
+    ctypedef OpaqueAudioConverter* AudioConverterRef
+    ctypedef UInt32 AudioConverterPropertyID
+
+    ctypedef enum AudioConverterOptions:
+        kAudioConverterOption_Unbuffered = 65536
+
+    # AudioConverter property IDs
+    ctypedef enum:
+        kAudioConverterPropertyMinimumInputBufferSize = 1835623027  # 'mibs'
+        kAudioConverterPropertyMinimumOutputBufferSize = 1836016243  # 'mobs'
+        kAudioConverterPropertyMaximumInputPacketSize = 2020175987  # 'xips'
+        kAudioConverterPropertyMaximumOutputPacketSize = 2020569203  # 'xops'
+        kAudioConverterPropertyCalculateInputBufferSize = 1667850867  # 'cibs'
+        kAudioConverterPropertyCalculateOutputBufferSize = 1668244083  # 'cobs'
+        kAudioConverterPropertyInputCodecParameters = 1768121456  # 'icdp'
+        kAudioConverterPropertyOutputCodecParameters = 1868784752  # 'ocdp'
+        kAudioConverterSampleRateConverterComplexity = 1936876385  # 'srca'
+        kAudioConverterSampleRateConverterQuality = 1936876401  # 'srcq'
+        kAudioConverterSampleRateConverterInitialPhase = 1936876400  # 'srcp'
+        kAudioConverterCodecQuality = 1667527029  # 'cdqu'
+        kAudioConverterPrimeMethod = 1886547309  # 'prmm'
+        kAudioConverterPrimeInfo = 1886546285  # 'prim'
+        kAudioConverterChannelMap = 1667788144  # 'chmp'
+        kAudioConverterDecompressionMagicCookie = 1684891491  # 'dmgc'
+        kAudioConverterCompressionMagicCookie = 1668114275  # 'cmgc'
+        kAudioConverterEncodeBitRate = 1651663220  # 'brat'
+        kAudioConverterEncodeAdjustableSampleRate = 1634366322  # 'ajsr'
+        kAudioConverterInputChannelLayout = 1768123424  # 'icl '
+        kAudioConverterOutputChannelLayout = 1868786720  # 'ocl '
+        kAudioConverterApplicableEncodeBitRates = 1634034290  # 'aebr'
+        kAudioConverterAvailableEncodeBitRates = 1986355826  # 'vebr'
+        kAudioConverterApplicableEncodeSampleRates = 1634038642  # 'aesr'
+        kAudioConverterAvailableEncodeSampleRates = 1986360178  # 'vesr'
+        kAudioConverterAvailableEncodeChannelLayoutTags = 1634034540  # 'aecl'
+        kAudioConverterCurrentOutputStreamDescription = 1633906532  # 'acod'
+        kAudioConverterCurrentInputStreamDescription = 1633904996  # 'acid'
+        kAudioConverterPropertySettings = 1633906803  # 'acps'
+        kAudioConverterPropertyBitDepthHint = 1633903204  # 'acbd'
+        kAudioConverterPropertyFormatList = 1718383476  # 'flst'
+    
+    # macOS-only properties
+    ctypedef enum:
+        kAudioConverterPropertyDithering = 1684632680  # 'dith'
+        kAudioConverterPropertyDitherBitDepth = 1684171124  # 'dbit'
+    
+    # Quality constants
+    ctypedef enum:
+        kAudioConverterQuality_Max = 127
+        kAudioConverterQuality_High = 96
+        kAudioConverterQuality_Medium = 64
+        kAudioConverterQuality_Low = 32
+        kAudioConverterQuality_Min = 0
+    
+    # Sample rate converter complexity
+    ctypedef enum:
+        kAudioConverterSampleRateConverterComplexity_Linear = 1818846821  # 'line'
+        kAudioConverterSampleRateConverterComplexity_Normal = 1852797541  # 'norm'
+        kAudioConverterSampleRateConverterComplexity_Mastering = 1651471971  # 'bats'
+        kAudioConverterSampleRateConverterComplexity_MinimumPhase = 1835622000  # 'minp'
+    
+    # Prime method constants
+    ctypedef enum:
+        kConverterPrimeMethod_Pre = 0
+        kConverterPrimeMethod_Normal = 1
+        kConverterPrimeMethod_None = 2
+    
+    # Dithering algorithms
+    ctypedef enum:
+        kDitherAlgorithm_TPDF = 1
+        kDitherAlgorithm_NoiseShaping = 2
+    
+    # AudioConverterPrimeInfo structure
+    ctypedef struct AudioConverterPrimeInfo:
+        UInt32 leadingFrames
+        UInt32 trailingFrames
+    
+    # Error codes
+    ctypedef enum:
+        kAudioConverterErr_FormatNotSupported = 1718447200  # 'fmt?'
+        kAudioConverterErr_OperationNotSupported = 1869638207  # 'op??'
+        kAudioConverterErr_PropertyNotSupported = 1886547824  # 'prop'
+        kAudioConverterErr_InvalidInputSize = 1768845682  # 'insz'
+        kAudioConverterErr_InvalidOutputSize = 1869771634  # 'otsz'
+        kAudioConverterErr_UnspecifiedError = 2003395684  # 'what'
+        kAudioConverterErr_BadPropertySizeError = 1937010802  # '!siz'
+        kAudioConverterErr_RequiresPacketDescriptionsError = 1937010788  # '!pkd'
+        kAudioConverterErr_InputSampleRateOutOfRange = 1768845682  # '!isr'
+        kAudioConverterErr_OutputSampleRateOutOfRange = 1869771634  # '!osr'
+    
+    # iOS-only error codes
+    ctypedef enum:
+        kAudioConverterErr_HardwareInUse = 1752392805  # 'hwiu'
+        kAudioConverterErr_NoHardwarePermission = 1886547821  # 'perm'
+    
+    # Callback function types
+    ctypedef OSStatus (*AudioConverterComplexInputDataProc)(AudioConverterRef inAudioConverter,
+                                                           UInt32* ioNumberDataPackets,
+                                                           AudioBufferList* ioData,
+                                                           AudioStreamPacketDescription** outDataPacketDescription,
+                                                           void* inUserData)
+    
+    ctypedef OSStatus (*AudioConverterInputDataProc)(AudioConverterRef inAudioConverter,
+                                                    UInt32* ioDataSize,
+                                                    void** outData,
+                                                    void* inUserData)
+    
+    # AudioConverter functions
+
+
+    # block cann be NULL
+    # cdef void AudioConverterPrepare(UInt32 inFlags,
+    #                     void * ioReserved,
+    #                     void (^inCompletionBlock)(OSStatus))
+
+    cdef OSStatus AudioConverterNew(const AudioStreamBasicDescription* inSourceFormat,
+                                   const AudioStreamBasicDescription* inDestinationFormat,
+                                   AudioConverterRef* outAudioConverter)
+    
+    cdef OSStatus AudioConverterNewSpecific(const AudioStreamBasicDescription* inSourceFormat,
+                                           const AudioStreamBasicDescription* inDestinationFormat,
+                                           UInt32 inNumberClassDescriptions,
+                                           const AudioClassDescription* inClassDescriptions,
+                                           AudioConverterRef* outAudioConverter)
+    
+    cdef OSStatus AudioConverterDispose(AudioConverterRef inAudioConverter)
+    cdef OSStatus AudioConverterReset(AudioConverterRef inAudioConverter)
+    
+    cdef OSStatus AudioConverterGetPropertyInfo(AudioConverterRef inAudioConverter,
+                                               AudioConverterPropertyID inPropertyID,
+                                               UInt32* outSize,
+                                               Boolean* outWritable)
+    
+    cdef OSStatus AudioConverterGetProperty(AudioConverterRef inAudioConverter,
+                                           AudioConverterPropertyID inPropertyID,
+                                           UInt32* ioPropertyDataSize,
+                                           void* outPropertyData)
+    
+    cdef OSStatus AudioConverterSetProperty(AudioConverterRef inAudioConverter,
+                                           AudioConverterPropertyID inPropertyID,
+                                           UInt32 inPropertyDataSize,
+                                           const void* inPropertyData)
+    
+    cdef OSStatus AudioConverterConvertBuffer(AudioConverterRef inAudioConverter,
+                                             UInt32 inInputDataSize,
+                                             const void* inInputData,
+                                             UInt32* ioOutputDataSize,
+                                             void* outOutputData)
+    
+    cdef OSStatus AudioConverterFillComplexBuffer(AudioConverterRef inAudioConverter,
+                                                 AudioConverterComplexInputDataProc inInputDataProc,
+                                                 void* inInputDataProcUserData,
+                                                 UInt32* ioOutputDataPacketSize,
+                                                 AudioBufferList* outOutputData,
+                                                 AudioStreamPacketDescription* outPacketDescription)
+    
+    cdef OSStatus AudioConverterConvertComplexBuffer(AudioConverterRef inAudioConverter,
+                                                    UInt32 inNumberPCMFrames,
+                                                    const AudioBufferList* inInputData,
+                                                    AudioBufferList* outOutputData)
+    
+    # Deprecated functions (macOS only)
+    cdef OSStatus AudioConverterFillBuffer(AudioConverterRef inAudioConverter,
+                                          AudioConverterInputDataProc inInputDataProc,
+                                          void* inInputDataProcUserData,
+                                          UInt32* ioOutputDataSize,
+                                          void* outOutputData)
+
+
+cdef extern from "AudioToolbox/ExtendedAudioFile.h":
+    
+    # ExtendedAudioFile types
+    ctypedef struct OpaqueExtAudioFile
+    ctypedef OpaqueExtAudioFile* ExtAudioFileRef
+    ctypedef UInt32 ExtAudioFilePropertyID
+    ctypedef SInt32 ExtAudioFilePacketTableInfoOverride
+    
+    # Packet table info override constants
+    ctypedef enum:
+        kExtAudioFilePacketTableInfoOverride_UseFileValue = -1
+        kExtAudioFilePacketTableInfoOverride_UseFileValueIfValid = -2
+    
+    # ExtendedAudioFile property IDs
+    ctypedef enum:
+        kExtAudioFileProperty_FileDataFormat = 1717988724  # 'ffmt'
+        kExtAudioFileProperty_FileChannelLayout = 1717791855  # 'fclo'
+        kExtAudioFileProperty_ClientDataFormat = 1667657076  # 'cfmt'
+        kExtAudioFileProperty_ClientChannelLayout = 1667460207  # 'cclo'
+        kExtAudioFileProperty_CodecManufacturer = 1668112750  # 'cman'
+        kExtAudioFileProperty_AudioConverter = 1633906294  # 'acnv'
+        kExtAudioFileProperty_AudioFile = 1634101612  # 'afil'
+        kExtAudioFileProperty_FileMaxPacketSize = 1718448243  # 'fmps'
+        kExtAudioFileProperty_ClientMaxPacketSize = 1668116595  # 'cmps'
+        kExtAudioFileProperty_FileLengthFrames = 593916525  # '#frm'
+        kExtAudioFileProperty_ConverterConfig = 1633903462  # 'accf'
+        kExtAudioFileProperty_IOBufferSizeBytes = 1768907379  # 'iobs'
+        kExtAudioFileProperty_IOBuffer = 1768907366  # 'iobf'
+        kExtAudioFileProperty_PacketTable = 2020635753  # 'xpti'
+    
+    # Error codes
+    ctypedef enum:
+        kExtAudioFileError_InvalidProperty = -66561
+        kExtAudioFileError_InvalidPropertySize = -66562
+        kExtAudioFileError_NonPCMClientFormat = -66563
+        kExtAudioFileError_InvalidChannelMap = -66564
+        kExtAudioFileError_InvalidOperationOrder = -66565
+        kExtAudioFileError_InvalidDataFormat = -66566
+        kExtAudioFileError_MaxPacketSizeUnknown = -66567
+        kExtAudioFileError_InvalidSeek = -66568
+        kExtAudioFileError_AsyncWriteTooLarge = -66569
+        kExtAudioFileError_AsyncWriteBufferOverflow = -66570
+    
+    # iOS-only error codes
+    ctypedef enum:
+        kExtAudioFileError_CodecUnavailableInputConsumed = -66559
+        kExtAudioFileError_CodecUnavailableInputNotConsumed = -66560
+    
+    # ExtendedAudioFile functions
+    cdef OSStatus ExtAudioFileOpenURL(CFURLRef inURL,
+                                     ExtAudioFileRef* outExtAudioFile)
+    
+    cdef OSStatus ExtAudioFileWrapAudioFileID(AudioFileID inFileID,
+                                             Boolean inForWriting,
+                                             ExtAudioFileRef* outExtAudioFile)
+    
+    cdef OSStatus ExtAudioFileCreateWithURL(CFURLRef inURL,
+                                           AudioFileTypeID inFileType,
+                                           const AudioStreamBasicDescription* inStreamDesc,
+                                           const AudioChannelLayout* inChannelLayout,
+                                           UInt32 inFlags,
+                                           ExtAudioFileRef* outExtAudioFile)
+    
+    # Deprecated functions (macOS only)
+    # cdef OSStatus ExtAudioFileOpen(const FSRef* inFSRef,
+    #                               ExtAudioFileRef* outExtAudioFile)
+    
+    # cdef OSStatus ExtAudioFileCreateNew(const FSRef* inParentDir,
+    #                                    CFStringRef inFileName,
+    #                                    AudioFileTypeID inFileType,
+    #                                    const AudioStreamBasicDescription* inStreamDesc,
+    #                                    const AudioChannelLayout* inChannelLayout,
+    #                                    ExtAudioFileRef* outExtAudioFile)
+    
+    # cdef OSStatus ExtAudioFileDispose(ExtAudioFileRef inExtAudioFile)
+    
+    # I/O functions
+    cdef OSStatus ExtAudioFileRead(ExtAudioFileRef inExtAudioFile,
+                                  UInt32* ioNumberFrames,
+                                  AudioBufferList* ioData)
+    
+    cdef OSStatus ExtAudioFileWrite(ExtAudioFileRef inExtAudioFile,
+                                   UInt32 inNumberFrames,
+                                   const AudioBufferList* ioData)
+    
+    cdef OSStatus ExtAudioFileWriteAsync(ExtAudioFileRef inExtAudioFile,
+                                        UInt32 inNumberFrames,
+                                        const AudioBufferList* ioData)
+    
+    cdef OSStatus ExtAudioFileSeek(ExtAudioFileRef inExtAudioFile,
+                                  SInt64 inFrameOffset)
+    
+    cdef OSStatus ExtAudioFileTell(ExtAudioFileRef inExtAudioFile,
+                                  SInt64* outFrameOffset)
+    
+    # Property functions
+    cdef OSStatus ExtAudioFileGetPropertyInfo(ExtAudioFileRef inExtAudioFile,
+                                             ExtAudioFilePropertyID inPropertyID,
+                                             UInt32* outSize,
+                                             Boolean* outWritable)
+    
+    cdef OSStatus ExtAudioFileGetProperty(ExtAudioFileRef inExtAudioFile,
+                                         ExtAudioFilePropertyID inPropertyID,
+                                         UInt32* ioPropertyDataSize,
+                                         void* outPropertyData)
+    
+    cdef OSStatus ExtAudioFileSetProperty(ExtAudioFileRef inExtAudioFile,
+                                         ExtAudioFilePropertyID inPropertyID,
+                                         UInt32 inPropertyDataSize,
+                                         const void* inPropertyData)
+
+
+cdef extern from "AudioToolbox/AudioFormat.h":
+    
+    # AudioFormat types
+    ctypedef UInt32 AudioFormatPropertyID
+    ctypedef UInt32 AudioPanningMode
+    ctypedef UInt32 AudioBalanceFadeType
+    
+    # Panning mode constants
+    ctypedef enum:
+        kPanningMode_SoundField = 3
+        kPanningMode_VectorBasedPanning = 4
+    
+    # Balance fade type constants
+    ctypedef enum:
+        kAudioBalanceFadeType_MaxUnityGain = 0
+        kAudioBalanceFadeType_EqualPower = 1
+    
+    # AudioPanningInfo structure
+    ctypedef struct AudioPanningInfo:
+        AudioPanningMode mPanningMode
+        UInt32 mCoordinateFlags
+        Float32 mCoordinates[3]
+        Float32 mGainScale
+        const AudioChannelLayout* mOutputChannelMap
+    
+    # AudioBalanceFade structure
+    ctypedef struct AudioBalanceFade:
+        Float32 mLeftRightBalance
+        Float32 mBackFrontFade
+        AudioBalanceFadeType mType
+        const AudioChannelLayout* mChannelLayout
+    
+    # AudioFormatInfo structure
+    ctypedef struct AudioFormatInfo:
+        AudioStreamBasicDescription mASBD
+        const void* mMagicCookie
+        UInt32 mMagicCookieSize
+    
+    # ExtendedAudioFormatInfo structure
+    ctypedef struct ExtendedAudioFormatInfo:
+        AudioStreamBasicDescription mASBD
+        const void* mMagicCookie
+        UInt32 mMagicCookieSize
+        AudioClassDescription mClassDescription
+    
+    # AudioFormat property IDs
+    ctypedef enum:
+        kAudioFormatProperty_FormatInfo = 1718449257  # 'fmti'
+        kAudioFormatProperty_FormatName = 1718509933  # 'fnam'
+        kAudioFormatProperty_EncodeFormatIDs = 1633906534  # 'acof'
+        kAudioFormatProperty_DecodeFormatIDs = 1633904998  # 'acif'
+        kAudioFormatProperty_FormatList = 1718383476  # 'flst'
+        kAudioFormatProperty_ASBDFromESDS = 1702064996  # 'essd'
+        kAudioFormatProperty_ChannelLayoutFromESDS = 1702060908  # 'escl'
+        kAudioFormatProperty_OutputFormatList = 1868983411  # 'ofls'
+        kAudioFormatProperty_FirstPlayableFormatFromList = 1718642284  # 'fpfl'
+        kAudioFormatProperty_FormatIsVBR = 1719034482  # 'fvbr'
+        kAudioFormatProperty_FormatIsExternallyFramed = 1717925990  # 'fexf'
+        kAudioFormatProperty_FormatEmploysDependentPackets = 1717855600  # 'fdep'
+        kAudioFormatProperty_FormatIsEncrypted = 1668446576  # 'cryp'
+        kAudioFormatProperty_Encoders = 1635149166  # 'aven'
+        kAudioFormatProperty_Decoders = 1635148901  # 'avde'
+        kAudioFormatProperty_AvailableEncodeBitRates = 1634034290  # 'aebr'
+        kAudioFormatProperty_AvailableEncodeSampleRates = 1634038642  # 'aesr'
+        kAudioFormatProperty_AvailableEncodeChannelLayoutTags = 1634034540  # 'aecl'
+        kAudioFormatProperty_AvailableEncodeNumberChannels = 1635151459  # 'avnc'
+        kAudioFormatProperty_AvailableDecodeNumberChannels = 1633971811  # 'adnc'
+        kAudioFormatProperty_ASBDFromMPEGPacket = 1633971568  # 'admp'
+        kAudioFormatProperty_BitmapForLayoutTag = 1651340391  # 'bmtg'
+        kAudioFormatProperty_MatrixMixMap = 1835884912  # 'mmap'
+        kAudioFormatProperty_ChannelMap = 1667788144  # 'chmp'
+        kAudioFormatProperty_NumberOfChannelsForLayout = 1852008557  # 'nchm'
+        kAudioFormatProperty_AreChannelLayoutsEquivalent = 1667786097  # 'cheq'
+        kAudioFormatProperty_ChannelLayoutHash = 1667786849  # 'chha'
+        kAudioFormatProperty_ValidateChannelLayout = 1986093932  # 'vacl'
+        kAudioFormatProperty_ChannelLayoutForTag = 1668116588  # 'cmpl'
+        kAudioFormatProperty_TagForChannelLayout = 1668116596  # 'cmpt'
+        kAudioFormatProperty_ChannelLayoutName = 1819242093  # 'lonm'
+        kAudioFormatProperty_ChannelLayoutSimpleName = 1819504237  # 'lsnm'
+        kAudioFormatProperty_ChannelLayoutForBitmap = 1668116578  # 'cmpb'
+        kAudioFormatProperty_ChannelName = 1668178285  # 'cnam'
+        kAudioFormatProperty_ChannelShortName = 1668509293  # 'csnm'
+        kAudioFormatProperty_TagsForNumberOfChannels = 1952540515  # 'tagc'
+        kAudioFormatProperty_PanningMatrix = 1885433453  # 'panm'
+        kAudioFormatProperty_BalanceFade = 1650551910  # 'balf'
+        kAudioFormatProperty_ID3TagSize = 1768174451  # 'id3s'
+        kAudioFormatProperty_ID3TagToDictionary = 1768174436  # 'id3d'
+    
+    # iOS-only properties
+    ctypedef enum:
+        kAudioFormatProperty_HardwareCodecCapabilities = 1752654691  # 'hwcc'
+    
+    # iOS-only codec types
+    ctypedef enum:
+        kAudioDecoderComponentType = 1633969507  # 'adec'
+        kAudioEncoderComponentType = 1634037347  # 'aenc'
+    
+    # iOS-only codec manufacturers
+    ctypedef enum:
+        kAppleSoftwareAudioCodecManufacturer = 1634758764  # 'appl'
+        kAppleHardwareAudioCodecManufacturer = 1634756727  # 'aphw'
+    
+    # Error codes
+    ctypedef enum:
+        kAudioFormatUnspecifiedError = 2003395684  # 'what'
+        kAudioFormatUnsupportedPropertyError = 1886547824  # 'prop'
+        kAudioFormatBadPropertySizeError = 561211770  # '!siz'
+        kAudioFormatBadSpecifierSizeError = 561213539  # '!spc'
+        kAudioFormatUnsupportedDataFormatError = 1718449215  # 'fmt?'
+        kAudioFormatUnknownFormatError = 560360820  # '!fmt'
+    
+    # AudioFormat functions
+    cdef OSStatus AudioFormatGetPropertyInfo(AudioFormatPropertyID inPropertyID,
+                                            UInt32 inSpecifierSize,
+                                            const void* inSpecifier,
+                                            UInt32* outPropertyDataSize)
+    
+    cdef OSStatus AudioFormatGetProperty(AudioFormatPropertyID inPropertyID,
+                                        UInt32 inSpecifierSize,
+                                        const void* inSpecifier,
+                                        UInt32* ioPropertyDataSize,
+                                        void* outPropertyData)
 
 
 # C audio player integration is available in the separate audio_player.c/h files

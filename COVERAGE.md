@@ -10,6 +10,9 @@ This document tracks the coverage of CoreAudio APIs in the cycoreaudio Python bi
 - **AudioQueue** - Playback and recording
 - **AudioFile** - File I/O operations
 - **AudioComponent/AudioUnit** - Component discovery and management
+- **AudioConverter** - Format conversion and sample rate conversion
+- **ExtendedAudioFile** - High-level file I/O with format conversion
+- **AudioFormat** - Channel layout and format utilities
 - **CoreAudioTypes** - Basic audio data types
 
 ### ⚠️ Partially Wrapped
@@ -18,9 +21,6 @@ This document tracks the coverage of CoreAudio APIs in the cycoreaudio Python bi
 
 ### ❌ Not Wrapped (High Priority)
 
-- **AudioConverter** - Format conversion (ESSENTIAL)
-- **ExtendedAudioFile** - High-level file I/O with conversion
-- **AudioFormat** - Channel layout and format utilities
 - **CoreFoundation Collections** - CFArray, CFDictionary, CFData
 - **CoreMIDI** - Complete MIDI support
 - **AudioServices** - System sound services
@@ -158,23 +158,30 @@ This document tracks the coverage of CoreAudio APIs in the cycoreaudio Python bi
 
 ### AudioConverter
 
-- ❌ AudioConverterNew
-- ❌ AudioConverterDispose
-- ❌ AudioConverterReset
-- ❌ AudioConverterGetPropertyInfo
-- ❌ AudioConverterGetProperty
-- ❌ AudioConverterSetProperty
-- ❌ AudioConverterConvertBuffer
-- ❌ AudioConverterFillComplexBuffer
-- ❌ AudioConverterConvertComplexBuffer
+- ✅ AudioConverterNew
+- ✅ AudioConverterNewSpecific
+- ✅ AudioConverterDispose
+- ✅ AudioConverterReset
+- ✅ AudioConverterGetPropertyInfo
+- ✅ AudioConverterGetProperty
+- ✅ AudioConverterSetProperty
+- ✅ AudioConverterConvertBuffer
+- ✅ AudioConverterFillComplexBuffer
+- ✅ AudioConverterConvertComplexBuffer
+- ✅ AudioConverterFillBuffer (deprecated)
 
 ### AudioFormat
 
-- ❌ AudioFormatGetPropertyInfo
-- ❌ AudioFormatGetProperty
-- ❌ AudioFormatGetPropertyValue
-- ❌ AudioFormatGetPropertyValueWithError
-- ❌ AudioFormatGetPropertyValueWithErrorAndOptions
+- ✅ AudioFormatGetPropertyInfo
+- ✅ AudioFormatGetProperty
+- ✅ AudioFormatProperty constants (35+ properties)
+- ✅ Channel layout utilities
+- ✅ AudioPanningInfo structure
+- ✅ AudioBalanceFade structure
+- ✅ AudioFormatInfo structure
+- ✅ ExtendedAudioFormatInfo structure
+- ✅ Panning and balance fade types
+- ✅ iOS-specific codec types and manufacturers
 
 ### AudioFileStream
 
@@ -188,17 +195,20 @@ This document tracks the coverage of CoreAudio APIs in the cycoreaudio Python bi
 
 ### ExtendedAudioFile
 
-- ❌ ExtAudioFileOpenURL
-- ❌ ExtAudioFileWrapAudioFileID
-- ❌ ExtAudioFileCreateWithURL
-- ❌ ExtAudioFileDispose
-- ❌ ExtAudioFileRead
-- ❌ ExtAudioFileWrite
-- ❌ ExtAudioFileSeek
-- ❌ ExtAudioFileTell
-- ❌ ExtAudioFileGetPropertyInfo
-- ❌ ExtAudioFileGetProperty
-- ❌ ExtAudioFileSetProperty
+- ✅ ExtAudioFileOpenURL
+- ✅ ExtAudioFileWrapAudioFileID
+- ✅ ExtAudioFileCreateWithURL
+- ✅ ExtAudioFileDispose
+- ✅ ExtAudioFileRead
+- ✅ ExtAudioFileWrite
+- ✅ ExtAudioFileWriteAsync
+- ✅ ExtAudioFileSeek
+- ✅ ExtAudioFileTell
+- ✅ ExtAudioFileGetPropertyInfo
+- ✅ ExtAudioFileGetProperty
+- ✅ ExtAudioFileSetProperty
+- ✅ ExtAudioFileOpen (deprecated)
+- ✅ ExtAudioFileCreateNew (deprecated)
 
 ### AudioServices
 
