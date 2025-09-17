@@ -1328,3 +1328,675 @@ def midi_pitch_bend(int channel, int value):
     lsb = value & 0x7F
     msb = (value >> 7) & 0x7F
     return (status, lsb, msb)
+
+
+# ===== MusicPlayer API =====
+
+# MusicPlayer functions
+
+def new_music_player():
+    """Create a new music player.
+
+    Returns:
+        MusicPlayer handle
+
+    Raises:
+        RuntimeError: If player creation fails
+    """
+    cdef ca.MusicPlayer player
+    cdef ca.OSStatus status = ca.NewMusicPlayer(&player)
+
+    if status != 0:
+        raise RuntimeError(f"NewMusicPlayer failed with status: {status}")
+    return <long>player
+
+def dispose_music_player(long player):
+    """Dispose a music player.
+
+    Args:
+        player: The MusicPlayer handle to dispose
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If disposal fails
+    """
+    cdef ca.OSStatus status = ca.DisposeMusicPlayer(<ca.MusicPlayer>player)
+
+    if status != 0:
+        raise RuntimeError(f"DisposeMusicPlayer failed with status: {status}")
+    return status
+
+def music_player_set_sequence(long player, long sequence):
+    """Set the sequence for the player to play.
+
+    Args:
+        player: The MusicPlayer handle
+        sequence: The MusicSequence handle (or 0 for NULL)
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If setting sequence fails
+    """
+    cdef ca.MusicSequence seq = <ca.MusicSequence>sequence if sequence != 0 else NULL
+    cdef ca.OSStatus status = ca.MusicPlayerSetSequence(<ca.MusicPlayer>player, seq)
+
+    if status != 0:
+        raise RuntimeError(f"MusicPlayerSetSequence failed with status: {status}")
+    return status
+
+def music_player_get_sequence(long player):
+    """Get the sequence attached to a player.
+
+    Args:
+        player: The MusicPlayer handle
+
+    Returns:
+        MusicSequence handle
+
+    Raises:
+        RuntimeError: If getting sequence fails
+    """
+    cdef ca.MusicSequence sequence
+    cdef ca.OSStatus status = ca.MusicPlayerGetSequence(<ca.MusicPlayer>player, &sequence)
+
+    if status != 0:
+        raise RuntimeError(f"MusicPlayerGetSequence failed with status: {status}")
+    return <long>sequence
+
+def music_player_set_time(long player, double time):
+    """Set the current time on the player.
+
+    Args:
+        player: The MusicPlayer handle
+        time: The new time value in beats
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If setting time fails
+    """
+    cdef ca.OSStatus status = ca.MusicPlayerSetTime(<ca.MusicPlayer>player, <ca.MusicTimeStamp>time)
+
+    if status != 0:
+        raise RuntimeError(f"MusicPlayerSetTime failed with status: {status}")
+    return status
+
+def music_player_get_time(long player):
+    """Get the current time of the player.
+
+    Args:
+        player: The MusicPlayer handle
+
+    Returns:
+        Current time value in beats
+
+    Raises:
+        RuntimeError: If getting time fails
+    """
+    cdef ca.MusicTimeStamp time
+    cdef ca.OSStatus status = ca.MusicPlayerGetTime(<ca.MusicPlayer>player, &time)
+
+    if status != 0:
+        raise RuntimeError(f"MusicPlayerGetTime failed with status: {status}")
+    return <double>time
+
+def music_player_preroll(long player):
+    """Prepare the player for playing.
+
+    Args:
+        player: The MusicPlayer handle
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If preroll fails
+    """
+    cdef ca.OSStatus status = ca.MusicPlayerPreroll(<ca.MusicPlayer>player)
+
+    if status != 0:
+        raise RuntimeError(f"MusicPlayerPreroll failed with status: {status}")
+    return status
+
+def music_player_start(long player):
+    """Start the player.
+
+    Args:
+        player: The MusicPlayer handle
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If start fails
+    """
+    cdef ca.OSStatus status = ca.MusicPlayerStart(<ca.MusicPlayer>player)
+
+    if status != 0:
+        raise RuntimeError(f"MusicPlayerStart failed with status: {status}")
+    return status
+
+def music_player_stop(long player):
+    """Stop the player.
+
+    Args:
+        player: The MusicPlayer handle
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If stop fails
+    """
+    cdef ca.OSStatus status = ca.MusicPlayerStop(<ca.MusicPlayer>player)
+
+    if status != 0:
+        raise RuntimeError(f"MusicPlayerStop failed with status: {status}")
+    return status
+
+def music_player_is_playing(long player):
+    """Check if the player is playing.
+
+    Args:
+        player: The MusicPlayer handle
+
+    Returns:
+        True if playing, False if not
+
+    Raises:
+        RuntimeError: If check fails
+    """
+    cdef ca.Boolean is_playing
+    cdef ca.OSStatus status = ca.MusicPlayerIsPlaying(<ca.MusicPlayer>player, &is_playing)
+
+    if status != 0:
+        raise RuntimeError(f"MusicPlayerIsPlaying failed with status: {status}")
+    return bool(is_playing)
+
+def music_player_set_play_rate_scalar(long player, double scale_rate):
+    """Scale the playback rate of the player.
+
+    Args:
+        player: The MusicPlayer handle
+        scale_rate: Playback rate scalar (e.g., 2.0 = double speed, 0.5 = half speed)
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If setting rate fails
+    """
+    if scale_rate <= 0:
+        raise ValueError("Scale rate must be greater than zero")
+
+    cdef ca.OSStatus status = ca.MusicPlayerSetPlayRateScalar(<ca.MusicPlayer>player, <ca.Float64>scale_rate)
+
+    if status != 0:
+        raise RuntimeError(f"MusicPlayerSetPlayRateScalar failed with status: {status}")
+    return status
+
+def music_player_get_play_rate_scalar(long player):
+    """Get the playback rate scalar of the player.
+
+    Args:
+        player: The MusicPlayer handle
+
+    Returns:
+        Current playback rate scalar
+
+    Raises:
+        RuntimeError: If getting rate fails
+    """
+    cdef ca.Float64 scale_rate
+    cdef ca.OSStatus status = ca.MusicPlayerGetPlayRateScalar(<ca.MusicPlayer>player, &scale_rate)
+
+    if status != 0:
+        raise RuntimeError(f"MusicPlayerGetPlayRateScalar failed with status: {status}")
+    return <double>scale_rate
+
+# MusicSequence functions
+
+def new_music_sequence():
+    """Create a new empty music sequence.
+
+    Returns:
+        MusicSequence handle
+
+    Raises:
+        RuntimeError: If sequence creation fails
+    """
+    cdef ca.MusicSequence sequence
+    cdef ca.OSStatus status = ca.NewMusicSequence(&sequence)
+
+    if status != 0:
+        raise RuntimeError(f"NewMusicSequence failed with status: {status}")
+    return <long>sequence
+
+def dispose_music_sequence(long sequence):
+    """Dispose a music sequence.
+
+    Args:
+        sequence: The MusicSequence handle to dispose
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If disposal fails
+    """
+    cdef ca.OSStatus status = ca.DisposeMusicSequence(<ca.MusicSequence>sequence)
+
+    if status != 0:
+        raise RuntimeError(f"DisposeMusicSequence failed with status: {status}")
+    return status
+
+def music_sequence_new_track(long sequence):
+    """Add a new track to the sequence.
+
+    Args:
+        sequence: The MusicSequence handle
+
+    Returns:
+        MusicTrack handle
+
+    Raises:
+        RuntimeError: If track creation fails
+    """
+    cdef ca.MusicTrack track
+    cdef ca.OSStatus status = ca.MusicSequenceNewTrack(<ca.MusicSequence>sequence, &track)
+
+    if status != 0:
+        raise RuntimeError(f"MusicSequenceNewTrack failed with status: {status}")
+    return <long>track
+
+def music_sequence_dispose_track(long sequence, long track):
+    """Remove and dispose a track from a sequence.
+
+    Args:
+        sequence: The MusicSequence handle
+        track: The MusicTrack handle to remove
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If track disposal fails
+    """
+    cdef ca.OSStatus status = ca.MusicSequenceDisposeTrack(<ca.MusicSequence>sequence, <ca.MusicTrack>track)
+
+    if status != 0:
+        raise RuntimeError(f"MusicSequenceDisposeTrack failed with status: {status}")
+    return status
+
+def music_sequence_get_track_count(long sequence):
+    """Get the number of tracks in a sequence.
+
+    Args:
+        sequence: The MusicSequence handle
+
+    Returns:
+        Number of tracks
+
+    Raises:
+        RuntimeError: If getting track count fails
+    """
+    cdef ca.UInt32 track_count
+    cdef ca.OSStatus status = ca.MusicSequenceGetTrackCount(<ca.MusicSequence>sequence, &track_count)
+
+    if status != 0:
+        raise RuntimeError(f"MusicSequenceGetTrackCount failed with status: {status}")
+    return track_count
+
+def music_sequence_get_ind_track(long sequence, int track_index):
+    """Get a track at the specified index.
+
+    Args:
+        sequence: The MusicSequence handle
+        track_index: Zero-based track index
+
+    Returns:
+        MusicTrack handle
+
+    Raises:
+        RuntimeError: If getting track fails
+    """
+    cdef ca.MusicTrack track
+    cdef ca.OSStatus status = ca.MusicSequenceGetIndTrack(<ca.MusicSequence>sequence, <ca.UInt32>track_index, &track)
+
+    if status != 0:
+        raise RuntimeError(f"MusicSequenceGetIndTrack failed with status: {status}")
+    return <long>track
+
+def music_sequence_get_tempo_track(long sequence):
+    """Get the tempo track of the sequence.
+
+    Args:
+        sequence: The MusicSequence handle
+
+    Returns:
+        MusicTrack handle for the tempo track
+
+    Raises:
+        RuntimeError: If getting tempo track fails
+    """
+    cdef ca.MusicTrack track
+    cdef ca.OSStatus status = ca.MusicSequenceGetTempoTrack(<ca.MusicSequence>sequence, &track)
+
+    if status != 0:
+        raise RuntimeError(f"MusicSequenceGetTempoTrack failed with status: {status}")
+    return <long>track
+
+def music_sequence_set_sequence_type(long sequence, int sequence_type):
+    """Set the sequence type.
+
+    Args:
+        sequence: The MusicSequence handle
+        sequence_type: The sequence type (beats, seconds, or samples)
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If setting sequence type fails
+    """
+    cdef ca.OSStatus status = ca.MusicSequenceSetSequenceType(<ca.MusicSequence>sequence, <ca.UInt32>sequence_type)
+
+    if status != 0:
+        raise RuntimeError(f"MusicSequenceSetSequenceType failed with status: {status}")
+    return status
+
+def music_sequence_get_sequence_type(long sequence):
+    """Get the sequence type.
+
+    Args:
+        sequence: The MusicSequence handle
+
+    Returns:
+        Sequence type constant
+
+    Raises:
+        RuntimeError: If getting sequence type fails
+    """
+    cdef ca.UInt32 sequence_type
+    cdef ca.OSStatus status = ca.MusicSequenceGetSequenceType(<ca.MusicSequence>sequence, &sequence_type)
+
+    if status != 0:
+        raise RuntimeError(f"MusicSequenceGetSequenceType failed with status: {status}")
+    return sequence_type
+
+def music_sequence_file_load(long sequence, str file_path, int file_type_hint=0, int flags=0):
+    """Load a file into the sequence.
+
+    Args:
+        sequence: The MusicSequence handle
+        file_path: Path to the file to load
+        file_type_hint: File type hint (default 0 for auto-detect)
+        flags: Load flags (default 0)
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If file loading fails
+    """
+    cdef bytes path_bytes = file_path.encode('utf-8')
+    cdef ca.CFURLRef url_ref = ca.CFURLCreateFromFileSystemRepresentation(
+        ca.kCFAllocatorDefault,
+        <const ca.UInt8*>path_bytes,
+        len(path_bytes),
+        False
+    )
+    cdef ca.OSStatus status
+
+    if not url_ref:
+        raise ValueError(f"Could not create URL from file path: {file_path}")
+
+    try:
+        status = ca.MusicSequenceFileLoad(
+            <ca.MusicSequence>sequence,
+            url_ref,
+            <ca.UInt32>file_type_hint,
+            <ca.UInt32>flags
+        )
+
+        if status != 0:
+            raise RuntimeError(f"MusicSequenceFileLoad failed with status: {status}")
+        return status
+
+    finally:
+        ca.CFRelease(url_ref)
+
+# MusicTrack functions
+
+def music_track_new_midi_note_event(long track, double timestamp, int channel, int note, int velocity, int release_velocity, double duration):
+    """Add a MIDI note event to a track.
+
+    Args:
+        track: The MusicTrack handle
+        timestamp: The time stamp in beats
+        channel: MIDI channel (0-15)
+        note: MIDI note number (0-127)
+        velocity: Note on velocity (0-127)
+        release_velocity: Note off velocity (0-127)
+        duration: Note duration in beats
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If adding event fails
+    """
+    cdef ca.MIDINoteMessage message
+    message.channel = <ca.UInt8>(channel & 0x0F)
+    message.note = <ca.UInt8>(note & 0x7F)
+    message.velocity = <ca.UInt8>(velocity & 0x7F)
+    message.releaseVelocity = <ca.UInt8>(release_velocity & 0x7F)
+    message.duration = <ca.Float32>duration
+
+    cdef ca.OSStatus status = ca.MusicTrackNewMIDINoteEvent(
+        <ca.MusicTrack>track,
+        <ca.MusicTimeStamp>timestamp,
+        &message
+    )
+
+    if status != 0:
+        raise RuntimeError(f"MusicTrackNewMIDINoteEvent failed with status: {status}")
+    return status
+
+def music_track_new_midi_channel_event(long track, double timestamp, int status, int data1, int data2):
+    """Add a MIDI channel event to a track.
+
+    Args:
+        track: The MusicTrack handle
+        timestamp: The time stamp in beats
+        status: MIDI status byte
+        data1: First data byte
+        data2: Second data byte
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If adding event fails
+    """
+    cdef ca.MIDIChannelMessage message
+    message.status = <ca.UInt8>status
+    message.data1 = <ca.UInt8>data1
+    message.data2 = <ca.UInt8>data2
+    message.reserved = 0
+
+    cdef ca.OSStatus status_result = ca.MusicTrackNewMIDIChannelEvent(
+        <ca.MusicTrack>track,
+        <ca.MusicTimeStamp>timestamp,
+        &message
+    )
+
+    if status_result != 0:
+        raise RuntimeError(f"MusicTrackNewMIDIChannelEvent failed with status: {status_result}")
+    return status_result
+
+def music_track_new_extended_tempo_event(long track, double timestamp, double bpm):
+    """Add a tempo event to a track.
+
+    Args:
+        track: The MusicTrack handle
+        timestamp: The time stamp in beats
+        bpm: Beats per minute
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If adding event fails
+    """
+    if bpm <= 0:
+        raise ValueError("BPM must be greater than zero")
+
+    cdef ca.OSStatus status = ca.MusicTrackNewExtendedTempoEvent(
+        <ca.MusicTrack>track,
+        <ca.MusicTimeStamp>timestamp,
+        <ca.Float64>bpm
+    )
+
+    if status != 0:
+        raise RuntimeError(f"MusicTrackNewExtendedTempoEvent failed with status: {status}")
+    return status
+
+# MusicPlayer constants
+
+def get_music_event_type_null():
+    """Get the NULL event type constant."""
+    return ca.kMusicEventType_NULL
+
+def get_music_event_type_extended_note():
+    """Get the extended note event type constant."""
+    return ca.kMusicEventType_ExtendedNote
+
+def get_music_event_type_extended_tempo():
+    """Get the extended tempo event type constant."""
+    return ca.kMusicEventType_ExtendedTempo
+
+def get_music_event_type_user():
+    """Get the user event type constant."""
+    return ca.kMusicEventType_User
+
+def get_music_event_type_meta():
+    """Get the meta event type constant."""
+    return ca.kMusicEventType_Meta
+
+def get_music_event_type_midi_note_message():
+    """Get the MIDI note message event type constant."""
+    return ca.kMusicEventType_MIDINoteMessage
+
+def get_music_event_type_midi_channel_message():
+    """Get the MIDI channel message event type constant."""
+    return ca.kMusicEventType_MIDIChannelMessage
+
+def get_music_event_type_midi_raw_data():
+    """Get the MIDI raw data event type constant."""
+    return ca.kMusicEventType_MIDIRawData
+
+def get_music_event_type_parameter():
+    """Get the parameter event type constant."""
+    return ca.kMusicEventType_Parameter
+
+def get_music_event_type_au_preset():
+    """Get the AU preset event type constant."""
+    return ca.kMusicEventType_AUPreset
+
+def get_music_sequence_type_beats():
+    """Get the beats sequence type constant."""
+    return ca.kMusicSequenceType_Beats
+
+def get_music_sequence_type_seconds():
+    """Get the seconds sequence type constant."""
+    return ca.kMusicSequenceType_Seconds
+
+def get_music_sequence_type_samples():
+    """Get the samples sequence type constant."""
+    return ca.kMusicSequenceType_Samples
+
+def get_music_sequence_file_any_type():
+    """Get the any file type constant."""
+    return ca.kMusicSequenceFile_AnyType
+
+def get_music_sequence_file_midi_type():
+    """Get the MIDI file type constant."""
+    return ca.kMusicSequenceFile_MIDIType
+
+def get_music_sequence_file_imelody_type():
+    """Get the iMelody file type constant."""
+    return ca.kMusicSequenceFile_iMelodyType
+
+def get_sequence_track_property_loop_info():
+    """Get the loop info track property constant."""
+    return ca.kSequenceTrackProperty_LoopInfo
+
+def get_sequence_track_property_offset_time():
+    """Get the offset time track property constant."""
+    return ca.kSequenceTrackProperty_OffsetTime
+
+def get_sequence_track_property_mute_status():
+    """Get the mute status track property constant."""
+    return ca.kSequenceTrackProperty_MuteStatus
+
+def get_sequence_track_property_solo_status():
+    """Get the solo status track property constant."""
+    return ca.kSequenceTrackProperty_SoloStatus
+
+def get_sequence_track_property_automated_parameters():
+    """Get the automated parameters track property constant."""
+    return ca.kSequenceTrackProperty_AutomatedParameters
+
+def get_sequence_track_property_track_length():
+    """Get the track length property constant."""
+    return ca.kSequenceTrackProperty_TrackLength
+
+def get_sequence_track_property_time_resolution():
+    """Get the time resolution property constant."""
+    return ca.kSequenceTrackProperty_TimeResolution
+
+# Helper functions
+
+def create_midi_note_message(int channel, int note, int velocity, int release_velocity=0, double duration=1.0):
+    """Create a MIDI note message dictionary.
+
+    Args:
+        channel: MIDI channel (0-15)
+        note: MIDI note number (0-127)
+        velocity: Note on velocity (0-127)
+        release_velocity: Note off velocity (0-127, default 0)
+        duration: Note duration in beats (default 1.0)
+
+    Returns:
+        Dictionary with note message parameters
+    """
+    return {
+        'channel': channel & 0x0F,
+        'note': note & 0x7F,
+        'velocity': velocity & 0x7F,
+        'release_velocity': release_velocity & 0x7F,
+        'duration': duration
+    }
+
+def create_midi_channel_message(int status, int data1, int data2=0):
+    """Create a MIDI channel message dictionary.
+
+    Args:
+        status: MIDI status byte
+        data1: First data byte
+        data2: Second data byte (default 0)
+
+    Returns:
+        Dictionary with channel message parameters
+    """
+    return {
+        'status': status & 0xFF,
+        'data1': data1 & 0x7F,
+        'data2': data2 & 0x7F
+    }

@@ -1018,3 +1018,237 @@ cdef extern from "AudioToolbox/MusicDevice.h":
         MusicDeviceGroupID inGroupID,
         NoteInstanceID inNoteInstanceID,
         UInt32 inOffsetSampleFrame)
+
+
+# MusicPlayer API declarations
+cdef extern from "AudioToolbox/MusicPlayer.h":
+
+    # Opaque types
+    ctypedef struct OpaqueMusicPlayer:
+        pass
+    ctypedef OpaqueMusicPlayer* MusicPlayer
+
+    ctypedef struct OpaqueMusicSequence:
+        pass
+    ctypedef OpaqueMusicSequence* MusicSequence
+
+    ctypedef struct OpaqueMusicTrack:
+        pass
+    ctypedef OpaqueMusicTrack* MusicTrack
+
+    ctypedef struct OpaqueMusicEventIterator:
+        pass
+    ctypedef OpaqueMusicEventIterator* MusicEventIterator
+
+    # Basic types
+    ctypedef Float64 MusicTimeStamp
+    ctypedef UInt32 MusicEventType
+
+    # Forward declarations for missing types
+    ctypedef void* AUGraph
+    ctypedef UInt32 AUNode
+
+    # Event types constants
+    ctypedef enum:
+        kMusicEventType_NULL = 0
+        kMusicEventType_ExtendedNote = 1
+        kMusicEventType_ExtendedTempo = 3
+        kMusicEventType_User = 4
+        kMusicEventType_Meta = 5
+        kMusicEventType_MIDINoteMessage = 6
+        kMusicEventType_MIDIChannelMessage = 7
+        kMusicEventType_MIDIRawData = 8
+        kMusicEventType_Parameter = 9
+        kMusicEventType_AUPreset = 10
+
+    # Sequence types
+    ctypedef enum:
+        kMusicSequenceType_Beats = 1651077476  # 'beat'
+        kMusicSequenceType_Seconds = 1936941667  # 'secs'
+        kMusicSequenceType_Samples = 1935832176  # 'samp'
+
+    # File types
+    ctypedef enum:
+        kMusicSequenceFile_AnyType = 0
+        kMusicSequenceFile_MIDIType = 1835623529  # 'midi'
+        kMusicSequenceFile_iMelodyType = 1768776044  # 'imel'
+
+    # Load and file flags
+    ctypedef enum:
+        kMusicSequenceLoadSMF_PreserveTracks = 0
+        kMusicSequenceLoadSMF_ChannelsToTracks = 1
+        kMusicSequenceFileFlags_Default = 0
+        kMusicSequenceFileFlags_EraseFile = 1
+
+    # Track property constants
+    ctypedef enum:
+        kSequenceTrackProperty_LoopInfo = 0
+        kSequenceTrackProperty_OffsetTime = 1
+        kSequenceTrackProperty_MuteStatus = 2
+        kSequenceTrackProperty_SoloStatus = 3
+        kSequenceTrackProperty_AutomatedParameters = 4
+        kSequenceTrackProperty_TrackLength = 5
+        kSequenceTrackProperty_TimeResolution = 6
+
+    # Error constants
+    ctypedef enum:
+        kAudioToolboxErr_InvalidSequenceType = -10846
+        kAudioToolboxErr_TrackIndexError = -10859
+        kAudioToolboxErr_TrackNotFound = -10858
+        kAudioToolboxErr_EndOfTrack = -10857
+        kAudioToolboxErr_StartOfTrack = -10856
+        kAudioToolboxErr_IllegalTrackDestination = -10855
+        kAudioToolboxErr_NoSequence = -10854
+        kAudioToolboxErr_InvalidEventType = -10853
+        kAudioToolboxErr_InvalidPlayerState = -10852
+        kAudioToolboxErr_CannotDoInCurrentContext = -10863
+        kAudioToolboxError_NoTrackDestination = -66720
+
+    # Event structures
+    ctypedef struct MIDINoteMessage:
+        UInt8 channel
+        UInt8 note
+        UInt8 velocity
+        UInt8 releaseVelocity
+        Float32 duration
+
+    ctypedef struct MIDIChannelMessage:
+        UInt8 status
+        UInt8 data1
+        UInt8 data2
+        UInt8 reserved
+
+    ctypedef struct MIDIRawData:
+        UInt32 length
+        UInt8 data[1]
+
+    ctypedef struct MIDIMetaEvent:
+        UInt8 metaEventType
+        UInt8 unused1
+        UInt8 unused2
+        UInt8 unused3
+        UInt32 dataLength
+        UInt8 data[1]
+
+    ctypedef struct MusicEventUserData:
+        UInt32 length
+        UInt8 data[1]
+
+    ctypedef struct ExtendedNoteOnEvent:
+        MusicDeviceInstrumentID instrumentID
+        MusicDeviceGroupID groupID
+        Float32 duration
+        MusicDeviceNoteParams extendedParams
+
+    ctypedef struct ParameterEvent:
+        AudioUnitParameterID parameterID
+        AudioUnitScope scope
+        AudioUnitElement element
+        AudioUnitParameterValue value
+
+    ctypedef struct ExtendedTempoEvent:
+        Float64 bpm
+
+    ctypedef struct AUPresetEvent:
+        AudioUnitScope scope
+        AudioUnitElement element
+        void* preset  # CFPropertyListRef
+
+    ctypedef struct MusicTrackLoopInfo:
+        MusicTimeStamp loopDuration
+        SInt32 numberOfLoops
+
+    ctypedef struct CABarBeatTime:
+        SInt32 bar
+        UInt16 beat
+        UInt16 subbeat
+        UInt16 subbeatDivisor
+        UInt16 reserved
+
+    # Callback types
+    ctypedef void (*MusicSequenceUserCallback)(
+        void* inClientData,
+        MusicSequence inSequence,
+        MusicTrack inTrack,
+        MusicTimeStamp inEventTime,
+        const MusicEventUserData* inEventData,
+        MusicTimeStamp inStartSliceBeat,
+        MusicTimeStamp inEndSliceBeat)
+
+    # MusicPlayer functions
+    cdef OSStatus NewMusicPlayer(MusicPlayer* outPlayer)
+    cdef OSStatus DisposeMusicPlayer(MusicPlayer inPlayer)
+    cdef OSStatus MusicPlayerSetSequence(MusicPlayer inPlayer, MusicSequence inSequence)
+    cdef OSStatus MusicPlayerGetSequence(MusicPlayer inPlayer, MusicSequence* outSequence)
+    cdef OSStatus MusicPlayerSetTime(MusicPlayer inPlayer, MusicTimeStamp inTime)
+    cdef OSStatus MusicPlayerGetTime(MusicPlayer inPlayer, MusicTimeStamp* outTime)
+    cdef OSStatus MusicPlayerGetHostTimeForBeats(MusicPlayer inPlayer, MusicTimeStamp inBeats, UInt64* outHostTime)
+    cdef OSStatus MusicPlayerGetBeatsForHostTime(MusicPlayer inPlayer, UInt64 inHostTime, MusicTimeStamp* outBeats)
+    cdef OSStatus MusicPlayerPreroll(MusicPlayer inPlayer)
+    cdef OSStatus MusicPlayerStart(MusicPlayer inPlayer)
+    cdef OSStatus MusicPlayerStop(MusicPlayer inPlayer)
+    cdef OSStatus MusicPlayerIsPlaying(MusicPlayer inPlayer, Boolean* outIsPlaying)
+    cdef OSStatus MusicPlayerSetPlayRateScalar(MusicPlayer inPlayer, Float64 inScaleRate)
+    cdef OSStatus MusicPlayerGetPlayRateScalar(MusicPlayer inPlayer, Float64* outScaleRate)
+
+    # MusicSequence functions
+    cdef OSStatus NewMusicSequence(MusicSequence* outSequence)
+    cdef OSStatus DisposeMusicSequence(MusicSequence inSequence)
+    cdef OSStatus MusicSequenceNewTrack(MusicSequence inSequence, MusicTrack* outTrack)
+    cdef OSStatus MusicSequenceDisposeTrack(MusicSequence inSequence, MusicTrack inTrack)
+    cdef OSStatus MusicSequenceGetTrackCount(MusicSequence inSequence, UInt32* outNumberOfTracks)
+    cdef OSStatus MusicSequenceGetIndTrack(MusicSequence inSequence, UInt32 inTrackIndex, MusicTrack* outTrack)
+    cdef OSStatus MusicSequenceGetTrackIndex(MusicSequence inSequence, MusicTrack inTrack, UInt32* outTrackIndex)
+    cdef OSStatus MusicSequenceGetTempoTrack(MusicSequence inSequence, MusicTrack* outTrack)
+    cdef OSStatus MusicSequenceSetAUGraph(MusicSequence inSequence, AUGraph inGraph)
+    cdef OSStatus MusicSequenceGetAUGraph(MusicSequence inSequence, AUGraph* outGraph)
+    cdef OSStatus MusicSequenceSetSequenceType(MusicSequence inSequence, UInt32 inType)
+    cdef OSStatus MusicSequenceGetSequenceType(MusicSequence inSequence, UInt32* outType)
+    cdef OSStatus MusicSequenceFileLoad(MusicSequence inSequence, CFURLRef inFileRef, UInt32 inFileTypeHint, UInt32 inFlags)
+    # cdef OSStatus MusicSequenceFileLoadData(MusicSequence inSequence, CFDataRef inData, UInt32 inFileTypeHint, UInt32 inFlags)
+    # cdef OSStatus MusicSequenceFileCreate(MusicSequence inSequence, CFURLRef inFileRef, UInt32 inFileType, UInt32 inFlags, SInt16 inResolution)
+    # cdef OSStatus MusicSequenceFileCreateData(MusicSequence inSequence, UInt32 inFileType, UInt32 inFlags, SInt16 inResolution, CFDataRef* outData)
+    cdef OSStatus MusicSequenceReverse(MusicSequence inSequence)
+    cdef OSStatus MusicSequenceGetSecondsForBeats(MusicSequence inSequence, MusicTimeStamp inBeats, Float64* outSeconds)
+    cdef OSStatus MusicSequenceGetBeatsForSeconds(MusicSequence inSequence, Float64 inSeconds, MusicTimeStamp* outBeats)
+    cdef OSStatus MusicSequenceSetUserCallback(MusicSequence inSequence, MusicSequenceUserCallback inCallback, void* inClientData)
+    cdef OSStatus MusicSequenceBeatsToBarBeatTime(MusicSequence inSequence, MusicTimeStamp inBeats, UInt32 inSubbeatDivisor, CABarBeatTime* outBarBeatTime)
+    cdef OSStatus MusicSequenceBarBeatTimeToBeats(MusicSequence inSequence, const CABarBeatTime* inBarBeatTime, MusicTimeStamp* outBeats)
+    # cdef CFDictionaryRef MusicSequenceGetInfoDictionary(MusicSequence inSequence)
+
+    # MusicTrack functions
+    cdef OSStatus MusicTrackGetSequence(MusicTrack inTrack, MusicSequence* outSequence)
+    cdef OSStatus MusicTrackSetDestNode(MusicTrack inTrack, AUNode inNode)
+    cdef OSStatus MusicTrackGetDestNode(MusicTrack inTrack, AUNode* outNode)
+    cdef OSStatus MusicTrackSetProperty(MusicTrack inTrack, UInt32 inPropertyID, void* inData, UInt32 inLength)
+    cdef OSStatus MusicTrackGetProperty(MusicTrack inTrack, UInt32 inPropertyID, void* outData, UInt32* ioLength)
+    cdef OSStatus MusicTrackMoveEvents(MusicTrack inTrack, MusicTimeStamp inStartTime, MusicTimeStamp inEndTime, MusicTimeStamp inMoveTime)
+    cdef OSStatus MusicTrackClear(MusicTrack inTrack, MusicTimeStamp inStartTime, MusicTimeStamp inEndTime)
+    cdef OSStatus MusicTrackCut(MusicTrack inTrack, MusicTimeStamp inStartTime, MusicTimeStamp inEndTime)
+    cdef OSStatus MusicTrackCopyInsert(MusicTrack inSourceTrack, MusicTimeStamp inSourceStartTime, MusicTimeStamp inSourceEndTime, MusicTrack inDestTrack, MusicTimeStamp inDestInsertTime)
+    cdef OSStatus MusicTrackMerge(MusicTrack inSourceTrack, MusicTimeStamp inSourceStartTime, MusicTimeStamp inSourceEndTime, MusicTrack inDestTrack, MusicTimeStamp inDestInsertTime)
+
+    # MusicTrack event creation functions
+    cdef OSStatus MusicTrackNewMIDINoteEvent(MusicTrack inTrack, MusicTimeStamp inTimeStamp, const MIDINoteMessage* inMessage)
+    cdef OSStatus MusicTrackNewMIDIChannelEvent(MusicTrack inTrack, MusicTimeStamp inTimeStamp, const MIDIChannelMessage* inMessage)
+    cdef OSStatus MusicTrackNewMIDIRawDataEvent(MusicTrack inTrack, MusicTimeStamp inTimeStamp, const MIDIRawData* inRawData)
+    cdef OSStatus MusicTrackNewExtendedNoteEvent(MusicTrack inTrack, MusicTimeStamp inTimeStamp, const ExtendedNoteOnEvent* inInfo)
+    cdef OSStatus MusicTrackNewParameterEvent(MusicTrack inTrack, MusicTimeStamp inTimeStamp, const ParameterEvent* inInfo)
+    cdef OSStatus MusicTrackNewExtendedTempoEvent(MusicTrack inTrack, MusicTimeStamp inTimeStamp, Float64 inBPM)
+    cdef OSStatus MusicTrackNewMetaEvent(MusicTrack inTrack, MusicTimeStamp inTimeStamp, const MIDIMetaEvent* inMetaEvent)
+    cdef OSStatus MusicTrackNewUserEvent(MusicTrack inTrack, MusicTimeStamp inTimeStamp, const MusicEventUserData* inUserData)
+    cdef OSStatus MusicTrackNewAUPresetEvent(MusicTrack inTrack, MusicTimeStamp inTimeStamp, const AUPresetEvent* inPresetEvent)
+
+    # MusicEventIterator functions
+    cdef OSStatus NewMusicEventIterator(MusicTrack inTrack, MusicEventIterator* outIterator)
+    cdef OSStatus DisposeMusicEventIterator(MusicEventIterator inIterator)
+    cdef OSStatus MusicEventIteratorSeek(MusicEventIterator inIterator, MusicTimeStamp inTimeStamp)
+    cdef OSStatus MusicEventIteratorNextEvent(MusicEventIterator inIterator)
+    cdef OSStatus MusicEventIteratorPreviousEvent(MusicEventIterator inIterator)
+    cdef OSStatus MusicEventIteratorGetEventInfo(MusicEventIterator inIterator, MusicTimeStamp* outTimeStamp, MusicEventType* outEventType, const void** outEventData, UInt32* outEventDataSize)
+    cdef OSStatus MusicEventIteratorSetEventInfo(MusicEventIterator inIterator, MusicEventType inEventType, const void* inEventData)
+    cdef OSStatus MusicEventIteratorSetEventTime(MusicEventIterator inIterator, MusicTimeStamp inTimeStamp)
+    cdef OSStatus MusicEventIteratorDeleteEvent(MusicEventIterator inIterator)
+    cdef OSStatus MusicEventIteratorHasPreviousEvent(MusicEventIterator inIterator, Boolean* outHasPrevEvent)
+    cdef OSStatus MusicEventIteratorHasNextEvent(MusicEventIterator inIterator, Boolean* outHasNextEvent)
+    cdef OSStatus MusicEventIteratorHasCurrentEvent(MusicEventIterator inIterator, Boolean* outHasCurEvent)

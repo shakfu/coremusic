@@ -231,17 +231,17 @@ This document tracks the coverage of CoreAudio APIs in the cycoreaudio Python bi
 
 ### MusicPlayer
 
-- ❌ NewMusicPlayer
-- ❌ DisposeMusicPlayer
-- ❌ MusicPlayerSetSequence
-- ❌ MusicPlayerGetSequence
-- ❌ MusicPlayerPreroll
-- ❌ MusicPlayerStart
-- ❌ MusicPlayerStop
-- ❌ MusicPlayerIsPlaying
-- ❌ MusicPlayerGetTime
-- ❌ MusicPlayerSetTime
-- ❌ MusicPlayerSetPlayRateScalar
+- ✅ NewMusicPlayer
+- ✅ DisposeMusicPlayer
+- ✅ MusicPlayerSetSequence
+- ✅ MusicPlayerGetSequence
+- ✅ MusicPlayerPreroll
+- ✅ MusicPlayerStart
+- ✅ MusicPlayerStop
+- ✅ MusicPlayerIsPlaying
+- ✅ MusicPlayerGetTime
+- ✅ MusicPlayerSetTime
+- ✅ MusicPlayerSetPlayRateScalar
 
 ### AUGraph (Deprecated)
 
