@@ -1,6 +1,6 @@
 # CoreAudio Demos
 
-This directory contains demonstrations of the cycoreaudio wrapper functionality.
+This directory contains demonstrations of the coremusic wrapper functionality.
 
 ## Main Demo
 
@@ -14,7 +14,7 @@ This directory contains demonstrations of the cycoreaudio wrapper functionality.
 - Advanced CoreAudio features
 - Comprehensive error handling and user feedback
 
-This is the definitive demo that showcases the complete capabilities of the cycoreaudio wrapper.
+This is the definitive demo that showcases the complete capabilities of the coremusic wrapper.
 
 ## Usage
 
@@ -27,7 +27,7 @@ python3 tests/demos/unified_audio_demo.py
 
 - macOS (CoreAudio framework)
 - Python 3.x
-- Built cycoreaudio module (`make coreaudio`)
+- Built coremusic module (`make coreaudio`)
 - `tests/amen.wav` audio file
 
 ## What the Demo Shows
@@ -52,4 +52,4 @@ When run successfully, the unified demo shows:
 - ✓ AudioPlayer playback working (you should hear audio!)
 - ✓ Advanced features working
 
-The cycoreaudio wrapper provides complete access to CoreAudio for professional audio development in Python.
+The coremusic wrapper provides complete access to CoreAudio for professional audio development in Python.

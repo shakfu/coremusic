@@ -5,7 +5,7 @@ Unified Audio Demo - Complete CoreAudio Demonstration
 This unified demo combines all the functionality from the individual demos
 into one comprehensive demonstration that:
 
-1. Shows complete CoreAudio API access through cycoreaudio
+1. Shows complete CoreAudio API access through coremusic
 2. Demonstrates audio file loading and format detection
 3. Uses coreaudio.AudioPlayer for actual audio playback
 4. Tests AudioUnit and AudioQueue infrastructure
@@ -13,7 +13,7 @@ into one comprehensive demonstration that:
 6. Shows real-time playback monitoring and control
 
 This is the definitive demo that showcases the full capabilities
-of the cycoreaudio wrapper for professional audio development.
+of the coremusic wrapper for professional audio development.
 """
 
 import os
@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 import coreaudio as ca
 
 class UnifiedAudioDemo:
-    """Comprehensive audio demonstration using cycoreaudio"""
+    """Comprehensive audio demonstration using coremusic"""
     
     def __init__(self, wav_path):
         self.wav_path = wav_path
@@ -381,7 +381,7 @@ class UnifiedAudioDemo:
     def run_comprehensive_demo(self):
         """Run the complete unified demonstration"""
         self.print_header("UNIFIED CYCOREAUDIO DEMONSTRATION", "🎵", 80)
-        self.print_info("This demo showcases the complete cycoreaudio wrapper capabilities")
+        self.print_info("This demo showcases the complete coremusic wrapper capabilities")
         self.print_info("Combining all individual demos into one comprehensive test")
         print()
         
@@ -420,7 +420,7 @@ class UnifiedAudioDemo:
         print()
         if successful_demos == total_demos:
             self.print_success("ALL DEMOS PASSED - CYCOREAUDIO IS FULLY FUNCTIONAL!")
-            self.print_info("The cycoreaudio wrapper provides complete access to CoreAudio")
+            self.print_info("The coremusic wrapper provides complete access to CoreAudio")
             self.print_info("All major audio frameworks are successfully wrapped")
             self.print_info("Audio hardware can be controlled and configured")
             self.print_info("File I/O operations work perfectly")
@@ -435,7 +435,7 @@ def main():
     # Check if we're in the right directory
     if not os.path.exists("tests"):
         print("Error: Please run this script from the project root directory")
-        print("Expected structure: /path/to/cycoreaudio/tests/demos/unified_audio_demo.py")
+        print("Expected structure: /path/to/coremusic/tests/demos/unified_audio_demo.py")
         sys.exit(1)
     
     # Check for test audio file
@@ -460,7 +460,7 @@ def main():
     
     if success:
         print("\n🎉 UNIFIED DEMO COMPLETED SUCCESSFULLY!")
-        print("   The cycoreaudio wrapper is ready for professional audio development.")
+        print("   The coremusic wrapper is ready for professional audio development.")
     else:
         print("\n⚠️  UNIFIED DEMO COMPLETED WITH ISSUES")
         print("   Some components may need additional work.")

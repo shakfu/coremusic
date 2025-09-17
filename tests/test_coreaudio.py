@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""pytest test suite for cycoreaudio wrapper functionality."""
+"""pytest test suite for coremusic wrapper functionality."""
 
 import os
 import pytest
 import wave
 import struct
 import time
-import coreaudio as ca
+import coremusic as cm
 
 
 class TestCoreAudioConstants:
@@ -14,26 +14,26 @@ class TestCoreAudioConstants:
     
     def test_audio_format_constants(self):
         """Test audio format constants"""
-        assert ca.get_audio_format_linear_pcm() is not None
-        assert ca.get_linear_pcm_format_flag_is_signed_integer() is not None
-        assert ca.get_linear_pcm_format_flag_is_packed() is not None
-        assert ca.get_linear_pcm_format_flag_is_non_interleaved() is not None
+        assert cm.get_audio_format_linear_pcm() is not None
+        assert cm.get_linear_pcm_format_flag_is_signed_integer() is not None
+        assert cm.get_linear_pcm_format_flag_is_packed() is not None
+        assert cm.get_linear_pcm_format_flag_is_non_interleaved() is not None
     
     def test_audio_file_constants(self):
         """Test audio file constants"""
-        assert ca.get_audio_file_wave_type() is not None
-        assert ca.get_audio_file_read_permission() is not None
-        assert ca.get_audio_file_property_data_format() is not None
-        assert ca.get_audio_file_property_maximum_packet_size() is not None
+        assert cm.get_audio_file_wave_type() is not None
+        assert cm.get_audio_file_read_permission() is not None
+        assert cm.get_audio_file_property_data_format() is not None
+        assert cm.get_audio_file_property_maximum_packet_size() is not None
     
     def test_audio_unit_constants(self):
         """Test AudioUnit constants"""
-        assert ca.get_audio_unit_type_output() is not None
-        assert ca.get_audio_unit_subtype_default_output() is not None
-        assert ca.get_audio_unit_manufacturer_apple() is not None
-        assert ca.get_audio_unit_property_stream_format() is not None
-        assert ca.get_audio_unit_scope_input() is not None
-        assert ca.get_audio_unit_scope_output() is not None
+        assert cm.get_audio_unit_type_output() is not None
+        assert cm.get_audio_unit_subtype_default_output() is not None
+        assert cm.get_audio_unit_manufacturer_apple() is not None
+        assert cm.get_audio_unit_property_stream_format() is not None
+        assert cm.get_audio_unit_scope_input() is not None
+        assert cm.get_audio_unit_scope_output() is not None
 
 
 class TestFourCCConversion:
@@ -43,7 +43,7 @@ class TestFourCCConversion:
         """Test string to int FourCC conversion"""
         test_codes = ['WAVE', 'TEXT', 'AIFF', 'mp4f', 'RIFF']
         for code in test_codes:
-            int_val = ca.fourchar_to_int(code)
+            int_val = cm.fourchar_to_int(code)
             assert isinstance(int_val, int)
             assert int_val > 0
     
@@ -51,16 +51,16 @@ class TestFourCCConversion:
         """Test int to string FourCC conversion"""
         test_codes = ['WAVE', 'TEXT', 'AIFF', 'mp4f', 'RIFF']
         for code in test_codes:
-            int_val = ca.fourchar_to_int(code)
-            back_to_str = ca.int_to_fourchar(int_val)
+            int_val = cm.fourchar_to_int(code)
+            back_to_str = cm.int_to_fourchar(int_val)
             assert back_to_str == code
     
     def test_roundtrip_conversion(self):
         """Test roundtrip conversion maintains data integrity"""
         test_codes = ['WAVE', 'TEXT', 'AIFF', 'mp4f', 'RIFF', 'CAFF', 'caff']
         for code in test_codes:
-            int_val = ca.fourchar_to_int(code)
-            back_to_str = ca.int_to_fourchar(int_val)
+            int_val = cm.fourchar_to_int(code)
+            back_to_str = cm.int_to_fourchar(int_val)
             assert back_to_str == code, f"Roundtrip failed for '{code}': {code} -> {int_val} -> {back_to_str}"
 
 

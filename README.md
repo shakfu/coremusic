@@ -1,10 +1,10 @@
-# cycoreaudio
+# coremusic
 
-A Cython wrapper for Apple's CoreAudio ecosystem, providing Python bindings for audio development on macOS. This project exposes a subset of CoreAudio C APIs through Python, enabling audio applications, real-time processing, and audio development on the Apple platform.
+A Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing Python bindings for audio development on macOS. This project exposes a subset of CoreAudio and CoreMIDI C APIs through Python, enabling audio applications, real-time processing, and audio development on the Apple platform.
 
 ## Overview
 
-`cycoreaudio` is a c-based Python extension that provides direct access to Apple's CoreAudio frameworks. Built with Cython, it offers near-native performance while maintaining the ease of use of Python. The wrapper covers the complete CoreAudio ecosystem, from low-level hardware control to high-level audio processing units.
+`coremusic` is a c-based Python extension that provides direct access to Apple's CoreAudio frameworks. Built with Cython, it offers near-native performance while maintaining the ease of use of Python. The wrapper covers the complete CoreAudio ecosystem, from low-level hardware control to high-level audio processing units.
 
 ### Key Features
 
@@ -64,8 +64,8 @@ A Cython wrapper for Apple's CoreAudio ecosystem, providing Python bindings for 
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/yourusername/cycoreaudio.git
-    cd cycoreaudio
+    git clone https://github.com/yourusername/coremusic.git
+    cd coremusic
     ```
 
 2. Install dependencies:
@@ -357,7 +357,7 @@ This comprehensive demo showcases:
 ### Test Suite
 
 ```bash
-pytest tests/test_cycoreaudio.py -v
+pytest tests/test_coremusic.py -v
 ```
 
 The test suite covers:
@@ -399,7 +399,7 @@ The extension is built using Cython with the following process:
 
 ## Performance
 
-cycoreaudio provides near-native performance through:
+coremusic provides near-native performance through:
 
 - Direct C API access without Python overhead
 - Efficient memory management

@@ -5,7 +5,7 @@ import wave
 
 import pytest
 
-import coreaudio as ca
+import coremusic as cm
 
 
 class TestAudioFileOperations:
@@ -22,29 +22,29 @@ class TestAudioFileOperations:
     def test_audio_file_open_close(self, amen_wav_path):
         """Test opening and closing audio files"""
         # Open audio file
-        audio_file_id = ca.audio_file_open_url(
+        audio_file_id = cm.audio_file_open_url(
             amen_wav_path,
-            ca.get_audio_file_read_permission(),
-            ca.get_audio_file_wave_type()
+            cm.get_audio_file_read_permission(),
+            cm.get_audio_file_wave_type()
         )
         assert audio_file_id is not None
         
         # Close audio file
-        ca.audio_file_close(audio_file_id)
+        cm.audio_file_close(audio_file_id)
     
     def test_audio_file_properties(self, amen_wav_path):
         """Test reading audio file properties"""
-        audio_file_id = ca.audio_file_open_url(
+        audio_file_id = cm.audio_file_open_url(
             amen_wav_path,
-            ca.get_audio_file_read_permission(),
-            ca.get_audio_file_wave_type()
+            cm.get_audio_file_read_permission(),
+            cm.get_audio_file_wave_type()
         )
         
         try:
             # Get data format property
-            format_data = ca.audio_file_get_property(
+            format_data = cm.audio_file_get_property(
                 audio_file_id,
-                ca.get_audio_file_property_data_format()
+                cm.get_audio_file_property_data_format()
             )
             assert len(format_data) >= 40  # AudioStreamBasicDescription is 40 bytes
             
@@ -56,28 +56,28 @@ class TestAudioFileOperations:
             assert sample_rate > 0
             assert channels_per_frame > 0
             assert bits_per_channel > 0
-            assert format_id == ca.get_audio_format_linear_pcm()
+            assert format_id == cm.get_audio_format_linear_pcm()
             
         finally:
-            ca.audio_file_close(audio_file_id)
+            cm.audio_file_close(audio_file_id)
     
     def test_audio_file_packet_reading(self, amen_wav_path):
         """Test reading audio packets from file"""
-        audio_file_id = ca.audio_file_open_url(
+        audio_file_id = cm.audio_file_open_url(
             amen_wav_path,
-            ca.get_audio_file_read_permission(),
-            ca.get_audio_file_wave_type()
+            cm.get_audio_file_read_permission(),
+            cm.get_audio_file_wave_type()
         )
         
         try:
             # Read some packets
-            packet_data, packets_read = ca.audio_file_read_packets(audio_file_id, 0, 100)
+            packet_data, packets_read = cm.audio_file_read_packets(audio_file_id, 0, 100)
             assert packets_read > 0
             assert len(packet_data) > 0
             assert isinstance(packet_data, bytes)
             
         finally:
-            ca.audio_file_close(audio_file_id)
+            cm.audio_file_close(audio_file_id)
     
     def test_wav_file_format_detection(self, amen_wav_path):
         """Test WAV file format detection using Python wave module"""
@@ -131,17 +131,17 @@ class TestAudioPlayerIntegration:
         assert len(audio_data) > 0
         
         # Load with CoreAudio
-        audio_file_id = ca.audio_file_open_url(
+        audio_file_id = cm.audio_file_open_url(
             amen_wav_path,
-            ca.get_audio_file_read_permission(),
-            ca.get_audio_file_wave_type()
+            cm.get_audio_file_read_permission(),
+            cm.get_audio_file_wave_type()
         )
         
         try:
             # Get format via CoreAudio
-            format_data = ca.audio_file_get_property(
+            format_data = cm.audio_file_get_property(
                 audio_file_id,
-                ca.get_audio_file_property_data_format()
+                cm.get_audio_file_property_data_format()
             )
             
             if len(format_data) >= 40:
@@ -158,12 +158,12 @@ class TestAudioPlayerIntegration:
                 assert coreaudio_format['bits_per_channel'] == python_format['sample_width'] * 8
             
             # Read audio data via CoreAudio
-            packet_data, packets_read = ca.audio_file_read_packets(audio_file_id, 0, 1000)
+            packet_data, packets_read = cm.audio_file_read_packets(audio_file_id, 0, 1000)
             assert packets_read > 0
             assert len(packet_data) > 0
             
         finally:
-            ca.audio_file_close(audio_file_id)
+            cm.audio_file_close(audio_file_id)
     
     def test_complete_audio_pipeline(self, amen_wav_path):
         """Test complete audio processing pipeline"""
@@ -181,44 +181,44 @@ class TestAudioPlayerIntegration:
         assert format_info['sample_rate'] > 0
         
         # Step 2: Verify CoreAudio access
-        audio_file_id = ca.audio_file_open_url(
+        audio_file_id = cm.audio_file_open_url(
             amen_wav_path,
-            ca.get_audio_file_read_permission(),
-            ca.get_audio_file_wave_type()
+            cm.get_audio_file_read_permission(),
+            cm.get_audio_file_wave_type()
         )
         assert audio_file_id is not None
-        ca.audio_file_close(audio_file_id)
+        cm.audio_file_close(audio_file_id)
         
         # Step 3: Test AudioUnit infrastructure
         description = {
-            'type': ca.get_audio_unit_type_output(),
-            'subtype': ca.get_audio_unit_subtype_default_output(),
-            'manufacturer': ca.get_audio_unit_manufacturer_apple(),
+            'type': cm.get_audio_unit_type_output(),
+            'subtype': cm.get_audio_unit_subtype_default_output(),
+            'manufacturer': cm.get_audio_unit_manufacturer_apple(),
             'flags': 0,
             'flags_mask': 0
         }
         
-        component_id = ca.audio_component_find_next(description)
+        component_id = cm.audio_component_find_next(description)
         assert component_id is not None
         
-        audio_unit = ca.audio_component_instance_new(component_id)
+        audio_unit = cm.audio_component_instance_new(component_id)
         assert audio_unit is not None
         
         try:
-            ca.audio_unit_initialize(audio_unit)
-            ca.audio_output_unit_start(audio_unit)
+            cm.audio_unit_initialize(audio_unit)
+            cm.audio_output_unit_start(audio_unit)
             time.sleep(0.1)  # Brief operation
-            ca.audio_output_unit_stop(audio_unit)
-            ca.audio_unit_uninitialize(audio_unit)
+            cm.audio_output_unit_stop(audio_unit)
+            cm.audio_unit_uninitialize(audio_unit)
         finally:
-            ca.audio_component_instance_dispose(audio_unit)
+            cm.audio_component_instance_dispose(audio_unit)
         
         # Step 4: Test AudioQueue infrastructure
         audio_format = {
             'sample_rate': format_info['sample_rate'],
-            'format_id': ca.get_audio_format_linear_pcm(),
-            'format_flags': ca.get_linear_pcm_format_flag_is_signed_integer() | 
-                           ca.get_linear_pcm_format_flag_is_packed(),
+            'format_id': cm.get_audio_format_linear_pcm(),
+            'format_flags': cm.get_linear_pcm_format_flag_is_signed_integer() | 
+                           cm.get_linear_pcm_format_flag_is_packed(),
             'bytes_per_packet': format_info['channels'] * format_info['sample_width'],
             'frames_per_packet': 1,
             'bytes_per_frame': format_info['channels'] * format_info['sample_width'],
@@ -226,14 +226,14 @@ class TestAudioPlayerIntegration:
             'bits_per_channel': format_info['sample_width'] * 8
         }
         
-        queue_id = ca.audio_queue_new_output(audio_format)
+        queue_id = cm.audio_queue_new_output(audio_format)
         assert queue_id is not None
         
         try:
-            buffer_id = ca.audio_queue_allocate_buffer(queue_id, 8192)
+            buffer_id = cm.audio_queue_allocate_buffer(queue_id, 8192)
             assert buffer_id is not None
         finally:
-            ca.audio_queue_dispose(queue_id, True)
+            cm.audio_queue_dispose(queue_id, True)
 
 
 class TestErrorHandling:
@@ -242,10 +242,10 @@ class TestErrorHandling:
     def test_invalid_file_handling(self):
         """Test handling of invalid file paths"""
         with pytest.raises(Exception):
-            ca.audio_file_open_url(
+            cm.audio_file_open_url(
                 "nonexistent_file.wav",
-                ca.get_audio_file_read_permission(),
-                ca.get_audio_file_wave_type()
+                cm.get_audio_file_read_permission(),
+                cm.get_audio_file_wave_type()
             )
 
 
@@ -269,16 +269,16 @@ class TestPerformance:
         # Load with CoreAudio
         start_time = time.time()
         
-        audio_file_id = ca.audio_file_open_url(
+        audio_file_id = cm.audio_file_open_url(
             amen_path,
-            ca.get_audio_file_read_permission(),
-            ca.get_audio_file_wave_type()
+            cm.get_audio_file_read_permission(),
+            cm.get_audio_file_wave_type()
         )
         
         try:
-            packet_data, packets_read = ca.audio_file_read_packets(audio_file_id, 0, 1000)
+            packet_data, packets_read = cm.audio_file_read_packets(audio_file_id, 0, 1000)
         finally:
-            ca.audio_file_close(audio_file_id)
+            cm.audio_file_close(audio_file_id)
         
         coreaudio_time = time.time() - start_time
         

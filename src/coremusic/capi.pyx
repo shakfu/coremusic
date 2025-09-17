@@ -645,7 +645,7 @@ def get_linear_pcm_format_flag_is_non_interleaved():
 
 # The C audio player integration has been moved to audio_player.c
 # which provides a working demonstration of real audio playback using
-# our cycoreaudio wrapper infrastructure.
+# our coremusic wrapper infrastructure.
 
 
 def demonstrate_callback_infrastructure():
@@ -667,7 +667,7 @@ def demonstrate_callback_infrastructure():
     print("   • The AudioUnit infrastructure is complete and functional")
     print("   • Callback functions can be implemented in pure C extensions")
     print("   • Or use higher-level Python audio libraries with our CoreAudio access")
-    print("   • All low-level CoreAudio APIs are now available through cycoreaudio")
+    print("   • All low-level CoreAudio APIs are now available through coremusic")
     
     return True
 

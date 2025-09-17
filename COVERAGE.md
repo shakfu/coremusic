@@ -1,6 +1,6 @@
 # CoreAudio Python Bindings Coverage
 
-This document tracks the coverage of CoreAudio APIs in the cycoreaudio Python bindings.
+This document tracks the coverage of CoreAudio APIs in the coremusic Python bindings.
 
 ## Coverage Summary
 

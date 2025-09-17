@@ -8,7 +8,7 @@ import wave
 
 import pytest
 
-import coreaudio as ca
+import coremusic as cm
 
 
 class TestAudioUnitInfrastructure:
@@ -19,26 +19,26 @@ class TestAudioUnitInfrastructure:
         """Fixture providing a configured AudioUnit"""
         # Find default output AudioUnit
         description = {
-            'type': ca.get_audio_unit_type_output(),
-            'subtype': ca.get_audio_unit_subtype_default_output(),
-            'manufacturer': ca.get_audio_unit_manufacturer_apple(),
+            'type': cm.get_audio_unit_type_output(),
+            'subtype': cm.get_audio_unit_subtype_default_output(),
+            'manufacturer': cm.get_audio_unit_manufacturer_apple(),
             'flags': 0,
             'flags_mask': 0
         }
         
-        component_id = ca.audio_component_find_next(description)
+        component_id = cm.audio_component_find_next(description)
         assert component_id is not None
         
         # Create AudioUnit instance
-        audio_unit = ca.audio_component_instance_new(component_id)
+        audio_unit = cm.audio_component_instance_new(component_id)
         assert audio_unit is not None
         
         yield audio_unit
         
         # Cleanup
         try:
-            ca.audio_unit_uninitialize(audio_unit)
-            ca.audio_component_instance_dispose(audio_unit)
+            cm.audio_unit_uninitialize(audio_unit)
+            cm.audio_component_instance_dispose(audio_unit)
         except:
             pass  # Ignore cleanup errors
     
@@ -49,7 +49,7 @@ class TestAudioUnitInfrastructure:
     
     def test_audio_unit_initialization(self, audio_unit):
         """Test AudioUnit initialization"""
-        ca.audio_unit_initialize(audio_unit)
+        cm.audio_unit_initialize(audio_unit)
         # If we get here without exception, initialization succeeded
     
     def test_audio_unit_format_configuration(self, audio_unit):
@@ -57,9 +57,9 @@ class TestAudioUnitInfrastructure:
         # Create AudioStreamBasicDescription for 44.1kHz stereo 16-bit
         format_data = struct.pack('<dLLLLLLLL',
             44100.0,                                    # Sample rate
-            ca.get_audio_format_linear_pcm(),          # Format ID
-            ca.get_linear_pcm_format_flag_is_signed_integer() | 
-            ca.get_linear_pcm_format_flag_is_packed(),  # Format flags
+            cm.get_audio_format_linear_pcm(),          # Format ID
+            cm.get_linear_pcm_format_flag_is_signed_integer() | 
+            cm.get_linear_pcm_format_flag_is_packed(),  # Format flags
             4,                                         # Bytes per packet (2 channels * 2 bytes)
             1,                                         # Frames per packet
             4,                                         # Bytes per frame
@@ -70,10 +70,10 @@ class TestAudioUnitInfrastructure:
         
         # Set the format (may fail on some systems, that's ok)
         try:
-            ca.audio_unit_set_property(
+            cm.audio_unit_set_property(
                 audio_unit,
-                ca.get_audio_unit_property_stream_format(),
-                ca.get_audio_unit_scope_input(),
+                cm.get_audio_unit_property_stream_format(),
+                cm.get_audio_unit_scope_input(),
                 0,
                 format_data
             )
@@ -83,31 +83,31 @@ class TestAudioUnitInfrastructure:
     
     def test_audio_unit_hardware_control(self, audio_unit):
         """Test AudioUnit hardware start/stop control"""
-        ca.audio_unit_initialize(audio_unit)
+        cm.audio_unit_initialize(audio_unit)
         
         # Test start/stop
-        ca.audio_output_unit_start(audio_unit)
-        ca.audio_output_unit_stop(audio_unit)
+        cm.audio_output_unit_start(audio_unit)
+        cm.audio_output_unit_stop(audio_unit)
     
     def test_audio_unit_lifecycle(self, audio_unit):
         """Test complete AudioUnit lifecycle"""
         # Initialize
-        ca.audio_unit_initialize(audio_unit)
+        cm.audio_unit_initialize(audio_unit)
         
         # Start
-        ca.audio_output_unit_start(audio_unit)
+        cm.audio_output_unit_start(audio_unit)
         
         # Brief operation
         time.sleep(0.1)
         
         # Stop
-        ca.audio_output_unit_stop(audio_unit)
+        cm.audio_output_unit_stop(audio_unit)
         
         # Uninitialize
-        ca.audio_unit_uninitialize(audio_unit)
+        cm.audio_unit_uninitialize(audio_unit)
         
         # Dispose
-        ca.audio_component_instance_dispose(audio_unit)
+        cm.audio_component_instance_dispose(audio_unit)
 
 
 class TestErrorHandling:
@@ -117,7 +117,7 @@ class TestErrorHandling:
         """Test operations on invalid AudioUnit"""
         # Try to operate on None/invalid AudioUnit
         with pytest.raises(Exception):
-            ca.audio_unit_initialize(None)
+            cm.audio_unit_initialize(None)
     
     def test_audio_queue_with_invalid_format(self):
         """Test AudioQueue creation with invalid format"""
@@ -133,7 +133,7 @@ class TestErrorHandling:
         }
         
         with pytest.raises(Exception):
-            ca.audio_queue_new_output(invalid_format)
+            cm.audio_queue_new_output(invalid_format)
 
 
 class TestPerformance:
@@ -144,21 +144,21 @@ class TestPerformance:
         start_time = time.time()
         
         description = {
-            'type': ca.get_audio_unit_type_output(),
-            'subtype': ca.get_audio_unit_subtype_default_output(),
-            'manufacturer': ca.get_audio_unit_manufacturer_apple(),
+            'type': cm.get_audio_unit_type_output(),
+            'subtype': cm.get_audio_unit_subtype_default_output(),
+            'manufacturer': cm.get_audio_unit_manufacturer_apple(),
             'flags': 0,
             'flags_mask': 0
         }
         
-        component_id = ca.audio_component_find_next(description)
-        audio_unit = ca.audio_component_instance_new(component_id)
+        component_id = cm.audio_component_find_next(description)
+        audio_unit = cm.audio_component_instance_new(component_id)
         
         try:
-            ca.audio_unit_initialize(audio_unit)
+            cm.audio_unit_initialize(audio_unit)
         finally:
-            ca.audio_unit_uninitialize(audio_unit)
-            ca.audio_component_instance_dispose(audio_unit)
+            cm.audio_unit_uninitialize(audio_unit)
+            cm.audio_component_instance_dispose(audio_unit)
         
         creation_time = time.time() - start_time
         

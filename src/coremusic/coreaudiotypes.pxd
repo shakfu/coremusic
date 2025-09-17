@@ -1,5 +1,5 @@
 # coreaudiotypes.pxd
-# CoreAudio and CoreAudioTypes framework declarations for cycoreaudio
+# CoreAudio and CoreAudioTypes framework declarations for coremusic
 
 from .corefoundation cimport *
 

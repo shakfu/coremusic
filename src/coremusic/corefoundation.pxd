@@ -1,5 +1,5 @@
 # corefoundation.pxd
-# CoreFoundation framework declarations for cycoreaudio
+# CoreFoundation framework declarations for coremusic
 
 cdef extern from *:
     """

@@ -1,9 +1,9 @@
 //
 //  audio_player.c
-//  cycoreaudio - Simple Audio Player Implementation
+//  coremusic - Simple Audio Player Implementation
 //
 //  Based on iOS CoreAudio player by James Alvarez
-//  Adapted for cycoreaudio Python wrapper
+//  Adapted for coremusic Python wrapper
 //
 
 #include "audio_player.h"

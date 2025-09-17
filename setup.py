@@ -14,10 +14,10 @@ os.environ['LDFLAGS'] = " ".join([
 ])
 
 extensions = [
-    Extension("coreaudio.capi", 
+    Extension("coremusic.capi", 
         sources=[
-            "src/coreaudio/capi.pyx",
-            "src/coreaudio/audio_player.c"
+            "src/coremusic/capi.pyx",
+            "src/coremusic/audio_player.c"
         ],
         # define_macros = [
         #     ('PD', 1),
@@ -40,7 +40,9 @@ extensions = [
 
 
 setup(
-    name="coreaudio in cython",
+    name="coremusic",
+    description="coreaudio/coremidi in cython",
+    version="0.1.0",
     ext_modules=cythonize(extensions, 
         compiler_directives={
             'language_level' : '3',

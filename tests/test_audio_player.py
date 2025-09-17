@@ -4,16 +4,8 @@ import os
 import time
 import sys
 
-# Add the current directory to Python path to import our module
-sys.path.insert(0, os.path.dirname(__file__))
+import coremusic as cm
 
-try:
-    import coreaudio
-    print("✓ Successfully imported coreaudio module")
-except ImportError as e:
-    print(f"✗ Failed to import coreaudio module: {e}")
-    print("Make sure to run 'make coreaudio' first to build the extension")
-    sys.exit(1)
 
 def test_audio_playback():
     """Test audio playback using the AudioPlayer class"""
@@ -26,7 +18,7 @@ def test_audio_playback():
     
     try:
         # Create AudioPlayer instance
-        player = coreaudio.AudioPlayer()
+        player = cm.AudioPlayer()
         print("✓ Created AudioPlayer instance")
         
         # Load the audio file
@@ -73,6 +65,6 @@ def test_audio_playback():
         assert False
 
 def test_module_test_error():
-    error_code = coreaudio.test_error()
+    error_code = cm.test_error()
     assert error_code
     print(f"✓ Basic module test passed (error code: {error_code})")

@@ -4,7 +4,7 @@
 import os
 import pytest
 import tempfile
-import coreaudio as ca
+import coremusic as cm
 
 
 class TestMusicDeviceConstants:
@@ -13,17 +13,17 @@ class TestMusicDeviceConstants:
     def test_music_note_event_constants(self):
         """Test MusicDevice note event constants"""
         # 0xFFFFFFFF is treated as -1 in Python signed integers
-        assert ca.get_music_note_event_use_group_instrument() == -1
-        assert ca.get_music_note_event_unused() == -1
+        assert cm.get_music_note_event_use_group_instrument() == -1
+        assert cm.get_music_note_event_unused() == -1
 
     def test_music_device_selector_constants(self):
         """Test MusicDevice selector constants"""
-        assert ca.get_music_device_range() == 0x0100
-        assert ca.get_music_device_midi_event_select() == 0x0101
-        assert ca.get_music_device_sysex_select() == 0x0102
-        assert ca.get_music_device_start_note_select() == 0x0105
-        assert ca.get_music_device_stop_note_select() == 0x0106
-        assert ca.get_music_device_midi_event_list_select() == 0x0107
+        assert cm.get_music_device_range() == 0x0100
+        assert cm.get_music_device_midi_event_select() == 0x0101
+        assert cm.get_music_device_sysex_select() == 0x0102
+        assert cm.get_music_device_start_note_select() == 0x0105
+        assert cm.get_music_device_stop_note_select() == 0x0106
+        assert cm.get_music_device_midi_event_list_select() == 0x0107
 
 
 class TestMusicDeviceHelpers:
@@ -31,7 +31,7 @@ class TestMusicDeviceHelpers:
 
     def test_create_std_note_params(self):
         """Test creating standard note parameters"""
-        params = ca.create_music_device_std_note_params(60.0, 127.0)
+        params = cm.create_music_device_std_note_params(60.0, 127.0)
         assert params['argCount'] == 2
         assert params['pitch'] == 60.0
         assert params['velocity'] == 127.0
@@ -39,7 +39,7 @@ class TestMusicDeviceHelpers:
     def test_create_note_params_with_controls(self):
         """Test creating note parameters with controls"""
         controls = [(1, 64.0), (7, 100.0)]  # Modulation wheel, Volume
-        params = ca.create_music_device_note_params(60.0, 100.0, controls)
+        params = cm.create_music_device_note_params(60.0, 100.0, controls)
         assert params['argCount'] == 4  # pitch + velocity + 2 controls
         assert params['pitch'] == 60.0
         assert params['velocity'] == 100.0
@@ -47,52 +47,52 @@ class TestMusicDeviceHelpers:
 
     def test_midi_note_on_helper(self):
         """Test MIDI Note On helper function"""
-        status, data1, data2 = ca.midi_note_on(0, 60, 127)
+        status, data1, data2 = cm.midi_note_on(0, 60, 127)
         assert status == 0x90  # Note On channel 0
         assert data1 == 60     # Middle C
         assert data2 == 127    # Max velocity
 
         # Test with different channel
-        status, data1, data2 = ca.midi_note_on(9, 36, 64)
+        status, data1, data2 = cm.midi_note_on(9, 36, 64)
         assert status == 0x99  # Note On channel 9 (drum channel)
         assert data1 == 36     # Bass drum
         assert data2 == 64     # Medium velocity
 
     def test_midi_note_off_helper(self):
         """Test MIDI Note Off helper function"""
-        status, data1, data2 = ca.midi_note_off(0, 60)
+        status, data1, data2 = cm.midi_note_off(0, 60)
         assert status == 0x80  # Note Off channel 0
         assert data1 == 60     # Middle C
         assert data2 == 0      # Default velocity
 
         # Test with specific velocity
-        status, data1, data2 = ca.midi_note_off(5, 72, 64)
+        status, data1, data2 = cm.midi_note_off(5, 72, 64)
         assert status == 0x85  # Note Off channel 5
         assert data1 == 72
         assert data2 == 64
 
     def test_midi_control_change_helper(self):
         """Test MIDI Control Change helper function"""
-        status, data1, data2 = ca.midi_control_change(0, 7, 127)
+        status, data1, data2 = cm.midi_control_change(0, 7, 127)
         assert status == 0xB0  # CC channel 0
         assert data1 == 7      # Volume controller
         assert data2 == 127    # Max volume
 
         # Test modulation wheel
-        status, data1, data2 = ca.midi_control_change(3, 1, 64)
+        status, data1, data2 = cm.midi_control_change(3, 1, 64)
         assert status == 0xB3  # CC channel 3
         assert data1 == 1      # Modulation wheel
         assert data2 == 64
 
     def test_midi_program_change_helper(self):
         """Test MIDI Program Change helper function"""
-        status, data1, data2 = ca.midi_program_change(0, 0)
+        status, data1, data2 = cm.midi_program_change(0, 0)
         assert status == 0xC0  # Program Change channel 0
         assert data1 == 0      # Piano (GM)
         assert data2 == 0      # Unused
 
         # Test different program
-        status, data1, data2 = ca.midi_program_change(9, 0)
+        status, data1, data2 = cm.midi_program_change(9, 0)
         assert status == 0xC9  # Program Change channel 9
         assert data1 == 0
         assert data2 == 0
@@ -100,19 +100,19 @@ class TestMusicDeviceHelpers:
     def test_midi_pitch_bend_helper(self):
         """Test MIDI Pitch Bend helper function"""
         # Center position (no bend)
-        status, data1, data2 = ca.midi_pitch_bend(0, 8192)
+        status, data1, data2 = cm.midi_pitch_bend(0, 8192)
         assert status == 0xE0  # Pitch Bend channel 0
         assert data1 == 0      # LSB
         assert data2 == 64     # MSB (center)
 
         # Maximum up bend
-        status, data1, data2 = ca.midi_pitch_bend(2, 16383)
+        status, data1, data2 = cm.midi_pitch_bend(2, 16383)
         assert status == 0xE2  # Pitch Bend channel 2
         assert data1 == 127    # LSB
         assert data2 == 127    # MSB
 
         # Minimum down bend
-        status, data1, data2 = ca.midi_pitch_bend(1, 0)
+        status, data1, data2 = cm.midi_pitch_bend(1, 0)
         assert status == 0xE1  # Pitch Bend channel 1
         assert data1 == 0      # LSB
         assert data2 == 0      # MSB
@@ -120,18 +120,18 @@ class TestMusicDeviceHelpers:
     def test_midi_data_bounds_checking(self):
         """Test that MIDI helper functions respect bounds"""
         # Test channel bounds (should mask to 0-15)
-        status, _, _ = ca.midi_note_on(16, 60, 127)  # Channel 16 -> 0
+        status, _, _ = cm.midi_note_on(16, 60, 127)  # Channel 16 -> 0
         assert status == 0x90
 
-        status, _, _ = ca.midi_note_on(255, 60, 127)  # Channel 255 -> 15
+        status, _, _ = cm.midi_note_on(255, 60, 127)  # Channel 255 -> 15
         assert status == 0x9F
 
         # Test data bounds (should mask to 0-127)
-        _, data1, data2 = ca.midi_note_on(0, 128, 128)
+        _, data1, data2 = cm.midi_note_on(0, 128, 128)
         assert data1 == 0   # 128 & 0x7F = 0
         assert data2 == 0   # 128 & 0x7F = 0
 
-        _, data1, data2 = ca.midi_control_change(0, 255, 255)
+        _, data1, data2 = cm.midi_control_change(0, 255, 255)
         assert data1 == 127  # 255 & 0x7F = 127
         assert data2 == 127  # 255 & 0x7F = 127
 
@@ -144,24 +144,24 @@ class TestMusicDeviceBasicOperations:
         """Create a music device audio unit for testing"""
         # Try to find a music device component
         desc = {
-            'type': ca.get_audio_component_type_music_device(),
+            'type': cm.get_audio_component_type_music_device(),
             'subtype': 0,  # Any subtype
             'manufacturer': 0,  # Any manufacturer
             'flags': 0,
             'flags_mask': 0
         }
 
-        component = ca.audio_component_find_next(desc)
+        component = cm.audio_component_find_next(desc)
         if not component:
             pytest.skip("No music device components available")
 
         # Create instance
-        unit = ca.audio_component_instance_new(component)
+        unit = cm.audio_component_instance_new(component)
         yield unit
 
         # Cleanup
         try:
-            ca.audio_component_instance_dispose(unit)
+            cm.audio_component_instance_dispose(unit)
         except:
             pass  # Ignore cleanup errors
 
@@ -169,7 +169,7 @@ class TestMusicDeviceBasicOperations:
         """Test basic MIDI event sending"""
         # Test Note On
         try:
-            result = ca.music_device_midi_event(
+            result = cm.music_device_midi_event(
                 music_device_unit, 0x90, 60, 127, 0
             )
             assert result == 0  # noErr
@@ -183,7 +183,7 @@ class TestMusicDeviceBasicOperations:
         sysex_data = bytes([0xF0, 0x7E, 0x7F, 0x09, 0x01, 0xF7])
 
         try:
-            result = ca.music_device_sysex(music_device_unit, sysex_data)
+            result = cm.music_device_sysex(music_device_unit, sysex_data)
             assert result == 0  # noErr
         except RuntimeError as e:
             # Some music devices may not support SysEx
@@ -193,9 +193,9 @@ class TestMusicDeviceBasicOperations:
         """Test basic note start/stop functionality"""
         try:
             # Start a note
-            note_id = ca.music_device_start_note(
+            note_id = cm.music_device_start_note(
                 music_device_unit,
-                ca.get_music_note_event_unused(),  # Use current patch
+                cm.get_music_note_event_unused(),  # Use current patch
                 0,      # Group 0
                 60.0,   # Middle C
                 100.0,  # Velocity
@@ -205,7 +205,7 @@ class TestMusicDeviceBasicOperations:
             assert note_id != 0
 
             # Stop the note
-            result = ca.music_device_stop_note(
+            result = cm.music_device_stop_note(
                 music_device_unit, 0, note_id, 0
             )
             assert result == 0  # noErr
@@ -219,9 +219,9 @@ class TestMusicDeviceBasicOperations:
         try:
             # Start note with modulation and volume controls
             controls = [(1, 64.0), (7, 100.0)]  # Modulation, Volume
-            note_id = ca.music_device_start_note(
+            note_id = cm.music_device_start_note(
                 music_device_unit,
-                ca.get_music_note_event_unused(),
+                cm.get_music_note_event_unused(),
                 0,        # Group 0
                 67.0,     # G above middle C
                 80.0,     # Velocity
@@ -232,7 +232,7 @@ class TestMusicDeviceBasicOperations:
             assert note_id != 0
 
             # Stop the note
-            result = ca.music_device_stop_note(
+            result = cm.music_device_stop_note(
                 music_device_unit, 0, note_id, 0
             )
             assert result == 0  # noErr
@@ -250,19 +250,19 @@ class TestMusicDeviceErrorHandling:
 
         # Test MIDI event with invalid unit
         with pytest.raises(RuntimeError):
-            ca.music_device_midi_event(invalid_unit, 0x90, 60, 127)
+            cm.music_device_midi_event(invalid_unit, 0x90, 60, 127)
 
         # Test SysEx with invalid unit
         with pytest.raises(RuntimeError):
-            ca.music_device_sysex(invalid_unit, bytes([0xF0, 0xF7]))
+            cm.music_device_sysex(invalid_unit, bytes([0xF0, 0xF7]))
 
         # Test start note with invalid unit
         with pytest.raises(RuntimeError):
-            ca.music_device_start_note(invalid_unit, 0, 0, 60.0, 100.0)
+            cm.music_device_start_note(invalid_unit, 0, 0, 60.0, 100.0)
 
         # Test stop note with invalid unit
         with pytest.raises(RuntimeError):
-            ca.music_device_stop_note(invalid_unit, 0, 1)
+            cm.music_device_stop_note(invalid_unit, 0, 1)
 
     def test_invalid_sysex_data_handling(self):
         """Test handling of invalid SysEx data"""
@@ -272,11 +272,11 @@ class TestMusicDeviceErrorHandling:
 
         # Test with empty data
         with pytest.raises(RuntimeError):
-            ca.music_device_sysex(invalid_unit, b"")
+            cm.music_device_sysex(invalid_unit, b"")
 
         # Test with non-bytes data would cause TypeError at Python level
         with pytest.raises(TypeError):
-            ca.music_device_sysex(invalid_unit, "not bytes")
+            cm.music_device_sysex(invalid_unit, "not bytes")
 
     def test_parameter_validation(self):
         """Test parameter validation"""
@@ -284,15 +284,15 @@ class TestMusicDeviceErrorHandling:
 
         # Test with invalid pitch range (should still work, but might be clamped by audio unit)
         with pytest.raises(RuntimeError):
-            ca.music_device_start_note(invalid_unit, 0, 0, -1.0, 100.0)
+            cm.music_device_start_note(invalid_unit, 0, 0, -1.0, 100.0)
 
         # Test with invalid velocity (should still work)
         with pytest.raises(RuntimeError):
-            ca.music_device_start_note(invalid_unit, 0, 0, 60.0, -1.0)
+            cm.music_device_start_note(invalid_unit, 0, 0, 60.0, -1.0)
 
         # Test with invalid group ID (large number should work)
         with pytest.raises(RuntimeError):
-            ca.music_device_start_note(invalid_unit, 0, 999999, 60.0, 100.0)
+            cm.music_device_start_note(invalid_unit, 0, 999999, 60.0, 100.0)
 
 
 class TestMusicDeviceIntegration:
@@ -304,30 +304,30 @@ class TestMusicDeviceIntegration:
         try:
             # Try to find a music device component
             desc = {
-                'type': ca.get_audio_component_type_music_device(),
+                'type': cm.get_audio_component_type_music_device(),
                 'subtype': 0,  # Any subtype
                 'manufacturer': 0,  # Any manufacturer
                 'flags': 0,
                 'flags_mask': 0
             }
 
-            component = ca.audio_component_find_next(desc)
+            component = cm.audio_component_find_next(desc)
             if not component:
                 pytest.skip("No music device components available")
 
             # Create and initialize instance
-            unit = ca.audio_component_instance_new(component)
+            unit = cm.audio_component_instance_new(component)
 
             try:
                 # Try to initialize the audio unit
-                ca.audio_unit_initialize(unit)
+                cm.audio_unit_initialize(unit)
                 yield unit
-                ca.audio_unit_uninitialize(unit)
+                cm.audio_unit_uninitialize(unit)
             except:
                 # If initialization fails, still yield for basic tests
                 yield unit
 
-            ca.audio_component_instance_dispose(unit)
+            cm.audio_component_instance_dispose(unit)
 
         except Exception as e:
             pytest.skip(f"Could not create music device: {e}")
@@ -338,14 +338,14 @@ class TestMusicDeviceIntegration:
 
         try:
             # Send program change to select a sound
-            status, data1, data2 = ca.midi_program_change(0, 0)  # Piano
-            ca.music_device_midi_event(unit, status, data1, data2)
+            status, data1, data2 = cm.midi_program_change(0, 0)  # Piano
+            cm.music_device_midi_event(unit, status, data1, data2)
 
             # Start multiple notes
             note_ids = []
             for pitch in [60, 64, 67]:  # C major chord
-                note_id = ca.music_device_start_note(
-                    unit, ca.get_music_note_event_unused(),
+                note_id = cm.music_device_start_note(
+                    unit, cm.get_music_note_event_unused(),
                     0, float(pitch), 100.0, 0
                 )
                 note_ids.append(note_id)
@@ -356,7 +356,7 @@ class TestMusicDeviceIntegration:
 
             # Stop all notes
             for note_id in note_ids:
-                result = ca.music_device_stop_note(unit, 0, note_id, 0)
+                result = cm.music_device_stop_note(unit, 0, note_id, 0)
                 assert result == 0
 
         except RuntimeError as e:
@@ -370,27 +370,27 @@ class TestMusicDeviceIntegration:
         try:
             # Send a sequence of MIDI events
             midi_events = [
-                ca.midi_program_change(0, 0),           # Select piano
-                ca.midi_control_change(0, 7, 100),      # Set volume
-                ca.midi_control_change(0, 1, 0),        # Reset modulation
-                ca.midi_note_on(0, 60, 100),            # Play C
-                ca.midi_note_on(0, 64, 100),            # Play E
-                ca.midi_note_on(0, 67, 100),            # Play G
+                cm.midi_program_change(0, 0),           # Select piano
+                cm.midi_control_change(0, 7, 100),      # Set volume
+                cm.midi_control_change(0, 1, 0),        # Reset modulation
+                cm.midi_note_on(0, 60, 100),            # Play C
+                cm.midi_note_on(0, 64, 100),            # Play E
+                cm.midi_note_on(0, 67, 100),            # Play G
             ]
 
             for status, data1, data2 in midi_events:
-                result = ca.music_device_midi_event(unit, status, data1, data2, 0)
+                result = cm.music_device_midi_event(unit, status, data1, data2, 0)
                 assert result == 0
 
             # Send note offs
             note_offs = [
-                ca.midi_note_off(0, 60),
-                ca.midi_note_off(0, 64),
-                ca.midi_note_off(0, 67),
+                cm.midi_note_off(0, 60),
+                cm.midi_note_off(0, 64),
+                cm.midi_note_off(0, 67),
             ]
 
             for status, data1, data2 in note_offs:
-                result = ca.music_device_midi_event(unit, status, data1, data2, 0)
+                result = cm.music_device_midi_event(unit, status, data1, data2, 0)
                 assert result == 0
 
         except RuntimeError as e:
@@ -405,24 +405,24 @@ class TestMusicDeviceResourceManagement:
         try:
             # Try to find a music device
             desc = {
-                'type': ca.get_audio_component_type_music_device(),
+                'type': cm.get_audio_component_type_music_device(),
                 'subtype': 0,
                 'manufacturer': 0,
                 'flags': 0,
                 'flags_mask': 0
             }
-            component = ca.audio_component_find_next(desc)
+            component = cm.audio_component_find_next(desc)
             if not component:
                 pytest.skip("No music device available")
 
-            unit = ca.audio_component_instance_new(component)
+            unit = cm.audio_component_instance_new(component)
 
             try:
                 # Start multiple notes
                 note_ids = []
                 for i in range(5):
-                    note_id = ca.music_device_start_note(
-                        unit, ca.get_music_note_event_unused(),
+                    note_id = cm.music_device_start_note(
+                        unit, cm.get_music_note_event_unused(),
                         0, 60.0 + i, 100.0, 0
                     )
                     note_ids.append(note_id)
@@ -432,14 +432,14 @@ class TestMusicDeviceResourceManagement:
 
                 # Stop all notes
                 for note_id in note_ids:
-                    result = ca.music_device_stop_note(unit, 0, note_id, 0)
+                    result = cm.music_device_stop_note(unit, 0, note_id, 0)
                     assert result == 0
 
             except RuntimeError as e:
                 print(f"Multiple note test skipped: {e}")
 
             finally:
-                ca.audio_component_instance_dispose(unit)
+                cm.audio_component_instance_dispose(unit)
 
         except Exception as e:
             pytest.skip(f"Resource management test failed: {e}")
@@ -448,17 +448,17 @@ class TestMusicDeviceResourceManagement:
         """Test SysEx messages of various sizes"""
         try:
             desc = {
-                'type': ca.get_audio_component_type_music_device(),
+                'type': cm.get_audio_component_type_music_device(),
                 'subtype': 0,
                 'manufacturer': 0,
                 'flags': 0,
                 'flags_mask': 0
             }
-            component = ca.audio_component_find_next(desc)
+            component = cm.audio_component_find_next(desc)
             if not component:
                 pytest.skip("No music device available")
 
-            unit = ca.audio_component_instance_new(component)
+            unit = cm.audio_component_instance_new(component)
 
             try:
                 # Test different sized SysEx messages
@@ -470,14 +470,14 @@ class TestMusicDeviceResourceManagement:
 
                 for sysex_data in sysex_messages:
                     try:
-                        result = ca.music_device_sysex(unit, sysex_data)
+                        result = cm.music_device_sysex(unit, sysex_data)
                         assert result == 0
                     except RuntimeError:
                         # Some devices may not support certain SysEx messages
                         pass
 
             finally:
-                ca.audio_component_instance_dispose(unit)
+                cm.audio_component_instance_dispose(unit)
 
         except Exception as e:
             pytest.skip(f"SysEx size test failed: {e}")

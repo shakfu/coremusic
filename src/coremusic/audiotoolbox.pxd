@@ -1,5 +1,5 @@
 # audiotoolbox.pxd
-# AudioToolbox framework declarations for cycoreaudio
+# AudioToolbox framework declarations for coremusic
 
 from .corefoundation cimport *
 from .coreaudiotypes cimport *

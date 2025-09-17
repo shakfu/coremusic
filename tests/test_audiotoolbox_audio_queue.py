@@ -5,7 +5,7 @@ import wave
 
 import pytest
 
-import coreaudio as ca
+import coremusic as cm
 
 
 
@@ -18,9 +18,9 @@ class TestAudioQueueOperations:
         """Fixture providing standard audio format"""
         return {
             'sample_rate': 44100.0,
-            'format_id': ca.get_audio_format_linear_pcm(),
-            'format_flags': ca.get_linear_pcm_format_flag_is_signed_integer() | 
-                           ca.get_linear_pcm_format_flag_is_packed(),
+            'format_id': cm.get_audio_format_linear_pcm(),
+            'format_flags': cm.get_linear_pcm_format_flag_is_signed_integer() | 
+                           cm.get_linear_pcm_format_flag_is_packed(),
             'bytes_per_packet': 4,
             'frames_per_packet': 1,
             'bytes_per_frame': 4,
@@ -30,54 +30,54 @@ class TestAudioQueueOperations:
     
     def test_audio_queue_creation(self, audio_format):
         """Test AudioQueue creation"""
-        queue_id = ca.audio_queue_new_output(audio_format)
+        queue_id = cm.audio_queue_new_output(audio_format)
         assert queue_id is not None
         assert isinstance(queue_id, int)
         
         # Cleanup
-        ca.audio_queue_dispose(queue_id, True)
+        cm.audio_queue_dispose(queue_id, True)
     
     def test_audio_queue_buffer_allocation(self, audio_format):
         """Test AudioQueue buffer allocation"""
-        queue_id = ca.audio_queue_new_output(audio_format)
+        queue_id = cm.audio_queue_new_output(audio_format)
         
         try:
             buffer_size = 8192
-            buffer_id = ca.audio_queue_allocate_buffer(queue_id, buffer_size)
+            buffer_id = cm.audio_queue_allocate_buffer(queue_id, buffer_size)
             assert buffer_id is not None
             assert isinstance(buffer_id, int)
             
         finally:
-            ca.audio_queue_dispose(queue_id, True)
+            cm.audio_queue_dispose(queue_id, True)
     
     def test_audio_queue_lifecycle(self, audio_format):
         """Test complete AudioQueue lifecycle"""
-        queue_id = ca.audio_queue_new_output(audio_format)
+        queue_id = cm.audio_queue_new_output(audio_format)
         
         try:
             # Allocate buffers
-            buffer1_id = ca.audio_queue_allocate_buffer(queue_id, 8192)
-            buffer2_id = ca.audio_queue_allocate_buffer(queue_id, 8192)
+            buffer1_id = cm.audio_queue_allocate_buffer(queue_id, 8192)
+            buffer2_id = cm.audio_queue_allocate_buffer(queue_id, 8192)
             
             # Note: Enqueuing buffers without a callback may fail on some systems
             # This is expected behavior - we're testing the infrastructure, not actual playback
             try:
-                ca.audio_queue_enqueue_buffer(queue_id, buffer1_id)
-                ca.audio_queue_enqueue_buffer(queue_id, buffer2_id)
+                cm.audio_queue_enqueue_buffer(queue_id, buffer1_id)
+                cm.audio_queue_enqueue_buffer(queue_id, buffer2_id)
                 
                 # Start queue
-                ca.audio_queue_start(queue_id)
+                cm.audio_queue_start(queue_id)
                 
                 # Brief operation
                 time.sleep(0.1)
                 
                 # Stop queue
-                ca.audio_queue_stop(queue_id, True)
+                cm.audio_queue_stop(queue_id, True)
             except RuntimeError as e:
                 # This is expected when no callback is set up
                 # The important thing is that we can create and dispose the queue
                 assert "AudioQueueEnqueueBuffer failed" in str(e) or "AudioQueueStart failed" in str(e)
             
         finally:
-            ca.audio_queue_dispose(queue_id, True)
+            cm.audio_queue_dispose(queue_id, True)
 
