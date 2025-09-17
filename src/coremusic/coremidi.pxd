@@ -222,3 +222,147 @@ cdef extern from "CoreMIDI/MIDIServices.h":
         const UInt8* data)
 
     # Note: Property constants omitted for now due to CFStringRef extern issues
+
+# CoreMIDI MIDIMessages.h API declarations
+cdef extern from "CoreMIDI/MIDIMessages.h":
+
+    # MIDI Universal Packet message type nibbles
+    ctypedef enum MIDIMessageType:
+        kMIDIMessageTypeUtility = 0x0
+        kMIDIMessageTypeSystem = 0x1
+        kMIDIMessageTypeChannelVoice1 = 0x2
+        kMIDIMessageTypeSysEx = 0x3
+        kMIDIMessageTypeChannelVoice2 = 0x4
+        kMIDIMessageTypeData128 = 0x5
+        kMIDIMessageTypeUnknownF = 0xF
+
+    # Channel Voice status nibbles
+    ctypedef enum MIDICVStatus:
+        # MIDI 1.0
+        kMIDICVStatusNoteOff = 0x8
+        kMIDICVStatusNoteOn = 0x9
+        kMIDICVStatusPolyPressure = 0xA
+        kMIDICVStatusControlChange = 0xB
+        kMIDICVStatusProgramChange = 0xC
+        kMIDICVStatusChannelPressure = 0xD
+        kMIDICVStatusPitchBend = 0xE
+        # MIDI 2.0
+        kMIDICVStatusRegisteredPNC = 0x0
+        kMIDICVStatusAssignablePNC = 0x1
+        kMIDICVStatusRegisteredControl = 0x2
+        kMIDICVStatusAssignableControl = 0x3
+        kMIDICVStatusRelRegisteredControl = 0x4
+        kMIDICVStatusRelAssignableControl = 0x5
+        kMIDICVStatusPerNotePitchBend = 0x6
+        kMIDICVStatusPerNoteMgmt = 0xF
+
+    # System status bytes
+    ctypedef enum MIDISystemStatus:
+        kMIDIStatusStartOfExclusive = 0xF0
+        kMIDIStatusEndOfExclusive = 0xF7
+        kMIDIStatusMTC = 0xF1
+        kMIDIStatusSongPosPointer = 0xF2
+        kMIDIStatusSongSelect = 0xF3
+        kMIDIStatusTuneRequest = 0xF6
+        kMIDIStatusTimingClock = 0xF8
+        kMIDIStatusStart = 0xFA
+        kMIDIStatusContinue = 0xFB
+        kMIDIStatusStop = 0xFC
+        kMIDIStatusActiveSending = 0xFE
+        kMIDIStatusActiveSensing = 0xFE
+        kMIDIStatusSystemReset = 0xFF
+
+    # SysEx status nibbles
+    ctypedef enum MIDISysExStatus:
+        kMIDISysExStatusComplete = 0x0
+        kMIDISysExStatusStart = 0x1
+        kMIDISysExStatusContinue = 0x2
+        kMIDISysExStatusEnd = 0x3
+        kMIDISysExStatusMixedDataSetHeader = 0x8
+        kMIDISysExStatusMixedDataSetPayload = 0x9
+
+    # Utility status nibbles
+    ctypedef enum MIDIUtilityStatus:
+        kMIDIUtilityStatusNOOP = 0x0
+        kMIDIUtilityStatusJitterReductionClock = 0x1
+        kMIDIUtilityStatusJitterReductionTimestamp = 0x2
+
+    # MIDI 2.0 Note Attribute Types
+    ctypedef enum MIDINoteAttribute:
+        kMIDINoteAttributeNone = 0x0
+        kMIDINoteAttributeManufacturerSpecific = 0x1
+        kMIDINoteAttributeProfileSpecific = 0x2
+        kMIDINoteAttributePitch = 0x3
+
+    # MIDI 2.0 Program Change Options
+    ctypedef enum MIDIProgramChangeOptions:
+        kMIDIProgramChangeBankValid = 0x1
+
+    # MIDI 2.0 Per Note Management Options
+    ctypedef enum MIDIPerNoteManagementOptions:
+        kMIDIPerNoteManagementReset = 0x1
+        kMIDIPerNoteManagementDetach = 0x2
+
+    # Universal MIDI Packet structs
+    ctypedef UInt32 MIDIMessage_32
+
+    ctypedef struct MIDIMessage_64:
+        UInt32 word0
+        UInt32 word1
+
+    ctypedef struct MIDIMessage_96:
+        UInt32 word0
+        UInt32 word1
+        UInt32 word2
+
+    ctypedef struct MIDIMessage_128:
+        UInt32 word0
+        UInt32 word1
+        UInt32 word2
+        UInt32 word3
+
+    # Universal MIDI Packet message helper functions
+    cdef MIDIMessageType MIDIMessageTypeForUPWord(const UInt32 word)
+
+    # MIDI 1.0 Universal MIDI Packet helper functions
+    cdef MIDIMessage_32 MIDI1UPChannelVoiceMessage(UInt8 group, UInt8 status, UInt8 channel, UInt8 data1, UInt8 data2)
+    cdef MIDIMessage_32 MIDI1UPNoteOff(UInt8 group, UInt8 channel, UInt8 noteNumber, UInt8 velocity)
+    cdef MIDIMessage_32 MIDI1UPNoteOn(UInt8 group, UInt8 channel, UInt8 noteNumber, UInt8 velocity)
+    cdef MIDIMessage_32 MIDI1UPControlChange(UInt8 group, UInt8 channel, UInt8 index, UInt8 data)
+    cdef MIDIMessage_32 MIDI1UPPitchBend(UInt8 group, UInt8 channel, UInt8 lsb, UInt8 msb)
+    cdef MIDIMessage_32 MIDI1UPSystemCommon(UInt8 group, UInt8 status, UInt8 byte1, UInt8 byte2)
+    cdef MIDIMessage_64 MIDI1UPSysEx(UInt8 group, UInt8 status, UInt8 bytesUsed, UInt8 byte1, UInt8 byte2, UInt8 byte3, UInt8 byte4, UInt8 byte5, UInt8 byte6)
+    cdef MIDIMessage_64 MIDI1UPSysExArray(UInt8 group, UInt8 status, const UInt8* begin, const UInt8* end)
+
+    # MIDI 2.0 Channel Voice Message helper functions
+    cdef MIDIMessage_64 MIDI2ChannelVoiceMessage(UInt8 group, UInt8 status, UInt8 channel, UInt16 index, UInt32 value)
+    cdef MIDIMessage_64 MIDI2NoteOn(UInt8 group, UInt8 channel, UInt8 noteNumber, UInt8 attributeType, UInt16 attributeData, UInt16 velocity)
+    cdef MIDIMessage_64 MIDI2NoteOff(UInt8 group, UInt8 channel, UInt8 noteNumber, UInt8 attributeType, UInt16 attributeData, UInt16 velocity)
+    cdef MIDIMessage_64 MIDI2PolyPressure(UInt8 group, UInt8 channel, UInt8 noteNumber, UInt32 value)
+    cdef MIDIMessage_64 MIDI2RegisteredPNC(UInt8 group, UInt8 channel, UInt8 noteNumber, UInt8 index, UInt32 value)
+    cdef MIDIMessage_64 MIDI2AssignablePNC(UInt8 group, UInt8 channel, UInt8 noteNumber, UInt8 index, UInt32 value)
+    cdef MIDIMessage_64 MIDI2PerNoteManagment(UInt8 group, UInt8 channel, UInt8 noteNumber, bint detachPNCs, bint resetPNCsToDefault)
+    cdef MIDIMessage_64 MIDI2ControlChange(UInt8 group, UInt8 channel, UInt8 index, UInt32 value)
+    cdef MIDIMessage_64 MIDI2RegisteredControl(UInt8 group, UInt8 channel, UInt8 bank, UInt8 index, UInt32 value)
+    cdef MIDIMessage_64 MIDI2AssignableControl(UInt8 group, UInt8 channel, UInt8 bank, UInt8 index, UInt32 value)
+    cdef MIDIMessage_64 MIDI2RelRegisteredControl(UInt8 group, UInt8 channel, UInt8 bank, UInt8 index, UInt32 value)
+    cdef MIDIMessage_64 MIDI2RelAssignableControl(UInt8 group, UInt8 channel, UInt8 bank, UInt8 index, UInt32 value)
+    cdef MIDIMessage_64 MIDI2ProgramChange(UInt8 group, UInt8 channel, bint bankIsValid, UInt8 program, UInt8 bank_msb, UInt8 bank_lsb)
+    cdef MIDIMessage_64 MIDI2ChannelPressure(UInt8 group, UInt8 channel, UInt32 value)
+    cdef MIDIMessage_64 MIDI2PitchBend(UInt8 group, UInt8 channel, UInt32 value)
+    cdef MIDIMessage_64 MIDI2PerNotePitchBend(UInt8 group, UInt8 channel, UInt8 noteNumber, UInt32 value)
+
+    # Universal Message structure and visitor types
+    ctypedef struct MIDIUniversalMessage:
+        MIDIMessageType type
+        UInt8 group
+        UInt8 reserved[3]
+        # Union members are simplified for Cython - full structure is complex
+
+    ctypedef void (*MIDIEventVisitor)(void* context, MIDITimeStamp timeStamp, MIDIUniversalMessage message)
+
+    # Event list parsing function
+    cdef void MIDIEventListForEachEvent(
+        const MIDIEventList* evtlist,
+        MIDIEventVisitor visitor,
+        void* visitorContext)

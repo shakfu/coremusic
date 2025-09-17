@@ -2810,3 +2810,286 @@ def get_midi_property_driver_owner():
 def get_midi_property_display_name():
     """Get the 'displayName' property key."""
     return "displayName"
+
+
+# MIDI Messages (Universal MIDI Packet) Functions
+
+def midi_message_type_for_up_word(int word):
+    """Get the message type from a Universal MIDI Packet word.
+
+    Args:
+        word: 32-bit Universal MIDI Packet word
+
+    Returns:
+        MIDIMessageType enum value
+    """
+    return midi.MIDIMessageTypeForUPWord(<ca.UInt32>word)
+
+# MIDI 1.0 Universal MIDI Packet Functions
+
+def midi1_up_channel_voice_message(int group, int status, int channel, int data1, int data2):
+    """Create a MIDI 1.0 Universal Packet channel voice message.
+
+    Args:
+        group: MIDI group (0-15)
+        status: MIDI status nibble
+        channel: MIDI channel (0-15)
+        data1: First data byte
+        data2: Second data byte
+
+    Returns:
+        32-bit MIDI message
+    """
+    return midi.MIDI1UPChannelVoiceMessage(<ca.UInt8>group, <ca.UInt8>status,
+                                           <ca.UInt8>channel, <ca.UInt8>data1, <ca.UInt8>data2)
+
+def midi1_up_note_off(int group, int channel, int note_number, int velocity):
+    """Create a MIDI 1.0 Universal Packet Note Off message.
+
+    Args:
+        group: MIDI group (0-15)
+        channel: MIDI channel (0-15)
+        note_number: Note number (0-127)
+        velocity: Note velocity (0-127)
+
+    Returns:
+        32-bit MIDI message
+    """
+    return midi.MIDI1UPNoteOff(<ca.UInt8>group, <ca.UInt8>channel,
+                               <ca.UInt8>note_number, <ca.UInt8>velocity)
+
+def midi1_up_note_on(int group, int channel, int note_number, int velocity):
+    """Create a MIDI 1.0 Universal Packet Note On message.
+
+    Args:
+        group: MIDI group (0-15)
+        channel: MIDI channel (0-15)
+        note_number: Note number (0-127)
+        velocity: Note velocity (0-127)
+
+    Returns:
+        32-bit MIDI message
+    """
+    return midi.MIDI1UPNoteOn(<ca.UInt8>group, <ca.UInt8>channel,
+                              <ca.UInt8>note_number, <ca.UInt8>velocity)
+
+def midi1_up_control_change(int group, int channel, int index, int data):
+    """Create a MIDI 1.0 Universal Packet Control Change message.
+
+    Args:
+        group: MIDI group (0-15)
+        channel: MIDI channel (0-15)
+        index: Controller number (0-127)
+        data: Controller value (0-127)
+
+    Returns:
+        32-bit MIDI message
+    """
+    return midi.MIDI1UPControlChange(<ca.UInt8>group, <ca.UInt8>channel,
+                                     <ca.UInt8>index, <ca.UInt8>data)
+
+def midi1_up_pitch_bend(int group, int channel, int lsb, int msb):
+    """Create a MIDI 1.0 Universal Packet Pitch Bend message.
+
+    Args:
+        group: MIDI group (0-15)
+        channel: MIDI channel (0-15)
+        lsb: Pitch bend LSB (0-127)
+        msb: Pitch bend MSB (0-127)
+
+    Returns:
+        32-bit MIDI message
+    """
+    return midi.MIDI1UPPitchBend(<ca.UInt8>group, <ca.UInt8>channel,
+                                 <ca.UInt8>lsb, <ca.UInt8>msb)
+
+def midi1_up_system_common(int group, int status, int byte1, int byte2):
+    """Create a MIDI 1.0 Universal Packet System Common message.
+
+    Args:
+        group: MIDI group (0-15)
+        status: System status byte
+        byte1: First data byte
+        byte2: Second data byte
+
+    Returns:
+        32-bit MIDI message
+    """
+    return midi.MIDI1UPSystemCommon(<ca.UInt8>group, <ca.UInt8>status,
+                                    <ca.UInt8>byte1, <ca.UInt8>byte2)
+
+def midi1_up_sysex(int group, int status, int bytes_used, int byte1, int byte2, int byte3, int byte4, int byte5, int byte6):
+    """Create a MIDI 1.0 Universal Packet SysEx message.
+
+    Args:
+        group: MIDI group (0-15)
+        status: SysEx status nibble
+        bytes_used: Number of data bytes used (0-6)
+        byte1-byte6: SysEx data bytes
+
+    Returns:
+        Tuple of (word0, word1) for 64-bit MIDI message
+    """
+    cdef midi.MIDIMessage_64 msg = midi.MIDI1UPSysEx(<ca.UInt8>group, <ca.UInt8>status, <ca.UInt8>bytes_used,
+                                                      <ca.UInt8>byte1, <ca.UInt8>byte2, <ca.UInt8>byte3,
+                                                      <ca.UInt8>byte4, <ca.UInt8>byte5, <ca.UInt8>byte6)
+    return (msg.word0, msg.word1)
+
+# MIDI 2.0 Channel Voice Message Functions
+
+def midi2_channel_voice_message(int group, int status, int channel, int index, long value):
+    """Create a MIDI 2.0 Channel Voice message.
+
+    Args:
+        group: MIDI group (0-15)
+        status: MIDI status nibble
+        channel: MIDI channel (0-15)
+        index: 16-bit index value
+        value: 32-bit data value
+
+    Returns:
+        Tuple of (word0, word1) for 64-bit MIDI message
+    """
+    cdef midi.MIDIMessage_64 msg = midi.MIDI2ChannelVoiceMessage(<ca.UInt8>group, <ca.UInt8>status,
+                                                                  <ca.UInt8>channel, <ca.UInt16>index, <ca.UInt32>value)
+    return (msg.word0, msg.word1)
+
+def midi2_note_on(int group, int channel, int note_number, int attribute_type, int attribute_data, int velocity):
+    """Create a MIDI 2.0 Note On message.
+
+    Args:
+        group: MIDI group (0-15)
+        channel: MIDI channel (0-15)
+        note_number: Note number (0-127)
+        attribute_type: Note attribute type
+        attribute_data: Note attribute data (16-bit)
+        velocity: Note velocity (16-bit)
+
+    Returns:
+        Tuple of (word0, word1) for 64-bit MIDI message
+    """
+    cdef midi.MIDIMessage_64 msg = midi.MIDI2NoteOn(<ca.UInt8>group, <ca.UInt8>channel, <ca.UInt8>note_number,
+                                                     <ca.UInt8>attribute_type, <ca.UInt16>attribute_data, <ca.UInt16>velocity)
+    return (msg.word0, msg.word1)
+
+def midi2_note_off(int group, int channel, int note_number, int attribute_type, int attribute_data, int velocity):
+    """Create a MIDI 2.0 Note Off message.
+
+    Args:
+        group: MIDI group (0-15)
+        channel: MIDI channel (0-15)
+        note_number: Note number (0-127)
+        attribute_type: Note attribute type
+        attribute_data: Note attribute data (16-bit)
+        velocity: Note velocity (16-bit)
+
+    Returns:
+        Tuple of (word0, word1) for 64-bit MIDI message
+    """
+    cdef midi.MIDIMessage_64 msg = midi.MIDI2NoteOff(<ca.UInt8>group, <ca.UInt8>channel, <ca.UInt8>note_number,
+                                                      <ca.UInt8>attribute_type, <ca.UInt16>attribute_data, <ca.UInt16>velocity)
+    return (msg.word0, msg.word1)
+
+def midi2_control_change(int group, int channel, int index, long value):
+    """Create a MIDI 2.0 Control Change message.
+
+    Args:
+        group: MIDI group (0-15)
+        channel: MIDI channel (0-15)
+        index: Controller number
+        value: Controller value (32-bit)
+
+    Returns:
+        Tuple of (word0, word1) for 64-bit MIDI message
+    """
+    cdef midi.MIDIMessage_64 msg = midi.MIDI2ControlChange(<ca.UInt8>group, <ca.UInt8>channel,
+                                                            <ca.UInt8>index, <ca.UInt32>value)
+    return (msg.word0, msg.word1)
+
+def midi2_program_change(int group, int channel, bint bank_is_valid, int program, int bank_msb, int bank_lsb):
+    """Create a MIDI 2.0 Program Change message.
+
+    Args:
+        group: MIDI group (0-15)
+        channel: MIDI channel (0-15)
+        bank_is_valid: Whether bank change is included
+        program: Program number
+        bank_msb: Bank MSB
+        bank_lsb: Bank LSB
+
+    Returns:
+        Tuple of (word0, word1) for 64-bit MIDI message
+    """
+    cdef midi.MIDIMessage_64 msg = midi.MIDI2ProgramChange(<ca.UInt8>group, <ca.UInt8>channel, bank_is_valid,
+                                                            <ca.UInt8>program, <ca.UInt8>bank_msb, <ca.UInt8>bank_lsb)
+    return (msg.word0, msg.word1)
+
+def midi2_pitch_bend(int group, int channel, long value):
+    """Create a MIDI 2.0 Pitch Bend message.
+
+    Args:
+        group: MIDI group (0-15)
+        channel: MIDI channel (0-15)
+        value: Pitch bend value (32-bit)
+
+    Returns:
+        Tuple of (word0, word1) for 64-bit MIDI message
+    """
+    cdef midi.MIDIMessage_64 msg = midi.MIDI2PitchBend(<ca.UInt8>group, <ca.UInt8>channel, <ca.UInt32>value)
+    return (msg.word0, msg.word1)
+
+# MIDI Message Type Constants
+
+def get_midi_message_type_utility():
+    """Get the Utility message type constant."""
+    return midi.kMIDIMessageTypeUtility
+
+def get_midi_message_type_system():
+    """Get the System message type constant."""
+    return midi.kMIDIMessageTypeSystem
+
+def get_midi_message_type_channel_voice1():
+    """Get the Channel Voice 1 (MIDI 1.0) message type constant."""
+    return midi.kMIDIMessageTypeChannelVoice1
+
+def get_midi_message_type_sysex():
+    """Get the SysEx message type constant."""
+    return midi.kMIDIMessageTypeSysEx
+
+def get_midi_message_type_channel_voice2():
+    """Get the Channel Voice 2 (MIDI 2.0) message type constant."""
+    return midi.kMIDIMessageTypeChannelVoice2
+
+def get_midi_message_type_data128():
+    """Get the Data128 message type constant."""
+    return midi.kMIDIMessageTypeData128
+
+# MIDI CV Status Constants
+
+def get_midi_cv_status_note_off():
+    """Get the Note Off status constant."""
+    return midi.kMIDICVStatusNoteOff
+
+def get_midi_cv_status_note_on():
+    """Get the Note On status constant."""
+    return midi.kMIDICVStatusNoteOn
+
+def get_midi_cv_status_poly_pressure():
+    """Get the Poly Pressure status constant."""
+    return midi.kMIDICVStatusPolyPressure
+
+def get_midi_cv_status_control_change():
+    """Get the Control Change status constant."""
+    return midi.kMIDICVStatusControlChange
+
+def get_midi_cv_status_program_change():
+    """Get the Program Change status constant."""
+    return midi.kMIDICVStatusProgramChange
+
+def get_midi_cv_status_channel_pressure():
+    """Get the Channel Pressure status constant."""
+    return midi.kMIDICVStatusChannelPressure
+
+def get_midi_cv_status_pitch_bend():
+    """Get the Pitch Bend status constant."""
+    return midi.kMIDICVStatusPitchBend

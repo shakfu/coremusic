@@ -50,6 +50,15 @@ A Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing Python 
 - Hardware audio output control
 - Render callback infrastructure
 
+### CoreMIDI
+
+- MIDI services
+- MIDI 1.0 Universal Packet support: Create standard MIDI messages in UMP format
+- MIDI 2.0 Channel Voice messages: Support for enhanced MIDI 2.0 functionality
+- Message type detection: Extract message types from Universal MIDI Packets
+- Full constant access: All MIDI message type and status constants available
+- Type safety: Proper parameter validation and overflow handling
+
 ## Installation
 
 ### Prerequisites
@@ -95,64 +104,64 @@ A Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing Python 
 ### Basic Audio File Operations
 
 ```python
-import coreaudio as ca
+import coremusic as cm
 
 # Open an audio file
-audio_file = ca.audio_file_open_url(
+audio_file = cm.audio_file_open_url(
     "path/to/audio.wav",
-    ca.get_audio_file_read_permission(),
-    ca.get_audio_file_wave_type()
+    cm.get_audio_file_read_permission(),
+    cm.get_audio_file_wave_type()
 )
 
 # Get file format information
-format_data = ca.audio_file_get_property(
+format_data = cm.audio_file_get_property(
     audio_file,
-    ca.get_audio_file_property_data_format()
+    cm.get_audio_file_property_data_format()
 )
 
 # Read audio packets
-packet_data, packets_read = ca.audio_file_read_packets(audio_file, 0, 1000)
+packet_data, packets_read = cm.audio_file_read_packets(audio_file, 0, 1000)
 
 # Close the file
-ca.audio_file_close(audio_file)
+cm.audio_file_close(audio_file)
 ```
 
 ### AudioUnit Setup
 
 ```python
-import coreaudio as ca
+import coremusic as cm
 
 # Find default output AudioUnit
 description = {
-    'type': ca.get_audio_unit_type_output(),
-    'subtype': ca.get_audio_unit_subtype_default_output(),
-    'manufacturer': ca.get_audio_unit_manufacturer_apple(),
+    'type': cm.get_audio_unit_type_output(),
+    'subtype': cm.get_audio_unit_subtype_default_output(),
+    'manufacturer': cm.get_audio_unit_manufacturer_apple(),
     'flags': 0,
     'flags_mask': 0
 }
 
-component_id = ca.audio_component_find_next(description)
-audio_unit = ca.audio_component_instance_new(component_id)
+component_id = cm.audio_component_find_next(description)
+audio_unit = cm.audio_component_instance_new(component_id)
 
 # Initialize and start
-ca.audio_unit_initialize(audio_unit)
-ca.audio_output_unit_start(audio_unit)
+cm.audio_unit_initialize(audio_unit)
+cm.audio_output_unit_start(audio_unit)
 
 # ... perform audio operations ...
 
 # Cleanup
-ca.audio_output_unit_stop(audio_unit)
-ca.audio_unit_uninitialize(audio_unit)
-ca.audio_component_instance_dispose(audio_unit)
+cm.audio_output_unit_stop(audio_unit)
+cm.audio_unit_uninitialize(audio_unit)
+cm.audio_component_instance_dispose(audio_unit)
 ```
 
 ### Audio Player Example
 
 ```python
-import coreaudio as ca
+import coremusic as cm
 
 # Create an audio player
-player = ca.AudioPlayer()
+player = cm.AudioPlayer()
 
 # Load an audio file
 player.load_file("path/to/audio.wav")

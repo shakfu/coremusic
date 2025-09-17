@@ -386,5 +386,311 @@ class TestCoreMIDIIntegration:
                     assert destination > 0
 
 
+class TestCoreMIDIMessages:
+    """Test CoreMIDI Universal MIDI Packet (UMP) message functionality"""
+
+    def test_midi_message_type_constants(self):
+        """Test MIDI message type constants"""
+        assert cm.get_midi_message_type_utility() == 0x0
+        assert cm.get_midi_message_type_system() == 0x1
+        assert cm.get_midi_message_type_channel_voice1() == 0x2
+        assert cm.get_midi_message_type_sysex() == 0x3
+        assert cm.get_midi_message_type_channel_voice2() == 0x4
+        assert cm.get_midi_message_type_data128() == 0x5
+
+    def test_midi_cv_status_constants(self):
+        """Test MIDI channel voice status constants"""
+        assert cm.get_midi_cv_status_note_off() == 0x8
+        assert cm.get_midi_cv_status_note_on() == 0x9
+        assert cm.get_midi_cv_status_poly_pressure() == 0xA
+        assert cm.get_midi_cv_status_control_change() == 0xB
+        assert cm.get_midi_cv_status_program_change() == 0xC
+        assert cm.get_midi_cv_status_channel_pressure() == 0xD
+        assert cm.get_midi_cv_status_pitch_bend() == 0xE
+
+    def test_midi_message_type_for_up_word(self):
+        """Test extracting message type from Universal MIDI Packet word"""
+        # Create test UMP words with different message types
+        utility_word = 0x00000000  # Type 0 (Utility)
+        system_word = 0x10000000   # Type 1 (System)
+        cv1_word = 0x20000000      # Type 2 (Channel Voice 1)
+        sysex_word = 0x30000000    # Type 3 (SysEx)
+        cv2_word = 0x40000000      # Type 4 (Channel Voice 2)
+        data128_word = 0x50000000  # Type 5 (Data128)
+
+        assert cm.midi_message_type_for_up_word(utility_word) == 0x0
+        assert cm.midi_message_type_for_up_word(system_word) == 0x1
+        assert cm.midi_message_type_for_up_word(cv1_word) == 0x2
+        assert cm.midi_message_type_for_up_word(sysex_word) == 0x3
+        assert cm.midi_message_type_for_up_word(cv2_word) == 0x4
+        assert cm.midi_message_type_for_up_word(data128_word) == 0x5
+
+    def test_midi1_up_channel_voice_message(self):
+        """Test MIDI 1.0 Universal Packet channel voice message creation"""
+        group = 0
+        status = 9  # Note On
+        channel = 0
+        data1 = 60  # Middle C
+        data2 = 127  # Full velocity
+
+        message = cm.midi1_up_channel_voice_message(group, status, channel, data1, data2)
+        assert isinstance(message, int)
+        assert message > 0
+
+        # Check that the message type is correct (should be 0x2 for Channel Voice 1)
+        message_type = cm.midi_message_type_for_up_word(message)
+        assert message_type == 0x2
+
+    def test_midi1_up_note_on(self):
+        """Test MIDI 1.0 Universal Packet Note On message"""
+        group = 0
+        channel = 0
+        note_number = 60  # Middle C
+        velocity = 127
+
+        message = cm.midi1_up_note_on(group, channel, note_number, velocity)
+        assert isinstance(message, int)
+        assert message > 0
+
+        # Verify message type
+        message_type = cm.midi_message_type_for_up_word(message)
+        assert message_type == 0x2
+
+    def test_midi1_up_note_off(self):
+        """Test MIDI 1.0 Universal Packet Note Off message"""
+        group = 0
+        channel = 0
+        note_number = 60  # Middle C
+        velocity = 64
+
+        message = cm.midi1_up_note_off(group, channel, note_number, velocity)
+        assert isinstance(message, int)
+        assert message > 0
+
+        # Verify message type
+        message_type = cm.midi_message_type_for_up_word(message)
+        assert message_type == 0x2
+
+    def test_midi1_up_control_change(self):
+        """Test MIDI 1.0 Universal Packet Control Change message"""
+        group = 0
+        channel = 0
+        index = 7  # Volume controller
+        data = 100
+
+        message = cm.midi1_up_control_change(group, channel, index, data)
+        assert isinstance(message, int)
+        assert message > 0
+
+        # Verify message type
+        message_type = cm.midi_message_type_for_up_word(message)
+        assert message_type == 0x2
+
+    def test_midi1_up_pitch_bend(self):
+        """Test MIDI 1.0 Universal Packet Pitch Bend message"""
+        group = 0
+        channel = 0
+        lsb = 0
+        msb = 64  # Center position
+
+        message = cm.midi1_up_pitch_bend(group, channel, lsb, msb)
+        assert isinstance(message, int)
+        assert message > 0
+
+        # Verify message type
+        message_type = cm.midi_message_type_for_up_word(message)
+        assert message_type == 0x2
+
+    def test_midi1_up_system_common(self):
+        """Test MIDI 1.0 Universal Packet System Common message"""
+        group = 0
+        status = 0xF2  # Song Position Pointer
+        byte1 = 0x10
+        byte2 = 0x20
+
+        message = cm.midi1_up_system_common(group, status, byte1, byte2)
+        assert isinstance(message, int)
+        assert message > 0
+
+        # Verify message type
+        message_type = cm.midi_message_type_for_up_word(message)
+        assert message_type == 0x1
+
+    def test_midi1_up_sysex(self):
+        """Test MIDI 1.0 Universal Packet SysEx message"""
+        group = 0
+        status = 0  # Complete SysEx
+        bytes_used = 3
+        byte1 = 0x7E  # Non-real-time
+        byte2 = 0x00  # Device ID
+        byte3 = 0x09  # General MIDI
+        byte4 = 0x01  # GM On
+        byte5 = 0x00
+        byte6 = 0x00
+
+        message = cm.midi1_up_sysex(group, status, bytes_used, byte1, byte2, byte3, byte4, byte5, byte6)
+        assert isinstance(message, tuple)
+        assert len(message) == 2
+        assert isinstance(message[0], int)
+        assert isinstance(message[1], int)
+
+        # Verify message type from first word
+        message_type = cm.midi_message_type_for_up_word(message[0])
+        assert message_type == 0x3
+
+    def test_midi2_channel_voice_message(self):
+        """Test MIDI 2.0 Channel Voice message creation"""
+        group = 0
+        status = 9  # Note On
+        channel = 0
+        index = 0x3C00  # Note number with attribute type
+        value = 0xFFFF0000  # Velocity and attribute data
+
+        message = cm.midi2_channel_voice_message(group, status, channel, index, value)
+        assert isinstance(message, tuple)
+        assert len(message) == 2
+        assert isinstance(message[0], int)
+        assert isinstance(message[1], int)
+
+        # Verify message type
+        message_type = cm.midi_message_type_for_up_word(message[0])
+        assert message_type == 0x4
+
+    def test_midi2_note_on(self):
+        """Test MIDI 2.0 Note On message"""
+        group = 0
+        channel = 0
+        note_number = 60  # Middle C
+        attribute_type = 0  # No attribute
+        attribute_data = 0
+        velocity = 0xFFFF  # Full velocity (16-bit)
+
+        message = cm.midi2_note_on(group, channel, note_number, attribute_type, attribute_data, velocity)
+        assert isinstance(message, tuple)
+        assert len(message) == 2
+        assert isinstance(message[0], int)
+        assert isinstance(message[1], int)
+
+        # Verify message type
+        message_type = cm.midi_message_type_for_up_word(message[0])
+        assert message_type == 0x4
+
+    def test_midi2_note_off(self):
+        """Test MIDI 2.0 Note Off message"""
+        group = 0
+        channel = 0
+        note_number = 60  # Middle C
+        attribute_type = 0  # No attribute
+        attribute_data = 0
+        velocity = 0x8000  # Half velocity (16-bit)
+
+        message = cm.midi2_note_off(group, channel, note_number, attribute_type, attribute_data, velocity)
+        assert isinstance(message, tuple)
+        assert len(message) == 2
+        assert isinstance(message[0], int)
+        assert isinstance(message[1], int)
+
+        # Verify message type
+        message_type = cm.midi_message_type_for_up_word(message[0])
+        assert message_type == 0x4
+
+    def test_midi2_control_change(self):
+        """Test MIDI 2.0 Control Change message"""
+        group = 0
+        channel = 0
+        index = 7  # Volume controller
+        value = 0x80000000  # Half value (32-bit)
+
+        message = cm.midi2_control_change(group, channel, index, value)
+        assert isinstance(message, tuple)
+        assert len(message) == 2
+        assert isinstance(message[0], int)
+        assert isinstance(message[1], int)
+
+        # Verify message type
+        message_type = cm.midi_message_type_for_up_word(message[0])
+        assert message_type == 0x4
+
+    def test_midi2_program_change(self):
+        """Test MIDI 2.0 Program Change message"""
+        group = 0
+        channel = 0
+        bank_is_valid = True
+        program = 1  # Piano
+        bank_msb = 0
+        bank_lsb = 0
+
+        message = cm.midi2_program_change(group, channel, bank_is_valid, program, bank_msb, bank_lsb)
+        assert isinstance(message, tuple)
+        assert len(message) == 2
+        assert isinstance(message[0], int)
+        assert isinstance(message[1], int)
+
+        # Verify message type
+        message_type = cm.midi_message_type_for_up_word(message[0])
+        assert message_type == 0x4
+
+    def test_midi2_pitch_bend(self):
+        """Test MIDI 2.0 Pitch Bend message"""
+        group = 0
+        channel = 0
+        value = 0x80000000  # Center position (32-bit)
+
+        message = cm.midi2_pitch_bend(group, channel, value)
+        assert isinstance(message, tuple)
+        assert len(message) == 2
+        assert isinstance(message[0], int)
+        assert isinstance(message[1], int)
+
+        # Verify message type
+        message_type = cm.midi_message_type_for_up_word(message[0])
+        assert message_type == 0x4
+
+    def test_midi_message_parameter_validation(self):
+        """Test parameter validation for MIDI message functions"""
+        # Test valid ranges
+        group = 0  # 0-15
+        channel = 0  # 0-15
+        note = 60  # 0-127
+        velocity = 127  # 0-127
+
+        # These should work without error
+        message = cm.midi1_up_note_on(group, channel, note, velocity)
+        assert isinstance(message, int)
+
+        # Test with maximum valid values
+        max_group = 15
+        max_channel = 15
+        max_note = 127
+        max_velocity = 127
+
+        message = cm.midi1_up_note_on(max_group, max_channel, max_note, max_velocity)
+        assert isinstance(message, int)
+
+    def test_midi_message_consistency(self):
+        """Test that identical parameters produce identical messages"""
+        group = 0
+        channel = 5
+        note = 72  # C5
+        velocity = 100
+
+        # Create the same message twice
+        message1 = cm.midi1_up_note_on(group, channel, note, velocity)
+        message2 = cm.midi1_up_note_on(group, channel, note, velocity)
+
+        # Should be identical
+        assert message1 == message2
+
+        # MIDI 2.0 version
+        attr_type = 0
+        attr_data = 0
+        velocity16 = 0xC800  # Approximately 100 in 16-bit
+
+        msg2_1 = cm.midi2_note_on(group, channel, note, attr_type, attr_data, velocity16)
+        msg2_2 = cm.midi2_note_on(group, channel, note, attr_type, attr_data, velocity16)
+
+        assert msg2_1 == msg2_2
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

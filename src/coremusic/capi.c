@@ -1158,6 +1158,7 @@ static CYTHON_INLINE float __PYX_NAN() {
 #include "audio_player.h"
 #include <stdint.h>
 #include "CoreMIDI/MIDIServices.h"
+#include "CoreMIDI/MIDIMessages.h"
 #include <string.h>
 #include <stdlib.h>
 #ifdef _OPENMP
@@ -2343,6 +2344,12 @@ static CYTHON_INLINE PyObject* __Pyx_PyLong_From_AudioFileStreamPropertyFlags(Au
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyLong_From_AudioFileStreamParseFlags(AudioFileStreamParseFlags value);
 
+/* CIntToPy.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyLong_From_MIDIMessageType(MIDIMessageType value);
+
+/* CIntToPy.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyLong_From_MIDICVStatus(MIDICVStatus value);
+
 /* FormatTypeName.proto */
 #if CYTHON_COMPILING_IN_LIMITED_API
 typedef PyObject *__Pyx_TypeName;
@@ -2480,6 +2487,7 @@ static PyObject *__pyx_builtin_enumerate;
 /* #### Code section: string_decls ### */
 static const char __pyx_k_[] = ")";
 static const char __pyx_k_1[] = "\200\001\360\n\000\005\n\210\021\210!\330\004\t\210\021\210!\330\004\t\210\021\210!\330\004\t\210\021\210!\330\004\t\210\021\210!\330\004\t\210\021\210!\330\004\t\210\021\210!\330\004\t\210\021\210!\330\004\t\210\021\210!\330\004\t\210\021\330\004\t\210\021\210!\330\004\t\210\021\210!\330\004\t\210\021\210!\330\004\t\210\021\210!\330\004\t\210\021\210!\340\004\013\2101";
+static const char __pyx_k_A[] = "\200\001\360\022\000\005\020\320\017(\250\001\250\033\260A";
 static const char __pyx_k_Q[] = "\200\001\330\004\r\210Q";
 static const char __pyx_k_a[] = "\200\001\360\014\000\005\020\320\017&\240a";
 static const char __pyx_k_i[] = "i";
@@ -2502,6 +2510,7 @@ static const char __pyx_k_get[] = "get";
 static const char __pyx_k_int[] = "int";
 static const char __pyx_k_lsb[] = "lsb";
 static const char __pyx_k_msb[] = "msb";
+static const char __pyx_k_msg[] = "msg";
 static const char __pyx_k_obj[] = "obj";
 static const char __pyx_k_pop[] = "pop";
 static const char __pyx_k_q_2[] = "\200\001\340\004\017\210q";
@@ -2511,6 +2520,7 @@ static const char __pyx_k_A_m1[] = "\200A\340\n\030\230\001\230\021\230$\230m\25
 static const char __pyx_k_None[] = "None";
 static const char __pyx_k_a_1A[] = "\200\001\340\004,\320,>\270a\330\006#\2401\240A";
 static const char __pyx_k_asbd[] = "asbd";
+static const char __pyx_k_az_j[] = "\200\001\360\030\000\005\020\210\177\230a\230z\250\027\260\n\270!\330\037)\250\035\260j\300\001";
 static const char __pyx_k_code[] = "code";
 static const char __pyx_k_data[] = "data";
 static const char __pyx_k_desc[] = "desc";
@@ -2527,13 +2537,23 @@ static const char __pyx_k_test[] = "__test__";
 static const char __pyx_k_time[] = "time";
 static const char __pyx_k_type[] = "type";
 static const char __pyx_k_unit[] = "unit";
+static const char __pyx_k_word[] = "word";
 static const char __pyx_k_1_2Fa[] = "\200\001\360\022\000\005\020\320\0171\260\021\3202F\300a";
+static const char __pyx_k_7_A_5[] = "\200\001\360\030\000\005\020\320\017 \240\001\240\032\2507\260*\270A\330!+\2505\260\n\270!";
 static const char __pyx_k_A_A_2[] = "\200\001\360\022\000\005\020\320\017,\250A\320-A\300\021";
 static const char __pyx_k_A_Qat[] = "\200A\340\010\021\320\021%\240Q\240a\240t\250=\270\001";
+static const char __pyx_k_byte1[] = "byte1";
+static const char __pyx_k_byte2[] = "byte2";
+static const char __pyx_k_byte3[] = "byte3";
+static const char __pyx_k_byte4[] = "byte4";
+static const char __pyx_k_byte5[] = "byte5";
+static const char __pyx_k_byte6[] = "byte6";
 static const char __pyx_k_c_str[] = "c_str";
 static const char __pyx_k_data1[] = "data1";
 static const char __pyx_k_data2[] = "data2";
 static const char __pyx_k_flags[] = "flags";
+static const char __pyx_k_group[] = "group";
+static const char __pyx_k_index[] = "index";
 static const char __pyx_k_model[] = "model";
 static const char __pyx_k_pitch[] = "pitch";
 static const char __pyx_k_print[] = "print";
@@ -2560,7 +2580,9 @@ static const char __pyx_k_return[] = "return";
 static const char __pyx_k_source[] = "source";
 static const char __pyx_k_status[] = "status";
 static const char __pyx_k_stream[] = "stream";
+static const char __pyx_k_AZwj_wj[] = "\200\001\360\030\000\005\020\320\017$\240A\240Z\250w\260j\300\001\330%/\250w\260j\300\001";
 static const char __pyx_k_A_Qat_Q[] = "\200A\340\n\025\220Q\220a\220t\230=\250\r\260Q";
+static const char __pyx_k_Qj_z_Zq[] = "\200\001\360\030\000\005\020\210~\230Q\230j\250\007\250z\270\021\330\036(\250\r\260Z\270q";
 static const char __pyx_k_cf_name[] = "cf_name";
 static const char __pyx_k_channel[] = "channel";
 static const char __pyx_k_disable[] = "disable";
@@ -2577,6 +2599,8 @@ static const char __pyx_k_7q_1_r_r[] = "\320\0007\260q\360\026\000\005\006\330\0
 static const char __pyx_k_A_t3j_m1[] = "\200A\340\010\017\210t\2203\220j\240\001\240\021\240$\240m\2601";
 static const char __pyx_k_add_note[] = "add_note";
 static const char __pyx_k_argCount[] = "argCount";
+static const char __pyx_k_bank_lsb[] = "bank_lsb";
+static const char __pyx_k_bank_msb[] = "bank_msb";
 static const char __pyx_k_cf_value[] = "cf_value";
 static const char __pyx_k_controls[] = "controls";
 static const char __pyx_k_data_ptr[] = "data_ptr";
@@ -2598,6 +2622,7 @@ static const char __pyx_k_sound_id[] = "sound_id";
 static const char __pyx_k_uniqueID[] = "uniqueID";
 static const char __pyx_k_velocity[] = "velocity";
 static const char __pyx_k_writable[] = "writable";
+static const char __pyx_k_1JgZq_gZq[] = "\200\001\360\030\000\005\020\320\017#\2401\240J\250g\260Z\270q\330$.\250g\260Z\270q";
 static const char __pyx_k_Bb_1A_A_A[] = "\200\001\360\026\000\005\006\330\010\024\220B\220b\230\003\2301\230A\330\010\021\220\021\330\010\024\220A\330\010\024\220A";
 static const char __pyx_k_TypeError[] = "TypeError";
 static const char __pyx_k_arg_count[] = "arg_count";
@@ -2624,6 +2649,7 @@ static const char __pyx_k_timestamp[] = "timestamp";
 static const char __pyx_k_uint_data[] = "uint_data";
 static const char __pyx_k_ValueError[] = "ValueError";
 static const char __pyx_k_audio_file[] = "audio_file";
+static const char __pyx_k_bytes_used[] = "bytes_used";
 static const char __pyx_k_controller[] = "controller";
 static const char __pyx_k_dest_index[] = "dest_index";
 static const char __pyx_k_flags_mask[] = "flags_mask";
@@ -2636,6 +2662,7 @@ static const char __pyx_k_test_error[] = "test_error";
 static const char __pyx_k_AudioPlayer[] = "AudioPlayer";
 static const char __pyx_k_MemoryError[] = "MemoryError";
 static const char __pyx_k_U_XRq_HHBfA[] = "\200\001\360\024\000\005\016\210U\220#\220X\230R\230q\330\004\014\210H\220H\230B\230f\240A";
+static const char __pyx_k_WJa_5Yj_zYZ[] = "\200\001\360\032\000\005\020\320\017*\250!\250:\260W\270J\300a\330+5\260Y\270j\310\007\310z\320YZ";
 static const char __pyx_k_actual_size[] = "actual_size";
 static const char __pyx_k_buffer_size[] = "buffer_size";
 static const char __pyx_k_byte_offset[] = "byte_offset";
@@ -2643,6 +2670,7 @@ static const char __pyx_k_destination[] = "destination";
 static const char __pyx_k_displayName[] = "displayName";
 static const char __pyx_k_driverOwner[] = "driverOwner";
 static const char __pyx_k_instance_id[] = "instance_id";
+static const char __pyx_k_note_number[] = "note_number";
 static const char __pyx_k_num_devices[] = "num_devices";
 static const char __pyx_k_num_packets[] = "num_packets";
 static const char __pyx_k_num_sources[] = "num_sources";
@@ -2660,6 +2688,7 @@ static const char __pyx_k_RuntimeError[] = "RuntimeError";
 static const char __pyx_k_Source_index[] = "Source index ";
 static const char __pyx_k_U_XRq_HE_6_A[] = "\200\001\360\026\000\005\016\210U\220#\220X\230R\230q\330\004\014\210H\220E\230\022\2306\240\031\250\"\250A";
 static const char __pyx_k_audio_format[] = "audio_format";
+static const char __pyx_k_az_R_ffg_Cxs[] = "\200\001\360\026\000\005(\240\177\260a\260z\300\027\310\n\320R[\320[f\320fg\330\004\014\210C\210x\220s\230!";
 static const char __pyx_k_cf_prop_name[] = "cf_prop_name";
 static const char __pyx_k_component_id[] = "component_id";
 static const char __pyx_k_device_index[] = "device_index";
@@ -2683,7 +2712,9 @@ static const char __pyx_k_U_XRq_6_Cr_HE[] = "\200\001\360\024\000\005\016\210U\2
 static const char __pyx_k_U_XRq_HKr_vRq[] = "\200\001\360\026\000\005\016\210U\220#\220X\230R\230q\330\004\014\210H\220K\230r\240\026\240v\250R\250q";
 static const char __pyx_k_audio_file_id[] = "audio_file_id";
 static const char __pyx_k_audio_unit_id[] = "audio_unit_id";
+static const char __pyx_k_bank_is_valid[] = "bank_is_valid";
 static const char __pyx_k_instrument_id[] = "instrument_id";
+static const char __pyx_k_midi2_note_on[] = "midi2_note_on";
 static const char __pyx_k_midi_note_off[] = "midi_note_off";
 static const char __pyx_k_packet_offset[] = "packet_offset";
 static const char __pyx_k_property_name[] = "property_name";
@@ -2693,9 +2724,14 @@ static const char __pyx_k_sequence_type[] = "sequence_type";
 static const char __pyx_k_status_result[] = "status_result";
 static const char __pyx_k_AssertionError[] = "AssertionError";
 static const char __pyx_k_U_XRq_HE_6_A_2[] = "\320\000)\250\021\360\026\000\005\016\210U\220#\220X\230R\230q\330\004\014\210H\220E\230\022\2306\240\031\250\"\250A";
+static const char __pyx_k_WJVW_Fg_XY_Cxs[] = "\200\001\360\030\000\005(\320':\270!\270:\300W\310J\320VW\330<F\300g\310[\320XY\330\004\014\210C\210x\220s\230!";
 static const char __pyx_k_aq_wc_l_2_Oq_6[] = "\200\001\340\004'\320':\270!\360\006\000\005!\320 :\270!\270;\300a\300q\330\004\007\200w\210c\220\021\330\010\016\210l\230!\2302\320\035O\310q\340\004\013\2106\220\021";
+static const char __pyx_k_attribute_data[] = "attribute_data";
+static const char __pyx_k_attribute_type[] = "attribute_type";
 static const char __pyx_k_coremusic_capi[] = "coremusic.capi";
 static const char __pyx_k_file_type_hint[] = "file_type_hint";
+static const char __pyx_k_midi1_up_sysex[] = "midi1_up_sysex";
+static const char __pyx_k_midi2_note_off[] = "midi2_note_off";
 static const char __pyx_k_midi_send_data[] = "midi_send_data";
 static const char __pyx_k_out_of_range_0[] = " out of range (0-";
 static const char __pyx_k_reset_playback[] = "reset_playback";
@@ -2730,6 +2766,8 @@ static const char __pyx_k_audio_queue_stop[] = "audio_queue_stop";
 static const char __pyx_k_bits_per_channel[] = "bits_per_channel";
 static const char __pyx_k_bytes_per_packet[] = "bytes_per_packet";
 static const char __pyx_k_description_dict[] = "description_dict";
+static const char __pyx_k_midi1_up_note_on[] = "midi1_up_note_on";
+static const char __pyx_k_midi2_pitch_bend[] = "midi2_pitch_bend";
 static const char __pyx_k_new_music_player[] = "new_music_player";
 static const char __pyx_k_note_instance_id[] = "note_instance_id";
 static const char __pyx_k_release_velocity[] = "release_velocity";
@@ -2737,6 +2775,7 @@ static const char __pyx_k_transmitChannels[] = "transmitChannels";
 static const char __pyx_k_1_4A_A_wc_l_2_I_6[] = "\320\000\033\2301\360\010\000\005!\320 4\260A\330\010\t\330\010\t\330\010\t\330\010\034\230A\330\010\t\210\021\360\006\000\005\010\200w\210c\220\021\330\010\016\210l\230!\2302\320\035I\310\021\340\004\013\2106\220\021";
 static const char __pyx_k_1_6aq_wc_l_2_K1_1[] = "\200\001\340\004\035\230^\2501\340\004 \320 6\260a\260q\330\004\007\200w\210c\220\021\330\010\016\210l\230!\2302\320\035K\3101\340\004\013\2101";
 static const char __pyx_k_2_3EQ_wc_l_2_EQ_1[] = "\200\001\360\030\000\005#\320\"2\260!\3203E\300Q\330\004\007\200w\210c\220\021\330\010\016\210l\230!\2302\320\035E\300Q\330\004\013\2101";
+static const char __pyx_k_7R_BLIU_ggrrs_Cxs[] = "\200\001\360\032\000\005(\320'@\300\001\300\032\3107\320R\\\320\\]\330BL\310I\320U`\320`g\320gr\320rs\330\004\014\210C\210x\220s\230!";
 static const char __pyx_k_8_6ha_wc_l_2_K1_1[] = "\200\001\360\032\000\005#\320\"8\270\001\330\010\032\230&\320 6\260h\270a\330\004\007\200w\210c\220\021\330\010\016\210l\230!\2302\320\035K\3101\330\004\013\2101";
 static const char __pyx_k_AudioPlayer_start[] = "AudioPlayer.start";
 static const char __pyx_k_Destination_index[] = "Destination index ";
@@ -2744,6 +2783,7 @@ static const char __pyx_k_I_aq_wc_l_2_SST_1[] = "\200\001\340\004.\320.I\310\021
 static const char __pyx_k_audio_object_show[] = "audio_object_show";
 static const char __pyx_k_audio_queue_start[] = "audio_queue_start";
 static const char __pyx_k_frames_per_packet[] = "frames_per_packet";
+static const char __pyx_k_midi1_up_note_off[] = "midi1_up_note_off";
 static const char __pyx_k_midi_port_dispose[] = "midi_port_dispose";
 static const char __pyx_k_music_player_stop[] = "music_player_stop";
 static const char __pyx_k_4A_9_1_wc_l_2_Na_6[] = "\200\001\340\004\"\320\"4\260A\360\006\000\005!\320 9\270\021\330\010\t\330\010\023\2201\330\010\t\210\021\360\006\000\005\010\200w\210c\220\021\330\010\016\210l\230!\2302\320\035N\310a\340\004\013\2106\220\021";
@@ -2762,8 +2802,10 @@ static const char __pyx_k_314DHAQ_wc_l_2_H_81[] = "\200\001\360\032\000\005!\320
 static const char __pyx_k_314DHL___wc_l_2_H_1[] = "\200\001\360\032\000\005!\320 3\2601\3204D\300H\320L_\320_`\340\004\007\200w\210c\220\021\330\010\016\210l\230!\2302\320\035H\310\001\330\004\013\2101";
 static const char __pyx_k_5Q6Fhaq_wc_l_2_J_4q[] = "\200\001\360\032\000\005!\320 5\260Q\3206F\300h\310a\310q\340\004\007\200w\210c\220\021\330\010\016\210l\230!\2302\320\035J\310!\330\004\013\2104\210q\220\001";
 static const char __pyx_k_Q_PPZZ_wc_l_2_RRS_1[] = "\200\001\360\032\000\005!\320 =\270Q\320>P\320PZ\320Z[\320[\\\340\004\007\200w\210c\220\021\330\010\016\210l\230!\2302\320\035R\320RS\330\004\013\2101";
+static const char __pyx_k_WJV___FizYccmmn_Cxs[] = "\200\001\360\034\000\005(\320':\270!\270:\300W\310J\320V_\320_`\330<F\300i\310z\320Yc\320cm\320mn\330\004\014\210C\210x\220s\230!";
 static const char __pyx_k_audio_file_open_url[] = "audio_file_open_url";
 static const char __pyx_k_audio_queue_dispose[] = "audio_queue_dispose";
+static const char __pyx_k_midi1_up_pitch_bend[] = "midi1_up_pitch_bend";
 static const char __pyx_k_midi_client_dispose[] = "midi_client_dispose";
 static const char __pyx_k_midi_control_change[] = "midi_control_change";
 static const char __pyx_k_midi_program_change[] = "midi_program_change";
@@ -2774,6 +2816,8 @@ static const char __pyx_k_6a_Bb_1_j_K_VWWX_Q_6[] = "\200\001\360\030\000\005 \32
 static const char __pyx_k_A_4A_q_q_wc_l_2_DA_1[] = "\320\000$\240A\340\004\"\320\"4\260A\340\004 \240\017\250q\260\007\260q\340\004\007\200w\210c\220\021\330\010\016\210l\230!\2302\320\035D\300A\340\004\013\2101";
 static const char __pyx_k_BBZZ_82Q_Rq_IRq_Rq_A[] = "\320\000B\320BZ\320Z[\360\032\000\005\006\330\010\023\2208\2302\230Q\330\010\020\220\005\220R\220q\330\010\024\220I\230R\230q\330\010\034\320\034-\250R\250q\330\010\024\220A";
 static const char __pyx_k_dispose_music_player[] = "dispose_music_player";
+static const char __pyx_k_midi2_control_change[] = "midi2_control_change";
+static const char __pyx_k_midi2_program_change[] = "midi2_program_change";
 static const char __pyx_k_midi_get_destination[] = "midi_get_destination";
 static const char __pyx_k_music_player_preroll[] = "music_player_preroll";
 static const char __pyx_k_q_4A_2_7_wc_l_2_Gq_1[] = "\320\000'\240q\340\004\"\320\"4\260A\340\004 \320 2\260!\2607\270!\340\004\007\200w\210c\220\021\330\010\016\210l\230!\2302\320\035G\300q\340\004\013\2101";
@@ -2806,11 +2850,13 @@ static const char __pyx_k_dispose_music_sequence[] = "dispose_music_sequence";
 static const char __pyx_k_fourchar_to_int_line_8[] = "fourchar_to_int (line 8)";
 static const char __pyx_k_get_midi_property_name[] = "get_midi_property_name";
 static const char __pyx_k_get_music_device_range[] = "get_music_device_range";
+static const char __pyx_k_midi1_up_system_common[] = "midi1_up_system_common";
 static const char __pyx_k_midi_device_get_entity[] = "midi_device_get_entity";
 static const char __pyx_k_midi_entity_get_source[] = "midi_entity_get_source";
 static const char __pyx_k_midi_input_port_create[] = "midi_input_port_create";
 static const char __pyx_k_music_device_stop_note[] = "music_device_stop_note";
 static const char __pyx_k_src_coremusic_capi_pyx[] = "src/coremusic/capi.pyx";
+static const char __pyx_k_1JgZyXbbc5_O_Zjjuuv_Cxs[] = "\200\001\360\034\000\005(\240|\2601\260J\270g\300Z\310y\320Xb\320bc\3305?\320?O\310{\320Zj\320ju\320uv\330\004\014\210C\210x\220s\230!";
 static const char __pyx_k_A_4t1_1_4AQd_7_Q_ar_B_q[] = "\200A\340\010\013\2104\210t\2201\330\014\023\2201\340\010$\320$4\260A\260Q\260d\270!\330\010\013\2107\220#\220Q\330\014\022\220,\230a\230r\320!B\300!\330\010\017\210q";
 static const char __pyx_k_AudioPlayer_set_looping[] = "AudioPlayer.set_looping";
 static const char __pyx_k_a_Q_s_1_Q_a_wc_l_2_Oq_1[] = "\320\000>\270a\340\004'\320'=\270Q\330\004\032\230'\240\021\330\004\037\230s\240!\2401\340\004 \320 :\270!\330\010\t\330\010\t\330\010\025\220Q\330\010&\240a\360\006\000\005\010\200w\210c\220\021\330\010\016\210l\230!\2302\320\035O\310q\340\004\013\2101";
@@ -2823,6 +2869,7 @@ static const char __pyx_k_audio_unit_set_property[] = "audio_unit_set_property";
 static const char __pyx_k_audio_unit_uninitialize[] = "audio_unit_uninitialize";
 static const char __pyx_k_get_midi_property_model[] = "get_midi_property_model";
 static const char __pyx_k_int_to_fourchar_line_18[] = "int_to_fourchar (line 18)";
+static const char __pyx_k_midi1_up_control_change[] = "midi1_up_control_change";
 static const char __pyx_k_midi_destination_create[] = "midi_destination_create";
 static const char __pyx_k_midi_output_port_create[] = "midi_output_port_create";
 static const char __pyx_k_music_device_midi_event[] = "music_device_midi_event";
@@ -2830,6 +2877,7 @@ static const char __pyx_k_music_device_start_note[] = "music_device_start_note";
 static const char __pyx_k_music_player_is_playing[] = "music_player_is_playing";
 static const char __pyx_k_xq_Rr_D_Rr_D_Rr_Cr_Rr_1[] = "\320\000\027\220x\230q\360\014\000\005\006\330\n\r\210R\210r\220\023\220D\230\002\230!\330\010\n\210#\210R\210r\220\023\220D\230\002\230!\330\010\n\210#\210R\210r\220\023\220C\220r\230\021\330\010\n\210#\210R\210r\220\022\2201";
 static const char __pyx_k_9_LJVaannoop_wc_l_2_Na_6[] = "\200\001\360\034\000\005!\320 9\270\021\320:L\310J\320Va\320an\320no\320op\340\004\007\200w\210c\220\021\330\010\016\210l\230!\2302\320\035N\310a\330\004\013\2106\220\021";
+static const char __pyx_k_AZwjPYYccd6_PP_kkvvw_Cxs[] = "\200\001\360\034\000\005(\240}\260A\260Z\270w\300j\320PY\320Yc\320cd\3306@\320@P\320P[\320[k\320kv\320vw\330\004\014\210C\210x\220s\230!";
 static const char __pyx_k_AudioPlayer_get_progress[] = "AudioPlayer.get_progress";
 static const char __pyx_k_AudioPlayer_setup_output[] = "AudioPlayer.setup_output";
 static const char __pyx_k_create_midi_note_message[] = "create_midi_note_message";
@@ -2856,6 +2904,7 @@ static const char __pyx_k_AudioPlayer_reset_playback[] = "AudioPlayer.reset_play
 static const char __pyx_k_audio_queue_enqueue_buffer[] = "audio_queue_enqueue_buffer";
 static const char __pyx_k_get_audio_unit_scope_input[] = "get_audio_unit_scope_input";
 static const char __pyx_k_get_audio_unit_type_output[] = "get_audio_unit_type_output";
+static const char __pyx_k_get_midi_cv_status_note_on[] = "get_midi_cv_status_note_on";
 static const char __pyx_k_get_midi_object_type_other[] = "get_midi_object_type_other";
 static const char __pyx_k_midi_get_number_of_devices[] = "midi_get_number_of_devices";
 static const char __pyx_k_midi_get_number_of_sources[] = "midi_get_number_of_sources";
@@ -2874,8 +2923,10 @@ static const char __pyx_k_get_audio_format_linear_pcm[] = "get_audio_format_line
 static const char __pyx_k_get_audio_services_no_error[] = "get_audio_services_no_error";
 static const char __pyx_k_get_audio_unit_scope_global[] = "get_audio_unit_scope_global";
 static const char __pyx_k_get_audio_unit_scope_output[] = "get_audio_unit_scope_output";
+static const char __pyx_k_get_midi_cv_status_note_off[] = "get_midi_cv_status_note_off";
 static const char __pyx_k_get_midi_error_invalid_port[] = "get_midi_error_invalid_port";
 static const char __pyx_k_get_midi_error_wrong_thread[] = "get_midi_error_wrong_thread";
+static const char __pyx_k_get_midi_message_type_sysex[] = "get_midi_message_type_sysex";
 static const char __pyx_k_get_midi_object_type_device[] = "get_midi_object_type_device";
 static const char __pyx_k_get_midi_object_type_entity[] = "get_midi_object_type_entity";
 static const char __pyx_k_get_midi_object_type_source[] = "get_midi_object_type_source";
@@ -2883,6 +2934,7 @@ static const char __pyx_k_get_midi_property_device_id[] = "get_midi_property_dev
 static const char __pyx_k_get_midi_property_unique_id[] = "get_midi_property_unique_id";
 static const char __pyx_k_get_music_note_event_unused[] = "get_music_note_event_unused";
 static const char __pyx_k_get_system_sound_id_vibrate[] = "get_system_sound_id_vibrate";
+static const char __pyx_k_midi2_channel_voice_message[] = "midi2_channel_voice_message";
 static const char __pyx_k_midi_entity_get_destination[] = "midi_entity_get_destination";
 static const char __pyx_k_midi_port_disconnect_source[] = "midi_port_disconnect_source";
 static const char __pyx_k_Failed_to_setup_audio_output[] = "Failed to setup audio output: ";
@@ -2892,6 +2944,7 @@ static const char __pyx_k_get_midi_error_id_not_unique[] = "get_midi_error_id_no
 static const char __pyx_k_get_midi_error_no_connection[] = "get_midi_error_no_connection";
 static const char __pyx_k_get_midi_error_not_permitted[] = "get_midi_error_not_permitted";
 static const char __pyx_k_get_midi_error_unknown_error[] = "get_midi_error_unknown_error";
+static const char __pyx_k_get_midi_message_type_system[] = "get_midi_message_type_system";
 static const char __pyx_k_music_sequence_dispose_track[] = "music_sequence_dispose_track";
 static const char __pyx_k_music_sequence_get_ind_track[] = "music_sequence_get_ind_track";
 static const char __pyx_k_1_z_A_A_a_6a_4Cq_j_wc_l_2_J_1[] = "\200\001\340\004\035\230^\2501\360\006\000\005\010\200z\220\021\220&\230\001\340\010\023\320\023(\250\001\250\021\330)A\300\021\330)<\270A\330)>\270a\330)6\260a\330)4\260C\260q\270\001\340\010\016\210j\230\001\230\021\340\004\007\200w\210c\220\021\330\010\016\210l\230!\2302\320\035J\310!\340\004\013\2101";
@@ -2902,9 +2955,13 @@ static const char __pyx_k_Hardware_audio_output_control[] = "   Hardware audio o
 static const char __pyx_k_IWAQ_8_1A_t1_j_A_wc_l_2_VVW_6[] = "\200\001\360\010\000\005\035\230I\240W\250A\250Q\340\004\020\320\0208\270\001\330\n\013\330\010\031\230\021\330\010\013\2101\210A\330\010\t\360\006\000\005\010\200t\2101\330\010\016\210j\230\001\230\021\340\004 \320 A\300\021\330\010\t\330\010\t\210\021\360\006\000\007\021\220\001\220\021\340\004\007\200w\210c\220\021\330\010\016\210l\230!\2302\320\035V\320VW\340\004\013\2106\220\021";
 static const char __pyx_k_a_31_t1_k_vQa_7_Q_ar_MQ_vQ_AQ[] = "\200\001\360\032\000\005\"\240\031\250'\260\021\260!\330\004$\320$>\270a\330\n \320 3\2601\360\010\000\005\010\200t\2101\330\010\016\210k\230\021\230!\340\004\005\330\010\025\320\025)\250\021\330\014 \240\010\250\t\260\026\260v\270Q\270a\330\010\013\2107\220#\220Q\330\014\022\220,\230a\230r\320!M\310Q\330\010\017\210v\220Q\340\n\024\220A\220Q";
 static const char __pyx_k_audio_file_stream_parse_bytes[] = "audio_file_stream_parse_bytes";
+static const char __pyx_k_get_midi_cv_status_pitch_bend[] = "get_midi_cv_status_pitch_bend";
 static const char __pyx_k_get_midi_error_invalid_client[] = "get_midi_error_invalid_client";
+static const char __pyx_k_get_midi_message_type_data128[] = "get_midi_message_type_data128";
+static const char __pyx_k_get_midi_message_type_utility[] = "get_midi_message_type_utility";
 static const char __pyx_k_get_music_device_sysex_select[] = "get_music_device_sysex_select";
 static const char __pyx_k_get_music_sequence_type_beats[] = "get_music_sequence_type_beats";
+static const char __pyx_k_midi_message_type_for_up_word[] = "midi_message_type_for_up_word";
 static const char __pyx_k_1_J_q_q_Q_S_q_c_wc_l_2_RRS_vQa[] = "\320\0001\260\021\340\004.\320.J\310!\330\004\037\230q\330\004\037\230q\330\004\037\230{\250!\360\006\000\005!\320 =\270Q\330\010\t\330\010\035\320\035-\250S\260\007\260q\330\010\t\210\035\320\026&\240c\250\027\260\001\330\010\t\210\021\330\010\t\210\021\360\006\000\005\010\200w\210c\220\021\330\010\016\210l\230!\2302\320\035R\320RS\360\006\000\005\031\230\007\230v\240Q\240a\330\004!\240\021\330\004\007\200t\2101\330\010\016\210k\230\021\230!\340\004\005\330\010\023\320\023,\250A\330\014\r\330\014!\320!1\260\023\260G\2701\330\014\r\210]\320\032*\250#\250W\260A\330\014\r\210Q\330\014\r\360\006\000\t\014\2107\220#\220Q\330\014\022\220,\230a\230r\320!R\320RS\360\006\000\t\014\210:\220S\230\001\330\014\024\220L\240\007\240q\250\001\340\014\023\2206\230\022\2301\360\006\000\t\r\210A\210Q";
 static const char __pyx_k_1_q_q_A_A_a_wc_l_2_Na_vQa_t1_k[] = "\200\001\340\004\035\230^\2501\330\004\037\230q\330\004\037\230q\360\010\000\005\020\320\017(\250\001\250\021\330)A\300\021\330)<\270A\330)>\270a\330)*\250!\330)*\250!\330\004\007\200w\210c\220\021\330\010\016\210l\230!\2302\320\035N\310a\360\006\000\005\031\230\007\230v\240Q\240a\330\004\007\200t\2101\330\010\016\210k\230\021\230!\340\004\005\330\010\023\320\023(\250\001\250\021\330)A\300\021\330)<\270A\330)>\270a\330)*\330)*\250!\340\010\013\2107\220#\220Q\330\014\022\220,\230a\230r\320!N\310a\340\010\017\210v\220R\220q\360\006\000\t\r\210A\210Q";
 static const char __pyx_k_7q_J_z_Kq_A_1F_A_Cq_iq_9_S_q_c[] = "\320\0007\260q\340\004.\320.J\310!\330\004\037\230{\250!\360\016\000\005\010\200z\220\021\220&\230\001\330\010\024\220K\230q\330\010\023\220=\240\001\240\021\330\010\024\220A\330\t\023\2201\220F\230!\330\010\024\220A\330\010\023\220=\240\001\330\010\024\220C\220q\230\001\340\010\016\210i\220q\230\001\340\004 \320 9\270\021\330\010\t\330\010\035\320\035-\250S\260\007\260q\330\010\t\210\035\320\026&\240c\250\027\260\001\330\010\t\330\010\t\360\006\000\005\010\200w\210c\220\021\330\010\016\210l\230!\2302\320\035N\310a\340\004\013\2101";
@@ -2921,12 +2978,14 @@ static const char __pyx_k_get_midi_property_driver_owner[] = "get_midi_property_
 static const char __pyx_k_get_midi_property_manufacturer[] = "get_midi_property_manufacturer";
 static const char __pyx_k_get_music_event_type_au_preset[] = "get_music_event_type_au_preset";
 static const char __pyx_k_get_music_event_type_parameter[] = "get_music_event_type_parameter";
+static const char __pyx_k_midi1_up_channel_voice_message[] = "midi1_up_channel_voice_message";
 static const char __pyx_k_music_sequence_get_tempo_track[] = "music_sequence_get_tempo_track";
 static const char __pyx_k_music_sequence_get_track_count[] = "music_sequence_get_track_count";
 static const char __pyx_k_q_TTU_Bc_Cq_j_11NiWXXY_B_HKq_6[] = "\200\001\360\032\000\005\036\320\035?\270q\320@T\320TU\330\004\007\200{\220\"\220B\220c\230\033\240C\240q\330\010\016\210j\230\001\230\022\320\0331\3201N\310i\320WX\320XY\340\004)\320)B\300!\330\010\034\230H\240K\250q\330\004\013\2106\220\021";
 static const char __pyx_k_should_be_four_characters_only[] = "should be four characters only";
 static const char __pyx_k_5Q_q_Q_Q_q_5Q_wc_l_2_DA_1_1_vQa[] = "\200\001\340\004%\320%5\260Q\330\004\037\230q\330\004\"\240+\250Q\360\006\000\005&\240Q\330\004\037\230q\340\004 \320 5\260Q\330\010\t\330\n\013\330\010\t\210\021\330\010\t\210\021\360\006\000\005\010\200w\210c\220\021\330\010\016\210l\230!\2302\320\035D\300A\360\006\000\005\"\320!1\260\022\2601\330\004\030\230\007\230v\240Q\240a\330\004\007\200t\2101\330\010\016\210k\230\021\230!\340\004\005\330\010\024\220A\330\010\023\320\023(\250\001\330\014\r\330\014\r\330\014\r\210Q\330\014\r\330\014\027\220q\330\014\r\210Q\330\014\r\360\006\000\t\014\2107\220#\220Q\330\014\022\220,\230a\230r\320!N\310a\340\010\017\210v\220R\220|\2401\360\006\000\t\r\210A\210Q";
 static const char __pyx_k_5Q_q_a_9_wc_l_2_Na_vQa_t1_k_A_Q[] = "\200\001\340\004%\320%5\260Q\330\004\037\230q\330\004\036\230a\360\006\000\005!\320 9\270\021\330\010\t\330\010 \240\001\330\010\t\210\021\330\010\t\210\021\360\006\000\005\010\200w\210c\220\021\330\010\016\210l\230!\2302\320\035N\310a\360\006\000\005\031\230\007\230v\240Q\240a\330\004\007\200t\2101\330\010\016\210k\230\021\230!\340\004\005\330\010\023\320\023(\250\001\330\014\r\330\014$\240A\330\014\r\210Q\330\014\r\360\006\000\t\014\2107\220#\220Q\330\014\022\220,\230a\230r\320!N\310a\360\006\000\t\020\210v\220R\220q\360\006\000\t\r\210A\210Q";
+static const char __pyx_k_AZwjPXXbbc6_zQXXbbc6_zQXXbbc_Cx[] = "\200\001\360\030\000\005(\240}\260A\260Z\270w\300j\320PX\320Xb\320bc\3306@\300\007\300z\320QX\320Xb\320bc\3306@\300\007\300z\320QX\320Xb\320bc\330\004\014\210C\210x\220s\230!";
 static const char __pyx_k_A_s_6_1_j_r_AQ_F_1_t1_k_q_1_s_1[] = "\320\000<\270A\360*\000\005\010\200s\210!\2106\220\022\2201\330\010\016\210j\230\001\230\021\360\006\000\005\024\320\023/\250r\260\023\260A\260Q\330\004\016\320\016$\240F\250!\2501\330\004\007\200t\2101\330\010\016\210k\230\021\230!\340\004\005\340\010\025\320\025(\250\001\250\021\360\006\000\t\026\320\025'\240q\330\014\025\220^\2401\330\014 \240\001\330\014\027\220s\230!\2301\330\014\035\230W\240A\340\010\013\2104\210q\330\014\022\220,\230a\230q\360\006\000\t\026\220Y\230a\330\014\036\230a\330\014\"\240!\330\014\r\340\010\013\2107\220#\220Q\330\014\022\220,\230a\230r\320!B\300!\330\010\017\210q\360\006\000\t\r\210A\210Q";
 static const char __pyx_k_All_low_level_CoreAudio_APIs_ar[] = "   \342\200\242 All low-level CoreAudio APIs are now available through coremusic";
 static const char __pyx_k_AudioComponent_discovery_and_in[] = "   AudioComponent discovery and instantiation";
@@ -3103,8 +3162,13 @@ static const char __pyx_k_get_audio_unit_subtype_default_o[] = "get_audio_unit_s
 static const char __pyx_k_get_linear_pcm_format_flag_is_no[] = "get_linear_pcm_format_flag_is_non_interleaved";
 static const char __pyx_k_get_linear_pcm_format_flag_is_pa[] = "get_linear_pcm_format_flag_is_packed";
 static const char __pyx_k_get_linear_pcm_format_flag_is_si[] = "get_linear_pcm_format_flag_is_signed_integer";
+static const char __pyx_k_get_midi_cv_status_channel_press[] = "get_midi_cv_status_channel_pressure";
+static const char __pyx_k_get_midi_cv_status_control_chang[] = "get_midi_cv_status_control_change";
+static const char __pyx_k_get_midi_cv_status_poly_pressure[] = "get_midi_cv_status_poly_pressure";
+static const char __pyx_k_get_midi_cv_status_program_chang[] = "get_midi_cv_status_program_change";
 static const char __pyx_k_get_midi_error_wrong_endpoint_ty[] = "get_midi_error_wrong_endpoint_type";
 static const char __pyx_k_get_midi_error_wrong_property_ty[] = "get_midi_error_wrong_property_type";
+static const char __pyx_k_get_midi_message_type_channel_vo[] = "get_midi_message_type_channel_voice1";
 static const char __pyx_k_get_midi_object_type_destination[] = "get_midi_object_type_destination";
 static const char __pyx_k_get_midi_object_type_external_de[] = "get_midi_object_type_external_device";
 static const char __pyx_k_get_midi_object_type_external_en[] = "get_midi_object_type_external_entity";
@@ -3163,6 +3227,7 @@ static const char __pyx_k_get_audio_file_stream_property_m_2[] = "get_audio_file
 static const char __pyx_k_get_audio_file_stream_property_p_2[] = "get_audio_file_stream_property_packet_to_byte";
 static const char __pyx_k_get_audio_file_stream_property_p_3[] = "get_audio_file_stream_property_packet_table_info";
 static const char __pyx_k_get_audio_file_stream_property_p_4[] = "get_audio_file_stream_property_packet_size_upper_bound";
+static const char __pyx_k_get_midi_message_type_channel_vo_2[] = "get_midi_message_type_channel_voice2";
 static const char __pyx_k_get_midi_object_type_external_de_2[] = "get_midi_object_type_external_destination";
 /* #### Code section: decls ### */
 static PyObject *__pyx_pf_9coremusic_4capi_fourchar_to_int(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_code); /* proto */
@@ -3413,6 +3478,33 @@ static PyObject *__pyx_pf_9coremusic_4capi_464get_midi_property_offline(CYTHON_U
 static PyObject *__pyx_pf_9coremusic_4capi_466get_midi_property_private(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
 static PyObject *__pyx_pf_9coremusic_4capi_468get_midi_property_driver_owner(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
 static PyObject *__pyx_pf_9coremusic_4capi_470get_midi_property_display_name(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_472midi_message_type_for_up_word(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_word); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_474midi1_up_channel_voice_message(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_status, int __pyx_v_channel, int __pyx_v_data1, int __pyx_v_data2); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_476midi1_up_note_off(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_note_number, int __pyx_v_velocity); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_478midi1_up_note_on(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_note_number, int __pyx_v_velocity); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_480midi1_up_control_change(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_index, int __pyx_v_data); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_482midi1_up_pitch_bend(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_lsb, int __pyx_v_msb); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_484midi1_up_system_common(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_status, int __pyx_v_byte1, int __pyx_v_byte2); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_486midi1_up_sysex(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_status, int __pyx_v_bytes_used, int __pyx_v_byte1, int __pyx_v_byte2, int __pyx_v_byte3, int __pyx_v_byte4, int __pyx_v_byte5, int __pyx_v_byte6); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_488midi2_channel_voice_message(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_status, int __pyx_v_channel, int __pyx_v_index, long __pyx_v_value); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_490midi2_note_on(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_note_number, int __pyx_v_attribute_type, int __pyx_v_attribute_data, int __pyx_v_velocity); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_492midi2_note_off(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_note_number, int __pyx_v_attribute_type, int __pyx_v_attribute_data, int __pyx_v_velocity); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_494midi2_control_change(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_index, long __pyx_v_value); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_496midi2_program_change(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_bank_is_valid, int __pyx_v_program, int __pyx_v_bank_msb, int __pyx_v_bank_lsb); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_498midi2_pitch_bend(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, long __pyx_v_value); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_500get_midi_message_type_utility(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_502get_midi_message_type_system(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_504get_midi_message_type_channel_voice1(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_506get_midi_message_type_sysex(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_508get_midi_message_type_channel_voice2(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_510get_midi_message_type_data128(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_512get_midi_cv_status_note_off(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_514get_midi_cv_status_note_on(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_516get_midi_cv_status_poly_pressure(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_518get_midi_cv_status_control_change(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_520get_midi_cv_status_program_change(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_522get_midi_cv_status_channel_pressure(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4capi_524get_midi_cv_status_pitch_bend(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
 static PyObject *__pyx_tp_new_9coremusic_4capi_AudioPlayer(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 /* #### Code section: late_includes ### */
 /* #### Code section: module_state ### */
@@ -3456,8 +3548,8 @@ typedef struct {
   PyTypeObject *__pyx_ptype_9coremusic_4capi_AudioPlayer;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_pop;
   PyObject *__pyx_tuple[12];
-  PyObject *__pyx_codeobj_tab[246];
-  PyObject *__pyx_string_tab[574];
+  PyObject *__pyx_codeobj_tab[273];
+  PyObject *__pyx_string_tab[618];
   PyObject *__pyx_float_44100_0;
   PyObject *__pyx_int_0;
   PyObject *__pyx_int_1;
@@ -3649,435 +3741,479 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_n_u_arg_count __pyx_string_tab[142]
 #define __pyx_n_u_asbd __pyx_string_tab[143]
 #define __pyx_n_u_asyncio_coroutines __pyx_string_tab[144]
-#define __pyx_n_u_audio_component_find_next __pyx_string_tab[145]
-#define __pyx_n_u_audio_component_instance_dispose __pyx_string_tab[146]
-#define __pyx_n_u_audio_component_instance_new __pyx_string_tab[147]
-#define __pyx_n_u_audio_file __pyx_string_tab[148]
-#define __pyx_n_u_audio_file_close __pyx_string_tab[149]
-#define __pyx_n_u_audio_file_get_property __pyx_string_tab[150]
-#define __pyx_n_u_audio_file_id __pyx_string_tab[151]
-#define __pyx_n_u_audio_file_open_url __pyx_string_tab[152]
-#define __pyx_n_u_audio_file_read_packets __pyx_string_tab[153]
-#define __pyx_n_u_audio_file_stream_close __pyx_string_tab[154]
-#define __pyx_n_u_audio_file_stream_get_property __pyx_string_tab[155]
-#define __pyx_n_u_audio_file_stream_open __pyx_string_tab[156]
-#define __pyx_n_u_audio_file_stream_parse_bytes __pyx_string_tab[157]
-#define __pyx_n_u_audio_file_stream_seek __pyx_string_tab[158]
-#define __pyx_n_u_audio_format __pyx_string_tab[159]
-#define __pyx_n_u_audio_hardware_destroy_aggregate __pyx_string_tab[160]
-#define __pyx_n_u_audio_hardware_unload __pyx_string_tab[161]
-#define __pyx_n_u_audio_object_show __pyx_string_tab[162]
-#define __pyx_n_u_audio_output_unit_start __pyx_string_tab[163]
-#define __pyx_n_u_audio_output_unit_stop __pyx_string_tab[164]
-#define __pyx_n_u_audio_queue_allocate_buffer __pyx_string_tab[165]
-#define __pyx_n_u_audio_queue_dispose __pyx_string_tab[166]
-#define __pyx_n_u_audio_queue_enqueue_buffer __pyx_string_tab[167]
-#define __pyx_n_u_audio_queue_new_output __pyx_string_tab[168]
-#define __pyx_n_u_audio_queue_start __pyx_string_tab[169]
-#define __pyx_n_u_audio_queue_stop __pyx_string_tab[170]
-#define __pyx_n_u_audio_services_create_system_sou __pyx_string_tab[171]
-#define __pyx_n_u_audio_services_dispose_system_so __pyx_string_tab[172]
-#define __pyx_n_u_audio_services_get_property __pyx_string_tab[173]
-#define __pyx_n_u_audio_services_play_alert_sound __pyx_string_tab[174]
-#define __pyx_n_u_audio_services_play_system_sound __pyx_string_tab[175]
-#define __pyx_n_u_audio_services_set_property __pyx_string_tab[176]
-#define __pyx_n_u_audio_unit_get_property __pyx_string_tab[177]
-#define __pyx_n_u_audio_unit_id __pyx_string_tab[178]
-#define __pyx_n_u_audio_unit_initialize __pyx_string_tab[179]
-#define __pyx_n_u_audio_unit_set_property __pyx_string_tab[180]
-#define __pyx_n_u_audio_unit_uninitialize __pyx_string_tab[181]
-#define __pyx_n_u_bits_per_channel __pyx_string_tab[182]
-#define __pyx_n_u_bpm __pyx_string_tab[183]
-#define __pyx_n_u_buffer __pyx_string_tab[184]
-#define __pyx_n_u_buffer_id __pyx_string_tab[185]
-#define __pyx_n_u_buffer_size __pyx_string_tab[186]
-#define __pyx_n_u_byte_data __pyx_string_tab[187]
-#define __pyx_n_u_byte_offset __pyx_string_tab[188]
-#define __pyx_n_u_bytes_per_frame __pyx_string_tab[189]
-#define __pyx_n_u_bytes_per_packet __pyx_string_tab[190]
-#define __pyx_n_u_c_str __pyx_string_tab[191]
-#define __pyx_n_u_cf_name __pyx_string_tab[192]
-#define __pyx_n_u_cf_prop_name __pyx_string_tab[193]
-#define __pyx_n_u_cf_value __pyx_string_tab[194]
-#define __pyx_n_u_channel __pyx_string_tab[195]
-#define __pyx_n_u_channels_per_frame __pyx_string_tab[196]
-#define __pyx_n_u_client __pyx_string_tab[197]
-#define __pyx_n_u_cline_in_traceback __pyx_string_tab[198]
-#define __pyx_n_u_code __pyx_string_tab[199]
-#define __pyx_n_u_component __pyx_string_tab[200]
-#define __pyx_n_u_component_id __pyx_string_tab[201]
-#define __pyx_n_u_controller __pyx_string_tab[202]
-#define __pyx_n_u_controls __pyx_string_tab[203]
-#define __pyx_kp_u_convert_int_to_fourcc_4_chars_in __pyx_string_tab[204]
-#define __pyx_n_u_coremusic_capi __pyx_string_tab[205]
-#define __pyx_n_u_create_midi_channel_message __pyx_string_tab[206]
-#define __pyx_n_u_create_midi_note_message __pyx_string_tab[207]
-#define __pyx_n_u_create_music_device_note_params __pyx_string_tab[208]
-#define __pyx_n_u_create_music_device_std_note_par __pyx_string_tab[209]
-#define __pyx_n_u_data __pyx_string_tab[210]
-#define __pyx_n_u_data1 __pyx_string_tab[211]
-#define __pyx_n_u_data2 __pyx_string_tab[212]
-#define __pyx_kp_u_data_must_be_bytes __pyx_string_tab[213]
-#define __pyx_n_u_data_ptr __pyx_string_tab[214]
-#define __pyx_n_u_data_size __pyx_string_tab[215]
-#define __pyx_n_u_demonstrate_callback_infrastruct __pyx_string_tab[216]
-#define __pyx_n_u_desc __pyx_string_tab[217]
-#define __pyx_n_u_description_dict __pyx_string_tab[218]
-#define __pyx_n_u_dest __pyx_string_tab[219]
-#define __pyx_n_u_dest_index __pyx_string_tab[220]
-#define __pyx_n_u_destination __pyx_string_tab[221]
-#define __pyx_n_u_device __pyx_string_tab[222]
-#define __pyx_n_u_deviceID __pyx_string_tab[223]
-#define __pyx_n_u_device_index __pyx_string_tab[224]
-#define __pyx_kp_u_disable __pyx_string_tab[225]
-#define __pyx_n_u_displayName __pyx_string_tab[226]
-#define __pyx_n_u_dispose_music_player __pyx_string_tab[227]
-#define __pyx_n_u_dispose_music_sequence __pyx_string_tab[228]
-#define __pyx_n_u_driverOwner __pyx_string_tab[229]
-#define __pyx_n_u_duration __pyx_string_tab[230]
-#define __pyx_n_u_element __pyx_string_tab[231]
-#define __pyx_kp_u_enable __pyx_string_tab[232]
-#define __pyx_n_u_endpoint __pyx_string_tab[233]
-#define __pyx_n_u_entity __pyx_string_tab[234]
-#define __pyx_n_u_entity_index __pyx_string_tab[235]
-#define __pyx_n_u_enumerate __pyx_string_tab[236]
-#define __pyx_n_u_file_path __pyx_string_tab[237]
-#define __pyx_n_u_file_type_hint __pyx_string_tab[238]
-#define __pyx_n_u_flags __pyx_string_tab[239]
-#define __pyx_n_u_flags_mask __pyx_string_tab[240]
-#define __pyx_n_u_format __pyx_string_tab[241]
-#define __pyx_n_u_format_flags __pyx_string_tab[242]
-#define __pyx_n_u_format_id __pyx_string_tab[243]
-#define __pyx_n_u_fourchar_to_int __pyx_string_tab[244]
-#define __pyx_kp_u_fourchar_to_int_line_8 __pyx_string_tab[245]
-#define __pyx_n_u_frames_per_packet __pyx_string_tab[246]
-#define __pyx_n_u_func __pyx_string_tab[247]
-#define __pyx_kp_u_gc __pyx_string_tab[248]
-#define __pyx_n_u_get __pyx_string_tab[249]
-#define __pyx_n_u_get_audio_component_type_music_d __pyx_string_tab[250]
-#define __pyx_n_u_get_audio_file_property_data_for __pyx_string_tab[251]
-#define __pyx_n_u_get_audio_file_property_maximum __pyx_string_tab[252]
-#define __pyx_n_u_get_audio_file_read_permission __pyx_string_tab[253]
-#define __pyx_n_u_get_audio_file_stream_error_bad __pyx_string_tab[254]
-#define __pyx_n_u_get_audio_file_stream_error_data __pyx_string_tab[255]
-#define __pyx_n_u_get_audio_file_stream_error_disc __pyx_string_tab[256]
-#define __pyx_n_u_get_audio_file_stream_error_ille __pyx_string_tab[257]
-#define __pyx_n_u_get_audio_file_stream_error_inva __pyx_string_tab[258]
-#define __pyx_n_u_get_audio_file_stream_error_inva_2 __pyx_string_tab[259]
-#define __pyx_n_u_get_audio_file_stream_error_not __pyx_string_tab[260]
-#define __pyx_n_u_get_audio_file_stream_error_unsp __pyx_string_tab[261]
-#define __pyx_n_u_get_audio_file_stream_error_unsu __pyx_string_tab[262]
-#define __pyx_n_u_get_audio_file_stream_error_unsu_2 __pyx_string_tab[263]
-#define __pyx_n_u_get_audio_file_stream_error_unsu_3 __pyx_string_tab[264]
-#define __pyx_n_u_get_audio_file_stream_error_valu __pyx_string_tab[265]
-#define __pyx_n_u_get_audio_file_stream_parse_flag __pyx_string_tab[266]
-#define __pyx_n_u_get_audio_file_stream_property_a __pyx_string_tab[267]
-#define __pyx_n_u_get_audio_file_stream_property_a_2 __pyx_string_tab[268]
-#define __pyx_n_u_get_audio_file_stream_property_a_3 __pyx_string_tab[269]
-#define __pyx_n_u_get_audio_file_stream_property_b __pyx_string_tab[270]
-#define __pyx_n_u_get_audio_file_stream_property_b_2 __pyx_string_tab[271]
-#define __pyx_n_u_get_audio_file_stream_property_c __pyx_string_tab[272]
-#define __pyx_n_u_get_audio_file_stream_property_d __pyx_string_tab[273]
-#define __pyx_n_u_get_audio_file_stream_property_d_2 __pyx_string_tab[274]
-#define __pyx_n_u_get_audio_file_stream_property_f __pyx_string_tab[275]
-#define __pyx_n_u_get_audio_file_stream_property_f_2 __pyx_string_tab[276]
-#define __pyx_n_u_get_audio_file_stream_property_f_3 __pyx_string_tab[277]
-#define __pyx_n_u_get_audio_file_stream_property_f_4 __pyx_string_tab[278]
-#define __pyx_n_u_get_audio_file_stream_property_f_5 __pyx_string_tab[279]
-#define __pyx_n_u_get_audio_file_stream_property_i __pyx_string_tab[280]
-#define __pyx_n_u_get_audio_file_stream_property_m __pyx_string_tab[281]
-#define __pyx_n_u_get_audio_file_stream_property_m_2 __pyx_string_tab[282]
-#define __pyx_n_u_get_audio_file_stream_property_p __pyx_string_tab[283]
-#define __pyx_n_u_get_audio_file_stream_property_p_2 __pyx_string_tab[284]
-#define __pyx_n_u_get_audio_file_stream_property_p_3 __pyx_string_tab[285]
-#define __pyx_n_u_get_audio_file_stream_property_p_4 __pyx_string_tab[286]
-#define __pyx_n_u_get_audio_file_stream_property_r __pyx_string_tab[287]
-#define __pyx_n_u_get_audio_file_stream_seek_flag __pyx_string_tab[288]
-#define __pyx_n_u_get_audio_file_wave_type __pyx_string_tab[289]
-#define __pyx_n_u_get_audio_format_linear_pcm __pyx_string_tab[290]
-#define __pyx_n_u_get_audio_services_bad_property __pyx_string_tab[291]
-#define __pyx_n_u_get_audio_services_bad_specifier __pyx_string_tab[292]
-#define __pyx_n_u_get_audio_services_no_error __pyx_string_tab[293]
-#define __pyx_n_u_get_audio_services_property_comp __pyx_string_tab[294]
-#define __pyx_n_u_get_audio_services_property_is_u __pyx_string_tab[295]
-#define __pyx_n_u_get_audio_services_system_sound __pyx_string_tab[296]
-#define __pyx_n_u_get_audio_services_system_sound_2 __pyx_string_tab[297]
-#define __pyx_n_u_get_audio_services_system_sound_3 __pyx_string_tab[298]
-#define __pyx_n_u_get_audio_services_unsupported_p __pyx_string_tab[299]
-#define __pyx_n_u_get_audio_unit_manufacturer_appl __pyx_string_tab[300]
-#define __pyx_n_u_get_audio_unit_property_set_rend __pyx_string_tab[301]
-#define __pyx_n_u_get_audio_unit_property_stream_f __pyx_string_tab[302]
-#define __pyx_n_u_get_audio_unit_scope_global __pyx_string_tab[303]
-#define __pyx_n_u_get_audio_unit_scope_input __pyx_string_tab[304]
-#define __pyx_n_u_get_audio_unit_scope_output __pyx_string_tab[305]
-#define __pyx_n_u_get_audio_unit_subtype_default_o __pyx_string_tab[306]
-#define __pyx_n_u_get_audio_unit_type_output __pyx_string_tab[307]
-#define __pyx_n_u_get_linear_pcm_format_flag_is_no __pyx_string_tab[308]
-#define __pyx_n_u_get_linear_pcm_format_flag_is_pa __pyx_string_tab[309]
-#define __pyx_n_u_get_linear_pcm_format_flag_is_si __pyx_string_tab[310]
-#define __pyx_n_u_get_midi_error_id_not_unique __pyx_string_tab[311]
-#define __pyx_n_u_get_midi_error_invalid_client __pyx_string_tab[312]
-#define __pyx_n_u_get_midi_error_invalid_port __pyx_string_tab[313]
-#define __pyx_n_u_get_midi_error_message_send_err __pyx_string_tab[314]
-#define __pyx_n_u_get_midi_error_no_connection __pyx_string_tab[315]
-#define __pyx_n_u_get_midi_error_no_current_setup __pyx_string_tab[316]
-#define __pyx_n_u_get_midi_error_not_permitted __pyx_string_tab[317]
-#define __pyx_n_u_get_midi_error_object_not_found __pyx_string_tab[318]
-#define __pyx_n_u_get_midi_error_server_start_err __pyx_string_tab[319]
-#define __pyx_n_u_get_midi_error_setup_format_err __pyx_string_tab[320]
-#define __pyx_n_u_get_midi_error_unknown_endpoint __pyx_string_tab[321]
-#define __pyx_n_u_get_midi_error_unknown_error __pyx_string_tab[322]
-#define __pyx_n_u_get_midi_error_unknown_property __pyx_string_tab[323]
-#define __pyx_n_u_get_midi_error_wrong_endpoint_ty __pyx_string_tab[324]
-#define __pyx_n_u_get_midi_error_wrong_property_ty __pyx_string_tab[325]
-#define __pyx_n_u_get_midi_error_wrong_thread __pyx_string_tab[326]
-#define __pyx_n_u_get_midi_object_type_destination __pyx_string_tab[327]
-#define __pyx_n_u_get_midi_object_type_device __pyx_string_tab[328]
-#define __pyx_n_u_get_midi_object_type_entity __pyx_string_tab[329]
-#define __pyx_n_u_get_midi_object_type_external_de __pyx_string_tab[330]
-#define __pyx_n_u_get_midi_object_type_external_de_2 __pyx_string_tab[331]
-#define __pyx_n_u_get_midi_object_type_external_en __pyx_string_tab[332]
-#define __pyx_n_u_get_midi_object_type_external_so __pyx_string_tab[333]
-#define __pyx_n_u_get_midi_object_type_other __pyx_string_tab[334]
-#define __pyx_n_u_get_midi_object_type_source __pyx_string_tab[335]
-#define __pyx_n_u_get_midi_property_device_id __pyx_string_tab[336]
-#define __pyx_n_u_get_midi_property_display_name __pyx_string_tab[337]
-#define __pyx_n_u_get_midi_property_driver_owner __pyx_string_tab[338]
-#define __pyx_n_u_get_midi_property_manufacturer __pyx_string_tab[339]
-#define __pyx_n_u_get_midi_property_model __pyx_string_tab[340]
-#define __pyx_n_u_get_midi_property_name __pyx_string_tab[341]
-#define __pyx_n_u_get_midi_property_offline __pyx_string_tab[342]
-#define __pyx_n_u_get_midi_property_private __pyx_string_tab[343]
-#define __pyx_n_u_get_midi_property_receive_channe __pyx_string_tab[344]
-#define __pyx_n_u_get_midi_property_transmit_chann __pyx_string_tab[345]
-#define __pyx_n_u_get_midi_property_unique_id __pyx_string_tab[346]
-#define __pyx_n_u_get_midi_protocol_1_0 __pyx_string_tab[347]
-#define __pyx_n_u_get_midi_protocol_2_0 __pyx_string_tab[348]
-#define __pyx_n_u_get_music_device_midi_event_list __pyx_string_tab[349]
-#define __pyx_n_u_get_music_device_midi_event_sele __pyx_string_tab[350]
-#define __pyx_n_u_get_music_device_range __pyx_string_tab[351]
-#define __pyx_n_u_get_music_device_start_note_sele __pyx_string_tab[352]
-#define __pyx_n_u_get_music_device_stop_note_selec __pyx_string_tab[353]
-#define __pyx_n_u_get_music_device_sysex_select __pyx_string_tab[354]
-#define __pyx_n_u_get_music_event_type_au_preset __pyx_string_tab[355]
-#define __pyx_n_u_get_music_event_type_extended_no __pyx_string_tab[356]
-#define __pyx_n_u_get_music_event_type_extended_te __pyx_string_tab[357]
-#define __pyx_n_u_get_music_event_type_meta __pyx_string_tab[358]
-#define __pyx_n_u_get_music_event_type_midi_channe __pyx_string_tab[359]
-#define __pyx_n_u_get_music_event_type_midi_note_m __pyx_string_tab[360]
-#define __pyx_n_u_get_music_event_type_midi_raw_da __pyx_string_tab[361]
-#define __pyx_n_u_get_music_event_type_null __pyx_string_tab[362]
-#define __pyx_n_u_get_music_event_type_parameter __pyx_string_tab[363]
-#define __pyx_n_u_get_music_event_type_user __pyx_string_tab[364]
-#define __pyx_n_u_get_music_note_event_unused __pyx_string_tab[365]
-#define __pyx_n_u_get_music_note_event_use_group_i __pyx_string_tab[366]
-#define __pyx_n_u_get_music_sequence_file_any_type __pyx_string_tab[367]
-#define __pyx_n_u_get_music_sequence_file_imelody __pyx_string_tab[368]
-#define __pyx_n_u_get_music_sequence_file_midi_typ __pyx_string_tab[369]
-#define __pyx_n_u_get_music_sequence_type_beats __pyx_string_tab[370]
-#define __pyx_n_u_get_music_sequence_type_samples __pyx_string_tab[371]
-#define __pyx_n_u_get_music_sequence_type_seconds __pyx_string_tab[372]
-#define __pyx_n_u_get_progress __pyx_string_tab[373]
-#define __pyx_n_u_get_sequence_track_property_auto __pyx_string_tab[374]
-#define __pyx_n_u_get_sequence_track_property_loop __pyx_string_tab[375]
-#define __pyx_n_u_get_sequence_track_property_mute __pyx_string_tab[376]
-#define __pyx_n_u_get_sequence_track_property_offs __pyx_string_tab[377]
-#define __pyx_n_u_get_sequence_track_property_solo __pyx_string_tab[378]
-#define __pyx_n_u_get_sequence_track_property_time __pyx_string_tab[379]
-#define __pyx_n_u_get_sequence_track_property_trac __pyx_string_tab[380]
-#define __pyx_n_u_get_system_sound_id_flash_screen __pyx_string_tab[381]
-#define __pyx_n_u_get_system_sound_id_user_preferr __pyx_string_tab[382]
-#define __pyx_n_u_get_system_sound_id_vibrate __pyx_string_tab[383]
-#define __pyx_n_u_get_user_preferred_alert __pyx_string_tab[384]
-#define __pyx_n_u_getstate __pyx_string_tab[385]
-#define __pyx_n_u_group_id __pyx_string_tab[386]
-#define __pyx_n_u_i __pyx_string_tab[387]
-#define __pyx_n_u_immediate __pyx_string_tab[388]
-#define __pyx_n_u_in_device_id __pyx_string_tab[389]
-#define __pyx_n_u_instance __pyx_string_tab[390]
-#define __pyx_n_u_instance_id __pyx_string_tab[391]
-#define __pyx_n_u_instrument_id __pyx_string_tab[392]
-#define __pyx_n_u_int __pyx_string_tab[393]
-#define __pyx_n_u_int_to_fourchar __pyx_string_tab[394]
-#define __pyx_kp_u_int_to_fourchar_line_18 __pyx_string_tab[395]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[396]
-#define __pyx_n_u_is_estimated __pyx_string_tab[397]
-#define __pyx_n_u_is_playing __pyx_string_tab[398]
-#define __pyx_kp_u_isenabled __pyx_string_tab[399]
-#define __pyx_n_u_length __pyx_string_tab[400]
-#define __pyx_n_u_load_file __pyx_string_tab[401]
-#define __pyx_n_u_loop __pyx_string_tab[402]
-#define __pyx_n_u_lsb __pyx_string_tab[403]
-#define __pyx_n_u_main __pyx_string_tab[404]
-#define __pyx_n_u_manufacturer __pyx_string_tab[405]
-#define __pyx_n_u_max_packet_size __pyx_string_tab[406]
-#define __pyx_n_u_max_size __pyx_string_tab[407]
-#define __pyx_n_u_message __pyx_string_tab[408]
-#define __pyx_n_u_midi_client_create __pyx_string_tab[409]
-#define __pyx_n_u_midi_client_dispose __pyx_string_tab[410]
-#define __pyx_n_u_midi_control_change __pyx_string_tab[411]
-#define __pyx_n_u_midi_destination_create __pyx_string_tab[412]
-#define __pyx_n_u_midi_device_get_entity __pyx_string_tab[413]
-#define __pyx_n_u_midi_device_get_number_of_entiti __pyx_string_tab[414]
-#define __pyx_n_u_midi_endpoint_dispose __pyx_string_tab[415]
-#define __pyx_n_u_midi_entity_get_destination __pyx_string_tab[416]
-#define __pyx_n_u_midi_entity_get_number_of_destin __pyx_string_tab[417]
-#define __pyx_n_u_midi_entity_get_number_of_source __pyx_string_tab[418]
-#define __pyx_n_u_midi_entity_get_source __pyx_string_tab[419]
-#define __pyx_n_u_midi_get_destination __pyx_string_tab[420]
-#define __pyx_n_u_midi_get_device __pyx_string_tab[421]
-#define __pyx_n_u_midi_get_number_of_destinations __pyx_string_tab[422]
-#define __pyx_n_u_midi_get_number_of_devices __pyx_string_tab[423]
-#define __pyx_n_u_midi_get_number_of_sources __pyx_string_tab[424]
-#define __pyx_n_u_midi_get_source __pyx_string_tab[425]
-#define __pyx_n_u_midi_input_port_create __pyx_string_tab[426]
-#define __pyx_n_u_midi_note_off __pyx_string_tab[427]
-#define __pyx_n_u_midi_note_on __pyx_string_tab[428]
-#define __pyx_n_u_midi_object_get_integer_property __pyx_string_tab[429]
-#define __pyx_n_u_midi_object_get_string_property __pyx_string_tab[430]
-#define __pyx_n_u_midi_object_set_integer_property __pyx_string_tab[431]
-#define __pyx_n_u_midi_object_set_string_property __pyx_string_tab[432]
-#define __pyx_n_u_midi_output_port_create __pyx_string_tab[433]
-#define __pyx_n_u_midi_pitch_bend __pyx_string_tab[434]
-#define __pyx_n_u_midi_port_connect_source __pyx_string_tab[435]
-#define __pyx_n_u_midi_port_disconnect_source __pyx_string_tab[436]
-#define __pyx_n_u_midi_port_dispose __pyx_string_tab[437]
-#define __pyx_n_u_midi_program_change __pyx_string_tab[438]
-#define __pyx_n_u_midi_send_data __pyx_string_tab[439]
-#define __pyx_n_u_midi_source_create __pyx_string_tab[440]
-#define __pyx_n_u_model __pyx_string_tab[441]
-#define __pyx_n_u_module __pyx_string_tab[442]
-#define __pyx_n_u_msb __pyx_string_tab[443]
-#define __pyx_n_u_music_device_midi_event __pyx_string_tab[444]
-#define __pyx_n_u_music_device_start_note __pyx_string_tab[445]
-#define __pyx_n_u_music_device_stop_note __pyx_string_tab[446]
-#define __pyx_n_u_music_device_sysex __pyx_string_tab[447]
-#define __pyx_n_u_music_player_get_play_rate_scala __pyx_string_tab[448]
-#define __pyx_n_u_music_player_get_sequence __pyx_string_tab[449]
-#define __pyx_n_u_music_player_get_time __pyx_string_tab[450]
-#define __pyx_n_u_music_player_is_playing __pyx_string_tab[451]
-#define __pyx_n_u_music_player_preroll __pyx_string_tab[452]
-#define __pyx_n_u_music_player_set_play_rate_scala __pyx_string_tab[453]
-#define __pyx_n_u_music_player_set_sequence __pyx_string_tab[454]
-#define __pyx_n_u_music_player_set_time __pyx_string_tab[455]
-#define __pyx_n_u_music_player_start __pyx_string_tab[456]
-#define __pyx_n_u_music_player_stop __pyx_string_tab[457]
-#define __pyx_n_u_music_sequence_dispose_track __pyx_string_tab[458]
-#define __pyx_n_u_music_sequence_file_load __pyx_string_tab[459]
-#define __pyx_n_u_music_sequence_get_ind_track __pyx_string_tab[460]
-#define __pyx_n_u_music_sequence_get_sequence_type __pyx_string_tab[461]
-#define __pyx_n_u_music_sequence_get_tempo_track __pyx_string_tab[462]
-#define __pyx_n_u_music_sequence_get_track_count __pyx_string_tab[463]
-#define __pyx_n_u_music_sequence_new_track __pyx_string_tab[464]
-#define __pyx_n_u_music_sequence_set_sequence_type __pyx_string_tab[465]
-#define __pyx_n_u_music_track_new_extended_tempo_e __pyx_string_tab[466]
-#define __pyx_n_u_music_track_new_midi_channel_eve __pyx_string_tab[467]
-#define __pyx_n_u_music_track_new_midi_note_event __pyx_string_tab[468]
-#define __pyx_n_u_n __pyx_string_tab[469]
-#define __pyx_n_u_name __pyx_string_tab[470]
-#define __pyx_n_u_name_2 __pyx_string_tab[471]
-#define __pyx_n_u_name_bytes __pyx_string_tab[472]
-#define __pyx_n_u_new_music_player __pyx_string_tab[473]
-#define __pyx_n_u_new_music_sequence __pyx_string_tab[474]
-#define __pyx_n_u_note __pyx_string_tab[475]
-#define __pyx_n_u_note_instance_id __pyx_string_tab[476]
-#define __pyx_n_u_num_bytes __pyx_string_tab[477]
-#define __pyx_n_u_num_controls __pyx_string_tab[478]
-#define __pyx_n_u_num_dests __pyx_string_tab[479]
-#define __pyx_n_u_num_devices __pyx_string_tab[480]
-#define __pyx_n_u_num_entities __pyx_string_tab[481]
-#define __pyx_n_u_num_packets __pyx_string_tab[482]
-#define __pyx_n_u_num_sources __pyx_string_tab[483]
-#define __pyx_n_u_obj __pyx_string_tab[484]
-#define __pyx_n_u_object_id __pyx_string_tab[485]
-#define __pyx_n_u_offline __pyx_string_tab[486]
-#define __pyx_n_u_offset_sample_frame __pyx_string_tab[487]
-#define __pyx_kp_u_out_of_range_0 __pyx_string_tab[488]
-#define __pyx_n_u_packet __pyx_string_tab[489]
-#define __pyx_n_u_packet_count __pyx_string_tab[490]
-#define __pyx_n_u_packet_offset __pyx_string_tab[491]
-#define __pyx_n_u_param_id __pyx_string_tab[492]
-#define __pyx_n_u_params __pyx_string_tab[493]
-#define __pyx_n_u_params_size __pyx_string_tab[494]
-#define __pyx_n_u_path_bytes __pyx_string_tab[495]
-#define __pyx_n_u_permissions __pyx_string_tab[496]
-#define __pyx_n_u_pitch __pyx_string_tab[497]
-#define __pyx_n_u_pktlist __pyx_string_tab[498]
-#define __pyx_n_u_pktlist_size __pyx_string_tab[499]
-#define __pyx_n_u_player __pyx_string_tab[500]
-#define __pyx_n_u_pop __pyx_string_tab[501]
-#define __pyx_n_u_port __pyx_string_tab[502]
-#define __pyx_n_u_port_name __pyx_string_tab[503]
-#define __pyx_n_u_port_name_bytes __pyx_string_tab[504]
-#define __pyx_n_u_print __pyx_string_tab[505]
-#define __pyx_n_u_private __pyx_string_tab[506]
-#define __pyx_n_u_program __pyx_string_tab[507]
-#define __pyx_n_u_prop_bytes __pyx_string_tab[508]
-#define __pyx_n_u_prop_id __pyx_string_tab[509]
-#define __pyx_n_u_prop_size __pyx_string_tab[510]
-#define __pyx_n_u_property_id __pyx_string_tab[511]
-#define __pyx_n_u_property_name __pyx_string_tab[512]
-#define __pyx_n_u_pyx_state __pyx_string_tab[513]
-#define __pyx_n_u_qualname __pyx_string_tab[514]
-#define __pyx_n_u_queue __pyx_string_tab[515]
-#define __pyx_n_u_queue_id __pyx_string_tab[516]
-#define __pyx_n_u_receiveChannels __pyx_string_tab[517]
-#define __pyx_n_u_reduce __pyx_string_tab[518]
-#define __pyx_n_u_reduce_cython __pyx_string_tab[519]
-#define __pyx_n_u_reduce_ex __pyx_string_tab[520]
-#define __pyx_n_u_release_velocity __pyx_string_tab[521]
-#define __pyx_n_u_reserved __pyx_string_tab[522]
-#define __pyx_n_u_reset_playback __pyx_string_tab[523]
-#define __pyx_n_u_result __pyx_string_tab[524]
-#define __pyx_n_u_return __pyx_string_tab[525]
-#define __pyx_n_u_sample_rate __pyx_string_tab[526]
-#define __pyx_n_u_scale_rate __pyx_string_tab[527]
-#define __pyx_n_u_scope __pyx_string_tab[528]
-#define __pyx_n_u_self __pyx_string_tab[529]
-#define __pyx_kp_u_self_audio_output_cannot_be_conv __pyx_string_tab[530]
-#define __pyx_n_u_seq __pyx_string_tab[531]
-#define __pyx_n_u_sequence __pyx_string_tab[532]
-#define __pyx_n_u_sequence_type __pyx_string_tab[533]
-#define __pyx_n_u_set_looping __pyx_string_tab[534]
-#define __pyx_n_u_set_name __pyx_string_tab[535]
-#define __pyx_n_u_setstate __pyx_string_tab[536]
-#define __pyx_n_u_setstate_cython __pyx_string_tab[537]
-#define __pyx_n_u_setup_output __pyx_string_tab[538]
-#define __pyx_kp_u_should_be_four_characters_only __pyx_string_tab[539]
-#define __pyx_n_u_sound_id __pyx_string_tab[540]
-#define __pyx_n_u_source __pyx_string_tab[541]
-#define __pyx_n_u_source_index __pyx_string_tab[542]
-#define __pyx_n_u_specifier __pyx_string_tab[543]
-#define __pyx_n_u_specifier_value __pyx_string_tab[544]
-#define __pyx_kp_u_src_coremusic_capi_pyx __pyx_string_tab[545]
-#define __pyx_n_u_start __pyx_string_tab[546]
-#define __pyx_n_u_start_packet __pyx_string_tab[547]
-#define __pyx_n_u_status __pyx_string_tab[548]
-#define __pyx_n_u_status_result __pyx_string_tab[549]
-#define __pyx_n_u_stop __pyx_string_tab[550]
-#define __pyx_n_u_str __pyx_string_tab[551]
-#define __pyx_n_u_stream __pyx_string_tab[552]
-#define __pyx_n_u_stream_id __pyx_string_tab[553]
-#define __pyx_kp_u_stringsource __pyx_string_tab[554]
-#define __pyx_n_u_subtype __pyx_string_tab[555]
-#define __pyx_n_u_system_sound_id __pyx_string_tab[556]
-#define __pyx_n_u_test __pyx_string_tab[557]
-#define __pyx_n_u_test_error __pyx_string_tab[558]
-#define __pyx_n_u_time __pyx_string_tab[559]
-#define __pyx_n_u_timestamp __pyx_string_tab[560]
-#define __pyx_n_u_track __pyx_string_tab[561]
-#define __pyx_n_u_track_count __pyx_string_tab[562]
-#define __pyx_n_u_track_index __pyx_string_tab[563]
-#define __pyx_n_u_transmitChannels __pyx_string_tab[564]
-#define __pyx_n_u_type __pyx_string_tab[565]
-#define __pyx_n_u_uint_data __pyx_string_tab[566]
-#define __pyx_n_u_uniqueID __pyx_string_tab[567]
-#define __pyx_n_u_unit __pyx_string_tab[568]
-#define __pyx_n_u_url_ref __pyx_string_tab[569]
-#define __pyx_n_u_value __pyx_string_tab[570]
-#define __pyx_n_u_value_bytes __pyx_string_tab[571]
-#define __pyx_n_u_velocity __pyx_string_tab[572]
-#define __pyx_n_u_writable __pyx_string_tab[573]
+#define __pyx_n_u_attribute_data __pyx_string_tab[145]
+#define __pyx_n_u_attribute_type __pyx_string_tab[146]
+#define __pyx_n_u_audio_component_find_next __pyx_string_tab[147]
+#define __pyx_n_u_audio_component_instance_dispose __pyx_string_tab[148]
+#define __pyx_n_u_audio_component_instance_new __pyx_string_tab[149]
+#define __pyx_n_u_audio_file __pyx_string_tab[150]
+#define __pyx_n_u_audio_file_close __pyx_string_tab[151]
+#define __pyx_n_u_audio_file_get_property __pyx_string_tab[152]
+#define __pyx_n_u_audio_file_id __pyx_string_tab[153]
+#define __pyx_n_u_audio_file_open_url __pyx_string_tab[154]
+#define __pyx_n_u_audio_file_read_packets __pyx_string_tab[155]
+#define __pyx_n_u_audio_file_stream_close __pyx_string_tab[156]
+#define __pyx_n_u_audio_file_stream_get_property __pyx_string_tab[157]
+#define __pyx_n_u_audio_file_stream_open __pyx_string_tab[158]
+#define __pyx_n_u_audio_file_stream_parse_bytes __pyx_string_tab[159]
+#define __pyx_n_u_audio_file_stream_seek __pyx_string_tab[160]
+#define __pyx_n_u_audio_format __pyx_string_tab[161]
+#define __pyx_n_u_audio_hardware_destroy_aggregate __pyx_string_tab[162]
+#define __pyx_n_u_audio_hardware_unload __pyx_string_tab[163]
+#define __pyx_n_u_audio_object_show __pyx_string_tab[164]
+#define __pyx_n_u_audio_output_unit_start __pyx_string_tab[165]
+#define __pyx_n_u_audio_output_unit_stop __pyx_string_tab[166]
+#define __pyx_n_u_audio_queue_allocate_buffer __pyx_string_tab[167]
+#define __pyx_n_u_audio_queue_dispose __pyx_string_tab[168]
+#define __pyx_n_u_audio_queue_enqueue_buffer __pyx_string_tab[169]
+#define __pyx_n_u_audio_queue_new_output __pyx_string_tab[170]
+#define __pyx_n_u_audio_queue_start __pyx_string_tab[171]
+#define __pyx_n_u_audio_queue_stop __pyx_string_tab[172]
+#define __pyx_n_u_audio_services_create_system_sou __pyx_string_tab[173]
+#define __pyx_n_u_audio_services_dispose_system_so __pyx_string_tab[174]
+#define __pyx_n_u_audio_services_get_property __pyx_string_tab[175]
+#define __pyx_n_u_audio_services_play_alert_sound __pyx_string_tab[176]
+#define __pyx_n_u_audio_services_play_system_sound __pyx_string_tab[177]
+#define __pyx_n_u_audio_services_set_property __pyx_string_tab[178]
+#define __pyx_n_u_audio_unit_get_property __pyx_string_tab[179]
+#define __pyx_n_u_audio_unit_id __pyx_string_tab[180]
+#define __pyx_n_u_audio_unit_initialize __pyx_string_tab[181]
+#define __pyx_n_u_audio_unit_set_property __pyx_string_tab[182]
+#define __pyx_n_u_audio_unit_uninitialize __pyx_string_tab[183]
+#define __pyx_n_u_bank_is_valid __pyx_string_tab[184]
+#define __pyx_n_u_bank_lsb __pyx_string_tab[185]
+#define __pyx_n_u_bank_msb __pyx_string_tab[186]
+#define __pyx_n_u_bits_per_channel __pyx_string_tab[187]
+#define __pyx_n_u_bpm __pyx_string_tab[188]
+#define __pyx_n_u_buffer __pyx_string_tab[189]
+#define __pyx_n_u_buffer_id __pyx_string_tab[190]
+#define __pyx_n_u_buffer_size __pyx_string_tab[191]
+#define __pyx_n_u_byte1 __pyx_string_tab[192]
+#define __pyx_n_u_byte2 __pyx_string_tab[193]
+#define __pyx_n_u_byte3 __pyx_string_tab[194]
+#define __pyx_n_u_byte4 __pyx_string_tab[195]
+#define __pyx_n_u_byte5 __pyx_string_tab[196]
+#define __pyx_n_u_byte6 __pyx_string_tab[197]
+#define __pyx_n_u_byte_data __pyx_string_tab[198]
+#define __pyx_n_u_byte_offset __pyx_string_tab[199]
+#define __pyx_n_u_bytes_per_frame __pyx_string_tab[200]
+#define __pyx_n_u_bytes_per_packet __pyx_string_tab[201]
+#define __pyx_n_u_bytes_used __pyx_string_tab[202]
+#define __pyx_n_u_c_str __pyx_string_tab[203]
+#define __pyx_n_u_cf_name __pyx_string_tab[204]
+#define __pyx_n_u_cf_prop_name __pyx_string_tab[205]
+#define __pyx_n_u_cf_value __pyx_string_tab[206]
+#define __pyx_n_u_channel __pyx_string_tab[207]
+#define __pyx_n_u_channels_per_frame __pyx_string_tab[208]
+#define __pyx_n_u_client __pyx_string_tab[209]
+#define __pyx_n_u_cline_in_traceback __pyx_string_tab[210]
+#define __pyx_n_u_code __pyx_string_tab[211]
+#define __pyx_n_u_component __pyx_string_tab[212]
+#define __pyx_n_u_component_id __pyx_string_tab[213]
+#define __pyx_n_u_controller __pyx_string_tab[214]
+#define __pyx_n_u_controls __pyx_string_tab[215]
+#define __pyx_kp_u_convert_int_to_fourcc_4_chars_in __pyx_string_tab[216]
+#define __pyx_n_u_coremusic_capi __pyx_string_tab[217]
+#define __pyx_n_u_create_midi_channel_message __pyx_string_tab[218]
+#define __pyx_n_u_create_midi_note_message __pyx_string_tab[219]
+#define __pyx_n_u_create_music_device_note_params __pyx_string_tab[220]
+#define __pyx_n_u_create_music_device_std_note_par __pyx_string_tab[221]
+#define __pyx_n_u_data __pyx_string_tab[222]
+#define __pyx_n_u_data1 __pyx_string_tab[223]
+#define __pyx_n_u_data2 __pyx_string_tab[224]
+#define __pyx_kp_u_data_must_be_bytes __pyx_string_tab[225]
+#define __pyx_n_u_data_ptr __pyx_string_tab[226]
+#define __pyx_n_u_data_size __pyx_string_tab[227]
+#define __pyx_n_u_demonstrate_callback_infrastruct __pyx_string_tab[228]
+#define __pyx_n_u_desc __pyx_string_tab[229]
+#define __pyx_n_u_description_dict __pyx_string_tab[230]
+#define __pyx_n_u_dest __pyx_string_tab[231]
+#define __pyx_n_u_dest_index __pyx_string_tab[232]
+#define __pyx_n_u_destination __pyx_string_tab[233]
+#define __pyx_n_u_device __pyx_string_tab[234]
+#define __pyx_n_u_deviceID __pyx_string_tab[235]
+#define __pyx_n_u_device_index __pyx_string_tab[236]
+#define __pyx_kp_u_disable __pyx_string_tab[237]
+#define __pyx_n_u_displayName __pyx_string_tab[238]
+#define __pyx_n_u_dispose_music_player __pyx_string_tab[239]
+#define __pyx_n_u_dispose_music_sequence __pyx_string_tab[240]
+#define __pyx_n_u_driverOwner __pyx_string_tab[241]
+#define __pyx_n_u_duration __pyx_string_tab[242]
+#define __pyx_n_u_element __pyx_string_tab[243]
+#define __pyx_kp_u_enable __pyx_string_tab[244]
+#define __pyx_n_u_endpoint __pyx_string_tab[245]
+#define __pyx_n_u_entity __pyx_string_tab[246]
+#define __pyx_n_u_entity_index __pyx_string_tab[247]
+#define __pyx_n_u_enumerate __pyx_string_tab[248]
+#define __pyx_n_u_file_path __pyx_string_tab[249]
+#define __pyx_n_u_file_type_hint __pyx_string_tab[250]
+#define __pyx_n_u_flags __pyx_string_tab[251]
+#define __pyx_n_u_flags_mask __pyx_string_tab[252]
+#define __pyx_n_u_format __pyx_string_tab[253]
+#define __pyx_n_u_format_flags __pyx_string_tab[254]
+#define __pyx_n_u_format_id __pyx_string_tab[255]
+#define __pyx_n_u_fourchar_to_int __pyx_string_tab[256]
+#define __pyx_kp_u_fourchar_to_int_line_8 __pyx_string_tab[257]
+#define __pyx_n_u_frames_per_packet __pyx_string_tab[258]
+#define __pyx_n_u_func __pyx_string_tab[259]
+#define __pyx_kp_u_gc __pyx_string_tab[260]
+#define __pyx_n_u_get __pyx_string_tab[261]
+#define __pyx_n_u_get_audio_component_type_music_d __pyx_string_tab[262]
+#define __pyx_n_u_get_audio_file_property_data_for __pyx_string_tab[263]
+#define __pyx_n_u_get_audio_file_property_maximum __pyx_string_tab[264]
+#define __pyx_n_u_get_audio_file_read_permission __pyx_string_tab[265]
+#define __pyx_n_u_get_audio_file_stream_error_bad __pyx_string_tab[266]
+#define __pyx_n_u_get_audio_file_stream_error_data __pyx_string_tab[267]
+#define __pyx_n_u_get_audio_file_stream_error_disc __pyx_string_tab[268]
+#define __pyx_n_u_get_audio_file_stream_error_ille __pyx_string_tab[269]
+#define __pyx_n_u_get_audio_file_stream_error_inva __pyx_string_tab[270]
+#define __pyx_n_u_get_audio_file_stream_error_inva_2 __pyx_string_tab[271]
+#define __pyx_n_u_get_audio_file_stream_error_not __pyx_string_tab[272]
+#define __pyx_n_u_get_audio_file_stream_error_unsp __pyx_string_tab[273]
+#define __pyx_n_u_get_audio_file_stream_error_unsu __pyx_string_tab[274]
+#define __pyx_n_u_get_audio_file_stream_error_unsu_2 __pyx_string_tab[275]
+#define __pyx_n_u_get_audio_file_stream_error_unsu_3 __pyx_string_tab[276]
+#define __pyx_n_u_get_audio_file_stream_error_valu __pyx_string_tab[277]
+#define __pyx_n_u_get_audio_file_stream_parse_flag __pyx_string_tab[278]
+#define __pyx_n_u_get_audio_file_stream_property_a __pyx_string_tab[279]
+#define __pyx_n_u_get_audio_file_stream_property_a_2 __pyx_string_tab[280]
+#define __pyx_n_u_get_audio_file_stream_property_a_3 __pyx_string_tab[281]
+#define __pyx_n_u_get_audio_file_stream_property_b __pyx_string_tab[282]
+#define __pyx_n_u_get_audio_file_stream_property_b_2 __pyx_string_tab[283]
+#define __pyx_n_u_get_audio_file_stream_property_c __pyx_string_tab[284]
+#define __pyx_n_u_get_audio_file_stream_property_d __pyx_string_tab[285]
+#define __pyx_n_u_get_audio_file_stream_property_d_2 __pyx_string_tab[286]
+#define __pyx_n_u_get_audio_file_stream_property_f __pyx_string_tab[287]
+#define __pyx_n_u_get_audio_file_stream_property_f_2 __pyx_string_tab[288]
+#define __pyx_n_u_get_audio_file_stream_property_f_3 __pyx_string_tab[289]
+#define __pyx_n_u_get_audio_file_stream_property_f_4 __pyx_string_tab[290]
+#define __pyx_n_u_get_audio_file_stream_property_f_5 __pyx_string_tab[291]
+#define __pyx_n_u_get_audio_file_stream_property_i __pyx_string_tab[292]
+#define __pyx_n_u_get_audio_file_stream_property_m __pyx_string_tab[293]
+#define __pyx_n_u_get_audio_file_stream_property_m_2 __pyx_string_tab[294]
+#define __pyx_n_u_get_audio_file_stream_property_p __pyx_string_tab[295]
+#define __pyx_n_u_get_audio_file_stream_property_p_2 __pyx_string_tab[296]
+#define __pyx_n_u_get_audio_file_stream_property_p_3 __pyx_string_tab[297]
+#define __pyx_n_u_get_audio_file_stream_property_p_4 __pyx_string_tab[298]
+#define __pyx_n_u_get_audio_file_stream_property_r __pyx_string_tab[299]
+#define __pyx_n_u_get_audio_file_stream_seek_flag __pyx_string_tab[300]
+#define __pyx_n_u_get_audio_file_wave_type __pyx_string_tab[301]
+#define __pyx_n_u_get_audio_format_linear_pcm __pyx_string_tab[302]
+#define __pyx_n_u_get_audio_services_bad_property __pyx_string_tab[303]
+#define __pyx_n_u_get_audio_services_bad_specifier __pyx_string_tab[304]
+#define __pyx_n_u_get_audio_services_no_error __pyx_string_tab[305]
+#define __pyx_n_u_get_audio_services_property_comp __pyx_string_tab[306]
+#define __pyx_n_u_get_audio_services_property_is_u __pyx_string_tab[307]
+#define __pyx_n_u_get_audio_services_system_sound __pyx_string_tab[308]
+#define __pyx_n_u_get_audio_services_system_sound_2 __pyx_string_tab[309]
+#define __pyx_n_u_get_audio_services_system_sound_3 __pyx_string_tab[310]
+#define __pyx_n_u_get_audio_services_unsupported_p __pyx_string_tab[311]
+#define __pyx_n_u_get_audio_unit_manufacturer_appl __pyx_string_tab[312]
+#define __pyx_n_u_get_audio_unit_property_set_rend __pyx_string_tab[313]
+#define __pyx_n_u_get_audio_unit_property_stream_f __pyx_string_tab[314]
+#define __pyx_n_u_get_audio_unit_scope_global __pyx_string_tab[315]
+#define __pyx_n_u_get_audio_unit_scope_input __pyx_string_tab[316]
+#define __pyx_n_u_get_audio_unit_scope_output __pyx_string_tab[317]
+#define __pyx_n_u_get_audio_unit_subtype_default_o __pyx_string_tab[318]
+#define __pyx_n_u_get_audio_unit_type_output __pyx_string_tab[319]
+#define __pyx_n_u_get_linear_pcm_format_flag_is_no __pyx_string_tab[320]
+#define __pyx_n_u_get_linear_pcm_format_flag_is_pa __pyx_string_tab[321]
+#define __pyx_n_u_get_linear_pcm_format_flag_is_si __pyx_string_tab[322]
+#define __pyx_n_u_get_midi_cv_status_channel_press __pyx_string_tab[323]
+#define __pyx_n_u_get_midi_cv_status_control_chang __pyx_string_tab[324]
+#define __pyx_n_u_get_midi_cv_status_note_off __pyx_string_tab[325]
+#define __pyx_n_u_get_midi_cv_status_note_on __pyx_string_tab[326]
+#define __pyx_n_u_get_midi_cv_status_pitch_bend __pyx_string_tab[327]
+#define __pyx_n_u_get_midi_cv_status_poly_pressure __pyx_string_tab[328]
+#define __pyx_n_u_get_midi_cv_status_program_chang __pyx_string_tab[329]
+#define __pyx_n_u_get_midi_error_id_not_unique __pyx_string_tab[330]
+#define __pyx_n_u_get_midi_error_invalid_client __pyx_string_tab[331]
+#define __pyx_n_u_get_midi_error_invalid_port __pyx_string_tab[332]
+#define __pyx_n_u_get_midi_error_message_send_err __pyx_string_tab[333]
+#define __pyx_n_u_get_midi_error_no_connection __pyx_string_tab[334]
+#define __pyx_n_u_get_midi_error_no_current_setup __pyx_string_tab[335]
+#define __pyx_n_u_get_midi_error_not_permitted __pyx_string_tab[336]
+#define __pyx_n_u_get_midi_error_object_not_found __pyx_string_tab[337]
+#define __pyx_n_u_get_midi_error_server_start_err __pyx_string_tab[338]
+#define __pyx_n_u_get_midi_error_setup_format_err __pyx_string_tab[339]
+#define __pyx_n_u_get_midi_error_unknown_endpoint __pyx_string_tab[340]
+#define __pyx_n_u_get_midi_error_unknown_error __pyx_string_tab[341]
+#define __pyx_n_u_get_midi_error_unknown_property __pyx_string_tab[342]
+#define __pyx_n_u_get_midi_error_wrong_endpoint_ty __pyx_string_tab[343]
+#define __pyx_n_u_get_midi_error_wrong_property_ty __pyx_string_tab[344]
+#define __pyx_n_u_get_midi_error_wrong_thread __pyx_string_tab[345]
+#define __pyx_n_u_get_midi_message_type_channel_vo __pyx_string_tab[346]
+#define __pyx_n_u_get_midi_message_type_channel_vo_2 __pyx_string_tab[347]
+#define __pyx_n_u_get_midi_message_type_data128 __pyx_string_tab[348]
+#define __pyx_n_u_get_midi_message_type_sysex __pyx_string_tab[349]
+#define __pyx_n_u_get_midi_message_type_system __pyx_string_tab[350]
+#define __pyx_n_u_get_midi_message_type_utility __pyx_string_tab[351]
+#define __pyx_n_u_get_midi_object_type_destination __pyx_string_tab[352]
+#define __pyx_n_u_get_midi_object_type_device __pyx_string_tab[353]
+#define __pyx_n_u_get_midi_object_type_entity __pyx_string_tab[354]
+#define __pyx_n_u_get_midi_object_type_external_de __pyx_string_tab[355]
+#define __pyx_n_u_get_midi_object_type_external_de_2 __pyx_string_tab[356]
+#define __pyx_n_u_get_midi_object_type_external_en __pyx_string_tab[357]
+#define __pyx_n_u_get_midi_object_type_external_so __pyx_string_tab[358]
+#define __pyx_n_u_get_midi_object_type_other __pyx_string_tab[359]
+#define __pyx_n_u_get_midi_object_type_source __pyx_string_tab[360]
+#define __pyx_n_u_get_midi_property_device_id __pyx_string_tab[361]
+#define __pyx_n_u_get_midi_property_display_name __pyx_string_tab[362]
+#define __pyx_n_u_get_midi_property_driver_owner __pyx_string_tab[363]
+#define __pyx_n_u_get_midi_property_manufacturer __pyx_string_tab[364]
+#define __pyx_n_u_get_midi_property_model __pyx_string_tab[365]
+#define __pyx_n_u_get_midi_property_name __pyx_string_tab[366]
+#define __pyx_n_u_get_midi_property_offline __pyx_string_tab[367]
+#define __pyx_n_u_get_midi_property_private __pyx_string_tab[368]
+#define __pyx_n_u_get_midi_property_receive_channe __pyx_string_tab[369]
+#define __pyx_n_u_get_midi_property_transmit_chann __pyx_string_tab[370]
+#define __pyx_n_u_get_midi_property_unique_id __pyx_string_tab[371]
+#define __pyx_n_u_get_midi_protocol_1_0 __pyx_string_tab[372]
+#define __pyx_n_u_get_midi_protocol_2_0 __pyx_string_tab[373]
+#define __pyx_n_u_get_music_device_midi_event_list __pyx_string_tab[374]
+#define __pyx_n_u_get_music_device_midi_event_sele __pyx_string_tab[375]
+#define __pyx_n_u_get_music_device_range __pyx_string_tab[376]
+#define __pyx_n_u_get_music_device_start_note_sele __pyx_string_tab[377]
+#define __pyx_n_u_get_music_device_stop_note_selec __pyx_string_tab[378]
+#define __pyx_n_u_get_music_device_sysex_select __pyx_string_tab[379]
+#define __pyx_n_u_get_music_event_type_au_preset __pyx_string_tab[380]
+#define __pyx_n_u_get_music_event_type_extended_no __pyx_string_tab[381]
+#define __pyx_n_u_get_music_event_type_extended_te __pyx_string_tab[382]
+#define __pyx_n_u_get_music_event_type_meta __pyx_string_tab[383]
+#define __pyx_n_u_get_music_event_type_midi_channe __pyx_string_tab[384]
+#define __pyx_n_u_get_music_event_type_midi_note_m __pyx_string_tab[385]
+#define __pyx_n_u_get_music_event_type_midi_raw_da __pyx_string_tab[386]
+#define __pyx_n_u_get_music_event_type_null __pyx_string_tab[387]
+#define __pyx_n_u_get_music_event_type_parameter __pyx_string_tab[388]
+#define __pyx_n_u_get_music_event_type_user __pyx_string_tab[389]
+#define __pyx_n_u_get_music_note_event_unused __pyx_string_tab[390]
+#define __pyx_n_u_get_music_note_event_use_group_i __pyx_string_tab[391]
+#define __pyx_n_u_get_music_sequence_file_any_type __pyx_string_tab[392]
+#define __pyx_n_u_get_music_sequence_file_imelody __pyx_string_tab[393]
+#define __pyx_n_u_get_music_sequence_file_midi_typ __pyx_string_tab[394]
+#define __pyx_n_u_get_music_sequence_type_beats __pyx_string_tab[395]
+#define __pyx_n_u_get_music_sequence_type_samples __pyx_string_tab[396]
+#define __pyx_n_u_get_music_sequence_type_seconds __pyx_string_tab[397]
+#define __pyx_n_u_get_progress __pyx_string_tab[398]
+#define __pyx_n_u_get_sequence_track_property_auto __pyx_string_tab[399]
+#define __pyx_n_u_get_sequence_track_property_loop __pyx_string_tab[400]
+#define __pyx_n_u_get_sequence_track_property_mute __pyx_string_tab[401]
+#define __pyx_n_u_get_sequence_track_property_offs __pyx_string_tab[402]
+#define __pyx_n_u_get_sequence_track_property_solo __pyx_string_tab[403]
+#define __pyx_n_u_get_sequence_track_property_time __pyx_string_tab[404]
+#define __pyx_n_u_get_sequence_track_property_trac __pyx_string_tab[405]
+#define __pyx_n_u_get_system_sound_id_flash_screen __pyx_string_tab[406]
+#define __pyx_n_u_get_system_sound_id_user_preferr __pyx_string_tab[407]
+#define __pyx_n_u_get_system_sound_id_vibrate __pyx_string_tab[408]
+#define __pyx_n_u_get_user_preferred_alert __pyx_string_tab[409]
+#define __pyx_n_u_getstate __pyx_string_tab[410]
+#define __pyx_n_u_group __pyx_string_tab[411]
+#define __pyx_n_u_group_id __pyx_string_tab[412]
+#define __pyx_n_u_i __pyx_string_tab[413]
+#define __pyx_n_u_immediate __pyx_string_tab[414]
+#define __pyx_n_u_in_device_id __pyx_string_tab[415]
+#define __pyx_n_u_index __pyx_string_tab[416]
+#define __pyx_n_u_instance __pyx_string_tab[417]
+#define __pyx_n_u_instance_id __pyx_string_tab[418]
+#define __pyx_n_u_instrument_id __pyx_string_tab[419]
+#define __pyx_n_u_int __pyx_string_tab[420]
+#define __pyx_n_u_int_to_fourchar __pyx_string_tab[421]
+#define __pyx_kp_u_int_to_fourchar_line_18 __pyx_string_tab[422]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[423]
+#define __pyx_n_u_is_estimated __pyx_string_tab[424]
+#define __pyx_n_u_is_playing __pyx_string_tab[425]
+#define __pyx_kp_u_isenabled __pyx_string_tab[426]
+#define __pyx_n_u_length __pyx_string_tab[427]
+#define __pyx_n_u_load_file __pyx_string_tab[428]
+#define __pyx_n_u_loop __pyx_string_tab[429]
+#define __pyx_n_u_lsb __pyx_string_tab[430]
+#define __pyx_n_u_main __pyx_string_tab[431]
+#define __pyx_n_u_manufacturer __pyx_string_tab[432]
+#define __pyx_n_u_max_packet_size __pyx_string_tab[433]
+#define __pyx_n_u_max_size __pyx_string_tab[434]
+#define __pyx_n_u_message __pyx_string_tab[435]
+#define __pyx_n_u_midi1_up_channel_voice_message __pyx_string_tab[436]
+#define __pyx_n_u_midi1_up_control_change __pyx_string_tab[437]
+#define __pyx_n_u_midi1_up_note_off __pyx_string_tab[438]
+#define __pyx_n_u_midi1_up_note_on __pyx_string_tab[439]
+#define __pyx_n_u_midi1_up_pitch_bend __pyx_string_tab[440]
+#define __pyx_n_u_midi1_up_sysex __pyx_string_tab[441]
+#define __pyx_n_u_midi1_up_system_common __pyx_string_tab[442]
+#define __pyx_n_u_midi2_channel_voice_message __pyx_string_tab[443]
+#define __pyx_n_u_midi2_control_change __pyx_string_tab[444]
+#define __pyx_n_u_midi2_note_off __pyx_string_tab[445]
+#define __pyx_n_u_midi2_note_on __pyx_string_tab[446]
+#define __pyx_n_u_midi2_pitch_bend __pyx_string_tab[447]
+#define __pyx_n_u_midi2_program_change __pyx_string_tab[448]
+#define __pyx_n_u_midi_client_create __pyx_string_tab[449]
+#define __pyx_n_u_midi_client_dispose __pyx_string_tab[450]
+#define __pyx_n_u_midi_control_change __pyx_string_tab[451]
+#define __pyx_n_u_midi_destination_create __pyx_string_tab[452]
+#define __pyx_n_u_midi_device_get_entity __pyx_string_tab[453]
+#define __pyx_n_u_midi_device_get_number_of_entiti __pyx_string_tab[454]
+#define __pyx_n_u_midi_endpoint_dispose __pyx_string_tab[455]
+#define __pyx_n_u_midi_entity_get_destination __pyx_string_tab[456]
+#define __pyx_n_u_midi_entity_get_number_of_destin __pyx_string_tab[457]
+#define __pyx_n_u_midi_entity_get_number_of_source __pyx_string_tab[458]
+#define __pyx_n_u_midi_entity_get_source __pyx_string_tab[459]
+#define __pyx_n_u_midi_get_destination __pyx_string_tab[460]
+#define __pyx_n_u_midi_get_device __pyx_string_tab[461]
+#define __pyx_n_u_midi_get_number_of_destinations __pyx_string_tab[462]
+#define __pyx_n_u_midi_get_number_of_devices __pyx_string_tab[463]
+#define __pyx_n_u_midi_get_number_of_sources __pyx_string_tab[464]
+#define __pyx_n_u_midi_get_source __pyx_string_tab[465]
+#define __pyx_n_u_midi_input_port_create __pyx_string_tab[466]
+#define __pyx_n_u_midi_message_type_for_up_word __pyx_string_tab[467]
+#define __pyx_n_u_midi_note_off __pyx_string_tab[468]
+#define __pyx_n_u_midi_note_on __pyx_string_tab[469]
+#define __pyx_n_u_midi_object_get_integer_property __pyx_string_tab[470]
+#define __pyx_n_u_midi_object_get_string_property __pyx_string_tab[471]
+#define __pyx_n_u_midi_object_set_integer_property __pyx_string_tab[472]
+#define __pyx_n_u_midi_object_set_string_property __pyx_string_tab[473]
+#define __pyx_n_u_midi_output_port_create __pyx_string_tab[474]
+#define __pyx_n_u_midi_pitch_bend __pyx_string_tab[475]
+#define __pyx_n_u_midi_port_connect_source __pyx_string_tab[476]
+#define __pyx_n_u_midi_port_disconnect_source __pyx_string_tab[477]
+#define __pyx_n_u_midi_port_dispose __pyx_string_tab[478]
+#define __pyx_n_u_midi_program_change __pyx_string_tab[479]
+#define __pyx_n_u_midi_send_data __pyx_string_tab[480]
+#define __pyx_n_u_midi_source_create __pyx_string_tab[481]
+#define __pyx_n_u_model __pyx_string_tab[482]
+#define __pyx_n_u_module __pyx_string_tab[483]
+#define __pyx_n_u_msb __pyx_string_tab[484]
+#define __pyx_n_u_msg __pyx_string_tab[485]
+#define __pyx_n_u_music_device_midi_event __pyx_string_tab[486]
+#define __pyx_n_u_music_device_start_note __pyx_string_tab[487]
+#define __pyx_n_u_music_device_stop_note __pyx_string_tab[488]
+#define __pyx_n_u_music_device_sysex __pyx_string_tab[489]
+#define __pyx_n_u_music_player_get_play_rate_scala __pyx_string_tab[490]
+#define __pyx_n_u_music_player_get_sequence __pyx_string_tab[491]
+#define __pyx_n_u_music_player_get_time __pyx_string_tab[492]
+#define __pyx_n_u_music_player_is_playing __pyx_string_tab[493]
+#define __pyx_n_u_music_player_preroll __pyx_string_tab[494]
+#define __pyx_n_u_music_player_set_play_rate_scala __pyx_string_tab[495]
+#define __pyx_n_u_music_player_set_sequence __pyx_string_tab[496]
+#define __pyx_n_u_music_player_set_time __pyx_string_tab[497]
+#define __pyx_n_u_music_player_start __pyx_string_tab[498]
+#define __pyx_n_u_music_player_stop __pyx_string_tab[499]
+#define __pyx_n_u_music_sequence_dispose_track __pyx_string_tab[500]
+#define __pyx_n_u_music_sequence_file_load __pyx_string_tab[501]
+#define __pyx_n_u_music_sequence_get_ind_track __pyx_string_tab[502]
+#define __pyx_n_u_music_sequence_get_sequence_type __pyx_string_tab[503]
+#define __pyx_n_u_music_sequence_get_tempo_track __pyx_string_tab[504]
+#define __pyx_n_u_music_sequence_get_track_count __pyx_string_tab[505]
+#define __pyx_n_u_music_sequence_new_track __pyx_string_tab[506]
+#define __pyx_n_u_music_sequence_set_sequence_type __pyx_string_tab[507]
+#define __pyx_n_u_music_track_new_extended_tempo_e __pyx_string_tab[508]
+#define __pyx_n_u_music_track_new_midi_channel_eve __pyx_string_tab[509]
+#define __pyx_n_u_music_track_new_midi_note_event __pyx_string_tab[510]
+#define __pyx_n_u_n __pyx_string_tab[511]
+#define __pyx_n_u_name __pyx_string_tab[512]
+#define __pyx_n_u_name_2 __pyx_string_tab[513]
+#define __pyx_n_u_name_bytes __pyx_string_tab[514]
+#define __pyx_n_u_new_music_player __pyx_string_tab[515]
+#define __pyx_n_u_new_music_sequence __pyx_string_tab[516]
+#define __pyx_n_u_note __pyx_string_tab[517]
+#define __pyx_n_u_note_instance_id __pyx_string_tab[518]
+#define __pyx_n_u_note_number __pyx_string_tab[519]
+#define __pyx_n_u_num_bytes __pyx_string_tab[520]
+#define __pyx_n_u_num_controls __pyx_string_tab[521]
+#define __pyx_n_u_num_dests __pyx_string_tab[522]
+#define __pyx_n_u_num_devices __pyx_string_tab[523]
+#define __pyx_n_u_num_entities __pyx_string_tab[524]
+#define __pyx_n_u_num_packets __pyx_string_tab[525]
+#define __pyx_n_u_num_sources __pyx_string_tab[526]
+#define __pyx_n_u_obj __pyx_string_tab[527]
+#define __pyx_n_u_object_id __pyx_string_tab[528]
+#define __pyx_n_u_offline __pyx_string_tab[529]
+#define __pyx_n_u_offset_sample_frame __pyx_string_tab[530]
+#define __pyx_kp_u_out_of_range_0 __pyx_string_tab[531]
+#define __pyx_n_u_packet __pyx_string_tab[532]
+#define __pyx_n_u_packet_count __pyx_string_tab[533]
+#define __pyx_n_u_packet_offset __pyx_string_tab[534]
+#define __pyx_n_u_param_id __pyx_string_tab[535]
+#define __pyx_n_u_params __pyx_string_tab[536]
+#define __pyx_n_u_params_size __pyx_string_tab[537]
+#define __pyx_n_u_path_bytes __pyx_string_tab[538]
+#define __pyx_n_u_permissions __pyx_string_tab[539]
+#define __pyx_n_u_pitch __pyx_string_tab[540]
+#define __pyx_n_u_pktlist __pyx_string_tab[541]
+#define __pyx_n_u_pktlist_size __pyx_string_tab[542]
+#define __pyx_n_u_player __pyx_string_tab[543]
+#define __pyx_n_u_pop __pyx_string_tab[544]
+#define __pyx_n_u_port __pyx_string_tab[545]
+#define __pyx_n_u_port_name __pyx_string_tab[546]
+#define __pyx_n_u_port_name_bytes __pyx_string_tab[547]
+#define __pyx_n_u_print __pyx_string_tab[548]
+#define __pyx_n_u_private __pyx_string_tab[549]
+#define __pyx_n_u_program __pyx_string_tab[550]
+#define __pyx_n_u_prop_bytes __pyx_string_tab[551]
+#define __pyx_n_u_prop_id __pyx_string_tab[552]
+#define __pyx_n_u_prop_size __pyx_string_tab[553]
+#define __pyx_n_u_property_id __pyx_string_tab[554]
+#define __pyx_n_u_property_name __pyx_string_tab[555]
+#define __pyx_n_u_pyx_state __pyx_string_tab[556]
+#define __pyx_n_u_qualname __pyx_string_tab[557]
+#define __pyx_n_u_queue __pyx_string_tab[558]
+#define __pyx_n_u_queue_id __pyx_string_tab[559]
+#define __pyx_n_u_receiveChannels __pyx_string_tab[560]
+#define __pyx_n_u_reduce __pyx_string_tab[561]
+#define __pyx_n_u_reduce_cython __pyx_string_tab[562]
+#define __pyx_n_u_reduce_ex __pyx_string_tab[563]
+#define __pyx_n_u_release_velocity __pyx_string_tab[564]
+#define __pyx_n_u_reserved __pyx_string_tab[565]
+#define __pyx_n_u_reset_playback __pyx_string_tab[566]
+#define __pyx_n_u_result __pyx_string_tab[567]
+#define __pyx_n_u_return __pyx_string_tab[568]
+#define __pyx_n_u_sample_rate __pyx_string_tab[569]
+#define __pyx_n_u_scale_rate __pyx_string_tab[570]
+#define __pyx_n_u_scope __pyx_string_tab[571]
+#define __pyx_n_u_self __pyx_string_tab[572]
+#define __pyx_kp_u_self_audio_output_cannot_be_conv __pyx_string_tab[573]
+#define __pyx_n_u_seq __pyx_string_tab[574]
+#define __pyx_n_u_sequence __pyx_string_tab[575]
+#define __pyx_n_u_sequence_type __pyx_string_tab[576]
+#define __pyx_n_u_set_looping __pyx_string_tab[577]
+#define __pyx_n_u_set_name __pyx_string_tab[578]
+#define __pyx_n_u_setstate __pyx_string_tab[579]
+#define __pyx_n_u_setstate_cython __pyx_string_tab[580]
+#define __pyx_n_u_setup_output __pyx_string_tab[581]
+#define __pyx_kp_u_should_be_four_characters_only __pyx_string_tab[582]
+#define __pyx_n_u_sound_id __pyx_string_tab[583]
+#define __pyx_n_u_source __pyx_string_tab[584]
+#define __pyx_n_u_source_index __pyx_string_tab[585]
+#define __pyx_n_u_specifier __pyx_string_tab[586]
+#define __pyx_n_u_specifier_value __pyx_string_tab[587]
+#define __pyx_kp_u_src_coremusic_capi_pyx __pyx_string_tab[588]
+#define __pyx_n_u_start __pyx_string_tab[589]
+#define __pyx_n_u_start_packet __pyx_string_tab[590]
+#define __pyx_n_u_status __pyx_string_tab[591]
+#define __pyx_n_u_status_result __pyx_string_tab[592]
+#define __pyx_n_u_stop __pyx_string_tab[593]
+#define __pyx_n_u_str __pyx_string_tab[594]
+#define __pyx_n_u_stream __pyx_string_tab[595]
+#define __pyx_n_u_stream_id __pyx_string_tab[596]
+#define __pyx_kp_u_stringsource __pyx_string_tab[597]
+#define __pyx_n_u_subtype __pyx_string_tab[598]
+#define __pyx_n_u_system_sound_id __pyx_string_tab[599]
+#define __pyx_n_u_test __pyx_string_tab[600]
+#define __pyx_n_u_test_error __pyx_string_tab[601]
+#define __pyx_n_u_time __pyx_string_tab[602]
+#define __pyx_n_u_timestamp __pyx_string_tab[603]
+#define __pyx_n_u_track __pyx_string_tab[604]
+#define __pyx_n_u_track_count __pyx_string_tab[605]
+#define __pyx_n_u_track_index __pyx_string_tab[606]
+#define __pyx_n_u_transmitChannels __pyx_string_tab[607]
+#define __pyx_n_u_type __pyx_string_tab[608]
+#define __pyx_n_u_uint_data __pyx_string_tab[609]
+#define __pyx_n_u_uniqueID __pyx_string_tab[610]
+#define __pyx_n_u_unit __pyx_string_tab[611]
+#define __pyx_n_u_url_ref __pyx_string_tab[612]
+#define __pyx_n_u_value __pyx_string_tab[613]
+#define __pyx_n_u_value_bytes __pyx_string_tab[614]
+#define __pyx_n_u_velocity __pyx_string_tab[615]
+#define __pyx_n_u_word __pyx_string_tab[616]
+#define __pyx_n_u_writable __pyx_string_tab[617]
 /* #### Code section: module_state_clear ### */
 #if CYTHON_USE_MODULE_STATE
 static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
@@ -4101,8 +4237,8 @@ static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_ptype_9coremusic_4capi_AudioPlayer);
   Py_CLEAR(clear_module_state->__pyx_type_9coremusic_4capi_AudioPlayer);
   for (int i=0; i<12; ++i) { Py_CLEAR(clear_module_state->__pyx_tuple[i]); }
-  for (int i=0; i<246; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<574; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<273; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
+  for (int i=0; i<618; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
   Py_CLEAR(clear_module_state->__pyx_float_44100_0);
   Py_CLEAR(clear_module_state->__pyx_int_0);
   Py_CLEAR(clear_module_state->__pyx_int_1);
@@ -4135,8 +4271,8 @@ static CYTHON_SMALL_CODE int __pyx_m_traverse(PyObject *m, visitproc visit, void
   Py_VISIT(traverse_module_state->__pyx_ptype_9coremusic_4capi_AudioPlayer);
   Py_VISIT(traverse_module_state->__pyx_type_9coremusic_4capi_AudioPlayer);
   for (int i=0; i<12; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_tuple[i]); }
-  for (int i=0; i<246; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<574; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<273; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
+  for (int i=0; i<618; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_float_44100_0);
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_int_0);
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_int_1);
@@ -40907,6 +41043,8 @@ static PyObject *__pyx_pf_9coremusic_4capi_470get_midi_property_display_name(CYT
  * def get_midi_property_display_name():
  *     """Get the 'displayName' property key."""
  *     return "displayName"             # <<<<<<<<<<<<<<
+ * 
+ * 
 */
   __Pyx_XDECREF(__pyx_r);
   __Pyx_INCREF(__pyx_mstate_global->__pyx_n_u_displayName);
@@ -40922,6 +41060,3403 @@ static PyObject *__pyx_pf_9coremusic_4capi_470get_midi_property_display_name(CYT
 */
 
   /* function exit code */
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":2817
+ * # MIDI Messages (Universal MIDI Packet) Functions
+ * 
+ * def midi_message_type_for_up_word(int word):             # <<<<<<<<<<<<<<
+ *     """Get the message type from a Universal MIDI Packet word.
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_473midi_message_type_for_up_word(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_472midi_message_type_for_up_word, "midi_message_type_for_up_word(int word)\n\nGet the message type from a Universal MIDI Packet word.\n\nArgs:\n    word: 32-bit Universal MIDI Packet word\n\nReturns:\n    MIDIMessageType enum value");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_473midi_message_type_for_up_word = {"midi_message_type_for_up_word", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4capi_473midi_message_type_for_up_word, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4capi_472midi_message_type_for_up_word};
+static PyObject *__pyx_pw_9coremusic_4capi_473midi_message_type_for_up_word(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  int __pyx_v_word;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[1] = {0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("midi_message_type_for_up_word (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_word,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 2817, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2817, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "midi_message_type_for_up_word", 0) < 0) __PYX_ERR(0, 2817, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 1; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("midi_message_type_for_up_word", 1, 1, 1, i); __PYX_ERR(0, 2817, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 1)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2817, __pyx_L3_error)
+    }
+    __pyx_v_word = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_word == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2817, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("midi_message_type_for_up_word", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 2817, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.capi.midi_message_type_for_up_word", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4capi_472midi_message_type_for_up_word(__pyx_self, __pyx_v_word);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_472midi_message_type_for_up_word(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_word) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("midi_message_type_for_up_word", 0);
+
+  /* "coremusic/capi.pyx":2826
+ *         MIDIMessageType enum value
+ *     """
+ *     return midi.MIDIMessageTypeForUPWord(<ca.UInt32>word)             # <<<<<<<<<<<<<<
+ * 
+ * # MIDI 1.0 Universal MIDI Packet Functions
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_MIDIMessageType(MIDIMessageTypeForUPWord(((UInt32)__pyx_v_word))); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2826, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":2817
+ * # MIDI Messages (Universal MIDI Packet) Functions
+ * 
+ * def midi_message_type_for_up_word(int word):             # <<<<<<<<<<<<<<
+ *     """Get the message type from a Universal MIDI Packet word.
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.midi_message_type_for_up_word", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":2830
+ * # MIDI 1.0 Universal MIDI Packet Functions
+ * 
+ * def midi1_up_channel_voice_message(int group, int status, int channel, int data1, int data2):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet channel voice message.
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_475midi1_up_channel_voice_message(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_474midi1_up_channel_voice_message, "midi1_up_channel_voice_message(int group, int status, int channel, int data1, int data2)\n\nCreate a MIDI 1.0 Universal Packet channel voice message.\n\nArgs:\n    group: MIDI group (0-15)\n    status: MIDI status nibble\n    channel: MIDI channel (0-15)\n    data1: First data byte\n    data2: Second data byte\n\nReturns:\n    32-bit MIDI message");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_475midi1_up_channel_voice_message = {"midi1_up_channel_voice_message", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4capi_475midi1_up_channel_voice_message, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4capi_474midi1_up_channel_voice_message};
+static PyObject *__pyx_pw_9coremusic_4capi_475midi1_up_channel_voice_message(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  int __pyx_v_group;
+  int __pyx_v_status;
+  int __pyx_v_channel;
+  int __pyx_v_data1;
+  int __pyx_v_data2;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[5] = {0,0,0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("midi1_up_channel_voice_message (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_group,&__pyx_mstate_global->__pyx_n_u_status,&__pyx_mstate_global->__pyx_n_u_channel,&__pyx_mstate_global->__pyx_n_u_data1,&__pyx_mstate_global->__pyx_n_u_data2,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 2830, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  5:
+        values[4] = __Pyx_ArgRef_FASTCALL(__pyx_args, 4);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 2830, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  4:
+        values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2830, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2830, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2830, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2830, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "midi1_up_channel_voice_message", 0) < 0) __PYX_ERR(0, 2830, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 5; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("midi1_up_channel_voice_message", 1, 5, 5, i); __PYX_ERR(0, 2830, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 5)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2830, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2830, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2830, __pyx_L3_error)
+      values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2830, __pyx_L3_error)
+      values[4] = __Pyx_ArgRef_FASTCALL(__pyx_args, 4);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 2830, __pyx_L3_error)
+    }
+    __pyx_v_group = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_group == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2830, __pyx_L3_error)
+    __pyx_v_status = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_status == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2830, __pyx_L3_error)
+    __pyx_v_channel = __Pyx_PyLong_As_int(values[2]); if (unlikely((__pyx_v_channel == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2830, __pyx_L3_error)
+    __pyx_v_data1 = __Pyx_PyLong_As_int(values[3]); if (unlikely((__pyx_v_data1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2830, __pyx_L3_error)
+    __pyx_v_data2 = __Pyx_PyLong_As_int(values[4]); if (unlikely((__pyx_v_data2 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2830, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("midi1_up_channel_voice_message", 1, 5, 5, __pyx_nargs); __PYX_ERR(0, 2830, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.capi.midi1_up_channel_voice_message", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4capi_474midi1_up_channel_voice_message(__pyx_self, __pyx_v_group, __pyx_v_status, __pyx_v_channel, __pyx_v_data1, __pyx_v_data2);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_474midi1_up_channel_voice_message(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_status, int __pyx_v_channel, int __pyx_v_data1, int __pyx_v_data2) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("midi1_up_channel_voice_message", 0);
+
+  /* "coremusic/capi.pyx":2843
+ *         32-bit MIDI message
+ *     """
+ *     return midi.MIDI1UPChannelVoiceMessage(<ca.UInt8>group, <ca.UInt8>status,             # <<<<<<<<<<<<<<
+ *                                            <ca.UInt8>channel, <ca.UInt8>data1, <ca.UInt8>data2)
+ * 
+*/
+  __Pyx_XDECREF(__pyx_r);
+
+  /* "coremusic/capi.pyx":2844
+ *     """
+ *     return midi.MIDI1UPChannelVoiceMessage(<ca.UInt8>group, <ca.UInt8>status,
+ *                                            <ca.UInt8>channel, <ca.UInt8>data1, <ca.UInt8>data2)             # <<<<<<<<<<<<<<
+ * 
+ * def midi1_up_note_off(int group, int channel, int note_number, int velocity):
+*/
+  __pyx_t_1 = __Pyx_PyLong_From_UInt32(MIDI1UPChannelVoiceMessage(((UInt8)__pyx_v_group), ((UInt8)__pyx_v_status), ((UInt8)__pyx_v_channel), ((UInt8)__pyx_v_data1), ((UInt8)__pyx_v_data2))); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2843, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":2830
+ * # MIDI 1.0 Universal MIDI Packet Functions
+ * 
+ * def midi1_up_channel_voice_message(int group, int status, int channel, int data1, int data2):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet channel voice message.
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.midi1_up_channel_voice_message", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":2846
+ *                                            <ca.UInt8>channel, <ca.UInt8>data1, <ca.UInt8>data2)
+ * 
+ * def midi1_up_note_off(int group, int channel, int note_number, int velocity):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet Note Off message.
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_477midi1_up_note_off(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_476midi1_up_note_off, "midi1_up_note_off(int group, int channel, int note_number, int velocity)\n\nCreate a MIDI 1.0 Universal Packet Note Off message.\n\nArgs:\n    group: MIDI group (0-15)\n    channel: MIDI channel (0-15)\n    note_number: Note number (0-127)\n    velocity: Note velocity (0-127)\n\nReturns:\n    32-bit MIDI message");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_477midi1_up_note_off = {"midi1_up_note_off", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4capi_477midi1_up_note_off, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4capi_476midi1_up_note_off};
+static PyObject *__pyx_pw_9coremusic_4capi_477midi1_up_note_off(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  int __pyx_v_group;
+  int __pyx_v_channel;
+  int __pyx_v_note_number;
+  int __pyx_v_velocity;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[4] = {0,0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("midi1_up_note_off (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_group,&__pyx_mstate_global->__pyx_n_u_channel,&__pyx_mstate_global->__pyx_n_u_note_number,&__pyx_mstate_global->__pyx_n_u_velocity,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 2846, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  4:
+        values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2846, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2846, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2846, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2846, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "midi1_up_note_off", 0) < 0) __PYX_ERR(0, 2846, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 4; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("midi1_up_note_off", 1, 4, 4, i); __PYX_ERR(0, 2846, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 4)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2846, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2846, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2846, __pyx_L3_error)
+      values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2846, __pyx_L3_error)
+    }
+    __pyx_v_group = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_group == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2846, __pyx_L3_error)
+    __pyx_v_channel = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_channel == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2846, __pyx_L3_error)
+    __pyx_v_note_number = __Pyx_PyLong_As_int(values[2]); if (unlikely((__pyx_v_note_number == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2846, __pyx_L3_error)
+    __pyx_v_velocity = __Pyx_PyLong_As_int(values[3]); if (unlikely((__pyx_v_velocity == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2846, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("midi1_up_note_off", 1, 4, 4, __pyx_nargs); __PYX_ERR(0, 2846, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.capi.midi1_up_note_off", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4capi_476midi1_up_note_off(__pyx_self, __pyx_v_group, __pyx_v_channel, __pyx_v_note_number, __pyx_v_velocity);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_476midi1_up_note_off(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_note_number, int __pyx_v_velocity) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("midi1_up_note_off", 0);
+
+  /* "coremusic/capi.pyx":2858
+ *         32-bit MIDI message
+ *     """
+ *     return midi.MIDI1UPNoteOff(<ca.UInt8>group, <ca.UInt8>channel,             # <<<<<<<<<<<<<<
+ *                                <ca.UInt8>note_number, <ca.UInt8>velocity)
+ * 
+*/
+  __Pyx_XDECREF(__pyx_r);
+
+  /* "coremusic/capi.pyx":2859
+ *     """
+ *     return midi.MIDI1UPNoteOff(<ca.UInt8>group, <ca.UInt8>channel,
+ *                                <ca.UInt8>note_number, <ca.UInt8>velocity)             # <<<<<<<<<<<<<<
+ * 
+ * def midi1_up_note_on(int group, int channel, int note_number, int velocity):
+*/
+  __pyx_t_1 = __Pyx_PyLong_From_UInt32(MIDI1UPNoteOff(((UInt8)__pyx_v_group), ((UInt8)__pyx_v_channel), ((UInt8)__pyx_v_note_number), ((UInt8)__pyx_v_velocity))); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2858, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":2846
+ *                                            <ca.UInt8>channel, <ca.UInt8>data1, <ca.UInt8>data2)
+ * 
+ * def midi1_up_note_off(int group, int channel, int note_number, int velocity):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet Note Off message.
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.midi1_up_note_off", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":2861
+ *                                <ca.UInt8>note_number, <ca.UInt8>velocity)
+ * 
+ * def midi1_up_note_on(int group, int channel, int note_number, int velocity):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet Note On message.
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_479midi1_up_note_on(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_478midi1_up_note_on, "midi1_up_note_on(int group, int channel, int note_number, int velocity)\n\nCreate a MIDI 1.0 Universal Packet Note On message.\n\nArgs:\n    group: MIDI group (0-15)\n    channel: MIDI channel (0-15)\n    note_number: Note number (0-127)\n    velocity: Note velocity (0-127)\n\nReturns:\n    32-bit MIDI message");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_479midi1_up_note_on = {"midi1_up_note_on", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4capi_479midi1_up_note_on, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4capi_478midi1_up_note_on};
+static PyObject *__pyx_pw_9coremusic_4capi_479midi1_up_note_on(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  int __pyx_v_group;
+  int __pyx_v_channel;
+  int __pyx_v_note_number;
+  int __pyx_v_velocity;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[4] = {0,0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("midi1_up_note_on (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_group,&__pyx_mstate_global->__pyx_n_u_channel,&__pyx_mstate_global->__pyx_n_u_note_number,&__pyx_mstate_global->__pyx_n_u_velocity,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 2861, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  4:
+        values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2861, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2861, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2861, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2861, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "midi1_up_note_on", 0) < 0) __PYX_ERR(0, 2861, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 4; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("midi1_up_note_on", 1, 4, 4, i); __PYX_ERR(0, 2861, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 4)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2861, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2861, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2861, __pyx_L3_error)
+      values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2861, __pyx_L3_error)
+    }
+    __pyx_v_group = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_group == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2861, __pyx_L3_error)
+    __pyx_v_channel = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_channel == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2861, __pyx_L3_error)
+    __pyx_v_note_number = __Pyx_PyLong_As_int(values[2]); if (unlikely((__pyx_v_note_number == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2861, __pyx_L3_error)
+    __pyx_v_velocity = __Pyx_PyLong_As_int(values[3]); if (unlikely((__pyx_v_velocity == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2861, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("midi1_up_note_on", 1, 4, 4, __pyx_nargs); __PYX_ERR(0, 2861, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.capi.midi1_up_note_on", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4capi_478midi1_up_note_on(__pyx_self, __pyx_v_group, __pyx_v_channel, __pyx_v_note_number, __pyx_v_velocity);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_478midi1_up_note_on(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_note_number, int __pyx_v_velocity) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("midi1_up_note_on", 0);
+
+  /* "coremusic/capi.pyx":2873
+ *         32-bit MIDI message
+ *     """
+ *     return midi.MIDI1UPNoteOn(<ca.UInt8>group, <ca.UInt8>channel,             # <<<<<<<<<<<<<<
+ *                               <ca.UInt8>note_number, <ca.UInt8>velocity)
+ * 
+*/
+  __Pyx_XDECREF(__pyx_r);
+
+  /* "coremusic/capi.pyx":2874
+ *     """
+ *     return midi.MIDI1UPNoteOn(<ca.UInt8>group, <ca.UInt8>channel,
+ *                               <ca.UInt8>note_number, <ca.UInt8>velocity)             # <<<<<<<<<<<<<<
+ * 
+ * def midi1_up_control_change(int group, int channel, int index, int data):
+*/
+  __pyx_t_1 = __Pyx_PyLong_From_UInt32(MIDI1UPNoteOn(((UInt8)__pyx_v_group), ((UInt8)__pyx_v_channel), ((UInt8)__pyx_v_note_number), ((UInt8)__pyx_v_velocity))); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2873, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":2861
+ *                                <ca.UInt8>note_number, <ca.UInt8>velocity)
+ * 
+ * def midi1_up_note_on(int group, int channel, int note_number, int velocity):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet Note On message.
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.midi1_up_note_on", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":2876
+ *                               <ca.UInt8>note_number, <ca.UInt8>velocity)
+ * 
+ * def midi1_up_control_change(int group, int channel, int index, int data):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet Control Change message.
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_481midi1_up_control_change(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_480midi1_up_control_change, "midi1_up_control_change(int group, int channel, int index, int data)\n\nCreate a MIDI 1.0 Universal Packet Control Change message.\n\nArgs:\n    group: MIDI group (0-15)\n    channel: MIDI channel (0-15)\n    index: Controller number (0-127)\n    data: Controller value (0-127)\n\nReturns:\n    32-bit MIDI message");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_481midi1_up_control_change = {"midi1_up_control_change", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4capi_481midi1_up_control_change, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4capi_480midi1_up_control_change};
+static PyObject *__pyx_pw_9coremusic_4capi_481midi1_up_control_change(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  int __pyx_v_group;
+  int __pyx_v_channel;
+  int __pyx_v_index;
+  int __pyx_v_data;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[4] = {0,0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("midi1_up_control_change (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_group,&__pyx_mstate_global->__pyx_n_u_channel,&__pyx_mstate_global->__pyx_n_u_index,&__pyx_mstate_global->__pyx_n_u_data,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 2876, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  4:
+        values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2876, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2876, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2876, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2876, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "midi1_up_control_change", 0) < 0) __PYX_ERR(0, 2876, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 4; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("midi1_up_control_change", 1, 4, 4, i); __PYX_ERR(0, 2876, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 4)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2876, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2876, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2876, __pyx_L3_error)
+      values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2876, __pyx_L3_error)
+    }
+    __pyx_v_group = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_group == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2876, __pyx_L3_error)
+    __pyx_v_channel = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_channel == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2876, __pyx_L3_error)
+    __pyx_v_index = __Pyx_PyLong_As_int(values[2]); if (unlikely((__pyx_v_index == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2876, __pyx_L3_error)
+    __pyx_v_data = __Pyx_PyLong_As_int(values[3]); if (unlikely((__pyx_v_data == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2876, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("midi1_up_control_change", 1, 4, 4, __pyx_nargs); __PYX_ERR(0, 2876, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.capi.midi1_up_control_change", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4capi_480midi1_up_control_change(__pyx_self, __pyx_v_group, __pyx_v_channel, __pyx_v_index, __pyx_v_data);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_480midi1_up_control_change(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_index, int __pyx_v_data) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("midi1_up_control_change", 0);
+
+  /* "coremusic/capi.pyx":2888
+ *         32-bit MIDI message
+ *     """
+ *     return midi.MIDI1UPControlChange(<ca.UInt8>group, <ca.UInt8>channel,             # <<<<<<<<<<<<<<
+ *                                      <ca.UInt8>index, <ca.UInt8>data)
+ * 
+*/
+  __Pyx_XDECREF(__pyx_r);
+
+  /* "coremusic/capi.pyx":2889
+ *     """
+ *     return midi.MIDI1UPControlChange(<ca.UInt8>group, <ca.UInt8>channel,
+ *                                      <ca.UInt8>index, <ca.UInt8>data)             # <<<<<<<<<<<<<<
+ * 
+ * def midi1_up_pitch_bend(int group, int channel, int lsb, int msb):
+*/
+  __pyx_t_1 = __Pyx_PyLong_From_UInt32(MIDI1UPControlChange(((UInt8)__pyx_v_group), ((UInt8)__pyx_v_channel), ((UInt8)__pyx_v_index), ((UInt8)__pyx_v_data))); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2888, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":2876
+ *                               <ca.UInt8>note_number, <ca.UInt8>velocity)
+ * 
+ * def midi1_up_control_change(int group, int channel, int index, int data):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet Control Change message.
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.midi1_up_control_change", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":2891
+ *                                      <ca.UInt8>index, <ca.UInt8>data)
+ * 
+ * def midi1_up_pitch_bend(int group, int channel, int lsb, int msb):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet Pitch Bend message.
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_483midi1_up_pitch_bend(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_482midi1_up_pitch_bend, "midi1_up_pitch_bend(int group, int channel, int lsb, int msb)\n\nCreate a MIDI 1.0 Universal Packet Pitch Bend message.\n\nArgs:\n    group: MIDI group (0-15)\n    channel: MIDI channel (0-15)\n    lsb: Pitch bend LSB (0-127)\n    msb: Pitch bend MSB (0-127)\n\nReturns:\n    32-bit MIDI message");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_483midi1_up_pitch_bend = {"midi1_up_pitch_bend", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4capi_483midi1_up_pitch_bend, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4capi_482midi1_up_pitch_bend};
+static PyObject *__pyx_pw_9coremusic_4capi_483midi1_up_pitch_bend(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  int __pyx_v_group;
+  int __pyx_v_channel;
+  int __pyx_v_lsb;
+  int __pyx_v_msb;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[4] = {0,0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("midi1_up_pitch_bend (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_group,&__pyx_mstate_global->__pyx_n_u_channel,&__pyx_mstate_global->__pyx_n_u_lsb,&__pyx_mstate_global->__pyx_n_u_msb,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 2891, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  4:
+        values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2891, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2891, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2891, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2891, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "midi1_up_pitch_bend", 0) < 0) __PYX_ERR(0, 2891, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 4; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("midi1_up_pitch_bend", 1, 4, 4, i); __PYX_ERR(0, 2891, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 4)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2891, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2891, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2891, __pyx_L3_error)
+      values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2891, __pyx_L3_error)
+    }
+    __pyx_v_group = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_group == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2891, __pyx_L3_error)
+    __pyx_v_channel = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_channel == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2891, __pyx_L3_error)
+    __pyx_v_lsb = __Pyx_PyLong_As_int(values[2]); if (unlikely((__pyx_v_lsb == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2891, __pyx_L3_error)
+    __pyx_v_msb = __Pyx_PyLong_As_int(values[3]); if (unlikely((__pyx_v_msb == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2891, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("midi1_up_pitch_bend", 1, 4, 4, __pyx_nargs); __PYX_ERR(0, 2891, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.capi.midi1_up_pitch_bend", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4capi_482midi1_up_pitch_bend(__pyx_self, __pyx_v_group, __pyx_v_channel, __pyx_v_lsb, __pyx_v_msb);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_482midi1_up_pitch_bend(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_lsb, int __pyx_v_msb) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("midi1_up_pitch_bend", 0);
+
+  /* "coremusic/capi.pyx":2903
+ *         32-bit MIDI message
+ *     """
+ *     return midi.MIDI1UPPitchBend(<ca.UInt8>group, <ca.UInt8>channel,             # <<<<<<<<<<<<<<
+ *                                  <ca.UInt8>lsb, <ca.UInt8>msb)
+ * 
+*/
+  __Pyx_XDECREF(__pyx_r);
+
+  /* "coremusic/capi.pyx":2904
+ *     """
+ *     return midi.MIDI1UPPitchBend(<ca.UInt8>group, <ca.UInt8>channel,
+ *                                  <ca.UInt8>lsb, <ca.UInt8>msb)             # <<<<<<<<<<<<<<
+ * 
+ * def midi1_up_system_common(int group, int status, int byte1, int byte2):
+*/
+  __pyx_t_1 = __Pyx_PyLong_From_UInt32(MIDI1UPPitchBend(((UInt8)__pyx_v_group), ((UInt8)__pyx_v_channel), ((UInt8)__pyx_v_lsb), ((UInt8)__pyx_v_msb))); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2903, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":2891
+ *                                      <ca.UInt8>index, <ca.UInt8>data)
+ * 
+ * def midi1_up_pitch_bend(int group, int channel, int lsb, int msb):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet Pitch Bend message.
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.midi1_up_pitch_bend", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":2906
+ *                                  <ca.UInt8>lsb, <ca.UInt8>msb)
+ * 
+ * def midi1_up_system_common(int group, int status, int byte1, int byte2):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet System Common message.
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_485midi1_up_system_common(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_484midi1_up_system_common, "midi1_up_system_common(int group, int status, int byte1, int byte2)\n\nCreate a MIDI 1.0 Universal Packet System Common message.\n\nArgs:\n    group: MIDI group (0-15)\n    status: System status byte\n    byte1: First data byte\n    byte2: Second data byte\n\nReturns:\n    32-bit MIDI message");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_485midi1_up_system_common = {"midi1_up_system_common", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4capi_485midi1_up_system_common, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4capi_484midi1_up_system_common};
+static PyObject *__pyx_pw_9coremusic_4capi_485midi1_up_system_common(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  int __pyx_v_group;
+  int __pyx_v_status;
+  int __pyx_v_byte1;
+  int __pyx_v_byte2;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[4] = {0,0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("midi1_up_system_common (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_group,&__pyx_mstate_global->__pyx_n_u_status,&__pyx_mstate_global->__pyx_n_u_byte1,&__pyx_mstate_global->__pyx_n_u_byte2,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 2906, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  4:
+        values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2906, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2906, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2906, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2906, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "midi1_up_system_common", 0) < 0) __PYX_ERR(0, 2906, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 4; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("midi1_up_system_common", 1, 4, 4, i); __PYX_ERR(0, 2906, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 4)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2906, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2906, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2906, __pyx_L3_error)
+      values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2906, __pyx_L3_error)
+    }
+    __pyx_v_group = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_group == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2906, __pyx_L3_error)
+    __pyx_v_status = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_status == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2906, __pyx_L3_error)
+    __pyx_v_byte1 = __Pyx_PyLong_As_int(values[2]); if (unlikely((__pyx_v_byte1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2906, __pyx_L3_error)
+    __pyx_v_byte2 = __Pyx_PyLong_As_int(values[3]); if (unlikely((__pyx_v_byte2 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2906, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("midi1_up_system_common", 1, 4, 4, __pyx_nargs); __PYX_ERR(0, 2906, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.capi.midi1_up_system_common", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4capi_484midi1_up_system_common(__pyx_self, __pyx_v_group, __pyx_v_status, __pyx_v_byte1, __pyx_v_byte2);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_484midi1_up_system_common(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_status, int __pyx_v_byte1, int __pyx_v_byte2) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("midi1_up_system_common", 0);
+
+  /* "coremusic/capi.pyx":2918
+ *         32-bit MIDI message
+ *     """
+ *     return midi.MIDI1UPSystemCommon(<ca.UInt8>group, <ca.UInt8>status,             # <<<<<<<<<<<<<<
+ *                                     <ca.UInt8>byte1, <ca.UInt8>byte2)
+ * 
+*/
+  __Pyx_XDECREF(__pyx_r);
+
+  /* "coremusic/capi.pyx":2919
+ *     """
+ *     return midi.MIDI1UPSystemCommon(<ca.UInt8>group, <ca.UInt8>status,
+ *                                     <ca.UInt8>byte1, <ca.UInt8>byte2)             # <<<<<<<<<<<<<<
+ * 
+ * def midi1_up_sysex(int group, int status, int bytes_used, int byte1, int byte2, int byte3, int byte4, int byte5, int byte6):
+*/
+  __pyx_t_1 = __Pyx_PyLong_From_UInt32(MIDI1UPSystemCommon(((UInt8)__pyx_v_group), ((UInt8)__pyx_v_status), ((UInt8)__pyx_v_byte1), ((UInt8)__pyx_v_byte2))); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2918, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":2906
+ *                                  <ca.UInt8>lsb, <ca.UInt8>msb)
+ * 
+ * def midi1_up_system_common(int group, int status, int byte1, int byte2):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet System Common message.
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.midi1_up_system_common", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":2921
+ *                                     <ca.UInt8>byte1, <ca.UInt8>byte2)
+ * 
+ * def midi1_up_sysex(int group, int status, int bytes_used, int byte1, int byte2, int byte3, int byte4, int byte5, int byte6):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet SysEx message.
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_487midi1_up_sysex(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_486midi1_up_sysex, "midi1_up_sysex(int group, int status, int bytes_used, int byte1, int byte2, int byte3, int byte4, int byte5, int byte6)\n\nCreate a MIDI 1.0 Universal Packet SysEx message.\n\nArgs:\n    group: MIDI group (0-15)\n    status: SysEx status nibble\n    bytes_used: Number of data bytes used (0-6)\n    byte1-byte6: SysEx data bytes\n\nReturns:\n    Tuple of (word0, word1) for 64-bit MIDI message");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_487midi1_up_sysex = {"midi1_up_sysex", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4capi_487midi1_up_sysex, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4capi_486midi1_up_sysex};
+static PyObject *__pyx_pw_9coremusic_4capi_487midi1_up_sysex(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  int __pyx_v_group;
+  int __pyx_v_status;
+  int __pyx_v_bytes_used;
+  int __pyx_v_byte1;
+  int __pyx_v_byte2;
+  int __pyx_v_byte3;
+  int __pyx_v_byte4;
+  int __pyx_v_byte5;
+  int __pyx_v_byte6;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[9] = {0,0,0,0,0,0,0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("midi1_up_sysex (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_group,&__pyx_mstate_global->__pyx_n_u_status,&__pyx_mstate_global->__pyx_n_u_bytes_used,&__pyx_mstate_global->__pyx_n_u_byte1,&__pyx_mstate_global->__pyx_n_u_byte2,&__pyx_mstate_global->__pyx_n_u_byte3,&__pyx_mstate_global->__pyx_n_u_byte4,&__pyx_mstate_global->__pyx_n_u_byte5,&__pyx_mstate_global->__pyx_n_u_byte6,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 2921, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  9:
+        values[8] = __Pyx_ArgRef_FASTCALL(__pyx_args, 8);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[8])) __PYX_ERR(0, 2921, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  8:
+        values[7] = __Pyx_ArgRef_FASTCALL(__pyx_args, 7);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[7])) __PYX_ERR(0, 2921, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  7:
+        values[6] = __Pyx_ArgRef_FASTCALL(__pyx_args, 6);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[6])) __PYX_ERR(0, 2921, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  6:
+        values[5] = __Pyx_ArgRef_FASTCALL(__pyx_args, 5);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[5])) __PYX_ERR(0, 2921, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  5:
+        values[4] = __Pyx_ArgRef_FASTCALL(__pyx_args, 4);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 2921, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  4:
+        values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2921, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2921, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2921, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2921, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "midi1_up_sysex", 0) < 0) __PYX_ERR(0, 2921, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 9; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("midi1_up_sysex", 1, 9, 9, i); __PYX_ERR(0, 2921, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 9)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2921, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2921, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2921, __pyx_L3_error)
+      values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2921, __pyx_L3_error)
+      values[4] = __Pyx_ArgRef_FASTCALL(__pyx_args, 4);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 2921, __pyx_L3_error)
+      values[5] = __Pyx_ArgRef_FASTCALL(__pyx_args, 5);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[5])) __PYX_ERR(0, 2921, __pyx_L3_error)
+      values[6] = __Pyx_ArgRef_FASTCALL(__pyx_args, 6);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[6])) __PYX_ERR(0, 2921, __pyx_L3_error)
+      values[7] = __Pyx_ArgRef_FASTCALL(__pyx_args, 7);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[7])) __PYX_ERR(0, 2921, __pyx_L3_error)
+      values[8] = __Pyx_ArgRef_FASTCALL(__pyx_args, 8);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[8])) __PYX_ERR(0, 2921, __pyx_L3_error)
+    }
+    __pyx_v_group = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_group == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2921, __pyx_L3_error)
+    __pyx_v_status = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_status == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2921, __pyx_L3_error)
+    __pyx_v_bytes_used = __Pyx_PyLong_As_int(values[2]); if (unlikely((__pyx_v_bytes_used == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2921, __pyx_L3_error)
+    __pyx_v_byte1 = __Pyx_PyLong_As_int(values[3]); if (unlikely((__pyx_v_byte1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2921, __pyx_L3_error)
+    __pyx_v_byte2 = __Pyx_PyLong_As_int(values[4]); if (unlikely((__pyx_v_byte2 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2921, __pyx_L3_error)
+    __pyx_v_byte3 = __Pyx_PyLong_As_int(values[5]); if (unlikely((__pyx_v_byte3 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2921, __pyx_L3_error)
+    __pyx_v_byte4 = __Pyx_PyLong_As_int(values[6]); if (unlikely((__pyx_v_byte4 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2921, __pyx_L3_error)
+    __pyx_v_byte5 = __Pyx_PyLong_As_int(values[7]); if (unlikely((__pyx_v_byte5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2921, __pyx_L3_error)
+    __pyx_v_byte6 = __Pyx_PyLong_As_int(values[8]); if (unlikely((__pyx_v_byte6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2921, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("midi1_up_sysex", 1, 9, 9, __pyx_nargs); __PYX_ERR(0, 2921, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.capi.midi1_up_sysex", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4capi_486midi1_up_sysex(__pyx_self, __pyx_v_group, __pyx_v_status, __pyx_v_bytes_used, __pyx_v_byte1, __pyx_v_byte2, __pyx_v_byte3, __pyx_v_byte4, __pyx_v_byte5, __pyx_v_byte6);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_486midi1_up_sysex(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_status, int __pyx_v_bytes_used, int __pyx_v_byte1, int __pyx_v_byte2, int __pyx_v_byte3, int __pyx_v_byte4, int __pyx_v_byte5, int __pyx_v_byte6) {
+  MIDIMessage_64 __pyx_v_msg;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("midi1_up_sysex", 0);
+
+  /* "coremusic/capi.pyx":2933
+ *         Tuple of (word0, word1) for 64-bit MIDI message
+ *     """
+ *     cdef midi.MIDIMessage_64 msg = midi.MIDI1UPSysEx(<ca.UInt8>group, <ca.UInt8>status, <ca.UInt8>bytes_used,             # <<<<<<<<<<<<<<
+ *                                                       <ca.UInt8>byte1, <ca.UInt8>byte2, <ca.UInt8>byte3,
+ *                                                       <ca.UInt8>byte4, <ca.UInt8>byte5, <ca.UInt8>byte6)
+*/
+  __pyx_v_msg = MIDI1UPSysEx(((UInt8)__pyx_v_group), ((UInt8)__pyx_v_status), ((UInt8)__pyx_v_bytes_used), ((UInt8)__pyx_v_byte1), ((UInt8)__pyx_v_byte2), ((UInt8)__pyx_v_byte3), ((UInt8)__pyx_v_byte4), ((UInt8)__pyx_v_byte5), ((UInt8)__pyx_v_byte6));
+
+  /* "coremusic/capi.pyx":2936
+ *                                                       <ca.UInt8>byte1, <ca.UInt8>byte2, <ca.UInt8>byte3,
+ *                                                       <ca.UInt8>byte4, <ca.UInt8>byte5, <ca.UInt8>byte6)
+ *     return (msg.word0, msg.word1)             # <<<<<<<<<<<<<<
+ * 
+ * # MIDI 2.0 Channel Voice Message Functions
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_UInt32(__pyx_v_msg.word0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2936, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyLong_From_UInt32(__pyx_v_msg.word1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2936, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 2936, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_1);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1) != (0)) __PYX_ERR(0, 2936, __pyx_L1_error);
+  __Pyx_GIVEREF(__pyx_t_2);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_2) != (0)) __PYX_ERR(0, 2936, __pyx_L1_error);
+  __pyx_t_1 = 0;
+  __pyx_t_2 = 0;
+  __pyx_r = __pyx_t_3;
+  __pyx_t_3 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":2921
+ *                                     <ca.UInt8>byte1, <ca.UInt8>byte2)
+ * 
+ * def midi1_up_sysex(int group, int status, int bytes_used, int byte1, int byte2, int byte3, int byte4, int byte5, int byte6):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet SysEx message.
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("coremusic.capi.midi1_up_sysex", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":2940
+ * # MIDI 2.0 Channel Voice Message Functions
+ * 
+ * def midi2_channel_voice_message(int group, int status, int channel, int index, long value):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Channel Voice message.
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_489midi2_channel_voice_message(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_488midi2_channel_voice_message, "midi2_channel_voice_message(int group, int status, int channel, int index, long value)\n\nCreate a MIDI 2.0 Channel Voice message.\n\nArgs:\n    group: MIDI group (0-15)\n    status: MIDI status nibble\n    channel: MIDI channel (0-15)\n    index: 16-bit index value\n    value: 32-bit data value\n\nReturns:\n    Tuple of (word0, word1) for 64-bit MIDI message");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_489midi2_channel_voice_message = {"midi2_channel_voice_message", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4capi_489midi2_channel_voice_message, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4capi_488midi2_channel_voice_message};
+static PyObject *__pyx_pw_9coremusic_4capi_489midi2_channel_voice_message(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  int __pyx_v_group;
+  int __pyx_v_status;
+  int __pyx_v_channel;
+  int __pyx_v_index;
+  long __pyx_v_value;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[5] = {0,0,0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("midi2_channel_voice_message (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_group,&__pyx_mstate_global->__pyx_n_u_status,&__pyx_mstate_global->__pyx_n_u_channel,&__pyx_mstate_global->__pyx_n_u_index,&__pyx_mstate_global->__pyx_n_u_value,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 2940, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  5:
+        values[4] = __Pyx_ArgRef_FASTCALL(__pyx_args, 4);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 2940, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  4:
+        values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2940, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2940, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2940, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2940, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "midi2_channel_voice_message", 0) < 0) __PYX_ERR(0, 2940, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 5; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("midi2_channel_voice_message", 1, 5, 5, i); __PYX_ERR(0, 2940, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 5)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2940, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2940, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2940, __pyx_L3_error)
+      values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2940, __pyx_L3_error)
+      values[4] = __Pyx_ArgRef_FASTCALL(__pyx_args, 4);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 2940, __pyx_L3_error)
+    }
+    __pyx_v_group = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_group == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2940, __pyx_L3_error)
+    __pyx_v_status = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_status == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2940, __pyx_L3_error)
+    __pyx_v_channel = __Pyx_PyLong_As_int(values[2]); if (unlikely((__pyx_v_channel == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2940, __pyx_L3_error)
+    __pyx_v_index = __Pyx_PyLong_As_int(values[3]); if (unlikely((__pyx_v_index == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2940, __pyx_L3_error)
+    __pyx_v_value = __Pyx_PyLong_As_long(values[4]); if (unlikely((__pyx_v_value == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 2940, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("midi2_channel_voice_message", 1, 5, 5, __pyx_nargs); __PYX_ERR(0, 2940, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.capi.midi2_channel_voice_message", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4capi_488midi2_channel_voice_message(__pyx_self, __pyx_v_group, __pyx_v_status, __pyx_v_channel, __pyx_v_index, __pyx_v_value);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_488midi2_channel_voice_message(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_status, int __pyx_v_channel, int __pyx_v_index, long __pyx_v_value) {
+  MIDIMessage_64 __pyx_v_msg;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("midi2_channel_voice_message", 0);
+
+  /* "coremusic/capi.pyx":2953
+ *         Tuple of (word0, word1) for 64-bit MIDI message
+ *     """
+ *     cdef midi.MIDIMessage_64 msg = midi.MIDI2ChannelVoiceMessage(<ca.UInt8>group, <ca.UInt8>status,             # <<<<<<<<<<<<<<
+ *                                                                   <ca.UInt8>channel, <ca.UInt16>index, <ca.UInt32>value)
+ *     return (msg.word0, msg.word1)
+*/
+  __pyx_v_msg = MIDI2ChannelVoiceMessage(((UInt8)__pyx_v_group), ((UInt8)__pyx_v_status), ((UInt8)__pyx_v_channel), ((UInt16)__pyx_v_index), ((UInt32)__pyx_v_value));
+
+  /* "coremusic/capi.pyx":2955
+ *     cdef midi.MIDIMessage_64 msg = midi.MIDI2ChannelVoiceMessage(<ca.UInt8>group, <ca.UInt8>status,
+ *                                                                   <ca.UInt8>channel, <ca.UInt16>index, <ca.UInt32>value)
+ *     return (msg.word0, msg.word1)             # <<<<<<<<<<<<<<
+ * 
+ * def midi2_note_on(int group, int channel, int note_number, int attribute_type, int attribute_data, int velocity):
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_UInt32(__pyx_v_msg.word0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2955, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyLong_From_UInt32(__pyx_v_msg.word1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2955, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 2955, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_1);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1) != (0)) __PYX_ERR(0, 2955, __pyx_L1_error);
+  __Pyx_GIVEREF(__pyx_t_2);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_2) != (0)) __PYX_ERR(0, 2955, __pyx_L1_error);
+  __pyx_t_1 = 0;
+  __pyx_t_2 = 0;
+  __pyx_r = __pyx_t_3;
+  __pyx_t_3 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":2940
+ * # MIDI 2.0 Channel Voice Message Functions
+ * 
+ * def midi2_channel_voice_message(int group, int status, int channel, int index, long value):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Channel Voice message.
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("coremusic.capi.midi2_channel_voice_message", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":2957
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_note_on(int group, int channel, int note_number, int attribute_type, int attribute_data, int velocity):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Note On message.
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_491midi2_note_on(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_490midi2_note_on, "midi2_note_on(int group, int channel, int note_number, int attribute_type, int attribute_data, int velocity)\n\nCreate a MIDI 2.0 Note On message.\n\nArgs:\n    group: MIDI group (0-15)\n    channel: MIDI channel (0-15)\n    note_number: Note number (0-127)\n    attribute_type: Note attribute type\n    attribute_data: Note attribute data (16-bit)\n    velocity: Note velocity (16-bit)\n\nReturns:\n    Tuple of (word0, word1) for 64-bit MIDI message");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_491midi2_note_on = {"midi2_note_on", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4capi_491midi2_note_on, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4capi_490midi2_note_on};
+static PyObject *__pyx_pw_9coremusic_4capi_491midi2_note_on(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  int __pyx_v_group;
+  int __pyx_v_channel;
+  int __pyx_v_note_number;
+  int __pyx_v_attribute_type;
+  int __pyx_v_attribute_data;
+  int __pyx_v_velocity;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[6] = {0,0,0,0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("midi2_note_on (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_group,&__pyx_mstate_global->__pyx_n_u_channel,&__pyx_mstate_global->__pyx_n_u_note_number,&__pyx_mstate_global->__pyx_n_u_attribute_type,&__pyx_mstate_global->__pyx_n_u_attribute_data,&__pyx_mstate_global->__pyx_n_u_velocity,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 2957, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  6:
+        values[5] = __Pyx_ArgRef_FASTCALL(__pyx_args, 5);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[5])) __PYX_ERR(0, 2957, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  5:
+        values[4] = __Pyx_ArgRef_FASTCALL(__pyx_args, 4);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 2957, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  4:
+        values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2957, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2957, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2957, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2957, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "midi2_note_on", 0) < 0) __PYX_ERR(0, 2957, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 6; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("midi2_note_on", 1, 6, 6, i); __PYX_ERR(0, 2957, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 6)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2957, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2957, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2957, __pyx_L3_error)
+      values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2957, __pyx_L3_error)
+      values[4] = __Pyx_ArgRef_FASTCALL(__pyx_args, 4);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 2957, __pyx_L3_error)
+      values[5] = __Pyx_ArgRef_FASTCALL(__pyx_args, 5);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[5])) __PYX_ERR(0, 2957, __pyx_L3_error)
+    }
+    __pyx_v_group = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_group == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2957, __pyx_L3_error)
+    __pyx_v_channel = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_channel == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2957, __pyx_L3_error)
+    __pyx_v_note_number = __Pyx_PyLong_As_int(values[2]); if (unlikely((__pyx_v_note_number == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2957, __pyx_L3_error)
+    __pyx_v_attribute_type = __Pyx_PyLong_As_int(values[3]); if (unlikely((__pyx_v_attribute_type == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2957, __pyx_L3_error)
+    __pyx_v_attribute_data = __Pyx_PyLong_As_int(values[4]); if (unlikely((__pyx_v_attribute_data == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2957, __pyx_L3_error)
+    __pyx_v_velocity = __Pyx_PyLong_As_int(values[5]); if (unlikely((__pyx_v_velocity == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2957, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("midi2_note_on", 1, 6, 6, __pyx_nargs); __PYX_ERR(0, 2957, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.capi.midi2_note_on", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4capi_490midi2_note_on(__pyx_self, __pyx_v_group, __pyx_v_channel, __pyx_v_note_number, __pyx_v_attribute_type, __pyx_v_attribute_data, __pyx_v_velocity);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_490midi2_note_on(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_note_number, int __pyx_v_attribute_type, int __pyx_v_attribute_data, int __pyx_v_velocity) {
+  MIDIMessage_64 __pyx_v_msg;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("midi2_note_on", 0);
+
+  /* "coremusic/capi.pyx":2971
+ *         Tuple of (word0, word1) for 64-bit MIDI message
+ *     """
+ *     cdef midi.MIDIMessage_64 msg = midi.MIDI2NoteOn(<ca.UInt8>group, <ca.UInt8>channel, <ca.UInt8>note_number,             # <<<<<<<<<<<<<<
+ *                                                      <ca.UInt8>attribute_type, <ca.UInt16>attribute_data, <ca.UInt16>velocity)
+ *     return (msg.word0, msg.word1)
+*/
+  __pyx_v_msg = MIDI2NoteOn(((UInt8)__pyx_v_group), ((UInt8)__pyx_v_channel), ((UInt8)__pyx_v_note_number), ((UInt8)__pyx_v_attribute_type), ((UInt16)__pyx_v_attribute_data), ((UInt16)__pyx_v_velocity));
+
+  /* "coremusic/capi.pyx":2973
+ *     cdef midi.MIDIMessage_64 msg = midi.MIDI2NoteOn(<ca.UInt8>group, <ca.UInt8>channel, <ca.UInt8>note_number,
+ *                                                      <ca.UInt8>attribute_type, <ca.UInt16>attribute_data, <ca.UInt16>velocity)
+ *     return (msg.word0, msg.word1)             # <<<<<<<<<<<<<<
+ * 
+ * def midi2_note_off(int group, int channel, int note_number, int attribute_type, int attribute_data, int velocity):
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_UInt32(__pyx_v_msg.word0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2973, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyLong_From_UInt32(__pyx_v_msg.word1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2973, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 2973, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_1);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1) != (0)) __PYX_ERR(0, 2973, __pyx_L1_error);
+  __Pyx_GIVEREF(__pyx_t_2);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_2) != (0)) __PYX_ERR(0, 2973, __pyx_L1_error);
+  __pyx_t_1 = 0;
+  __pyx_t_2 = 0;
+  __pyx_r = __pyx_t_3;
+  __pyx_t_3 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":2957
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_note_on(int group, int channel, int note_number, int attribute_type, int attribute_data, int velocity):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Note On message.
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("coremusic.capi.midi2_note_on", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":2975
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_note_off(int group, int channel, int note_number, int attribute_type, int attribute_data, int velocity):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Note Off message.
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_493midi2_note_off(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_492midi2_note_off, "midi2_note_off(int group, int channel, int note_number, int attribute_type, int attribute_data, int velocity)\n\nCreate a MIDI 2.0 Note Off message.\n\nArgs:\n    group: MIDI group (0-15)\n    channel: MIDI channel (0-15)\n    note_number: Note number (0-127)\n    attribute_type: Note attribute type\n    attribute_data: Note attribute data (16-bit)\n    velocity: Note velocity (16-bit)\n\nReturns:\n    Tuple of (word0, word1) for 64-bit MIDI message");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_493midi2_note_off = {"midi2_note_off", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4capi_493midi2_note_off, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4capi_492midi2_note_off};
+static PyObject *__pyx_pw_9coremusic_4capi_493midi2_note_off(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  int __pyx_v_group;
+  int __pyx_v_channel;
+  int __pyx_v_note_number;
+  int __pyx_v_attribute_type;
+  int __pyx_v_attribute_data;
+  int __pyx_v_velocity;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[6] = {0,0,0,0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("midi2_note_off (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_group,&__pyx_mstate_global->__pyx_n_u_channel,&__pyx_mstate_global->__pyx_n_u_note_number,&__pyx_mstate_global->__pyx_n_u_attribute_type,&__pyx_mstate_global->__pyx_n_u_attribute_data,&__pyx_mstate_global->__pyx_n_u_velocity,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 2975, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  6:
+        values[5] = __Pyx_ArgRef_FASTCALL(__pyx_args, 5);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[5])) __PYX_ERR(0, 2975, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  5:
+        values[4] = __Pyx_ArgRef_FASTCALL(__pyx_args, 4);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 2975, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  4:
+        values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2975, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2975, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2975, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2975, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "midi2_note_off", 0) < 0) __PYX_ERR(0, 2975, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 6; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("midi2_note_off", 1, 6, 6, i); __PYX_ERR(0, 2975, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 6)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2975, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2975, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2975, __pyx_L3_error)
+      values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2975, __pyx_L3_error)
+      values[4] = __Pyx_ArgRef_FASTCALL(__pyx_args, 4);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 2975, __pyx_L3_error)
+      values[5] = __Pyx_ArgRef_FASTCALL(__pyx_args, 5);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[5])) __PYX_ERR(0, 2975, __pyx_L3_error)
+    }
+    __pyx_v_group = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_group == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2975, __pyx_L3_error)
+    __pyx_v_channel = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_channel == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2975, __pyx_L3_error)
+    __pyx_v_note_number = __Pyx_PyLong_As_int(values[2]); if (unlikely((__pyx_v_note_number == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2975, __pyx_L3_error)
+    __pyx_v_attribute_type = __Pyx_PyLong_As_int(values[3]); if (unlikely((__pyx_v_attribute_type == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2975, __pyx_L3_error)
+    __pyx_v_attribute_data = __Pyx_PyLong_As_int(values[4]); if (unlikely((__pyx_v_attribute_data == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2975, __pyx_L3_error)
+    __pyx_v_velocity = __Pyx_PyLong_As_int(values[5]); if (unlikely((__pyx_v_velocity == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2975, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("midi2_note_off", 1, 6, 6, __pyx_nargs); __PYX_ERR(0, 2975, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.capi.midi2_note_off", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4capi_492midi2_note_off(__pyx_self, __pyx_v_group, __pyx_v_channel, __pyx_v_note_number, __pyx_v_attribute_type, __pyx_v_attribute_data, __pyx_v_velocity);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_492midi2_note_off(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_note_number, int __pyx_v_attribute_type, int __pyx_v_attribute_data, int __pyx_v_velocity) {
+  MIDIMessage_64 __pyx_v_msg;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("midi2_note_off", 0);
+
+  /* "coremusic/capi.pyx":2989
+ *         Tuple of (word0, word1) for 64-bit MIDI message
+ *     """
+ *     cdef midi.MIDIMessage_64 msg = midi.MIDI2NoteOff(<ca.UInt8>group, <ca.UInt8>channel, <ca.UInt8>note_number,             # <<<<<<<<<<<<<<
+ *                                                       <ca.UInt8>attribute_type, <ca.UInt16>attribute_data, <ca.UInt16>velocity)
+ *     return (msg.word0, msg.word1)
+*/
+  __pyx_v_msg = MIDI2NoteOff(((UInt8)__pyx_v_group), ((UInt8)__pyx_v_channel), ((UInt8)__pyx_v_note_number), ((UInt8)__pyx_v_attribute_type), ((UInt16)__pyx_v_attribute_data), ((UInt16)__pyx_v_velocity));
+
+  /* "coremusic/capi.pyx":2991
+ *     cdef midi.MIDIMessage_64 msg = midi.MIDI2NoteOff(<ca.UInt8>group, <ca.UInt8>channel, <ca.UInt8>note_number,
+ *                                                       <ca.UInt8>attribute_type, <ca.UInt16>attribute_data, <ca.UInt16>velocity)
+ *     return (msg.word0, msg.word1)             # <<<<<<<<<<<<<<
+ * 
+ * def midi2_control_change(int group, int channel, int index, long value):
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_UInt32(__pyx_v_msg.word0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2991, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyLong_From_UInt32(__pyx_v_msg.word1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2991, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 2991, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_1);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1) != (0)) __PYX_ERR(0, 2991, __pyx_L1_error);
+  __Pyx_GIVEREF(__pyx_t_2);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_2) != (0)) __PYX_ERR(0, 2991, __pyx_L1_error);
+  __pyx_t_1 = 0;
+  __pyx_t_2 = 0;
+  __pyx_r = __pyx_t_3;
+  __pyx_t_3 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":2975
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_note_off(int group, int channel, int note_number, int attribute_type, int attribute_data, int velocity):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Note Off message.
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("coremusic.capi.midi2_note_off", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":2993
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_control_change(int group, int channel, int index, long value):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Control Change message.
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_495midi2_control_change(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_494midi2_control_change, "midi2_control_change(int group, int channel, int index, long value)\n\nCreate a MIDI 2.0 Control Change message.\n\nArgs:\n    group: MIDI group (0-15)\n    channel: MIDI channel (0-15)\n    index: Controller number\n    value: Controller value (32-bit)\n\nReturns:\n    Tuple of (word0, word1) for 64-bit MIDI message");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_495midi2_control_change = {"midi2_control_change", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4capi_495midi2_control_change, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4capi_494midi2_control_change};
+static PyObject *__pyx_pw_9coremusic_4capi_495midi2_control_change(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  int __pyx_v_group;
+  int __pyx_v_channel;
+  int __pyx_v_index;
+  long __pyx_v_value;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[4] = {0,0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("midi2_control_change (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_group,&__pyx_mstate_global->__pyx_n_u_channel,&__pyx_mstate_global->__pyx_n_u_index,&__pyx_mstate_global->__pyx_n_u_value,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 2993, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  4:
+        values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2993, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2993, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2993, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2993, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "midi2_control_change", 0) < 0) __PYX_ERR(0, 2993, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 4; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("midi2_control_change", 1, 4, 4, i); __PYX_ERR(0, 2993, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 4)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 2993, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 2993, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 2993, __pyx_L3_error)
+      values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 2993, __pyx_L3_error)
+    }
+    __pyx_v_group = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_group == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2993, __pyx_L3_error)
+    __pyx_v_channel = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_channel == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2993, __pyx_L3_error)
+    __pyx_v_index = __Pyx_PyLong_As_int(values[2]); if (unlikely((__pyx_v_index == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 2993, __pyx_L3_error)
+    __pyx_v_value = __Pyx_PyLong_As_long(values[3]); if (unlikely((__pyx_v_value == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 2993, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("midi2_control_change", 1, 4, 4, __pyx_nargs); __PYX_ERR(0, 2993, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.capi.midi2_control_change", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4capi_494midi2_control_change(__pyx_self, __pyx_v_group, __pyx_v_channel, __pyx_v_index, __pyx_v_value);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_494midi2_control_change(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_index, long __pyx_v_value) {
+  MIDIMessage_64 __pyx_v_msg;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("midi2_control_change", 0);
+
+  /* "coremusic/capi.pyx":3005
+ *         Tuple of (word0, word1) for 64-bit MIDI message
+ *     """
+ *     cdef midi.MIDIMessage_64 msg = midi.MIDI2ControlChange(<ca.UInt8>group, <ca.UInt8>channel,             # <<<<<<<<<<<<<<
+ *                                                             <ca.UInt8>index, <ca.UInt32>value)
+ *     return (msg.word0, msg.word1)
+*/
+  __pyx_v_msg = MIDI2ControlChange(((UInt8)__pyx_v_group), ((UInt8)__pyx_v_channel), ((UInt8)__pyx_v_index), ((UInt32)__pyx_v_value));
+
+  /* "coremusic/capi.pyx":3007
+ *     cdef midi.MIDIMessage_64 msg = midi.MIDI2ControlChange(<ca.UInt8>group, <ca.UInt8>channel,
+ *                                                             <ca.UInt8>index, <ca.UInt32>value)
+ *     return (msg.word0, msg.word1)             # <<<<<<<<<<<<<<
+ * 
+ * def midi2_program_change(int group, int channel, bint bank_is_valid, int program, int bank_msb, int bank_lsb):
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_UInt32(__pyx_v_msg.word0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3007, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyLong_From_UInt32(__pyx_v_msg.word1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3007, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 3007, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_1);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1) != (0)) __PYX_ERR(0, 3007, __pyx_L1_error);
+  __Pyx_GIVEREF(__pyx_t_2);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_2) != (0)) __PYX_ERR(0, 3007, __pyx_L1_error);
+  __pyx_t_1 = 0;
+  __pyx_t_2 = 0;
+  __pyx_r = __pyx_t_3;
+  __pyx_t_3 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":2993
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_control_change(int group, int channel, int index, long value):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Control Change message.
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("coremusic.capi.midi2_control_change", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3009
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_program_change(int group, int channel, bint bank_is_valid, int program, int bank_msb, int bank_lsb):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Program Change message.
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_497midi2_program_change(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_496midi2_program_change, "midi2_program_change(int group, int channel, bool bank_is_valid, int program, int bank_msb, int bank_lsb)\n\nCreate a MIDI 2.0 Program Change message.\n\nArgs:\n    group: MIDI group (0-15)\n    channel: MIDI channel (0-15)\n    bank_is_valid: Whether bank change is included\n    program: Program number\n    bank_msb: Bank MSB\n    bank_lsb: Bank LSB\n\nReturns:\n    Tuple of (word0, word1) for 64-bit MIDI message");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_497midi2_program_change = {"midi2_program_change", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4capi_497midi2_program_change, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4capi_496midi2_program_change};
+static PyObject *__pyx_pw_9coremusic_4capi_497midi2_program_change(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  int __pyx_v_group;
+  int __pyx_v_channel;
+  int __pyx_v_bank_is_valid;
+  int __pyx_v_program;
+  int __pyx_v_bank_msb;
+  int __pyx_v_bank_lsb;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[6] = {0,0,0,0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("midi2_program_change (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_group,&__pyx_mstate_global->__pyx_n_u_channel,&__pyx_mstate_global->__pyx_n_u_bank_is_valid,&__pyx_mstate_global->__pyx_n_u_program,&__pyx_mstate_global->__pyx_n_u_bank_msb,&__pyx_mstate_global->__pyx_n_u_bank_lsb,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 3009, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  6:
+        values[5] = __Pyx_ArgRef_FASTCALL(__pyx_args, 5);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[5])) __PYX_ERR(0, 3009, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  5:
+        values[4] = __Pyx_ArgRef_FASTCALL(__pyx_args, 4);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 3009, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  4:
+        values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 3009, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 3009, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 3009, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 3009, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "midi2_program_change", 0) < 0) __PYX_ERR(0, 3009, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 6; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("midi2_program_change", 1, 6, 6, i); __PYX_ERR(0, 3009, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 6)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 3009, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 3009, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 3009, __pyx_L3_error)
+      values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 3009, __pyx_L3_error)
+      values[4] = __Pyx_ArgRef_FASTCALL(__pyx_args, 4);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 3009, __pyx_L3_error)
+      values[5] = __Pyx_ArgRef_FASTCALL(__pyx_args, 5);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[5])) __PYX_ERR(0, 3009, __pyx_L3_error)
+    }
+    __pyx_v_group = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_group == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 3009, __pyx_L3_error)
+    __pyx_v_channel = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_channel == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 3009, __pyx_L3_error)
+    __pyx_v_bank_is_valid = __Pyx_PyObject_IsTrue(values[2]); if (unlikely((__pyx_v_bank_is_valid == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 3009, __pyx_L3_error)
+    __pyx_v_program = __Pyx_PyLong_As_int(values[3]); if (unlikely((__pyx_v_program == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 3009, __pyx_L3_error)
+    __pyx_v_bank_msb = __Pyx_PyLong_As_int(values[4]); if (unlikely((__pyx_v_bank_msb == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 3009, __pyx_L3_error)
+    __pyx_v_bank_lsb = __Pyx_PyLong_As_int(values[5]); if (unlikely((__pyx_v_bank_lsb == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 3009, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("midi2_program_change", 1, 6, 6, __pyx_nargs); __PYX_ERR(0, 3009, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.capi.midi2_program_change", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4capi_496midi2_program_change(__pyx_self, __pyx_v_group, __pyx_v_channel, __pyx_v_bank_is_valid, __pyx_v_program, __pyx_v_bank_msb, __pyx_v_bank_lsb);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_496midi2_program_change(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, int __pyx_v_bank_is_valid, int __pyx_v_program, int __pyx_v_bank_msb, int __pyx_v_bank_lsb) {
+  MIDIMessage_64 __pyx_v_msg;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("midi2_program_change", 0);
+
+  /* "coremusic/capi.pyx":3023
+ *         Tuple of (word0, word1) for 64-bit MIDI message
+ *     """
+ *     cdef midi.MIDIMessage_64 msg = midi.MIDI2ProgramChange(<ca.UInt8>group, <ca.UInt8>channel, bank_is_valid,             # <<<<<<<<<<<<<<
+ *                                                             <ca.UInt8>program, <ca.UInt8>bank_msb, <ca.UInt8>bank_lsb)
+ *     return (msg.word0, msg.word1)
+*/
+  __pyx_v_msg = MIDI2ProgramChange(((UInt8)__pyx_v_group), ((UInt8)__pyx_v_channel), __pyx_v_bank_is_valid, ((UInt8)__pyx_v_program), ((UInt8)__pyx_v_bank_msb), ((UInt8)__pyx_v_bank_lsb));
+
+  /* "coremusic/capi.pyx":3025
+ *     cdef midi.MIDIMessage_64 msg = midi.MIDI2ProgramChange(<ca.UInt8>group, <ca.UInt8>channel, bank_is_valid,
+ *                                                             <ca.UInt8>program, <ca.UInt8>bank_msb, <ca.UInt8>bank_lsb)
+ *     return (msg.word0, msg.word1)             # <<<<<<<<<<<<<<
+ * 
+ * def midi2_pitch_bend(int group, int channel, long value):
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_UInt32(__pyx_v_msg.word0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3025, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyLong_From_UInt32(__pyx_v_msg.word1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3025, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 3025, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_1);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1) != (0)) __PYX_ERR(0, 3025, __pyx_L1_error);
+  __Pyx_GIVEREF(__pyx_t_2);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_2) != (0)) __PYX_ERR(0, 3025, __pyx_L1_error);
+  __pyx_t_1 = 0;
+  __pyx_t_2 = 0;
+  __pyx_r = __pyx_t_3;
+  __pyx_t_3 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3009
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_program_change(int group, int channel, bint bank_is_valid, int program, int bank_msb, int bank_lsb):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Program Change message.
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("coremusic.capi.midi2_program_change", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3027
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_pitch_bend(int group, int channel, long value):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Pitch Bend message.
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_499midi2_pitch_bend(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_498midi2_pitch_bend, "midi2_pitch_bend(int group, int channel, long value)\n\nCreate a MIDI 2.0 Pitch Bend message.\n\nArgs:\n    group: MIDI group (0-15)\n    channel: MIDI channel (0-15)\n    value: Pitch bend value (32-bit)\n\nReturns:\n    Tuple of (word0, word1) for 64-bit MIDI message");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_499midi2_pitch_bend = {"midi2_pitch_bend", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4capi_499midi2_pitch_bend, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4capi_498midi2_pitch_bend};
+static PyObject *__pyx_pw_9coremusic_4capi_499midi2_pitch_bend(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  int __pyx_v_group;
+  int __pyx_v_channel;
+  long __pyx_v_value;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[3] = {0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("midi2_pitch_bend (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_group,&__pyx_mstate_global->__pyx_n_u_channel,&__pyx_mstate_global->__pyx_n_u_value,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 3027, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 3027, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 3027, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 3027, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "midi2_pitch_bend", 0) < 0) __PYX_ERR(0, 3027, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 3; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("midi2_pitch_bend", 1, 3, 3, i); __PYX_ERR(0, 3027, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 3)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 3027, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 3027, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 3027, __pyx_L3_error)
+    }
+    __pyx_v_group = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_group == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 3027, __pyx_L3_error)
+    __pyx_v_channel = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_channel == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 3027, __pyx_L3_error)
+    __pyx_v_value = __Pyx_PyLong_As_long(values[2]); if (unlikely((__pyx_v_value == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 3027, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("midi2_pitch_bend", 1, 3, 3, __pyx_nargs); __PYX_ERR(0, 3027, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.capi.midi2_pitch_bend", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4capi_498midi2_pitch_bend(__pyx_self, __pyx_v_group, __pyx_v_channel, __pyx_v_value);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_498midi2_pitch_bend(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_group, int __pyx_v_channel, long __pyx_v_value) {
+  MIDIMessage_64 __pyx_v_msg;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("midi2_pitch_bend", 0);
+
+  /* "coremusic/capi.pyx":3038
+ *         Tuple of (word0, word1) for 64-bit MIDI message
+ *     """
+ *     cdef midi.MIDIMessage_64 msg = midi.MIDI2PitchBend(<ca.UInt8>group, <ca.UInt8>channel, <ca.UInt32>value)             # <<<<<<<<<<<<<<
+ *     return (msg.word0, msg.word1)
+ * 
+*/
+  __pyx_v_msg = MIDI2PitchBend(((UInt8)__pyx_v_group), ((UInt8)__pyx_v_channel), ((UInt32)__pyx_v_value));
+
+  /* "coremusic/capi.pyx":3039
+ *     """
+ *     cdef midi.MIDIMessage_64 msg = midi.MIDI2PitchBend(<ca.UInt8>group, <ca.UInt8>channel, <ca.UInt32>value)
+ *     return (msg.word0, msg.word1)             # <<<<<<<<<<<<<<
+ * 
+ * # MIDI Message Type Constants
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_UInt32(__pyx_v_msg.word0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3039, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyLong_From_UInt32(__pyx_v_msg.word1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3039, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 3039, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_1);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1) != (0)) __PYX_ERR(0, 3039, __pyx_L1_error);
+  __Pyx_GIVEREF(__pyx_t_2);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_2) != (0)) __PYX_ERR(0, 3039, __pyx_L1_error);
+  __pyx_t_1 = 0;
+  __pyx_t_2 = 0;
+  __pyx_r = __pyx_t_3;
+  __pyx_t_3 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3027
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_pitch_bend(int group, int channel, long value):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Pitch Bend message.
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("coremusic.capi.midi2_pitch_bend", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3043
+ * # MIDI Message Type Constants
+ * 
+ * def get_midi_message_type_utility():             # <<<<<<<<<<<<<<
+ *     """Get the Utility message type constant."""
+ *     return midi.kMIDIMessageTypeUtility
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_501get_midi_message_type_utility(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_500get_midi_message_type_utility, "get_midi_message_type_utility()\n\nGet the Utility message type constant.");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_501get_midi_message_type_utility = {"get_midi_message_type_utility", (PyCFunction)__pyx_pw_9coremusic_4capi_501get_midi_message_type_utility, METH_NOARGS, __pyx_doc_9coremusic_4capi_500get_midi_message_type_utility};
+static PyObject *__pyx_pw_9coremusic_4capi_501get_midi_message_type_utility(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_midi_message_type_utility (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_9coremusic_4capi_500get_midi_message_type_utility(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_500get_midi_message_type_utility(CYTHON_UNUSED PyObject *__pyx_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_midi_message_type_utility", 0);
+
+  /* "coremusic/capi.pyx":3045
+ * def get_midi_message_type_utility():
+ *     """Get the Utility message type constant."""
+ *     return midi.kMIDIMessageTypeUtility             # <<<<<<<<<<<<<<
+ * 
+ * def get_midi_message_type_system():
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_MIDIMessageType(kMIDIMessageTypeUtility); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3045, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3043
+ * # MIDI Message Type Constants
+ * 
+ * def get_midi_message_type_utility():             # <<<<<<<<<<<<<<
+ *     """Get the Utility message type constant."""
+ *     return midi.kMIDIMessageTypeUtility
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.get_midi_message_type_utility", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3047
+ *     return midi.kMIDIMessageTypeUtility
+ * 
+ * def get_midi_message_type_system():             # <<<<<<<<<<<<<<
+ *     """Get the System message type constant."""
+ *     return midi.kMIDIMessageTypeSystem
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_503get_midi_message_type_system(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_502get_midi_message_type_system, "get_midi_message_type_system()\n\nGet the System message type constant.");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_503get_midi_message_type_system = {"get_midi_message_type_system", (PyCFunction)__pyx_pw_9coremusic_4capi_503get_midi_message_type_system, METH_NOARGS, __pyx_doc_9coremusic_4capi_502get_midi_message_type_system};
+static PyObject *__pyx_pw_9coremusic_4capi_503get_midi_message_type_system(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_midi_message_type_system (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_9coremusic_4capi_502get_midi_message_type_system(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_502get_midi_message_type_system(CYTHON_UNUSED PyObject *__pyx_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_midi_message_type_system", 0);
+
+  /* "coremusic/capi.pyx":3049
+ * def get_midi_message_type_system():
+ *     """Get the System message type constant."""
+ *     return midi.kMIDIMessageTypeSystem             # <<<<<<<<<<<<<<
+ * 
+ * def get_midi_message_type_channel_voice1():
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_MIDIMessageType(kMIDIMessageTypeSystem); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3049, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3047
+ *     return midi.kMIDIMessageTypeUtility
+ * 
+ * def get_midi_message_type_system():             # <<<<<<<<<<<<<<
+ *     """Get the System message type constant."""
+ *     return midi.kMIDIMessageTypeSystem
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.get_midi_message_type_system", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3051
+ *     return midi.kMIDIMessageTypeSystem
+ * 
+ * def get_midi_message_type_channel_voice1():             # <<<<<<<<<<<<<<
+ *     """Get the Channel Voice 1 (MIDI 1.0) message type constant."""
+ *     return midi.kMIDIMessageTypeChannelVoice1
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_505get_midi_message_type_channel_voice1(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_504get_midi_message_type_channel_voice1, "get_midi_message_type_channel_voice1()\n\nGet the Channel Voice 1 (MIDI 1.0) message type constant.");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_505get_midi_message_type_channel_voice1 = {"get_midi_message_type_channel_voice1", (PyCFunction)__pyx_pw_9coremusic_4capi_505get_midi_message_type_channel_voice1, METH_NOARGS, __pyx_doc_9coremusic_4capi_504get_midi_message_type_channel_voice1};
+static PyObject *__pyx_pw_9coremusic_4capi_505get_midi_message_type_channel_voice1(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_midi_message_type_channel_voice1 (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_9coremusic_4capi_504get_midi_message_type_channel_voice1(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_504get_midi_message_type_channel_voice1(CYTHON_UNUSED PyObject *__pyx_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_midi_message_type_channel_voice1", 0);
+
+  /* "coremusic/capi.pyx":3053
+ * def get_midi_message_type_channel_voice1():
+ *     """Get the Channel Voice 1 (MIDI 1.0) message type constant."""
+ *     return midi.kMIDIMessageTypeChannelVoice1             # <<<<<<<<<<<<<<
+ * 
+ * def get_midi_message_type_sysex():
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_MIDIMessageType(kMIDIMessageTypeChannelVoice1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3053, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3051
+ *     return midi.kMIDIMessageTypeSystem
+ * 
+ * def get_midi_message_type_channel_voice1():             # <<<<<<<<<<<<<<
+ *     """Get the Channel Voice 1 (MIDI 1.0) message type constant."""
+ *     return midi.kMIDIMessageTypeChannelVoice1
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.get_midi_message_type_channel_voice1", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3055
+ *     return midi.kMIDIMessageTypeChannelVoice1
+ * 
+ * def get_midi_message_type_sysex():             # <<<<<<<<<<<<<<
+ *     """Get the SysEx message type constant."""
+ *     return midi.kMIDIMessageTypeSysEx
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_507get_midi_message_type_sysex(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_506get_midi_message_type_sysex, "get_midi_message_type_sysex()\n\nGet the SysEx message type constant.");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_507get_midi_message_type_sysex = {"get_midi_message_type_sysex", (PyCFunction)__pyx_pw_9coremusic_4capi_507get_midi_message_type_sysex, METH_NOARGS, __pyx_doc_9coremusic_4capi_506get_midi_message_type_sysex};
+static PyObject *__pyx_pw_9coremusic_4capi_507get_midi_message_type_sysex(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_midi_message_type_sysex (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_9coremusic_4capi_506get_midi_message_type_sysex(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_506get_midi_message_type_sysex(CYTHON_UNUSED PyObject *__pyx_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_midi_message_type_sysex", 0);
+
+  /* "coremusic/capi.pyx":3057
+ * def get_midi_message_type_sysex():
+ *     """Get the SysEx message type constant."""
+ *     return midi.kMIDIMessageTypeSysEx             # <<<<<<<<<<<<<<
+ * 
+ * def get_midi_message_type_channel_voice2():
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_MIDIMessageType(kMIDIMessageTypeSysEx); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3057, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3055
+ *     return midi.kMIDIMessageTypeChannelVoice1
+ * 
+ * def get_midi_message_type_sysex():             # <<<<<<<<<<<<<<
+ *     """Get the SysEx message type constant."""
+ *     return midi.kMIDIMessageTypeSysEx
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.get_midi_message_type_sysex", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3059
+ *     return midi.kMIDIMessageTypeSysEx
+ * 
+ * def get_midi_message_type_channel_voice2():             # <<<<<<<<<<<<<<
+ *     """Get the Channel Voice 2 (MIDI 2.0) message type constant."""
+ *     return midi.kMIDIMessageTypeChannelVoice2
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_509get_midi_message_type_channel_voice2(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_508get_midi_message_type_channel_voice2, "get_midi_message_type_channel_voice2()\n\nGet the Channel Voice 2 (MIDI 2.0) message type constant.");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_509get_midi_message_type_channel_voice2 = {"get_midi_message_type_channel_voice2", (PyCFunction)__pyx_pw_9coremusic_4capi_509get_midi_message_type_channel_voice2, METH_NOARGS, __pyx_doc_9coremusic_4capi_508get_midi_message_type_channel_voice2};
+static PyObject *__pyx_pw_9coremusic_4capi_509get_midi_message_type_channel_voice2(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_midi_message_type_channel_voice2 (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_9coremusic_4capi_508get_midi_message_type_channel_voice2(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_508get_midi_message_type_channel_voice2(CYTHON_UNUSED PyObject *__pyx_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_midi_message_type_channel_voice2", 0);
+
+  /* "coremusic/capi.pyx":3061
+ * def get_midi_message_type_channel_voice2():
+ *     """Get the Channel Voice 2 (MIDI 2.0) message type constant."""
+ *     return midi.kMIDIMessageTypeChannelVoice2             # <<<<<<<<<<<<<<
+ * 
+ * def get_midi_message_type_data128():
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_MIDIMessageType(kMIDIMessageTypeChannelVoice2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3061, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3059
+ *     return midi.kMIDIMessageTypeSysEx
+ * 
+ * def get_midi_message_type_channel_voice2():             # <<<<<<<<<<<<<<
+ *     """Get the Channel Voice 2 (MIDI 2.0) message type constant."""
+ *     return midi.kMIDIMessageTypeChannelVoice2
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.get_midi_message_type_channel_voice2", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3063
+ *     return midi.kMIDIMessageTypeChannelVoice2
+ * 
+ * def get_midi_message_type_data128():             # <<<<<<<<<<<<<<
+ *     """Get the Data128 message type constant."""
+ *     return midi.kMIDIMessageTypeData128
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_511get_midi_message_type_data128(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_510get_midi_message_type_data128, "get_midi_message_type_data128()\n\nGet the Data128 message type constant.");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_511get_midi_message_type_data128 = {"get_midi_message_type_data128", (PyCFunction)__pyx_pw_9coremusic_4capi_511get_midi_message_type_data128, METH_NOARGS, __pyx_doc_9coremusic_4capi_510get_midi_message_type_data128};
+static PyObject *__pyx_pw_9coremusic_4capi_511get_midi_message_type_data128(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_midi_message_type_data128 (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_9coremusic_4capi_510get_midi_message_type_data128(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_510get_midi_message_type_data128(CYTHON_UNUSED PyObject *__pyx_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_midi_message_type_data128", 0);
+
+  /* "coremusic/capi.pyx":3065
+ * def get_midi_message_type_data128():
+ *     """Get the Data128 message type constant."""
+ *     return midi.kMIDIMessageTypeData128             # <<<<<<<<<<<<<<
+ * 
+ * # MIDI CV Status Constants
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_MIDIMessageType(kMIDIMessageTypeData128); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3065, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3063
+ *     return midi.kMIDIMessageTypeChannelVoice2
+ * 
+ * def get_midi_message_type_data128():             # <<<<<<<<<<<<<<
+ *     """Get the Data128 message type constant."""
+ *     return midi.kMIDIMessageTypeData128
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.get_midi_message_type_data128", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3069
+ * # MIDI CV Status Constants
+ * 
+ * def get_midi_cv_status_note_off():             # <<<<<<<<<<<<<<
+ *     """Get the Note Off status constant."""
+ *     return midi.kMIDICVStatusNoteOff
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_513get_midi_cv_status_note_off(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_512get_midi_cv_status_note_off, "get_midi_cv_status_note_off()\n\nGet the Note Off status constant.");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_513get_midi_cv_status_note_off = {"get_midi_cv_status_note_off", (PyCFunction)__pyx_pw_9coremusic_4capi_513get_midi_cv_status_note_off, METH_NOARGS, __pyx_doc_9coremusic_4capi_512get_midi_cv_status_note_off};
+static PyObject *__pyx_pw_9coremusic_4capi_513get_midi_cv_status_note_off(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_midi_cv_status_note_off (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_9coremusic_4capi_512get_midi_cv_status_note_off(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_512get_midi_cv_status_note_off(CYTHON_UNUSED PyObject *__pyx_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_midi_cv_status_note_off", 0);
+
+  /* "coremusic/capi.pyx":3071
+ * def get_midi_cv_status_note_off():
+ *     """Get the Note Off status constant."""
+ *     return midi.kMIDICVStatusNoteOff             # <<<<<<<<<<<<<<
+ * 
+ * def get_midi_cv_status_note_on():
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_MIDICVStatus(kMIDICVStatusNoteOff); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3071, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3069
+ * # MIDI CV Status Constants
+ * 
+ * def get_midi_cv_status_note_off():             # <<<<<<<<<<<<<<
+ *     """Get the Note Off status constant."""
+ *     return midi.kMIDICVStatusNoteOff
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.get_midi_cv_status_note_off", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3073
+ *     return midi.kMIDICVStatusNoteOff
+ * 
+ * def get_midi_cv_status_note_on():             # <<<<<<<<<<<<<<
+ *     """Get the Note On status constant."""
+ *     return midi.kMIDICVStatusNoteOn
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_515get_midi_cv_status_note_on(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_514get_midi_cv_status_note_on, "get_midi_cv_status_note_on()\n\nGet the Note On status constant.");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_515get_midi_cv_status_note_on = {"get_midi_cv_status_note_on", (PyCFunction)__pyx_pw_9coremusic_4capi_515get_midi_cv_status_note_on, METH_NOARGS, __pyx_doc_9coremusic_4capi_514get_midi_cv_status_note_on};
+static PyObject *__pyx_pw_9coremusic_4capi_515get_midi_cv_status_note_on(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_midi_cv_status_note_on (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_9coremusic_4capi_514get_midi_cv_status_note_on(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_514get_midi_cv_status_note_on(CYTHON_UNUSED PyObject *__pyx_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_midi_cv_status_note_on", 0);
+
+  /* "coremusic/capi.pyx":3075
+ * def get_midi_cv_status_note_on():
+ *     """Get the Note On status constant."""
+ *     return midi.kMIDICVStatusNoteOn             # <<<<<<<<<<<<<<
+ * 
+ * def get_midi_cv_status_poly_pressure():
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_MIDICVStatus(kMIDICVStatusNoteOn); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3075, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3073
+ *     return midi.kMIDICVStatusNoteOff
+ * 
+ * def get_midi_cv_status_note_on():             # <<<<<<<<<<<<<<
+ *     """Get the Note On status constant."""
+ *     return midi.kMIDICVStatusNoteOn
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.get_midi_cv_status_note_on", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3077
+ *     return midi.kMIDICVStatusNoteOn
+ * 
+ * def get_midi_cv_status_poly_pressure():             # <<<<<<<<<<<<<<
+ *     """Get the Poly Pressure status constant."""
+ *     return midi.kMIDICVStatusPolyPressure
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_517get_midi_cv_status_poly_pressure(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_516get_midi_cv_status_poly_pressure, "get_midi_cv_status_poly_pressure()\n\nGet the Poly Pressure status constant.");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_517get_midi_cv_status_poly_pressure = {"get_midi_cv_status_poly_pressure", (PyCFunction)__pyx_pw_9coremusic_4capi_517get_midi_cv_status_poly_pressure, METH_NOARGS, __pyx_doc_9coremusic_4capi_516get_midi_cv_status_poly_pressure};
+static PyObject *__pyx_pw_9coremusic_4capi_517get_midi_cv_status_poly_pressure(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_midi_cv_status_poly_pressure (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_9coremusic_4capi_516get_midi_cv_status_poly_pressure(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_516get_midi_cv_status_poly_pressure(CYTHON_UNUSED PyObject *__pyx_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_midi_cv_status_poly_pressure", 0);
+
+  /* "coremusic/capi.pyx":3079
+ * def get_midi_cv_status_poly_pressure():
+ *     """Get the Poly Pressure status constant."""
+ *     return midi.kMIDICVStatusPolyPressure             # <<<<<<<<<<<<<<
+ * 
+ * def get_midi_cv_status_control_change():
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_MIDICVStatus(kMIDICVStatusPolyPressure); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3079, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3077
+ *     return midi.kMIDICVStatusNoteOn
+ * 
+ * def get_midi_cv_status_poly_pressure():             # <<<<<<<<<<<<<<
+ *     """Get the Poly Pressure status constant."""
+ *     return midi.kMIDICVStatusPolyPressure
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.get_midi_cv_status_poly_pressure", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3081
+ *     return midi.kMIDICVStatusPolyPressure
+ * 
+ * def get_midi_cv_status_control_change():             # <<<<<<<<<<<<<<
+ *     """Get the Control Change status constant."""
+ *     return midi.kMIDICVStatusControlChange
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_519get_midi_cv_status_control_change(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_518get_midi_cv_status_control_change, "get_midi_cv_status_control_change()\n\nGet the Control Change status constant.");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_519get_midi_cv_status_control_change = {"get_midi_cv_status_control_change", (PyCFunction)__pyx_pw_9coremusic_4capi_519get_midi_cv_status_control_change, METH_NOARGS, __pyx_doc_9coremusic_4capi_518get_midi_cv_status_control_change};
+static PyObject *__pyx_pw_9coremusic_4capi_519get_midi_cv_status_control_change(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_midi_cv_status_control_change (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_9coremusic_4capi_518get_midi_cv_status_control_change(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_518get_midi_cv_status_control_change(CYTHON_UNUSED PyObject *__pyx_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_midi_cv_status_control_change", 0);
+
+  /* "coremusic/capi.pyx":3083
+ * def get_midi_cv_status_control_change():
+ *     """Get the Control Change status constant."""
+ *     return midi.kMIDICVStatusControlChange             # <<<<<<<<<<<<<<
+ * 
+ * def get_midi_cv_status_program_change():
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_MIDICVStatus(kMIDICVStatusControlChange); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3083, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3081
+ *     return midi.kMIDICVStatusPolyPressure
+ * 
+ * def get_midi_cv_status_control_change():             # <<<<<<<<<<<<<<
+ *     """Get the Control Change status constant."""
+ *     return midi.kMIDICVStatusControlChange
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.get_midi_cv_status_control_change", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3085
+ *     return midi.kMIDICVStatusControlChange
+ * 
+ * def get_midi_cv_status_program_change():             # <<<<<<<<<<<<<<
+ *     """Get the Program Change status constant."""
+ *     return midi.kMIDICVStatusProgramChange
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_521get_midi_cv_status_program_change(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_520get_midi_cv_status_program_change, "get_midi_cv_status_program_change()\n\nGet the Program Change status constant.");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_521get_midi_cv_status_program_change = {"get_midi_cv_status_program_change", (PyCFunction)__pyx_pw_9coremusic_4capi_521get_midi_cv_status_program_change, METH_NOARGS, __pyx_doc_9coremusic_4capi_520get_midi_cv_status_program_change};
+static PyObject *__pyx_pw_9coremusic_4capi_521get_midi_cv_status_program_change(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_midi_cv_status_program_change (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_9coremusic_4capi_520get_midi_cv_status_program_change(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_520get_midi_cv_status_program_change(CYTHON_UNUSED PyObject *__pyx_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_midi_cv_status_program_change", 0);
+
+  /* "coremusic/capi.pyx":3087
+ * def get_midi_cv_status_program_change():
+ *     """Get the Program Change status constant."""
+ *     return midi.kMIDICVStatusProgramChange             # <<<<<<<<<<<<<<
+ * 
+ * def get_midi_cv_status_channel_pressure():
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_MIDICVStatus(kMIDICVStatusProgramChange); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3087, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3085
+ *     return midi.kMIDICVStatusControlChange
+ * 
+ * def get_midi_cv_status_program_change():             # <<<<<<<<<<<<<<
+ *     """Get the Program Change status constant."""
+ *     return midi.kMIDICVStatusProgramChange
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.get_midi_cv_status_program_change", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3089
+ *     return midi.kMIDICVStatusProgramChange
+ * 
+ * def get_midi_cv_status_channel_pressure():             # <<<<<<<<<<<<<<
+ *     """Get the Channel Pressure status constant."""
+ *     return midi.kMIDICVStatusChannelPressure
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_523get_midi_cv_status_channel_pressure(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_522get_midi_cv_status_channel_pressure, "get_midi_cv_status_channel_pressure()\n\nGet the Channel Pressure status constant.");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_523get_midi_cv_status_channel_pressure = {"get_midi_cv_status_channel_pressure", (PyCFunction)__pyx_pw_9coremusic_4capi_523get_midi_cv_status_channel_pressure, METH_NOARGS, __pyx_doc_9coremusic_4capi_522get_midi_cv_status_channel_pressure};
+static PyObject *__pyx_pw_9coremusic_4capi_523get_midi_cv_status_channel_pressure(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_midi_cv_status_channel_pressure (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_9coremusic_4capi_522get_midi_cv_status_channel_pressure(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_522get_midi_cv_status_channel_pressure(CYTHON_UNUSED PyObject *__pyx_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_midi_cv_status_channel_pressure", 0);
+
+  /* "coremusic/capi.pyx":3091
+ * def get_midi_cv_status_channel_pressure():
+ *     """Get the Channel Pressure status constant."""
+ *     return midi.kMIDICVStatusChannelPressure             # <<<<<<<<<<<<<<
+ * 
+ * def get_midi_cv_status_pitch_bend():
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_MIDICVStatus(kMIDICVStatusChannelPressure); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3091, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3089
+ *     return midi.kMIDICVStatusProgramChange
+ * 
+ * def get_midi_cv_status_channel_pressure():             # <<<<<<<<<<<<<<
+ *     """Get the Channel Pressure status constant."""
+ *     return midi.kMIDICVStatusChannelPressure
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.get_midi_cv_status_channel_pressure", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/capi.pyx":3093
+ *     return midi.kMIDICVStatusChannelPressure
+ * 
+ * def get_midi_cv_status_pitch_bend():             # <<<<<<<<<<<<<<
+ *     """Get the Pitch Bend status constant."""
+ *     return midi.kMIDICVStatusPitchBend
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4capi_525get_midi_cv_status_pitch_bend(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4capi_524get_midi_cv_status_pitch_bend, "get_midi_cv_status_pitch_bend()\n\nGet the Pitch Bend status constant.");
+static PyMethodDef __pyx_mdef_9coremusic_4capi_525get_midi_cv_status_pitch_bend = {"get_midi_cv_status_pitch_bend", (PyCFunction)__pyx_pw_9coremusic_4capi_525get_midi_cv_status_pitch_bend, METH_NOARGS, __pyx_doc_9coremusic_4capi_524get_midi_cv_status_pitch_bend};
+static PyObject *__pyx_pw_9coremusic_4capi_525get_midi_cv_status_pitch_bend(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_midi_cv_status_pitch_bend (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_9coremusic_4capi_524get_midi_cv_status_pitch_bend(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4capi_524get_midi_cv_status_pitch_bend(CYTHON_UNUSED PyObject *__pyx_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("get_midi_cv_status_pitch_bend", 0);
+
+  /* "coremusic/capi.pyx":3095
+ * def get_midi_cv_status_pitch_bend():
+ *     """Get the Pitch Bend status constant."""
+ *     return midi.kMIDICVStatusPitchBend             # <<<<<<<<<<<<<<
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyLong_From_MIDICVStatus(kMIDICVStatusPitchBend); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3095, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "coremusic/capi.pyx":3093
+ *     return midi.kMIDICVStatusChannelPressure
+ * 
+ * def get_midi_cv_status_pitch_bend():             # <<<<<<<<<<<<<<
+ *     """Get the Pitch Bend status constant."""
+ *     return midi.kMIDICVStatusPitchBend
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("coremusic.capi.get_midi_cv_status_pitch_bend", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
@@ -44563,6 +48098,330 @@ __Pyx_RefNannySetupContext("PyInit_capi", 0);
   if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_midi_property_display_name, __pyx_t_2) < 0) __PYX_ERR(0, 2810, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
+  /* "coremusic/capi.pyx":2817
+ * # MIDI Messages (Universal MIDI Packet) Functions
+ * 
+ * def midi_message_type_for_up_word(int word):             # <<<<<<<<<<<<<<
+ *     """Get the message type from a Universal MIDI Packet word.
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_473midi_message_type_for_up_word, 0, __pyx_mstate_global->__pyx_n_u_midi_message_type_for_up_word, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[246])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2817, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_midi_message_type_for_up_word, __pyx_t_2) < 0) __PYX_ERR(0, 2817, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":2830
+ * # MIDI 1.0 Universal MIDI Packet Functions
+ * 
+ * def midi1_up_channel_voice_message(int group, int status, int channel, int data1, int data2):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet channel voice message.
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_475midi1_up_channel_voice_message, 0, __pyx_mstate_global->__pyx_n_u_midi1_up_channel_voice_message, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[247])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2830, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_midi1_up_channel_voice_message, __pyx_t_2) < 0) __PYX_ERR(0, 2830, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":2846
+ *                                            <ca.UInt8>channel, <ca.UInt8>data1, <ca.UInt8>data2)
+ * 
+ * def midi1_up_note_off(int group, int channel, int note_number, int velocity):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet Note Off message.
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_477midi1_up_note_off, 0, __pyx_mstate_global->__pyx_n_u_midi1_up_note_off, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[248])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2846, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_midi1_up_note_off, __pyx_t_2) < 0) __PYX_ERR(0, 2846, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":2861
+ *                                <ca.UInt8>note_number, <ca.UInt8>velocity)
+ * 
+ * def midi1_up_note_on(int group, int channel, int note_number, int velocity):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet Note On message.
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_479midi1_up_note_on, 0, __pyx_mstate_global->__pyx_n_u_midi1_up_note_on, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[249])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2861, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_midi1_up_note_on, __pyx_t_2) < 0) __PYX_ERR(0, 2861, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":2876
+ *                               <ca.UInt8>note_number, <ca.UInt8>velocity)
+ * 
+ * def midi1_up_control_change(int group, int channel, int index, int data):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet Control Change message.
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_481midi1_up_control_change, 0, __pyx_mstate_global->__pyx_n_u_midi1_up_control_change, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[250])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2876, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_midi1_up_control_change, __pyx_t_2) < 0) __PYX_ERR(0, 2876, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":2891
+ *                                      <ca.UInt8>index, <ca.UInt8>data)
+ * 
+ * def midi1_up_pitch_bend(int group, int channel, int lsb, int msb):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet Pitch Bend message.
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_483midi1_up_pitch_bend, 0, __pyx_mstate_global->__pyx_n_u_midi1_up_pitch_bend, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[251])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2891, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_midi1_up_pitch_bend, __pyx_t_2) < 0) __PYX_ERR(0, 2891, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":2906
+ *                                  <ca.UInt8>lsb, <ca.UInt8>msb)
+ * 
+ * def midi1_up_system_common(int group, int status, int byte1, int byte2):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet System Common message.
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_485midi1_up_system_common, 0, __pyx_mstate_global->__pyx_n_u_midi1_up_system_common, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[252])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2906, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_midi1_up_system_common, __pyx_t_2) < 0) __PYX_ERR(0, 2906, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":2921
+ *                                     <ca.UInt8>byte1, <ca.UInt8>byte2)
+ * 
+ * def midi1_up_sysex(int group, int status, int bytes_used, int byte1, int byte2, int byte3, int byte4, int byte5, int byte6):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 1.0 Universal Packet SysEx message.
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_487midi1_up_sysex, 0, __pyx_mstate_global->__pyx_n_u_midi1_up_sysex, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[253])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2921, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_midi1_up_sysex, __pyx_t_2) < 0) __PYX_ERR(0, 2921, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":2940
+ * # MIDI 2.0 Channel Voice Message Functions
+ * 
+ * def midi2_channel_voice_message(int group, int status, int channel, int index, long value):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Channel Voice message.
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_489midi2_channel_voice_message, 0, __pyx_mstate_global->__pyx_n_u_midi2_channel_voice_message, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[254])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2940, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_midi2_channel_voice_message, __pyx_t_2) < 0) __PYX_ERR(0, 2940, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":2957
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_note_on(int group, int channel, int note_number, int attribute_type, int attribute_data, int velocity):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Note On message.
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_491midi2_note_on, 0, __pyx_mstate_global->__pyx_n_u_midi2_note_on, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[255])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2957, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_midi2_note_on, __pyx_t_2) < 0) __PYX_ERR(0, 2957, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":2975
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_note_off(int group, int channel, int note_number, int attribute_type, int attribute_data, int velocity):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Note Off message.
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_493midi2_note_off, 0, __pyx_mstate_global->__pyx_n_u_midi2_note_off, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[256])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2975, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_midi2_note_off, __pyx_t_2) < 0) __PYX_ERR(0, 2975, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":2993
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_control_change(int group, int channel, int index, long value):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Control Change message.
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_495midi2_control_change, 0, __pyx_mstate_global->__pyx_n_u_midi2_control_change, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[257])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2993, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_midi2_control_change, __pyx_t_2) < 0) __PYX_ERR(0, 2993, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3009
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_program_change(int group, int channel, bint bank_is_valid, int program, int bank_msb, int bank_lsb):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Program Change message.
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_497midi2_program_change, 0, __pyx_mstate_global->__pyx_n_u_midi2_program_change, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[258])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3009, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_midi2_program_change, __pyx_t_2) < 0) __PYX_ERR(0, 3009, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3027
+ *     return (msg.word0, msg.word1)
+ * 
+ * def midi2_pitch_bend(int group, int channel, long value):             # <<<<<<<<<<<<<<
+ *     """Create a MIDI 2.0 Pitch Bend message.
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_499midi2_pitch_bend, 0, __pyx_mstate_global->__pyx_n_u_midi2_pitch_bend, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[259])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3027, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_midi2_pitch_bend, __pyx_t_2) < 0) __PYX_ERR(0, 3027, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3043
+ * # MIDI Message Type Constants
+ * 
+ * def get_midi_message_type_utility():             # <<<<<<<<<<<<<<
+ *     """Get the Utility message type constant."""
+ *     return midi.kMIDIMessageTypeUtility
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_501get_midi_message_type_utility, 0, __pyx_mstate_global->__pyx_n_u_get_midi_message_type_utility, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[260])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3043, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_midi_message_type_utility, __pyx_t_2) < 0) __PYX_ERR(0, 3043, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3047
+ *     return midi.kMIDIMessageTypeUtility
+ * 
+ * def get_midi_message_type_system():             # <<<<<<<<<<<<<<
+ *     """Get the System message type constant."""
+ *     return midi.kMIDIMessageTypeSystem
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_503get_midi_message_type_system, 0, __pyx_mstate_global->__pyx_n_u_get_midi_message_type_system, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[261])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3047, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_midi_message_type_system, __pyx_t_2) < 0) __PYX_ERR(0, 3047, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3051
+ *     return midi.kMIDIMessageTypeSystem
+ * 
+ * def get_midi_message_type_channel_voice1():             # <<<<<<<<<<<<<<
+ *     """Get the Channel Voice 1 (MIDI 1.0) message type constant."""
+ *     return midi.kMIDIMessageTypeChannelVoice1
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_505get_midi_message_type_channel_voice1, 0, __pyx_mstate_global->__pyx_n_u_get_midi_message_type_channel_vo, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[262])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3051, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_midi_message_type_channel_vo, __pyx_t_2) < 0) __PYX_ERR(0, 3051, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3055
+ *     return midi.kMIDIMessageTypeChannelVoice1
+ * 
+ * def get_midi_message_type_sysex():             # <<<<<<<<<<<<<<
+ *     """Get the SysEx message type constant."""
+ *     return midi.kMIDIMessageTypeSysEx
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_507get_midi_message_type_sysex, 0, __pyx_mstate_global->__pyx_n_u_get_midi_message_type_sysex, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[263])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3055, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_midi_message_type_sysex, __pyx_t_2) < 0) __PYX_ERR(0, 3055, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3059
+ *     return midi.kMIDIMessageTypeSysEx
+ * 
+ * def get_midi_message_type_channel_voice2():             # <<<<<<<<<<<<<<
+ *     """Get the Channel Voice 2 (MIDI 2.0) message type constant."""
+ *     return midi.kMIDIMessageTypeChannelVoice2
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_509get_midi_message_type_channel_voice2, 0, __pyx_mstate_global->__pyx_n_u_get_midi_message_type_channel_vo_2, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[264])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3059, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_midi_message_type_channel_vo_2, __pyx_t_2) < 0) __PYX_ERR(0, 3059, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3063
+ *     return midi.kMIDIMessageTypeChannelVoice2
+ * 
+ * def get_midi_message_type_data128():             # <<<<<<<<<<<<<<
+ *     """Get the Data128 message type constant."""
+ *     return midi.kMIDIMessageTypeData128
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_511get_midi_message_type_data128, 0, __pyx_mstate_global->__pyx_n_u_get_midi_message_type_data128, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[265])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3063, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_midi_message_type_data128, __pyx_t_2) < 0) __PYX_ERR(0, 3063, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3069
+ * # MIDI CV Status Constants
+ * 
+ * def get_midi_cv_status_note_off():             # <<<<<<<<<<<<<<
+ *     """Get the Note Off status constant."""
+ *     return midi.kMIDICVStatusNoteOff
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_513get_midi_cv_status_note_off, 0, __pyx_mstate_global->__pyx_n_u_get_midi_cv_status_note_off, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[266])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3069, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_midi_cv_status_note_off, __pyx_t_2) < 0) __PYX_ERR(0, 3069, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3073
+ *     return midi.kMIDICVStatusNoteOff
+ * 
+ * def get_midi_cv_status_note_on():             # <<<<<<<<<<<<<<
+ *     """Get the Note On status constant."""
+ *     return midi.kMIDICVStatusNoteOn
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_515get_midi_cv_status_note_on, 0, __pyx_mstate_global->__pyx_n_u_get_midi_cv_status_note_on, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[267])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3073, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_midi_cv_status_note_on, __pyx_t_2) < 0) __PYX_ERR(0, 3073, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3077
+ *     return midi.kMIDICVStatusNoteOn
+ * 
+ * def get_midi_cv_status_poly_pressure():             # <<<<<<<<<<<<<<
+ *     """Get the Poly Pressure status constant."""
+ *     return midi.kMIDICVStatusPolyPressure
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_517get_midi_cv_status_poly_pressure, 0, __pyx_mstate_global->__pyx_n_u_get_midi_cv_status_poly_pressure, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[268])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3077, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_midi_cv_status_poly_pressure, __pyx_t_2) < 0) __PYX_ERR(0, 3077, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3081
+ *     return midi.kMIDICVStatusPolyPressure
+ * 
+ * def get_midi_cv_status_control_change():             # <<<<<<<<<<<<<<
+ *     """Get the Control Change status constant."""
+ *     return midi.kMIDICVStatusControlChange
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_519get_midi_cv_status_control_change, 0, __pyx_mstate_global->__pyx_n_u_get_midi_cv_status_control_chang, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[269])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3081, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_midi_cv_status_control_chang, __pyx_t_2) < 0) __PYX_ERR(0, 3081, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3085
+ *     return midi.kMIDICVStatusControlChange
+ * 
+ * def get_midi_cv_status_program_change():             # <<<<<<<<<<<<<<
+ *     """Get the Program Change status constant."""
+ *     return midi.kMIDICVStatusProgramChange
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_521get_midi_cv_status_program_change, 0, __pyx_mstate_global->__pyx_n_u_get_midi_cv_status_program_chang, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[270])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3085, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_midi_cv_status_program_chang, __pyx_t_2) < 0) __PYX_ERR(0, 3085, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3089
+ *     return midi.kMIDICVStatusProgramChange
+ * 
+ * def get_midi_cv_status_channel_pressure():             # <<<<<<<<<<<<<<
+ *     """Get the Channel Pressure status constant."""
+ *     return midi.kMIDICVStatusChannelPressure
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_523get_midi_cv_status_channel_pressure, 0, __pyx_mstate_global->__pyx_n_u_get_midi_cv_status_channel_press, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[271])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3089, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_midi_cv_status_channel_press, __pyx_t_2) < 0) __PYX_ERR(0, 3089, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/capi.pyx":3093
+ *     return midi.kMIDICVStatusChannelPressure
+ * 
+ * def get_midi_cv_status_pitch_bend():             # <<<<<<<<<<<<<<
+ *     """Get the Pitch Bend status constant."""
+ *     return midi.kMIDICVStatusPitchBend
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4capi_525get_midi_cv_status_pitch_bend, 0, __pyx_mstate_global->__pyx_n_u_get_midi_cv_status_pitch_bend, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_capi, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[272])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3093, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_midi_cv_status_pitch_bend, __pyx_t_2) < 0) __PYX_ERR(0, 3093, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
   /* "coremusic/capi.pyx":1
  * from . cimport capi as ca             # <<<<<<<<<<<<<<
  * from . cimport audio_player as ap
@@ -44780,6 +48639,8 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_arg_count, sizeof(__pyx_k_arg_count), 0, 1, 1}, /* PyObject cname: __pyx_n_u_arg_count */
   {__pyx_k_asbd, sizeof(__pyx_k_asbd), 0, 1, 1}, /* PyObject cname: __pyx_n_u_asbd */
   {__pyx_k_asyncio_coroutines, sizeof(__pyx_k_asyncio_coroutines), 0, 1, 1}, /* PyObject cname: __pyx_n_u_asyncio_coroutines */
+  {__pyx_k_attribute_data, sizeof(__pyx_k_attribute_data), 0, 1, 1}, /* PyObject cname: __pyx_n_u_attribute_data */
+  {__pyx_k_attribute_type, sizeof(__pyx_k_attribute_type), 0, 1, 1}, /* PyObject cname: __pyx_n_u_attribute_type */
   {__pyx_k_audio_component_find_next, sizeof(__pyx_k_audio_component_find_next), 0, 1, 1}, /* PyObject cname: __pyx_n_u_audio_component_find_next */
   {__pyx_k_audio_component_instance_dispose, sizeof(__pyx_k_audio_component_instance_dispose), 0, 1, 1}, /* PyObject cname: __pyx_n_u_audio_component_instance_dispose */
   {__pyx_k_audio_component_instance_new, sizeof(__pyx_k_audio_component_instance_new), 0, 1, 1}, /* PyObject cname: __pyx_n_u_audio_component_instance_new */
@@ -44817,15 +48678,25 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_audio_unit_initialize, sizeof(__pyx_k_audio_unit_initialize), 0, 1, 1}, /* PyObject cname: __pyx_n_u_audio_unit_initialize */
   {__pyx_k_audio_unit_set_property, sizeof(__pyx_k_audio_unit_set_property), 0, 1, 1}, /* PyObject cname: __pyx_n_u_audio_unit_set_property */
   {__pyx_k_audio_unit_uninitialize, sizeof(__pyx_k_audio_unit_uninitialize), 0, 1, 1}, /* PyObject cname: __pyx_n_u_audio_unit_uninitialize */
+  {__pyx_k_bank_is_valid, sizeof(__pyx_k_bank_is_valid), 0, 1, 1}, /* PyObject cname: __pyx_n_u_bank_is_valid */
+  {__pyx_k_bank_lsb, sizeof(__pyx_k_bank_lsb), 0, 1, 1}, /* PyObject cname: __pyx_n_u_bank_lsb */
+  {__pyx_k_bank_msb, sizeof(__pyx_k_bank_msb), 0, 1, 1}, /* PyObject cname: __pyx_n_u_bank_msb */
   {__pyx_k_bits_per_channel, sizeof(__pyx_k_bits_per_channel), 0, 1, 1}, /* PyObject cname: __pyx_n_u_bits_per_channel */
   {__pyx_k_bpm, sizeof(__pyx_k_bpm), 0, 1, 1}, /* PyObject cname: __pyx_n_u_bpm */
   {__pyx_k_buffer, sizeof(__pyx_k_buffer), 0, 1, 1}, /* PyObject cname: __pyx_n_u_buffer */
   {__pyx_k_buffer_id, sizeof(__pyx_k_buffer_id), 0, 1, 1}, /* PyObject cname: __pyx_n_u_buffer_id */
   {__pyx_k_buffer_size, sizeof(__pyx_k_buffer_size), 0, 1, 1}, /* PyObject cname: __pyx_n_u_buffer_size */
+  {__pyx_k_byte1, sizeof(__pyx_k_byte1), 0, 1, 1}, /* PyObject cname: __pyx_n_u_byte1 */
+  {__pyx_k_byte2, sizeof(__pyx_k_byte2), 0, 1, 1}, /* PyObject cname: __pyx_n_u_byte2 */
+  {__pyx_k_byte3, sizeof(__pyx_k_byte3), 0, 1, 1}, /* PyObject cname: __pyx_n_u_byte3 */
+  {__pyx_k_byte4, sizeof(__pyx_k_byte4), 0, 1, 1}, /* PyObject cname: __pyx_n_u_byte4 */
+  {__pyx_k_byte5, sizeof(__pyx_k_byte5), 0, 1, 1}, /* PyObject cname: __pyx_n_u_byte5 */
+  {__pyx_k_byte6, sizeof(__pyx_k_byte6), 0, 1, 1}, /* PyObject cname: __pyx_n_u_byte6 */
   {__pyx_k_byte_data, sizeof(__pyx_k_byte_data), 0, 1, 1}, /* PyObject cname: __pyx_n_u_byte_data */
   {__pyx_k_byte_offset, sizeof(__pyx_k_byte_offset), 0, 1, 1}, /* PyObject cname: __pyx_n_u_byte_offset */
   {__pyx_k_bytes_per_frame, sizeof(__pyx_k_bytes_per_frame), 0, 1, 1}, /* PyObject cname: __pyx_n_u_bytes_per_frame */
   {__pyx_k_bytes_per_packet, sizeof(__pyx_k_bytes_per_packet), 0, 1, 1}, /* PyObject cname: __pyx_n_u_bytes_per_packet */
+  {__pyx_k_bytes_used, sizeof(__pyx_k_bytes_used), 0, 1, 1}, /* PyObject cname: __pyx_n_u_bytes_used */
   {__pyx_k_c_str, sizeof(__pyx_k_c_str), 0, 1, 1}, /* PyObject cname: __pyx_n_u_c_str */
   {__pyx_k_cf_name, sizeof(__pyx_k_cf_name), 0, 1, 1}, /* PyObject cname: __pyx_n_u_cf_name */
   {__pyx_k_cf_prop_name, sizeof(__pyx_k_cf_prop_name), 0, 1, 1}, /* PyObject cname: __pyx_n_u_cf_prop_name */
@@ -44946,6 +48817,13 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_get_linear_pcm_format_flag_is_no, sizeof(__pyx_k_get_linear_pcm_format_flag_is_no), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_linear_pcm_format_flag_is_no */
   {__pyx_k_get_linear_pcm_format_flag_is_pa, sizeof(__pyx_k_get_linear_pcm_format_flag_is_pa), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_linear_pcm_format_flag_is_pa */
   {__pyx_k_get_linear_pcm_format_flag_is_si, sizeof(__pyx_k_get_linear_pcm_format_flag_is_si), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_linear_pcm_format_flag_is_si */
+  {__pyx_k_get_midi_cv_status_channel_press, sizeof(__pyx_k_get_midi_cv_status_channel_press), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_cv_status_channel_press */
+  {__pyx_k_get_midi_cv_status_control_chang, sizeof(__pyx_k_get_midi_cv_status_control_chang), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_cv_status_control_chang */
+  {__pyx_k_get_midi_cv_status_note_off, sizeof(__pyx_k_get_midi_cv_status_note_off), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_cv_status_note_off */
+  {__pyx_k_get_midi_cv_status_note_on, sizeof(__pyx_k_get_midi_cv_status_note_on), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_cv_status_note_on */
+  {__pyx_k_get_midi_cv_status_pitch_bend, sizeof(__pyx_k_get_midi_cv_status_pitch_bend), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_cv_status_pitch_bend */
+  {__pyx_k_get_midi_cv_status_poly_pressure, sizeof(__pyx_k_get_midi_cv_status_poly_pressure), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_cv_status_poly_pressure */
+  {__pyx_k_get_midi_cv_status_program_chang, sizeof(__pyx_k_get_midi_cv_status_program_chang), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_cv_status_program_chang */
   {__pyx_k_get_midi_error_id_not_unique, sizeof(__pyx_k_get_midi_error_id_not_unique), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_error_id_not_unique */
   {__pyx_k_get_midi_error_invalid_client, sizeof(__pyx_k_get_midi_error_invalid_client), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_error_invalid_client */
   {__pyx_k_get_midi_error_invalid_port, sizeof(__pyx_k_get_midi_error_invalid_port), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_error_invalid_port */
@@ -44962,6 +48840,12 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_get_midi_error_wrong_endpoint_ty, sizeof(__pyx_k_get_midi_error_wrong_endpoint_ty), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_error_wrong_endpoint_ty */
   {__pyx_k_get_midi_error_wrong_property_ty, sizeof(__pyx_k_get_midi_error_wrong_property_ty), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_error_wrong_property_ty */
   {__pyx_k_get_midi_error_wrong_thread, sizeof(__pyx_k_get_midi_error_wrong_thread), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_error_wrong_thread */
+  {__pyx_k_get_midi_message_type_channel_vo, sizeof(__pyx_k_get_midi_message_type_channel_vo), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_message_type_channel_vo */
+  {__pyx_k_get_midi_message_type_channel_vo_2, sizeof(__pyx_k_get_midi_message_type_channel_vo_2), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_message_type_channel_vo_2 */
+  {__pyx_k_get_midi_message_type_data128, sizeof(__pyx_k_get_midi_message_type_data128), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_message_type_data128 */
+  {__pyx_k_get_midi_message_type_sysex, sizeof(__pyx_k_get_midi_message_type_sysex), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_message_type_sysex */
+  {__pyx_k_get_midi_message_type_system, sizeof(__pyx_k_get_midi_message_type_system), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_message_type_system */
+  {__pyx_k_get_midi_message_type_utility, sizeof(__pyx_k_get_midi_message_type_utility), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_message_type_utility */
   {__pyx_k_get_midi_object_type_destination, sizeof(__pyx_k_get_midi_object_type_destination), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_object_type_destination */
   {__pyx_k_get_midi_object_type_device, sizeof(__pyx_k_get_midi_object_type_device), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_object_type_device */
   {__pyx_k_get_midi_object_type_entity, sizeof(__pyx_k_get_midi_object_type_entity), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_midi_object_type_entity */
@@ -45021,10 +48905,12 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_get_system_sound_id_vibrate, sizeof(__pyx_k_get_system_sound_id_vibrate), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_system_sound_id_vibrate */
   {__pyx_k_get_user_preferred_alert, sizeof(__pyx_k_get_user_preferred_alert), 0, 1, 1}, /* PyObject cname: __pyx_n_u_get_user_preferred_alert */
   {__pyx_k_getstate, sizeof(__pyx_k_getstate), 0, 1, 1}, /* PyObject cname: __pyx_n_u_getstate */
+  {__pyx_k_group, sizeof(__pyx_k_group), 0, 1, 1}, /* PyObject cname: __pyx_n_u_group */
   {__pyx_k_group_id, sizeof(__pyx_k_group_id), 0, 1, 1}, /* PyObject cname: __pyx_n_u_group_id */
   {__pyx_k_i, sizeof(__pyx_k_i), 0, 1, 1}, /* PyObject cname: __pyx_n_u_i */
   {__pyx_k_immediate, sizeof(__pyx_k_immediate), 0, 1, 1}, /* PyObject cname: __pyx_n_u_immediate */
   {__pyx_k_in_device_id, sizeof(__pyx_k_in_device_id), 0, 1, 1}, /* PyObject cname: __pyx_n_u_in_device_id */
+  {__pyx_k_index, sizeof(__pyx_k_index), 0, 1, 1}, /* PyObject cname: __pyx_n_u_index */
   {__pyx_k_instance, sizeof(__pyx_k_instance), 0, 1, 1}, /* PyObject cname: __pyx_n_u_instance */
   {__pyx_k_instance_id, sizeof(__pyx_k_instance_id), 0, 1, 1}, /* PyObject cname: __pyx_n_u_instance_id */
   {__pyx_k_instrument_id, sizeof(__pyx_k_instrument_id), 0, 1, 1}, /* PyObject cname: __pyx_n_u_instrument_id */
@@ -45044,6 +48930,19 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_max_packet_size, sizeof(__pyx_k_max_packet_size), 0, 1, 1}, /* PyObject cname: __pyx_n_u_max_packet_size */
   {__pyx_k_max_size, sizeof(__pyx_k_max_size), 0, 1, 1}, /* PyObject cname: __pyx_n_u_max_size */
   {__pyx_k_message, sizeof(__pyx_k_message), 0, 1, 1}, /* PyObject cname: __pyx_n_u_message */
+  {__pyx_k_midi1_up_channel_voice_message, sizeof(__pyx_k_midi1_up_channel_voice_message), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi1_up_channel_voice_message */
+  {__pyx_k_midi1_up_control_change, sizeof(__pyx_k_midi1_up_control_change), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi1_up_control_change */
+  {__pyx_k_midi1_up_note_off, sizeof(__pyx_k_midi1_up_note_off), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi1_up_note_off */
+  {__pyx_k_midi1_up_note_on, sizeof(__pyx_k_midi1_up_note_on), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi1_up_note_on */
+  {__pyx_k_midi1_up_pitch_bend, sizeof(__pyx_k_midi1_up_pitch_bend), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi1_up_pitch_bend */
+  {__pyx_k_midi1_up_sysex, sizeof(__pyx_k_midi1_up_sysex), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi1_up_sysex */
+  {__pyx_k_midi1_up_system_common, sizeof(__pyx_k_midi1_up_system_common), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi1_up_system_common */
+  {__pyx_k_midi2_channel_voice_message, sizeof(__pyx_k_midi2_channel_voice_message), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi2_channel_voice_message */
+  {__pyx_k_midi2_control_change, sizeof(__pyx_k_midi2_control_change), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi2_control_change */
+  {__pyx_k_midi2_note_off, sizeof(__pyx_k_midi2_note_off), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi2_note_off */
+  {__pyx_k_midi2_note_on, sizeof(__pyx_k_midi2_note_on), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi2_note_on */
+  {__pyx_k_midi2_pitch_bend, sizeof(__pyx_k_midi2_pitch_bend), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi2_pitch_bend */
+  {__pyx_k_midi2_program_change, sizeof(__pyx_k_midi2_program_change), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi2_program_change */
   {__pyx_k_midi_client_create, sizeof(__pyx_k_midi_client_create), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi_client_create */
   {__pyx_k_midi_client_dispose, sizeof(__pyx_k_midi_client_dispose), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi_client_dispose */
   {__pyx_k_midi_control_change, sizeof(__pyx_k_midi_control_change), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi_control_change */
@@ -45062,6 +48961,7 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_midi_get_number_of_sources, sizeof(__pyx_k_midi_get_number_of_sources), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi_get_number_of_sources */
   {__pyx_k_midi_get_source, sizeof(__pyx_k_midi_get_source), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi_get_source */
   {__pyx_k_midi_input_port_create, sizeof(__pyx_k_midi_input_port_create), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi_input_port_create */
+  {__pyx_k_midi_message_type_for_up_word, sizeof(__pyx_k_midi_message_type_for_up_word), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi_message_type_for_up_word */
   {__pyx_k_midi_note_off, sizeof(__pyx_k_midi_note_off), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi_note_off */
   {__pyx_k_midi_note_on, sizeof(__pyx_k_midi_note_on), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi_note_on */
   {__pyx_k_midi_object_get_integer_property, sizeof(__pyx_k_midi_object_get_integer_property), 0, 1, 1}, /* PyObject cname: __pyx_n_u_midi_object_get_integer_property */
@@ -45079,6 +48979,7 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_model, sizeof(__pyx_k_model), 0, 1, 1}, /* PyObject cname: __pyx_n_u_model */
   {__pyx_k_module, sizeof(__pyx_k_module), 0, 1, 1}, /* PyObject cname: __pyx_n_u_module */
   {__pyx_k_msb, sizeof(__pyx_k_msb), 0, 1, 1}, /* PyObject cname: __pyx_n_u_msb */
+  {__pyx_k_msg, sizeof(__pyx_k_msg), 0, 1, 1}, /* PyObject cname: __pyx_n_u_msg */
   {__pyx_k_music_device_midi_event, sizeof(__pyx_k_music_device_midi_event), 0, 1, 1}, /* PyObject cname: __pyx_n_u_music_device_midi_event */
   {__pyx_k_music_device_start_note, sizeof(__pyx_k_music_device_start_note), 0, 1, 1}, /* PyObject cname: __pyx_n_u_music_device_start_note */
   {__pyx_k_music_device_stop_note, sizeof(__pyx_k_music_device_stop_note), 0, 1, 1}, /* PyObject cname: __pyx_n_u_music_device_stop_note */
@@ -45112,6 +49013,7 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_new_music_sequence, sizeof(__pyx_k_new_music_sequence), 0, 1, 1}, /* PyObject cname: __pyx_n_u_new_music_sequence */
   {__pyx_k_note, sizeof(__pyx_k_note), 0, 1, 1}, /* PyObject cname: __pyx_n_u_note */
   {__pyx_k_note_instance_id, sizeof(__pyx_k_note_instance_id), 0, 1, 1}, /* PyObject cname: __pyx_n_u_note_instance_id */
+  {__pyx_k_note_number, sizeof(__pyx_k_note_number), 0, 1, 1}, /* PyObject cname: __pyx_n_u_note_number */
   {__pyx_k_num_bytes, sizeof(__pyx_k_num_bytes), 0, 1, 1}, /* PyObject cname: __pyx_n_u_num_bytes */
   {__pyx_k_num_controls, sizeof(__pyx_k_num_controls), 0, 1, 1}, /* PyObject cname: __pyx_n_u_num_controls */
   {__pyx_k_num_dests, sizeof(__pyx_k_num_dests), 0, 1, 1}, /* PyObject cname: __pyx_n_u_num_dests */
@@ -45208,6 +49110,7 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_value, sizeof(__pyx_k_value), 0, 1, 1}, /* PyObject cname: __pyx_n_u_value */
   {__pyx_k_value_bytes, sizeof(__pyx_k_value_bytes), 0, 1, 1}, /* PyObject cname: __pyx_n_u_value_bytes */
   {__pyx_k_velocity, sizeof(__pyx_k_velocity), 0, 1, 1}, /* PyObject cname: __pyx_n_u_velocity */
+  {__pyx_k_word, sizeof(__pyx_k_word), 0, 1, 1}, /* PyObject cname: __pyx_n_u_word */
   {__pyx_k_writable, sizeof(__pyx_k_writable), 0, 1, 1}, /* PyObject cname: __pyx_n_u_writable */
   {0, 0, 0, 0, 0}
 };
@@ -45396,7 +49299,7 @@ static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
 /* #### Code section: init_codeobjects ### */
 \
         typedef struct {
-            unsigned int argcount : 3;
+            unsigned int argcount : 4;
             unsigned int num_posonly_args : 1;
             unsigned int num_kwonly_args : 1;
             unsigned int nlocals : 5;
@@ -46647,6 +50550,141 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
     const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 2810, 7};
     PyObject* const varnames[] = {0};
     __pyx_mstate_global->__pyx_codeobj_tab[245] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_get_midi_property_display_name, __pyx_k_1_3, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[245])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 2817, 16};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_word};
+    __pyx_mstate_global->__pyx_codeobj_tab[246] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_midi_message_type_for_up_word, __pyx_k_A, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[246])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {5, 0, 0, 5, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 2830, 34};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_group, __pyx_mstate->__pyx_n_u_status, __pyx_mstate->__pyx_n_u_channel, __pyx_mstate->__pyx_n_u_data1, __pyx_mstate->__pyx_n_u_data2};
+    __pyx_mstate_global->__pyx_codeobj_tab[247] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_midi1_up_channel_voice_message, __pyx_k_WJa_5Yj_zYZ, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[247])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 2846, 28};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_group, __pyx_mstate->__pyx_n_u_channel, __pyx_mstate->__pyx_n_u_note_number, __pyx_mstate->__pyx_n_u_velocity};
+    __pyx_mstate_global->__pyx_codeobj_tab[248] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_midi1_up_note_off, __pyx_k_az_j, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[248])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 2861, 28};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_group, __pyx_mstate->__pyx_n_u_channel, __pyx_mstate->__pyx_n_u_note_number, __pyx_mstate->__pyx_n_u_velocity};
+    __pyx_mstate_global->__pyx_codeobj_tab[249] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_midi1_up_note_on, __pyx_k_Qj_z_Zq, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[249])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 2876, 29};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_group, __pyx_mstate->__pyx_n_u_channel, __pyx_mstate->__pyx_n_u_index, __pyx_mstate->__pyx_n_u_data};
+    __pyx_mstate_global->__pyx_codeobj_tab[250] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_midi1_up_control_change, __pyx_k_AZwj_wj, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[250])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 2891, 29};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_group, __pyx_mstate->__pyx_n_u_channel, __pyx_mstate->__pyx_n_u_lsb, __pyx_mstate->__pyx_n_u_msb};
+    __pyx_mstate_global->__pyx_codeobj_tab[251] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_midi1_up_pitch_bend, __pyx_k_7_A_5, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[251])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 2906, 29};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_group, __pyx_mstate->__pyx_n_u_status, __pyx_mstate->__pyx_n_u_byte1, __pyx_mstate->__pyx_n_u_byte2};
+    __pyx_mstate_global->__pyx_codeobj_tab[252] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_midi1_up_system_common, __pyx_k_1JgZq_gZq, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[252])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {9, 0, 0, 10, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 2921, 69};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_group, __pyx_mstate->__pyx_n_u_status, __pyx_mstate->__pyx_n_u_bytes_used, __pyx_mstate->__pyx_n_u_byte1, __pyx_mstate->__pyx_n_u_byte2, __pyx_mstate->__pyx_n_u_byte3, __pyx_mstate->__pyx_n_u_byte4, __pyx_mstate->__pyx_n_u_byte5, __pyx_mstate->__pyx_n_u_byte6, __pyx_mstate->__pyx_n_u_msg};
+    __pyx_mstate_global->__pyx_codeobj_tab[253] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_midi1_up_sysex, __pyx_k_AZwjPXXbbc6_zQXXbbc6_zQXXbbc_Cx, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[253])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {5, 0, 0, 6, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 2940, 50};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_group, __pyx_mstate->__pyx_n_u_status, __pyx_mstate->__pyx_n_u_channel, __pyx_mstate->__pyx_n_u_index, __pyx_mstate->__pyx_n_u_value, __pyx_mstate->__pyx_n_u_msg};
+    __pyx_mstate_global->__pyx_codeobj_tab[254] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_midi2_channel_voice_message, __pyx_k_7R_BLIU_ggrrs_Cxs, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[254])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {6, 0, 0, 7, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 2957, 53};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_group, __pyx_mstate->__pyx_n_u_channel, __pyx_mstate->__pyx_n_u_note_number, __pyx_mstate->__pyx_n_u_attribute_type, __pyx_mstate->__pyx_n_u_attribute_data, __pyx_mstate->__pyx_n_u_velocity, __pyx_mstate->__pyx_n_u_msg};
+    __pyx_mstate_global->__pyx_codeobj_tab[255] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_midi2_note_on, __pyx_k_1JgZyXbbc5_O_Zjjuuv_Cxs, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[255])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {6, 0, 0, 7, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 2975, 55};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_group, __pyx_mstate->__pyx_n_u_channel, __pyx_mstate->__pyx_n_u_note_number, __pyx_mstate->__pyx_n_u_attribute_type, __pyx_mstate->__pyx_n_u_attribute_data, __pyx_mstate->__pyx_n_u_velocity, __pyx_mstate->__pyx_n_u_msg};
+    __pyx_mstate_global->__pyx_codeobj_tab[256] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_midi2_note_off, __pyx_k_AZwjPYYccd6_PP_kkvvw_Cxs, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[256])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 5, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 2993, 42};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_group, __pyx_mstate->__pyx_n_u_channel, __pyx_mstate->__pyx_n_u_index, __pyx_mstate->__pyx_n_u_value, __pyx_mstate->__pyx_n_u_msg};
+    __pyx_mstate_global->__pyx_codeobj_tab[257] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_midi2_control_change, __pyx_k_WJVW_Fg_XY_Cxs, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[257])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {6, 0, 0, 7, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3009, 51};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_group, __pyx_mstate->__pyx_n_u_channel, __pyx_mstate->__pyx_n_u_bank_is_valid, __pyx_mstate->__pyx_n_u_program, __pyx_mstate->__pyx_n_u_bank_msb, __pyx_mstate->__pyx_n_u_bank_lsb, __pyx_mstate->__pyx_n_u_msg};
+    __pyx_mstate_global->__pyx_codeobj_tab[258] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_midi2_program_change, __pyx_k_WJV___FizYccmmn_Cxs, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[258])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {3, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3027, 37};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_group, __pyx_mstate->__pyx_n_u_channel, __pyx_mstate->__pyx_n_u_value, __pyx_mstate->__pyx_n_u_msg};
+    __pyx_mstate_global->__pyx_codeobj_tab[259] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_midi2_pitch_bend, __pyx_k_az_R_ffg_Cxs, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[259])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3043, 7};
+    PyObject* const varnames[] = {0};
+    __pyx_mstate_global->__pyx_codeobj_tab[260] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_get_midi_message_type_utility, __pyx_k_q_2, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[260])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3047, 7};
+    PyObject* const varnames[] = {0};
+    __pyx_mstate_global->__pyx_codeobj_tab[261] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_get_midi_message_type_system, __pyx_k_q_2, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[261])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3051, 7};
+    PyObject* const varnames[] = {0};
+    __pyx_mstate_global->__pyx_codeobj_tab[262] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_get_midi_message_type_channel_vo, __pyx_k_q_2, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[262])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3055, 7};
+    PyObject* const varnames[] = {0};
+    __pyx_mstate_global->__pyx_codeobj_tab[263] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_get_midi_message_type_sysex, __pyx_k_q_2, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[263])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3059, 7};
+    PyObject* const varnames[] = {0};
+    __pyx_mstate_global->__pyx_codeobj_tab[264] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_get_midi_message_type_channel_vo_2, __pyx_k_q_2, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[264])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3063, 7};
+    PyObject* const varnames[] = {0};
+    __pyx_mstate_global->__pyx_codeobj_tab[265] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_get_midi_message_type_data128, __pyx_k_q_2, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[265])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3069, 7};
+    PyObject* const varnames[] = {0};
+    __pyx_mstate_global->__pyx_codeobj_tab[266] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_get_midi_cv_status_note_off, __pyx_k_q_2, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[266])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3073, 7};
+    PyObject* const varnames[] = {0};
+    __pyx_mstate_global->__pyx_codeobj_tab[267] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_get_midi_cv_status_note_on, __pyx_k_q_2, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[267])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3077, 7};
+    PyObject* const varnames[] = {0};
+    __pyx_mstate_global->__pyx_codeobj_tab[268] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_get_midi_cv_status_poly_pressure, __pyx_k_q_2, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[268])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3081, 7};
+    PyObject* const varnames[] = {0};
+    __pyx_mstate_global->__pyx_codeobj_tab[269] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_get_midi_cv_status_control_chang, __pyx_k_q_2, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[269])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3085, 7};
+    PyObject* const varnames[] = {0};
+    __pyx_mstate_global->__pyx_codeobj_tab[270] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_get_midi_cv_status_program_chang, __pyx_k_q_2, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[270])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3089, 7};
+    PyObject* const varnames[] = {0};
+    __pyx_mstate_global->__pyx_codeobj_tab[271] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_get_midi_cv_status_channel_press, __pyx_k_q_2, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[271])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3093, 7};
+    PyObject* const varnames[] = {0};
+    __pyx_mstate_global->__pyx_codeobj_tab[272] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_capi_pyx, __pyx_mstate->__pyx_n_u_get_midi_cv_status_pitch_bend, __pyx_k_q_2, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[272])) goto bad;
   }
   Py_DECREF(tuple_dedup_map);
   return 0;
@@ -52972,6 +57010,148 @@ static CYTHON_INLINE PyObject* __Pyx_PyLong_From_AudioFileStreamParseFlags(Audio
         from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
         if (!from_bytes) return NULL;
         py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(AudioFileStreamParseFlags));
+        if (!py_bytes) goto limited_bad;
+        order_str = PyUnicode_FromString(little ? "little" : "big");
+        if (!order_str) goto limited_bad;
+        {
+            PyObject *args[3+(CYTHON_VECTORCALL ? 1 : 0)] = { NULL, py_bytes, order_str };
+            if (!is_unsigned) {
+                kwds = __Pyx_MakeVectorcallBuilderKwds(1);
+                if (!kwds) goto limited_bad;
+                if (__Pyx_VectorcallBuilder_AddArgStr("signed", __Pyx_NewRef(Py_True), kwds, args+3, 0) < 0) goto limited_bad;
+            }
+            result = __Pyx_Object_Vectorcall_CallFromBuilder(from_bytes, args+1, 2 | __Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET, kwds);
+        }
+        limited_bad:
+        Py_XDECREF(kwds);
+        Py_XDECREF(order_str);
+        Py_XDECREF(py_bytes);
+        Py_XDECREF(from_bytes);
+        return result;
+#endif
+    }
+}
+
+/* CIntToPy */
+static CYTHON_INLINE PyObject* __Pyx_PyLong_From_MIDIMessageType(MIDIMessageType value) {
+#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif
+    const MIDIMessageType neg_one = (MIDIMessageType) -1, const_zero = (MIDIMessageType) 0;
+#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
+#pragma GCC diagnostic pop
+#endif
+    const int is_unsigned = neg_one > const_zero;
+    if (is_unsigned) {
+        if (sizeof(MIDIMessageType) < sizeof(long)) {
+            return PyLong_FromLong((long) value);
+        } else if (sizeof(MIDIMessageType) <= sizeof(unsigned long)) {
+            return PyLong_FromUnsignedLong((unsigned long) value);
+#if defined(HAVE_LONG_LONG) && !CYTHON_COMPILING_IN_PYPY
+        } else if (sizeof(MIDIMessageType) <= sizeof(unsigned PY_LONG_LONG)) {
+            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+#endif
+        }
+    } else {
+        if (sizeof(MIDIMessageType) <= sizeof(long)) {
+            return PyLong_FromLong((long) value);
+#ifdef HAVE_LONG_LONG
+        } else if (sizeof(MIDIMessageType) <= sizeof(PY_LONG_LONG)) {
+            return PyLong_FromLongLong((PY_LONG_LONG) value);
+#endif
+        }
+    }
+    {
+        unsigned char *bytes = (unsigned char *)&value;
+#if !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX >= 0x030d00A4
+        if (is_unsigned) {
+            return PyLong_FromUnsignedNativeBytes(bytes, sizeof(value), -1);
+        } else {
+            return PyLong_FromNativeBytes(bytes, sizeof(value), -1);
+        }
+#elif !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX < 0x030d0000
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        return _PyLong_FromByteArray(bytes, sizeof(MIDIMessageType),
+                                     little, !is_unsigned);
+#else
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        PyObject *from_bytes, *result = NULL, *kwds = NULL;
+        PyObject *py_bytes = NULL, *order_str = NULL;
+        from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
+        if (!from_bytes) return NULL;
+        py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(MIDIMessageType));
+        if (!py_bytes) goto limited_bad;
+        order_str = PyUnicode_FromString(little ? "little" : "big");
+        if (!order_str) goto limited_bad;
+        {
+            PyObject *args[3+(CYTHON_VECTORCALL ? 1 : 0)] = { NULL, py_bytes, order_str };
+            if (!is_unsigned) {
+                kwds = __Pyx_MakeVectorcallBuilderKwds(1);
+                if (!kwds) goto limited_bad;
+                if (__Pyx_VectorcallBuilder_AddArgStr("signed", __Pyx_NewRef(Py_True), kwds, args+3, 0) < 0) goto limited_bad;
+            }
+            result = __Pyx_Object_Vectorcall_CallFromBuilder(from_bytes, args+1, 2 | __Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET, kwds);
+        }
+        limited_bad:
+        Py_XDECREF(kwds);
+        Py_XDECREF(order_str);
+        Py_XDECREF(py_bytes);
+        Py_XDECREF(from_bytes);
+        return result;
+#endif
+    }
+}
+
+/* CIntToPy */
+static CYTHON_INLINE PyObject* __Pyx_PyLong_From_MIDICVStatus(MIDICVStatus value) {
+#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif
+    const MIDICVStatus neg_one = (MIDICVStatus) -1, const_zero = (MIDICVStatus) 0;
+#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
+#pragma GCC diagnostic pop
+#endif
+    const int is_unsigned = neg_one > const_zero;
+    if (is_unsigned) {
+        if (sizeof(MIDICVStatus) < sizeof(long)) {
+            return PyLong_FromLong((long) value);
+        } else if (sizeof(MIDICVStatus) <= sizeof(unsigned long)) {
+            return PyLong_FromUnsignedLong((unsigned long) value);
+#if defined(HAVE_LONG_LONG) && !CYTHON_COMPILING_IN_PYPY
+        } else if (sizeof(MIDICVStatus) <= sizeof(unsigned PY_LONG_LONG)) {
+            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+#endif
+        }
+    } else {
+        if (sizeof(MIDICVStatus) <= sizeof(long)) {
+            return PyLong_FromLong((long) value);
+#ifdef HAVE_LONG_LONG
+        } else if (sizeof(MIDICVStatus) <= sizeof(PY_LONG_LONG)) {
+            return PyLong_FromLongLong((PY_LONG_LONG) value);
+#endif
+        }
+    }
+    {
+        unsigned char *bytes = (unsigned char *)&value;
+#if !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX >= 0x030d00A4
+        if (is_unsigned) {
+            return PyLong_FromUnsignedNativeBytes(bytes, sizeof(value), -1);
+        } else {
+            return PyLong_FromNativeBytes(bytes, sizeof(value), -1);
+        }
+#elif !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX < 0x030d0000
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        return _PyLong_FromByteArray(bytes, sizeof(MIDICVStatus),
+                                     little, !is_unsigned);
+#else
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        PyObject *from_bytes, *result = NULL, *kwds = NULL;
+        PyObject *py_bytes = NULL, *order_str = NULL;
+        from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
+        if (!from_bytes) return NULL;
+        py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(MIDICVStatus));
         if (!py_bytes) goto limited_bad;
         order_str = PyUnicode_FromString(little ? "little" : "big");
         if (!order_str) goto limited_bad;
