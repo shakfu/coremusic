@@ -1014,5 +1014,305 @@ class TestCoreMIDISetup:
             pytest.skip("External device creation not supported in this environment")
 
 
+class TestCoreMIDIDriver:
+    """Test CoreMIDI Driver functionality"""
+
+    def setup_method(self):
+        """Set up test environment for MIDIDriver tests"""
+        # Note: Many MIDIDriver functions are primarily for driver development
+        # These tests focus on functions that can be safely called in user context
+        pass
+
+    def teardown_method(self):
+        """Clean up test environment"""
+        pass
+
+    def test_midi_device_create_basic(self):
+        """Test creating a MIDI device using the driver API"""
+        try:
+            # Create a device using the driver API (with NULL owner = non-driver)
+            device = cm.midi_device_create(
+                "Driver Test Device",
+                "Test Driver Manufacturer",
+                "Test Driver Model"
+            )
+
+            assert isinstance(device, int)
+            assert device > 0
+
+            # Try to dispose the device (only works if not added to setup)
+            try:
+                cm.midi_device_dispose(device)
+            except RuntimeError:
+                # This is acceptable - device might have been automatically added to setup
+                pass
+
+        except RuntimeError as e:
+            # Device creation might fail in some environments
+            pytest.skip(f"MIDI device creation failed (expected): {e}")
+
+    def test_midi_device_create_invalid_params(self):
+        """Test MIDI device creation with invalid parameters"""
+        # Test with None parameters - should raise an error
+        with pytest.raises((TypeError, AttributeError)):
+            cm.midi_device_create(None, "Manufacturer", "Model")
+
+        with pytest.raises((TypeError, AttributeError)):
+            cm.midi_device_create("Name", None, "Model")
+
+        with pytest.raises((TypeError, AttributeError)):
+            cm.midi_device_create("Name", "Manufacturer", None)
+
+    def test_midi_device_dispose_invalid(self):
+        """Test disposing an invalid device"""
+        invalid_device = 999999  # Definitely invalid device ref
+
+        try:
+            cm.midi_device_dispose(invalid_device)
+            # If this doesn't raise an error, the function succeeded unexpectedly
+            assert False, "Expected RuntimeError for invalid device"
+        except RuntimeError as e:
+            assert "failed with status" in str(e)
+
+    def test_midi_endpoint_ref_cons_basic(self):
+        """Test setting and getting endpoint reference constants"""
+        # Get an existing endpoint to test with
+        num_sources = cm.midi_get_number_of_sources()
+        if num_sources == 0:
+            pytest.skip("No MIDI sources available for refCon testing")
+
+        source = cm.midi_get_source(0)
+
+        # Test setting refCons
+        ref1_value = 12345
+        ref2_value = 67890
+
+        try:
+            # Set reference constants
+            result = cm.midi_endpoint_set_ref_cons(source, ref1_value, ref2_value)
+            assert isinstance(result, int)
+            assert result == 0  # Success
+
+            # Get reference constants back
+            ref1_retrieved, ref2_retrieved = cm.midi_endpoint_get_ref_cons(source)
+            assert ref1_retrieved == ref1_value
+            assert ref2_retrieved == ref2_value
+
+            # Test with default values (0)
+            cm.midi_endpoint_set_ref_cons(source)
+            ref1_default, ref2_default = cm.midi_endpoint_get_ref_cons(source)
+            assert ref1_default == 0
+            assert ref2_default == 0
+
+        except RuntimeError as e:
+            # RefCon operations might fail on some endpoints
+            pytest.skip(f"RefCon operations failed (expected): {e}")
+
+    def test_midi_endpoint_ref_cons_invalid_endpoint(self):
+        """Test refCon operations with invalid endpoint"""
+        invalid_endpoint = 999999
+
+        try:
+            cm.midi_endpoint_set_ref_cons(invalid_endpoint, 123, 456)
+            assert False, "Expected RuntimeError for invalid endpoint"
+        except RuntimeError as e:
+            assert "failed with status" in str(e)
+
+        try:
+            cm.midi_endpoint_get_ref_cons(invalid_endpoint)
+            assert False, "Expected RuntimeError for invalid endpoint"
+        except RuntimeError as e:
+            assert "failed with status" in str(e)
+
+    def test_midi_get_driver_io_runloop(self):
+        """Test getting the driver I/O run loop"""
+        try:
+            runloop = cm.midi_get_driver_io_runloop()
+            assert isinstance(runloop, int)
+            assert runloop != 0  # Should be a valid CFRunLoopRef
+
+        except Exception as e:
+            # This might fail in some environments
+            pytest.skip(f"Driver I/O runloop access failed: {e}")
+
+    def test_midi_get_driver_device_list_invalid(self):
+        """Test getting device list for invalid driver"""
+        invalid_driver = 999999
+
+        try:
+            # This should return 0 or a null device list for invalid driver
+            dev_list = cm.midi_get_driver_device_list(invalid_driver)
+            # The result might be 0 (null) which is acceptable
+            assert isinstance(dev_list, int)
+
+        except Exception as e:
+            # This operation might fail, which is acceptable
+            pass
+
+    def test_midi_driver_enable_monitoring_invalid(self):
+        """Test enabling monitoring for invalid driver"""
+        invalid_driver = 999999
+
+        try:
+            cm.midi_driver_enable_monitoring(invalid_driver, True)
+            assert False, "Expected RuntimeError for invalid driver"
+        except RuntimeError as e:
+            assert "failed with status" in str(e)
+
+        try:
+            cm.midi_driver_enable_monitoring(invalid_driver, False)
+            assert False, "Expected RuntimeError for invalid driver"
+        except RuntimeError as e:
+            assert "failed with status" in str(e)
+
+    def test_midi_device_list_operations_basic(self):
+        """Test basic device list operations (if we can create devices)"""
+        # This test is complex because we need valid devices and device lists
+        # We'll test with mock/invalid values to ensure the functions exist and handle errors
+
+        # Test with invalid device list
+        invalid_dev_list = 999999
+
+        # Test getting number of devices from invalid list
+        try:
+            num_devices = cm.midi_device_list_get_number_of_devices(invalid_dev_list)
+            # This might return 0 for invalid list, which is acceptable
+            assert isinstance(num_devices, int)
+            assert num_devices >= 0
+
+        except Exception:
+            # Function might fail, which is acceptable
+            pass
+
+        # Test getting device from invalid list
+        try:
+            device = cm.midi_device_list_get_device(invalid_dev_list, 0)
+            # This should fail since the list is invalid
+            assert False, "Expected error for invalid device list"
+        except (RuntimeError, IndexError):
+            # Expected failure
+            pass
+
+        # Test adding device to invalid list
+        try:
+            cm.midi_device_list_add_device(invalid_dev_list, 123456)
+            assert False, "Expected RuntimeError for invalid device list"
+        except RuntimeError as e:
+            assert "failed with status" in str(e)
+
+        # Test disposing invalid list
+        try:
+            cm.midi_device_list_dispose(invalid_dev_list)
+            assert False, "Expected RuntimeError for invalid device list"
+        except RuntimeError as e:
+            assert "failed with status" in str(e)
+
+    def test_midi_driver_function_existence(self):
+        """Test that all MIDIDriver functions exist and are callable"""
+        # Test that all the wrapped functions exist
+        assert hasattr(cm, 'midi_device_create')
+        assert callable(cm.midi_device_create)
+
+        assert hasattr(cm, 'midi_device_dispose')
+        assert callable(cm.midi_device_dispose)
+
+        assert hasattr(cm, 'midi_device_list_get_number_of_devices')
+        assert callable(cm.midi_device_list_get_number_of_devices)
+
+        assert hasattr(cm, 'midi_device_list_get_device')
+        assert callable(cm.midi_device_list_get_device)
+
+        assert hasattr(cm, 'midi_device_list_add_device')
+        assert callable(cm.midi_device_list_add_device)
+
+        assert hasattr(cm, 'midi_device_list_dispose')
+        assert callable(cm.midi_device_list_dispose)
+
+        assert hasattr(cm, 'midi_endpoint_set_ref_cons')
+        assert callable(cm.midi_endpoint_set_ref_cons)
+
+        assert hasattr(cm, 'midi_endpoint_get_ref_cons')
+        assert callable(cm.midi_endpoint_get_ref_cons)
+
+        assert hasattr(cm, 'midi_get_driver_io_runloop')
+        assert callable(cm.midi_get_driver_io_runloop)
+
+        assert hasattr(cm, 'midi_get_driver_device_list')
+        assert callable(cm.midi_get_driver_device_list)
+
+        assert hasattr(cm, 'midi_driver_enable_monitoring')
+        assert callable(cm.midi_driver_enable_monitoring)
+
+    def test_midi_driver_parameter_validation(self):
+        """Test parameter validation for MIDIDriver functions"""
+        # Test parameter type validation
+
+        # String parameters should reject None
+        with pytest.raises((TypeError, AttributeError)):
+            cm.midi_device_create(None, "Manufacturer", "Model")
+
+        # Integer parameters should reject strings (where inappropriate)
+        with pytest.raises((TypeError, ValueError)):
+            cm.midi_device_dispose("not_a_device_ref")
+
+        with pytest.raises((TypeError, ValueError)):
+            cm.midi_endpoint_set_ref_cons("not_an_endpoint", 123, 456)
+
+        # Test index bounds checking
+        invalid_dev_list = 999999
+        with pytest.raises((IndexError, RuntimeError)):
+            cm.midi_device_list_get_device(invalid_dev_list, -1)
+
+    def test_midi_driver_integration_workflow(self):
+        """Test a complete workflow of driver-style device management"""
+        try:
+            # Step 1: Create a device using driver API
+            device = cm.midi_device_create(
+                "Integration Driver Device",
+                "Integration Test Company",
+                "Integration Test Model"
+            )
+
+            assert isinstance(device, int)
+            assert device > 0
+
+            # Step 2: Test that we can't dispose it once it's in the system
+            # (This will likely fail since the device is automatically added)
+            try:
+                cm.midi_device_dispose(device)
+                # If disposal succeeds, the device wasn't automatically added
+                pass
+            except RuntimeError:
+                # Expected - device was automatically added to system
+                pass
+
+            # Step 3: Try to get an endpoint from the device to test refCons
+            try:
+                # Get entities from the device
+                num_entities = cm.midi_device_get_number_of_entities(device)
+
+                if num_entities > 0:
+                    entity = cm.midi_device_get_entity(device, 0)
+
+                    # Try to get a source from the entity
+                    num_sources = cm.midi_entity_get_number_of_sources(entity)
+                    if num_sources > 0:
+                        source = cm.midi_entity_get_source(entity, 0)
+
+                        # Test refCons on this endpoint
+                        cm.midi_endpoint_set_ref_cons(source, 0x1234, 0x5678)
+                        ref1, ref2 = cm.midi_endpoint_get_ref_cons(source)
+                        assert ref1 == 0x1234
+                        assert ref2 == 0x5678
+
+            except (RuntimeError, IndexError):
+                # Expected - newly created devices might not have entities/endpoints
+                pass
+
+        except RuntimeError:
+            # Device creation itself might fail, which is acceptable
+            pytest.skip("Driver-style device creation not supported in this environment")
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

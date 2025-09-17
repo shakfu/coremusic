@@ -3363,3 +3363,257 @@ def midi_external_device_create(str name, str manufacturer, str model):
             ca.CFRelease(cf_manufacturer)
         if cf_model:
             ca.CFRelease(cf_model)
+
+
+# MIDI Driver Functions
+
+def midi_device_create(str name, str manufacturer, str model):
+    """Create a new MIDI device (available to non-drivers).
+
+    Args:
+        name: Name of the device
+        manufacturer: Manufacturer name
+        model: Model name
+
+    Returns:
+        The new MIDIDeviceRef
+
+    Raises:
+        RuntimeError: If device creation fails
+    """
+    cdef midi.MIDIDeviceRef device
+    cdef ca.CFStringRef cf_name, cf_manufacturer, cf_model
+    cdef bytes name_bytes = name.encode('utf-8')
+    cdef bytes manufacturer_bytes = manufacturer.encode('utf-8')
+    cdef bytes model_bytes = model.encode('utf-8')
+
+    cf_name = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, name_bytes, ca.kCFStringEncodingUTF8
+    )
+    cf_manufacturer = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, manufacturer_bytes, ca.kCFStringEncodingUTF8
+    )
+    cf_model = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, model_bytes, ca.kCFStringEncodingUTF8
+    )
+
+    cdef ca.OSStatus status
+    try:
+        # NULL owner indicates non-driver creation
+        status = midi.MIDIDeviceCreate(
+            <midi.MIDIDriverRef>NULL,
+            cf_name, cf_manufacturer, cf_model, &device
+        )
+
+        if status != 0:
+            raise RuntimeError(f"MIDIDeviceCreate failed with status: {status}")
+
+        return device
+
+    finally:
+        if cf_name:
+            ca.CFRelease(cf_name)
+        if cf_manufacturer:
+            ca.CFRelease(cf_manufacturer)
+        if cf_model:
+            ca.CFRelease(cf_model)
+
+def midi_device_dispose(long device):
+    """Dispose a MIDI device that hasn't been added to the system.
+
+    Args:
+        device: The MIDIDeviceRef to dispose
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If device disposal fails
+    """
+    cdef ca.OSStatus status = midi.MIDIDeviceDispose(<midi.MIDIDeviceRef>device)
+
+    if status != 0:
+        raise RuntimeError(f"MIDIDeviceDispose failed with status: {status}")
+
+    return status
+
+def midi_device_list_get_number_of_devices(long dev_list):
+    """Get the number of devices in a device list.
+
+    Args:
+        dev_list: The MIDIDeviceListRef
+
+    Returns:
+        Number of devices in the list
+    """
+    return midi.MIDIDeviceListGetNumberOfDevices(<midi.MIDIDeviceListRef>dev_list)
+
+def midi_device_list_get_device(long dev_list, int index):
+    """Get a device from a device list.
+
+    Args:
+        dev_list: The MIDIDeviceListRef
+        index: Index of the device to retrieve (0-based)
+
+    Returns:
+        The MIDIDeviceRef at the specified index
+
+    Raises:
+        IndexError: If index is out of bounds
+    """
+    cdef midi.ItemCount num_devices = midi.MIDIDeviceListGetNumberOfDevices(<midi.MIDIDeviceListRef>dev_list)
+
+    if index < 0 or index >= num_devices:
+        raise IndexError(f"Device index {index} out of bounds (0-{num_devices-1})")
+
+    cdef midi.MIDIDeviceRef device = midi.MIDIDeviceListGetDevice(
+        <midi.MIDIDeviceListRef>dev_list, <midi.ItemCount>index
+    )
+
+    if device == 0:
+        raise RuntimeError(f"Failed to get device at index {index}")
+
+    return device
+
+def midi_device_list_add_device(long dev_list, long device):
+    """Add a device to a device list.
+
+    Args:
+        dev_list: The MIDIDeviceListRef
+        device: The MIDIDeviceRef to add
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If adding device fails
+    """
+    cdef ca.OSStatus status = midi.MIDIDeviceListAddDevice(
+        <midi.MIDIDeviceListRef>dev_list, <midi.MIDIDeviceRef>device
+    )
+
+    if status != 0:
+        raise RuntimeError(f"MIDIDeviceListAddDevice failed with status: {status}")
+
+    return status
+
+def midi_device_list_dispose(long dev_list):
+    """Dispose a device list (but not the contained devices).
+
+    Args:
+        dev_list: The MIDIDeviceListRef to dispose
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If disposal fails
+    """
+    cdef ca.OSStatus status = midi.MIDIDeviceListDispose(<midi.MIDIDeviceListRef>dev_list)
+
+    if status != 0:
+        raise RuntimeError(f"MIDIDeviceListDispose failed with status: {status}")
+
+    return status
+
+def midi_endpoint_set_ref_cons(long endpoint, long ref1=0, long ref2=0):
+    """Set reference constants for a MIDI endpoint.
+
+    Args:
+        endpoint: The MIDIEndpointRef
+        ref1: First reference constant (optional)
+        ref2: Second reference constant (optional)
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If setting refCons fails
+    """
+    cdef ca.OSStatus status = midi.MIDIEndpointSetRefCons(
+        <midi.MIDIEndpointRef>endpoint,
+        <void*>ref1,
+        <void*>ref2
+    )
+
+    if status != 0:
+        raise RuntimeError(f"MIDIEndpointSetRefCons failed with status: {status}")
+
+    return status
+
+def midi_endpoint_get_ref_cons(long endpoint):
+    """Get reference constants for a MIDI endpoint.
+
+    Args:
+        endpoint: The MIDIEndpointRef
+
+    Returns:
+        Tuple of (ref1, ref2) as integers
+
+    Raises:
+        RuntimeError: If getting refCons fails
+    """
+    cdef void* ref1
+    cdef void* ref2
+    cdef ca.OSStatus status = midi.MIDIEndpointGetRefCons(
+        <midi.MIDIEndpointRef>endpoint, &ref1, &ref2
+    )
+
+    if status != 0:
+        raise RuntimeError(f"MIDIEndpointGetRefCons failed with status: {status}")
+
+    return (<long>ref1, <long>ref2)
+
+def midi_get_driver_io_runloop():
+    """Get the driver I/O run loop.
+
+    Returns:
+        CFRunLoopRef as an integer (for advanced use)
+
+    Note:
+        This is primarily used by MIDI drivers for high-priority I/O operations.
+    """
+    cdef ca.CFRunLoopRef runloop = midi.MIDIGetDriverIORunLoop()
+    return <long>runloop
+
+def midi_get_driver_device_list(long driver):
+    """Get the device list for a specific driver.
+
+    Args:
+        driver: The MIDIDriverRef
+
+    Returns:
+        MIDIDeviceListRef containing devices owned by the driver
+
+    Note:
+        The returned device list should be disposed using midi_device_list_dispose().
+        This function is primarily useful for driver development.
+    """
+    cdef midi.MIDIDeviceListRef dev_list = midi.MIDIGetDriverDeviceList(<midi.MIDIDriverRef>driver)
+    return dev_list
+
+def midi_driver_enable_monitoring(long driver, bint enabled):
+    """Enable or disable MIDI monitoring for a driver.
+
+    Args:
+        driver: The MIDIDriverRef
+        enabled: True to enable monitoring, False to disable
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If enabling/disabling monitoring fails
+
+    Note:
+        This allows a driver to monitor all outgoing MIDI packets in the system.
+        Primarily used for specialized drivers like MIDI monitor displays.
+    """
+    cdef ca.OSStatus status = midi.MIDIDriverEnableMonitoring(
+        <midi.MIDIDriverRef>driver, <ca.Boolean>enabled
+    )
+
+    if status != 0:
+        raise RuntimeError(f"MIDIDriverEnableMonitoring failed with status: {status}")
+
+    return status

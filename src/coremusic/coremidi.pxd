@@ -441,3 +441,71 @@ cdef extern from "CoreMIDI/MIDISetup.h":
     # - MIDIGetSerialPortOwner (deprecated in macOS 10.6)
     # - MIDISetSerialPortOwner (deprecated in macOS 10.6)
     # - MIDIGetSerialPortDrivers (deprecated in macOS 10.6)
+
+# CoreMIDI MIDIDriver.h API declarations
+cdef extern from "CoreMIDI/MIDIDriver.h":
+
+    # Driver and device list types
+    ctypedef void* MIDIDriverRef
+    ctypedef MIDIObjectRef MIDIDeviceListRef
+
+    # Device Creation and Management Functions (Available to non-drivers)
+
+    # MIDIDeviceCreate - Available from macOS 10.0+, iOS 4.2+
+    cdef OSStatus MIDIDeviceCreate(
+        MIDIDriverRef owner,
+        CFStringRef name,
+        CFStringRef manufacturer,
+        CFStringRef model,
+        MIDIDeviceRef* outDevice)
+
+    # MIDIDeviceDispose - Available from macOS 10.3+, iOS 4.2+
+    cdef OSStatus MIDIDeviceDispose(MIDIDeviceRef device)
+
+    # Device List Management Functions
+
+    # MIDIDeviceListGetNumberOfDevices - Available from macOS 10.0+, iOS 4.2+
+    cdef ItemCount MIDIDeviceListGetNumberOfDevices(MIDIDeviceListRef devList)
+
+    # MIDIDeviceListGetDevice - Available from macOS 10.0+, iOS 4.2+
+    cdef MIDIDeviceRef MIDIDeviceListGetDevice(
+        MIDIDeviceListRef devList,
+        ItemCount index0)
+
+    # MIDIDeviceListAddDevice - Available from macOS 10.0+, iOS 4.2+
+    cdef OSStatus MIDIDeviceListAddDevice(
+        MIDIDeviceListRef devList,
+        MIDIDeviceRef dev)
+
+    # MIDIDeviceListDispose - Available from macOS 10.1+, iOS 4.2+
+    cdef OSStatus MIDIDeviceListDispose(MIDIDeviceListRef devList)
+
+    # Endpoint RefCon Management Functions
+
+    # MIDIEndpointSetRefCons - Available from macOS 10.0+, iOS 4.2+
+    cdef OSStatus MIDIEndpointSetRefCons(
+        MIDIEndpointRef endpt,
+        void* ref1,
+        void* ref2)
+
+    # MIDIEndpointGetRefCons - Available from macOS 10.0+, iOS 4.2+
+    cdef OSStatus MIDIEndpointGetRefCons(
+        MIDIEndpointRef endpt,
+        void** ref1,
+        void** ref2)
+
+    # Driver Utility Functions
+
+    # MIDIGetDriverIORunLoop - Available from macOS 10.0+, iOS 4.2+
+    cdef CFRunLoopRef MIDIGetDriverIORunLoop()
+
+    # MIDIGetDriverDeviceList - Available from macOS 10.1+, iOS 4.2+
+    cdef MIDIDeviceListRef MIDIGetDriverDeviceList(MIDIDriverRef driver)
+
+    # MIDIDriverEnableMonitoring - Available from macOS 10.1+
+    cdef OSStatus MIDIDriverEnableMonitoring(
+        MIDIDriverRef driver,
+        Boolean enabled)
+
+    # Note: Complex driver interface structures and COM-style functions are omitted
+    # as they are primarily used in CFPlugIn driver development, not general use

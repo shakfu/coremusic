@@ -384,23 +384,22 @@ This document tracks the coverage of CoreAudio APIs in the coremusic Python bind
 
 ### MIDI I/O
 
-- ❌ MIDIInputPortCreate
-- ❌ MIDIOutputPortCreate
-- ❌ MIDIPortDispose
-- ❌ MIDISend
-- ❌ MIDISendSysex
-- ❌ MIDIReceived
-- ❌ MIDIReceivedMultiple
+- ✅ MIDIInputPortCreate
+- ✅ MIDIOutputPortCreate
+- ✅ MIDIPortDispose
+- ✅ MIDISend
+- ✅ MIDISendSysex
+- ✅ MIDIReceived
 
 ### MIDI Setup & Configuration
 
-- ❌ MIDISetup APIs
+- ✅ MIDISetup APIs
 - ❌ MIDIThruConnection APIs
 - ❌ MIDIDriver APIs
 
 ### MIDI Messages
 
-- ❌ MIDIMessage APIs
+- ✅ MIDIMessage APIs
 - ❌ MIDIBluetoothConnection APIs
 - ❌ MIDINetworkSession APIs
 - ❌ MIDICapabilityInquiry APIs
