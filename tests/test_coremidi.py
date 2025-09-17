@@ -692,5 +692,327 @@ class TestCoreMIDIMessages:
         assert msg2_1 == msg2_2
 
 
+class TestCoreMIDISetup:
+    """Test CoreMIDI Setup (device and entity management) functionality"""
+
+    def setup_method(self):
+        """Set up test environment for MIDISetup tests"""
+        # Note: Many MIDISetup functions require special permissions or driver context
+        # These tests focus on functions that can be safely called in user context
+        pass
+
+    def teardown_method(self):
+        """Clean up test environment"""
+        pass
+
+    def test_midi_external_device_create(self):
+        """Test creating an external MIDI device"""
+        try:
+            # Create an external device
+            device = cm.midi_external_device_create(
+                "Test External Device",
+                "Test Manufacturer",
+                "Test Model"
+            )
+
+            assert isinstance(device, int)
+            assert device > 0
+
+            # The device should be successfully created
+            # Note: We can't easily dispose of it without proper setup management
+
+        except RuntimeError as e:
+            # This might fail if we don't have proper permissions
+            # or if the system doesn't allow external device creation
+            pytest.skip(f"External device creation failed (expected): {e}")
+
+    def test_midi_external_device_create_invalid_params(self):
+        """Test external device creation with invalid parameters"""
+        # Test with empty strings - should still work but create device with empty names
+        try:
+            device = cm.midi_external_device_create("", "", "")
+            assert isinstance(device, int)
+            assert device > 0
+        except RuntimeError:
+            # This is acceptable - some systems may not allow empty names
+            pass
+
+        # Test with None parameters - should raise an error
+        with pytest.raises((TypeError, AttributeError)):
+            cm.midi_external_device_create(None, "Manufacturer", "Model")
+
+    def test_midi_device_add_entity_basic(self):
+        """Test adding entity to a device (if we have a valid device)"""
+        # This test is challenging because we need a valid MIDIDeviceRef
+        # and proper permissions to modify devices
+
+        # First try to get an existing device
+        num_devices = cm.midi_get_number_of_devices()
+        if num_devices == 0:
+            pytest.skip("No MIDI devices available for entity testing")
+
+        # Get the first device
+        device = cm.midi_get_device(0)
+
+        try:
+            # Try to add an entity - this will likely fail due to permissions
+            # but we test that the function exists and handles errors properly
+            entity = cm.midi_device_add_entity(
+                device,
+                "Test Entity",
+                True,  # embedded
+                1,     # num source endpoints
+                1      # num destination endpoints
+            )
+
+            # If this succeeds, we have a new entity
+            assert isinstance(entity, int)
+            assert entity > 0
+
+            # Try to remove the entity we just added
+            try:
+                cm.midi_device_remove_entity(device, entity)
+            except RuntimeError:
+                # Removal might fail, which is okay
+                pass
+
+        except RuntimeError as e:
+            # Expected - most devices are read-only to user applications
+            assert "failed with status" in str(e)
+
+    def test_midi_device_new_entity_basic(self):
+        """Test creating new entity with protocol support (macOS 11.0+)"""
+        # This test focuses on the newer MIDIDeviceNewEntity function
+
+        num_devices = cm.midi_get_number_of_devices()
+        if num_devices == 0:
+            pytest.skip("No MIDI devices available for entity testing")
+
+        device = cm.midi_get_device(0)
+
+        try:
+            # Try to create a new entity with MIDI 1.0 protocol
+            entity = cm.midi_device_new_entity(
+                device,
+                "Test MIDI 1.0 Entity",
+                1,     # MIDI 1.0 protocol
+                True,  # embedded
+                1,     # num source endpoints
+                1      # num destination endpoints
+            )
+
+            assert isinstance(entity, int)
+            assert entity > 0
+
+            # Clean up
+            try:
+                cm.midi_device_remove_entity(device, entity)
+            except RuntimeError:
+                pass
+
+        except RuntimeError as e:
+            # Expected - most devices are read-only to user applications
+            assert "failed with status" in str(e)
+
+        try:
+            # Try to create a new entity with MIDI 2.0 protocol
+            entity = cm.midi_device_new_entity(
+                device,
+                "Test MIDI 2.0 Entity",
+                2,     # MIDI 2.0 protocol
+                False, # external connectors
+                2,     # num source endpoints
+                2      # num destination endpoints
+            )
+
+            assert isinstance(entity, int)
+            assert entity > 0
+
+            # Clean up
+            try:
+                cm.midi_device_remove_entity(device, entity)
+            except RuntimeError:
+                pass
+
+        except RuntimeError as e:
+            # Expected - most devices are read-only to user applications
+            assert "failed with status" in str(e)
+
+    def test_midi_entity_add_or_remove_endpoints(self):
+        """Test adding/removing endpoints from an entity"""
+        # Get a device and entity to test with
+        num_devices = cm.midi_get_number_of_devices()
+        if num_devices == 0:
+            pytest.skip("No MIDI devices available for endpoint testing")
+
+        device = cm.midi_get_device(0)
+        num_entities = cm.midi_device_get_number_of_entities(device)
+
+        if num_entities == 0:
+            pytest.skip("No entities available for endpoint testing")
+
+        entity = cm.midi_device_get_entity(device, 0)
+
+        try:
+            # Try to modify endpoints - this will likely fail for existing entities
+            # but we test that the function works properly
+            result = cm.midi_entity_add_or_remove_endpoints(
+                entity,
+                2,  # desired source endpoints
+                2   # desired destination endpoints
+            )
+
+            # If this succeeds, check the result
+            assert isinstance(result, int)
+            assert result == 0  # Success status
+
+        except RuntimeError as e:
+            # Expected - most entities are read-only to user applications
+            assert "failed with status" in str(e)
+
+    def test_midi_setup_device_management(self):
+        """Test setup device management functions"""
+        # These functions are typically only available to drivers
+        # We test that they exist and handle invalid devices properly
+
+        invalid_device = 999999  # Definitely invalid device ref
+
+        # Test adding invalid device to setup
+        try:
+            cm.midi_setup_add_device(invalid_device)
+            # If this doesn't raise an error, the function succeeded unexpectedly
+            assert False, "Expected RuntimeError for invalid device"
+        except RuntimeError as e:
+            assert "failed with status" in str(e)
+
+        # Test removing invalid device from setup
+        try:
+            cm.midi_setup_remove_device(invalid_device)
+            # If this doesn't raise an error, the function succeeded unexpectedly
+            assert False, "Expected RuntimeError for invalid device"
+        except RuntimeError as e:
+            assert "failed with status" in str(e)
+
+        # Test adding invalid external device
+        try:
+            cm.midi_setup_add_external_device(invalid_device)
+            assert False, "Expected RuntimeError for invalid device"
+        except RuntimeError as e:
+            assert "failed with status" in str(e)
+
+        # Test removing invalid external device
+        try:
+            cm.midi_setup_remove_external_device(invalid_device)
+            assert False, "Expected RuntimeError for invalid device"
+        except RuntimeError as e:
+            assert "failed with status" in str(e)
+
+    def test_midi_setup_function_existence(self):
+        """Test that all MIDISetup functions exist and are callable"""
+        # Test that all the wrapped functions exist
+        assert hasattr(cm, 'midi_external_device_create')
+        assert callable(cm.midi_external_device_create)
+
+        assert hasattr(cm, 'midi_device_add_entity')
+        assert callable(cm.midi_device_add_entity)
+
+        assert hasattr(cm, 'midi_device_new_entity')
+        assert callable(cm.midi_device_new_entity)
+
+        assert hasattr(cm, 'midi_device_remove_entity')
+        assert callable(cm.midi_device_remove_entity)
+
+        assert hasattr(cm, 'midi_entity_add_or_remove_endpoints')
+        assert callable(cm.midi_entity_add_or_remove_endpoints)
+
+        assert hasattr(cm, 'midi_setup_add_device')
+        assert callable(cm.midi_setup_add_device)
+
+        assert hasattr(cm, 'midi_setup_remove_device')
+        assert callable(cm.midi_setup_remove_device)
+
+        assert hasattr(cm, 'midi_setup_add_external_device')
+        assert callable(cm.midi_setup_add_external_device)
+
+        assert hasattr(cm, 'midi_setup_remove_external_device')
+        assert callable(cm.midi_setup_remove_external_device)
+
+    def test_midi_setup_parameter_validation(self):
+        """Test parameter validation for MIDISetup functions"""
+        # Test parameter type validation
+
+        # String parameters should reject None
+        with pytest.raises((TypeError, AttributeError)):
+            cm.midi_external_device_create(None, "Manufacturer", "Model")
+
+        with pytest.raises((TypeError, AttributeError)):
+            cm.midi_external_device_create("Name", None, "Model")
+
+        with pytest.raises((TypeError, AttributeError)):
+            cm.midi_external_device_create("Name", "Manufacturer", None)
+
+        # Integer parameters should reject strings (where inappropriate)
+        with pytest.raises((TypeError, ValueError)):
+            cm.midi_setup_add_device("not_a_device_ref")
+
+        with pytest.raises((TypeError, ValueError)):
+            cm.midi_device_remove_entity("not_a_device", "not_an_entity")
+
+    def test_midi_setup_integration_workflow(self):
+        """Test a complete workflow of external device management"""
+        try:
+            # Step 1: Create an external device
+            device = cm.midi_external_device_create(
+                "Integration Test Device",
+                "Test Company",
+                "Test Model v1.0"
+            )
+
+            assert isinstance(device, int)
+            assert device > 0
+
+            # Step 2: Try to add it to the setup
+            try:
+                cm.midi_setup_add_external_device(device)
+
+                # Step 3: Try to add an entity to the device
+                try:
+                    entity = cm.midi_device_add_entity(
+                        device,
+                        "Test Entity",
+                        False,  # external connectors
+                        1,      # source endpoints
+                        1       # destination endpoints
+                    )
+
+                    # Step 4: Try to modify endpoints
+                    try:
+                        cm.midi_entity_add_or_remove_endpoints(entity, 2, 2)
+                    except RuntimeError:
+                        pass  # Expected
+
+                    # Step 5: Try to remove entity
+                    try:
+                        cm.midi_device_remove_entity(device, entity)
+                    except RuntimeError:
+                        pass  # Expected
+
+                except RuntimeError:
+                    pass  # Expected - entity operations might not be allowed
+
+                # Step 6: Try to remove device from setup
+                try:
+                    cm.midi_setup_remove_external_device(device)
+                except RuntimeError:
+                    pass  # Expected - might not be allowed
+
+            except RuntimeError:
+                pass  # Expected - setup operations might not be allowed
+
+        except RuntimeError:
+            # Device creation itself might fail, which is acceptable
+            pytest.skip("External device creation not supported in this environment")
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

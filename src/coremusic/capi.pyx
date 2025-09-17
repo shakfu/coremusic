@@ -3093,3 +3093,273 @@ def get_midi_cv_status_channel_pressure():
 def get_midi_cv_status_pitch_bend():
     """Get the Pitch Bend status constant."""
     return midi.kMIDICVStatusPitchBend
+
+
+# MIDI Setup (Device and Entity Management) Functions
+
+def midi_device_new_entity(long device, str name, int protocol, bint embedded, int num_source_endpoints, int num_destination_endpoints):
+    """Create a new entity for a MIDI device (macOS 11.0+, iOS 14.0+).
+
+    Args:
+        device: The MIDIDeviceRef to add an entity to
+        name: Name of the new entity
+        protocol: MIDI protocol ID (1 for MIDI 1.0, 2 for MIDI 2.0)
+        embedded: True if entity is inside device, False if external connectors
+        num_source_endpoints: Number of source endpoints for the entity
+        num_destination_endpoints: Number of destination endpoints for the entity
+
+    Returns:
+        The new MIDIEntityRef
+
+    Raises:
+        RuntimeError: If entity creation fails
+    """
+    cdef midi.MIDIEntityRef entity
+    cdef ca.CFStringRef cf_name
+    cdef bytes name_bytes = name.encode('utf-8')
+
+    cf_name = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault,
+        name_bytes,
+        ca.kCFStringEncodingUTF8
+    )
+
+    cdef ca.OSStatus status
+    try:
+        status = midi.MIDIDeviceNewEntity(
+            <midi.MIDIDeviceRef>device,
+            cf_name,
+            <midi.MIDIProtocolID>protocol,
+            <ca.Boolean>embedded,
+            <midi.ItemCount>num_source_endpoints,
+            <midi.ItemCount>num_destination_endpoints,
+            &entity
+        )
+
+        if status != 0:
+            raise RuntimeError(f"MIDIDeviceNewEntity failed with status: {status}")
+
+        return entity
+
+    finally:
+        if cf_name:
+            ca.CFRelease(cf_name)
+
+def midi_device_add_entity(long device, str name, bint embedded, int num_source_endpoints, int num_destination_endpoints):
+    """Add an entity to a MIDI device (deprecated, use midi_device_new_entity).
+
+    Args:
+        device: The MIDIDeviceRef to add an entity to
+        name: Name of the new entity
+        embedded: True if entity is inside device, False if external connectors
+        num_source_endpoints: Number of source endpoints for the entity
+        num_destination_endpoints: Number of destination endpoints for the entity
+
+    Returns:
+        The new MIDIEntityRef
+
+    Raises:
+        RuntimeError: If entity creation fails
+    """
+    cdef midi.MIDIEntityRef entity
+    cdef ca.CFStringRef cf_name
+    cdef bytes name_bytes = name.encode('utf-8')
+
+    cf_name = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault,
+        name_bytes,
+        ca.kCFStringEncodingUTF8
+    )
+
+    cdef ca.OSStatus status
+    try:
+        status = midi.MIDIDeviceAddEntity(
+            <midi.MIDIDeviceRef>device,
+            cf_name,
+            <ca.Boolean>embedded,
+            <midi.ItemCount>num_source_endpoints,
+            <midi.ItemCount>num_destination_endpoints,
+            &entity
+        )
+
+        if status != 0:
+            raise RuntimeError(f"MIDIDeviceAddEntity failed with status: {status}")
+
+        return entity
+
+    finally:
+        if cf_name:
+            ca.CFRelease(cf_name)
+
+def midi_device_remove_entity(long device, long entity):
+    """Remove an entity from a MIDI device.
+
+    Args:
+        device: The MIDIDeviceRef to remove entity from
+        entity: The MIDIEntityRef to remove
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If entity removal fails
+    """
+    cdef ca.OSStatus status = midi.MIDIDeviceRemoveEntity(
+        <midi.MIDIDeviceRef>device,
+        <midi.MIDIEntityRef>entity
+    )
+
+    if status != 0:
+        raise RuntimeError(f"MIDIDeviceRemoveEntity failed with status: {status}")
+
+    return status
+
+def midi_entity_add_or_remove_endpoints(long entity, int num_source_endpoints, int num_destination_endpoints):
+    """Add or remove endpoints from a MIDI entity.
+
+    Args:
+        entity: The MIDIEntityRef to modify
+        num_source_endpoints: Desired number of source endpoints
+        num_destination_endpoints: Desired number of destination endpoints
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If endpoint modification fails
+    """
+    cdef ca.OSStatus status = midi.MIDIEntityAddOrRemoveEndpoints(
+        <midi.MIDIEntityRef>entity,
+        <midi.ItemCount>num_source_endpoints,
+        <midi.ItemCount>num_destination_endpoints
+    )
+
+    if status != 0:
+        raise RuntimeError(f"MIDIEntityAddOrRemoveEndpoints failed with status: {status}")
+
+    return status
+
+def midi_setup_add_device(long device):
+    """Add a driver-owned MIDI device to the current setup.
+
+    Args:
+        device: The MIDIDeviceRef to add
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If device addition fails
+    """
+    cdef ca.OSStatus status = midi.MIDISetupAddDevice(<midi.MIDIDeviceRef>device)
+
+    if status != 0:
+        raise RuntimeError(f"MIDISetupAddDevice failed with status: {status}")
+
+    return status
+
+def midi_setup_remove_device(long device):
+    """Remove a driver-owned MIDI device from the current setup.
+
+    Args:
+        device: The MIDIDeviceRef to remove
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If device removal fails
+    """
+    cdef ca.OSStatus status = midi.MIDISetupRemoveDevice(<midi.MIDIDeviceRef>device)
+
+    if status != 0:
+        raise RuntimeError(f"MIDISetupRemoveDevice failed with status: {status}")
+
+    return status
+
+def midi_setup_add_external_device(long device):
+    """Add an external MIDI device to the current setup.
+
+    Args:
+        device: The MIDIDeviceRef to add
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If external device addition fails
+    """
+    cdef ca.OSStatus status = midi.MIDISetupAddExternalDevice(<midi.MIDIDeviceRef>device)
+
+    if status != 0:
+        raise RuntimeError(f"MIDISetupAddExternalDevice failed with status: {status}")
+
+    return status
+
+def midi_setup_remove_external_device(long device):
+    """Remove an external MIDI device from the current setup.
+
+    Args:
+        device: The MIDIDeviceRef to remove
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If external device removal fails
+    """
+    cdef ca.OSStatus status = midi.MIDISetupRemoveExternalDevice(<midi.MIDIDeviceRef>device)
+
+    if status != 0:
+        raise RuntimeError(f"MIDISetupRemoveExternalDevice failed with status: {status}")
+
+    return status
+
+def midi_external_device_create(str name, str manufacturer, str model):
+    """Create a new external MIDI device.
+
+    Args:
+        name: Name of the device
+        manufacturer: Manufacturer name
+        model: Model name
+
+    Returns:
+        The new MIDIDeviceRef
+
+    Raises:
+        RuntimeError: If device creation fails
+    """
+    cdef midi.MIDIDeviceRef device
+    cdef ca.CFStringRef cf_name, cf_manufacturer, cf_model
+    cdef bytes name_bytes = name.encode('utf-8')
+    cdef bytes manufacturer_bytes = manufacturer.encode('utf-8')
+    cdef bytes model_bytes = model.encode('utf-8')
+
+    cf_name = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, name_bytes, ca.kCFStringEncodingUTF8
+    )
+    cf_manufacturer = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, manufacturer_bytes, ca.kCFStringEncodingUTF8
+    )
+    cf_model = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, model_bytes, ca.kCFStringEncodingUTF8
+    )
+
+    cdef ca.OSStatus status
+    try:
+        status = midi.MIDIExternalDeviceCreate(
+            cf_name, cf_manufacturer, cf_model, &device
+        )
+
+        if status != 0:
+            raise RuntimeError(f"MIDIExternalDeviceCreate failed with status: {status}")
+
+        return device
+
+    finally:
+        if cf_name:
+            ca.CFRelease(cf_name)
+        if cf_manufacturer:
+            ca.CFRelease(cf_manufacturer)
+        if cf_model:
+            ca.CFRelease(cf_model)

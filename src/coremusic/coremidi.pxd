@@ -366,3 +366,78 @@ cdef extern from "CoreMIDI/MIDIMessages.h":
         const MIDIEventList* evtlist,
         MIDIEventVisitor visitor,
         void* visitorContext)
+
+# CoreMIDI MIDISetup.h API declarations
+cdef extern from "CoreMIDI/MIDISetup.h":
+
+    # MIDISetup type (typedef from MIDIObjectRef)
+    ctypedef MIDIObjectRef MIDISetupRef
+
+    # Item count type for endpoints
+    ctypedef UInt32 ItemCount
+
+    # Device and Entity Management Functions (Available, non-deprecated)
+
+    # MIDIDeviceNewEntity - Available from macOS 11.0+, iOS 14.0+
+    cdef OSStatus MIDIDeviceNewEntity(
+        MIDIDeviceRef device,
+        CFStringRef name,
+        MIDIProtocolID protocol,
+        Boolean embedded,
+        ItemCount numSourceEndpoints,
+        ItemCount numDestinationEndpoints,
+        MIDIEntityRef* newEntity)
+
+    # MIDIDeviceAddEntity - Deprecated but still available for compatibility
+    cdef OSStatus MIDIDeviceAddEntity(
+        MIDIDeviceRef device,
+        CFStringRef name,
+        Boolean embedded,
+        ItemCount numSourceEndpoints,
+        ItemCount numDestinationEndpoints,
+        MIDIEntityRef* newEntity)
+
+    # MIDIDeviceRemoveEntity - Available from macOS 10.1+, iOS 4.2+
+    cdef OSStatus MIDIDeviceRemoveEntity(
+        MIDIDeviceRef device,
+        MIDIEntityRef entity)
+
+    # MIDIEntityAddOrRemoveEndpoints - Available from macOS 10.2+, iOS 4.2+
+    cdef OSStatus MIDIEntityAddOrRemoveEndpoints(
+        MIDIEntityRef entity,
+        ItemCount numSourceEndpoints,
+        ItemCount numDestinationEndpoints)
+
+    # Setup Device Management Functions
+
+    # MIDISetupAddDevice - Available from macOS 10.1+, iOS 4.2+
+    cdef OSStatus MIDISetupAddDevice(MIDIDeviceRef device)
+
+    # MIDISetupRemoveDevice - Available from macOS 10.1+, iOS 4.2+
+    cdef OSStatus MIDISetupRemoveDevice(MIDIDeviceRef device)
+
+    # MIDISetupAddExternalDevice - Available from macOS 10.1+, iOS 4.2+
+    cdef OSStatus MIDISetupAddExternalDevice(MIDIDeviceRef device)
+
+    # MIDISetupRemoveExternalDevice - Available from macOS 10.1+, iOS 4.2+
+    cdef OSStatus MIDISetupRemoveExternalDevice(MIDIDeviceRef device)
+
+    # External Device Creation
+
+    # MIDIExternalDeviceCreate - Available from macOS 10.1+, iOS 4.2+
+    cdef OSStatus MIDIExternalDeviceCreate(
+        CFStringRef name,
+        CFStringRef manufacturer,
+        CFStringRef model,
+        MIDIDeviceRef* outDevice)
+
+    # Note: The following functions are deprecated and not included:
+    # - MIDISetupCreate (deprecated in macOS 10.6)
+    # - MIDISetupDispose (deprecated in macOS 10.6)
+    # - MIDISetupInstall (deprecated in macOS 10.6)
+    # - MIDISetupGetCurrent (deprecated in macOS 10.6)
+    # - MIDISetupToData (deprecated in macOS 10.6)
+    # - MIDISetupFromData (deprecated in macOS 10.6)
+    # - MIDIGetSerialPortOwner (deprecated in macOS 10.6)
+    # - MIDISetSerialPortOwner (deprecated in macOS 10.6)
+    # - MIDIGetSerialPortDrivers (deprecated in macOS 10.6)
