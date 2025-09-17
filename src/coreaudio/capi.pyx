@@ -604,6 +604,9 @@ def audio_output_unit_stop(long audio_unit_id):
 def get_audio_unit_type_output():
     return ca.kAudioUnitType_Output
 
+def get_audio_component_type_music_device():
+    return ca.kAudioUnitType_MusicDevice
+
 def get_audio_unit_subtype_default_output():
     return ca.kAudioUnitSubType_DefaultOutput
 
@@ -1042,3 +1045,286 @@ def get_audio_services_property_complete_playback_if_app_dies():
 def test_error() -> int:
     """Test function to verify the module works"""
     return ca.kAudio_UnimplementedError
+
+
+# ===== MusicDevice API =====
+
+def music_device_midi_event(long unit, int status, int data1, int data2, int offset_sample_frame=0):
+    """Send a MIDI channel message to a music device audio unit.
+
+    Args:
+        unit: The MusicDeviceComponent (AudioComponentInstance)
+        status: MIDI status byte (includes channel and command)
+        data1: First MIDI data byte (0-127)
+        data2: Second MIDI data byte (0-127), or 0 if not needed
+        offset_sample_frame: Sample offset for scheduling (default 0)
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If the MIDI event fails
+    """
+    cdef ca.OSStatus status_result = ca.MusicDeviceMIDIEvent(
+        <ca.MusicDeviceComponent>unit,
+        <ca.UInt32>status,
+        <ca.UInt32>data1,
+        <ca.UInt32>data2,
+        <ca.UInt32>offset_sample_frame)
+
+    if status_result != 0:
+        raise RuntimeError(f"MusicDeviceMIDIEvent failed with status: {status_result}")
+    return status_result
+
+def music_device_sysex(long unit, bytes data):
+    """Send a System Exclusive MIDI message to a music device audio unit.
+
+    Args:
+        unit: The MusicDeviceComponent (AudioComponentInstance)
+        data: Complete MIDI SysEx message including F0 and F7 bytes
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If the SysEx message fails
+    """
+    cdef const ca.UInt8* data_ptr = <const ca.UInt8*><char*>data
+    cdef ca.UInt32 length = len(data)
+
+    cdef ca.OSStatus status = ca.MusicDeviceSysEx(
+        <ca.MusicDeviceComponent>unit,
+        data_ptr,
+        length)
+
+    if status != 0:
+        raise RuntimeError(f"MusicDeviceSysEx failed with status: {status}")
+    return status
+
+def music_device_start_note(long unit, int instrument_id, int group_id, float pitch, float velocity, int offset_sample_frame=0, list controls=None):
+    """Start a note on a music device audio unit.
+
+    Args:
+        unit: The MusicDeviceComponent (AudioComponentInstance)
+        instrument_id: Instrument ID (use kMusicNoteEvent_Unused for current patch)
+        group_id: Group/channel ID (0-based)
+        pitch: MIDI pitch (0-127, can be fractional)
+        velocity: MIDI velocity (0-127, can be fractional)
+        offset_sample_frame: Sample offset for scheduling (default 0)
+        controls: Optional list of (parameter_id, value) tuples for additional controls
+
+    Returns:
+        NoteInstanceID token for stopping the note
+
+    Raises:
+        RuntimeError: If starting the note fails
+    """
+    cdef ca.NoteInstanceID note_instance_id
+    cdef ca.MusicDeviceNoteParams* params
+    cdef ca.UInt32 arg_count = 2  # pitch + velocity
+    cdef int num_controls = 0
+    cdef ca.OSStatus status
+
+    if controls:
+        num_controls = len(controls)
+        arg_count += num_controls
+
+    # Allocate memory for note parameters
+    cdef size_t params_size = sizeof(ca.MusicDeviceNoteParams) + (num_controls - 1) * sizeof(ca.NoteParamsControlValue)
+    params = <ca.MusicDeviceNoteParams*>malloc(params_size)
+    if not params:
+        raise MemoryError("Could not allocate memory for note parameters")
+
+    try:
+        params.argCount = arg_count
+        params.mPitch = pitch
+        params.mVelocity = velocity
+
+        # Add control parameters if provided
+        if controls:
+            for i, (param_id, value) in enumerate(controls):
+                params.mControls[i].mID = <ca.AudioUnitParameterID>param_id
+                params.mControls[i].mValue = <ca.AudioUnitParameterValue>value
+
+        status = ca.MusicDeviceStartNote(
+            <ca.MusicDeviceComponent>unit,
+            <ca.MusicDeviceInstrumentID>instrument_id,
+            <ca.MusicDeviceGroupID>group_id,
+            &note_instance_id,
+            <ca.UInt32>offset_sample_frame,
+            params)
+
+        if status != 0:
+            raise RuntimeError(f"MusicDeviceStartNote failed with status: {status}")
+
+        return <long>note_instance_id
+
+    finally:
+        free(params)
+
+def music_device_stop_note(long unit, int group_id, long note_instance_id, int offset_sample_frame=0):
+    """Stop a note that was started with music_device_start_note.
+
+    Args:
+        unit: The MusicDeviceComponent (AudioComponentInstance)
+        group_id: Group/channel ID that the note was started on
+        note_instance_id: Token returned by music_device_start_note
+        offset_sample_frame: Sample offset for scheduling (default 0)
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If stopping the note fails
+    """
+    cdef ca.OSStatus status = ca.MusicDeviceStopNote(
+        <ca.MusicDeviceComponent>unit,
+        <ca.MusicDeviceGroupID>group_id,
+        <ca.NoteInstanceID>note_instance_id,
+        <ca.UInt32>offset_sample_frame)
+
+    if status != 0:
+        raise RuntimeError(f"MusicDeviceStopNote failed with status: {status}")
+    return status
+
+# Convenience functions for creating standard note parameters
+
+def create_music_device_std_note_params(float pitch, float velocity):
+    """Create standard note parameters with just pitch and velocity.
+
+    Args:
+        pitch: MIDI pitch (0-127, can be fractional)
+        velocity: MIDI velocity (0-127, can be fractional)
+
+    Returns:
+        Dictionary with argCount, pitch, and velocity
+    """
+    return {
+        'argCount': 2,
+        'pitch': pitch,
+        'velocity': velocity
+    }
+
+def create_music_device_note_params(float pitch, float velocity, list controls):
+    """Create note parameters with pitch, velocity, and additional controls.
+
+    Args:
+        pitch: MIDI pitch (0-127, can be fractional)
+        velocity: MIDI velocity (0-127, can be fractional)
+        controls: List of (parameter_id, value) tuples
+
+    Returns:
+        Dictionary with all note parameters
+    """
+    return {
+        'argCount': 2 + len(controls),
+        'pitch': pitch,
+        'velocity': velocity,
+        'controls': controls
+    }
+
+# MusicDevice constants
+
+def get_music_note_event_use_group_instrument():
+    """Get the constant for using the current patch for a group."""
+    return ca.kMusicNoteEvent_UseGroupInstrument
+
+def get_music_note_event_unused():
+    """Get the constant for unused instrument ID."""
+    return ca.kMusicNoteEvent_Unused
+
+def get_music_device_range():
+    """Get the MusicDevice selector range start."""
+    return ca.kMusicDeviceRange
+
+def get_music_device_midi_event_select():
+    """Get the MusicDevice MIDI event selector."""
+    return ca.kMusicDeviceMIDIEventSelect
+
+def get_music_device_sysex_select():
+    """Get the MusicDevice SysEx selector."""
+    return ca.kMusicDeviceSysExSelect
+
+def get_music_device_start_note_select():
+    """Get the MusicDevice start note selector."""
+    return ca.kMusicDeviceStartNoteSelect
+
+def get_music_device_stop_note_select():
+    """Get the MusicDevice stop note selector."""
+    return ca.kMusicDeviceStopNoteSelect
+
+def get_music_device_midi_event_list_select():
+    """Get the MusicDevice MIDI event list selector."""
+    return ca.kMusicDeviceMIDIEventListSelect
+
+# Helper functions for MIDI data
+
+def midi_note_on(int channel, int note, int velocity):
+    """Create a MIDI Note On status byte.
+
+    Args:
+        channel: MIDI channel (0-15)
+        note: MIDI note number (0-127)
+        velocity: MIDI velocity (0-127)
+
+    Returns:
+        Tuple of (status, data1, data2)
+    """
+    status = 0x90 | (channel & 0x0F)  # Note On + channel
+    return (status, note & 0x7F, velocity & 0x7F)
+
+def midi_note_off(int channel, int note, int velocity=0):
+    """Create a MIDI Note Off status byte.
+
+    Args:
+        channel: MIDI channel (0-15)
+        note: MIDI note number (0-127)
+        velocity: MIDI velocity (0-127, default 0)
+
+    Returns:
+        Tuple of (status, data1, data2)
+    """
+    status = 0x80 | (channel & 0x0F)  # Note Off + channel
+    return (status, note & 0x7F, velocity & 0x7F)
+
+def midi_control_change(int channel, int controller, int value):
+    """Create a MIDI Control Change message.
+
+    Args:
+        channel: MIDI channel (0-15)
+        controller: Controller number (0-127)
+        value: Controller value (0-127)
+
+    Returns:
+        Tuple of (status, data1, data2)
+    """
+    status = 0xB0 | (channel & 0x0F)  # Control Change + channel
+    return (status, controller & 0x7F, value & 0x7F)
+
+def midi_program_change(int channel, int program):
+    """Create a MIDI Program Change message.
+
+    Args:
+        channel: MIDI channel (0-15)
+        program: Program number (0-127)
+
+    Returns:
+        Tuple of (status, data1, data2)
+    """
+    status = 0xC0 | (channel & 0x0F)  # Program Change + channel
+    return (status, program & 0x7F, 0)
+
+def midi_pitch_bend(int channel, int value):
+    """Create a MIDI Pitch Bend message.
+
+    Args:
+        channel: MIDI channel (0-15)
+        value: Pitch bend value (0-16383, 8192 = center)
+
+    Returns:
+        Tuple of (status, data1, data2)
+    """
+    status = 0xE0 | (channel & 0x0F)  # Pitch Bend + channel
+    lsb = value & 0x7F
+    msb = (value >> 7) & 0x7F
+    return (status, lsb, msb)

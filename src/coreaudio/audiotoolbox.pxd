@@ -911,3 +911,110 @@ cdef extern from "AudioToolbox/AudioServices.h":
         void* inClientData)
 
     cdef void AudioServicesRemoveSystemSoundCompletion(SystemSoundID inSystemSoundID)
+
+
+# MusicDevice API declarations
+cdef extern from "AudioToolbox/MusicDevice.h":
+
+    # Type definitions
+    ctypedef UInt32 MusicDeviceInstrumentID
+    ctypedef UInt32 MusicDeviceGroupID
+    ctypedef UInt32 NoteInstanceID
+    ctypedef AudioComponentInstance MusicDeviceComponent
+
+    # Forward declaration for MIDIEventList
+    ctypedef struct MIDIEventList:
+        pass
+
+    # Standard note parameters structure
+    ctypedef struct MusicDeviceStdNoteParams:
+        UInt32 argCount
+        Float32 mPitch
+        Float32 mVelocity
+
+    # Note parameter control value
+    ctypedef struct NoteParamsControlValue:
+        AudioUnitParameterID mID
+        AudioUnitParameterValue mValue
+
+    # Music device note parameters (variable length)
+    ctypedef struct MusicDeviceNoteParams:
+        UInt32 argCount
+        Float32 mPitch
+        Float32 mVelocity
+        NoteParamsControlValue mControls[1]
+
+    # Constants
+    ctypedef enum:
+        kMusicNoteEvent_UseGroupInstrument = 0xFFFFFFFF
+        kMusicNoteEvent_Unused = 0xFFFFFFFF
+
+    # Selector constants
+    ctypedef enum:
+        kMusicDeviceRange = 0x0100
+        kMusicDeviceMIDIEventSelect = 0x0101
+        kMusicDeviceSysExSelect = 0x0102
+        kMusicDevicePrepareInstrumentSelect = 0x0103
+        kMusicDeviceReleaseInstrumentSelect = 0x0104
+        kMusicDeviceStartNoteSelect = 0x0105
+        kMusicDeviceStopNoteSelect = 0x0106
+        kMusicDeviceMIDIEventListSelect = 0x0107
+
+    # Core functions
+    cdef OSStatus MusicDeviceMIDIEvent(
+        MusicDeviceComponent inUnit,
+        UInt32 inStatus,
+        UInt32 inData1,
+        UInt32 inData2,
+        UInt32 inOffsetSampleFrame)
+
+    cdef OSStatus MusicDeviceSysEx(
+        MusicDeviceComponent inUnit,
+        const UInt8* inData,
+        UInt32 inLength)
+
+    cdef OSStatus MusicDeviceMIDIEventList(
+        MusicDeviceComponent inUnit,
+        UInt32 inOffsetSampleFrame,
+        const MIDIEventList* evtList)
+
+    cdef OSStatus MusicDeviceStartNote(
+        MusicDeviceComponent inUnit,
+        MusicDeviceInstrumentID inInstrument,
+        MusicDeviceGroupID inGroupID,
+        NoteInstanceID* outNoteInstanceID,
+        UInt32 inOffsetSampleFrame,
+        const MusicDeviceNoteParams* inParams)
+
+    cdef OSStatus MusicDeviceStopNote(
+        MusicDeviceComponent inUnit,
+        MusicDeviceGroupID inGroupID,
+        NoteInstanceID inNoteInstanceID,
+        UInt32 inOffsetSampleFrame)
+
+    # Function pointer types for fast dispatch
+    ctypedef OSStatus (*MusicDeviceMIDIEventProc)(
+        void* self,
+        UInt32 inStatus,
+        UInt32 inData1,
+        UInt32 inData2,
+        UInt32 inOffsetSampleFrame)
+
+    ctypedef OSStatus (*MusicDeviceSysExProc)(
+        void* self,
+        const UInt8* inData,
+        UInt32 inLength)
+
+    ctypedef OSStatus (*MusicDeviceStartNoteProc)(
+        void* self,
+        MusicDeviceInstrumentID inInstrument,
+        MusicDeviceGroupID inGroupID,
+        NoteInstanceID* outNoteInstanceID,
+        UInt32 inOffsetSampleFrame,
+        const MusicDeviceNoteParams* inParams)
+
+    ctypedef OSStatus (*MusicDeviceStopNoteProc)(
+        void* self,
+        MusicDeviceGroupID inGroupID,
+        NoteInstanceID inNoteInstanceID,
+        UInt32 inOffsetSampleFrame)

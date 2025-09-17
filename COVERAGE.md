@@ -224,10 +224,10 @@ This document tracks the coverage of CoreAudio APIs in the cycoreaudio Python bi
 
 ### MusicDevice
 
-- ❌ MusicDeviceMIDIEvent
-- ❌ MusicDeviceStartNote
-- ❌ MusicDeviceStopNote
-- ❌ MusicDeviceSysEx
+- ✅ MusicDeviceMIDIEvent
+- ✅ MusicDeviceStartNote
+- ✅ MusicDeviceStopNote
+- ✅ MusicDeviceSysEx
 
 ### MusicPlayer
 
