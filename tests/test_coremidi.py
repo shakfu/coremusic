@@ -288,6 +288,85 @@ class TestCoreMIDIProperties:
         finally:
             cm.midi_endpoint_dispose(source)
 
+    def test_midi_device_get_name(self):
+        """Test getting MIDI device names"""
+        num_devices = cm.midi_get_number_of_devices()
+        if num_devices > 0:
+            device = cm.midi_get_device(0)
+            try:
+                name = cm.midi_device_get_name(device)
+                assert isinstance(name, str)
+                assert len(name) > 0
+                print(f"Device name: {name}")
+            except RuntimeError:
+                # Some devices might not have names
+                pass
+
+    def test_midi_endpoint_get_name(self):
+        """Test getting MIDI endpoint names"""
+        # Test with sources
+        num_sources = cm.midi_get_number_of_sources()
+        if num_sources > 0:
+            source = cm.midi_get_source(0)
+            try:
+                name = cm.midi_endpoint_get_name(source)
+                if name is not None:
+                    assert isinstance(name, str)
+                    print(f"Source name: {name}")
+            except RuntimeError:
+                # Some endpoints might not have names
+                pass
+
+        # Test with destinations
+        num_destinations = cm.midi_get_number_of_destinations()
+        if num_destinations > 0:
+            dest = cm.midi_get_destination(0)
+            try:
+                name = cm.midi_endpoint_get_name(dest)
+                if name is not None:
+                    assert isinstance(name, str)
+                    print(f"Destination name: {name}")
+            except RuntimeError:
+                # Some endpoints might not have names
+                pass
+
+    def test_midi_object_get_manufacturer_and_model(self):
+        """Test getting MIDI object manufacturer and model"""
+        num_devices = cm.midi_get_number_of_devices()
+        if num_devices > 0:
+            device = cm.midi_get_device(0)
+
+            # Test manufacturer
+            try:
+                manufacturer = cm.midi_object_get_manufacturer(device)
+                if manufacturer is not None:
+                    assert isinstance(manufacturer, str)
+                    print(f"Device manufacturer: {manufacturer}")
+            except RuntimeError:
+                pass
+
+            # Test model
+            try:
+                model = cm.midi_object_get_model(device)
+                if model is not None:
+                    assert isinstance(model, str)
+                    print(f"Device model: {model}")
+            except RuntimeError:
+                pass
+
+    def test_midi_object_get_name_convenience(self):
+        """Test the generic midi_object_get_name function"""
+        num_devices = cm.midi_get_number_of_devices()
+        if num_devices > 0:
+            device = cm.midi_get_device(0)
+            try:
+                name = cm.midi_object_get_name(device)
+                assert isinstance(name, str)
+                assert len(name) > 0
+                print(f"Object name: {name}")
+            except RuntimeError:
+                pass
+
 
 class TestCoreMIDIData:
     """Test CoreMIDI data transmission"""

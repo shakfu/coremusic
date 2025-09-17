@@ -1,6 +1,9 @@
+from . cimport corefoundation as cf
+from . cimport coreaudiotypes as ct
+from . cimport audiotoolbox as at
 from . cimport capi as ca
 from . cimport audio_player as ap
-from . cimport coremidi as midi
+from . cimport coremidi as cm
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy, memset
@@ -42,13 +45,13 @@ def audio_hardware_destroy_aggregate_device(int in_device_id) -> int:
 # Audio File Functions
 def audio_file_open_url(str file_path, int permissions=1, int file_type_hint=0):
     """Open an audio file at the given path"""
-    cdef ca.AudioFileID audio_file
-    cdef ca.CFURLRef url_ref
+    cdef at.AudioFileID audio_file
+    cdef cf.CFURLRef url_ref
     cdef bytes path_bytes = file_path.encode('utf-8')
     
-    url_ref = ca.CFURLCreateFromFileSystemRepresentation(
-        ca.kCFAllocatorDefault, 
-        <const ca.UInt8*>path_bytes, 
+    url_ref = cf.CFURLCreateFromFileSystemRepresentation(
+        cf.kCFAllocatorDefault, 
+        <const cf.UInt8*>path_bytes, 
         len(path_bytes), 
         False
     )
@@ -56,14 +59,14 @@ def audio_file_open_url(str file_path, int permissions=1, int file_type_hint=0):
     if not url_ref:
         raise ValueError("Could not create URL from file path")
     
-    cdef ca.OSStatus status = ca.AudioFileOpenURL(
+    cdef cf.OSStatus status = at.AudioFileOpenURL(
         url_ref, 
-        <ca.AudioFilePermissions>permissions, 
-        <ca.AudioFileTypeID>file_type_hint, 
+        <at.AudioFilePermissions>permissions, 
+        <at.AudioFileTypeID>file_type_hint, 
         &audio_file
     )
     
-    ca.CFRelease(url_ref)
+    cf.CFRelease(url_ref)
     
     if status != 0:
         raise RuntimeError(f"AudioFileOpenURL failed with status: {status}")
@@ -73,8 +76,8 @@ def audio_file_open_url(str file_path, int permissions=1, int file_type_hint=0):
 
 def audio_file_close(long audio_file_id):
     """Close an audio file"""
-    cdef ca.AudioFileID audio_file = <ca.AudioFileID>audio_file_id
-    cdef ca.OSStatus status = ca.AudioFileClose(audio_file)
+    cdef at.AudioFileID audio_file = <at.AudioFileID>audio_file_id
+    cdef cf.OSStatus status = ca.AudioFileClose(audio_file)
     if status != 0:
         raise RuntimeError(f"AudioFileClose failed with status: {status}")
     return status
@@ -82,14 +85,14 @@ def audio_file_close(long audio_file_id):
 
 def audio_file_get_property(long audio_file_id, int property_id):
     """Get a property from an audio file"""
-    cdef ca.AudioFileID audio_file = <ca.AudioFileID>audio_file_id
-    cdef ca.UInt32 data_size = 0
-    cdef ca.UInt32 writable = 0
+    cdef at.AudioFileID audio_file = <at.AudioFileID>audio_file_id
+    cdef cf.UInt32 data_size = 0
+    cdef cf.UInt32 writable = 0
     
     # Get the size of the property data
-    cdef ca.OSStatus status = ca.AudioFileGetPropertyInfo(
+    cdef cf.OSStatus status = at.AudioFileGetPropertyInfo(
         audio_file, 
-        <ca.AudioFilePropertyID>property_id, 
+        <at.AudioFilePropertyID>property_id, 
         &data_size, 
         &writable
     )
@@ -103,9 +106,9 @@ def audio_file_get_property(long audio_file_id, int property_id):
         raise MemoryError("Could not allocate buffer for property data")
     
     try:
-        status = ca.AudioFileGetProperty(
+        status = at.AudioFileGetProperty(
             audio_file, 
-            <ca.AudioFilePropertyID>property_id, 
+            <at.AudioFilePropertyID>property_id, 
             &data_size, 
             buffer
         )
@@ -122,15 +125,15 @@ def audio_file_get_property(long audio_file_id, int property_id):
 
 def audio_file_read_packets(long audio_file_id, long start_packet, int num_packets):
     """Read packets from an audio file"""
-    cdef ca.AudioFileID audio_file = <ca.AudioFileID>audio_file_id
-    cdef ca.UInt32 num_bytes = 0
-    cdef ca.UInt32 packet_count = <ca.UInt32>num_packets
+    cdef at.AudioFileID audio_file = <at.AudioFileID>audio_file_id
+    cdef cf.UInt32 num_bytes = 0
+    cdef cf.UInt32 packet_count = <cf.UInt32>num_packets
     
     # First get the maximum packet size to determine buffer size
-    cdef ca.UInt32 max_packet_size = 0
-    cdef ca.UInt32 prop_size = sizeof(ca.UInt32)
+    cdef cf.UInt32 max_packet_size = 0
+    cdef cf.UInt32 prop_size = sizeof(cf.UInt32)
     
-    cdef ca.OSStatus status = ca.AudioFileGetProperty(
+    cdef cf.OSStatus status = at.AudioFileGetProperty(
         audio_file,
         ca.kAudioFilePropertyMaximumPacketSize,
         &prop_size,
@@ -141,7 +144,7 @@ def audio_file_read_packets(long audio_file_id, long start_packet, int num_packe
         raise RuntimeError(f"Could not get maximum packet size: {status}")
     
     # Allocate buffer
-    cdef ca.UInt32 buffer_size = max_packet_size * packet_count
+    cdef cf.UInt32 buffer_size = max_packet_size * packet_count
     cdef char* buffer = <char*>malloc(buffer_size)
     if not buffer:
         raise MemoryError("Could not allocate buffer for packet data")
@@ -153,7 +156,7 @@ def audio_file_read_packets(long audio_file_id, long start_packet, int num_packe
             False,  # don't use cache
             &num_bytes,
             NULL,   # no packet descriptions
-            <ca.SInt64>start_packet,
+            <cf.SInt64>start_packet,
             &packet_count,
             buffer
         )
@@ -169,27 +172,27 @@ def audio_file_read_packets(long audio_file_id, long start_packet, int num_packe
 
 # AudioFileStream Functions
 # Dummy callback functions to avoid NULL pointer issues
-cdef void dummy_property_listener(void* client_data, ca.AudioFileStreamID stream,
-                                 ca.AudioFileStreamPropertyID property_id,
-                                 ca.AudioFileStreamPropertyFlags* flags) noexcept:
+cdef void dummy_property_listener(void* client_data, at.AudioFileStreamID stream,
+                                 at.AudioFileStreamPropertyID property_id,
+                                 at.AudioFileStreamPropertyFlags* flags) noexcept:
     """Dummy property listener callback"""
     pass
 
-cdef void dummy_packets_callback(void* client_data, ca.UInt32 num_bytes,
-                                ca.UInt32 num_packets, const void* input_data,
-                                ca.AudioStreamPacketDescription* packet_descriptions) noexcept:
+cdef void dummy_packets_callback(void* client_data, cf.UInt32 num_bytes,
+                                cf.UInt32 num_packets, const void* input_data,
+                                ct.AudioStreamPacketDescription* packet_descriptions) noexcept:
     """Dummy packets callback"""
     pass
 
 def audio_file_stream_open(file_type_hint=0):
     """Open an AudioFileStream parser for streaming audio data"""
-    cdef ca.AudioFileStreamID stream_id
+    cdef at.AudioFileStreamID stream_id
 
-    cdef ca.OSStatus status = ca.AudioFileStreamOpen(
+    cdef cf.OSStatus status = ca.AudioFileStreamOpen(
         NULL,  # client data
         dummy_property_listener,  # property listener proc
         dummy_packets_callback,  # packets proc
-        <ca.AudioFileTypeID>file_type_hint,
+        <at.AudioFileTypeID>file_type_hint,
         &stream_id
     )
 
@@ -201,8 +204,8 @@ def audio_file_stream_open(file_type_hint=0):
 
 def audio_file_stream_close(long stream_id):
     """Close an AudioFileStream parser"""
-    cdef ca.AudioFileStreamID stream = <ca.AudioFileStreamID>stream_id
-    cdef ca.OSStatus status = ca.AudioFileStreamClose(stream)
+    cdef at.AudioFileStreamID stream = <at.AudioFileStreamID>stream_id
+    cdef cf.OSStatus status = ca.AudioFileStreamClose(stream)
     if status != 0:
         raise RuntimeError(f"AudioFileStreamClose failed with status: {status}")
     return status
@@ -210,11 +213,11 @@ def audio_file_stream_close(long stream_id):
 
 def audio_file_stream_parse_bytes(long stream_id, bytes data, int flags=0):
     """Parse bytes through the AudioFileStream parser"""
-    cdef ca.AudioFileStreamID stream = <ca.AudioFileStreamID>stream_id
+    cdef at.AudioFileStreamID stream = <at.AudioFileStreamID>stream_id
     cdef char* data_ptr = <char*>data
-    cdef ca.UInt32 data_size = len(data)
+    cdef cf.UInt32 data_size = len(data)
 
-    cdef ca.OSStatus status = ca.AudioFileStreamParseBytes(
+    cdef cf.OSStatus status = ca.AudioFileStreamParseBytes(
         stream,
         data_size,
         <const void*>data_ptr,
@@ -229,14 +232,14 @@ def audio_file_stream_parse_bytes(long stream_id, bytes data, int flags=0):
 
 def audio_file_stream_get_property(long stream_id, int property_id):
     """Get a property from an AudioFileStream parser"""
-    cdef ca.AudioFileStreamID stream = <ca.AudioFileStreamID>stream_id
-    cdef ca.UInt32 data_size = 0
-    cdef ca.Boolean writable = 0
+    cdef at.AudioFileStreamID stream = <at.AudioFileStreamID>stream_id
+    cdef cf.UInt32 data_size = 0
+    cdef cf.Boolean writable = 0
 
     # Get the size of the property data
-    cdef ca.OSStatus status = ca.AudioFileStreamGetPropertyInfo(
+    cdef cf.OSStatus status = ca.AudioFileStreamGetPropertyInfo(
         stream,
-        <ca.AudioFileStreamPropertyID>property_id,
+        <at.AudioFileStreamPropertyID>property_id,
         &data_size,
         &writable
     )
@@ -249,12 +252,12 @@ def audio_file_stream_get_property(long stream_id, int property_id):
     if not buffer:
         raise MemoryError("Could not allocate memory for property data")
 
-    cdef ca.UInt32 actual_size = data_size
+    cdef cf.UInt32 actual_size = data_size
     cdef ca.AudioStreamBasicDescription* asbd
     try:
         status = ca.AudioFileStreamGetProperty(
             stream,
-            <ca.AudioFileStreamPropertyID>property_id,
+            <at.AudioFileStreamPropertyID>property_id,
             &actual_size,
             buffer
         )
@@ -284,13 +287,13 @@ def audio_file_stream_get_property(long stream_id, int property_id):
                            ca.kAudioFileStreamProperty_BitRate]:
             # Return scalar values
             if data_size == 4:
-                return (<ca.UInt32*>buffer)[0]
+                return (<cf.UInt32*>buffer)[0]
             elif data_size == 8:
-                return (<ca.UInt64*>buffer)[0]
+                return (<cf.UInt64*>buffer)[0]
         elif property_id in [ca.kAudioFileStreamProperty_AudioDataByteCount,
                            ca.kAudioFileStreamProperty_DataOffset]:
             # Return 64-bit values
-            return (<ca.UInt64*>buffer)[0]
+            return (<cf.UInt64*>buffer)[0]
         else:
             # Return raw bytes for other properties
             return buffer[:actual_size]
@@ -301,14 +304,14 @@ def audio_file_stream_get_property(long stream_id, int property_id):
 
 def audio_file_stream_seek(long stream_id, long packet_offset):
     """Seek to a packet offset in the AudioFileStream"""
-    cdef ca.AudioFileStreamID stream = <ca.AudioFileStreamID>stream_id
-    cdef ca.SInt64 byte_offset = 0
+    cdef at.AudioFileStreamID stream = <at.AudioFileStreamID>stream_id
+    cdef cf.SInt64 byte_offset = 0
     cdef ca.AudioFileStreamSeekFlags flags
     flags = <ca.AudioFileStreamSeekFlags>0
 
-    cdef ca.OSStatus status = ca.AudioFileStreamSeek(
+    cdef cf.OSStatus status = ca.AudioFileStreamSeek(
         stream,
-        <ca.SInt64>packet_offset,
+        <cf.SInt64>packet_offset,
         &byte_offset,
         &flags
     )
@@ -324,17 +327,17 @@ def audio_file_stream_seek(long stream_id, long packet_offset):
 
 
 # Audio Queue Functions  
-cdef void audio_queue_output_callback(void* user_data, ca.AudioQueueRef queue, ca.AudioQueueBufferRef buffer) noexcept:
+cdef void audio_queue_output_callback(void* user_data, at.AudioQueueRef queue, at.AudioQueueBufferRef buffer) noexcept:
     """C callback function for audio queue output"""
     # This will be called by CoreAudio when it needs more audio data
     # For now, we'll just enqueue the buffer again to keep playing
-    cdef ca.OSStatus status = ca.AudioQueueEnqueueBuffer(queue, buffer, 0, NULL)
+    cdef cf.OSStatus status = ca.AudioQueueEnqueueBuffer(queue, buffer, 0, NULL)
 
 
 def audio_queue_new_output(audio_format):
     """Create a new audio output queue"""
     cdef ca.AudioStreamBasicDescription format
-    cdef ca.AudioQueueRef queue
+    cdef at.AudioQueueRef queue
     
     # Set up the audio format
     format.mSampleRate = audio_format.get('sample_rate', 44100.0)
@@ -348,7 +351,7 @@ def audio_queue_new_output(audio_format):
     format.mBitsPerChannel = audio_format.get('bits_per_channel', 16)
     format.mReserved = 0
     
-    cdef ca.OSStatus status = ca.AudioQueueNewOutput(
+    cdef cf.OSStatus status = ca.AudioQueueNewOutput(
         &format,
         audio_queue_output_callback,
         NULL,  # user data
@@ -366,12 +369,12 @@ def audio_queue_new_output(audio_format):
 
 def audio_queue_allocate_buffer(long queue_id, int buffer_size):
     """Allocate a buffer for an audio queue"""
-    cdef ca.AudioQueueRef queue = <ca.AudioQueueRef>queue_id
-    cdef ca.AudioQueueBufferRef buffer
+    cdef at.AudioQueueRef queue = <at.AudioQueueRef>queue_id
+    cdef at.AudioQueueBufferRef buffer
     
-    cdef ca.OSStatus status = ca.AudioQueueAllocateBuffer(
+    cdef cf.OSStatus status = ca.AudioQueueAllocateBuffer(
         queue, 
-        <ca.UInt32>buffer_size, 
+        <cf.UInt32>buffer_size, 
         &buffer
     )
     
@@ -383,10 +386,10 @@ def audio_queue_allocate_buffer(long queue_id, int buffer_size):
 
 def audio_queue_enqueue_buffer(long queue_id, long buffer_id):
     """Enqueue a buffer to an audio queue"""
-    cdef ca.AudioQueueRef queue = <ca.AudioQueueRef>queue_id
-    cdef ca.AudioQueueBufferRef buffer = <ca.AudioQueueBufferRef>buffer_id
+    cdef at.AudioQueueRef queue = <at.AudioQueueRef>queue_id
+    cdef at.AudioQueueBufferRef buffer = <at.AudioQueueBufferRef>buffer_id
     
-    cdef ca.OSStatus status = ca.AudioQueueEnqueueBuffer(queue, buffer, 0, NULL)
+    cdef cf.OSStatus status = ca.AudioQueueEnqueueBuffer(queue, buffer, 0, NULL)
     
     if status != 0:
         raise RuntimeError(f"AudioQueueEnqueueBuffer failed with status: {status}")
@@ -396,9 +399,9 @@ def audio_queue_enqueue_buffer(long queue_id, long buffer_id):
 
 def audio_queue_start(long queue_id):
     """Start an audio queue"""
-    cdef ca.AudioQueueRef queue = <ca.AudioQueueRef>queue_id
+    cdef at.AudioQueueRef queue = <at.AudioQueueRef>queue_id
     
-    cdef ca.OSStatus status = ca.AudioQueueStart(queue, NULL)
+    cdef cf.OSStatus status = ca.AudioQueueStart(queue, NULL)
     
     if status != 0:
         raise RuntimeError(f"AudioQueueStart failed with status: {status}")
@@ -408,9 +411,9 @@ def audio_queue_start(long queue_id):
 
 def audio_queue_stop(long queue_id, bint immediate=True):
     """Stop an audio queue"""
-    cdef ca.AudioQueueRef queue = <ca.AudioQueueRef>queue_id
+    cdef at.AudioQueueRef queue = <at.AudioQueueRef>queue_id
     
-    cdef ca.OSStatus status = ca.AudioQueueStop(queue, immediate)
+    cdef cf.OSStatus status = ca.AudioQueueStop(queue, immediate)
     
     if status != 0:
         raise RuntimeError(f"AudioQueueStop failed with status: {status}")
@@ -420,9 +423,9 @@ def audio_queue_stop(long queue_id, bint immediate=True):
 
 def audio_queue_dispose(long queue_id, bint immediate=True):
     """Dispose of an audio queue"""
-    cdef ca.AudioQueueRef queue = <ca.AudioQueueRef>queue_id
+    cdef at.AudioQueueRef queue = <at.AudioQueueRef>queue_id
     
-    cdef ca.OSStatus status = ca.AudioQueueDispose(queue, immediate)
+    cdef cf.OSStatus status = ca.AudioQueueDispose(queue, immediate)
     
     if status != 0:
         raise RuntimeError(f"AudioQueueDispose failed with status: {status}")
@@ -477,7 +480,7 @@ def audio_component_instance_new(long component_id):
     cdef ca.AudioComponent component = <ca.AudioComponent>component_id
     cdef ca.AudioComponentInstance instance
     
-    cdef ca.OSStatus status = ca.AudioComponentInstanceNew(component, &instance)
+    cdef cf.OSStatus status = ca.AudioComponentInstanceNew(component, &instance)
     if status != 0:
         raise RuntimeError(f"AudioComponentInstanceNew failed with status: {status}")
     
@@ -488,7 +491,7 @@ def audio_component_instance_dispose(long instance_id):
     """Dispose of an audio component instance"""
     cdef ca.AudioComponentInstance instance = <ca.AudioComponentInstance>instance_id
     
-    cdef ca.OSStatus status = ca.AudioComponentInstanceDispose(instance)
+    cdef cf.OSStatus status = ca.AudioComponentInstanceDispose(instance)
     if status != 0:
         raise RuntimeError(f"AudioComponentInstanceDispose failed with status: {status}")
     
@@ -500,7 +503,7 @@ def audio_unit_initialize(long audio_unit_id):
     """Initialize an audio unit"""
     cdef ca.AudioUnit unit = <ca.AudioUnit>audio_unit_id
     
-    cdef ca.OSStatus status = ca.AudioUnitInitialize(unit)
+    cdef cf.OSStatus status = ca.AudioUnitInitialize(unit)
     if status != 0:
         raise RuntimeError(f"AudioUnitInitialize failed with status: {status}")
     
@@ -511,7 +514,7 @@ def audio_unit_uninitialize(long audio_unit_id):
     """Uninitialize an audio unit"""
     cdef ca.AudioUnit unit = <ca.AudioUnit>audio_unit_id
     
-    cdef ca.OSStatus status = ca.AudioUnitUninitialize(unit)
+    cdef cf.OSStatus status = ca.AudioUnitUninitialize(unit)
     if status != 0:
         raise RuntimeError(f"AudioUnitUninitialize failed with status: {status}")
     
@@ -521,7 +524,7 @@ def audio_unit_uninitialize(long audio_unit_id):
 def audio_unit_set_property(long audio_unit_id, int property_id, int scope, int element, data):
     """Set a property on an audio unit"""
     cdef ca.AudioUnit unit = <ca.AudioUnit>audio_unit_id
-    cdef ca.OSStatus status
+    cdef cf.OSStatus status
     
     if isinstance(data, bytes):
         # Handle raw bytes data
@@ -530,7 +533,7 @@ def audio_unit_set_property(long audio_unit_id, int property_id, int scope, int 
                                          <ca.AudioUnitScope>scope,
                                          <ca.AudioUnitElement>element,
                                          <const char*>data,
-                                         <ca.UInt32>len(data))
+                                         <cf.UInt32>len(data))
     else:
         raise ValueError("data must be bytes")
     
@@ -543,9 +546,9 @@ def audio_unit_set_property(long audio_unit_id, int property_id, int scope, int 
 def audio_unit_get_property(long audio_unit_id, int property_id, int scope, int element):
     """Get a property from an audio unit"""
     cdef ca.AudioUnit unit = <ca.AudioUnit>audio_unit_id
-    cdef ca.UInt32 data_size = 0
-    cdef ca.Boolean writable = 0
-    cdef ca.OSStatus status
+    cdef cf.UInt32 data_size = 0
+    cdef cf.Boolean writable = 0
+    cdef cf.OSStatus status
     
     # Get the size of the property
     status = ca.AudioUnitGetPropertyInfo(unit,
@@ -583,7 +586,7 @@ def audio_output_unit_start(long audio_unit_id):
     """Start an output audio unit"""
     cdef ca.AudioUnit unit = <ca.AudioUnit>audio_unit_id
     
-    cdef ca.OSStatus status = ca.AudioOutputUnitStart(unit)
+    cdef cf.OSStatus status = ca.AudioOutputUnitStart(unit)
     if status != 0:
         raise RuntimeError(f"AudioOutputUnitStart failed with status: {status}")
     
@@ -594,7 +597,7 @@ def audio_output_unit_stop(long audio_unit_id):
     """Stop an output audio unit"""
     cdef ca.AudioUnit unit = <ca.AudioUnit>audio_unit_id
     
-    cdef ca.OSStatus status = ca.AudioOutputUnitStop(unit)
+    cdef cf.OSStatus status = ca.AudioOutputUnitStop(unit)
     if status != 0:
         raise RuntimeError(f"AudioOutputUnitStop failed with status: {status}")
     
@@ -687,9 +690,9 @@ cdef class AudioPlayer:
     def load_file(self, str file_path):
         """Load an audio file for playback"""
         cdef bytes path_bytes = file_path.encode('utf-8')
-        cdef ca.CFURLRef url_ref = ca.CFURLCreateFromFileSystemRepresentation(
-            ca.kCFAllocatorDefault,
-            <const ca.UInt8*>path_bytes,
+        cdef cf.CFURLRef url_ref = cf.CFURLCreateFromFileSystemRepresentation(
+            cf.kCFAllocatorDefault,
+            <const cf.UInt8*>path_bytes,
             len(path_bytes),
             False
         )
@@ -697,8 +700,8 @@ cdef class AudioPlayer:
         if url_ref == NULL:
             raise ValueError(f"Could not create URL for file: {file_path}")
         
-        cdef ca.OSStatus result = ap.LoadAudioFile(url_ref, &self.audio_output.playerData)
-        ca.CFRelease(url_ref)
+        cdef cf.OSStatus result = ap.LoadAudioFile(url_ref, &self.audio_output.playerData)
+        cf.CFRelease(url_ref)
         
         if result != 0:  # noErr is 0
             raise RuntimeError(f"Failed to load audio file: {result}")
@@ -707,7 +710,7 @@ cdef class AudioPlayer:
     
     def setup_output(self):
         """Setup the audio output unit"""
-        cdef ca.OSStatus result = ap.SetupAudioOutput(&self.audio_output)
+        cdef cf.OSStatus result = ap.SetupAudioOutput(&self.audio_output)
         if result != 0:  # noErr is 0
             raise RuntimeError(f"Failed to setup audio output: {result}")
         self.initialized = True
@@ -718,7 +721,7 @@ cdef class AudioPlayer:
         if not self.initialized:
             raise RuntimeError("AudioPlayer not initialized. Call setup_output() first.")
         
-        cdef ca.OSStatus result = ap.StartAudioOutput(&self.audio_output)
+        cdef cf.OSStatus result = ap.StartAudioOutput(&self.audio_output)
         if result != 0:  # noErr is 0
             raise RuntimeError(f"Failed to start audio output: {result}")
         return result
@@ -728,7 +731,7 @@ cdef class AudioPlayer:
         if not self.initialized:
             return 0  # noErr is 0
             
-        cdef ca.OSStatus result = ap.StopAudioOutput(&self.audio_output)
+        cdef cf.OSStatus result = ap.StopAudioOutput(&self.audio_output)
         if result != 0:  # noErr is 0
             raise RuntimeError(f"Failed to stop audio output: {result}")
         return result
@@ -871,12 +874,12 @@ def get_audio_file_stream_error_discontinuity_cant_recover():
 def audio_services_create_system_sound_id(str file_path):
     """Create a SystemSoundID from an audio file path"""
     cdef ca.SystemSoundID sound_id
-    cdef ca.CFURLRef url_ref
+    cdef cf.CFURLRef url_ref
     cdef bytes path_bytes = file_path.encode('utf-8')
 
-    url_ref = ca.CFURLCreateFromFileSystemRepresentation(
-        ca.kCFAllocatorDefault,
-        <const ca.UInt8*>path_bytes,
+    url_ref = cf.CFURLCreateFromFileSystemRepresentation(
+        cf.kCFAllocatorDefault,
+        <const cf.UInt8*>path_bytes,
         len(path_bytes),
         False
     )
@@ -884,12 +887,12 @@ def audio_services_create_system_sound_id(str file_path):
     if not url_ref:
         raise ValueError("Could not create URL from file path")
 
-    cdef ca.OSStatus status = ca.AudioServicesCreateSystemSoundID(
+    cdef cf.OSStatus status = ca.AudioServicesCreateSystemSoundID(
         url_ref,
         &sound_id
     )
 
-    ca.CFRelease(url_ref)
+    cf.CFRelease(url_ref)
 
     if status != 0:
         raise RuntimeError(f"AudioServicesCreateSystemSoundID failed with status: {status}")
@@ -900,7 +903,7 @@ def audio_services_create_system_sound_id(str file_path):
 def audio_services_dispose_system_sound_id(long sound_id):
     """Dispose a SystemSoundID"""
     cdef ca.SystemSoundID system_sound_id = <ca.SystemSoundID>sound_id
-    cdef ca.OSStatus status = ca.AudioServicesDisposeSystemSoundID(system_sound_id)
+    cdef cf.OSStatus status = ca.AudioServicesDisposeSystemSoundID(system_sound_id)
 
     if status != 0:
         raise RuntimeError(f"AudioServicesDisposeSystemSoundID failed with status: {status}")
@@ -922,15 +925,15 @@ def audio_services_play_alert_sound(long sound_id):
 
 def audio_services_get_property(int property_id, long specifier_value=0):
     """Get an AudioServices property"""
-    cdef ca.AudioServicesPropertyID prop_id = <ca.AudioServicesPropertyID>property_id
-    cdef ca.UInt32 data_size = 0
-    cdef ca.Boolean writable = False
-    cdef ca.UInt32 specifier = <ca.UInt32>specifier_value
+    cdef at.AudioServicesPropertyID prop_id = <at.AudioServicesPropertyID>property_id
+    cdef cf.UInt32 data_size = 0
+    cdef cf.Boolean writable = False
+    cdef cf.UInt32 specifier = <cf.UInt32>specifier_value
 
     # Get property info first
-    cdef ca.OSStatus status = ca.AudioServicesGetPropertyInfo(
+    cdef cf.OSStatus status = at.AudioServicesGetPropertyInfo(
         prop_id,
-        sizeof(ca.UInt32) if specifier_value != 0 else 0,
+        sizeof(cf.UInt32) if specifier_value != 0 else 0,
         &specifier if specifier_value != 0 else NULL,
         &data_size,
         &writable
@@ -941,14 +944,14 @@ def audio_services_get_property(int property_id, long specifier_value=0):
 
     # Allocate buffer and get property data
     cdef char* buffer = <char*>malloc(data_size)
-    cdef ca.UInt32 actual_size = data_size
+    cdef cf.UInt32 actual_size = data_size
     if not buffer:
         raise MemoryError("Could not allocate memory for property data")
 
     try:
-        status = ca.AudioServicesGetProperty(
+        status = at.AudioServicesGetProperty(
             prop_id,
-            sizeof(ca.UInt32) if specifier_value != 0 else 0,
+            sizeof(cf.UInt32) if specifier_value != 0 else 0,
             &specifier if specifier_value != 0 else NULL,
             &actual_size,
             buffer
@@ -959,7 +962,7 @@ def audio_services_get_property(int property_id, long specifier_value=0):
 
         # Return property value based on size
         if data_size == 4:
-            return (<ca.UInt32*>buffer)[0]
+            return (<cf.UInt32*>buffer)[0]
         else:
             return buffer[:actual_size]
 
@@ -969,18 +972,18 @@ def audio_services_get_property(int property_id, long specifier_value=0):
 
 def audio_services_set_property(int property_id, data, long specifier_value=0):
     """Set an AudioServices property"""
-    cdef ca.AudioServicesPropertyID prop_id = <ca.AudioServicesPropertyID>property_id
-    cdef ca.UInt32 specifier = <ca.UInt32>specifier_value
-    cdef ca.UInt32 uint_data
+    cdef at.AudioServicesPropertyID prop_id = <at.AudioServicesPropertyID>property_id
+    cdef cf.UInt32 specifier = <cf.UInt32>specifier_value
+    cdef cf.UInt32 uint_data
     cdef bytes byte_data
     cdef const void* data_ptr
-    cdef ca.UInt32 data_size
+    cdef cf.UInt32 data_size
 
     # Handle different data types
     if isinstance(data, int):
-        uint_data = <ca.UInt32>data
+        uint_data = <cf.UInt32>data
         data_ptr = <const void*>&uint_data
-        data_size = sizeof(ca.UInt32)
+        data_size = sizeof(cf.UInt32)
     elif isinstance(data, bytes):
         byte_data = data
         data_ptr = <const void*>byte_data
@@ -988,9 +991,9 @@ def audio_services_set_property(int property_id, data, long specifier_value=0):
     else:
         raise TypeError("Data must be int or bytes")
 
-    cdef ca.OSStatus status = ca.AudioServicesSetProperty(
+    cdef cf.OSStatus status = at.AudioServicesSetProperty(
         prop_id,
-        sizeof(ca.UInt32) if specifier_value != 0 else 0,
+        sizeof(cf.UInt32) if specifier_value != 0 else 0,
         &specifier if specifier_value != 0 else NULL,
         data_size,
         data_ptr
@@ -1004,43 +1007,43 @@ def audio_services_set_property(int property_id, data, long specifier_value=0):
 
 # AudioServices constant getter functions
 def get_audio_services_no_error():
-    return ca.kAudioServicesNoError
+    return at.kAudioServicesNoError
 
 def get_audio_services_unsupported_property_error():
-    return ca.kAudioServicesUnsupportedPropertyError
+    return at.kAudioServicesUnsupportedPropertyError
 
 def get_audio_services_bad_property_size_error():
-    return ca.kAudioServicesBadPropertySizeError
+    return at.kAudioServicesBadPropertySizeError
 
 def get_audio_services_bad_specifier_size_error():
-    return ca.kAudioServicesBadSpecifierSizeError
+    return at.kAudioServicesBadSpecifierSizeError
 
 def get_audio_services_system_sound_unspecified_error():
-    return ca.kAudioServicesSystemSoundUnspecifiedError
+    return at.kAudioServicesSystemSoundUnspecifiedError
 
 def get_audio_services_system_sound_client_timed_out_error():
-    return ca.kAudioServicesSystemSoundClientTimedOutError
+    return at.kAudioServicesSystemSoundClientTimedOutError
 
 def get_audio_services_system_sound_exceeded_maximum_duration_error():
-    return ca.kAudioServicesSystemSoundExceededMaximumDurationError
+    return at.kAudioServicesSystemSoundExceededMaximumDurationError
 
 def get_system_sound_id_user_preferred_alert():
-    return ca.kSystemSoundID_UserPreferredAlert
+    return at.kSystemSoundID_UserPreferredAlert
 
 def get_system_sound_id_flash_screen():
-    return ca.kSystemSoundID_FlashScreen
+    return at.kSystemSoundID_FlashScreen
 
 def get_system_sound_id_vibrate():
-    return ca.kSystemSoundID_Vibrate
+    return at.kSystemSoundID_Vibrate
 
 def get_user_preferred_alert():
-    return ca.kUserPreferredAlert
+    return at.kUserPreferredAlert
 
 def get_audio_services_property_is_ui_sound():
-    return ca.kAudioServicesPropertyIsUISound
+    return at.kAudioServicesPropertyIsUISound
 
 def get_audio_services_property_complete_playback_if_app_dies():
-    return ca.kAudioServicesPropertyCompletePlaybackIfAppDies
+    return at.kAudioServicesPropertyCompletePlaybackIfAppDies
 
 
 def test_error() -> int:
@@ -1061,17 +1064,17 @@ def music_device_midi_event(long unit, int status, int data1, int data2, int off
         offset_sample_frame: Sample offset for scheduling (default 0)
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If the MIDI event fails
     """
-    cdef ca.OSStatus status_result = ca.MusicDeviceMIDIEvent(
-        <ca.MusicDeviceComponent>unit,
-        <ca.UInt32>status,
-        <ca.UInt32>data1,
-        <ca.UInt32>data2,
-        <ca.UInt32>offset_sample_frame)
+    cdef cf.OSStatus status_result = at.MusicDeviceMIDIEvent(
+        <at.MusicDeviceComponent>unit,
+        <cf.UInt32>status,
+        <cf.UInt32>data1,
+        <cf.UInt32>data2,
+        <cf.UInt32>offset_sample_frame)
 
     if status_result != 0:
         raise RuntimeError(f"MusicDeviceMIDIEvent failed with status: {status_result}")
@@ -1085,16 +1088,16 @@ def music_device_sysex(long unit, bytes data):
         data: Complete MIDI SysEx message including F0 and F7 bytes
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If the SysEx message fails
     """
-    cdef const ca.UInt8* data_ptr = <const ca.UInt8*><char*>data
-    cdef ca.UInt32 length = len(data)
+    cdef const cf.UInt8* data_ptr = <const cf.UInt8*><char*>data
+    cdef cf.UInt32 length = len(data)
 
-    cdef ca.OSStatus status = ca.MusicDeviceSysEx(
-        <ca.MusicDeviceComponent>unit,
+    cdef cf.OSStatus status = ca.MusicDeviceSysEx(
+        <at.MusicDeviceComponent>unit,
         data_ptr,
         length)
 
@@ -1120,19 +1123,19 @@ def music_device_start_note(long unit, int instrument_id, int group_id, float pi
     Raises:
         RuntimeError: If starting the note fails
     """
-    cdef ca.NoteInstanceID note_instance_id
-    cdef ca.MusicDeviceNoteParams* params
-    cdef ca.UInt32 arg_count = 2  # pitch + velocity
+    cdef at.NoteInstanceID note_instance_id
+    cdef at.MusicDeviceNoteParams* params
+    cdef cf.UInt32 arg_count = 2  # pitch + velocity
     cdef int num_controls = 0
-    cdef ca.OSStatus status
+    cdef cf.OSStatus status
 
     if controls:
         num_controls = len(controls)
         arg_count += num_controls
 
     # Allocate memory for note parameters
-    cdef size_t params_size = sizeof(ca.MusicDeviceNoteParams) + (num_controls - 1) * sizeof(ca.NoteParamsControlValue)
-    params = <ca.MusicDeviceNoteParams*>malloc(params_size)
+    cdef size_t params_size = sizeof(at.MusicDeviceNoteParams) + (num_controls - 1) * sizeof(ca.NoteParamsControlValue)
+    params = <at.MusicDeviceNoteParams*>malloc(params_size)
     if not params:
         raise MemoryError("Could not allocate memory for note parameters")
 
@@ -1144,15 +1147,15 @@ def music_device_start_note(long unit, int instrument_id, int group_id, float pi
         # Add control parameters if provided
         if controls:
             for i, (param_id, value) in enumerate(controls):
-                params.mControls[i].mID = <ca.AudioUnitParameterID>param_id
-                params.mControls[i].mValue = <ca.AudioUnitParameterValue>value
+                params.mControls[i].mID = <at.AudioUnitParameterID>param_id
+                params.mControls[i].mValue = <at.AudioUnitParameterValue>value
 
-        status = ca.MusicDeviceStartNote(
-            <ca.MusicDeviceComponent>unit,
-            <ca.MusicDeviceInstrumentID>instrument_id,
-            <ca.MusicDeviceGroupID>group_id,
+        status = at.MusicDeviceStartNote(
+            <at.MusicDeviceComponent>unit,
+            <at.MusicDeviceInstrumentID>instrument_id,
+            <at.MusicDeviceGroupID>group_id,
             &note_instance_id,
-            <ca.UInt32>offset_sample_frame,
+            <cf.UInt32>offset_sample_frame,
             params)
 
         if status != 0:
@@ -1173,16 +1176,16 @@ def music_device_stop_note(long unit, int group_id, long note_instance_id, int o
         offset_sample_frame: Sample offset for scheduling (default 0)
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If stopping the note fails
     """
-    cdef ca.OSStatus status = ca.MusicDeviceStopNote(
-        <ca.MusicDeviceComponent>unit,
-        <ca.MusicDeviceGroupID>group_id,
-        <ca.NoteInstanceID>note_instance_id,
-        <ca.UInt32>offset_sample_frame)
+    cdef cf.OSStatus status = at.MusicDeviceStopNote(
+        <at.MusicDeviceComponent>unit,
+        <at.MusicDeviceGroupID>group_id,
+        <at.NoteInstanceID>note_instance_id,
+        <cf.UInt32>offset_sample_frame)
 
     if status != 0:
         raise RuntimeError(f"MusicDeviceStopNote failed with status: {status}")
@@ -1228,35 +1231,35 @@ def create_music_device_note_params(float pitch, float velocity, list controls):
 
 def get_music_note_event_use_group_instrument():
     """Get the constant for using the current patch for a group."""
-    return ca.kMusicNoteEvent_UseGroupInstrument
+    return at.kMusicNoteEvent_UseGroupInstrument
 
 def get_music_note_event_unused():
     """Get the constant for unused instrument ID."""
-    return ca.kMusicNoteEvent_Unused
+    return at.kMusicNoteEvent_Unused
 
 def get_music_device_range():
     """Get the MusicDevice selector range start."""
-    return ca.kMusicDeviceRange
+    return at.kMusicDeviceRange
 
 def get_music_device_midi_event_select():
     """Get the MusicDevice MIDI event selector."""
-    return ca.kMusicDeviceMIDIEventSelect
+    return at.kMusicDeviceMIDIEventSelect
 
 def get_music_device_sysex_select():
     """Get the MusicDevice SysEx selector."""
-    return ca.kMusicDeviceSysExSelect
+    return at.kMusicDeviceSysExSelect
 
 def get_music_device_start_note_select():
     """Get the MusicDevice start note selector."""
-    return ca.kMusicDeviceStartNoteSelect
+    return at.kMusicDeviceStartNoteSelect
 
 def get_music_device_stop_note_select():
     """Get the MusicDevice stop note selector."""
-    return ca.kMusicDeviceStopNoteSelect
+    return at.kMusicDeviceStopNoteSelect
 
 def get_music_device_midi_event_list_select():
     """Get the MusicDevice MIDI event list selector."""
-    return ca.kMusicDeviceMIDIEventListSelect
+    return at.kMusicDeviceMIDIEventListSelect
 
 # Helper functions for MIDI data
 
@@ -1344,8 +1347,8 @@ def new_music_player():
     Raises:
         RuntimeError: If player creation fails
     """
-    cdef ca.MusicPlayer player
-    cdef ca.OSStatus status = ca.NewMusicPlayer(&player)
+    cdef at.MusicPlayer player
+    cdef cf.OSStatus status = at.NewMusicPlayer(&player)
 
     if status != 0:
         raise RuntimeError(f"NewMusicPlayer failed with status: {status}")
@@ -1358,12 +1361,12 @@ def dispose_music_player(long player):
         player: The MusicPlayer handle to dispose
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If disposal fails
     """
-    cdef ca.OSStatus status = ca.DisposeMusicPlayer(<ca.MusicPlayer>player)
+    cdef cf.OSStatus status = at.DisposeMusicPlayer(<at.MusicPlayer>player)
 
     if status != 0:
         raise RuntimeError(f"DisposeMusicPlayer failed with status: {status}")
@@ -1377,13 +1380,13 @@ def music_player_set_sequence(long player, long sequence):
         sequence: The MusicSequence handle (or 0 for NULL)
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If setting sequence fails
     """
-    cdef ca.MusicSequence seq = <ca.MusicSequence>sequence if sequence != 0 else NULL
-    cdef ca.OSStatus status = ca.MusicPlayerSetSequence(<ca.MusicPlayer>player, seq)
+    cdef at.MusicSequence seq = <at.MusicSequence>sequence if sequence != 0 else NULL
+    cdef cf.OSStatus status = at.MusicPlayerSetSequence(<at.MusicPlayer>player, seq)
 
     if status != 0:
         raise RuntimeError(f"MusicPlayerSetSequence failed with status: {status}")
@@ -1401,8 +1404,8 @@ def music_player_get_sequence(long player):
     Raises:
         RuntimeError: If getting sequence fails
     """
-    cdef ca.MusicSequence sequence
-    cdef ca.OSStatus status = ca.MusicPlayerGetSequence(<ca.MusicPlayer>player, &sequence)
+    cdef at.MusicSequence sequence
+    cdef cf.OSStatus status = at.MusicPlayerGetSequence(<at.MusicPlayer>player, &sequence)
 
     if status != 0:
         raise RuntimeError(f"MusicPlayerGetSequence failed with status: {status}")
@@ -1416,12 +1419,12 @@ def music_player_set_time(long player, double time):
         time: The new time value in beats
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If setting time fails
     """
-    cdef ca.OSStatus status = ca.MusicPlayerSetTime(<ca.MusicPlayer>player, <ca.MusicTimeStamp>time)
+    cdef cf.OSStatus status = at.MusicPlayerSetTime(<at.MusicPlayer>player, <ca.MusicTimeStamp>time)
 
     if status != 0:
         raise RuntimeError(f"MusicPlayerSetTime failed with status: {status}")
@@ -1440,7 +1443,7 @@ def music_player_get_time(long player):
         RuntimeError: If getting time fails
     """
     cdef ca.MusicTimeStamp time
-    cdef ca.OSStatus status = ca.MusicPlayerGetTime(<ca.MusicPlayer>player, &time)
+    cdef cf.OSStatus status = at.MusicPlayerGetTime(<at.MusicPlayer>player, &time)
 
     if status != 0:
         raise RuntimeError(f"MusicPlayerGetTime failed with status: {status}")
@@ -1453,12 +1456,12 @@ def music_player_preroll(long player):
         player: The MusicPlayer handle
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If preroll fails
     """
-    cdef ca.OSStatus status = ca.MusicPlayerPreroll(<ca.MusicPlayer>player)
+    cdef cf.OSStatus status = at.MusicPlayerPreroll(<at.MusicPlayer>player)
 
     if status != 0:
         raise RuntimeError(f"MusicPlayerPreroll failed with status: {status}")
@@ -1471,12 +1474,12 @@ def music_player_start(long player):
         player: The MusicPlayer handle
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If start fails
     """
-    cdef ca.OSStatus status = ca.MusicPlayerStart(<ca.MusicPlayer>player)
+    cdef cf.OSStatus status = at.MusicPlayerStart(<at.MusicPlayer>player)
 
     if status != 0:
         raise RuntimeError(f"MusicPlayerStart failed with status: {status}")
@@ -1489,12 +1492,12 @@ def music_player_stop(long player):
         player: The MusicPlayer handle
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If stop fails
     """
-    cdef ca.OSStatus status = ca.MusicPlayerStop(<ca.MusicPlayer>player)
+    cdef cf.OSStatus status = at.MusicPlayerStop(<at.MusicPlayer>player)
 
     if status != 0:
         raise RuntimeError(f"MusicPlayerStop failed with status: {status}")
@@ -1512,8 +1515,8 @@ def music_player_is_playing(long player):
     Raises:
         RuntimeError: If check fails
     """
-    cdef ca.Boolean is_playing
-    cdef ca.OSStatus status = ca.MusicPlayerIsPlaying(<ca.MusicPlayer>player, &is_playing)
+    cdef cf.Boolean is_playing
+    cdef cf.OSStatus status = at.MusicPlayerIsPlaying(<at.MusicPlayer>player, &is_playing)
 
     if status != 0:
         raise RuntimeError(f"MusicPlayerIsPlaying failed with status: {status}")
@@ -1527,7 +1530,7 @@ def music_player_set_play_rate_scalar(long player, double scale_rate):
         scale_rate: Playback rate scalar (e.g., 2.0 = double speed, 0.5 = half speed)
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If setting rate fails
@@ -1535,7 +1538,7 @@ def music_player_set_play_rate_scalar(long player, double scale_rate):
     if scale_rate <= 0:
         raise ValueError("Scale rate must be greater than zero")
 
-    cdef ca.OSStatus status = ca.MusicPlayerSetPlayRateScalar(<ca.MusicPlayer>player, <ca.Float64>scale_rate)
+    cdef cf.OSStatus status = at.MusicPlayerSetPlayRateScalar(<at.MusicPlayer>player, <ca.Float64>scale_rate)
 
     if status != 0:
         raise RuntimeError(f"MusicPlayerSetPlayRateScalar failed with status: {status}")
@@ -1554,7 +1557,7 @@ def music_player_get_play_rate_scalar(long player):
         RuntimeError: If getting rate fails
     """
     cdef ca.Float64 scale_rate
-    cdef ca.OSStatus status = ca.MusicPlayerGetPlayRateScalar(<ca.MusicPlayer>player, &scale_rate)
+    cdef cf.OSStatus status = at.MusicPlayerGetPlayRateScalar(<at.MusicPlayer>player, &scale_rate)
 
     if status != 0:
         raise RuntimeError(f"MusicPlayerGetPlayRateScalar failed with status: {status}")
@@ -1571,8 +1574,8 @@ def new_music_sequence():
     Raises:
         RuntimeError: If sequence creation fails
     """
-    cdef ca.MusicSequence sequence
-    cdef ca.OSStatus status = ca.NewMusicSequence(&sequence)
+    cdef at.MusicSequence sequence
+    cdef cf.OSStatus status = ca.NewMusicSequence(&sequence)
 
     if status != 0:
         raise RuntimeError(f"NewMusicSequence failed with status: {status}")
@@ -1585,12 +1588,12 @@ def dispose_music_sequence(long sequence):
         sequence: The MusicSequence handle to dispose
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If disposal fails
     """
-    cdef ca.OSStatus status = ca.DisposeMusicSequence(<ca.MusicSequence>sequence)
+    cdef cf.OSStatus status = ca.DisposeMusicSequence(<at.MusicSequence>sequence)
 
     if status != 0:
         raise RuntimeError(f"DisposeMusicSequence failed with status: {status}")
@@ -1609,7 +1612,7 @@ def music_sequence_new_track(long sequence):
         RuntimeError: If track creation fails
     """
     cdef ca.MusicTrack track
-    cdef ca.OSStatus status = ca.MusicSequenceNewTrack(<ca.MusicSequence>sequence, &track)
+    cdef cf.OSStatus status = at.MusicSequenceNewTrack(<at.MusicSequence>sequence, &track)
 
     if status != 0:
         raise RuntimeError(f"MusicSequenceNewTrack failed with status: {status}")
@@ -1623,12 +1626,12 @@ def music_sequence_dispose_track(long sequence, long track):
         track: The MusicTrack handle to remove
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If track disposal fails
     """
-    cdef ca.OSStatus status = ca.MusicSequenceDisposeTrack(<ca.MusicSequence>sequence, <ca.MusicTrack>track)
+    cdef cf.OSStatus status = at.MusicSequenceDisposeTrack(<at.MusicSequence>sequence, <ca.MusicTrack>track)
 
     if status != 0:
         raise RuntimeError(f"MusicSequenceDisposeTrack failed with status: {status}")
@@ -1646,8 +1649,8 @@ def music_sequence_get_track_count(long sequence):
     Raises:
         RuntimeError: If getting track count fails
     """
-    cdef ca.UInt32 track_count
-    cdef ca.OSStatus status = ca.MusicSequenceGetTrackCount(<ca.MusicSequence>sequence, &track_count)
+    cdef cf.UInt32 track_count
+    cdef cf.OSStatus status = at.MusicSequenceGetTrackCount(<at.MusicSequence>sequence, &track_count)
 
     if status != 0:
         raise RuntimeError(f"MusicSequenceGetTrackCount failed with status: {status}")
@@ -1667,7 +1670,7 @@ def music_sequence_get_ind_track(long sequence, int track_index):
         RuntimeError: If getting track fails
     """
     cdef ca.MusicTrack track
-    cdef ca.OSStatus status = ca.MusicSequenceGetIndTrack(<ca.MusicSequence>sequence, <ca.UInt32>track_index, &track)
+    cdef cf.OSStatus status = at.MusicSequenceGetIndTrack(<at.MusicSequence>sequence, <cf.UInt32>track_index, &track)
 
     if status != 0:
         raise RuntimeError(f"MusicSequenceGetIndTrack failed with status: {status}")
@@ -1686,7 +1689,7 @@ def music_sequence_get_tempo_track(long sequence):
         RuntimeError: If getting tempo track fails
     """
     cdef ca.MusicTrack track
-    cdef ca.OSStatus status = ca.MusicSequenceGetTempoTrack(<ca.MusicSequence>sequence, &track)
+    cdef cf.OSStatus status = at.MusicSequenceGetTempoTrack(<at.MusicSequence>sequence, &track)
 
     if status != 0:
         raise RuntimeError(f"MusicSequenceGetTempoTrack failed with status: {status}")
@@ -1700,12 +1703,12 @@ def music_sequence_set_sequence_type(long sequence, int sequence_type):
         sequence_type: The sequence type (beats, seconds, or samples)
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If setting sequence type fails
     """
-    cdef ca.OSStatus status = ca.MusicSequenceSetSequenceType(<ca.MusicSequence>sequence, <ca.UInt32>sequence_type)
+    cdef cf.OSStatus status = at.MusicSequenceSetSequenceType(<at.MusicSequence>sequence, <cf.UInt32>sequence_type)
 
     if status != 0:
         raise RuntimeError(f"MusicSequenceSetSequenceType failed with status: {status}")
@@ -1723,8 +1726,8 @@ def music_sequence_get_sequence_type(long sequence):
     Raises:
         RuntimeError: If getting sequence type fails
     """
-    cdef ca.UInt32 sequence_type
-    cdef ca.OSStatus status = ca.MusicSequenceGetSequenceType(<ca.MusicSequence>sequence, &sequence_type)
+    cdef cf.UInt32 sequence_type
+    cdef cf.OSStatus status = at.MusicSequenceGetSequenceType(<at.MusicSequence>sequence, &sequence_type)
 
     if status != 0:
         raise RuntimeError(f"MusicSequenceGetSequenceType failed with status: {status}")
@@ -1740,29 +1743,29 @@ def music_sequence_file_load(long sequence, str file_path, int file_type_hint=0,
         flags: Load flags (default 0)
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If file loading fails
     """
     cdef bytes path_bytes = file_path.encode('utf-8')
-    cdef ca.CFURLRef url_ref = ca.CFURLCreateFromFileSystemRepresentation(
-        ca.kCFAllocatorDefault,
-        <const ca.UInt8*>path_bytes,
+    cdef cf.CFURLRef url_ref = cf.CFURLCreateFromFileSystemRepresentation(
+        cf.kCFAllocatorDefault,
+        <const cf.UInt8*>path_bytes,
         len(path_bytes),
         False
     )
-    cdef ca.OSStatus status
+    cdef cf.OSStatus status
 
     if not url_ref:
         raise ValueError(f"Could not create URL from file path: {file_path}")
 
     try:
-        status = ca.MusicSequenceFileLoad(
-            <ca.MusicSequence>sequence,
+        status = at.MusicSequenceFileLoad(
+            <at.MusicSequence>sequence,
             url_ref,
-            <ca.UInt32>file_type_hint,
-            <ca.UInt32>flags
+            <cf.UInt32>file_type_hint,
+            <cf.UInt32>flags
         )
 
         if status != 0:
@@ -1770,7 +1773,7 @@ def music_sequence_file_load(long sequence, str file_path, int file_type_hint=0,
         return status
 
     finally:
-        ca.CFRelease(url_ref)
+        cf.CFRelease(url_ref)
 
 # MusicTrack functions
 
@@ -1787,19 +1790,19 @@ def music_track_new_midi_note_event(long track, double timestamp, int channel, i
         duration: Note duration in beats
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If adding event fails
     """
     cdef ca.MIDINoteMessage message
-    message.channel = <ca.UInt8>(channel & 0x0F)
-    message.note = <ca.UInt8>(note & 0x7F)
-    message.velocity = <ca.UInt8>(velocity & 0x7F)
-    message.releaseVelocity = <ca.UInt8>(release_velocity & 0x7F)
+    message.channel = <cf.UInt8>(channel & 0x0F)
+    message.note = <cf.UInt8>(note & 0x7F)
+    message.velocity = <cf.UInt8>(velocity & 0x7F)
+    message.releaseVelocity = <cf.UInt8>(release_velocity & 0x7F)
     message.duration = <ca.Float32>duration
 
-    cdef ca.OSStatus status = ca.MusicTrackNewMIDINoteEvent(
+    cdef cf.OSStatus status = ca.MusicTrackNewMIDINoteEvent(
         <ca.MusicTrack>track,
         <ca.MusicTimeStamp>timestamp,
         &message
@@ -1820,18 +1823,18 @@ def music_track_new_midi_channel_event(long track, double timestamp, int status,
         data2: Second data byte
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If adding event fails
     """
     cdef ca.MIDIChannelMessage message
-    message.status = <ca.UInt8>status
-    message.data1 = <ca.UInt8>data1
-    message.data2 = <ca.UInt8>data2
+    message.status = <cf.UInt8>status
+    message.data1 = <cf.UInt8>data1
+    message.data2 = <cf.UInt8>data2
     message.reserved = 0
 
-    cdef ca.OSStatus status_result = ca.MusicTrackNewMIDIChannelEvent(
+    cdef cf.OSStatus status_result = ca.MusicTrackNewMIDIChannelEvent(
         <ca.MusicTrack>track,
         <ca.MusicTimeStamp>timestamp,
         &message
@@ -1850,7 +1853,7 @@ def music_track_new_extended_tempo_event(long track, double timestamp, double bp
         bpm: Beats per minute
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If adding event fails
@@ -1858,7 +1861,7 @@ def music_track_new_extended_tempo_event(long track, double timestamp, double bp
     if bpm <= 0:
         raise ValueError("BPM must be greater than zero")
 
-    cdef ca.OSStatus status = ca.MusicTrackNewExtendedTempoEvent(
+    cdef cf.OSStatus status = ca.MusicTrackNewExtendedTempoEvent(
         <ca.MusicTrack>track,
         <ca.MusicTimeStamp>timestamp,
         <ca.Float64>bpm
@@ -2020,21 +2023,21 @@ def midi_client_create(str name):
         RuntimeError: If client creation fails
     """
     cdef bytes name_bytes = name.encode('utf-8')
-    cdef ca.CFStringRef cf_name = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, name_bytes, ca.kCFStringEncodingUTF8)
-    cdef midi.MIDIClientRef client
-    cdef ca.OSStatus status
+    cdef cf.CFStringRef cf_name = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, name_bytes, cf.kCFStringEncodingUTF8)
+    cdef cm.MIDIClientRef client
+    cdef cf.OSStatus status
 
     if not cf_name:
         raise MemoryError("Could not create CFString from name")
 
     try:
-        status = midi.MIDIClientCreate(cf_name, NULL, NULL, &client)
+        status = cm.MIDIClientCreate(cf_name, NULL, NULL, &client)
         if status != 0:
             raise RuntimeError(f"MIDIClientCreate failed with status: {status}")
         return <long>client
     finally:
-        ca.CFRelease(cf_name)
+        cf.CFRelease(cf_name)
 
 def midi_client_dispose(long client):
     """Dispose a MIDI client.
@@ -2043,12 +2046,12 @@ def midi_client_dispose(long client):
         client: The MIDIClientRef to dispose
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If disposal fails
     """
-    cdef ca.OSStatus status = midi.MIDIClientDispose(<midi.MIDIClientRef>client)
+    cdef cf.OSStatus status = cm.MIDIClientDispose(<cm.MIDIClientRef>client)
     if status != 0:
         raise RuntimeError(f"MIDIClientDispose failed with status: {status}")
     return status
@@ -2069,22 +2072,22 @@ def midi_input_port_create(long client, str port_name):
         RuntimeError: If port creation fails
     """
     cdef bytes port_name_bytes = port_name.encode('utf-8')
-    cdef ca.CFStringRef cf_name = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, port_name_bytes, ca.kCFStringEncodingUTF8)
-    cdef midi.MIDIPortRef port
-    cdef ca.OSStatus status
+    cdef cf.CFStringRef cf_name = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, port_name_bytes, cf.kCFStringEncodingUTF8)
+    cdef cm.MIDIPortRef port
+    cdef cf.OSStatus status
 
     if not cf_name:
         raise MemoryError("Could not create CFString from port name")
 
     try:
-        status = midi.MIDIInputPortCreate(
-            <midi.MIDIClientRef>client, cf_name, NULL, NULL, &port)
+        status = cm.MIDIInputPortCreate(
+            <cm.MIDIClientRef>client, cf_name, NULL, NULL, &port)
         if status != 0:
             raise RuntimeError(f"MIDIInputPortCreate failed with status: {status}")
         return <long>port
     finally:
-        ca.CFRelease(cf_name)
+        cf.CFRelease(cf_name)
 
 def midi_output_port_create(long client, str port_name):
     """Create a MIDI output port.
@@ -2100,22 +2103,22 @@ def midi_output_port_create(long client, str port_name):
         RuntimeError: If port creation fails
     """
     cdef bytes port_name_bytes = port_name.encode('utf-8')
-    cdef ca.CFStringRef cf_name = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, port_name_bytes, ca.kCFStringEncodingUTF8)
-    cdef midi.MIDIPortRef port
-    cdef ca.OSStatus status
+    cdef cf.CFStringRef cf_name = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, port_name_bytes, cf.kCFStringEncodingUTF8)
+    cdef cm.MIDIPortRef port
+    cdef cf.OSStatus status
 
     if not cf_name:
         raise MemoryError("Could not create CFString from port name")
 
     try:
-        status = midi.MIDIOutputPortCreate(
-            <midi.MIDIClientRef>client, cf_name, &port)
+        status = cm.MIDIOutputPortCreate(
+            <cm.MIDIClientRef>client, cf_name, &port)
         if status != 0:
             raise RuntimeError(f"MIDIOutputPortCreate failed with status: {status}")
         return <long>port
     finally:
-        ca.CFRelease(cf_name)
+        cf.CFRelease(cf_name)
 
 def midi_port_dispose(long port):
     """Dispose a MIDI port.
@@ -2124,12 +2127,12 @@ def midi_port_dispose(long port):
         port: The MIDIPortRef to dispose
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If disposal fails
     """
-    cdef ca.OSStatus status = midi.MIDIPortDispose(<midi.MIDIPortRef>port)
+    cdef cf.OSStatus status = cm.MIDIPortDispose(<cm.MIDIPortRef>port)
     if status != 0:
         raise RuntimeError(f"MIDIPortDispose failed with status: {status}")
     return status
@@ -2142,13 +2145,13 @@ def midi_port_connect_source(long port, long source):
         source: The MIDIEndpointRef (source endpoint)
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If connection fails
     """
-    cdef ca.OSStatus status = midi.MIDIPortConnectSource(
-        <midi.MIDIPortRef>port, <midi.MIDIEndpointRef>source, NULL)
+    cdef cf.OSStatus status = cm.MIDIPortConnectSource(
+        <cm.MIDIPortRef>port, <cm.MIDIEndpointRef>source, NULL)
     if status != 0:
         raise RuntimeError(f"MIDIPortConnectSource failed with status: {status}")
     return status
@@ -2161,13 +2164,13 @@ def midi_port_disconnect_source(long port, long source):
         source: The MIDIEndpointRef (source endpoint)
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If disconnection fails
     """
-    cdef ca.OSStatus status = midi.MIDIPortDisconnectSource(
-        <midi.MIDIPortRef>port, <midi.MIDIEndpointRef>source)
+    cdef cf.OSStatus status = cm.MIDIPortDisconnectSource(
+        <cm.MIDIPortRef>port, <cm.MIDIEndpointRef>source)
     if status != 0:
         raise RuntimeError(f"MIDIPortDisconnectSource failed with status: {status}")
     return status
@@ -2180,7 +2183,7 @@ def midi_get_number_of_devices():
     Returns:
         Number of devices
     """
-    return midi.MIDIGetNumberOfDevices()
+    return cm.MIDIGetNumberOfDevices()
 
 def midi_get_device(int device_index) -> int:
     """Get a device by index.
@@ -2194,11 +2197,11 @@ def midi_get_device(int device_index) -> int:
     Raises:
         ValueError: If index is out of range
     """
-    cdef int num_devices = midi.MIDIGetNumberOfDevices()
+    cdef int num_devices = cm.MIDIGetNumberOfDevices()
     if device_index < 0 or device_index >= num_devices:
         raise ValueError(f"Device index {device_index} out of range (0-{num_devices-1})")
 
-    cdef midi.MIDIDeviceRef device = midi.MIDIGetDevice(<ca.UInt32>device_index)
+    cdef cm.MIDIDeviceRef device = cm.MIDIGetDevice(<cf.UInt32>device_index)
     return <long>device
 
 def midi_device_get_number_of_entities(long device):
@@ -2210,7 +2213,7 @@ def midi_device_get_number_of_entities(long device):
     Returns:
         Number of entities
     """
-    return midi.MIDIDeviceGetNumberOfEntities(<midi.MIDIDeviceRef>device)
+    return cm.MIDIDeviceGetNumberOfEntities(<cm.MIDIDeviceRef>device)
 
 def midi_device_get_entity(long device, int entity_index):
     """Get an entity from a device by index.
@@ -2225,12 +2228,12 @@ def midi_device_get_entity(long device, int entity_index):
     Raises:
         ValueError: If index is out of range
     """
-    cdef int num_entities = midi.MIDIDeviceGetNumberOfEntities(<midi.MIDIDeviceRef>device)
+    cdef int num_entities = cm.MIDIDeviceGetNumberOfEntities(<cm.MIDIDeviceRef>device)
     if entity_index < 0 or entity_index >= num_entities:
         raise ValueError(f"Entity index {entity_index} out of range (0-{num_entities-1})")
 
-    cdef midi.MIDIEntityRef entity = midi.MIDIDeviceGetEntity(
-        <midi.MIDIDeviceRef>device, <ca.UInt32>entity_index)
+    cdef cm.MIDIEntityRef entity = cm.MIDIDeviceGetEntity(
+        <cm.MIDIDeviceRef>device, <cf.UInt32>entity_index)
     return <long>entity
 
 def midi_entity_get_number_of_sources(long entity):
@@ -2242,7 +2245,7 @@ def midi_entity_get_number_of_sources(long entity):
     Returns:
         Number of sources
     """
-    return midi.MIDIEntityGetNumberOfSources(<midi.MIDIEntityRef>entity)
+    return cm.MIDIEntityGetNumberOfSources(<cm.MIDIEntityRef>entity)
 
 def midi_entity_get_source(long entity, int source_index):
     """Get a source from an entity by index.
@@ -2257,12 +2260,12 @@ def midi_entity_get_source(long entity, int source_index):
     Raises:
         ValueError: If index is out of range
     """
-    cdef int num_sources = midi.MIDIEntityGetNumberOfSources(<midi.MIDIEntityRef>entity)
+    cdef int num_sources = cm.MIDIEntityGetNumberOfSources(<cm.MIDIEntityRef>entity)
     if source_index < 0 or source_index >= num_sources:
         raise ValueError(f"Source index {source_index} out of range (0-{num_sources-1})")
 
-    cdef midi.MIDIEndpointRef source = midi.MIDIEntityGetSource(
-        <midi.MIDIEntityRef>entity, <ca.UInt32>source_index)
+    cdef cm.MIDIEndpointRef source = cm.MIDIEntityGetSource(
+        <cm.MIDIEntityRef>entity, <cf.UInt32>source_index)
     return <long>source
 
 def midi_entity_get_number_of_destinations(long entity):
@@ -2274,7 +2277,7 @@ def midi_entity_get_number_of_destinations(long entity):
     Returns:
         Number of destinations
     """
-    return midi.MIDIEntityGetNumberOfDestinations(<midi.MIDIEntityRef>entity)
+    return cm.MIDIEntityGetNumberOfDestinations(<cm.MIDIEntityRef>entity)
 
 def midi_entity_get_destination(long entity, int dest_index):
     """Get a destination from an entity by index.
@@ -2289,12 +2292,12 @@ def midi_entity_get_destination(long entity, int dest_index):
     Raises:
         ValueError: If index is out of range
     """
-    cdef int num_dests = midi.MIDIEntityGetNumberOfDestinations(<midi.MIDIEntityRef>entity)
+    cdef int num_dests = cm.MIDIEntityGetNumberOfDestinations(<cm.MIDIEntityRef>entity)
     if dest_index < 0 or dest_index >= num_dests:
         raise ValueError(f"Destination index {dest_index} out of range (0-{num_dests-1})")
 
-    cdef midi.MIDIEndpointRef dest = midi.MIDIEntityGetDestination(
-        <midi.MIDIEntityRef>entity, <ca.UInt32>dest_index)
+    cdef cm.MIDIEndpointRef dest = cm.MIDIEntityGetDestination(
+        <cm.MIDIEntityRef>entity, <cf.UInt32>dest_index)
     return <long>dest
 
 def midi_get_number_of_sources():
@@ -2303,7 +2306,7 @@ def midi_get_number_of_sources():
     Returns:
         Number of sources
     """
-    return midi.MIDIGetNumberOfSources()
+    return cm.MIDIGetNumberOfSources()
 
 def midi_get_source(int source_index) -> int:
     """Get a source by system-wide index.
@@ -2317,11 +2320,11 @@ def midi_get_source(int source_index) -> int:
     Raises:
         ValueError: If index is out of range
     """
-    cdef int num_sources = midi.MIDIGetNumberOfSources()
+    cdef int num_sources = cm.MIDIGetNumberOfSources()
     if source_index < 0 or source_index >= num_sources:
         raise ValueError(f"Source index {source_index} out of range (0-{num_sources-1})")
 
-    cdef midi.MIDIEndpointRef source = midi.MIDIGetSource(<ca.UInt32>source_index)
+    cdef cm.MIDIEndpointRef source = cm.MIDIGetSource(<cf.UInt32>source_index)
     return <long>source
 
 def midi_get_number_of_destinations():
@@ -2330,7 +2333,7 @@ def midi_get_number_of_destinations():
     Returns:
         Number of destinations
     """
-    return midi.MIDIGetNumberOfDestinations()
+    return cm.MIDIGetNumberOfDestinations()
 
 def midi_get_destination(int dest_index):
     """Get a destination by system-wide index.
@@ -2344,11 +2347,11 @@ def midi_get_destination(int dest_index):
     Raises:
         ValueError: If index is out of range
     """
-    cdef int num_dests = midi.MIDIGetNumberOfDestinations()
+    cdef int num_dests = cm.MIDIGetNumberOfDestinations()
     if dest_index < 0 or dest_index >= num_dests:
         raise ValueError(f"Destination index {dest_index} out of range (0-{num_dests-1})")
 
-    cdef midi.MIDIEndpointRef dest = midi.MIDIGetDestination(<ca.UInt32>dest_index)
+    cdef cm.MIDIEndpointRef dest = cm.MIDIGetDestination(<cf.UInt32>dest_index)
     return <long>dest
 
 # Virtual endpoint functions
@@ -2367,21 +2370,21 @@ def midi_source_create(long client, str name):
         RuntimeError: If source creation fails
     """
     cdef bytes name_bytes = name.encode('utf-8')
-    cdef ca.CFStringRef cf_name = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, name_bytes, ca.kCFStringEncodingUTF8)
-    cdef midi.MIDIEndpointRef source
-    cdef ca.OSStatus status
+    cdef cf.CFStringRef cf_name = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, name_bytes, cf.kCFStringEncodingUTF8)
+    cdef cm.MIDIEndpointRef source
+    cdef cf.OSStatus status
 
     if not cf_name:
         raise MemoryError("Could not create CFString from name")
 
     try:
-        status = midi.MIDISourceCreate(<midi.MIDIClientRef>client, cf_name, &source)
+        status = cm.MIDISourceCreate(<cm.MIDIClientRef>client, cf_name, &source)
         if status != 0:
             raise RuntimeError(f"MIDISourceCreate failed with status: {status}")
         return <long>source
     finally:
-        ca.CFRelease(cf_name)
+        cf.CFRelease(cf_name)
 
 def midi_destination_create(long client, str name):
     """Create a virtual MIDI destination.
@@ -2397,22 +2400,22 @@ def midi_destination_create(long client, str name):
         RuntimeError: If destination creation fails
     """
     cdef bytes name_bytes = name.encode('utf-8')
-    cdef ca.CFStringRef cf_name = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, name_bytes, ca.kCFStringEncodingUTF8)
-    cdef midi.MIDIEndpointRef dest
-    cdef ca.OSStatus status
+    cdef cf.CFStringRef cf_name = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, name_bytes, cf.kCFStringEncodingUTF8)
+    cdef cm.MIDIEndpointRef dest
+    cdef cf.OSStatus status
 
     if not cf_name:
         raise MemoryError("Could not create CFString from name")
 
     try:
-        status = midi.MIDIDestinationCreate(
-            <midi.MIDIClientRef>client, cf_name, NULL, NULL, &dest)
+        status = cm.MIDIDestinationCreate(
+            <cm.MIDIClientRef>client, cf_name, NULL, NULL, &dest)
         if status != 0:
             raise RuntimeError(f"MIDIDestinationCreate failed with status: {status}")
         return <long>dest
     finally:
-        ca.CFRelease(cf_name)
+        cf.CFRelease(cf_name)
 
 def midi_endpoint_dispose(long endpoint):
     """Dispose a virtual MIDI endpoint.
@@ -2421,12 +2424,12 @@ def midi_endpoint_dispose(long endpoint):
         endpoint: The MIDIEndpointRef to dispose
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If disposal fails
     """
-    cdef ca.OSStatus status = midi.MIDIEndpointDispose(<midi.MIDIEndpointRef>endpoint)
+    cdef cf.OSStatus status = cm.MIDIEndpointDispose(<cm.MIDIEndpointRef>endpoint)
     if status != 0:
         raise RuntimeError(f"MIDIEndpointDispose failed with status: {status}")
     return status
@@ -2447,51 +2450,51 @@ def midi_object_get_string_property(long obj, str property_name):
         RuntimeError: If getting property fails
         ValueError: If property name conversion fails
     """
-    cdef ca.CFStringRef cf_prop_name
-    cdef ca.CFStringRef cf_value
-    cdef ca.OSStatus status
+    cdef cf.CFStringRef cf_prop_name
+    cdef cf.CFStringRef cf_value
+    cdef cf.OSStatus status
     cdef char* c_str
-    cdef ca.CFIndex length
-    cdef ca.CFIndex max_size
+    cdef cf.CFIndex length
+    cdef cf.CFIndex max_size
     cdef char* buffer
 
-    cf_prop_name = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, property_name.encode('utf-8'), ca.kCFStringEncodingUTF8)
+    cf_prop_name = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, property_name.encode('utf-8'), cf.kCFStringEncodingUTF8)
 
     if not cf_prop_name:
         raise ValueError("Could not create CFString from property name")
 
     try:
-        status = midi.MIDIObjectGetStringProperty(
-            <midi.MIDIObjectRef>obj, cf_prop_name, &cf_value)
+        status = cm.MIDIObjectGetStringProperty(
+            <cm.MIDIObjectRef>obj, cf_prop_name, &cf_value)
         if status != 0:
             raise RuntimeError(f"MIDIObjectGetStringProperty failed with status: {status}")
 
         # Convert CFString to Python string
-        c_str = <char*>ca.CFStringGetCStringPtr(cf_value, ca.kCFStringEncodingUTF8)
+        c_str = <char*>cf.CFStringGetCStringPtr(cf_value, cf.kCFStringEncodingUTF8)
         if c_str:
             result = c_str.decode('utf-8')
         else:
             # Fallback for when direct pointer isn't available
-            length = ca.CFStringGetLength(cf_value)
-            max_size = ca.CFStringGetMaximumSizeForEncoding(length, ca.kCFStringEncodingUTF8) + 1
+            length = cf.CFStringGetLength(cf_value)
+            max_size = cf.CFStringGetMaximumSizeForEncoding(length, cf.kCFStringEncodingUTF8) + 1
             buffer = <char*>malloc(max_size)
             if not buffer:
-                ca.CFRelease(cf_value)
+                cf.CFRelease(cf_value)
                 raise MemoryError("Could not allocate buffer for string conversion")
             try:
-                if ca.CFStringGetCString(cf_value, buffer, max_size, ca.kCFStringEncodingUTF8):
+                if cf.CFStringGetCString(cf_value, buffer, max_size, cf.kCFStringEncodingUTF8):
                     result = buffer.decode('utf-8')
                 else:
-                    ca.CFRelease(cf_value)
+                    cf.CFRelease(cf_value)
                     raise RuntimeError("Could not convert CFString to C string")
             finally:
                 free(buffer)
 
-        ca.CFRelease(cf_value)
+        cf.CFRelease(cf_value)
         return result
     finally:
-        ca.CFRelease(cf_prop_name)
+        cf.CFRelease(cf_prop_name)
 
 def midi_object_get_integer_property(long obj, str property_name):
     """Get an integer property from a MIDI object.
@@ -2508,22 +2511,22 @@ def midi_object_get_integer_property(long obj, str property_name):
         ValueError: If property name conversion fails
     """
     cdef bytes prop_bytes = property_name.encode('utf-8')
-    cdef ca.CFStringRef cf_prop_name = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, prop_bytes, ca.kCFStringEncodingUTF8)
+    cdef cf.CFStringRef cf_prop_name = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, prop_bytes, cf.kCFStringEncodingUTF8)
     cdef ca.SInt32 value
-    cdef ca.OSStatus status
+    cdef cf.OSStatus status
 
     if not cf_prop_name:
         raise ValueError("Could not create CFString from property name")
 
     try:
-        status = midi.MIDIObjectGetIntegerProperty(
-            <midi.MIDIObjectRef>obj, cf_prop_name, &value)
+        status = cm.MIDIObjectGetIntegerProperty(
+            <cm.MIDIObjectRef>obj, cf_prop_name, &value)
         if status != 0:
             raise RuntimeError(f"MIDIObjectGetIntegerProperty failed with status: {status}")
         return value
     finally:
-        ca.CFRelease(cf_prop_name)
+        cf.CFRelease(cf_prop_name)
 
 def midi_object_set_string_property(long obj, str property_name, str value):
     """Set a string property on a MIDI object.
@@ -2534,35 +2537,35 @@ def midi_object_set_string_property(long obj, str property_name, str value):
         value: String value to set
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If setting property fails
         ValueError: If string conversion fails
     """
     cdef bytes prop_bytes = property_name.encode('utf-8')
-    cdef ca.CFStringRef cf_prop_name = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, prop_bytes, ca.kCFStringEncodingUTF8)
+    cdef cf.CFStringRef cf_prop_name = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, prop_bytes, cf.kCFStringEncodingUTF8)
     cdef bytes value_bytes = value.encode('utf-8')
-    cdef ca.CFStringRef cf_value = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, value_bytes, ca.kCFStringEncodingUTF8)
-    cdef ca.OSStatus status
+    cdef cf.CFStringRef cf_value = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, value_bytes, cf.kCFStringEncodingUTF8)
+    cdef cf.OSStatus status
 
     if not cf_prop_name:
         raise ValueError("Could not create CFString from property name")
     if not cf_value:
-        ca.CFRelease(cf_prop_name)
+        cf.CFRelease(cf_prop_name)
         raise ValueError("Could not create CFString from value")
 
     try:
-        status = midi.MIDIObjectSetStringProperty(
-            <midi.MIDIObjectRef>obj, cf_prop_name, cf_value)
+        status = cm.MIDIObjectSetStringProperty(
+            <cm.MIDIObjectRef>obj, cf_prop_name, cf_value)
         if status != 0:
             raise RuntimeError(f"MIDIObjectSetStringProperty failed with status: {status}")
         return status
     finally:
-        ca.CFRelease(cf_prop_name)
-        ca.CFRelease(cf_value)
+        cf.CFRelease(cf_prop_name)
+        cf.CFRelease(cf_value)
 
 def midi_object_set_integer_property(long obj, str property_name, int value):
     """Set an integer property on a MIDI object.
@@ -2573,28 +2576,216 @@ def midi_object_set_integer_property(long obj, str property_name, int value):
         value: Integer value to set
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If setting property fails
         ValueError: If property name conversion fails
     """
     cdef bytes prop_bytes = property_name.encode('utf-8')
-    cdef ca.CFStringRef cf_prop_name = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, prop_bytes, ca.kCFStringEncodingUTF8)
-    cdef ca.OSStatus status
+    cdef cf.CFStringRef cf_prop_name = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, prop_bytes, cf.kCFStringEncodingUTF8)
+    cdef cf.OSStatus status
 
     if not cf_prop_name:
         raise ValueError("Could not create CFString from property name")
 
     try:
-        status = midi.MIDIObjectSetIntegerProperty(
-            <midi.MIDIObjectRef>obj, cf_prop_name, <ca.SInt32>value)
+        status = cm.MIDIObjectSetIntegerProperty(
+            <cm.MIDIObjectRef>obj, cf_prop_name, <ca.SInt32>value)
         if status != 0:
             raise RuntimeError(f"MIDIObjectSetIntegerProperty failed with status: {status}")
         return status
     finally:
-        ca.CFRelease(cf_prop_name)
+        cf.CFRelease(cf_prop_name)
+
+# Convenience functions for getting common properties
+
+def midi_object_get_name(long obj):
+    """Get the name of a MIDI object (device, entity, or endpoint).
+
+    Args:
+        obj: The MIDIObjectRef (device, entity, or endpoint)
+
+    Returns:
+        String name of the object, or None if no name is set
+
+    Raises:
+        RuntimeError: If getting the name fails
+    """
+    cdef cf.CFStringRef cf_value
+    cdef cf.OSStatus status
+    cdef char* c_str
+    cdef cf.CFIndex length
+    cdef cf.CFIndex max_size
+    cdef char* buffer
+
+    status = cm.MIDIObjectGetStringProperty(
+        <cm.MIDIObjectRef>obj, cm.kMIDIPropertyName, &cf_value)
+    if status != 0:
+        raise RuntimeError(f"MIDIObjectGetStringProperty failed with status: {status}")
+
+    try:
+        # Convert CFString to Python string
+        c_str = <char*>cf.CFStringGetCStringPtr(cf_value, cf.kCFStringEncodingUTF8)
+        if c_str:
+            result = c_str.decode('utf-8')
+        else:
+            # Fallback for when direct pointer isn't available
+            length = cf.CFStringGetLength(cf_value)
+            max_size = cf.CFStringGetMaximumSizeForEncoding(length, cf.kCFStringEncodingUTF8) + 1
+            buffer = <char*>malloc(max_size)
+            if not buffer:
+                raise MemoryError("Could not allocate buffer for string conversion")
+            try:
+                if cf.CFStringGetCString(cf_value, buffer, max_size, cf.kCFStringEncodingUTF8):
+                    result = buffer.decode('utf-8')
+                else:
+                    raise RuntimeError("Could not convert CFString to C string")
+            finally:
+                free(buffer)
+
+        return result
+    finally:
+        cf.CFRelease(cf_value)
+
+def midi_device_get_name(long device):
+    """Get the name of a MIDI device.
+
+    Args:
+        device: The MIDIDeviceRef
+
+    Returns:
+        String name of the device, or None if no name is set
+
+    Raises:
+        RuntimeError: If getting the device name fails
+    """
+    return midi_object_get_name(device)
+
+def midi_endpoint_get_name(long endpoint):
+    """Get the name of a MIDI endpoint (source or destination).
+
+    Args:
+        endpoint: The MIDIEndpointRef
+
+    Returns:
+        String name of the endpoint, or None if no name is set
+
+    Raises:
+        RuntimeError: If getting the endpoint name fails
+    """
+    return midi_object_get_name(endpoint)
+
+def midi_entity_get_name(long entity):
+    """Get the name of a MIDI entity.
+
+    Args:
+        entity: The MIDIEntityRef
+
+    Returns:
+        String name of the entity, or None if no name is set
+
+    Raises:
+        RuntimeError: If getting the entity name fails
+    """
+    return midi_object_get_name(entity)
+
+def midi_object_get_manufacturer(long obj):
+    """Get the manufacturer of a MIDI object.
+
+    Args:
+        obj: The MIDIObjectRef (device or endpoint)
+
+    Returns:
+        String manufacturer name, or None if not set
+
+    Raises:
+        RuntimeError: If getting the manufacturer fails
+    """
+    cdef cf.CFStringRef cf_value
+    cdef cf.OSStatus status
+    cdef char* c_str
+    cdef cf.CFIndex length
+    cdef cf.CFIndex max_size
+    cdef char* buffer
+
+    status = cm.MIDIObjectGetStringProperty(
+        <cm.MIDIObjectRef>obj, cm.kMIDIPropertyManufacturer, &cf_value)
+    if status != 0:
+        raise RuntimeError(f"MIDIObjectGetStringProperty failed with status: {status}")
+
+    try:
+        # Convert CFString to Python string
+        c_str = <char*>cf.CFStringGetCStringPtr(cf_value, cf.kCFStringEncodingUTF8)
+        if c_str:
+            result = c_str.decode('utf-8')
+        else:
+            # Fallback for when direct pointer isn't available
+            length = cf.CFStringGetLength(cf_value)
+            max_size = cf.CFStringGetMaximumSizeForEncoding(length, cf.kCFStringEncodingUTF8) + 1
+            buffer = <char*>malloc(max_size)
+            if not buffer:
+                raise MemoryError("Could not allocate buffer for string conversion")
+            try:
+                if cf.CFStringGetCString(cf_value, buffer, max_size, cf.kCFStringEncodingUTF8):
+                    result = buffer.decode('utf-8')
+                else:
+                    raise RuntimeError("Could not convert CFString to C string")
+            finally:
+                free(buffer)
+
+        return result
+    finally:
+        cf.CFRelease(cf_value)
+
+def midi_object_get_model(long obj):
+    """Get the model of a MIDI object.
+
+    Args:
+        obj: The MIDIObjectRef (device or endpoint)
+
+    Returns:
+        String model name, or None if not set
+
+    Raises:
+        RuntimeError: If getting the model fails
+    """
+    cdef cf.CFStringRef cf_value
+    cdef cf.OSStatus status
+    cdef char* c_str
+    cdef cf.CFIndex length
+    cdef cf.CFIndex max_size
+    cdef char* buffer
+
+    status = cm.MIDIObjectGetStringProperty(
+        <cm.MIDIObjectRef>obj, cm.kMIDIPropertyModel, &cf_value)
+    if status != 0:
+        raise RuntimeError(f"MIDIObjectGetStringProperty failed with status: {status}")
+
+    try:
+        # Convert CFString to Python string
+        c_str = <char*>cf.CFStringGetCStringPtr(cf_value, cf.kCFStringEncodingUTF8)
+        if c_str:
+            result = c_str.decode('utf-8')
+        else:
+            # Fallback for when direct pointer isn't available
+            length = cf.CFStringGetLength(cf_value)
+            max_size = cf.CFStringGetMaximumSizeForEncoding(length, cf.kCFStringEncodingUTF8) + 1
+            buffer = <char*>malloc(max_size)
+            if not buffer:
+                raise MemoryError("Could not allocate buffer for string conversion")
+            try:
+                if cf.CFStringGetCString(cf_value, buffer, max_size, cf.kCFStringEncodingUTF8):
+                    result = buffer.decode('utf-8')
+                else:
+                    raise RuntimeError("Could not convert CFString to C string")
+            finally:
+                free(buffer)
+
+        return result
+    finally:
+        cf.CFRelease(cf_value)
 
 # Send functions with simplified packet creation
 
@@ -2608,44 +2799,44 @@ def midi_send_data(long port, long destination, bytes data, int timestamp=0):
         timestamp: MIDI timestamp (default 0 for immediate)
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If sending fails
         ValueError: If data is too large
     """
     cdef size_t pktlist_size
-    cdef midi.MIDIPacketList* pktlist
-    cdef midi.MIDIPacket* packet
-    cdef ca.OSStatus status
+    cdef cm.MIDIPacketList* pktlist
+    cdef cm.MIDIPacket* packet
+    cdef cf.OSStatus status
 
     if len(data) > 256:
         raise ValueError("MIDI data too large (max 256 bytes)")
 
     # Create a packet list with one packet
-    pktlist_size = sizeof(midi.MIDIPacketList) + len(data)
-    pktlist = <midi.MIDIPacketList*>malloc(pktlist_size)
+    pktlist_size = sizeof(cm.MIDIPacketList) + len(data)
+    pktlist = <cm.MIDIPacketList*>malloc(pktlist_size)
     if not pktlist:
         raise MemoryError("Could not allocate packet list")
 
     try:
         # Initialize packet list
-        packet = midi.MIDIPacketListInit(pktlist)
+        packet = cm.MIDIPacketListInit(pktlist)
 
         # Add our data to the packet
-        packet = midi.MIDIPacketListAdd(
+        packet = cm.MIDIPacketListAdd(
             pktlist, pktlist_size, packet,
-            <midi.MIDITimeStamp>timestamp,
-            <ca.UInt32>len(data),
-            <const ca.UInt8*><char*>data)
+            <cm.MIDITimeStamp>timestamp,
+            <cf.UInt32>len(data),
+            <const cf.UInt8*><char*>data)
 
         if not packet:
             raise RuntimeError("Could not add packet to packet list")
 
         # Send the packet list
-        status = midi.MIDISend(
-            <midi.MIDIPortRef>port,
-            <midi.MIDIEndpointRef>destination,
+        status = cm.MIDISend(
+            <cm.MIDIPortRef>port,
+            <cm.MIDIEndpointRef>destination,
             pktlist)
 
         if status != 0:
@@ -2659,111 +2850,111 @@ def midi_send_data(long port, long destination, bytes data, int timestamp=0):
 
 def get_midi_error_invalid_client():
     """Get the kMIDIInvalidClient error constant."""
-    return midi.kMIDIInvalidClient
+    return cm.kMIDIInvalidClient
 
 def get_midi_error_invalid_port():
     """Get the kMIDIInvalidPort error constant."""
-    return midi.kMIDIInvalidPort
+    return cm.kMIDIInvalidPort
 
 def get_midi_error_wrong_endpoint_type():
     """Get the kMIDIWrongEndpointType error constant."""
-    return midi.kMIDIWrongEndpointType
+    return cm.kMIDIWrongEndpointType
 
 def get_midi_error_no_connection():
     """Get the kMIDINoConnection error constant."""
-    return midi.kMIDINoConnection
+    return cm.kMIDINoConnection
 
 def get_midi_error_unknown_endpoint():
     """Get the kMIDIUnknownEndpoint error constant."""
-    return midi.kMIDIUnknownEndpoint
+    return cm.kMIDIUnknownEndpoint
 
 def get_midi_error_unknown_property():
     """Get the kMIDIUnknownProperty error constant."""
-    return midi.kMIDIUnknownProperty
+    return cm.kMIDIUnknownProperty
 
 def get_midi_error_wrong_property_type():
     """Get the kMIDIWrongPropertyType error constant."""
-    return midi.kMIDIWrongPropertyType
+    return cm.kMIDIWrongPropertyType
 
 def get_midi_error_no_current_setup():
     """Get the kMIDINoCurrentSetup error constant."""
-    return midi.kMIDINoCurrentSetup
+    return cm.kMIDINoCurrentSetup
 
 def get_midi_error_message_send_err():
     """Get the kMIDIMessageSendErr error constant."""
-    return midi.kMIDIMessageSendErr
+    return cm.kMIDIMessageSendErr
 
 def get_midi_error_server_start_err():
     """Get the kMIDIServerStartErr error constant."""
-    return midi.kMIDIServerStartErr
+    return cm.kMIDIServerStartErr
 
 def get_midi_error_setup_format_err():
     """Get the kMIDISetupFormatErr error constant."""
-    return midi.kMIDISetupFormatErr
+    return cm.kMIDISetupFormatErr
 
 def get_midi_error_wrong_thread():
     """Get the kMIDIWrongThread error constant."""
-    return midi.kMIDIWrongThread
+    return cm.kMIDIWrongThread
 
 def get_midi_error_object_not_found():
     """Get the kMIDIObjectNotFound error constant."""
-    return midi.kMIDIObjectNotFound
+    return cm.kMIDIObjectNotFound
 
 def get_midi_error_id_not_unique():
     """Get the kMIDIIDNotUnique error constant."""
-    return midi.kMIDIIDNotUnique
+    return cm.kMIDIIDNotUnique
 
 def get_midi_error_not_permitted():
     """Get the kMIDINotPermitted error constant."""
-    return midi.kMIDINotPermitted
+    return cm.kMIDINotPermitted
 
 def get_midi_error_unknown_error():
     """Get the kMIDIUnknownError error constant."""
-    return midi.kMIDIUnknownError
+    return cm.kMIDIUnknownError
 
 def get_midi_object_type_other():
     """Get the kMIDIObjectType_Other constant."""
-    return midi.kMIDIObjectType_Other
+    return cm.kMIDIObjectType_Other
 
 def get_midi_object_type_device():
     """Get the kMIDIObjectType_Device constant."""
-    return midi.kMIDIObjectType_Device
+    return cm.kMIDIObjectType_Device
 
 def get_midi_object_type_entity():
     """Get the kMIDIObjectType_Entity constant."""
-    return midi.kMIDIObjectType_Entity
+    return cm.kMIDIObjectType_Entity
 
 def get_midi_object_type_source():
     """Get the kMIDIObjectType_Source constant."""
-    return midi.kMIDIObjectType_Source
+    return cm.kMIDIObjectType_Source
 
 def get_midi_object_type_destination():
     """Get the kMIDIObjectType_Destination constant."""
-    return midi.kMIDIObjectType_Destination
+    return cm.kMIDIObjectType_Destination
 
 def get_midi_object_type_external_device():
     """Get the kMIDIObjectType_ExternalDevice constant."""
-    return midi.kMIDIObjectType_ExternalDevice
+    return cm.kMIDIObjectType_ExternalDevice
 
 def get_midi_object_type_external_entity():
     """Get the kMIDIObjectType_ExternalEntity constant."""
-    return midi.kMIDIObjectType_ExternalEntity
+    return cm.kMIDIObjectType_ExternalEntity
 
 def get_midi_object_type_external_source():
     """Get the kMIDIObjectType_ExternalSource constant."""
-    return midi.kMIDIObjectType_ExternalSource
+    return cm.kMIDIObjectType_ExternalSource
 
 def get_midi_object_type_external_destination():
     """Get the kMIDIObjectType_ExternalDestination constant."""
-    return midi.kMIDIObjectType_ExternalDestination
+    return cm.kMIDIObjectType_ExternalDestination
 
 def get_midi_protocol_1_0():
     """Get the kMIDIProtocol_1_0 constant."""
-    return midi.kMIDIProtocol_1_0
+    return cm.kMIDIProtocol_1_0
 
 def get_midi_protocol_2_0():
     """Get the kMIDIProtocol_2_0 constant."""
-    return midi.kMIDIProtocol_2_0
+    return cm.kMIDIProtocol_2_0
 
 # Common property name helpers
 
@@ -2823,7 +3014,7 @@ def midi_message_type_for_up_word(int word):
     Returns:
         MIDIMessageType enum value
     """
-    return midi.MIDIMessageTypeForUPWord(<ca.UInt32>word)
+    return cm.MIDIMessageTypeForUPWord(<cf.UInt32>word)
 
 # MIDI 1.0 Universal MIDI Packet Functions
 
@@ -2840,8 +3031,8 @@ def midi1_up_channel_voice_message(int group, int status, int channel, int data1
     Returns:
         32-bit MIDI message
     """
-    return midi.MIDI1UPChannelVoiceMessage(<ca.UInt8>group, <ca.UInt8>status,
-                                           <ca.UInt8>channel, <ca.UInt8>data1, <ca.UInt8>data2)
+    return cm.MIDI1UPChannelVoiceMessage(<cf.UInt8>group, <cf.UInt8>status,
+                                           <cf.UInt8>channel, <cf.UInt8>data1, <cf.UInt8>data2)
 
 def midi1_up_note_off(int group, int channel, int note_number, int velocity):
     """Create a MIDI 1.0 Universal Packet Note Off message.
@@ -2855,8 +3046,8 @@ def midi1_up_note_off(int group, int channel, int note_number, int velocity):
     Returns:
         32-bit MIDI message
     """
-    return midi.MIDI1UPNoteOff(<ca.UInt8>group, <ca.UInt8>channel,
-                               <ca.UInt8>note_number, <ca.UInt8>velocity)
+    return cm.MIDI1UPNoteOff(<cf.UInt8>group, <cf.UInt8>channel,
+                               <cf.UInt8>note_number, <cf.UInt8>velocity)
 
 def midi1_up_note_on(int group, int channel, int note_number, int velocity):
     """Create a MIDI 1.0 Universal Packet Note On message.
@@ -2870,8 +3061,8 @@ def midi1_up_note_on(int group, int channel, int note_number, int velocity):
     Returns:
         32-bit MIDI message
     """
-    return midi.MIDI1UPNoteOn(<ca.UInt8>group, <ca.UInt8>channel,
-                              <ca.UInt8>note_number, <ca.UInt8>velocity)
+    return cm.MIDI1UPNoteOn(<cf.UInt8>group, <cf.UInt8>channel,
+                              <cf.UInt8>note_number, <cf.UInt8>velocity)
 
 def midi1_up_control_change(int group, int channel, int index, int data):
     """Create a MIDI 1.0 Universal Packet Control Change message.
@@ -2885,8 +3076,8 @@ def midi1_up_control_change(int group, int channel, int index, int data):
     Returns:
         32-bit MIDI message
     """
-    return midi.MIDI1UPControlChange(<ca.UInt8>group, <ca.UInt8>channel,
-                                     <ca.UInt8>index, <ca.UInt8>data)
+    return cm.MIDI1UPControlChange(<cf.UInt8>group, <cf.UInt8>channel,
+                                     <cf.UInt8>index, <cf.UInt8>data)
 
 def midi1_up_pitch_bend(int group, int channel, int lsb, int msb):
     """Create a MIDI 1.0 Universal Packet Pitch Bend message.
@@ -2900,8 +3091,8 @@ def midi1_up_pitch_bend(int group, int channel, int lsb, int msb):
     Returns:
         32-bit MIDI message
     """
-    return midi.MIDI1UPPitchBend(<ca.UInt8>group, <ca.UInt8>channel,
-                                 <ca.UInt8>lsb, <ca.UInt8>msb)
+    return cm.MIDI1UPPitchBend(<cf.UInt8>group, <cf.UInt8>channel,
+                                 <cf.UInt8>lsb, <cf.UInt8>msb)
 
 def midi1_up_system_common(int group, int status, int byte1, int byte2):
     """Create a MIDI 1.0 Universal Packet System Common message.
@@ -2915,8 +3106,8 @@ def midi1_up_system_common(int group, int status, int byte1, int byte2):
     Returns:
         32-bit MIDI message
     """
-    return midi.MIDI1UPSystemCommon(<ca.UInt8>group, <ca.UInt8>status,
-                                    <ca.UInt8>byte1, <ca.UInt8>byte2)
+    return cm.MIDI1UPSystemCommon(<cf.UInt8>group, <cf.UInt8>status,
+                                    <cf.UInt8>byte1, <cf.UInt8>byte2)
 
 def midi1_up_sysex(int group, int status, int bytes_used, int byte1, int byte2, int byte3, int byte4, int byte5, int byte6):
     """Create a MIDI 1.0 Universal Packet SysEx message.
@@ -2930,9 +3121,9 @@ def midi1_up_sysex(int group, int status, int bytes_used, int byte1, int byte2, 
     Returns:
         Tuple of (word0, word1) for 64-bit MIDI message
     """
-    cdef midi.MIDIMessage_64 msg = midi.MIDI1UPSysEx(<ca.UInt8>group, <ca.UInt8>status, <ca.UInt8>bytes_used,
-                                                      <ca.UInt8>byte1, <ca.UInt8>byte2, <ca.UInt8>byte3,
-                                                      <ca.UInt8>byte4, <ca.UInt8>byte5, <ca.UInt8>byte6)
+    cdef cm.MIDIMessage_64 msg = cm.MIDI1UPSysEx(<cf.UInt8>group, <cf.UInt8>status, <cf.UInt8>bytes_used,
+                                                      <cf.UInt8>byte1, <cf.UInt8>byte2, <cf.UInt8>byte3,
+                                                      <cf.UInt8>byte4, <cf.UInt8>byte5, <cf.UInt8>byte6)
     return (msg.word0, msg.word1)
 
 # MIDI 2.0 Channel Voice Message Functions
@@ -2950,8 +3141,8 @@ def midi2_channel_voice_message(int group, int status, int channel, int index, l
     Returns:
         Tuple of (word0, word1) for 64-bit MIDI message
     """
-    cdef midi.MIDIMessage_64 msg = midi.MIDI2ChannelVoiceMessage(<ca.UInt8>group, <ca.UInt8>status,
-                                                                  <ca.UInt8>channel, <ca.UInt16>index, <ca.UInt32>value)
+    cdef cm.MIDIMessage_64 msg = cm.MIDI2ChannelVoiceMessage(<cf.UInt8>group, <cf.UInt8>status,
+                                                                  <cf.UInt8>channel, <ca.UInt16>index, <cf.UInt32>value)
     return (msg.word0, msg.word1)
 
 def midi2_note_on(int group, int channel, int note_number, int attribute_type, int attribute_data, int velocity):
@@ -2968,8 +3159,8 @@ def midi2_note_on(int group, int channel, int note_number, int attribute_type, i
     Returns:
         Tuple of (word0, word1) for 64-bit MIDI message
     """
-    cdef midi.MIDIMessage_64 msg = midi.MIDI2NoteOn(<ca.UInt8>group, <ca.UInt8>channel, <ca.UInt8>note_number,
-                                                     <ca.UInt8>attribute_type, <ca.UInt16>attribute_data, <ca.UInt16>velocity)
+    cdef cm.MIDIMessage_64 msg = cm.MIDI2NoteOn(<cf.UInt8>group, <cf.UInt8>channel, <cf.UInt8>note_number,
+                                                     <cf.UInt8>attribute_type, <ca.UInt16>attribute_data, <ca.UInt16>velocity)
     return (msg.word0, msg.word1)
 
 def midi2_note_off(int group, int channel, int note_number, int attribute_type, int attribute_data, int velocity):
@@ -2986,8 +3177,8 @@ def midi2_note_off(int group, int channel, int note_number, int attribute_type, 
     Returns:
         Tuple of (word0, word1) for 64-bit MIDI message
     """
-    cdef midi.MIDIMessage_64 msg = midi.MIDI2NoteOff(<ca.UInt8>group, <ca.UInt8>channel, <ca.UInt8>note_number,
-                                                      <ca.UInt8>attribute_type, <ca.UInt16>attribute_data, <ca.UInt16>velocity)
+    cdef cm.MIDIMessage_64 msg = cm.MIDI2NoteOff(<cf.UInt8>group, <cf.UInt8>channel, <cf.UInt8>note_number,
+                                                      <cf.UInt8>attribute_type, <ca.UInt16>attribute_data, <ca.UInt16>velocity)
     return (msg.word0, msg.word1)
 
 def midi2_control_change(int group, int channel, int index, long value):
@@ -3002,8 +3193,8 @@ def midi2_control_change(int group, int channel, int index, long value):
     Returns:
         Tuple of (word0, word1) for 64-bit MIDI message
     """
-    cdef midi.MIDIMessage_64 msg = midi.MIDI2ControlChange(<ca.UInt8>group, <ca.UInt8>channel,
-                                                            <ca.UInt8>index, <ca.UInt32>value)
+    cdef cm.MIDIMessage_64 msg = cm.MIDI2ControlChange(<cf.UInt8>group, <cf.UInt8>channel,
+                                                            <cf.UInt8>index, <cf.UInt32>value)
     return (msg.word0, msg.word1)
 
 def midi2_program_change(int group, int channel, bint bank_is_valid, int program, int bank_msb, int bank_lsb):
@@ -3020,8 +3211,8 @@ def midi2_program_change(int group, int channel, bint bank_is_valid, int program
     Returns:
         Tuple of (word0, word1) for 64-bit MIDI message
     """
-    cdef midi.MIDIMessage_64 msg = midi.MIDI2ProgramChange(<ca.UInt8>group, <ca.UInt8>channel, bank_is_valid,
-                                                            <ca.UInt8>program, <ca.UInt8>bank_msb, <ca.UInt8>bank_lsb)
+    cdef cm.MIDIMessage_64 msg = cm.MIDI2ProgramChange(<cf.UInt8>group, <cf.UInt8>channel, bank_is_valid,
+                                                            <cf.UInt8>program, <cf.UInt8>bank_msb, <cf.UInt8>bank_lsb)
     return (msg.word0, msg.word1)
 
 def midi2_pitch_bend(int group, int channel, long value):
@@ -3035,64 +3226,64 @@ def midi2_pitch_bend(int group, int channel, long value):
     Returns:
         Tuple of (word0, word1) for 64-bit MIDI message
     """
-    cdef midi.MIDIMessage_64 msg = midi.MIDI2PitchBend(<ca.UInt8>group, <ca.UInt8>channel, <ca.UInt32>value)
+    cdef cm.MIDIMessage_64 msg = cm.MIDI2PitchBend(<cf.UInt8>group, <cf.UInt8>channel, <cf.UInt32>value)
     return (msg.word0, msg.word1)
 
 # MIDI Message Type Constants
 
 def get_midi_message_type_utility():
     """Get the Utility message type constant."""
-    return midi.kMIDIMessageTypeUtility
+    return cm.kMIDIMessageTypeUtility
 
 def get_midi_message_type_system():
     """Get the System message type constant."""
-    return midi.kMIDIMessageTypeSystem
+    return cm.kMIDIMessageTypeSystem
 
 def get_midi_message_type_channel_voice1():
     """Get the Channel Voice 1 (MIDI 1.0) message type constant."""
-    return midi.kMIDIMessageTypeChannelVoice1
+    return cm.kMIDIMessageTypeChannelVoice1
 
 def get_midi_message_type_sysex():
     """Get the SysEx message type constant."""
-    return midi.kMIDIMessageTypeSysEx
+    return cm.kMIDIMessageTypeSysEx
 
 def get_midi_message_type_channel_voice2():
     """Get the Channel Voice 2 (MIDI 2.0) message type constant."""
-    return midi.kMIDIMessageTypeChannelVoice2
+    return cm.kMIDIMessageTypeChannelVoice2
 
 def get_midi_message_type_data128():
     """Get the Data128 message type constant."""
-    return midi.kMIDIMessageTypeData128
+    return cm.kMIDIMessageTypeData128
 
 # MIDI CV Status Constants
 
 def get_midi_cv_status_note_off():
     """Get the Note Off status constant."""
-    return midi.kMIDICVStatusNoteOff
+    return cm.kMIDICVStatusNoteOff
 
 def get_midi_cv_status_note_on():
     """Get the Note On status constant."""
-    return midi.kMIDICVStatusNoteOn
+    return cm.kMIDICVStatusNoteOn
 
 def get_midi_cv_status_poly_pressure():
     """Get the Poly Pressure status constant."""
-    return midi.kMIDICVStatusPolyPressure
+    return cm.kMIDICVStatusPolyPressure
 
 def get_midi_cv_status_control_change():
     """Get the Control Change status constant."""
-    return midi.kMIDICVStatusControlChange
+    return cm.kMIDICVStatusControlChange
 
 def get_midi_cv_status_program_change():
     """Get the Program Change status constant."""
-    return midi.kMIDICVStatusProgramChange
+    return cm.kMIDICVStatusProgramChange
 
 def get_midi_cv_status_channel_pressure():
     """Get the Channel Pressure status constant."""
-    return midi.kMIDICVStatusChannelPressure
+    return cm.kMIDICVStatusChannelPressure
 
 def get_midi_cv_status_pitch_bend():
     """Get the Pitch Bend status constant."""
-    return midi.kMIDICVStatusPitchBend
+    return cm.kMIDICVStatusPitchBend
 
 
 # MIDI Setup (Device and Entity Management) Functions
@@ -3114,25 +3305,25 @@ def midi_device_new_entity(long device, str name, int protocol, bint embedded, i
     Raises:
         RuntimeError: If entity creation fails
     """
-    cdef midi.MIDIEntityRef entity
-    cdef ca.CFStringRef cf_name
+    cdef cm.MIDIEntityRef entity
+    cdef cf.CFStringRef cf_name
     cdef bytes name_bytes = name.encode('utf-8')
 
-    cf_name = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault,
+    cf_name = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault,
         name_bytes,
-        ca.kCFStringEncodingUTF8
+        cf.kCFStringEncodingUTF8
     )
 
-    cdef ca.OSStatus status
+    cdef cf.OSStatus status
     try:
-        status = midi.MIDIDeviceNewEntity(
-            <midi.MIDIDeviceRef>device,
+        status = cm.MIDIDeviceNewEntity(
+            <cm.MIDIDeviceRef>device,
             cf_name,
-            <midi.MIDIProtocolID>protocol,
-            <ca.Boolean>embedded,
-            <midi.ItemCount>num_source_endpoints,
-            <midi.ItemCount>num_destination_endpoints,
+            <cm.MIDIProtocolID>protocol,
+            <cf.Boolean>embedded,
+            <cm.ItemCount>num_source_endpoints,
+            <cm.ItemCount>num_destination_endpoints,
             &entity
         )
 
@@ -3143,7 +3334,7 @@ def midi_device_new_entity(long device, str name, int protocol, bint embedded, i
 
     finally:
         if cf_name:
-            ca.CFRelease(cf_name)
+            cf.CFRelease(cf_name)
 
 def midi_device_add_entity(long device, str name, bint embedded, int num_source_endpoints, int num_destination_endpoints):
     """Add an entity to a MIDI device (deprecated, use midi_device_new_entity).
@@ -3161,24 +3352,24 @@ def midi_device_add_entity(long device, str name, bint embedded, int num_source_
     Raises:
         RuntimeError: If entity creation fails
     """
-    cdef midi.MIDIEntityRef entity
-    cdef ca.CFStringRef cf_name
+    cdef cm.MIDIEntityRef entity
+    cdef cf.CFStringRef cf_name
     cdef bytes name_bytes = name.encode('utf-8')
 
-    cf_name = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault,
+    cf_name = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault,
         name_bytes,
-        ca.kCFStringEncodingUTF8
+        cf.kCFStringEncodingUTF8
     )
 
-    cdef ca.OSStatus status
+    cdef cf.OSStatus status
     try:
-        status = midi.MIDIDeviceAddEntity(
-            <midi.MIDIDeviceRef>device,
+        status = cm.MIDIDeviceAddEntity(
+            <cm.MIDIDeviceRef>device,
             cf_name,
-            <ca.Boolean>embedded,
-            <midi.ItemCount>num_source_endpoints,
-            <midi.ItemCount>num_destination_endpoints,
+            <cf.Boolean>embedded,
+            <cm.ItemCount>num_source_endpoints,
+            <cm.ItemCount>num_destination_endpoints,
             &entity
         )
 
@@ -3189,7 +3380,7 @@ def midi_device_add_entity(long device, str name, bint embedded, int num_source_
 
     finally:
         if cf_name:
-            ca.CFRelease(cf_name)
+            cf.CFRelease(cf_name)
 
 def midi_device_remove_entity(long device, long entity):
     """Remove an entity from a MIDI device.
@@ -3199,14 +3390,14 @@ def midi_device_remove_entity(long device, long entity):
         entity: The MIDIEntityRef to remove
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If entity removal fails
     """
-    cdef ca.OSStatus status = midi.MIDIDeviceRemoveEntity(
-        <midi.MIDIDeviceRef>device,
-        <midi.MIDIEntityRef>entity
+    cdef cf.OSStatus status = cm.MIDIDeviceRemoveEntity(
+        <cm.MIDIDeviceRef>device,
+        <cm.MIDIEntityRef>entity
     )
 
     if status != 0:
@@ -3223,15 +3414,15 @@ def midi_entity_add_or_remove_endpoints(long entity, int num_source_endpoints, i
         num_destination_endpoints: Desired number of destination endpoints
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If endpoint modification fails
     """
-    cdef ca.OSStatus status = midi.MIDIEntityAddOrRemoveEndpoints(
-        <midi.MIDIEntityRef>entity,
-        <midi.ItemCount>num_source_endpoints,
-        <midi.ItemCount>num_destination_endpoints
+    cdef cf.OSStatus status = cm.MIDIEntityAddOrRemoveEndpoints(
+        <cm.MIDIEntityRef>entity,
+        <cm.ItemCount>num_source_endpoints,
+        <cm.ItemCount>num_destination_endpoints
     )
 
     if status != 0:
@@ -3246,12 +3437,12 @@ def midi_setup_add_device(long device):
         device: The MIDIDeviceRef to add
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If device addition fails
     """
-    cdef ca.OSStatus status = midi.MIDISetupAddDevice(<midi.MIDIDeviceRef>device)
+    cdef cf.OSStatus status = cm.MIDISetupAddDevice(<cm.MIDIDeviceRef>device)
 
     if status != 0:
         raise RuntimeError(f"MIDISetupAddDevice failed with status: {status}")
@@ -3265,12 +3456,12 @@ def midi_setup_remove_device(long device):
         device: The MIDIDeviceRef to remove
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If device removal fails
     """
-    cdef ca.OSStatus status = midi.MIDISetupRemoveDevice(<midi.MIDIDeviceRef>device)
+    cdef cf.OSStatus status = cm.MIDISetupRemoveDevice(<cm.MIDIDeviceRef>device)
 
     if status != 0:
         raise RuntimeError(f"MIDISetupRemoveDevice failed with status: {status}")
@@ -3284,12 +3475,12 @@ def midi_setup_add_external_device(long device):
         device: The MIDIDeviceRef to add
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If external device addition fails
     """
-    cdef ca.OSStatus status = midi.MIDISetupAddExternalDevice(<midi.MIDIDeviceRef>device)
+    cdef cf.OSStatus status = cm.MIDISetupAddExternalDevice(<cm.MIDIDeviceRef>device)
 
     if status != 0:
         raise RuntimeError(f"MIDISetupAddExternalDevice failed with status: {status}")
@@ -3303,12 +3494,12 @@ def midi_setup_remove_external_device(long device):
         device: The MIDIDeviceRef to remove
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If external device removal fails
     """
-    cdef ca.OSStatus status = midi.MIDISetupRemoveExternalDevice(<midi.MIDIDeviceRef>device)
+    cdef cf.OSStatus status = cm.MIDISetupRemoveExternalDevice(<cm.MIDIDeviceRef>device)
 
     if status != 0:
         raise RuntimeError(f"MIDISetupRemoveExternalDevice failed with status: {status}")
@@ -3329,25 +3520,25 @@ def midi_external_device_create(str name, str manufacturer, str model):
     Raises:
         RuntimeError: If device creation fails
     """
-    cdef midi.MIDIDeviceRef device
-    cdef ca.CFStringRef cf_name, cf_manufacturer, cf_model
+    cdef cm.MIDIDeviceRef device
+    cdef cf.CFStringRef cf_name, cf_manufacturer, cf_model
     cdef bytes name_bytes = name.encode('utf-8')
     cdef bytes manufacturer_bytes = manufacturer.encode('utf-8')
     cdef bytes model_bytes = model.encode('utf-8')
 
-    cf_name = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, name_bytes, ca.kCFStringEncodingUTF8
+    cf_name = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, name_bytes, cf.kCFStringEncodingUTF8
     )
-    cf_manufacturer = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, manufacturer_bytes, ca.kCFStringEncodingUTF8
+    cf_manufacturer = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, manufacturer_bytes, cf.kCFStringEncodingUTF8
     )
-    cf_model = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, model_bytes, ca.kCFStringEncodingUTF8
+    cf_model = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, model_bytes, cf.kCFStringEncodingUTF8
     )
 
-    cdef ca.OSStatus status
+    cdef cf.OSStatus status
     try:
-        status = midi.MIDIExternalDeviceCreate(
+        status = cm.MIDIExternalDeviceCreate(
             cf_name, cf_manufacturer, cf_model, &device
         )
 
@@ -3358,11 +3549,11 @@ def midi_external_device_create(str name, str manufacturer, str model):
 
     finally:
         if cf_name:
-            ca.CFRelease(cf_name)
+            cf.CFRelease(cf_name)
         if cf_manufacturer:
-            ca.CFRelease(cf_manufacturer)
+            cf.CFRelease(cf_manufacturer)
         if cf_model:
-            ca.CFRelease(cf_model)
+            cf.CFRelease(cf_model)
 
 
 # MIDI Driver Functions
@@ -3381,27 +3572,27 @@ def midi_device_create(str name, str manufacturer, str model):
     Raises:
         RuntimeError: If device creation fails
     """
-    cdef midi.MIDIDeviceRef device
-    cdef ca.CFStringRef cf_name, cf_manufacturer, cf_model
+    cdef cm.MIDIDeviceRef device
+    cdef cf.CFStringRef cf_name, cf_manufacturer, cf_model
     cdef bytes name_bytes = name.encode('utf-8')
     cdef bytes manufacturer_bytes = manufacturer.encode('utf-8')
     cdef bytes model_bytes = model.encode('utf-8')
 
-    cf_name = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, name_bytes, ca.kCFStringEncodingUTF8
+    cf_name = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, name_bytes, cf.kCFStringEncodingUTF8
     )
-    cf_manufacturer = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, manufacturer_bytes, ca.kCFStringEncodingUTF8
+    cf_manufacturer = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, manufacturer_bytes, cf.kCFStringEncodingUTF8
     )
-    cf_model = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, model_bytes, ca.kCFStringEncodingUTF8
+    cf_model = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, model_bytes, cf.kCFStringEncodingUTF8
     )
 
-    cdef ca.OSStatus status
+    cdef cf.OSStatus status
     try:
         # NULL owner indicates non-driver creation
-        status = midi.MIDIDeviceCreate(
-            <midi.MIDIDriverRef>NULL,
+        status = cm.MIDIDeviceCreate(
+            <cm.MIDIDriverRef>NULL,
             cf_name, cf_manufacturer, cf_model, &device
         )
 
@@ -3412,11 +3603,11 @@ def midi_device_create(str name, str manufacturer, str model):
 
     finally:
         if cf_name:
-            ca.CFRelease(cf_name)
+            cf.CFRelease(cf_name)
         if cf_manufacturer:
-            ca.CFRelease(cf_manufacturer)
+            cf.CFRelease(cf_manufacturer)
         if cf_model:
-            ca.CFRelease(cf_model)
+            cf.CFRelease(cf_model)
 
 def midi_device_dispose(long device):
     """Dispose a MIDI device that hasn't been added to the system.
@@ -3425,12 +3616,12 @@ def midi_device_dispose(long device):
         device: The MIDIDeviceRef to dispose
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If device disposal fails
     """
-    cdef ca.OSStatus status = midi.MIDIDeviceDispose(<midi.MIDIDeviceRef>device)
+    cdef cf.OSStatus status = cm.MIDIDeviceDispose(<cm.MIDIDeviceRef>device)
 
     if status != 0:
         raise RuntimeError(f"MIDIDeviceDispose failed with status: {status}")
@@ -3446,7 +3637,7 @@ def midi_device_list_get_number_of_devices(long dev_list):
     Returns:
         Number of devices in the list
     """
-    return midi.MIDIDeviceListGetNumberOfDevices(<midi.MIDIDeviceListRef>dev_list)
+    return cm.MIDIDeviceListGetNumberOfDevices(<cm.MIDIDeviceListRef>dev_list)
 
 def midi_device_list_get_device(long dev_list, int index):
     """Get a device from a device list.
@@ -3461,13 +3652,13 @@ def midi_device_list_get_device(long dev_list, int index):
     Raises:
         IndexError: If index is out of bounds
     """
-    cdef midi.ItemCount num_devices = midi.MIDIDeviceListGetNumberOfDevices(<midi.MIDIDeviceListRef>dev_list)
+    cdef cm.ItemCount num_devices = cm.MIDIDeviceListGetNumberOfDevices(<cm.MIDIDeviceListRef>dev_list)
 
     if index < 0 or index >= num_devices:
         raise IndexError(f"Device index {index} out of bounds (0-{num_devices-1})")
 
-    cdef midi.MIDIDeviceRef device = midi.MIDIDeviceListGetDevice(
-        <midi.MIDIDeviceListRef>dev_list, <midi.ItemCount>index
+    cdef cm.MIDIDeviceRef device = cm.MIDIDeviceListGetDevice(
+        <cm.MIDIDeviceListRef>dev_list, <cm.ItemCount>index
     )
 
     if device == 0:
@@ -3483,13 +3674,13 @@ def midi_device_list_add_device(long dev_list, long device):
         device: The MIDIDeviceRef to add
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If adding device fails
     """
-    cdef ca.OSStatus status = midi.MIDIDeviceListAddDevice(
-        <midi.MIDIDeviceListRef>dev_list, <midi.MIDIDeviceRef>device
+    cdef cf.OSStatus status = cm.MIDIDeviceListAddDevice(
+        <cm.MIDIDeviceListRef>dev_list, <cm.MIDIDeviceRef>device
     )
 
     if status != 0:
@@ -3504,12 +3695,12 @@ def midi_device_list_dispose(long dev_list):
         dev_list: The MIDIDeviceListRef to dispose
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If disposal fails
     """
-    cdef ca.OSStatus status = midi.MIDIDeviceListDispose(<midi.MIDIDeviceListRef>dev_list)
+    cdef cf.OSStatus status = cm.MIDIDeviceListDispose(<cm.MIDIDeviceListRef>dev_list)
 
     if status != 0:
         raise RuntimeError(f"MIDIDeviceListDispose failed with status: {status}")
@@ -3525,13 +3716,13 @@ def midi_endpoint_set_ref_cons(long endpoint, long ref1=0, long ref2=0):
         ref2: Second reference constant (optional)
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If setting refCons fails
     """
-    cdef ca.OSStatus status = midi.MIDIEndpointSetRefCons(
-        <midi.MIDIEndpointRef>endpoint,
+    cdef cf.OSStatus status = cm.MIDIEndpointSetRefCons(
+        <cm.MIDIEndpointRef>endpoint,
         <void*>ref1,
         <void*>ref2
     )
@@ -3555,8 +3746,8 @@ def midi_endpoint_get_ref_cons(long endpoint):
     """
     cdef void* ref1
     cdef void* ref2
-    cdef ca.OSStatus status = midi.MIDIEndpointGetRefCons(
-        <midi.MIDIEndpointRef>endpoint, &ref1, &ref2
+    cdef cf.OSStatus status = cm.MIDIEndpointGetRefCons(
+        <cm.MIDIEndpointRef>endpoint, &ref1, &ref2
     )
 
     if status != 0:
@@ -3573,7 +3764,7 @@ def midi_get_driver_io_runloop():
     Note:
         This is primarily used by MIDI drivers for high-priority I/O operations.
     """
-    cdef ca.CFRunLoopRef runloop = midi.MIDIGetDriverIORunLoop()
+    cdef ca.CFRunLoopRef runloop = cm.MIDIGetDriverIORunLoop()
     return <long>runloop
 
 def midi_get_driver_device_list(long driver):
@@ -3589,7 +3780,7 @@ def midi_get_driver_device_list(long driver):
         The returned device list should be disposed using midi_device_list_dispose().
         This function is primarily useful for driver development.
     """
-    cdef midi.MIDIDeviceListRef dev_list = midi.MIDIGetDriverDeviceList(<midi.MIDIDriverRef>driver)
+    cdef cm.MIDIDeviceListRef dev_list = cm.MIDIGetDriverDeviceList(<cm.MIDIDriverRef>driver)
     return dev_list
 
 def midi_driver_enable_monitoring(long driver, bint enabled):
@@ -3600,7 +3791,7 @@ def midi_driver_enable_monitoring(long driver, bint enabled):
         enabled: True to enable monitoring, False to disable
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If enabling/disabling monitoring fails
@@ -3609,8 +3800,8 @@ def midi_driver_enable_monitoring(long driver, bint enabled):
         This allows a driver to monitor all outgoing MIDI packets in the system.
         Primarily used for specialized drivers like MIDI monitor displays.
     """
-    cdef ca.OSStatus status = midi.MIDIDriverEnableMonitoring(
-        <midi.MIDIDriverRef>driver, <ca.Boolean>enabled
+    cdef cf.OSStatus status = cm.MIDIDriverEnableMonitoring(
+        <cm.MIDIDriverRef>driver, <cf.Boolean>enabled
     )
 
     if status != 0:
@@ -3631,8 +3822,8 @@ def midi_thru_connection_params_initialize():
         This creates a basic structure with no endpoints and no transformations.
         You can then modify the returned dictionary and use it with other functions.
     """
-    cdef midi.MIDIThruConnectionParams params
-    midi.MIDIThruConnectionParamsInitialize(&params)
+    cdef cm.MIDIThruConnectionParams params
+    cm.MIDIThruConnectionParamsInitialize(&params)
 
     # Convert to Python dictionary for easier manipulation
     result = {
@@ -3678,10 +3869,10 @@ def midi_thru_connection_create(str persistent_owner_id=None, dict connection_pa
         connection_params = midi_thru_connection_params_initialize()
 
     # Convert Python dict back to C structure
-    cdef midi.MIDIThruConnectionParams params
+    cdef cm.MIDIThruConnectionParams params
     cdef int note_transform
     cdef int velocity_transform
-    midi.MIDIThruConnectionParamsInitialize(&params)
+    cm.MIDIThruConnectionParamsInitialize(&params)
 
     # Fill in the structure from the dictionary
     params.version = connection_params.get('version', 0)
@@ -3691,45 +3882,45 @@ def midi_thru_connection_create(str persistent_owner_id=None, dict connection_pa
     params.numSources = min(len(sources), 8)
     for i in range(params.numSources):
         if isinstance(sources[i], dict):
-            params.sources[i].endpointRef = <midi.MIDIEndpointRef>sources[i].get('endpointRef', 0)
-            params.sources[i].uniqueID = <midi.MIDIUniqueID>sources[i].get('uniqueID', 0)
+            params.sources[i].endpointRef = <cm.MIDIEndpointRef>sources[i].get('endpointRef', 0)
+            params.sources[i].uniqueID = <cm.MIDIUniqueID>sources[i].get('uniqueID', 0)
 
     # Destinations
     destinations = connection_params.get('destinations', [])
     params.numDestinations = min(len(destinations), 8)
     for i in range(params.numDestinations):
         if isinstance(destinations[i], dict):
-            params.destinations[i].endpointRef = <midi.MIDIEndpointRef>destinations[i].get('endpointRef', 0)
-            params.destinations[i].uniqueID = <midi.MIDIUniqueID>destinations[i].get('uniqueID', 0)
+            params.destinations[i].endpointRef = <cm.MIDIEndpointRef>destinations[i].get('endpointRef', 0)
+            params.destinations[i].uniqueID = <cm.MIDIUniqueID>destinations[i].get('uniqueID', 0)
 
     # Channel map
     channel_map = connection_params.get('channelMap', list(range(16)))
     for i in range(16):
-        params.channelMap[i] = <ca.UInt8>channel_map[i] if i < len(channel_map) else <ca.UInt8>i
+        params.channelMap[i] = <cf.UInt8>channel_map[i] if i < len(channel_map) else <cf.UInt8>i
 
     # Velocity and note filtering
-    params.lowVelocity = <ca.UInt8>connection_params.get('lowVelocity', 0)
-    params.highVelocity = <ca.UInt8>connection_params.get('highVelocity', 0)
-    params.lowNote = <ca.UInt8>connection_params.get('lowNote', 0)
-    params.highNote = <ca.UInt8>connection_params.get('highNote', 127)
+    params.lowVelocity = <cf.UInt8>connection_params.get('lowVelocity', 0)
+    params.highVelocity = <cf.UInt8>connection_params.get('highVelocity', 0)
+    params.lowNote = <cf.UInt8>connection_params.get('lowNote', 0)
+    params.highNote = <cf.UInt8>connection_params.get('highNote', 127)
 
     # Transform settings
     note_number = connection_params.get('noteNumber', {'transform': 0, 'param': 0})
     note_transform = note_number.get('transform', 0)
-    params.noteNumber.transform = <midi.MIDITransformType>note_transform
+    params.noteNumber.transform = <cm.MIDITransformType>note_transform
     params.noteNumber.param = <ca.SInt16>note_number.get('param', 0)
 
     velocity = connection_params.get('velocity', {'transform': 0, 'param': 0})
     velocity_transform = velocity.get('transform', 0)
-    params.velocity.transform = <midi.MIDITransformType>velocity_transform
+    params.velocity.transform = <cm.MIDITransformType>velocity_transform
     params.velocity.param = <ca.SInt16>velocity.get('param', 0)
 
     # Filter settings
-    params.filterOutSysEx = <ca.UInt8>connection_params.get('filterOutSysEx', 0)
-    params.filterOutMTC = <ca.UInt8>connection_params.get('filterOutMTC', 0)
-    params.filterOutBeatClock = <ca.UInt8>connection_params.get('filterOutBeatClock', 0)
-    params.filterOutTuneRequest = <ca.UInt8>connection_params.get('filterOutTuneRequest', 0)
-    params.filterOutAllControls = <ca.UInt8>connection_params.get('filterOutAllControls', 0)
+    params.filterOutSysEx = <cf.UInt8>connection_params.get('filterOutSysEx', 0)
+    params.filterOutMTC = <cf.UInt8>connection_params.get('filterOutMTC', 0)
+    params.filterOutBeatClock = <cf.UInt8>connection_params.get('filterOutBeatClock', 0)
+    params.filterOutTuneRequest = <cf.UInt8>connection_params.get('filterOutTuneRequest', 0)
+    params.filterOutAllControls = <cf.UInt8>connection_params.get('filterOutAllControls', 0)
 
     # Note: For simplicity, we're not implementing the variable-length portions
     # (control transforms and value maps) in this basic wrapper
@@ -3737,25 +3928,25 @@ def midi_thru_connection_create(str persistent_owner_id=None, dict connection_pa
     params.numMaps = 0
 
     # Create CFData from the structure
-    cdef ca.CFDataRef cf_params = ca.CFDataCreate(
-        ca.kCFAllocatorDefault,
-        <ca.UInt8*>&params,
-        sizeof(midi.MIDIThruConnectionParams)
+    cdef cf.CFDataRef cf_params = ca.CFDataCreate(
+        cf.kCFAllocatorDefault,
+        <cf.UInt8*>&params,
+        sizeof(cm.MIDIThruConnectionParams)
     )
 
-    cdef ca.CFStringRef cf_owner_id = NULL
+    cdef cf.CFStringRef cf_owner_id = NULL
     cdef bytes owner_id_bytes
     if persistent_owner_id is not None:
         owner_id_bytes = persistent_owner_id.encode('utf-8')
-        cf_owner_id = ca.CFStringCreateWithCString(
-            ca.kCFAllocatorDefault, owner_id_bytes, ca.kCFStringEncodingUTF8
+        cf_owner_id = cf.CFStringCreateWithCString(
+            cf.kCFAllocatorDefault, owner_id_bytes, cf.kCFStringEncodingUTF8
         )
 
-    cdef midi.MIDIThruConnectionRef connection
-    cdef ca.OSStatus status
+    cdef cm.MIDIThruConnectionRef connection
+    cdef cf.OSStatus status
 
     try:
-        status = midi.MIDIThruConnectionCreate(cf_owner_id, cf_params, &connection)
+        status = cm.MIDIThruConnectionCreate(cf_owner_id, cf_params, &connection)
 
         if status != 0:
             raise RuntimeError(f"MIDIThruConnectionCreate failed with status: {status}")
@@ -3764,9 +3955,9 @@ def midi_thru_connection_create(str persistent_owner_id=None, dict connection_pa
 
     finally:
         if cf_params:
-            ca.CFRelease(cf_params)
+            cf.CFRelease(cf_params)
         if cf_owner_id:
-            ca.CFRelease(cf_owner_id)
+            cf.CFRelease(cf_owner_id)
 
 def midi_thru_connection_dispose(long connection):
     """Dispose a MIDI thru connection.
@@ -3775,12 +3966,12 @@ def midi_thru_connection_dispose(long connection):
         connection: The MIDIThruConnectionRef to dispose
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If disposal fails
     """
-    cdef ca.OSStatus status = midi.MIDIThruConnectionDispose(<midi.MIDIThruConnectionRef>connection)
+    cdef cf.OSStatus status = cm.MIDIThruConnectionDispose(<cm.MIDIThruConnectionRef>connection)
 
     if status != 0:
         raise RuntimeError(f"MIDIThruConnectionDispose failed with status: {status}")
@@ -3799,27 +3990,27 @@ def midi_thru_connection_get_params(long connection):
     Raises:
         RuntimeError: If getting parameters fails
     """
-    cdef ca.CFDataRef cf_params
-    cdef ca.OSStatus status = midi.MIDIThruConnectionGetParams(
-        <midi.MIDIThruConnectionRef>connection, &cf_params
+    cdef cf.CFDataRef cf_params
+    cdef cf.OSStatus status = cm.MIDIThruConnectionGetParams(
+        <cm.MIDIThruConnectionRef>connection, &cf_params
     )
 
     if status != 0:
         raise RuntimeError(f"MIDIThruConnectionGetParams failed with status: {status}")
 
-    cdef ca.CFIndex data_length
-    cdef ca.UInt8* data_ptr
-    cdef midi.MIDIThruConnectionParams* params
+    cdef cf.CFIndex data_length
+    cdef cf.UInt8* data_ptr
+    cdef cm.MIDIThruConnectionParams* params
 
     try:
         # Extract the data
         data_length = ca.CFDataGetLength(cf_params)
-        data_ptr = <ca.UInt8*>ca.CFDataGetBytePtr(cf_params)
+        data_ptr = <cf.UInt8*>ca.CFDataGetBytePtr(cf_params)
 
-        if data_length < sizeof(midi.MIDIThruConnectionParams):
+        if data_length < sizeof(cm.MIDIThruConnectionParams):
             raise RuntimeError("Invalid connection parameters data")
 
-        params = <midi.MIDIThruConnectionParams*>data_ptr
+        params = <cm.MIDIThruConnectionParams*>data_ptr
 
         # Convert to Python dictionary
         result = {
@@ -3866,7 +4057,7 @@ def midi_thru_connection_get_params(long connection):
 
     finally:
         if cf_params:
-            ca.CFRelease(cf_params)
+            cf.CFRelease(cf_params)
 
 def midi_thru_connection_set_params(long connection, dict connection_params):
     """Set the parameters of a MIDI thru connection.
@@ -3876,14 +4067,14 @@ def midi_thru_connection_set_params(long connection, dict connection_params):
         connection_params: Dictionary with new connection parameters
 
     Returns:
-        OSStatus result code
+      f OSStatus result code
 
     Raises:
         RuntimeError: If setting parameters fails
     """
     # Convert Python dict to C structure (similar to create function)
-    cdef midi.MIDIThruConnectionParams params
-    midi.MIDIThruConnectionParamsInitialize(&params)
+    cdef cm.MIDIThruConnectionParams params
+    cm.MIDIThruConnectionParamsInitialize(&params)
 
     # Fill in the structure from the dictionary (abbreviated version)
     params.version = connection_params.get('version', 0)
@@ -3893,34 +4084,34 @@ def midi_thru_connection_set_params(long connection, dict connection_params):
     params.numSources = min(len(sources), 8)
     for i in range(params.numSources):
         if isinstance(sources[i], dict):
-            params.sources[i].endpointRef = <midi.MIDIEndpointRef>sources[i].get('endpointRef', 0)
-            params.sources[i].uniqueID = <midi.MIDIUniqueID>sources[i].get('uniqueID', 0)
+            params.sources[i].endpointRef = <cm.MIDIEndpointRef>sources[i].get('endpointRef', 0)
+            params.sources[i].uniqueID = <cm.MIDIUniqueID>sources[i].get('uniqueID', 0)
 
     # Destinations
     destinations = connection_params.get('destinations', [])
     params.numDestinations = min(len(destinations), 8)
     for i in range(params.numDestinations):
         if isinstance(destinations[i], dict):
-            params.destinations[i].endpointRef = <midi.MIDIEndpointRef>destinations[i].get('endpointRef', 0)
-            params.destinations[i].uniqueID = <midi.MIDIUniqueID>destinations[i].get('uniqueID', 0)
+            params.destinations[i].endpointRef = <cm.MIDIEndpointRef>destinations[i].get('endpointRef', 0)
+            params.destinations[i].uniqueID = <cm.MIDIUniqueID>destinations[i].get('uniqueID', 0)
 
     # Basic parameters
-    params.filterOutSysEx = <ca.UInt8>connection_params.get('filterOutSysEx', 0)
-    params.filterOutMTC = <ca.UInt8>connection_params.get('filterOutMTC', 0)
-    params.filterOutBeatClock = <ca.UInt8>connection_params.get('filterOutBeatClock', 0)
-    params.filterOutAllControls = <ca.UInt8>connection_params.get('filterOutAllControls', 0)
+    params.filterOutSysEx = <cf.UInt8>connection_params.get('filterOutSysEx', 0)
+    params.filterOutMTC = <cf.UInt8>connection_params.get('filterOutMTC', 0)
+    params.filterOutBeatClock = <cf.UInt8>connection_params.get('filterOutBeatClock', 0)
+    params.filterOutAllControls = <cf.UInt8>connection_params.get('filterOutAllControls', 0)
 
     # Create CFData from the structure
-    cdef ca.CFDataRef cf_params = ca.CFDataCreate(
-        ca.kCFAllocatorDefault,
-        <ca.UInt8*>&params,
-        sizeof(midi.MIDIThruConnectionParams)
+    cdef cf.CFDataRef cf_params = ca.CFDataCreate(
+        cf.kCFAllocatorDefault,
+        <cf.UInt8*>&params,
+        sizeof(cm.MIDIThruConnectionParams)
     )
 
-    cdef ca.OSStatus status
+    cdef cf.OSStatus status
     try:
-        status = midi.MIDIThruConnectionSetParams(
-            <midi.MIDIThruConnectionRef>connection, cf_params
+        status = cm.MIDIThruConnectionSetParams(
+            <cm.MIDIThruConnectionRef>connection, cf_params
         )
 
         if status != 0:
@@ -3930,7 +4121,7 @@ def midi_thru_connection_set_params(long connection, dict connection_params):
 
     finally:
         if cf_params:
-            ca.CFRelease(cf_params)
+            cf.CFRelease(cf_params)
 
 def midi_thru_connection_find(str persistent_owner_id):
     """Find all thru connections created by a specific owner.
@@ -3945,30 +4136,30 @@ def midi_thru_connection_find(str persistent_owner_id):
         RuntimeError: If finding connections fails
     """
     cdef bytes owner_id_bytes = persistent_owner_id.encode('utf-8')
-    cdef ca.CFStringRef cf_owner_id = ca.CFStringCreateWithCString(
-        ca.kCFAllocatorDefault, owner_id_bytes, ca.kCFStringEncodingUTF8
+    cdef cf.CFStringRef cf_owner_id = cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault, owner_id_bytes, cf.kCFStringEncodingUTF8
     )
 
-    cdef ca.CFDataRef cf_connection_list
-    cdef ca.OSStatus status
-    cdef ca.CFIndex data_length
-    cdef ca.UInt8* data_ptr
-    cdef ca.CFIndex num_connections
-    cdef midi.MIDIThruConnectionRef* connections
+    cdef cf.CFDataRef cf_connection_list
+    cdef cf.OSStatus status
+    cdef cf.CFIndex data_length
+    cdef cf.UInt8* data_ptr
+    cdef cf.CFIndex num_connections
+    cdef cm.MIDIThruConnectionRef* connections
 
     try:
-        status = midi.MIDIThruConnectionFind(cf_owner_id, &cf_connection_list)
+        status = cm.MIDIThruConnectionFind(cf_owner_id, &cf_connection_list)
 
         if status != 0:
             raise RuntimeError(f"MIDIThruConnectionFind failed with status: {status}")
 
         # Extract the connection list
         data_length = ca.CFDataGetLength(cf_connection_list)
-        data_ptr = <ca.UInt8*>ca.CFDataGetBytePtr(cf_connection_list)
+        data_ptr = <cf.UInt8*>ca.CFDataGetBytePtr(cf_connection_list)
 
         # Each connection is a MIDIThruConnectionRef (which is a MIDIObjectRef)
-        num_connections = data_length // sizeof(midi.MIDIThruConnectionRef)
-        connections = <midi.MIDIThruConnectionRef*>data_ptr
+        num_connections = data_length // sizeof(cm.MIDIThruConnectionRef)
+        connections = <cm.MIDIThruConnectionRef*>data_ptr
 
         result = []
         for i in range(num_connections):
@@ -3978,67 +4169,67 @@ def midi_thru_connection_find(str persistent_owner_id):
 
     finally:
         if cf_owner_id:
-            ca.CFRelease(cf_owner_id)
+            cf.CFRelease(cf_owner_id)
         if cf_connection_list:
-            ca.CFRelease(cf_connection_list)
+            cf.CFRelease(cf_connection_list)
 
 # MIDI Thru Connection Constants
 
 def get_midi_transform_none():
     """Get the 'None' transform type constant."""
-    return midi.kMIDITransform_None
+    return cm.kMIDITransform_None
 
 def get_midi_transform_filter_out():
     """Get the 'FilterOut' transform type constant."""
-    return midi.kMIDITransform_FilterOut
+    return cm.kMIDITransform_FilterOut
 
 def get_midi_transform_map_control():
     """Get the 'MapControl' transform type constant."""
-    return midi.kMIDITransform_MapControl
+    return cm.kMIDITransform_MapControl
 
 def get_midi_transform_add():
     """Get the 'Add' transform type constant."""
-    return midi.kMIDITransform_Add
+    return cm.kMIDITransform_Add
 
 def get_midi_transform_scale():
     """Get the 'Scale' transform type constant."""
-    return midi.kMIDITransform_Scale
+    return cm.kMIDITransform_Scale
 
 def get_midi_transform_min_value():
     """Get the 'MinValue' transform type constant."""
-    return midi.kMIDITransform_MinValue
+    return cm.kMIDITransform_MinValue
 
 def get_midi_transform_max_value():
     """Get the 'MaxValue' transform type constant."""
-    return midi.kMIDITransform_MaxValue
+    return cm.kMIDITransform_MaxValue
 
 def get_midi_transform_map_value():
     """Get the 'MapValue' transform type constant."""
-    return midi.kMIDITransform_MapValue
+    return cm.kMIDITransform_MapValue
 
 def get_midi_control_type_7bit():
     """Get the '7Bit' control type constant."""
-    return midi.kMIDIControlType_7Bit
+    return cm.kMIDIControlType_7Bit
 
 def get_midi_control_type_14bit():
     """Get the '14Bit' control type constant."""
-    return midi.kMIDIControlType_14Bit
+    return cm.kMIDIControlType_14Bit
 
 def get_midi_control_type_7bit_rpn():
     """Get the '7BitRPN' control type constant."""
-    return midi.kMIDIControlType_7BitRPN
+    return cm.kMIDIControlType_7BitRPN
 
 def get_midi_control_type_14bit_rpn():
     """Get the '14BitRPN' control type constant."""
-    return midi.kMIDIControlType_14BitRPN
+    return cm.kMIDIControlType_14BitRPN
 
 def get_midi_control_type_7bit_nrpn():
     """Get the '7BitNRPN' control type constant."""
-    return midi.kMIDIControlType_7BitNRPN
+    return cm.kMIDIControlType_7BitNRPN
 
 def get_midi_control_type_14bit_nrpn():
     """Get the '14BitNRPN' control type constant."""
-    return midi.kMIDIControlType_14BitNRPN
+    return cm.kMIDIControlType_14BitNRPN
 
 def get_midi_thru_connection_max_endpoints():
     """Get the maximum number of endpoints for a thru connection."""

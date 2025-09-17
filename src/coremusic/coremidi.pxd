@@ -221,7 +221,29 @@ cdef extern from "CoreMIDI/MIDIServices.h":
         UInt32 nData,
         const UInt8* data)
 
-    # Note: Property constants omitted for now due to CFStringRef extern issues
+    # Property constants
+    cdef extern const CFStringRef kMIDIPropertyName
+    cdef extern const CFStringRef kMIDIPropertyManufacturer
+    cdef extern const CFStringRef kMIDIPropertyModel
+    cdef extern const CFStringRef kMIDIPropertyUniqueID
+    cdef extern const CFStringRef kMIDIPropertyDeviceID
+    cdef extern const CFStringRef kMIDIPropertyReceiveChannels
+    cdef extern const CFStringRef kMIDIPropertyTransmitChannels
+    cdef extern const CFStringRef kMIDIPropertyMaxSysExSpeed
+    cdef extern const CFStringRef kMIDIPropertyAdvanceScheduleTimeMuSec
+    cdef extern const CFStringRef kMIDIPropertyIsEmbeddedEntity
+    cdef extern const CFStringRef kMIDIPropertyIsBroadcast
+    cdef extern const CFStringRef kMIDIPropertySingleRealtimeEntity
+    cdef extern const CFStringRef kMIDIPropertyConnectionUniqueID
+    cdef extern const CFStringRef kMIDIPropertyOffline
+    cdef extern const CFStringRef kMIDIPropertyPrivate
+    cdef extern const CFStringRef kMIDIPropertyDriverOwner
+    cdef extern const CFStringRef kMIDIPropertySupportsMMC
+    cdef extern const CFStringRef kMIDIPropertySupportsGeneralMIDI
+    cdef extern const CFStringRef kMIDIPropertySupportsShowControl
+    cdef extern const CFStringRef kMIDIPropertyImage
+    cdef extern const CFStringRef kMIDIPropertyDriverVersion
+    cdef extern const CFStringRef kMIDIPropertyDisplayName
 
 # CoreMIDI MIDIMessages.h API declarations
 cdef extern from "CoreMIDI/MIDIMessages.h":
