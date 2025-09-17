@@ -1,8 +1,10 @@
-#!/usr/bin/env python3
-"""pytest test suite for AudioFileStream functionality."""
-
 import os
+import struct
+import time
+import wave
+
 import pytest
+
 import coreaudio as ca
 
 
@@ -282,7 +284,3 @@ class TestAudioFileStreamPropertyInfo:
         finally:
             ca.audio_file_stream_close(stream_id)
 
-
-if __name__ == "__main__":
-    # Run tests if script is executed directly
-    pytest.main([__file__, "-v"])
