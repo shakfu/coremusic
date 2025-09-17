@@ -38,6 +38,8 @@ cdef extern from "CoreFoundation/CoreFoundation.h":
     ctypedef __CFRunLoop* CFRunLoopRef
     ctypedef struct __CFString
     ctypedef __CFString* CFStringRef
+    ctypedef struct __CFData
+    ctypedef __CFData* CFDataRef
     ctypedef UInt8 AudioFilePermissions
     ctypedef long CFIndex
     ctypedef void* CFAllocatorRef
@@ -55,3 +57,8 @@ cdef extern from "CoreFoundation/CoreFoundation.h":
     cdef CFIndex CFStringGetLength(CFStringRef theString)
     cdef CFIndex CFStringGetMaximumSizeForEncoding(CFIndex length, CFStringEncoding encoding)
     cdef Boolean CFStringGetCString(CFStringRef theString, char* buffer, CFIndex bufferSize, CFStringEncoding encoding)
+
+    # CFData functions
+    cdef CFDataRef CFDataCreate(CFAllocatorRef allocator, const UInt8* bytes, CFIndex length)
+    cdef CFIndex CFDataGetLength(CFDataRef theData)
+    cdef UInt8* CFDataGetBytePtr(CFDataRef theData)

@@ -509,3 +509,114 @@ cdef extern from "CoreMIDI/MIDIDriver.h":
 
     # Note: Complex driver interface structures and COM-style functions are omitted
     # as they are primarily used in CFPlugIn driver development, not general use
+
+# CoreMIDI MIDIThruConnection.h API declarations
+cdef extern from "CoreMIDI/MIDIThruConnection.h":
+
+    # Thru connection reference type
+    ctypedef MIDIObjectRef MIDIThruConnectionRef
+
+    # Constants
+    enum:
+        kMIDIThruConnection_MaxEndpoints = 8
+
+    # Transform types
+    ctypedef enum MIDITransformType:
+        kMIDITransform_None = 0
+        kMIDITransform_FilterOut = 1
+        kMIDITransform_MapControl = 2
+        kMIDITransform_Add = 8
+        kMIDITransform_Scale = 9
+        kMIDITransform_MinValue = 10
+        kMIDITransform_MaxValue = 11
+        kMIDITransform_MapValue = 12
+
+    # Control types
+    ctypedef enum MIDITransformControlType:
+        kMIDIControlType_7Bit = 0
+        kMIDIControlType_14Bit = 1
+        kMIDIControlType_7BitRPN = 2
+        kMIDIControlType_14BitRPN = 3
+        kMIDIControlType_7BitNRPN = 4
+        kMIDIControlType_14BitNRPN = 5
+
+    # Value mapping structure
+    ctypedef struct MIDIValueMap:
+        UInt8 value[128]
+
+    # Transform structures
+    ctypedef struct MIDITransform:
+        MIDITransformType transform
+        SInt16 param
+
+    ctypedef struct MIDIControlTransform:
+        MIDITransformControlType controlType
+        MIDITransformControlType remappedControlType
+        UInt16 controlNumber
+        MIDITransformType transform
+        SInt16 param
+
+    # Endpoint description
+    ctypedef struct MIDIThruConnectionEndpoint:
+        MIDIEndpointRef endpointRef
+        MIDIUniqueID uniqueID
+
+    # Main connection parameters structure
+    ctypedef struct MIDIThruConnectionParams:
+        UInt32 version
+        UInt32 numSources
+        MIDIThruConnectionEndpoint sources[8]  # kMIDIThruConnection_MaxEndpoints
+        UInt32 numDestinations
+        MIDIThruConnectionEndpoint destinations[8]  # kMIDIThruConnection_MaxEndpoints
+
+        UInt8 channelMap[16]
+        UInt8 lowVelocity
+        UInt8 highVelocity
+        UInt8 lowNote
+        UInt8 highNote
+        MIDITransform noteNumber
+        MIDITransform velocity
+        MIDITransform keyPressure
+        MIDITransform channelPressure
+        MIDITransform programChange
+        MIDITransform pitchBend
+
+        UInt8 filterOutSysEx
+        UInt8 filterOutMTC
+        UInt8 filterOutBeatClock
+        UInt8 filterOutTuneRequest
+        UInt8 reserved2[3]
+        UInt8 filterOutAllControls
+
+        UInt16 numControlTransforms
+        UInt16 numMaps
+        UInt16 reserved3[4]
+
+    # Function declarations
+
+    # MIDIThruConnectionParamsInitialize - Available from macOS 10.2+, iOS 4.2+
+    cdef void MIDIThruConnectionParamsInitialize(MIDIThruConnectionParams* inConnectionParams)
+
+    # MIDIThruConnectionCreate - Available from macOS 10.2+, iOS 4.2+
+    cdef OSStatus MIDIThruConnectionCreate(
+        CFStringRef inPersistentOwnerID,
+        CFDataRef inConnectionParams,
+        MIDIThruConnectionRef* outConnection)
+
+    # MIDIThruConnectionDispose - Available from macOS 10.2+, iOS 4.2+
+    cdef OSStatus MIDIThruConnectionDispose(MIDIThruConnectionRef connection)
+
+    # MIDIThruConnectionGetParams - Available from macOS 10.2+, iOS 4.2+
+    cdef OSStatus MIDIThruConnectionGetParams(
+        MIDIThruConnectionRef connection,
+        CFDataRef* outConnectionParams)
+
+    # MIDIThruConnectionSetParams - Available from macOS 10.2+, iOS 4.2+
+    cdef OSStatus MIDIThruConnectionSetParams(
+        MIDIThruConnectionRef connection,
+        CFDataRef inConnectionParams)
+
+    # MIDIThruConnectionFind - Available from macOS 10.2+, iOS 4.2+
+    cdef OSStatus MIDIThruConnectionFind(
+        CFStringRef inPersistentOwnerID,
+        CFDataRef* outConnectionList)

@@ -1314,5 +1314,384 @@ class TestCoreMIDIDriver:
             pytest.skip("Driver-style device creation not supported in this environment")
 
 
+class TestCoreMIDIThruConnection:
+    """Test CoreMIDI Thru Connection functionality"""
+
+    def setup_method(self):
+        """Set up test environment for MIDIThruConnection tests"""
+        # Store created connections for cleanup
+        self.test_connections = []
+        self.test_owner_id = "com.test.pytest.thruconnection"
+
+    def teardown_method(self):
+        """Clean up test environment"""
+        # Clean up any connections we created
+        for connection in self.test_connections:
+            try:
+                cm.midi_thru_connection_dispose(connection)
+            except RuntimeError:
+                pass  # Connection might already be disposed
+
+    def test_midi_thru_connection_params_initialize(self):
+        """Test initializing thru connection parameters"""
+        params = cm.midi_thru_connection_params_initialize()
+
+        # Check that we get a dictionary with expected keys
+        assert isinstance(params, dict)
+        assert 'version' in params
+        assert 'sources' in params
+        assert 'destinations' in params
+        assert 'channelMap' in params
+        assert 'filterOutSysEx' in params
+        assert 'filterOutMTC' in params
+        assert 'filterOutBeatClock' in params
+
+        # Check channel map is initialized correctly (0-15)
+        assert len(params['channelMap']) == 16
+        assert params['channelMap'] == list(range(16))
+
+        # Check transform structures
+        assert isinstance(params['noteNumber'], dict)
+        assert 'transform' in params['noteNumber']
+        assert 'param' in params['noteNumber']
+
+        # Check initial values are sensible
+        assert params['version'] == 0
+        assert params['sources'] == []
+        assert params['destinations'] == []
+        assert params['lowVelocity'] == 0
+        assert params['highVelocity'] == 0
+
+    def test_midi_thru_connection_create_basic(self):
+        """Test creating a basic thru connection"""
+        try:
+            # Create a basic connection with default parameters
+            connection = cm.midi_thru_connection_create()
+
+            assert isinstance(connection, int)
+            assert connection > 0
+
+            # Store for cleanup
+            self.test_connections.append(connection)
+
+            # Test disposal
+            cm.midi_thru_connection_dispose(connection)
+            self.test_connections.remove(connection)
+
+        except RuntimeError as e:
+            # Thru connection creation might fail due to permissions or lack of endpoints
+            pytest.skip(f"Thru connection creation failed (expected): {e}")
+
+    def test_midi_thru_connection_create_persistent(self):
+        """Test creating a persistent thru connection"""
+        try:
+            # Create a persistent connection
+            connection = cm.midi_thru_connection_create(self.test_owner_id)
+
+            assert isinstance(connection, int)
+            assert connection > 0
+
+            self.test_connections.append(connection)
+
+            # Dispose it
+            cm.midi_thru_connection_dispose(connection)
+            self.test_connections.remove(connection)
+
+        except RuntimeError as e:
+            pytest.skip(f"Persistent thru connection creation failed (expected): {e}")
+
+    def test_midi_thru_connection_create_with_params(self):
+        """Test creating a thru connection with custom parameters"""
+        try:
+            # Get default parameters and modify them
+            params = cm.midi_thru_connection_params_initialize()
+
+            # Modify some filter settings
+            params['filterOutSysEx'] = 1
+            params['filterOutMTC'] = 1
+            params['filterOutBeatClock'] = 1
+
+            # Create connection with custom parameters
+            connection = cm.midi_thru_connection_create(
+                persistent_owner_id=self.test_owner_id,
+                connection_params=params
+            )
+
+            assert isinstance(connection, int)
+            assert connection > 0
+
+            self.test_connections.append(connection)
+
+            # Test getting parameters back
+            retrieved_params = cm.midi_thru_connection_get_params(connection)
+
+            # Check that our filter settings were applied
+            assert retrieved_params['filterOutSysEx'] == 1
+            assert retrieved_params['filterOutMTC'] == 1
+            assert retrieved_params['filterOutBeatClock'] == 1
+
+            # Dispose
+            cm.midi_thru_connection_dispose(connection)
+            self.test_connections.remove(connection)
+
+        except RuntimeError as e:
+            pytest.skip(f"Thru connection with custom params failed (expected): {e}")
+
+    def test_midi_thru_connection_get_params_invalid(self):
+        """Test getting parameters from invalid connection"""
+        invalid_connection = 999999
+
+        try:
+            cm.midi_thru_connection_get_params(invalid_connection)
+            assert False, "Expected RuntimeError for invalid connection"
+        except RuntimeError as e:
+            assert "failed with status" in str(e)
+
+    def test_midi_thru_connection_set_params_invalid(self):
+        """Test setting parameters on invalid connection"""
+        invalid_connection = 999999
+        params = cm.midi_thru_connection_params_initialize()
+
+        try:
+            cm.midi_thru_connection_set_params(invalid_connection, params)
+            assert False, "Expected RuntimeError for invalid connection"
+        except RuntimeError as e:
+            assert "failed with status" in str(e)
+
+    def test_midi_thru_connection_dispose_invalid(self):
+        """Test disposing invalid connection"""
+        invalid_connection = 999999
+
+        try:
+            cm.midi_thru_connection_dispose(invalid_connection)
+            assert False, "Expected RuntimeError for invalid connection"
+        except RuntimeError as e:
+            assert "failed with status" in str(e)
+
+    def test_midi_thru_connection_find_empty(self):
+        """Test finding connections with non-existent owner"""
+        try:
+            connections = cm.midi_thru_connection_find("com.nonexistent.owner")
+            assert isinstance(connections, list)
+            # Should return empty list for non-existent owner
+            assert len(connections) == 0
+
+        except RuntimeError as e:
+            # This might fail in some environments
+            pytest.skip(f"Connection find failed: {e}")
+
+    def test_midi_thru_connection_find_existing(self):
+        """Test finding connections after creating them"""
+        try:
+            # Create a persistent connection
+            connection = cm.midi_thru_connection_create(self.test_owner_id)
+            self.test_connections.append(connection)
+
+            # Find connections for our owner
+            connections = cm.midi_thru_connection_find(self.test_owner_id)
+
+            assert isinstance(connections, list)
+            assert len(connections) >= 1
+            assert connection in connections
+
+            # Clean up
+            cm.midi_thru_connection_dispose(connection)
+            self.test_connections.remove(connection)
+
+        except RuntimeError as e:
+            pytest.skip(f"Connection find test failed: {e}")
+
+    def test_midi_thru_connection_constants(self):
+        """Test thru connection constants"""
+        # Transform type constants
+        assert cm.get_midi_transform_none() == 0
+        assert cm.get_midi_transform_filter_out() == 1
+        assert cm.get_midi_transform_map_control() == 2
+        assert cm.get_midi_transform_add() == 8
+        assert cm.get_midi_transform_scale() == 9
+        assert cm.get_midi_transform_min_value() == 10
+        assert cm.get_midi_transform_max_value() == 11
+        assert cm.get_midi_transform_map_value() == 12
+
+        # Control type constants
+        assert cm.get_midi_control_type_7bit() == 0
+        assert cm.get_midi_control_type_14bit() == 1
+        assert cm.get_midi_control_type_7bit_rpn() == 2
+        assert cm.get_midi_control_type_14bit_rpn() == 3
+        assert cm.get_midi_control_type_7bit_nrpn() == 4
+        assert cm.get_midi_control_type_14bit_nrpn() == 5
+
+        # Max endpoints constant
+        assert cm.get_midi_thru_connection_max_endpoints() == 8
+
+    def test_midi_thru_connection_function_existence(self):
+        """Test that all MIDIThruConnection functions exist and are callable"""
+        # Test that all the wrapped functions exist
+        assert hasattr(cm, 'midi_thru_connection_params_initialize')
+        assert callable(cm.midi_thru_connection_params_initialize)
+
+        assert hasattr(cm, 'midi_thru_connection_create')
+        assert callable(cm.midi_thru_connection_create)
+
+        assert hasattr(cm, 'midi_thru_connection_dispose')
+        assert callable(cm.midi_thru_connection_dispose)
+
+        assert hasattr(cm, 'midi_thru_connection_get_params')
+        assert callable(cm.midi_thru_connection_get_params)
+
+        assert hasattr(cm, 'midi_thru_connection_set_params')
+        assert callable(cm.midi_thru_connection_set_params)
+
+        assert hasattr(cm, 'midi_thru_connection_find')
+        assert callable(cm.midi_thru_connection_find)
+
+        # Constant functions
+        assert hasattr(cm, 'get_midi_transform_none')
+        assert callable(cm.get_midi_transform_none)
+
+        assert hasattr(cm, 'get_midi_control_type_7bit')
+        assert callable(cm.get_midi_control_type_7bit)
+
+    def test_midi_thru_connection_parameter_validation(self):
+        """Test parameter validation for MIDIThruConnection functions"""
+        # Test parameter type validation
+
+        # Integer parameters should reject strings
+        with pytest.raises((TypeError, ValueError)):
+            cm.midi_thru_connection_dispose("not_a_connection_ref")
+
+        with pytest.raises((TypeError, ValueError)):
+            cm.midi_thru_connection_get_params("not_a_connection_ref")
+
+        # Dictionary parameters should be validated
+        with pytest.raises((TypeError, AttributeError)):
+            cm.midi_thru_connection_set_params(123456, "not_a_dict")
+
+        # String parameters should reject None where required
+        with pytest.raises((TypeError, AttributeError)):
+            cm.midi_thru_connection_find(None)
+
+    def test_midi_thru_connection_params_structure(self):
+        """Test the structure of thru connection parameters"""
+        params = cm.midi_thru_connection_params_initialize()
+
+        # Test that we can modify parameters
+        params['filterOutSysEx'] = 1
+        params['lowVelocity'] = 10
+        params['highVelocity'] = 120
+        params['lowNote'] = 21  # A0
+        params['highNote'] = 108  # C8
+
+        # Test channel mapping modification
+        params['channelMap'][0] = 1  # Route channel 1 to channel 2
+        params['channelMap'][15] = 0xFF  # Filter out channel 16
+
+        # Test transform modification
+        params['velocity']['transform'] = cm.get_midi_transform_add()
+        params['velocity']['param'] = 10
+
+        # These modifications should not cause errors
+        assert params['filterOutSysEx'] == 1
+        assert params['lowVelocity'] == 10
+        assert params['channelMap'][0] == 1
+        assert params['velocity']['transform'] == cm.get_midi_transform_add()
+
+    def test_midi_thru_connection_with_endpoints(self):
+        """Test thru connection with actual endpoints (if available)"""
+        # Check if we have any MIDI sources or destinations
+        num_sources = cm.midi_get_number_of_sources()
+        num_destinations = cm.midi_get_number_of_destinations()
+
+        if num_sources == 0 and num_destinations == 0:
+            pytest.skip("No MIDI endpoints available for endpoint testing")
+
+        try:
+            params = cm.midi_thru_connection_params_initialize()
+
+            # Add sources if available
+            if num_sources > 0:
+                source = cm.midi_get_source(0)
+                params['sources'] = [{'endpointRef': source, 'uniqueID': 0}]
+
+            # Add destinations if available
+            if num_destinations > 0:
+                dest = cm.midi_get_destination(0)
+                params['destinations'] = [{'endpointRef': dest, 'uniqueID': 0}]
+
+            # Try to create connection with real endpoints
+            connection = cm.midi_thru_connection_create(
+                persistent_owner_id=self.test_owner_id,
+                connection_params=params
+            )
+
+            assert isinstance(connection, int)
+            assert connection > 0
+
+            self.test_connections.append(connection)
+
+            # Test getting parameters back
+            retrieved_params = cm.midi_thru_connection_get_params(connection)
+
+            # Check that endpoints were preserved
+            if num_sources > 0:
+                assert len(retrieved_params['sources']) >= 1
+                assert retrieved_params['sources'][0]['endpointRef'] == source
+
+            if num_destinations > 0:
+                assert len(retrieved_params['destinations']) >= 1
+                assert retrieved_params['destinations'][0]['endpointRef'] == dest
+
+            # Clean up
+            cm.midi_thru_connection_dispose(connection)
+            self.test_connections.remove(connection)
+
+        except RuntimeError as e:
+            pytest.skip(f"Thru connection with endpoints failed: {e}")
+
+    def test_midi_thru_connection_integration_workflow(self):
+        """Test a complete workflow of thru connection management"""
+        try:
+            # Step 1: Initialize parameters
+            params = cm.midi_thru_connection_params_initialize()
+
+            # Step 2: Customize parameters
+            params['filterOutSysEx'] = 1
+            params['filterOutMTC'] = 1
+            params['lowVelocity'] = 1  # Filter out very low velocities
+
+            # Step 3: Create connection
+            connection = cm.midi_thru_connection_create(
+                persistent_owner_id=self.test_owner_id,
+                connection_params=params
+            )
+
+            self.test_connections.append(connection)
+
+            # Step 4: Verify parameters
+            retrieved_params = cm.midi_thru_connection_get_params(connection)
+            assert retrieved_params['filterOutSysEx'] == 1
+            assert retrieved_params['filterOutMTC'] == 1
+            assert retrieved_params['lowVelocity'] == 1
+
+            # Step 5: Modify parameters
+            retrieved_params['filterOutBeatClock'] = 1
+            cm.midi_thru_connection_set_params(connection, retrieved_params)
+
+            # Step 6: Verify modification
+            final_params = cm.midi_thru_connection_get_params(connection)
+            assert final_params['filterOutBeatClock'] == 1
+
+            # Step 7: Find the connection
+            found_connections = cm.midi_thru_connection_find(self.test_owner_id)
+            assert connection in found_connections
+
+            # Step 8: Clean up
+            cm.midi_thru_connection_dispose(connection)
+            self.test_connections.remove(connection)
+
+        except RuntimeError as e:
+            pytest.skip(f"Thru connection integration test failed: {e}")
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

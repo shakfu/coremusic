@@ -3617,3 +3617,429 @@ def midi_driver_enable_monitoring(long driver, bint enabled):
         raise RuntimeError(f"MIDIDriverEnableMonitoring failed with status: {status}")
 
     return status
+
+
+# MIDI Thru Connection Functions
+
+def midi_thru_connection_params_initialize():
+    """Initialize a MIDIThruConnectionParams structure with default values.
+
+    Returns:
+        Dictionary containing the default thru connection parameters
+
+    Note:
+        This creates a basic structure with no endpoints and no transformations.
+        You can then modify the returned dictionary and use it with other functions.
+    """
+    cdef midi.MIDIThruConnectionParams params
+    midi.MIDIThruConnectionParamsInitialize(&params)
+
+    # Convert to Python dictionary for easier manipulation
+    result = {
+        'version': params.version,
+        'sources': [],
+        'destinations': [],
+        'channelMap': [params.channelMap[i] for i in range(16)],
+        'lowVelocity': params.lowVelocity,
+        'highVelocity': params.highVelocity,
+        'lowNote': params.lowNote,
+        'highNote': params.highNote,
+        'noteNumber': {'transform': params.noteNumber.transform, 'param': params.noteNumber.param},
+        'velocity': {'transform': params.velocity.transform, 'param': params.velocity.param},
+        'keyPressure': {'transform': params.keyPressure.transform, 'param': params.keyPressure.param},
+        'channelPressure': {'transform': params.channelPressure.transform, 'param': params.channelPressure.param},
+        'programChange': {'transform': params.programChange.transform, 'param': params.programChange.param},
+        'pitchBend': {'transform': params.pitchBend.transform, 'param': params.pitchBend.param},
+        'filterOutSysEx': params.filterOutSysEx,
+        'filterOutMTC': params.filterOutMTC,
+        'filterOutBeatClock': params.filterOutBeatClock,
+        'filterOutTuneRequest': params.filterOutTuneRequest,
+        'filterOutAllControls': params.filterOutAllControls,
+        'controlTransforms': [],
+        'valueMaps': []
+    }
+
+    return result
+
+def midi_thru_connection_create(str persistent_owner_id=None, dict connection_params=None):
+    """Create a MIDI thru connection.
+
+    Args:
+        persistent_owner_id: If provided, connection persists; if None, owned by client
+        connection_params: Dictionary with connection parameters (use midi_thru_connection_params_initialize())
+
+    Returns:
+        MIDIThruConnectionRef
+
+    Raises:
+        RuntimeError: If connection creation fails
+    """
+    if connection_params is None:
+        connection_params = midi_thru_connection_params_initialize()
+
+    # Convert Python dict back to C structure
+    cdef midi.MIDIThruConnectionParams params
+    cdef int note_transform
+    cdef int velocity_transform
+    midi.MIDIThruConnectionParamsInitialize(&params)
+
+    # Fill in the structure from the dictionary
+    params.version = connection_params.get('version', 0)
+
+    # Sources
+    sources = connection_params.get('sources', [])
+    params.numSources = min(len(sources), 8)
+    for i in range(params.numSources):
+        if isinstance(sources[i], dict):
+            params.sources[i].endpointRef = <midi.MIDIEndpointRef>sources[i].get('endpointRef', 0)
+            params.sources[i].uniqueID = <midi.MIDIUniqueID>sources[i].get('uniqueID', 0)
+
+    # Destinations
+    destinations = connection_params.get('destinations', [])
+    params.numDestinations = min(len(destinations), 8)
+    for i in range(params.numDestinations):
+        if isinstance(destinations[i], dict):
+            params.destinations[i].endpointRef = <midi.MIDIEndpointRef>destinations[i].get('endpointRef', 0)
+            params.destinations[i].uniqueID = <midi.MIDIUniqueID>destinations[i].get('uniqueID', 0)
+
+    # Channel map
+    channel_map = connection_params.get('channelMap', list(range(16)))
+    for i in range(16):
+        params.channelMap[i] = <ca.UInt8>channel_map[i] if i < len(channel_map) else <ca.UInt8>i
+
+    # Velocity and note filtering
+    params.lowVelocity = <ca.UInt8>connection_params.get('lowVelocity', 0)
+    params.highVelocity = <ca.UInt8>connection_params.get('highVelocity', 0)
+    params.lowNote = <ca.UInt8>connection_params.get('lowNote', 0)
+    params.highNote = <ca.UInt8>connection_params.get('highNote', 127)
+
+    # Transform settings
+    note_number = connection_params.get('noteNumber', {'transform': 0, 'param': 0})
+    note_transform = note_number.get('transform', 0)
+    params.noteNumber.transform = <midi.MIDITransformType>note_transform
+    params.noteNumber.param = <ca.SInt16>note_number.get('param', 0)
+
+    velocity = connection_params.get('velocity', {'transform': 0, 'param': 0})
+    velocity_transform = velocity.get('transform', 0)
+    params.velocity.transform = <midi.MIDITransformType>velocity_transform
+    params.velocity.param = <ca.SInt16>velocity.get('param', 0)
+
+    # Filter settings
+    params.filterOutSysEx = <ca.UInt8>connection_params.get('filterOutSysEx', 0)
+    params.filterOutMTC = <ca.UInt8>connection_params.get('filterOutMTC', 0)
+    params.filterOutBeatClock = <ca.UInt8>connection_params.get('filterOutBeatClock', 0)
+    params.filterOutTuneRequest = <ca.UInt8>connection_params.get('filterOutTuneRequest', 0)
+    params.filterOutAllControls = <ca.UInt8>connection_params.get('filterOutAllControls', 0)
+
+    # Note: For simplicity, we're not implementing the variable-length portions
+    # (control transforms and value maps) in this basic wrapper
+    params.numControlTransforms = 0
+    params.numMaps = 0
+
+    # Create CFData from the structure
+    cdef ca.CFDataRef cf_params = ca.CFDataCreate(
+        ca.kCFAllocatorDefault,
+        <ca.UInt8*>&params,
+        sizeof(midi.MIDIThruConnectionParams)
+    )
+
+    cdef ca.CFStringRef cf_owner_id = NULL
+    cdef bytes owner_id_bytes
+    if persistent_owner_id is not None:
+        owner_id_bytes = persistent_owner_id.encode('utf-8')
+        cf_owner_id = ca.CFStringCreateWithCString(
+            ca.kCFAllocatorDefault, owner_id_bytes, ca.kCFStringEncodingUTF8
+        )
+
+    cdef midi.MIDIThruConnectionRef connection
+    cdef ca.OSStatus status
+
+    try:
+        status = midi.MIDIThruConnectionCreate(cf_owner_id, cf_params, &connection)
+
+        if status != 0:
+            raise RuntimeError(f"MIDIThruConnectionCreate failed with status: {status}")
+
+        return connection
+
+    finally:
+        if cf_params:
+            ca.CFRelease(cf_params)
+        if cf_owner_id:
+            ca.CFRelease(cf_owner_id)
+
+def midi_thru_connection_dispose(long connection):
+    """Dispose a MIDI thru connection.
+
+    Args:
+        connection: The MIDIThruConnectionRef to dispose
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If disposal fails
+    """
+    cdef ca.OSStatus status = midi.MIDIThruConnectionDispose(<midi.MIDIThruConnectionRef>connection)
+
+    if status != 0:
+        raise RuntimeError(f"MIDIThruConnectionDispose failed with status: {status}")
+
+    return status
+
+def midi_thru_connection_get_params(long connection):
+    """Get the parameters of a MIDI thru connection.
+
+    Args:
+        connection: The MIDIThruConnectionRef
+
+    Returns:
+        Dictionary containing the connection parameters
+
+    Raises:
+        RuntimeError: If getting parameters fails
+    """
+    cdef ca.CFDataRef cf_params
+    cdef ca.OSStatus status = midi.MIDIThruConnectionGetParams(
+        <midi.MIDIThruConnectionRef>connection, &cf_params
+    )
+
+    if status != 0:
+        raise RuntimeError(f"MIDIThruConnectionGetParams failed with status: {status}")
+
+    cdef ca.CFIndex data_length
+    cdef ca.UInt8* data_ptr
+    cdef midi.MIDIThruConnectionParams* params
+
+    try:
+        # Extract the data
+        data_length = ca.CFDataGetLength(cf_params)
+        data_ptr = <ca.UInt8*>ca.CFDataGetBytePtr(cf_params)
+
+        if data_length < sizeof(midi.MIDIThruConnectionParams):
+            raise RuntimeError("Invalid connection parameters data")
+
+        params = <midi.MIDIThruConnectionParams*>data_ptr
+
+        # Convert to Python dictionary
+        result = {
+            'version': params.version,
+            'sources': [],
+            'destinations': [],
+            'channelMap': [params.channelMap[i] for i in range(16)],
+            'lowVelocity': params.lowVelocity,
+            'highVelocity': params.highVelocity,
+            'lowNote': params.lowNote,
+            'highNote': params.highNote,
+            'noteNumber': {'transform': params.noteNumber.transform, 'param': params.noteNumber.param},
+            'velocity': {'transform': params.velocity.transform, 'param': params.velocity.param},
+            'keyPressure': {'transform': params.keyPressure.transform, 'param': params.keyPressure.param},
+            'channelPressure': {'transform': params.channelPressure.transform, 'param': params.channelPressure.param},
+            'programChange': {'transform': params.programChange.transform, 'param': params.programChange.param},
+            'pitchBend': {'transform': params.pitchBend.transform, 'param': params.pitchBend.param},
+            'filterOutSysEx': params.filterOutSysEx,
+            'filterOutMTC': params.filterOutMTC,
+            'filterOutBeatClock': params.filterOutBeatClock,
+            'filterOutTuneRequest': params.filterOutTuneRequest,
+            'filterOutAllControls': params.filterOutAllControls,
+            'numControlTransforms': params.numControlTransforms,
+            'numMaps': params.numMaps
+        }
+
+        # Add sources
+        for i in range(params.numSources):
+            source = {
+                'endpointRef': params.sources[i].endpointRef,
+                'uniqueID': params.sources[i].uniqueID
+            }
+            result['sources'].append(source)
+
+        # Add destinations
+        for i in range(params.numDestinations):
+            dest = {
+                'endpointRef': params.destinations[i].endpointRef,
+                'uniqueID': params.destinations[i].uniqueID
+            }
+            result['destinations'].append(dest)
+
+        return result
+
+    finally:
+        if cf_params:
+            ca.CFRelease(cf_params)
+
+def midi_thru_connection_set_params(long connection, dict connection_params):
+    """Set the parameters of a MIDI thru connection.
+
+    Args:
+        connection: The MIDIThruConnectionRef
+        connection_params: Dictionary with new connection parameters
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If setting parameters fails
+    """
+    # Convert Python dict to C structure (similar to create function)
+    cdef midi.MIDIThruConnectionParams params
+    midi.MIDIThruConnectionParamsInitialize(&params)
+
+    # Fill in the structure from the dictionary (abbreviated version)
+    params.version = connection_params.get('version', 0)
+
+    # Sources
+    sources = connection_params.get('sources', [])
+    params.numSources = min(len(sources), 8)
+    for i in range(params.numSources):
+        if isinstance(sources[i], dict):
+            params.sources[i].endpointRef = <midi.MIDIEndpointRef>sources[i].get('endpointRef', 0)
+            params.sources[i].uniqueID = <midi.MIDIUniqueID>sources[i].get('uniqueID', 0)
+
+    # Destinations
+    destinations = connection_params.get('destinations', [])
+    params.numDestinations = min(len(destinations), 8)
+    for i in range(params.numDestinations):
+        if isinstance(destinations[i], dict):
+            params.destinations[i].endpointRef = <midi.MIDIEndpointRef>destinations[i].get('endpointRef', 0)
+            params.destinations[i].uniqueID = <midi.MIDIUniqueID>destinations[i].get('uniqueID', 0)
+
+    # Basic parameters
+    params.filterOutSysEx = <ca.UInt8>connection_params.get('filterOutSysEx', 0)
+    params.filterOutMTC = <ca.UInt8>connection_params.get('filterOutMTC', 0)
+    params.filterOutBeatClock = <ca.UInt8>connection_params.get('filterOutBeatClock', 0)
+    params.filterOutAllControls = <ca.UInt8>connection_params.get('filterOutAllControls', 0)
+
+    # Create CFData from the structure
+    cdef ca.CFDataRef cf_params = ca.CFDataCreate(
+        ca.kCFAllocatorDefault,
+        <ca.UInt8*>&params,
+        sizeof(midi.MIDIThruConnectionParams)
+    )
+
+    cdef ca.OSStatus status
+    try:
+        status = midi.MIDIThruConnectionSetParams(
+            <midi.MIDIThruConnectionRef>connection, cf_params
+        )
+
+        if status != 0:
+            raise RuntimeError(f"MIDIThruConnectionSetParams failed with status: {status}")
+
+        return status
+
+    finally:
+        if cf_params:
+            ca.CFRelease(cf_params)
+
+def midi_thru_connection_find(str persistent_owner_id):
+    """Find all thru connections created by a specific owner.
+
+    Args:
+        persistent_owner_id: The ID of the owner whose connections to find
+
+    Returns:
+        List of MIDIThruConnectionRef values
+
+    Raises:
+        RuntimeError: If finding connections fails
+    """
+    cdef bytes owner_id_bytes = persistent_owner_id.encode('utf-8')
+    cdef ca.CFStringRef cf_owner_id = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, owner_id_bytes, ca.kCFStringEncodingUTF8
+    )
+
+    cdef ca.CFDataRef cf_connection_list
+    cdef ca.OSStatus status
+    cdef ca.CFIndex data_length
+    cdef ca.UInt8* data_ptr
+    cdef ca.CFIndex num_connections
+    cdef midi.MIDIThruConnectionRef* connections
+
+    try:
+        status = midi.MIDIThruConnectionFind(cf_owner_id, &cf_connection_list)
+
+        if status != 0:
+            raise RuntimeError(f"MIDIThruConnectionFind failed with status: {status}")
+
+        # Extract the connection list
+        data_length = ca.CFDataGetLength(cf_connection_list)
+        data_ptr = <ca.UInt8*>ca.CFDataGetBytePtr(cf_connection_list)
+
+        # Each connection is a MIDIThruConnectionRef (which is a MIDIObjectRef)
+        num_connections = data_length // sizeof(midi.MIDIThruConnectionRef)
+        connections = <midi.MIDIThruConnectionRef*>data_ptr
+
+        result = []
+        for i in range(num_connections):
+            result.append(connections[i])
+
+        return result
+
+    finally:
+        if cf_owner_id:
+            ca.CFRelease(cf_owner_id)
+        if cf_connection_list:
+            ca.CFRelease(cf_connection_list)
+
+# MIDI Thru Connection Constants
+
+def get_midi_transform_none():
+    """Get the 'None' transform type constant."""
+    return midi.kMIDITransform_None
+
+def get_midi_transform_filter_out():
+    """Get the 'FilterOut' transform type constant."""
+    return midi.kMIDITransform_FilterOut
+
+def get_midi_transform_map_control():
+    """Get the 'MapControl' transform type constant."""
+    return midi.kMIDITransform_MapControl
+
+def get_midi_transform_add():
+    """Get the 'Add' transform type constant."""
+    return midi.kMIDITransform_Add
+
+def get_midi_transform_scale():
+    """Get the 'Scale' transform type constant."""
+    return midi.kMIDITransform_Scale
+
+def get_midi_transform_min_value():
+    """Get the 'MinValue' transform type constant."""
+    return midi.kMIDITransform_MinValue
+
+def get_midi_transform_max_value():
+    """Get the 'MaxValue' transform type constant."""
+    return midi.kMIDITransform_MaxValue
+
+def get_midi_transform_map_value():
+    """Get the 'MapValue' transform type constant."""
+    return midi.kMIDITransform_MapValue
+
+def get_midi_control_type_7bit():
+    """Get the '7Bit' control type constant."""
+    return midi.kMIDIControlType_7Bit
+
+def get_midi_control_type_14bit():
+    """Get the '14Bit' control type constant."""
+    return midi.kMIDIControlType_14Bit
+
+def get_midi_control_type_7bit_rpn():
+    """Get the '7BitRPN' control type constant."""
+    return midi.kMIDIControlType_7BitRPN
+
+def get_midi_control_type_14bit_rpn():
+    """Get the '14BitRPN' control type constant."""
+    return midi.kMIDIControlType_14BitRPN
+
+def get_midi_control_type_7bit_nrpn():
+    """Get the '7BitNRPN' control type constant."""
+    return midi.kMIDIControlType_7BitNRPN
+
+def get_midi_control_type_14bit_nrpn():
+    """Get the '14BitNRPN' control type constant."""
+    return midi.kMIDIControlType_14BitNRPN
+
+def get_midi_thru_connection_max_endpoints():
+    """Get the maximum number of endpoints for a thru connection."""
+    return 8  # kMIDIThruConnection_MaxEndpoints
