@@ -394,8 +394,8 @@ This document tracks the coverage of CoreAudio APIs in the coremusic Python bind
 ### MIDI Setup & Configuration
 
 - ✅ MIDISetup APIs
-- ❌ MIDIThruConnection APIs
-- ❌ MIDIDriver APIs
+- ✅ MIDIThruConnection APIs
+- ✅ MIDIDriver APIs
 
 ### MIDI Messages
 

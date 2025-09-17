@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unified Audio Demo - Complete CoreAudio Demonstration
+Unified Audio Demo - coremusic CoreAudio Demonstration
 
 This unified demo combines all the functionality from the individual demos
 into one comprehensive demonstration that:
@@ -12,8 +12,8 @@ into one comprehensive demonstration that:
 5. Provides comprehensive error handling and user feedback
 6. Shows real-time playback monitoring and control
 
-This is the definitive demo that showcases the full capabilities
-of the coremusic wrapper for professional audio development.
+This is a demo that showcases the capabilities
+of the coremusic wrapper.
 """
 
 import os
@@ -22,11 +22,12 @@ import time
 import wave
 import struct
 import threading
+from pathlib import Path
 
-# Add the project root to Python path to import our module
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+# Add the src directory root to Python path to import our module
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-import coreaudio as ca
+import coremusic as cm
 
 class UnifiedAudioDemo:
     """Comprehensive audio demonstration using coremusic"""
@@ -68,20 +69,20 @@ class UnifiedAudioDemo:
         
         try:
             # Test basic module functionality
-            error_code = ca.test_error()
+            error_code = cm.test_error()
             self.print_success(f"Module loaded successfully (test error: {error_code})")
             
             # Show key constants
             constants = {
-                'kAudioFormatLinearPCM': ca.get_audio_format_linear_pcm(),
-                'kLinearPCMFormatFlagIsSignedInteger': ca.get_linear_pcm_format_flag_is_signed_integer(),
-                'kLinearPCMFormatFlagIsPacked': ca.get_linear_pcm_format_flag_is_packed(),
-                'kAudioFileWAVEType': ca.get_audio_file_wave_type(),
-                'kAudioFileReadPermission': ca.get_audio_file_read_permission(),
-                'kAudioFilePropertyDataFormat': ca.get_audio_file_property_data_format(),
-                'kAudioUnitType_Output': ca.get_audio_unit_type_output(),
-                'kAudioUnitSubType_DefaultOutput': ca.get_audio_unit_subtype_default_output(),
-                'kAudioUnitManufacturer_Apple': ca.get_audio_unit_manufacturer_apple()
+                'kAudioFormatLinearPCM': cm.get_audio_format_linear_pcm(),
+                'kLinearPCMFormatFlagIsSignedInteger': cm.get_linear_pcm_format_flag_is_signed_integer(),
+                'kLinearPCMFormatFlagIsPacked': cm.get_linear_pcm_format_flag_is_packed(),
+                'kAudioFileWAVEType': cm.get_audio_file_wave_type(),
+                'kAudioFileReadPermission': cm.get_audio_file_read_permission(),
+                'kAudioFilePropertyDataFormat': cm.get_audio_file_property_data_format(),
+                'kAudioUnitType_Output': cm.get_audio_unit_type_output(),
+                'kAudioUnitSubType_DefaultOutput': cm.get_audio_unit_subtype_default_output(),
+                'kAudioUnitManufacturer_Apple': cm.get_audio_unit_manufacturer_apple()
             }
             
             for name, value in constants.items():
@@ -91,8 +92,8 @@ class UnifiedAudioDemo:
             test_codes = ['WAVE', 'TEXT', 'AIFF', 'mp4f']
             self.print_info("FourCC conversion test:")
             for code in test_codes:
-                int_val = ca.fourchar_to_int(code)
-                back_to_str = ca.int_to_fourchar(int_val)
+                int_val = cm.fourchar_to_int(code)
+                back_to_str = cm.int_to_fourchar(int_val)
                 self.print_info(f"  '{code}' -> {int_val} -> '{back_to_str}'")
             
             self.demo_results['constants'] = True
@@ -131,28 +132,28 @@ class UnifiedAudioDemo:
                 self.print_info(f"File size: {os.path.getsize(self.wav_path):,} bytes")
             
             # Verify with CoreAudio AudioFile API
-            audio_file_id = ca.audio_file_open_url(
+            audio_file_id = cm.audio_file_open_url(
                 self.wav_path,
-                ca.get_audio_file_read_permission(),
-                ca.get_audio_file_wave_type()
+                cm.get_audio_file_read_permission(),
+                cm.get_audio_file_wave_type()
             )
             
             # Get format information via CoreAudio
-            format_data = ca.audio_file_get_property(
+            format_data = cm.audio_file_get_property(
                 audio_file_id,
-                ca.get_audio_file_property_data_format()
+                cm.get_audio_file_property_data_format()
             )
             
             if len(format_data) >= 40:
                 asbd = struct.unpack('<dLLLLLLLL', format_data[:40])
                 self.print_success(f"CoreAudio format verification: {asbd[0]}Hz, {asbd[6]}ch, {asbd[7]}-bit")
-                self.print_info(f"Format ID: {ca.int_to_fourchar(asbd[1])}")
+                self.print_info(f"Format ID: {cm.int_to_fourchar(asbd[1])}")
             
             # Read audio packets via CoreAudio
-            packet_data, packets_read = ca.audio_file_read_packets(audio_file_id, 0, 1000)
+            packet_data, packets_read = cm.audio_file_read_packets(audio_file_id, 0, 1000)
             self.print_success(f"Read {packets_read} packets ({len(packet_data)} bytes) via CoreAudio")
             
-            ca.audio_file_close(audio_file_id)
+            cm.audio_file_close(audio_file_id)
             self.print_success("CoreAudio file operations: SUCCESS")
             
             self.demo_results['file_ops'] = True
@@ -170,29 +171,29 @@ class UnifiedAudioDemo:
         try:
             # Find default output AudioUnit
             description = {
-                'type': ca.get_audio_unit_type_output(),
-                'subtype': ca.get_audio_unit_subtype_default_output(),
-                'manufacturer': ca.get_audio_unit_manufacturer_apple(),
+                'type': cm.get_audio_unit_type_output(),
+                'subtype': cm.get_audio_unit_subtype_default_output(),
+                'manufacturer': cm.get_audio_unit_manufacturer_apple(),
                 'flags': 0,
                 'flags_mask': 0
             }
             
-            component_id = ca.audio_component_find_next(description)
+            component_id = cm.audio_component_find_next(description)
             if not component_id:
                 raise RuntimeError("Could not find default output AudioUnit")
             
             self.print_success(f"Found AudioComponent: {component_id}")
             
             # Create AudioUnit
-            audio_unit = ca.audio_component_instance_new(component_id)
+            audio_unit = cm.audio_component_instance_new(component_id)
             self.print_success(f"Created AudioUnit: {audio_unit}")
             
             # Configure audio format
             format_data = struct.pack('<dLLLLLLLL',
                 float(self.format_info['sample_rate']),
-                ca.get_audio_format_linear_pcm(),
-                ca.get_linear_pcm_format_flag_is_signed_integer() | 
-                ca.get_linear_pcm_format_flag_is_packed(),
+                cm.get_audio_format_linear_pcm(),
+                cm.get_linear_pcm_format_flag_is_signed_integer() | 
+                cm.get_linear_pcm_format_flag_is_packed(),
                 self.format_info['channels'] * self.format_info['sample_width'],
                 1,
                 self.format_info['channels'] * self.format_info['sample_width'],
@@ -202,10 +203,10 @@ class UnifiedAudioDemo:
             )
             
             try:
-                ca.audio_unit_set_property(
+                cm.audio_unit_set_property(
                     audio_unit,
-                    ca.get_audio_unit_property_stream_format(),
-                    ca.get_audio_unit_scope_input(),
+                    cm.get_audio_unit_property_stream_format(),
+                    cm.get_audio_unit_scope_input(),
                     0,
                     format_data
                 )
@@ -214,22 +215,22 @@ class UnifiedAudioDemo:
                 self.print_info(f"Format configuration: {e} (continuing)")
             
             # Initialize AudioUnit
-            ca.audio_unit_initialize(audio_unit)
+            cm.audio_unit_initialize(audio_unit)
             self.print_success("AudioUnit initialization: SUCCESS")
             
             # Test hardware control
-            ca.audio_output_unit_start(audio_unit)
+            cm.audio_output_unit_start(audio_unit)
             self.print_success("AudioUnit start: SUCCESS")
             
             self.print_info("AudioUnit active for 2 seconds...")
             time.sleep(2)
             
-            ca.audio_output_unit_stop(audio_unit)
+            cm.audio_output_unit_stop(audio_unit)
             self.print_success("AudioUnit stop: SUCCESS")
             
             # Cleanup
-            ca.audio_unit_uninitialize(audio_unit)
-            ca.audio_component_instance_dispose(audio_unit)
+            cm.audio_unit_uninitialize(audio_unit)
+            cm.audio_component_instance_dispose(audio_unit)
             self.print_success("AudioUnit cleanup: SUCCESS")
             
             self.demo_results['audiounit'] = True
@@ -248,9 +249,9 @@ class UnifiedAudioDemo:
             # Create AudioQueue
             audio_format = {
                 'sample_rate': float(self.format_info['sample_rate']),
-                'format_id': ca.get_audio_format_linear_pcm(),
-                'format_flags': ca.get_linear_pcm_format_flag_is_signed_integer() | 
-                               ca.get_linear_pcm_format_flag_is_packed(),
+                'format_id': cm.get_audio_format_linear_pcm(),
+                'format_flags': cm.get_linear_pcm_format_flag_is_signed_integer() | 
+                               cm.get_linear_pcm_format_flag_is_packed(),
                 'bytes_per_packet': self.format_info['channels'] * self.format_info['sample_width'],
                 'frames_per_packet': 1,
                 'bytes_per_frame': self.format_info['channels'] * self.format_info['sample_width'],
@@ -258,27 +259,27 @@ class UnifiedAudioDemo:
                 'bits_per_channel': self.format_info['sample_width'] * 8
             }
             
-            queue_id = ca.audio_queue_new_output(audio_format)
+            queue_id = cm.audio_queue_new_output(audio_format)
             self.print_success(f"Created AudioQueue: {queue_id}")
             
             # Allocate buffer
-            buffer_id = ca.audio_queue_allocate_buffer(queue_id, 8192)
+            buffer_id = cm.audio_queue_allocate_buffer(queue_id, 8192)
             self.print_success(f"Allocated buffer: {buffer_id}")
             
             # Test queue operations
-            ca.audio_queue_enqueue_buffer(queue_id, buffer_id)
+            cm.audio_queue_enqueue_buffer(queue_id, buffer_id)
             self.print_success("Enqueued buffer")
             
-            ca.audio_queue_start(queue_id)
+            cm.audio_queue_start(queue_id)
             self.print_success("Started AudioQueue")
             
             time.sleep(1)
             
-            ca.audio_queue_stop(queue_id, True)
+            cm.audio_queue_stop(queue_id, True)
             self.print_success("Stopped AudioQueue")
             
             # Cleanup
-            ca.audio_queue_dispose(queue_id, True)
+            cm.audio_queue_dispose(queue_id, True)
             self.print_success("AudioQueue cleanup: SUCCESS")
             
             self.demo_results['audioqueue'] = True
@@ -295,7 +296,7 @@ class UnifiedAudioDemo:
         
         try:
             # Create AudioPlayer instance
-            self.player = ca.AudioPlayer()
+            self.player = cm.AudioPlayer()
             self.print_success("Created AudioPlayer instance")
             
             # Load audio file
@@ -346,20 +347,20 @@ class UnifiedAudioDemo:
         
         try:
             # Test hardware object access
-            ca.audio_object_show(1)  # System object
+            cm.audio_object_show(1)  # System object
             self.print_success("Hardware object access: SUCCESS")
             
             # Test additional AudioUnit properties
             description = {
-                'type': ca.get_audio_unit_type_output(),
-                'subtype': ca.get_audio_unit_subtype_default_output(),
-                'manufacturer': ca.get_audio_unit_manufacturer_apple(),
+                'type': cm.get_audio_unit_type_output(),
+                'subtype': cm.get_audio_unit_subtype_default_output(),
+                'manufacturer': cm.get_audio_unit_manufacturer_apple(),
                 'flags': 0,
                 'flags_mask': 0
             }
             
-            component_id = ca.audio_component_find_next(description)
-            audio_unit = ca.audio_component_instance_new(component_id)
+            component_id = cm.audio_component_find_next(description)
+            audio_unit = cm.audio_component_instance_new(component_id)
             
             # Test property access
             try:
@@ -368,7 +369,7 @@ class UnifiedAudioDemo:
             except:
                 self.print_info("AudioUnit property access: Limited")
             
-            ca.audio_component_instance_dispose(audio_unit)
+            cm.audio_component_instance_dispose(audio_unit)
             
             self.demo_results['advanced'] = True
             return True
@@ -443,15 +444,6 @@ def main():
     if not os.path.exists(amen_path):
         print(f"Error: Audio test file not found: {amen_path}")
         print("Please ensure amen.wav exists in the tests/ directory")
-        sys.exit(1)
-    
-    # Check if coreaudio module is available
-    try:
-        import coreaudio
-        print("✓ Successfully imported coreaudio module")
-    except ImportError as e:
-        print(f"✗ Failed to import coreaudio module: {e}")
-        print("Make sure to run 'make coreaudio' first to build the extension")
         sys.exit(1)
     
     # Run the unified demo

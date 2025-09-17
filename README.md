@@ -1,14 +1,14 @@
 # coremusic
 
-A Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing Python bindings for audio development on macOS. This project exposes a subset of CoreAudio and CoreMIDI C APIs through Python, enabling audio applications, real-time processing, and audio development on the Apple platform.
+An early stage Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing Python bindings for professional audio and MIDI development on macOS. This project exposes a subset of CoreAudio and CoreMIDI C APIs through Python, enabling advanced audio applications, real-time processing, MIDI routing, and professional audio software development.
 
 ## Overview
 
-`coremusic` is a c-based Python extension that provides direct access to Apple's CoreAudio frameworks. Built with Cython, it offers near-native performance while maintaining the ease of use of Python. The wrapper covers the complete CoreAudio ecosystem, from low-level hardware control to high-level audio processing units.
+`coremusic` is a c-based Python extension that provides direct access to Apple's CoreAudio frameworks. Built with Cython, it offers near-native performance while maintaining the ease of use of Python. The wrapper covers the CoreAudio ecosystem, from low-level hardware control to high-level audio processing units.
 
 ### Key Features
 
-- **Complete CoreAudio Framework Coverage**: Full access to CoreAudio, AudioToolbox, and AudioUnit APIs
+- **CoreAudio Framework Coverage**: Full access to CoreAudio, AudioToolbox, and AudioUnit APIs
 
 - **High Performance**: Cython-based implementation with near-native C performance
 
@@ -16,7 +16,7 @@ A Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing Python 
 
 - **Audio File I/O**: Support for WAV, AIFF, MP3, and other audio formats through CoreAudio
 
-- **AudioUnit Integration**: Complete AudioUnit discovery, instantiation, and lifecycle management
+- **AudioUnit Integration**:  AudioUnit discovery, instantiation, and lifecycle management
 
 - **AudioQueue Support**: High-level audio queue management for streaming and playback
 
@@ -25,6 +25,16 @@ A Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing Python 
 - **Format Detection**: Automatic audio format detection and conversion
 
 - **Real-time Processing**: Low-latency audio processing capabilities
+
+- ** CoreMIDI Framework Coverage**: Full access to MIDI services, device management, and advanced routing
+
+- **Universal MIDI Packet Support**: MIDI 1.0 and 2.0 message creation and handling in UMP format
+
+- **MIDI Device Management**:  device and entity discovery, creation, and control
+
+- **MIDI Routing and Transformation**: Advanced MIDI thru connections with filtering and transformation
+
+- **MIDI Driver APIs**: Access to MIDI driver development and device integration functions
 
 ## Supported Frameworks
 
@@ -52,12 +62,15 @@ A Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing Python 
 
 ### CoreMIDI
 
-- MIDI services
-- MIDI 1.0 Universal Packet support: Create standard MIDI messages in UMP format
-- MIDI 2.0 Channel Voice messages: Support for enhanced MIDI 2.0 functionality
-- Message type detection: Extract message types from Universal MIDI Packets
-- Full constant access: All MIDI message type and status constants available
-- Type safety: Proper parameter validation and overflow handling
+- MIDI Services:  CoreMIDI framework integration with device and endpoint management
+- Universal MIDI Packets: MIDI 1.0 and 2.0 message creation and handling in UMP format
+- Message Creation: Channel voice, system, and meta message construction with type safety
+- Device Management: MIDI device and entity discovery, creation, and property management
+- MIDI Setup: External device handling, device list management, and system configuration
+- Driver Support: Access to MIDI driver APIs for device creation and endpoint management
+- Thru Connections: Advanced MIDI routing with filtering, transformation, and channel mapping
+- Message Transformation: Scale, filter, add, and remap MIDI messages with flexible transforms
+- Real-time MIDI: Low-latency MIDI processing with proper timestamp handling
 
 ## Installation
 
@@ -97,6 +110,8 @@ A Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing Python 
     make test
     # or manually:
     pytest
+    # or run tests individually
+    pytest -v tests/test_coremidi.py
     ```
 
 ## Quick Start
@@ -181,168 +196,63 @@ print(f"Progress: {player.get_progress():.2f}")
 player.stop()
 ```
 
-## API Reference
-
-### Audio File Operations
-
-#### `audio_file_open_url(file_path, permissions, file_type_hint)`
-
-Open an audio file for reading or writing.
-
-**Parameters:**
-
-- `file_path` (str): Path to the audio file
-- `permissions` (int): File access permissions (use `get_audio_file_read_permission()`)
-- `file_type_hint` (int): File type hint (use `get_audio_file_wave_type()` for WAV files)
-
-**Returns:** Audio file ID (int)
-
-#### `audio_file_get_property(audio_file_id, property_id)`
-
-Get a property from an audio file.
-
-**Parameters:**
-
-- `audio_file_id` (int): Audio file ID from `audio_file_open_url()`
-- `property_id` (int): Property ID (use `get_audio_file_property_data_format()` for format info)
-
-**Returns:** Property data as bytes
-
-#### `audio_file_read_packets(audio_file_id, start_packet, num_packets)`
-
-Read audio packets from a file.
-
-**Parameters:**
-
-- `audio_file_id` (int): Audio file ID
-- `start_packet` (int): Starting packet number
-- `num_packets` (int): Number of packets to read
-
-**Returns:** Tuple of (packet_data, packets_read)
-
-#### `audio_file_close(audio_file_id)`
-
-Close an audio file.
-
-### AudioUnit Operations
-
-#### `audio_component_find_next(description)`
-
-Find an audio component matching the description.
-
-**Parameters:**
-
-- `description` (dict): Component description with keys: type, subtype, manufacturer, flags, flags_mask
-
-**Returns:** Component ID (int) or None
-
-#### `audio_component_instance_new(component_id)`
-
-Create a new instance of an audio component.
-
-**Parameters:**
-
-- `component_id` (int): Component ID from `audio_component_find_next()`
-
-**Returns:** AudioUnit instance ID (int)
-
-#### `audio_unit_initialize(audio_unit_id)`
-
-Initialize an AudioUnit.
-
-#### `audio_output_unit_start(audio_unit_id)`
-
-Start audio output.
-
-#### `audio_output_unit_stop(audio_unit_id)`
-
-Stop audio output.
-
-### AudioQueue Operations
-
-#### `audio_queue_new_output(audio_format)`
-
-Create a new output audio queue.
-
-**Parameters:**
-
-- `audio_format` (dict): Audio format specification
-
-**Returns:** AudioQueue ID (int)
-
-#### `audio_queue_allocate_buffer(queue_id, buffer_size)`
-
-Allocate a buffer for an audio queue.
-
-#### `audio_queue_start(queue_id)`
-
-Start an audio queue.
-
-#### `audio_queue_stop(queue_id, immediate)`
-
-Stop an audio queue.
-
-### Utility Functions
-
-#### `fourchar_to_int(code)`
-
-Convert a four-character code string to integer.
-
-**Parameters:**
-
-- `code` (str): Four-character code (e.g., 'WAVE', 'TEXT')
-
-**Returns:** Integer representation
-
-#### `int_to_fourchar(n)`
-
-Convert an integer to a four-character code string.
-
-**Parameters:**
-
-- `n` (int): Integer value
-
-**Returns:** Four-character code string
-
-### AudioPlayer Class
-
-The `AudioPlayer` class provides a high-level interface for audio playback:
-
-#### `AudioPlayer()`
-
-Create a new AudioPlayer instance.
-
-#### `load_file(file_path)`
-
-Load an audio file for playback.
-
-#### `setup_output()`
-
-Setup the audio output unit.
-
-#### `start()`
-
-Start audio playback.
-
-#### `stop()`
-
-Stop audio playback.
-
-#### `set_looping(loop)`
-
-Enable or disable looping playback.
-
-#### `is_playing()`
-
-Check if audio is currently playing.
-
-#### `get_progress()`
-
-Get current playback progress (0.0 to 1.0).
-
-#### `reset_playback()`
-
-Reset playback to the beginning.
+### CoreMIDI Basic Usage
+
+```python
+import coremusic as cm
+
+# Create MIDI 1.0 Universal Packets
+ump = cm.midi1_channel_voice_message(
+    group=0,
+    status=cm.get_midi_status_note_on(),
+    channel=0,
+    data1=60,  # Middle C
+    data2=100  # Velocity
+)
+print(f"MIDI UMP: {ump:08X}")
+
+# Get MIDI device information
+device_count = cm.midi_get_number_of_devices()
+print(f"MIDI devices: {device_count}")
+
+source_count = cm.midi_get_number_of_sources()
+print(f"MIDI sources: {source_count}")
+
+# Create a virtual MIDI device
+try:
+    device = cm.midi_device_create("My Virtual Device")
+    print(f"Created device: {device}")
+except RuntimeError as e:
+    print(f"Device creation failed: {e}")
+```
+
+### MIDI Thru Connection Example
+
+```python
+import coremusic as cm
+
+# Initialize thru connection parameters
+params = cm.midi_thru_connection_params_initialize()
+
+# Configure channel mapping (route channel 1 to channel 2)
+params['channelMap'][0] = 1  # Channel 1 (0-indexed) -> Channel 2
+
+# Add a note number transform (transpose up one octave)
+params['noteNumber'] = {
+    'transform': cm.get_midi_transform_add(),
+    'value': 12  # Add 12 semitones
+}
+
+# Create the thru connection
+try:
+    connection = cm.midi_thru_connection_create_with_params(params)
+    print(f"Created thru connection: {connection}")
+
+    # Clean up
+    cm.midi_thru_connection_dispose(connection)
+except RuntimeError as e:
+    print(f"Thru connection failed: {e}")
+```
 
 ## Examples and Demos
 
@@ -363,17 +273,33 @@ This comprehensive demo showcases:
 - Real audio playback using AudioPlayer
 - Advanced CoreAudio features
 
+### CoreMIDI Test Suite
+
+```bash
+pytest tests/test_coremidi.py -v
+```
+
+The CoreMIDI test suite includes:
+
+- Universal MIDI Packet creation and validation
+- MIDI device and entity management
+- MIDI driver API functionality
+- Thru connection routing and transformation
+- Error handling and environment adaptation
+
 ### Test Suite
 
 ```bash
-pytest tests/test_coremusic.py -v
+pytest tests/test_coremusic.py tests/test_coremidi.py -v
 ```
 
-The test suite covers:
+The complete test suite covers:
 
 - Audio file I/O operations
 - AudioUnit lifecycle management
 - AudioQueue functionality
+- MIDI message creation and handling
+- MIDI device management and routing
 - Error handling and edge cases
 - Performance characteristics
 
@@ -381,30 +307,46 @@ The test suite covers:
 
 ### Core Files
 
-- **`coreaudio.pyx`**: Main Cython implementation with Python wrapper functions
-- **`coreaudio.pxd`**: Cython header file with C declarations for CoreAudio APIs
-- **`audio_player.c/h`**: C implementation of audio player with render callbacks
-- **`setup.py`**: Build configuration linking CoreAudio frameworks
+- **`src/coremusic/capi.pyx`**: Main Cython implementation with Python wrapper functions
+- **`src/coremusic/capi.pxd`**: Main Cython header importing all framework declarations
+- **`src/coremusic/coremidi.pxd`**: CoreMIDI framework declarations and structures
+- **`src/coremusic/corefoundation.pxd`**: CoreFoundation framework declarations
+- **`src/coremusic/audio_player.c/h`**: C implementation of audio player with render callbacks
+- **`setup.py`**: Build configuration linking CoreAudio and CoreMIDI frameworks
 
 ### Framework Dependencies
 
 The project links against macOS frameworks:
 
 - CoreServices
-- CoreFoundation  
+- CoreFoundation
 - AudioUnit
 - AudioToolbox
 - CoreAudio
+- CoreMIDI
 
 Required libraries: m, dl, pthread
 
 ### Build Process
+
+To build just:
+
+```sh
+make
+```
 
 The extension is built using Cython with the following process:
 
 1. Cython compiles `.pyx` files to C
 2. C compiler links against CoreAudio frameworks
 3. Python extension module is created
+
+To build a wheel:
+
+```sh
+make wheel
+```
+
 
 ## Performance
 
@@ -423,6 +365,17 @@ coremusic provides near-native performance through:
 - Audio effects and processors
 - Real-time audio synthesis
 - Multi-channel audio handling
+- MIDI controllers and sequencers
+- Virtual instruments and synthesizers
+
+### MIDI Applications
+
+- MIDI routing and transformation systems
+- Virtual MIDI devices and drivers
+- MIDI processing and filtering
+- Advanced MIDI routing matrices
+- MIDI learning and mapping systems
+- Real-time MIDI effects and processors
 
 ### Audio Analysis and Processing
 
@@ -437,6 +390,8 @@ coremusic provides near-native performance through:
 - CoreAudio API exploration
 - Audio programming education
 - Prototype audio applications
+- MIDI protocol research and development
+- Music technology experimentation
 
 ## Contributing
 

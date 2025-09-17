@@ -2182,7 +2182,7 @@ def midi_get_number_of_devices():
     """
     return midi.MIDIGetNumberOfDevices()
 
-def midi_get_device(int device_index):
+def midi_get_device(int device_index) -> int:
     """Get a device by index.
 
     Args:
@@ -2305,7 +2305,7 @@ def midi_get_number_of_sources():
     """
     return midi.MIDIGetNumberOfSources()
 
-def midi_get_source(int source_index):
+def midi_get_source(int source_index) -> int:
     """Get a source by system-wide index.
 
     Args:

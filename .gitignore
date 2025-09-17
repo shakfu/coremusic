@@ -3,6 +3,7 @@ build
 __pycache__
 
 .*_cache
+dist
 
 # Prerequisites
 *.d
