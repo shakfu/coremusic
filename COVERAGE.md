@@ -48,6 +48,81 @@ This document tracks the coverage of CoreAudio APIs in the cycoreaudio Python bi
 
 ---
 
+## CoreFoundation Framework
+
+### Basic Types
+
+- ✅ CFBase types (CFIndex, CFAllocatorRef, etc.)
+- ✅ CFURLRef (basic creation)
+- ✅ CFStringRef (basic creation)
+
+### Data Structures
+
+- ❌ CFArray APIs
+- ❌ CFDictionary APIs
+- ❌ CFSet APIs
+- ❌ CFData APIs
+- ❌ CFNumber APIs
+- ❌ CFBag APIs
+- ❌ CFBinaryHeap APIs
+- ❌ CFBitVector APIs
+- ❌ CFTree APIs
+
+### String & Text
+
+- ❌ CFString extended APIs
+- ❌ CFAttributedString APIs
+- ❌ CFStringTokenizer APIs
+- ❌ CFStringEncodingExt APIs
+
+### Date & Time
+
+- ❌ CFDate APIs
+- ❌ CFDateFormatter APIs
+- ❌ CFLocale APIs
+- ❌ CFTimeZone APIs
+- ❌ CFCalendar APIs
+
+### File & URL
+
+- ❌ CFURL extended APIs
+- ❌ CFURLAccess APIs
+- ❌ CFURLEnumerator APIs
+- ❌ CFFileDescriptor APIs
+- ❌ CFFileSecurity APIs
+
+### System Services
+
+- ❌ CFRunLoop APIs
+- ❌ CFNotificationCenter APIs
+- ❌ CFPreferences APIs
+- ❌ CFBundle APIs
+- ❌ CFPlugIn APIs
+- ❌ CFMachPort APIs
+- ❌ CFMessagePort APIs
+
+### Data & Serialization
+
+- ❌ CFPropertyList APIs
+- ❌ CFError APIs
+- ❌ CFXMLNode APIs
+- ❌ CFXMLParser APIs
+
+### Network & Communication
+
+- ❌ CFSocket APIs
+- ❌ CFStream APIs
+- ❌ CFUserNotification APIs
+
+### Utilities
+
+- ❌ CFUtilities APIs
+- ❌ CFUUID APIs
+- ❌ CFByteOrder APIs
+- ❌ CFAvailability APIs
+
+---
+
 ## CoreAudio Framework
 
 ### AudioHardware
@@ -290,97 +365,22 @@ This document tracks the coverage of CoreAudio APIs in the cycoreaudio Python bi
 
 ---
 
-## CoreFoundation Framework
-
-### Basic Types
-
-- ✅ CFBase types (CFIndex, CFAllocatorRef, etc.)
-- ✅ CFURLRef (basic creation)
-- ✅ CFStringRef (basic creation)
-
-### Data Structures
-
-- ❌ CFArray APIs
-- ❌ CFDictionary APIs
-- ❌ CFSet APIs
-- ❌ CFData APIs
-- ❌ CFNumber APIs
-- ❌ CFBag APIs
-- ❌ CFBinaryHeap APIs
-- ❌ CFBitVector APIs
-- ❌ CFTree APIs
-
-### String & Text
-
-- ❌ CFString extended APIs
-- ❌ CFAttributedString APIs
-- ❌ CFStringTokenizer APIs
-- ❌ CFStringEncodingExt APIs
-
-### Date & Time
-
-- ❌ CFDate APIs
-- ❌ CFDateFormatter APIs
-- ❌ CFLocale APIs
-- ❌ CFTimeZone APIs
-- ❌ CFCalendar APIs
-
-### File & URL
-
-- ❌ CFURL extended APIs
-- ❌ CFURLAccess APIs
-- ❌ CFURLEnumerator APIs
-- ❌ CFFileDescriptor APIs
-- ❌ CFFileSecurity APIs
-
-### System Services
-
-- ❌ CFRunLoop APIs
-- ❌ CFNotificationCenter APIs
-- ❌ CFPreferences APIs
-- ❌ CFBundle APIs
-- ❌ CFPlugIn APIs
-- ❌ CFMachPort APIs
-- ❌ CFMessagePort APIs
-
-### Data & Serialization
-
-- ❌ CFPropertyList APIs
-- ❌ CFError APIs
-- ❌ CFXMLNode APIs
-- ❌ CFXMLParser APIs
-
-### Network & Communication
-
-- ❌ CFSocket APIs
-- ❌ CFStream APIs
-- ❌ CFUserNotification APIs
-
-### Utilities
-
-- ❌ CFUtilities APIs
-- ❌ CFUUID APIs
-- ❌ CFByteOrder APIs
-- ❌ CFAvailability APIs
-
----
-
 ## CoreMIDI Framework
 
 ### Core MIDI Services
 
-- ❌ MIDIClientCreate
-- ❌ MIDIClientDispose
-- ❌ MIDIGetNumberOfDevices
-- ❌ MIDIGetDevice
-- ❌ MIDIDeviceAddEntity
-- ❌ MIDIDeviceRemoveEntity
-- ❌ MIDIEntityGetNumberOfSources
-- ❌ MIDIEntityGetNumberOfDestinations
-- ❌ MIDIEntityGetSource
-- ❌ MIDIEntityGetDestination
-- ❌ MIDIEndpointGetEntity
-- ❌ MIDIEndpointGetDevice
+- ✅ MIDIClientCreate
+- ✅ MIDIClientDispose
+- ✅ MIDIGetNumberOfDevices
+- ✅ MIDIGetDevice
+- ✅ MIDIDeviceAddEntity
+- ✅ MIDIDeviceRemoveEntity
+- ✅ MIDIEntityGetNumberOfSources
+- ✅ MIDIEntityGetNumberOfDestinations
+- ✅ MIDIEntityGetSource
+- ✅ MIDIEntityGetDestination
+- ✅ MIDIEndpointGetEntity
+- ✅ MIDIEndpointGetDevice
 
 ### MIDI I/O
 

@@ -1,5 +1,6 @@
 from . cimport capi as ca
 from . cimport audio_player as ap
+from . cimport coremidi as midi
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy, memset
@@ -2000,3 +2001,812 @@ def create_midi_channel_message(int status, int data1, int data2=0):
         'data1': data1 & 0x7F,
         'data2': data2 & 0x7F
     }
+
+
+# ===== CoreMIDI API =====
+
+# Client functions
+
+def midi_client_create(str name):
+    """Create a MIDI client.
+
+    Args:
+        name: The client's name
+
+    Returns:
+        MIDIClientRef handle
+
+    Raises:
+        RuntimeError: If client creation fails
+    """
+    cdef bytes name_bytes = name.encode('utf-8')
+    cdef ca.CFStringRef cf_name = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, name_bytes, ca.kCFStringEncodingUTF8)
+    cdef midi.MIDIClientRef client
+    cdef ca.OSStatus status
+
+    if not cf_name:
+        raise MemoryError("Could not create CFString from name")
+
+    try:
+        status = midi.MIDIClientCreate(cf_name, NULL, NULL, &client)
+        if status != 0:
+            raise RuntimeError(f"MIDIClientCreate failed with status: {status}")
+        return <long>client
+    finally:
+        ca.CFRelease(cf_name)
+
+def midi_client_dispose(long client):
+    """Dispose a MIDI client.
+
+    Args:
+        client: The MIDIClientRef to dispose
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If disposal fails
+    """
+    cdef ca.OSStatus status = midi.MIDIClientDispose(<midi.MIDIClientRef>client)
+    if status != 0:
+        raise RuntimeError(f"MIDIClientDispose failed with status: {status}")
+    return status
+
+# Port functions
+
+def midi_input_port_create(long client, str port_name):
+    """Create a MIDI input port.
+
+    Args:
+        client: The MIDIClientRef
+        port_name: Name for the input port
+
+    Returns:
+        MIDIPortRef handle
+
+    Raises:
+        RuntimeError: If port creation fails
+    """
+    cdef bytes port_name_bytes = port_name.encode('utf-8')
+    cdef ca.CFStringRef cf_name = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, port_name_bytes, ca.kCFStringEncodingUTF8)
+    cdef midi.MIDIPortRef port
+    cdef ca.OSStatus status
+
+    if not cf_name:
+        raise MemoryError("Could not create CFString from port name")
+
+    try:
+        status = midi.MIDIInputPortCreate(
+            <midi.MIDIClientRef>client, cf_name, NULL, NULL, &port)
+        if status != 0:
+            raise RuntimeError(f"MIDIInputPortCreate failed with status: {status}")
+        return <long>port
+    finally:
+        ca.CFRelease(cf_name)
+
+def midi_output_port_create(long client, str port_name):
+    """Create a MIDI output port.
+
+    Args:
+        client: The MIDIClientRef
+        port_name: Name for the output port
+
+    Returns:
+        MIDIPortRef handle
+
+    Raises:
+        RuntimeError: If port creation fails
+    """
+    cdef bytes port_name_bytes = port_name.encode('utf-8')
+    cdef ca.CFStringRef cf_name = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, port_name_bytes, ca.kCFStringEncodingUTF8)
+    cdef midi.MIDIPortRef port
+    cdef ca.OSStatus status
+
+    if not cf_name:
+        raise MemoryError("Could not create CFString from port name")
+
+    try:
+        status = midi.MIDIOutputPortCreate(
+            <midi.MIDIClientRef>client, cf_name, &port)
+        if status != 0:
+            raise RuntimeError(f"MIDIOutputPortCreate failed with status: {status}")
+        return <long>port
+    finally:
+        ca.CFRelease(cf_name)
+
+def midi_port_dispose(long port):
+    """Dispose a MIDI port.
+
+    Args:
+        port: The MIDIPortRef to dispose
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If disposal fails
+    """
+    cdef ca.OSStatus status = midi.MIDIPortDispose(<midi.MIDIPortRef>port)
+    if status != 0:
+        raise RuntimeError(f"MIDIPortDispose failed with status: {status}")
+    return status
+
+def midi_port_connect_source(long port, long source):
+    """Connect a source to an input port.
+
+    Args:
+        port: The MIDIPortRef (input port)
+        source: The MIDIEndpointRef (source endpoint)
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If connection fails
+    """
+    cdef ca.OSStatus status = midi.MIDIPortConnectSource(
+        <midi.MIDIPortRef>port, <midi.MIDIEndpointRef>source, NULL)
+    if status != 0:
+        raise RuntimeError(f"MIDIPortConnectSource failed with status: {status}")
+    return status
+
+def midi_port_disconnect_source(long port, long source):
+    """Disconnect a source from an input port.
+
+    Args:
+        port: The MIDIPortRef (input port)
+        source: The MIDIEndpointRef (source endpoint)
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If disconnection fails
+    """
+    cdef ca.OSStatus status = midi.MIDIPortDisconnectSource(
+        <midi.MIDIPortRef>port, <midi.MIDIEndpointRef>source)
+    if status != 0:
+        raise RuntimeError(f"MIDIPortDisconnectSource failed with status: {status}")
+    return status
+
+# Device and endpoint discovery
+
+def midi_get_number_of_devices():
+    """Get the number of MIDI devices in the system.
+
+    Returns:
+        Number of devices
+    """
+    return midi.MIDIGetNumberOfDevices()
+
+def midi_get_device(int device_index):
+    """Get a device by index.
+
+    Args:
+        device_index: Zero-based device index
+
+    Returns:
+        MIDIDeviceRef handle
+
+    Raises:
+        ValueError: If index is out of range
+    """
+    cdef int num_devices = midi.MIDIGetNumberOfDevices()
+    if device_index < 0 or device_index >= num_devices:
+        raise ValueError(f"Device index {device_index} out of range (0-{num_devices-1})")
+
+    cdef midi.MIDIDeviceRef device = midi.MIDIGetDevice(<ca.UInt32>device_index)
+    return <long>device
+
+def midi_device_get_number_of_entities(long device):
+    """Get the number of entities in a device.
+
+    Args:
+        device: The MIDIDeviceRef
+
+    Returns:
+        Number of entities
+    """
+    return midi.MIDIDeviceGetNumberOfEntities(<midi.MIDIDeviceRef>device)
+
+def midi_device_get_entity(long device, int entity_index):
+    """Get an entity from a device by index.
+
+    Args:
+        device: The MIDIDeviceRef
+        entity_index: Zero-based entity index
+
+    Returns:
+        MIDIEntityRef handle
+
+    Raises:
+        ValueError: If index is out of range
+    """
+    cdef int num_entities = midi.MIDIDeviceGetNumberOfEntities(<midi.MIDIDeviceRef>device)
+    if entity_index < 0 or entity_index >= num_entities:
+        raise ValueError(f"Entity index {entity_index} out of range (0-{num_entities-1})")
+
+    cdef midi.MIDIEntityRef entity = midi.MIDIDeviceGetEntity(
+        <midi.MIDIDeviceRef>device, <ca.UInt32>entity_index)
+    return <long>entity
+
+def midi_entity_get_number_of_sources(long entity):
+    """Get the number of sources in an entity.
+
+    Args:
+        entity: The MIDIEntityRef
+
+    Returns:
+        Number of sources
+    """
+    return midi.MIDIEntityGetNumberOfSources(<midi.MIDIEntityRef>entity)
+
+def midi_entity_get_source(long entity, int source_index):
+    """Get a source from an entity by index.
+
+    Args:
+        entity: The MIDIEntityRef
+        source_index: Zero-based source index
+
+    Returns:
+        MIDIEndpointRef handle
+
+    Raises:
+        ValueError: If index is out of range
+    """
+    cdef int num_sources = midi.MIDIEntityGetNumberOfSources(<midi.MIDIEntityRef>entity)
+    if source_index < 0 or source_index >= num_sources:
+        raise ValueError(f"Source index {source_index} out of range (0-{num_sources-1})")
+
+    cdef midi.MIDIEndpointRef source = midi.MIDIEntityGetSource(
+        <midi.MIDIEntityRef>entity, <ca.UInt32>source_index)
+    return <long>source
+
+def midi_entity_get_number_of_destinations(long entity):
+    """Get the number of destinations in an entity.
+
+    Args:
+        entity: The MIDIEntityRef
+
+    Returns:
+        Number of destinations
+    """
+    return midi.MIDIEntityGetNumberOfDestinations(<midi.MIDIEntityRef>entity)
+
+def midi_entity_get_destination(long entity, int dest_index):
+    """Get a destination from an entity by index.
+
+    Args:
+        entity: The MIDIEntityRef
+        dest_index: Zero-based destination index
+
+    Returns:
+        MIDIEndpointRef handle
+
+    Raises:
+        ValueError: If index is out of range
+    """
+    cdef int num_dests = midi.MIDIEntityGetNumberOfDestinations(<midi.MIDIEntityRef>entity)
+    if dest_index < 0 or dest_index >= num_dests:
+        raise ValueError(f"Destination index {dest_index} out of range (0-{num_dests-1})")
+
+    cdef midi.MIDIEndpointRef dest = midi.MIDIEntityGetDestination(
+        <midi.MIDIEntityRef>entity, <ca.UInt32>dest_index)
+    return <long>dest
+
+def midi_get_number_of_sources():
+    """Get the total number of MIDI sources in the system.
+
+    Returns:
+        Number of sources
+    """
+    return midi.MIDIGetNumberOfSources()
+
+def midi_get_source(int source_index):
+    """Get a source by system-wide index.
+
+    Args:
+        source_index: Zero-based source index
+
+    Returns:
+        MIDIEndpointRef handle
+
+    Raises:
+        ValueError: If index is out of range
+    """
+    cdef int num_sources = midi.MIDIGetNumberOfSources()
+    if source_index < 0 or source_index >= num_sources:
+        raise ValueError(f"Source index {source_index} out of range (0-{num_sources-1})")
+
+    cdef midi.MIDIEndpointRef source = midi.MIDIGetSource(<ca.UInt32>source_index)
+    return <long>source
+
+def midi_get_number_of_destinations():
+    """Get the total number of MIDI destinations in the system.
+
+    Returns:
+        Number of destinations
+    """
+    return midi.MIDIGetNumberOfDestinations()
+
+def midi_get_destination(int dest_index):
+    """Get a destination by system-wide index.
+
+    Args:
+        dest_index: Zero-based destination index
+
+    Returns:
+        MIDIEndpointRef handle
+
+    Raises:
+        ValueError: If index is out of range
+    """
+    cdef int num_dests = midi.MIDIGetNumberOfDestinations()
+    if dest_index < 0 or dest_index >= num_dests:
+        raise ValueError(f"Destination index {dest_index} out of range (0-{num_dests-1})")
+
+    cdef midi.MIDIEndpointRef dest = midi.MIDIGetDestination(<ca.UInt32>dest_index)
+    return <long>dest
+
+# Virtual endpoint functions
+
+def midi_source_create(long client, str name):
+    """Create a virtual MIDI source.
+
+    Args:
+        client: The MIDIClientRef
+        name: Name for the virtual source
+
+    Returns:
+        MIDIEndpointRef handle
+
+    Raises:
+        RuntimeError: If source creation fails
+    """
+    cdef bytes name_bytes = name.encode('utf-8')
+    cdef ca.CFStringRef cf_name = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, name_bytes, ca.kCFStringEncodingUTF8)
+    cdef midi.MIDIEndpointRef source
+    cdef ca.OSStatus status
+
+    if not cf_name:
+        raise MemoryError("Could not create CFString from name")
+
+    try:
+        status = midi.MIDISourceCreate(<midi.MIDIClientRef>client, cf_name, &source)
+        if status != 0:
+            raise RuntimeError(f"MIDISourceCreate failed with status: {status}")
+        return <long>source
+    finally:
+        ca.CFRelease(cf_name)
+
+def midi_destination_create(long client, str name):
+    """Create a virtual MIDI destination.
+
+    Args:
+        client: The MIDIClientRef
+        name: Name for the virtual destination
+
+    Returns:
+        MIDIEndpointRef handle
+
+    Raises:
+        RuntimeError: If destination creation fails
+    """
+    cdef bytes name_bytes = name.encode('utf-8')
+    cdef ca.CFStringRef cf_name = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, name_bytes, ca.kCFStringEncodingUTF8)
+    cdef midi.MIDIEndpointRef dest
+    cdef ca.OSStatus status
+
+    if not cf_name:
+        raise MemoryError("Could not create CFString from name")
+
+    try:
+        status = midi.MIDIDestinationCreate(
+            <midi.MIDIClientRef>client, cf_name, NULL, NULL, &dest)
+        if status != 0:
+            raise RuntimeError(f"MIDIDestinationCreate failed with status: {status}")
+        return <long>dest
+    finally:
+        ca.CFRelease(cf_name)
+
+def midi_endpoint_dispose(long endpoint):
+    """Dispose a virtual MIDI endpoint.
+
+    Args:
+        endpoint: The MIDIEndpointRef to dispose
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If disposal fails
+    """
+    cdef ca.OSStatus status = midi.MIDIEndpointDispose(<midi.MIDIEndpointRef>endpoint)
+    if status != 0:
+        raise RuntimeError(f"MIDIEndpointDispose failed with status: {status}")
+    return status
+
+# Property functions
+
+def midi_object_get_string_property(long obj, str property_name):
+    """Get a string property from a MIDI object.
+
+    Args:
+        obj: The MIDIObjectRef
+        property_name: Name of the property to get
+
+    Returns:
+        String value of the property
+
+    Raises:
+        RuntimeError: If getting property fails
+        ValueError: If property name conversion fails
+    """
+    cdef ca.CFStringRef cf_prop_name
+    cdef ca.CFStringRef cf_value
+    cdef ca.OSStatus status
+    cdef char* c_str
+    cdef ca.CFIndex length
+    cdef ca.CFIndex max_size
+    cdef char* buffer
+
+    cf_prop_name = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, property_name.encode('utf-8'), ca.kCFStringEncodingUTF8)
+
+    if not cf_prop_name:
+        raise ValueError("Could not create CFString from property name")
+
+    try:
+        status = midi.MIDIObjectGetStringProperty(
+            <midi.MIDIObjectRef>obj, cf_prop_name, &cf_value)
+        if status != 0:
+            raise RuntimeError(f"MIDIObjectGetStringProperty failed with status: {status}")
+
+        # Convert CFString to Python string
+        c_str = <char*>ca.CFStringGetCStringPtr(cf_value, ca.kCFStringEncodingUTF8)
+        if c_str:
+            result = c_str.decode('utf-8')
+        else:
+            # Fallback for when direct pointer isn't available
+            length = ca.CFStringGetLength(cf_value)
+            max_size = ca.CFStringGetMaximumSizeForEncoding(length, ca.kCFStringEncodingUTF8) + 1
+            buffer = <char*>malloc(max_size)
+            if not buffer:
+                ca.CFRelease(cf_value)
+                raise MemoryError("Could not allocate buffer for string conversion")
+            try:
+                if ca.CFStringGetCString(cf_value, buffer, max_size, ca.kCFStringEncodingUTF8):
+                    result = buffer.decode('utf-8')
+                else:
+                    ca.CFRelease(cf_value)
+                    raise RuntimeError("Could not convert CFString to C string")
+            finally:
+                free(buffer)
+
+        ca.CFRelease(cf_value)
+        return result
+    finally:
+        ca.CFRelease(cf_prop_name)
+
+def midi_object_get_integer_property(long obj, str property_name):
+    """Get an integer property from a MIDI object.
+
+    Args:
+        obj: The MIDIObjectRef
+        property_name: Name of the property to get
+
+    Returns:
+        Integer value of the property
+
+    Raises:
+        RuntimeError: If getting property fails
+        ValueError: If property name conversion fails
+    """
+    cdef bytes prop_bytes = property_name.encode('utf-8')
+    cdef ca.CFStringRef cf_prop_name = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, prop_bytes, ca.kCFStringEncodingUTF8)
+    cdef ca.SInt32 value
+    cdef ca.OSStatus status
+
+    if not cf_prop_name:
+        raise ValueError("Could not create CFString from property name")
+
+    try:
+        status = midi.MIDIObjectGetIntegerProperty(
+            <midi.MIDIObjectRef>obj, cf_prop_name, &value)
+        if status != 0:
+            raise RuntimeError(f"MIDIObjectGetIntegerProperty failed with status: {status}")
+        return value
+    finally:
+        ca.CFRelease(cf_prop_name)
+
+def midi_object_set_string_property(long obj, str property_name, str value):
+    """Set a string property on a MIDI object.
+
+    Args:
+        obj: The MIDIObjectRef
+        property_name: Name of the property to set
+        value: String value to set
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If setting property fails
+        ValueError: If string conversion fails
+    """
+    cdef bytes prop_bytes = property_name.encode('utf-8')
+    cdef ca.CFStringRef cf_prop_name = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, prop_bytes, ca.kCFStringEncodingUTF8)
+    cdef bytes value_bytes = value.encode('utf-8')
+    cdef ca.CFStringRef cf_value = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, value_bytes, ca.kCFStringEncodingUTF8)
+    cdef ca.OSStatus status
+
+    if not cf_prop_name:
+        raise ValueError("Could not create CFString from property name")
+    if not cf_value:
+        ca.CFRelease(cf_prop_name)
+        raise ValueError("Could not create CFString from value")
+
+    try:
+        status = midi.MIDIObjectSetStringProperty(
+            <midi.MIDIObjectRef>obj, cf_prop_name, cf_value)
+        if status != 0:
+            raise RuntimeError(f"MIDIObjectSetStringProperty failed with status: {status}")
+        return status
+    finally:
+        ca.CFRelease(cf_prop_name)
+        ca.CFRelease(cf_value)
+
+def midi_object_set_integer_property(long obj, str property_name, int value):
+    """Set an integer property on a MIDI object.
+
+    Args:
+        obj: The MIDIObjectRef
+        property_name: Name of the property to set
+        value: Integer value to set
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If setting property fails
+        ValueError: If property name conversion fails
+    """
+    cdef bytes prop_bytes = property_name.encode('utf-8')
+    cdef ca.CFStringRef cf_prop_name = ca.CFStringCreateWithCString(
+        ca.kCFAllocatorDefault, prop_bytes, ca.kCFStringEncodingUTF8)
+    cdef ca.OSStatus status
+
+    if not cf_prop_name:
+        raise ValueError("Could not create CFString from property name")
+
+    try:
+        status = midi.MIDIObjectSetIntegerProperty(
+            <midi.MIDIObjectRef>obj, cf_prop_name, <ca.SInt32>value)
+        if status != 0:
+            raise RuntimeError(f"MIDIObjectSetIntegerProperty failed with status: {status}")
+        return status
+    finally:
+        ca.CFRelease(cf_prop_name)
+
+# Send functions with simplified packet creation
+
+def midi_send_data(long port, long destination, bytes data, int timestamp=0):
+    """Send MIDI data to a destination.
+
+    Args:
+        port: The MIDIPortRef (output port)
+        destination: The MIDIEndpointRef (destination endpoint)
+        data: MIDI data bytes to send
+        timestamp: MIDI timestamp (default 0 for immediate)
+
+    Returns:
+        OSStatus result code
+
+    Raises:
+        RuntimeError: If sending fails
+        ValueError: If data is too large
+    """
+    cdef size_t pktlist_size
+    cdef midi.MIDIPacketList* pktlist
+    cdef midi.MIDIPacket* packet
+    cdef ca.OSStatus status
+
+    if len(data) > 256:
+        raise ValueError("MIDI data too large (max 256 bytes)")
+
+    # Create a packet list with one packet
+    pktlist_size = sizeof(midi.MIDIPacketList) + len(data)
+    pktlist = <midi.MIDIPacketList*>malloc(pktlist_size)
+    if not pktlist:
+        raise MemoryError("Could not allocate packet list")
+
+    try:
+        # Initialize packet list
+        packet = midi.MIDIPacketListInit(pktlist)
+
+        # Add our data to the packet
+        packet = midi.MIDIPacketListAdd(
+            pktlist, pktlist_size, packet,
+            <midi.MIDITimeStamp>timestamp,
+            <ca.UInt32>len(data),
+            <const ca.UInt8*><char*>data)
+
+        if not packet:
+            raise RuntimeError("Could not add packet to packet list")
+
+        # Send the packet list
+        status = midi.MIDISend(
+            <midi.MIDIPortRef>port,
+            <midi.MIDIEndpointRef>destination,
+            pktlist)
+
+        if status != 0:
+            raise RuntimeError(f"MIDISend failed with status: {status}")
+        return status
+
+    finally:
+        free(pktlist)
+
+# Constants and helpers
+
+def get_midi_error_invalid_client():
+    """Get the kMIDIInvalidClient error constant."""
+    return midi.kMIDIInvalidClient
+
+def get_midi_error_invalid_port():
+    """Get the kMIDIInvalidPort error constant."""
+    return midi.kMIDIInvalidPort
+
+def get_midi_error_wrong_endpoint_type():
+    """Get the kMIDIWrongEndpointType error constant."""
+    return midi.kMIDIWrongEndpointType
+
+def get_midi_error_no_connection():
+    """Get the kMIDINoConnection error constant."""
+    return midi.kMIDINoConnection
+
+def get_midi_error_unknown_endpoint():
+    """Get the kMIDIUnknownEndpoint error constant."""
+    return midi.kMIDIUnknownEndpoint
+
+def get_midi_error_unknown_property():
+    """Get the kMIDIUnknownProperty error constant."""
+    return midi.kMIDIUnknownProperty
+
+def get_midi_error_wrong_property_type():
+    """Get the kMIDIWrongPropertyType error constant."""
+    return midi.kMIDIWrongPropertyType
+
+def get_midi_error_no_current_setup():
+    """Get the kMIDINoCurrentSetup error constant."""
+    return midi.kMIDINoCurrentSetup
+
+def get_midi_error_message_send_err():
+    """Get the kMIDIMessageSendErr error constant."""
+    return midi.kMIDIMessageSendErr
+
+def get_midi_error_server_start_err():
+    """Get the kMIDIServerStartErr error constant."""
+    return midi.kMIDIServerStartErr
+
+def get_midi_error_setup_format_err():
+    """Get the kMIDISetupFormatErr error constant."""
+    return midi.kMIDISetupFormatErr
+
+def get_midi_error_wrong_thread():
+    """Get the kMIDIWrongThread error constant."""
+    return midi.kMIDIWrongThread
+
+def get_midi_error_object_not_found():
+    """Get the kMIDIObjectNotFound error constant."""
+    return midi.kMIDIObjectNotFound
+
+def get_midi_error_id_not_unique():
+    """Get the kMIDIIDNotUnique error constant."""
+    return midi.kMIDIIDNotUnique
+
+def get_midi_error_not_permitted():
+    """Get the kMIDINotPermitted error constant."""
+    return midi.kMIDINotPermitted
+
+def get_midi_error_unknown_error():
+    """Get the kMIDIUnknownError error constant."""
+    return midi.kMIDIUnknownError
+
+def get_midi_object_type_other():
+    """Get the kMIDIObjectType_Other constant."""
+    return midi.kMIDIObjectType_Other
+
+def get_midi_object_type_device():
+    """Get the kMIDIObjectType_Device constant."""
+    return midi.kMIDIObjectType_Device
+
+def get_midi_object_type_entity():
+    """Get the kMIDIObjectType_Entity constant."""
+    return midi.kMIDIObjectType_Entity
+
+def get_midi_object_type_source():
+    """Get the kMIDIObjectType_Source constant."""
+    return midi.kMIDIObjectType_Source
+
+def get_midi_object_type_destination():
+    """Get the kMIDIObjectType_Destination constant."""
+    return midi.kMIDIObjectType_Destination
+
+def get_midi_object_type_external_device():
+    """Get the kMIDIObjectType_ExternalDevice constant."""
+    return midi.kMIDIObjectType_ExternalDevice
+
+def get_midi_object_type_external_entity():
+    """Get the kMIDIObjectType_ExternalEntity constant."""
+    return midi.kMIDIObjectType_ExternalEntity
+
+def get_midi_object_type_external_source():
+    """Get the kMIDIObjectType_ExternalSource constant."""
+    return midi.kMIDIObjectType_ExternalSource
+
+def get_midi_object_type_external_destination():
+    """Get the kMIDIObjectType_ExternalDestination constant."""
+    return midi.kMIDIObjectType_ExternalDestination
+
+def get_midi_protocol_1_0():
+    """Get the kMIDIProtocol_1_0 constant."""
+    return midi.kMIDIProtocol_1_0
+
+def get_midi_protocol_2_0():
+    """Get the kMIDIProtocol_2_0 constant."""
+    return midi.kMIDIProtocol_2_0
+
+# Common property name helpers
+
+def get_midi_property_name():
+    """Get the 'name' property key."""
+    return "name"
+
+def get_midi_property_manufacturer():
+    """Get the 'manufacturer' property key."""
+    return "manufacturer"
+
+def get_midi_property_model():
+    """Get the 'model' property key."""
+    return "model"
+
+def get_midi_property_unique_id():
+    """Get the 'uniqueID' property key."""
+    return "uniqueID"
+
+def get_midi_property_device_id():
+    """Get the 'deviceID' property key."""
+    return "deviceID"
+
+def get_midi_property_receive_channels():
+    """Get the 'receiveChannels' property key."""
+    return "receiveChannels"
+
+def get_midi_property_transmit_channels():
+    """Get the 'transmitChannels' property key."""
+    return "transmitChannels"
+
+def get_midi_property_offline():
+    """Get the 'offline' property key."""
+    return "offline"
+
+def get_midi_property_private():
+    """Get the 'private' property key."""
+    return "private"
+
+def get_midi_property_driver_owner():
+    """Get the 'driverOwner' property key."""
+    return "driverOwner"
+
+def get_midi_property_display_name():
+    """Get the 'displayName' property key."""
+    return "displayName"

@@ -46,3 +46,12 @@ cdef extern from "CoreFoundation/CoreFoundation.h":
     cdef CFURLRef CFURLCreateFromFileSystemRepresentation(CFAllocatorRef allocator, const UInt8* buffer, CFIndex bufLen, Boolean isDirectory)
     cdef void CFRelease(CFTypeRef cf)
     cdef CFAllocatorRef kCFAllocatorDefault
+
+    # String creation and encoding
+    ctypedef UInt32 CFStringEncoding
+    cdef CFStringEncoding kCFStringEncodingUTF8
+    cdef CFStringRef CFStringCreateWithCString(CFAllocatorRef allocator, const char* cStr, CFStringEncoding encoding)
+    cdef char* CFStringGetCStringPtr(CFStringRef theString, CFStringEncoding encoding)
+    cdef CFIndex CFStringGetLength(CFStringRef theString)
+    cdef CFIndex CFStringGetMaximumSizeForEncoding(CFIndex length, CFStringEncoding encoding)
+    cdef Boolean CFStringGetCString(CFStringRef theString, char* buffer, CFIndex bufferSize, CFStringEncoding encoding)
