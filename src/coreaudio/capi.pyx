@@ -863,6 +863,182 @@ def get_audio_file_stream_error_discontinuity_cant_recover():
     return ca.kAudioFileStreamError_DiscontinuityCantRecover
 
 
+# AudioServices Functions
+def audio_services_create_system_sound_id(str file_path):
+    """Create a SystemSoundID from an audio file path"""
+    cdef ca.SystemSoundID sound_id
+    cdef ca.CFURLRef url_ref
+    cdef bytes path_bytes = file_path.encode('utf-8')
+
+    url_ref = ca.CFURLCreateFromFileSystemRepresentation(
+        ca.kCFAllocatorDefault,
+        <const ca.UInt8*>path_bytes,
+        len(path_bytes),
+        False
+    )
+
+    if not url_ref:
+        raise ValueError("Could not create URL from file path")
+
+    cdef ca.OSStatus status = ca.AudioServicesCreateSystemSoundID(
+        url_ref,
+        &sound_id
+    )
+
+    ca.CFRelease(url_ref)
+
+    if status != 0:
+        raise RuntimeError(f"AudioServicesCreateSystemSoundID failed with status: {status}")
+
+    return <long>sound_id
+
+
+def audio_services_dispose_system_sound_id(long sound_id):
+    """Dispose a SystemSoundID"""
+    cdef ca.SystemSoundID system_sound_id = <ca.SystemSoundID>sound_id
+    cdef ca.OSStatus status = ca.AudioServicesDisposeSystemSoundID(system_sound_id)
+
+    if status != 0:
+        raise RuntimeError(f"AudioServicesDisposeSystemSoundID failed with status: {status}")
+
+    return status
+
+
+def audio_services_play_system_sound(long sound_id):
+    """Play a system sound (deprecated but widely used)"""
+    cdef ca.SystemSoundID system_sound_id = <ca.SystemSoundID>sound_id
+    ca.AudioServicesPlaySystemSound(system_sound_id)
+
+
+def audio_services_play_alert_sound(long sound_id):
+    """Play an alert sound (deprecated but widely used)"""
+    cdef ca.SystemSoundID system_sound_id = <ca.SystemSoundID>sound_id
+    ca.AudioServicesPlayAlertSound(system_sound_id)
+
+
+def audio_services_get_property(int property_id, long specifier_value=0):
+    """Get an AudioServices property"""
+    cdef ca.AudioServicesPropertyID prop_id = <ca.AudioServicesPropertyID>property_id
+    cdef ca.UInt32 data_size = 0
+    cdef ca.Boolean writable = False
+    cdef ca.UInt32 specifier = <ca.UInt32>specifier_value
+
+    # Get property info first
+    cdef ca.OSStatus status = ca.AudioServicesGetPropertyInfo(
+        prop_id,
+        sizeof(ca.UInt32) if specifier_value != 0 else 0,
+        &specifier if specifier_value != 0 else NULL,
+        &data_size,
+        &writable
+    )
+
+    if status != 0:
+        raise RuntimeError(f"AudioServicesGetPropertyInfo failed with status: {status}")
+
+    # Allocate buffer and get property data
+    cdef char* buffer = <char*>malloc(data_size)
+    cdef ca.UInt32 actual_size = data_size
+    if not buffer:
+        raise MemoryError("Could not allocate memory for property data")
+
+    try:
+        status = ca.AudioServicesGetProperty(
+            prop_id,
+            sizeof(ca.UInt32) if specifier_value != 0 else 0,
+            &specifier if specifier_value != 0 else NULL,
+            &actual_size,
+            buffer
+        )
+
+        if status != 0:
+            raise RuntimeError(f"AudioServicesGetProperty failed with status: {status}")
+
+        # Return property value based on size
+        if data_size == 4:
+            return (<ca.UInt32*>buffer)[0]
+        else:
+            return buffer[:actual_size]
+
+    finally:
+        free(buffer)
+
+
+def audio_services_set_property(int property_id, data, long specifier_value=0):
+    """Set an AudioServices property"""
+    cdef ca.AudioServicesPropertyID prop_id = <ca.AudioServicesPropertyID>property_id
+    cdef ca.UInt32 specifier = <ca.UInt32>specifier_value
+    cdef ca.UInt32 uint_data
+    cdef bytes byte_data
+    cdef const void* data_ptr
+    cdef ca.UInt32 data_size
+
+    # Handle different data types
+    if isinstance(data, int):
+        uint_data = <ca.UInt32>data
+        data_ptr = <const void*>&uint_data
+        data_size = sizeof(ca.UInt32)
+    elif isinstance(data, bytes):
+        byte_data = data
+        data_ptr = <const void*>byte_data
+        data_size = len(byte_data)
+    else:
+        raise TypeError("Data must be int or bytes")
+
+    cdef ca.OSStatus status = ca.AudioServicesSetProperty(
+        prop_id,
+        sizeof(ca.UInt32) if specifier_value != 0 else 0,
+        &specifier if specifier_value != 0 else NULL,
+        data_size,
+        data_ptr
+    )
+
+    if status != 0:
+        raise RuntimeError(f"AudioServicesSetProperty failed with status: {status}")
+
+    return status
+
+
+# AudioServices constant getter functions
+def get_audio_services_no_error():
+    return ca.kAudioServicesNoError
+
+def get_audio_services_unsupported_property_error():
+    return ca.kAudioServicesUnsupportedPropertyError
+
+def get_audio_services_bad_property_size_error():
+    return ca.kAudioServicesBadPropertySizeError
+
+def get_audio_services_bad_specifier_size_error():
+    return ca.kAudioServicesBadSpecifierSizeError
+
+def get_audio_services_system_sound_unspecified_error():
+    return ca.kAudioServicesSystemSoundUnspecifiedError
+
+def get_audio_services_system_sound_client_timed_out_error():
+    return ca.kAudioServicesSystemSoundClientTimedOutError
+
+def get_audio_services_system_sound_exceeded_maximum_duration_error():
+    return ca.kAudioServicesSystemSoundExceededMaximumDurationError
+
+def get_system_sound_id_user_preferred_alert():
+    return ca.kSystemSoundID_UserPreferredAlert
+
+def get_system_sound_id_flash_screen():
+    return ca.kSystemSoundID_FlashScreen
+
+def get_system_sound_id_vibrate():
+    return ca.kSystemSoundID_Vibrate
+
+def get_user_preferred_alert():
+    return ca.kUserPreferredAlert
+
+def get_audio_services_property_is_ui_sound():
+    return ca.kAudioServicesPropertyIsUISound
+
+def get_audio_services_property_complete_playback_if_app_dies():
+    return ca.kAudioServicesPropertyCompletePlaybackIfAppDies
+
+
 def test_error() -> int:
     """Test function to verify the module works"""
     return ca.kAudio_UnimplementedError

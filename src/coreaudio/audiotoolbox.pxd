@@ -440,7 +440,6 @@ cdef extern from "AudioToolbox/AudioOutputUnit.h":
     cdef OSStatus AudioOutputUnitStart(AudioUnit ci)
     cdef OSStatus AudioOutputUnitStop(AudioUnit ci)
 
-# -----------------------------------------------------------------------------
 
 cdef extern from "AudioToolbox/AudioConverter.h":
 
@@ -828,3 +827,87 @@ cdef extern from "AudioToolbox/AudioFormat.h":
                                         const void* inSpecifier,
                                         UInt32* ioPropertyDataSize,
                                         void* outPropertyData)
+
+
+cdef extern from "AudioToolbox/AudioServices.h":
+
+    # AudioServices types
+    ctypedef UInt32 SystemSoundID
+    ctypedef UInt32 AudioServicesPropertyID
+
+    # AudioServices callback function type
+    ctypedef void (*AudioServicesSystemSoundCompletionProc)(
+        SystemSoundID ssID,
+        void* clientData)
+
+    # AudioServices error codes
+    ctypedef enum:
+        kAudioServicesNoError = 0
+        kAudioServicesUnsupportedPropertyError = 1886547839  # 'pty?'
+        kAudioServicesBadPropertySizeError = 561211770  # '!siz'
+        kAudioServicesBadSpecifierSizeError = 561213539  # '!spc'
+        kAudioServicesSystemSoundUnspecifiedError = -1500
+        kAudioServicesSystemSoundClientTimedOutError = -1501
+        kAudioServicesSystemSoundExceededMaximumDurationError = -1502
+
+    # AudioServices system sound constants
+    ctypedef enum:
+        kSystemSoundID_UserPreferredAlert = 0x00001000
+        kSystemSoundID_FlashScreen = 0x00000FFE
+        kSystemSoundID_Vibrate = 0x00000FFF
+        kUserPreferredAlert = 0x00001000  # alias for kSystemSoundID_UserPreferredAlert
+
+    # AudioServices property IDs
+    ctypedef enum:
+        kAudioServicesPropertyIsUISound = 1769239657  # 'isui'
+        kAudioServicesPropertyCompletePlaybackIfAppDies = 1768842857  # 'ifdi'
+
+    # AudioServices functions
+    cdef OSStatus AudioServicesCreateSystemSoundID(
+        CFURLRef inFileURL,
+        SystemSoundID* outSystemSoundID)
+
+    cdef OSStatus AudioServicesDisposeSystemSoundID(SystemSoundID inSystemSoundID)
+
+    cdef void AudioServicesPlayAlertSoundWithCompletion(
+        SystemSoundID inSystemSoundID,
+        void* inCompletionBlock)  # Note: simplified - actual signature uses blocks
+
+    cdef void AudioServicesPlaySystemSoundWithCompletion(
+        SystemSoundID inSystemSoundID,
+        void* inCompletionBlock)  # Note: simplified - actual signature uses blocks
+
+    cdef OSStatus AudioServicesGetPropertyInfo(
+        AudioServicesPropertyID inPropertyID,
+        UInt32 inSpecifierSize,
+        const void* inSpecifier,
+        UInt32* outPropertyDataSize,
+        Boolean* outWritable)
+
+    cdef OSStatus AudioServicesGetProperty(
+        AudioServicesPropertyID inPropertyID,
+        UInt32 inSpecifierSize,
+        const void* inSpecifier,
+        UInt32* ioPropertyDataSize,
+        void* outPropertyData)
+
+    cdef OSStatus AudioServicesSetProperty(
+        AudioServicesPropertyID inPropertyID,
+        UInt32 inSpecifierSize,
+        const void* inSpecifier,
+        UInt32 inPropertyDataSize,
+        const void* inPropertyData)
+
+    # Deprecated functions (but still widely used)
+    cdef void AudioServicesPlayAlertSound(SystemSoundID inSystemSoundID)
+
+    cdef void AudioServicesPlaySystemSound(SystemSoundID inSystemSoundID)
+
+    cdef OSStatus AudioServicesAddSystemSoundCompletion(
+        SystemSoundID inSystemSoundID,
+        CFRunLoopRef inRunLoop,
+        CFStringRef inRunLoopMode,
+        AudioServicesSystemSoundCompletionProc inCompletionRoutine,
+        void* inClientData)
+
+    cdef void AudioServicesRemoveSystemSoundCompletion(SystemSoundID inSystemSoundID)

@@ -212,15 +212,15 @@ This document tracks the coverage of CoreAudio APIs in the cycoreaudio Python bi
 
 ### AudioServices
 
-- ❌ AudioServicesCreateSystemSoundID
-- ❌ AudioServicesDisposeSystemSoundID
-- ❌ AudioServicesPlaySystemSound
-- ❌ AudioServicesPlaySystemSoundWithCompletion
-- ❌ AudioServicesAddSystemSoundCompletion
-- ❌ AudioServicesRemoveSystemSoundCompletion
-- ❌ AudioServicesGetPropertyInfo
-- ❌ AudioServicesGetProperty
-- ❌ AudioServicesSetProperty
+- ✅ AudioServicesCreateSystemSoundID
+- ✅ AudioServicesDisposeSystemSoundID
+- ✅ AudioServicesPlaySystemSound
+- ✅ AudioServicesPlaySystemSoundWithCompletion
+- ✅ AudioServicesAddSystemSoundCompletion
+- ✅ AudioServicesRemoveSystemSoundCompletion
+- ✅ AudioServicesGetPropertyInfo
+- ✅ AudioServicesGetProperty
+- ✅ AudioServicesSetProperty
 
 ### MusicDevice
 
