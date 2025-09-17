@@ -1,10 +1,10 @@
-.PHONY: all coreaudio test clean
+.PHONY: all build test clean
 
-all: coreaudio
+all: build
 
-coreaudio:
+build:
 	@python3 setup.py build_ext --inplace	
-	@rm -rf ./build ./coreaudio.c
+	@rm -rf ./build ./src/coreaudio/capi.c
 
 test:
 	@pytest

@@ -1,7 +1,8 @@
 # audio_player.pxd
 # Cython declarations for audio_player.h
 
-from coreaudio cimport *
+# from coreaudio cimport *
+from .capi cimport *
 
 # Function declarations - use ctypedef to match C struct definitions exactly
 cdef extern from "audio_player.h":

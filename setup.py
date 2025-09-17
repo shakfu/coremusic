@@ -14,23 +14,27 @@ os.environ['LDFLAGS'] = " ".join([
 ])
 
 extensions = [
-    Extension("coreaudio", ["coreaudio.pyx", "audio_player.c"],
-        define_macros = [
-            ('PD', 1),
+    Extension("coreaudio.capi", 
+        sources=[
+            "src/coreaudio/capi.pyx",
+            "src/coreaudio/audio_player.c"
         ],
+        # define_macros = [
+        #     ('PD', 1),
+        # ],
 
-        include_dirs=["."],
+        # include_dirs=["."],
 
-        libraries = [
-            'm',
-            'dl',
-            'pthread',
+        # libraries = [
+        #     'm',
+        #     'dl',
+        #     'pthread',
 
-        ],
+        # ],
 
-        library_dirs=[],
+        # library_dirs=[],
 
-        extra_objects=[],
+        # extra_objects=[],
     ),
 ]
 
@@ -42,4 +46,5 @@ setup(
             'language_level' : '3',
             'embedsignature': True,
         }),
+    package_dir={"": "src"},
 )

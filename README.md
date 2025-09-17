@@ -77,7 +77,7 @@ A Cython wrapper for Apple's CoreAudio ecosystem, providing Python bindings for 
 3. Build the extension:
 
     ```bash
-    make coreaudio
+    make
     # or manually:
     python3 setup.py build_ext --inplace
     ```

@@ -1,5 +1,6 @@
-cimport coreaudio as ca
-cimport audio_player as ap
+from . cimport capi as ca
+from . cimport audio_player as ap
+
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy, memset
 
