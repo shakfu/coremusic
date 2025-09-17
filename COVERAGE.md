@@ -185,13 +185,13 @@ This document tracks the coverage of CoreAudio APIs in the cycoreaudio Python bi
 
 ### AudioFileStream
 
-- ❌ AudioFileStreamOpen
-- ❌ AudioFileStreamClose
-- ❌ AudioFileStreamParseBytes
-- ❌ AudioFileStreamSeek
-- ❌ AudioFileStreamGetPropertyInfo
-- ❌ AudioFileStreamGetProperty
-- ❌ AudioFileStreamSetProperty
+- ✅ AudioFileStreamOpen
+- ✅ AudioFileStreamClose
+- ✅ AudioFileStreamParseBytes
+- ✅ AudioFileStreamSeek
+- ✅ AudioFileStreamGetPropertyInfo
+- ✅ AudioFileStreamGetProperty
+- ✅ AudioFileStreamSetProperty
 
 ### ExtendedAudioFile
 

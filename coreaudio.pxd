@@ -572,6 +572,121 @@ cdef extern from "AudioToolbox/AudioFile.h":
         AudioQueueParameterValue mValue
 
 
+cdef extern from "AudioToolbox/AudioFileStream.h":
+
+    # AudioFileStream types
+    ctypedef UInt32 AudioFileStreamPropertyID
+    ctypedef struct OpaqueAudioFileStreamID
+    ctypedef OpaqueAudioFileStreamID* AudioFileStreamID
+
+    # AudioFileStream flags
+    ctypedef enum AudioFileStreamPropertyFlags:
+        kAudioFileStreamPropertyFlag_PropertyIsCached = 1
+        kAudioFileStreamPropertyFlag_CacheProperty = 2
+
+    ctypedef enum AudioFileStreamParseFlags:
+        kAudioFileStreamParseFlag_Discontinuity = 1
+
+    ctypedef enum AudioFileStreamSeekFlags:
+        kAudioFileStreamSeekFlag_OffsetIsEstimated = 1
+
+    # AudioFileStream callback function types
+    ctypedef void (*AudioFileStream_PropertyListenerProc)(
+        void* inClientData,
+        AudioFileStreamID inAudioFileStream,
+        AudioFileStreamPropertyID inPropertyID,
+        AudioFileStreamPropertyFlags* ioFlags)
+
+    ctypedef void (*AudioFileStream_PacketsProc)(
+        void* inClientData,
+        UInt32 inNumberBytes,
+        UInt32 inNumberPackets,
+        const void* inInputData,
+        AudioStreamPacketDescription* inPacketDescriptions)
+
+    # AudioFileStream error codes
+    ctypedef enum:
+        kAudioFileStreamError_UnsupportedFileType = 1953064820  # 'typ?'
+        kAudioFileStreamError_UnsupportedDataFormat = 1718449215  # 'fmt?'
+        kAudioFileStreamError_UnsupportedProperty = 1886547839  # 'pty?'
+        kAudioFileStreamError_BadPropertySize = 561211770  # '!siz'
+        kAudioFileStreamError_NotOptimized = 1869640813  # 'optm'
+        kAudioFileStreamError_InvalidPacketOffset = 1885433391  # 'pck?'
+        kAudioFileStreamError_InvalidFile = 1685348415  # 'dta?'
+        kAudioFileStreamError_ValueUnknown = 1970170687  # 'unk?'
+        kAudioFileStreamError_DataUnavailable = 1836016741  # 'more'
+        kAudioFileStreamError_IllegalOperation = 1852139888  # 'nope'
+        kAudioFileStreamError_UnspecifiedError = 2003395684  # 'wht?'
+        kAudioFileStreamError_DiscontinuityCantRecover = 1685348641  # 'dsc!'
+
+    # AudioFileStream property IDs
+    ctypedef enum:
+        kAudioFileStreamProperty_ReadyToProducePackets = 1919247473  # 'redy'
+        kAudioFileStreamProperty_FileFormat = 1717988724  # 'ffmt'
+        kAudioFileStreamProperty_DataFormat = 1684103783  # 'dfmt'
+        kAudioFileStreamProperty_FormatList = 1718383476  # 'flst'
+        kAudioFileStreamProperty_MagicCookieData = 1835493731  # 'mgic'
+        kAudioFileStreamProperty_AudioDataByteCount = 1650683508  # 'bcnt'
+        kAudioFileStreamProperty_AudioDataPacketCount = 1885564532  # 'pcnt'
+        kAudioFileStreamProperty_MaximumPacketSize = 1886616691  # 'psze'
+        kAudioFileStreamProperty_DataOffset = 1685022310  # 'doff'
+        kAudioFileStreamProperty_ChannelLayout = 1668112500  # 'cmap'
+        kAudioFileStreamProperty_PacketToFrame = 1886086770  # 'pkfr'
+        kAudioFileStreamProperty_FrameToPacket = 1718775151  # 'frpk'
+        kAudioFileStreamProperty_RestrictsRandomAccess = 1919508592  # 'rrap'
+        kAudioFileStreamProperty_PacketToRollDistance = 1886090604  # 'pkrl'
+        kAudioFileStreamProperty_PreviousIndependentPacket = 1885957228  # 'pind'
+        kAudioFileStreamProperty_NextIndependentPacket = 1852273252  # 'nind'
+        kAudioFileStreamProperty_PacketToDependencyInfo = 1886086256  # 'pkdp'
+        kAudioFileStreamProperty_PacketToByte = 1886085753  # 'pkby'
+        kAudioFileStreamProperty_ByteToPacket = 1652125803  # 'bypk'
+        kAudioFileStreamProperty_PacketTableInfo = 1886283375  # 'pnfo'
+        kAudioFileStreamProperty_PacketSizeUpperBound = 1886090093  # 'pkub'
+        kAudioFileStreamProperty_AverageBytesPerPacket = 1633969264  # 'abpp'
+        kAudioFileStreamProperty_BitRate = 1651663220  # 'brat'
+        kAudioFileStreamProperty_InfoDictionary = 1768842863  # 'info'
+
+    # AudioFileStream functions
+    cdef OSStatus AudioFileStreamOpen(
+        void* inClientData,
+        AudioFileStream_PropertyListenerProc inPropertyListenerProc,
+        AudioFileStream_PacketsProc inPacketsProc,
+        AudioFileTypeID inFileTypeHint,
+        AudioFileStreamID* outAudioFileStream)
+
+    cdef OSStatus AudioFileStreamParseBytes(
+        AudioFileStreamID inAudioFileStream,
+        UInt32 inDataByteSize,
+        const void* inData,
+        AudioFileStreamParseFlags inFlags)
+
+    cdef OSStatus AudioFileStreamSeek(
+        AudioFileStreamID inAudioFileStream,
+        SInt64 inPacketOffset,
+        SInt64* outDataByteOffset,
+        AudioFileStreamSeekFlags* ioFlags)
+
+    cdef OSStatus AudioFileStreamGetPropertyInfo(
+        AudioFileStreamID inAudioFileStream,
+        AudioFileStreamPropertyID inPropertyID,
+        UInt32* outPropertyDataSize,
+        Boolean* outWritable)
+
+    cdef OSStatus AudioFileStreamGetProperty(
+        AudioFileStreamID inAudioFileStream,
+        AudioFileStreamPropertyID inPropertyID,
+        UInt32* ioPropertyDataSize,
+        void* outPropertyData)
+
+    cdef OSStatus AudioFileStreamSetProperty(
+        AudioFileStreamID inAudioFileStream,
+        AudioFileStreamPropertyID inPropertyID,
+        UInt32 inPropertyDataSize,
+        const void* inPropertyData)
+
+    cdef OSStatus AudioFileStreamClose(AudioFileStreamID inAudioFileStream)
+
+
 cdef extern from "AudioToolbox/AudioComponent.h":
     
     ctypedef struct OpaqueAudioComponent
@@ -621,7 +736,6 @@ cdef extern from "AudioToolbox/AudioComponent.h":
 
 cdef extern from "AudioToolbox/AudioUnitProperties.h":
     pass
-
 
 cdef extern from "AudioToolbox/AUComponent.h":
     

@@ -165,6 +165,162 @@ def audio_file_read_packets(long audio_file_id, long start_packet, int num_packe
         free(buffer)
 
 
+# AudioFileStream Functions
+# Dummy callback functions to avoid NULL pointer issues
+cdef void dummy_property_listener(void* client_data, ca.AudioFileStreamID stream,
+                                 ca.AudioFileStreamPropertyID property_id,
+                                 ca.AudioFileStreamPropertyFlags* flags) noexcept:
+    """Dummy property listener callback"""
+    pass
+
+cdef void dummy_packets_callback(void* client_data, ca.UInt32 num_bytes,
+                                ca.UInt32 num_packets, const void* input_data,
+                                ca.AudioStreamPacketDescription* packet_descriptions) noexcept:
+    """Dummy packets callback"""
+    pass
+
+def audio_file_stream_open(file_type_hint=0):
+    """Open an AudioFileStream parser for streaming audio data"""
+    cdef ca.AudioFileStreamID stream_id
+
+    cdef ca.OSStatus status = ca.AudioFileStreamOpen(
+        NULL,  # client data
+        dummy_property_listener,  # property listener proc
+        dummy_packets_callback,  # packets proc
+        <ca.AudioFileTypeID>file_type_hint,
+        &stream_id
+    )
+
+    if status != 0:
+        raise RuntimeError(f"AudioFileStreamOpen failed with status: {status}")
+
+    return <long>stream_id
+
+
+def audio_file_stream_close(long stream_id):
+    """Close an AudioFileStream parser"""
+    cdef ca.AudioFileStreamID stream = <ca.AudioFileStreamID>stream_id
+    cdef ca.OSStatus status = ca.AudioFileStreamClose(stream)
+    if status != 0:
+        raise RuntimeError(f"AudioFileStreamClose failed with status: {status}")
+    return status
+
+
+def audio_file_stream_parse_bytes(long stream_id, bytes data, int flags=0):
+    """Parse bytes through the AudioFileStream parser"""
+    cdef ca.AudioFileStreamID stream = <ca.AudioFileStreamID>stream_id
+    cdef char* data_ptr = <char*>data
+    cdef ca.UInt32 data_size = len(data)
+
+    cdef ca.OSStatus status = ca.AudioFileStreamParseBytes(
+        stream,
+        data_size,
+        <const void*>data_ptr,
+        <ca.AudioFileStreamParseFlags>flags
+    )
+
+    if status != 0:
+        raise RuntimeError(f"AudioFileStreamParseBytes failed with status: {status}")
+
+    return status
+
+
+def audio_file_stream_get_property(long stream_id, int property_id):
+    """Get a property from an AudioFileStream parser"""
+    cdef ca.AudioFileStreamID stream = <ca.AudioFileStreamID>stream_id
+    cdef ca.UInt32 data_size = 0
+    cdef ca.Boolean writable = 0
+
+    # Get the size of the property data
+    cdef ca.OSStatus status = ca.AudioFileStreamGetPropertyInfo(
+        stream,
+        <ca.AudioFileStreamPropertyID>property_id,
+        &data_size,
+        &writable
+    )
+
+    if status != 0:
+        raise RuntimeError(f"AudioFileStreamGetPropertyInfo failed with status: {status}")
+
+    # Allocate buffer and get the property data
+    cdef char* buffer = <char*>malloc(data_size)
+    if not buffer:
+        raise MemoryError("Could not allocate memory for property data")
+
+    cdef ca.UInt32 actual_size = data_size
+    cdef ca.AudioStreamBasicDescription* asbd
+    try:
+        status = ca.AudioFileStreamGetProperty(
+            stream,
+            <ca.AudioFileStreamPropertyID>property_id,
+            &actual_size,
+            buffer
+        )
+
+        if status != 0:
+            raise RuntimeError(f"AudioFileStreamGetProperty failed with status: {status}")
+
+        # Handle different property types
+        if property_id == ca.kAudioFileStreamProperty_DataFormat:
+            # Return AudioStreamBasicDescription as dict
+            asbd = <ca.AudioStreamBasicDescription*>buffer
+            return {
+                'sample_rate': asbd.mSampleRate,
+                'format_id': asbd.mFormatID,
+                'format_flags': asbd.mFormatFlags,
+                'bytes_per_packet': asbd.mBytesPerPacket,
+                'frames_per_packet': asbd.mFramesPerPacket,
+                'bytes_per_frame': asbd.mBytesPerFrame,
+                'channels_per_frame': asbd.mChannelsPerFrame,
+                'bits_per_channel': asbd.mBitsPerChannel,
+                'reserved': asbd.mReserved
+            }
+        elif property_id in [ca.kAudioFileStreamProperty_ReadyToProducePackets,
+                           ca.kAudioFileStreamProperty_FileFormat,
+                           ca.kAudioFileStreamProperty_MaximumPacketSize,
+                           ca.kAudioFileStreamProperty_AudioDataPacketCount,
+                           ca.kAudioFileStreamProperty_BitRate]:
+            # Return scalar values
+            if data_size == 4:
+                return (<ca.UInt32*>buffer)[0]
+            elif data_size == 8:
+                return (<ca.UInt64*>buffer)[0]
+        elif property_id in [ca.kAudioFileStreamProperty_AudioDataByteCount,
+                           ca.kAudioFileStreamProperty_DataOffset]:
+            # Return 64-bit values
+            return (<ca.UInt64*>buffer)[0]
+        else:
+            # Return raw bytes for other properties
+            return buffer[:actual_size]
+
+    finally:
+        free(buffer)
+
+
+def audio_file_stream_seek(long stream_id, long packet_offset):
+    """Seek to a packet offset in the AudioFileStream"""
+    cdef ca.AudioFileStreamID stream = <ca.AudioFileStreamID>stream_id
+    cdef ca.SInt64 byte_offset = 0
+    cdef ca.AudioFileStreamSeekFlags flags
+    flags = <ca.AudioFileStreamSeekFlags>0
+
+    cdef ca.OSStatus status = ca.AudioFileStreamSeek(
+        stream,
+        <ca.SInt64>packet_offset,
+        &byte_offset,
+        &flags
+    )
+
+    if status != 0:
+        raise RuntimeError(f"AudioFileStreamSeek failed with status: {status}")
+
+    return {
+        'byte_offset': byte_offset,
+        'flags': flags,
+        'is_estimated': bool(flags & ca.kAudioFileStreamSeekFlag_OffsetIsEstimated)
+    }
+
+
 # Audio Queue Functions  
 cdef void audio_queue_output_callback(void* user_data, ca.AudioQueueRef queue, ca.AudioQueueBufferRef buffer) noexcept:
     """C callback function for audio queue output"""
@@ -595,6 +751,115 @@ cdef class AudioPlayer:
         ap.DisposeAudioPlayer(&self.audio_output.playerData)
         if self.initialized:
             ap.DisposeAudioOutput(&self.audio_output)
+
+
+# AudioFileStream constant getter functions
+def get_audio_file_stream_property_ready_to_produce_packets():
+    return ca.kAudioFileStreamProperty_ReadyToProducePackets
+
+def get_audio_file_stream_property_file_format():
+    return ca.kAudioFileStreamProperty_FileFormat
+
+def get_audio_file_stream_property_data_format():
+    return ca.kAudioFileStreamProperty_DataFormat
+
+def get_audio_file_stream_property_format_list():
+    return ca.kAudioFileStreamProperty_FormatList
+
+def get_audio_file_stream_property_magic_cookie_data():
+    return ca.kAudioFileStreamProperty_MagicCookieData
+
+def get_audio_file_stream_property_audio_data_byte_count():
+    return ca.kAudioFileStreamProperty_AudioDataByteCount
+
+def get_audio_file_stream_property_audio_data_packet_count():
+    return ca.kAudioFileStreamProperty_AudioDataPacketCount
+
+def get_audio_file_stream_property_maximum_packet_size():
+    return ca.kAudioFileStreamProperty_MaximumPacketSize
+
+def get_audio_file_stream_property_data_offset():
+    return ca.kAudioFileStreamProperty_DataOffset
+
+def get_audio_file_stream_property_channel_layout():
+    return ca.kAudioFileStreamProperty_ChannelLayout
+
+def get_audio_file_stream_property_packet_to_frame():
+    return ca.kAudioFileStreamProperty_PacketToFrame
+
+def get_audio_file_stream_property_frame_to_packet():
+    return ca.kAudioFileStreamProperty_FrameToPacket
+
+def get_audio_file_stream_property_packet_to_byte():
+    return ca.kAudioFileStreamProperty_PacketToByte
+
+def get_audio_file_stream_property_byte_to_packet():
+    return ca.kAudioFileStreamProperty_ByteToPacket
+
+def get_audio_file_stream_property_packet_table_info():
+    return ca.kAudioFileStreamProperty_PacketTableInfo
+
+def get_audio_file_stream_property_packet_size_upper_bound():
+    return ca.kAudioFileStreamProperty_PacketSizeUpperBound
+
+def get_audio_file_stream_property_average_bytes_per_packet():
+    return ca.kAudioFileStreamProperty_AverageBytesPerPacket
+
+def get_audio_file_stream_property_bit_rate():
+    return ca.kAudioFileStreamProperty_BitRate
+
+def get_audio_file_stream_property_info_dictionary():
+    return ca.kAudioFileStreamProperty_InfoDictionary
+
+# AudioFileStream flag getter functions
+def get_audio_file_stream_property_flag_property_is_cached():
+    return ca.kAudioFileStreamPropertyFlag_PropertyIsCached
+
+def get_audio_file_stream_property_flag_cache_property():
+    return ca.kAudioFileStreamPropertyFlag_CacheProperty
+
+def get_audio_file_stream_parse_flag_discontinuity():
+    return ca.kAudioFileStreamParseFlag_Discontinuity
+
+def get_audio_file_stream_seek_flag_offset_is_estimated():
+    return ca.kAudioFileStreamSeekFlag_OffsetIsEstimated
+
+# AudioFileStream error code getter functions
+def get_audio_file_stream_error_unsupported_file_type():
+    return ca.kAudioFileStreamError_UnsupportedFileType
+
+def get_audio_file_stream_error_unsupported_data_format():
+    return ca.kAudioFileStreamError_UnsupportedDataFormat
+
+def get_audio_file_stream_error_unsupported_property():
+    return ca.kAudioFileStreamError_UnsupportedProperty
+
+def get_audio_file_stream_error_bad_property_size():
+    return ca.kAudioFileStreamError_BadPropertySize
+
+def get_audio_file_stream_error_not_optimized():
+    return ca.kAudioFileStreamError_NotOptimized
+
+def get_audio_file_stream_error_invalid_packet_offset():
+    return ca.kAudioFileStreamError_InvalidPacketOffset
+
+def get_audio_file_stream_error_invalid_file():
+    return ca.kAudioFileStreamError_InvalidFile
+
+def get_audio_file_stream_error_value_unknown():
+    return ca.kAudioFileStreamError_ValueUnknown
+
+def get_audio_file_stream_error_data_unavailable():
+    return ca.kAudioFileStreamError_DataUnavailable
+
+def get_audio_file_stream_error_illegal_operation():
+    return ca.kAudioFileStreamError_IllegalOperation
+
+def get_audio_file_stream_error_unspecified_error():
+    return ca.kAudioFileStreamError_UnspecifiedError
+
+def get_audio_file_stream_error_discontinuity_cant_recover():
+    return ca.kAudioFileStreamError_DiscontinuityCantRecover
 
 
 def test_error() -> int:
