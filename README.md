@@ -1,22 +1,26 @@
 # coremusic
 
-An early stage Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing Python bindings for professional audio and MIDI development on macOS. This project exposes a subset of CoreAudio and CoreMIDI C APIs through Python, enabling advanced audio applications, real-time processing, MIDI routing, and professional audio software development.
+A comprehensive Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing both functional and object-oriented Python bindings for professional audio and MIDI development on macOS. This project exposes the complete CoreAudio and CoreMIDI C APIs through Python, enabling advanced audio applications, real-time processing, MIDI routing, and professional audio software development.
 
 ## Overview
 
-`coremusic` is a c-based Python extension that provides direct access to Apple's CoreAudio frameworks. Built with Cython, it offers near-native performance while maintaining the ease of use of Python. The wrapper covers the CoreAudio ecosystem, from low-level hardware control to high-level audio processing units.
+`coremusic` is a high-performance Python extension that provides direct access to Apple's CoreAudio frameworks. Built with Cython, it offers near-native performance while maintaining the ease of use of Python. The wrapper covers the complete CoreAudio ecosystem, from low-level hardware control to high-level audio processing units, with both traditional functional APIs and modern object-oriented interfaces.
 
 ### Key Features
+
+- **Dual API Design**: Both functional (C-style) and object-oriented (Pythonic) APIs available
 
 - **CoreAudio Framework Coverage**: Full access to CoreAudio, AudioToolbox, and AudioUnit APIs
 
 - **High Performance**: Cython-based implementation with near-native C performance
 
+- **Automatic Resource Management**: Object-oriented APIs with context managers and automatic cleanup
+
 - **Professional Audio Support**: Real-time audio processing, multi-channel audio, and hardware control
 
 - **Audio File I/O**: Support for WAV, AIFF, MP3, and other audio formats through CoreAudio
 
-- **AudioUnit Integration**:  AudioUnit discovery, instantiation, and lifecycle management
+- **AudioUnit Integration**: AudioUnit discovery, instantiation, and lifecycle management
 
 - **AudioQueue Support**: High-level audio queue management for streaming and playback
 
@@ -26,11 +30,11 @@ An early stage Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, prov
 
 - **Real-time Processing**: Low-latency audio processing capabilities
 
-- ** CoreMIDI Framework Coverage**: Full access to MIDI services, device management, and advanced routing
+- **CoreMIDI Framework Coverage**: Full access to MIDI services, device management, and advanced routing
 
 - **Universal MIDI Packet Support**: MIDI 1.0 and 2.0 message creation and handling in UMP format
 
-- **MIDI Device Management**:  device and entity discovery, creation, and control
+- **MIDI Device Management**: Device and entity discovery, creation, and control
 
 - **MIDI Routing and Transformation**: Advanced MIDI thru connections with filtering and transformation
 
@@ -114,19 +118,68 @@ An early stage Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, prov
     pytest -v tests/test_coremidi.py
     ```
 
+## API Overview
+
+`coremusic` provides two complementary APIs that can be used together or independently:
+
+### Functional API (Traditional)
+
+The functional API provides direct access to CoreAudio C functions with minimal wrapping. This approach offers:
+
+- Direct mapping to CoreAudio C APIs
+- Maximum performance and control
+- Familiar interface for CoreAudio developers
+- Fine-grained resource management
+
+### Object-Oriented API (Modern)
+
+The object-oriented API provides Pythonic wrappers with automatic resource management:
+
+- **Automatic cleanup** with context managers and destructors
+- **Type safety** with proper Python classes instead of integer IDs
+- **Pythonic patterns** with properties, iteration, and operators
+- **Resource safety** preventing common memory leaks and handle errors
+- **Developer experience** with IDE autocompletion and type hints
+
+Both APIs can be used together - the object-oriented layer is built on top of the functional API and maintains full compatibility.
+
 ## Quick Start
 
-### Basic Audio File Operations
+### Audio File Operations
+
+#### Object-Oriented API (Recommended)
+
+```python
+import coremusic as cm
+
+# Simple context manager approach
+with cm.AudioFile("path/to/audio.wav") as audio_file:
+    print(f"Duration: {audio_file.duration:.2f} seconds")
+    print(f"Format: {audio_file.format}")
+
+    # Read audio data
+    data, count = audio_file.read_packets(0, 1000)
+    print(f"Read {count} packets, {len(data)} bytes")
+
+# Alternative explicit management
+audio_file = cm.AudioFile("path/to/audio.wav")
+audio_file.open()
+try:
+    # Work with file
+    format_info = audio_file.format
+    print(f"Sample rate: {format_info.sample_rate}")
+    print(f"Channels: {format_info.channels_per_frame}")
+finally:
+    audio_file.close()
+```
+
+#### Functional API (Traditional)
 
 ```python
 import coremusic as cm
 
 # Open an audio file
-audio_file = cm.audio_file_open_url(
-    "path/to/audio.wav",
-    cm.get_audio_file_read_permission(),
-    cm.get_audio_file_wave_type()
-)
+audio_file = cm.audio_file_open_url("path/to/audio.wav")
 
 # Get file format information
 format_data = cm.audio_file_get_property(
@@ -137,20 +190,59 @@ format_data = cm.audio_file_get_property(
 # Read audio packets
 packet_data, packets_read = cm.audio_file_read_packets(audio_file, 0, 1000)
 
-# Close the file
+# Close the file (manual cleanup required)
 cm.audio_file_close(audio_file)
 ```
 
-### AudioUnit Setup
+### AudioUnit Operations
+
+#### Object-Oriented API (Recommended)
+
+```python
+import coremusic as cm
+
+# Context manager approach with automatic cleanup
+with cm.AudioUnit.default_output() as unit:
+    # Unit is automatically initialized
+
+    # Configure audio format
+    format = cm.AudioFormat(
+        sample_rate=44100.0,
+        format_id='lpcm',
+        channels_per_frame=2,
+        bits_per_channel=16
+    )
+    unit.set_stream_format(format)
+
+    # Start audio processing
+    unit.start()
+    # ... perform audio operations ...
+    unit.stop()
+
+# Unit is automatically cleaned up
+
+# Alternative explicit management
+unit = cm.AudioUnit.default_output()
+try:
+    unit.initialize()
+    unit.start()
+    # ... audio processing ...
+    unit.stop()
+    unit.uninitialize()
+finally:
+    unit.dispose()
+```
+
+#### Functional API (Traditional)
 
 ```python
 import coremusic as cm
 
 # Find default output AudioUnit
 description = {
-    'type': cm.get_audio_unit_type_output(),
-    'subtype': cm.get_audio_unit_subtype_default_output(),
-    'manufacturer': cm.get_audio_unit_manufacturer_apple(),
+    'type': cm.fourchar_to_int('auou'),
+    'subtype': cm.fourchar_to_int('def '),
+    'manufacturer': cm.fourchar_to_int('appl'),
     'flags': 0,
     'flags_mask': 0
 }
@@ -164,10 +256,122 @@ cm.audio_output_unit_start(audio_unit)
 
 # ... perform audio operations ...
 
-# Cleanup
+# Manual cleanup required
 cm.audio_output_unit_stop(audio_unit)
 cm.audio_unit_uninitialize(audio_unit)
 cm.audio_component_instance_dispose(audio_unit)
+```
+
+### AudioQueue Operations
+
+#### Object-Oriented API (Recommended)
+
+```python
+import coremusic as cm
+
+# Create audio format
+format = cm.AudioFormat(
+    sample_rate=44100.0,
+    format_id='lpcm',
+    channels_per_frame=2,
+    bits_per_channel=16
+)
+
+# Create audio queue for output
+queue = cm.AudioQueue.new_output(format)
+try:
+    # Allocate buffers
+    buffers = []
+    for i in range(3):
+        buffer = queue.allocate_buffer(1024)
+        buffers.append(buffer)
+
+        # Fill buffer with audio data and enqueue
+        # buffer.data = audio_data  # Fill with actual audio data
+        queue.enqueue_buffer(buffer)
+
+    # Start playback
+    queue.start()
+    # ... playback operations ...
+    queue.stop()
+
+finally:
+    queue.dispose()
+```
+
+#### Functional API (Traditional)
+
+```python
+import coremusic as cm
+
+# Define audio format
+format_dict = {
+    'sample_rate': 44100.0,
+    'format_id': 'lpcm',
+    'channels_per_frame': 2,
+    'bits_per_channel': 16
+}
+
+# Create audio queue
+queue_id = cm.audio_queue_new_output(format_dict)
+try:
+    # Allocate and enqueue buffers
+    buffer_id = cm.audio_queue_allocate_buffer(queue_id, 1024)
+    cm.audio_queue_enqueue_buffer(queue_id, buffer_id)
+
+    # Start and stop playback
+    cm.audio_queue_start(queue_id)
+    # ... playback operations ...
+    cm.audio_queue_stop(queue_id)
+
+finally:
+    cm.audio_queue_dispose(queue_id)
+```
+
+### MIDI Operations
+
+#### Object-Oriented API (Recommended)
+
+```python
+import coremusic as cm
+
+# Create MIDI client
+client = cm.MIDIClient("My MIDI App")
+try:
+    # Create input and output ports
+    input_port = client.create_input_port("Input")
+    output_port = client.create_output_port("Output")
+
+    # Send MIDI data
+    note_on_data = b'\x90\x60\x7F'  # Note On, Middle C, Velocity 127
+    output_port.send_data(destination, note_on_data)
+
+finally:
+    client.dispose()
+```
+
+#### Functional API (Traditional)
+
+```python
+import coremusic as cm
+
+# Create MIDI client
+client_id = cm.midi_client_create("My MIDI App")
+try:
+    # Create ports
+    input_port_id = cm.midi_input_port_create(client_id, "Input")
+    output_port_id = cm.midi_output_port_create(client_id, "Output")
+
+    # Send MIDI data
+    note_on_data = b'\x90\x60\x7F'
+    cm.midi_send(output_port_id, destination_id, note_on_data, 0)
+
+    # Clean up ports
+    cm.midi_port_dispose(input_port_id)
+    cm.midi_port_dispose(output_port_id)
+
+finally:
+    cm.midi_client_dispose(client_id)
 ```
 
 ### Audio Player Example
@@ -256,7 +460,23 @@ except RuntimeError as e:
 
 ## Examples and Demos
 
-The project includes comprehensive demonstration scripts in the `tests/demos/` directory:
+The project includes comprehensive demonstration scripts and test suites:
+
+### Object-Oriented API Tests
+
+```bash
+# Test object-oriented audio file operations
+pytest tests/test_objects_audio_file.py -v
+
+# Test object-oriented AudioUnit operations
+pytest tests/test_objects_audio_unit.py -v
+
+# Test object-oriented MIDI operations
+pytest tests/test_objects_midi.py -v
+
+# Test complete object-oriented API
+pytest tests/test_objects_comprehensive.py -v
+```
 
 ### Unified Audio Demo
 
@@ -267,9 +487,9 @@ python3 tests/demos/unified_audio_demo.py
 This comprehensive demo showcases:
 
 - CoreAudio constants and utilities
-- Audio file operations and format detection
-- AudioUnit infrastructure testing
-- AudioQueue operations
+- Audio file operations and format detection (both APIs)
+- AudioUnit infrastructure testing (both APIs)
+- AudioQueue operations (both APIs)
 - Real audio playback using AudioPlayer
 - Advanced CoreAudio features
 
@@ -287,32 +507,59 @@ The CoreMIDI test suite includes:
 - Thru connection routing and transformation
 - Error handling and environment adaptation
 
-### Test Suite
+### Complete Test Suite
 
 ```bash
-pytest tests/test_coremusic.py tests/test_coremidi.py -v
+# Run all tests
+make test
+
+# Run specific test categories
+pytest tests/test_coremidi.py tests/test_objects_*.py -v
 ```
 
 The complete test suite covers:
 
-- Audio file I/O operations
-- AudioUnit lifecycle management
-- AudioQueue functionality
-- MIDI message creation and handling
-- MIDI device management and routing
-- Error handling and edge cases
-- Performance characteristics
+- **Functional API**: Audio file I/O, AudioUnit lifecycle, AudioQueue functionality
+- **Object-Oriented API**: Modern Pythonic wrappers with automatic resource management
+- **MIDI Operations**: Message creation, device management, and routing (both APIs)
+- **Integration Testing**: Cross-API compatibility and consistency
+- **Resource Management**: Automatic cleanup and disposal testing
+- **Error handling**: Edge cases and failure scenarios
+- **Performance characteristics**: Real-time audio processing validation
 
 ## Architecture
 
 ### Core Files
 
+#### Functional API Layer
 - **`src/coremusic/capi.pyx`**: Main Cython implementation with Python wrapper functions
 - **`src/coremusic/capi.pxd`**: Main Cython header importing all framework declarations
 - **`src/coremusic/coremidi.pxd`**: CoreMIDI framework declarations and structures
 - **`src/coremusic/corefoundation.pxd`**: CoreFoundation framework declarations
+- **`src/coremusic/audiotoolbox.pxd`**: AudioToolbox framework declarations
+- **`src/coremusic/coreaudiotypes.pxd`**: CoreAudio types and structures
 - **`src/coremusic/audio_player.c/h`**: C implementation of audio player with render callbacks
+
+#### Object-Oriented API Layer
+- **`src/coremusic/objects.pyx`**: Cython extension base class for automatic resource management
+- **`src/coremusic/oo.py`**: Object-oriented wrappers with automatic cleanup and context managers
+- **`src/coremusic/__init__.py`**: Package entry point exposing both functional and OO APIs
+
+#### Build Configuration
 - **`setup.py`**: Build configuration linking CoreAudio and CoreMIDI frameworks
+
+### API Architecture
+
+The project uses a layered architecture:
+
+1. **C Framework Layer**: Direct access to Apple's CoreAudio and CoreMIDI frameworks
+2. **Functional API Layer**: Cython wrappers providing direct C function access with Python calling conventions
+3. **Object-Oriented API Layer**: Pure Python classes built on the functional layer, providing:
+   - Automatic resource management via `__dealloc__` in Cython base class
+   - Context manager support (`with` statements)
+   - Pythonic interfaces with properties and methods
+   - Type safety with proper class hierarchies
+   - IDE support with autocompletion and type hints
 
 ### Framework Dependencies
 
@@ -348,14 +595,69 @@ make wheel
 ```
 
 
+## API Migration and Best Practices
+
+### Choosing Between APIs
+
+**Use Object-Oriented API when:**
+- Building new applications
+- Rapid prototyping and development
+- You want automatic resource management
+- Working with complex audio workflows
+- Team development where code safety is important
+
+**Use Functional API when:**
+- Maximum performance is critical
+- Porting existing CoreAudio C code
+- Need fine-grained control over resource lifetimes
+- Working within existing functional codebases
+- Building low-level audio processing components
+
+### Migration Guide
+
+Existing functional API code can be gradually migrated:
+
+```python
+# Before (Functional API)
+audio_file = cm.audio_file_open_url("file.wav")
+try:
+    format_data = cm.audio_file_get_property(audio_file, property_id)
+    data, count = cm.audio_file_read_packets(audio_file, 0, 1000)
+finally:
+    cm.audio_file_close(audio_file)
+
+# After (Object-Oriented API)
+with cm.AudioFile("file.wav") as audio_file:
+    format_info = audio_file.format
+    data, count = audio_file.read_packets(0, 1000)
+```
+
+### Best Practices
+
+- **Resource Management**: Always use context managers (`with` statements) when possible
+- **Error Handling**: Both APIs provide consistent exception types (`AudioFileError`, `AudioUnitError`, etc.)
+- **Performance**: Object-oriented layer adds minimal overhead - choose based on development needs
+- **Mixing APIs**: Both APIs can be used together - OO objects expose their underlying IDs when needed
+
 ## Performance
 
-coremusic provides near-native performance through:
+coremusic provides near-native performance through both APIs:
 
-- Direct C API access without Python overhead
-- Efficient memory management
+**Functional API:**
+- Direct C API access with zero Python overhead
+- Explicit memory management for optimal control
+- Maximum performance for real-time audio processing
+
+**Object-Oriented API:**
+- Minimal overhead layer built on functional API
+- Automatic resource management without performance penalty
+- Efficient Cython-based cleanup via `__dealloc__`
+
+**Common Performance Features:**
 - Optimized audio processing pipelines
 - Real-time audio callback support
+- Efficient memory management
+- Direct framework integration
 
 ## Use Cases
 

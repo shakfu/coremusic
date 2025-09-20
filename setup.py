@@ -14,27 +14,17 @@ os.environ['LDFLAGS'] = " ".join([
 ])
 
 extensions = [
-    Extension("coremusic.capi", 
+    Extension("coremusic.capi",
         sources=[
             "src/coremusic/capi.pyx",
             "src/coremusic/audio_player.c"
         ],
-        # define_macros = [
-        #     ('PD', 1),
-        # ],
-
-        # include_dirs=["."],
-
-        # libraries = [
-        #     'm',
-        #     'dl',
-        #     'pthread',
-
-        # ],
-
-        # library_dirs=[],
-
-        # extra_objects=[],
+    ),
+    Extension("coremusic.objects",
+        sources=[
+            "src/coremusic/objects.pyx",
+            "src/coremusic/audio_player.c",
+        ],
     ),
 ]
 
