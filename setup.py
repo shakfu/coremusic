@@ -20,12 +20,6 @@ extensions = [
             "src/coremusic/audio_player.c"
         ],
     ),
-    Extension("coremusic.objects",
-        sources=[
-            "src/coremusic/objects.pyx",
-            "src/coremusic/audio_player.c",
-        ],
-    ),
 ]
 
 

@@ -5,15 +5,15 @@ This module provides Pythonic, object-oriented wrappers around the CoreAudio
 functional API. These classes handle resource management automatically and
 provide a more intuitive interface for CoreAudio development.
 
-All classes inherit from CoreAudioObject (Cython extension class) for automatic
-resource cleanup, but are implemented as pure Python classes for simplicity.
+All classes inherit from capi.CoreAudioObject (Cython extension class) for
+automatic resource cleanup, but are implemented as pure Python classes for
+simplicity.
 """
 
 from typing import Optional, Union, List, Dict, Any
 from pathlib import Path
 
 from . import capi
-from .objects import CoreAudioObject
 
 # ============================================================================
 # Exception Hierarchy
@@ -105,7 +105,7 @@ class AudioFormat:
 # Audio File Operations
 # ============================================================================
 
-class AudioFile(CoreAudioObject):
+class AudioFile(capi.CoreAudioObject):
     """High-level audio file operations with automatic resource management"""
 
     def __init__(self, path: Union[str, Path]):
@@ -209,7 +209,7 @@ class AudioFile(CoreAudioObject):
                     self._is_open = False
             super().dispose()
 
-class AudioFileStream(CoreAudioObject):
+class AudioFileStream(capi.CoreAudioObject):
     """Audio file stream for parsing audio data"""
 
     def __init__(self, file_type_hint: int = 0):
@@ -297,7 +297,7 @@ class AudioFileStream(CoreAudioObject):
 # Audio Queue Framework
 # ============================================================================
 
-class AudioBuffer(CoreAudioObject):
+class AudioBuffer(capi.CoreAudioObject):
     """Audio buffer for queue operations"""
 
     def __init__(self, queue_id: int, buffer_size: int):
@@ -309,7 +309,7 @@ class AudioBuffer(CoreAudioObject):
     def buffer_size(self) -> int:
         return self._buffer_size
 
-class AudioQueue(CoreAudioObject):
+class AudioQueue(capi.CoreAudioObject):
     """Audio queue for buffered playback and recording"""
 
     def __init__(self, audio_format: AudioFormat):
@@ -407,7 +407,7 @@ class AudioComponentDescription:
             'flags_mask': self.flags_mask
         }
 
-class AudioComponent(CoreAudioObject):
+class AudioComponent(capi.CoreAudioObject):
     """Audio component wrapper"""
 
     def __init__(self, description: AudioComponentDescription):
@@ -440,7 +440,7 @@ class AudioComponent(CoreAudioObject):
         except Exception as e:
             raise AudioUnitError(f"Failed to create instance: {e}")
 
-class AudioUnit(CoreAudioObject):
+class AudioUnit(capi.CoreAudioObject):
     """Audio unit for real-time audio processing"""
 
     def __init__(self, description: AudioComponentDescription):
@@ -550,7 +550,7 @@ class AudioUnit(CoreAudioObject):
 # MIDI Framework
 # ============================================================================
 
-class MIDIPort(CoreAudioObject):
+class MIDIPort(capi.CoreAudioObject):
     """Base class for MIDI ports"""
 
     def __init__(self, name: str):
@@ -609,7 +609,7 @@ class MIDIOutputPort(MIDIPort):
         except Exception as e:
             raise MIDIError(f"Failed to send data: {e}")
 
-class MIDIClient(CoreAudioObject):
+class MIDIClient(capi.CoreAudioObject):
     """MIDI client for managing MIDI operations"""
 
     def __init__(self, name: str):
