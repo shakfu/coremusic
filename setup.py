@@ -26,7 +26,7 @@ extensions = [
 setup(
     name="coremusic",
     description="coreaudio/coremidi in cython",
-    version="0.1.0",
+    version="0.1.2",
     ext_modules=cythonize(extensions, 
         compiler_directives={
             'language_level' : '3',
