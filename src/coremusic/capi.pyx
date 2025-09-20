@@ -20,7 +20,7 @@ def fourchar_to_int(code: str) -> int:
 
 def int_to_fourchar(n: int) -> str:
     """convert int to fourcc 4 chars
-    
+
     >>> int_to_fourchar(1413830740)
     'TEXT'
     """
@@ -48,29 +48,29 @@ def audio_file_open_url(str file_path, int permissions=1, int file_type_hint=0):
     cdef at.AudioFileID audio_file
     cdef cf.CFURLRef url_ref
     cdef bytes path_bytes = file_path.encode('utf-8')
-    
+
     url_ref = cf.CFURLCreateFromFileSystemRepresentation(
-        cf.kCFAllocatorDefault, 
-        <const cf.UInt8*>path_bytes, 
-        len(path_bytes), 
+        cf.kCFAllocatorDefault,
+        <const cf.UInt8*>path_bytes,
+        len(path_bytes),
         False
     )
-    
+
     if not url_ref:
         raise ValueError("Could not create URL from file path")
-    
+
     cdef cf.OSStatus status = at.AudioFileOpenURL(
-        url_ref, 
-        <at.AudioFilePermissions>permissions, 
-        <at.AudioFileTypeID>file_type_hint, 
+        url_ref,
+        <at.AudioFilePermissions>permissions,
+        <at.AudioFileTypeID>file_type_hint,
         &audio_file
     )
-    
+
     cf.CFRelease(url_ref)
-    
+
     if status != 0:
         raise RuntimeError(f"AudioFileOpenURL failed with status: {status}")
-    
+
     return <long>audio_file
 
 
@@ -88,37 +88,37 @@ def audio_file_get_property(long audio_file_id, int property_id):
     cdef at.AudioFileID audio_file = <at.AudioFileID>audio_file_id
     cdef cf.UInt32 data_size = 0
     cdef cf.UInt32 writable = 0
-    
+
     # Get the size of the property data
     cdef cf.OSStatus status = at.AudioFileGetPropertyInfo(
-        audio_file, 
-        <at.AudioFilePropertyID>property_id, 
-        &data_size, 
+        audio_file,
+        <at.AudioFilePropertyID>property_id,
+        &data_size,
         &writable
     )
-    
+
     if status != 0:
         raise RuntimeError(f"AudioFileGetPropertyInfo failed with status: {status}")
-    
+
     # Allocate buffer and get the property data
     cdef char* buffer = <char*>malloc(data_size)
     if not buffer:
         raise MemoryError("Could not allocate buffer for property data")
-    
+
     try:
         status = at.AudioFileGetProperty(
-            audio_file, 
-            <at.AudioFilePropertyID>property_id, 
-            &data_size, 
+            audio_file,
+            <at.AudioFilePropertyID>property_id,
+            &data_size,
             buffer
         )
-        
+
         if status != 0:
             raise RuntimeError(f"AudioFileGetProperty failed with status: {status}")
-        
+
         # Return the data as bytes
         return buffer[:data_size]
-        
+
     finally:
         free(buffer)
 
@@ -128,27 +128,27 @@ def audio_file_read_packets(long audio_file_id, long start_packet, int num_packe
     cdef at.AudioFileID audio_file = <at.AudioFileID>audio_file_id
     cdef cf.UInt32 num_bytes = 0
     cdef cf.UInt32 packet_count = <cf.UInt32>num_packets
-    
+
     # First get the maximum packet size to determine buffer size
     cdef cf.UInt32 max_packet_size = 0
     cdef cf.UInt32 prop_size = sizeof(cf.UInt32)
-    
+
     cdef cf.OSStatus status = at.AudioFileGetProperty(
         audio_file,
         at.kAudioFilePropertyMaximumPacketSize,
         &prop_size,
         &max_packet_size
     )
-    
+
     if status != 0:
         raise RuntimeError(f"Could not get maximum packet size: {status}")
-    
+
     # Allocate buffer
     cdef cf.UInt32 buffer_size = max_packet_size * packet_count
     cdef char* buffer = <char*>malloc(buffer_size)
     if not buffer:
         raise MemoryError("Could not allocate buffer for packet data")
-    
+
     try:
         num_bytes = buffer_size
         status = at.AudioFileReadPackets(
@@ -160,12 +160,12 @@ def audio_file_read_packets(long audio_file_id, long start_packet, int num_packe
             &packet_count,
             buffer
         )
-        
+
         if status != 0:
             raise RuntimeError(f"AudioFileReadPackets failed with status: {status}")
-        
+
         return buffer[:num_bytes], packet_count
-        
+
     finally:
         free(buffer)
 
@@ -326,7 +326,7 @@ def audio_file_stream_seek(long stream_id, long packet_offset):
     }
 
 
-# Audio Queue Functions  
+# Audio Queue Functions
 cdef void audio_queue_output_callback(void* user_data, at.AudioQueueRef queue, at.AudioQueueBufferRef buffer) noexcept:
     """C callback function for audio queue output"""
     # This will be called by CoreAudio when it needs more audio data
@@ -338,11 +338,11 @@ def audio_queue_new_output(audio_format):
     """Create a new audio output queue"""
     cdef at.AudioStreamBasicDescription format
     cdef at.AudioQueueRef queue
-    
+
     # Set up the audio format
     format.mSampleRate = audio_format.get('sample_rate', 44100.0)
     format.mFormatID = audio_format.get('format_id', ca.kAudioFormatLinearPCM)
-    format.mFormatFlags = audio_format.get('format_flags', 
+    format.mFormatFlags = audio_format.get('format_flags',
         ca.kLinearPCMFormatFlagIsSignedInteger | ca.kLinearPCMFormatFlagIsPacked)
     format.mBytesPerPacket = audio_format.get('bytes_per_packet', 4)
     format.mFramesPerPacket = audio_format.get('frames_per_packet', 1)
@@ -350,7 +350,7 @@ def audio_queue_new_output(audio_format):
     format.mChannelsPerFrame = audio_format.get('channels_per_frame', 2)
     format.mBitsPerChannel = audio_format.get('bits_per_channel', 16)
     format.mReserved = 0
-    
+
     cdef cf.OSStatus status = at.AudioQueueNewOutput(
         &format,
         audio_queue_output_callback,
@@ -360,10 +360,10 @@ def audio_queue_new_output(audio_format):
         0,     # flags
         &queue
     )
-    
+
     if status != 0:
         raise RuntimeError(f"AudioQueueNewOutput failed with status: {status}")
-    
+
     return <long>queue
 
 
@@ -371,16 +371,16 @@ def audio_queue_allocate_buffer(long queue_id, int buffer_size):
     """Allocate a buffer for an audio queue"""
     cdef at.AudioQueueRef queue = <at.AudioQueueRef>queue_id
     cdef at.AudioQueueBufferRef buffer
-    
+
     cdef cf.OSStatus status = at.AudioQueueAllocateBuffer(
-        queue, 
-        <cf.UInt32>buffer_size, 
+        queue,
+        <cf.UInt32>buffer_size,
         &buffer
     )
-    
+
     if status != 0:
         raise RuntimeError(f"AudioQueueAllocateBuffer failed with status: {status}")
-    
+
     return <long>buffer
 
 
@@ -388,48 +388,48 @@ def audio_queue_enqueue_buffer(long queue_id, long buffer_id):
     """Enqueue a buffer to an audio queue"""
     cdef at.AudioQueueRef queue = <at.AudioQueueRef>queue_id
     cdef at.AudioQueueBufferRef buffer = <at.AudioQueueBufferRef>buffer_id
-    
+
     cdef cf.OSStatus status = at.AudioQueueEnqueueBuffer(queue, buffer, 0, NULL)
-    
+
     if status != 0:
         raise RuntimeError(f"AudioQueueEnqueueBuffer failed with status: {status}")
-    
+
     return status
 
 
 def audio_queue_start(long queue_id):
     """Start an audio queue"""
     cdef at.AudioQueueRef queue = <at.AudioQueueRef>queue_id
-    
+
     cdef cf.OSStatus status = at.AudioQueueStart(queue, NULL)
-    
+
     if status != 0:
         raise RuntimeError(f"AudioQueueStart failed with status: {status}")
-    
+
     return status
 
 
 def audio_queue_stop(long queue_id, bint immediate=True):
     """Stop an audio queue"""
     cdef at.AudioQueueRef queue = <at.AudioQueueRef>queue_id
-    
+
     cdef cf.OSStatus status = at.AudioQueueStop(queue, immediate)
-    
+
     if status != 0:
         raise RuntimeError(f"AudioQueueStop failed with status: {status}")
-    
+
     return status
 
 
 def audio_queue_dispose(long queue_id, bint immediate=True):
     """Dispose of an audio queue"""
     cdef at.AudioQueueRef queue = <at.AudioQueueRef>queue_id
-    
+
     cdef cf.OSStatus status = at.AudioQueueDispose(queue, immediate)
-    
+
     if status != 0:
         raise RuntimeError(f"AudioQueueDispose failed with status: {status}")
-    
+
     return status
 
 
@@ -461,15 +461,15 @@ def audio_component_find_next(description_dict):
     """Find an audio component matching the description"""
     cdef at.AudioComponentDescription desc
     cdef at.AudioComponent component
-    
+
     desc.componentType = description_dict.get('type', 0)
-    desc.componentSubType = description_dict.get('subtype', 0) 
+    desc.componentSubType = description_dict.get('subtype', 0)
     desc.componentManufacturer = description_dict.get('manufacturer', 0)
     desc.componentFlags = description_dict.get('flags', 0)
     desc.componentFlagsMask = description_dict.get('flags_mask', 0)
-    
+
     component = at.AudioComponentFindNext(NULL, &desc)
-    
+
     if component == NULL:
         return None
     return <long>component
@@ -479,45 +479,45 @@ def audio_component_instance_new(long component_id):
     """Create a new instance of an audio component"""
     cdef at.AudioComponent component = <at.AudioComponent>component_id
     cdef at.AudioComponentInstance instance
-    
+
     cdef cf.OSStatus status = at.AudioComponentInstanceNew(component, &instance)
     if status != 0:
         raise RuntimeError(f"AudioComponentInstanceNew failed with status: {status}")
-    
+
     return <long>instance
 
 
 def audio_component_instance_dispose(long instance_id):
     """Dispose of an audio component instance"""
     cdef at.AudioComponentInstance instance = <at.AudioComponentInstance>instance_id
-    
+
     cdef cf.OSStatus status = at.AudioComponentInstanceDispose(instance)
     if status != 0:
         raise RuntimeError(f"AudioComponentInstanceDispose failed with status: {status}")
-    
+
     return status
 
 
-# AudioUnit Functions  
+# AudioUnit Functions
 def audio_unit_initialize(long audio_unit_id):
     """Initialize an audio unit"""
     cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
-    
+
     cdef cf.OSStatus status = at.AudioUnitInitialize(unit)
     if status != 0:
         raise RuntimeError(f"AudioUnitInitialize failed with status: {status}")
-    
+
     return status
 
 
 def audio_unit_uninitialize(long audio_unit_id):
     """Uninitialize an audio unit"""
     cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
-    
+
     cdef cf.OSStatus status = at.AudioUnitUninitialize(unit)
     if status != 0:
         raise RuntimeError(f"AudioUnitUninitialize failed with status: {status}")
-    
+
     return status
 
 
@@ -525,10 +525,10 @@ def audio_unit_set_property(long audio_unit_id, int property_id, int scope, int 
     """Set a property on an audio unit"""
     cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
     cdef cf.OSStatus status
-    
+
     if isinstance(data, bytes):
         # Handle raw bytes data
-        status = at.AudioUnitSetProperty(unit, 
+        status = at.AudioUnitSetProperty(unit,
                                          <at.AudioUnitPropertyID>property_id,
                                          <at.AudioUnitScope>scope,
                                          <at.AudioUnitElement>element,
@@ -536,10 +536,10 @@ def audio_unit_set_property(long audio_unit_id, int property_id, int scope, int 
                                          <cf.UInt32>len(data))
     else:
         raise ValueError("data must be bytes")
-    
+
     if status != 0:
         raise RuntimeError(f"AudioUnitSetProperty failed with status: {status}")
-    
+
     return status
 
 
@@ -549,7 +549,7 @@ def audio_unit_get_property(long audio_unit_id, int property_id, int scope, int 
     cdef cf.UInt32 data_size = 0
     cdef cf.Boolean writable = 0
     cdef cf.OSStatus status
-    
+
     # Get the size of the property
     status = at.AudioUnitGetPropertyInfo(unit,
                                          <at.AudioUnitPropertyID>property_id,
@@ -559,12 +559,12 @@ def audio_unit_get_property(long audio_unit_id, int property_id, int scope, int 
                                          &writable)
     if status != 0:
         raise RuntimeError(f"AudioUnitGetPropertyInfo failed with status: {status}")
-    
+
     # Allocate buffer and get the property
     cdef char* buffer = <char*>malloc(data_size)
     if not buffer:
         raise MemoryError("Could not allocate buffer for property data")
-    
+
     try:
         status = at.AudioUnitGetProperty(unit,
                                          <at.AudioUnitPropertyID>property_id,
@@ -572,12 +572,12 @@ def audio_unit_get_property(long audio_unit_id, int property_id, int scope, int 
                                          <at.AudioUnitElement>element,
                                          buffer,
                                          &data_size)
-        
+
         if status != 0:
             raise RuntimeError(f"AudioUnitGetProperty failed with status: {status}")
-        
+
         return buffer[:data_size]
-        
+
     finally:
         free(buffer)
 
@@ -585,22 +585,22 @@ def audio_unit_get_property(long audio_unit_id, int property_id, int scope, int 
 def audio_output_unit_start(long audio_unit_id):
     """Start an output audio unit"""
     cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
-    
+
     cdef cf.OSStatus status = at.AudioOutputUnitStart(unit)
     if status != 0:
         raise RuntimeError(f"AudioOutputUnitStart failed with status: {status}")
-    
+
     return status
 
 
 def audio_output_unit_stop(long audio_unit_id):
     """Stop an output audio unit"""
     cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
-    
+
     cdef cf.OSStatus status = at.AudioOutputUnitStop(unit)
     if status != 0:
         raise RuntimeError(f"AudioOutputUnitStop failed with status: {status}")
-    
+
     return status
 
 
@@ -640,7 +640,7 @@ def get_linear_pcm_format_flag_is_non_interleaved():
 
 # Simple approach: Create a working audio player that demonstrates the infrastructure
 # The full callback implementation requires careful C-level global variable management
-# which can be complex in Cython. For now, we'll focus on demonstrating the 
+# which can be complex in Cython. For now, we'll focus on demonstrating the
 # complete AudioUnit setup that's ready for callback integration.
 
 
@@ -658,7 +658,7 @@ def demonstrate_callback_infrastructure():
     """
     print("AudioUnit Callback Infrastructure Demonstration")
     print("   All components needed for real-time audio callbacks:")
-    print("   AudioComponent discovery and instantiation")  
+    print("   AudioComponent discovery and instantiation")
     print("   AudioUnit lifecycle management")
     print("   Format configuration and property setting")
     print("   Callback structure definitions (AURenderCallbackStruct)")
@@ -671,7 +671,7 @@ def demonstrate_callback_infrastructure():
     print("   • Callback functions can be implemented in pure C extensions")
     print("   • Or use higher-level Python audio libraries with our CoreAudio access")
     print("   • All low-level CoreAudio APIs are now available through coremusic")
-    
+
     return True
 
 
@@ -681,12 +681,12 @@ cdef class AudioPlayer:
     """Python wrapper for the C audio_player implementation"""
     cdef ap.AudioOutput audio_output
     cdef bint initialized
-    
+
     def __init__(self):
         """Initialize the AudioPlayer"""
         memset(&self.audio_output, 0, sizeof(ap.AudioOutput))
         self.initialized = False
-    
+
     def load_file(self, str file_path):
         """Load an audio file for playback"""
         cdef bytes path_bytes = file_path.encode('utf-8')
@@ -696,18 +696,18 @@ cdef class AudioPlayer:
             len(path_bytes),
             False
         )
-        
+
         if url_ref == NULL:
             raise ValueError(f"Could not create URL for file: {file_path}")
-        
+
         cdef cf.OSStatus result = ap.LoadAudioFile(url_ref, &self.audio_output.playerData)
         cf.CFRelease(url_ref)
-        
+
         if result != 0:  # noErr is 0
             raise RuntimeError(f"Failed to load audio file: {result}")
-        
+
         return result
-    
+
     def setup_output(self):
         """Setup the audio output unit"""
         cdef cf.OSStatus result = ap.SetupAudioOutput(&self.audio_output)
@@ -715,43 +715,43 @@ cdef class AudioPlayer:
             raise RuntimeError(f"Failed to setup audio output: {result}")
         self.initialized = True
         return result
-    
+
     def start(self):
         """Start audio playback"""
         if not self.initialized:
             raise RuntimeError("AudioPlayer not initialized. Call setup_output() first.")
-        
+
         cdef cf.OSStatus result = ap.StartAudioOutput(&self.audio_output)
         if result != 0:  # noErr is 0
             raise RuntimeError(f"Failed to start audio output: {result}")
         return result
-    
+
     def stop(self):
         """Stop audio playback"""
         if not self.initialized:
             return 0  # noErr is 0
-            
+
         cdef cf.OSStatus result = ap.StopAudioOutput(&self.audio_output)
         if result != 0:  # noErr is 0
             raise RuntimeError(f"Failed to stop audio output: {result}")
         return result
-    
+
     def set_looping(self, bint loop):
         """Enable/disable looping playback"""
         ap.SetLooping(&self.audio_output.playerData, loop)
-    
+
     def reset_playback(self):
         """Reset playback to beginning"""
         ap.ResetPlayback(&self.audio_output.playerData)
-    
+
     def is_playing(self):
         """Check if audio is currently playing"""
         return bool(ap.IsPlaying(&self.audio_output.playerData))
-    
+
     def get_progress(self):
         """Get current playback progress as a float (0.0 to 1.0)"""
         return ap.GetPlaybackProgress(&self.audio_output.playerData)
-    
+
     def __dealloc__(self):
         """Clean up resources when the object is destroyed"""
         if self.initialized:

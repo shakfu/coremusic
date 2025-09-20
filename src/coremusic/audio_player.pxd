@@ -19,17 +19,17 @@ cdef extern from "audio_player.h":
     ctypedef struct AudioOutput:
         at.AudioUnit outputUnit
         AudioPlayerData playerData
-    
+
     # File loading and disposal
     cf.OSStatus LoadAudioFile(cf.CFURLRef url, AudioPlayerData *playerData)
     void DisposeAudioPlayer(AudioPlayerData *playerData)
-    
+
     # Audio output management
     cf.OSStatus SetupAudioOutput(AudioOutput *output)
     cf.OSStatus StartAudioOutput(AudioOutput *output)
     cf.OSStatus StopAudioOutput(AudioOutput *output)
     void DisposeAudioOutput(AudioOutput *output)
-    
+
     # Control functions
     void SetLooping(AudioPlayerData *playerData, cf.Boolean loop)
     void ResetPlayback(AudioPlayerData *playerData)
