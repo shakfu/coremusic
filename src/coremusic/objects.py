@@ -10,10 +10,19 @@ automatic resource cleanup, but are implemented as pure Python classes for
 simplicity.
 """
 
-from typing import Optional, Union, List, Dict, Any
+from typing import Optional, Union, List, Dict, Any, Tuple, Iterator
 from pathlib import Path
+import struct
 
 from . import capi
+
+# Check if NumPy is available
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+    np = None  # type: ignore
 
 # ============================================================================
 # Exception Hierarchy
@@ -43,6 +52,10 @@ class MIDIError(CoreAudioError):
 
 class MusicPlayerError(CoreAudioError):
     """Exception for MusicPlayer operations"""
+    pass
+
+class AudioDeviceError(CoreAudioError):
+    """Exception for AudioDevice operations"""
     pass
 
 # ============================================================================
@@ -96,6 +109,49 @@ class AudioFormat:
             'channels_per_frame': self.channels_per_frame,
             'bits_per_channel': self.bits_per_channel
         }
+
+    def to_numpy_dtype(self):
+        """
+        Convert audio format to NumPy dtype for audio data arrays.
+
+        Returns:
+            NumPy dtype object suitable for audio data representation
+
+        Raises:
+            ImportError: If NumPy is not available
+            ValueError: If format cannot be converted to NumPy dtype
+        """
+        if not NUMPY_AVAILABLE:
+            raise ImportError("NumPy is not available. Install numpy to use this feature.")
+
+        # Handle PCM formats
+        if self.is_pcm:
+            # Check if float or integer
+            is_float = bool(self.format_flags & 1)  # kAudioFormatFlagIsFloat
+            is_signed = not bool(self.format_flags & 2)  # kAudioFormatFlagIsSignedInteger
+
+            if is_float:
+                if self.bits_per_channel == 32:
+                    return np.dtype(np.float32)
+                elif self.bits_per_channel == 64:
+                    return np.dtype(np.float64)
+                else:
+                    raise ValueError(f"Unsupported float bit depth: {self.bits_per_channel}")
+            else:
+                # Integer formats
+                if self.bits_per_channel == 8:
+                    return np.dtype(np.int8 if is_signed else np.uint8)
+                elif self.bits_per_channel == 16:
+                    return np.dtype(np.int16)
+                elif self.bits_per_channel == 24:
+                    # 24-bit audio is typically padded to 32-bit
+                    return np.dtype(np.int32)
+                elif self.bits_per_channel == 32:
+                    return np.dtype(np.int32)
+                else:
+                    raise ValueError(f"Unsupported integer bit depth: {self.bits_per_channel}")
+        else:
+            raise ValueError(f"Cannot convert non-PCM format '{self.format_id}' to NumPy dtype")
 
     def __repr__(self) -> str:
         return (f"AudioFormat({self.sample_rate}Hz, {self.format_id}, "
@@ -196,6 +252,83 @@ class AudioFile(capi.CoreAudioObject):
             return capi.audio_file_read_packets(self.object_id, start_packet, packet_count)
         except Exception as e:
             raise AudioFileError(f"Failed to read packets: {e}")
+
+    def read_as_numpy(self, start_packet: int = 0, packet_count: Optional[int] = None):
+        """
+        Read audio data from the file as a NumPy array.
+
+        Args:
+            start_packet: Starting packet index (default: 0)
+            packet_count: Number of packets to read (default: all remaining packets)
+
+        Returns:
+            NumPy array with shape (frames, channels) for multi-channel audio,
+            or (frames,) for mono audio. The dtype is determined by the audio format.
+
+        Raises:
+            ImportError: If NumPy is not available
+            AudioFileError: If reading fails
+
+        Example:
+            >>> with AudioFile("audio.wav") as audio:
+            ...     data = audio.read_as_numpy()
+            ...     print(f"Shape: {data.shape}, dtype: {data.dtype}")
+            Shape: (44100, 2), dtype: int16
+        """
+        if not NUMPY_AVAILABLE:
+            raise ImportError("NumPy is not available. Install numpy to use this feature.")
+
+        self._ensure_not_disposed()
+        if not self._is_open:
+            self.open()
+
+        try:
+            # Get format information
+            format = self.format
+
+            # If packet_count not specified, read all remaining packets
+            if packet_count is None:
+                # Get total packet count from file
+                import struct
+                packet_count_data = capi.audio_file_get_property(
+                    self.object_id,
+                    capi.get_audio_file_property_audio_data_packet_count()
+                )
+                if len(packet_count_data) >= 8:
+                    total_packets = struct.unpack('<Q', packet_count_data[:8])[0]
+                    packet_count = total_packets - start_packet
+                else:
+                    raise AudioFileError("Cannot determine packet count")
+
+            # Read the raw audio data
+            data_bytes, actual_count = capi.audio_file_read_packets(
+                self.object_id, start_packet, packet_count
+            )
+
+            # Get NumPy dtype from format
+            dtype = format.to_numpy_dtype()
+
+            # Convert bytes to NumPy array
+            audio_data = np.frombuffer(data_bytes, dtype=dtype)
+
+            # Reshape for multi-channel audio
+            # Audio data is typically interleaved: L R L R L R ...
+            if format.channels_per_frame > 1:
+                # Calculate number of frames
+                samples_per_frame = format.channels_per_frame
+                num_frames = len(audio_data) // samples_per_frame
+
+                # Reshape to (frames, channels)
+                audio_data = audio_data[:num_frames * samples_per_frame].reshape(
+                    num_frames, samples_per_frame
+                )
+
+            return audio_data
+
+        except Exception as e:
+            if isinstance(e, (ImportError, AudioFileError)):
+                raise
+            raise AudioFileError(f"Failed to read as NumPy array: {e}")
 
     def get_property(self, property_id: int):
         """Get a property from the audio file"""
@@ -953,3 +1086,262 @@ class MIDIClient(capi.CoreAudioObject):
                 # Clear port references and call base dispose
                 self._ports.clear()
                 super().dispose()
+
+# ============================================================================
+# Audio Device & Hardware Abstraction
+# ============================================================================
+
+class AudioDevice(capi.CoreAudioObject):
+    """Represents a hardware audio device with property access
+
+    Provides Pythonic access to audio hardware devices including inputs,
+    outputs, and their properties like name, sample rate, channels, etc.
+    """
+
+    def __init__(self, device_id: int):
+        """Initialize AudioDevice with a device ID
+
+        Args:
+            device_id: The AudioObjectID for this device
+        """
+        super().__init__()
+        self._set_object_id(device_id)
+
+    def _get_property_string(self, property_id: int, scope: int = None, element: int = 0) -> str:
+        """Get a string property from the device"""
+        if scope is None:
+            scope = capi.get_audio_object_property_scope_global()
+
+        try:
+            data = capi.audio_object_get_property_data(
+                self.object_id,
+                property_id,
+                scope,
+                element
+            )
+            if data:
+                # CFString is returned, decode as UTF-8
+                # Remove any null terminators
+                return data.decode('utf-8', errors='ignore').rstrip('\x00')
+            return ""
+        except Exception:
+            return ""
+
+    def _get_property_uint32(self, property_id: int, scope: int = None, element: int = 0) -> int:
+        """Get a UInt32 property from the device"""
+        if scope is None:
+            scope = capi.get_audio_object_property_scope_global()
+
+        try:
+            data = capi.audio_object_get_property_data(
+                self.object_id,
+                property_id,
+                scope,
+                element
+            )
+            if len(data) >= 4:
+                return struct.unpack('<L', data[:4])[0]
+            return 0
+        except Exception:
+            return 0
+
+    def _get_property_float64(self, property_id: int, scope: int = None, element: int = 0) -> float:
+        """Get a Float64 property from the device"""
+        if scope is None:
+            scope = capi.get_audio_object_property_scope_global()
+
+        try:
+            data = capi.audio_object_get_property_data(
+                self.object_id,
+                property_id,
+                scope,
+                element
+            )
+            if len(data) >= 8:
+                return struct.unpack('<d', data[:8])[0]
+            return 0.0
+        except Exception:
+            return 0.0
+
+    @property
+    def name(self) -> str:
+        """Get the device name"""
+        return self._get_property_string(capi.get_audio_object_property_name())
+
+    @property
+    def manufacturer(self) -> str:
+        """Get the device manufacturer"""
+        return self._get_property_string(capi.get_audio_object_property_manufacturer())
+
+    @property
+    def uid(self) -> str:
+        """Get the device UID (unique identifier)"""
+        return self._get_property_string(capi.get_audio_device_property_device_uid())
+
+    @property
+    def model_uid(self) -> str:
+        """Get the device model UID"""
+        return self._get_property_string(capi.get_audio_device_property_model_uid())
+
+    @property
+    def transport_type(self) -> int:
+        """Get the transport type (USB, PCI, etc.)"""
+        return self._get_property_uint32(capi.get_audio_device_property_transport_type())
+
+    @property
+    def sample_rate(self) -> float:
+        """Get the current nominal sample rate"""
+        return self._get_property_float64(capi.get_audio_device_property_nominal_sample_rate())
+
+    @sample_rate.setter
+    def sample_rate(self, rate: float) -> None:
+        """Set the nominal sample rate (not all devices support this)"""
+        # This would require implementing AudioObjectSetPropertyData
+        raise NotImplementedError("Setting sample rate not yet implemented")
+
+    @property
+    def is_alive(self) -> bool:
+        """Check if the device is alive/connected"""
+        value = self._get_property_uint32(capi.get_audio_device_property_device_is_alive())
+        return bool(value)
+
+    @property
+    def is_hidden(self) -> bool:
+        """Check if the device is hidden"""
+        value = self._get_property_uint32(capi.get_audio_device_property_is_hidden())
+        return bool(value)
+
+    def get_stream_configuration(self, scope: str = 'output') -> Dict[str, Any]:
+        """Get stream configuration (channel layout)
+
+        Args:
+            scope: 'input' or 'output' (default: 'output')
+
+        Returns:
+            Dictionary with stream configuration information
+        """
+        scope_map = {
+            'input': capi.get_audio_object_property_scope_input(),
+            'output': capi.get_audio_object_property_scope_output()
+        }
+        scope_val = scope_map.get(scope.lower())
+        if scope_val is None:
+            raise AudioDeviceError(f"Invalid scope: {scope}")
+
+        try:
+            data = capi.audio_object_get_property_data(
+                self.object_id,
+                capi.get_audio_device_property_stream_configuration(),
+                scope_val,
+                0
+            )
+            # AudioBufferList structure - would need detailed parsing
+            # For now, return basic info
+            return {'raw_data_length': len(data)}
+        except Exception as e:
+            raise AudioDeviceError(f"Failed to get stream configuration: {e}")
+
+    def __repr__(self) -> str:
+        name = self.name or "Unknown"
+        return f"AudioDevice(id={self.object_id}, name='{name}')"
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.manufacturer})"
+
+
+class AudioDeviceManager:
+    """Manager for discovering and accessing audio devices
+
+    Provides static methods for device discovery and retrieval.
+    """
+
+    @staticmethod
+    def get_devices() -> List[AudioDevice]:
+        """Get all available audio devices
+
+        Returns:
+            List of AudioDevice objects
+        """
+        device_ids = capi.audio_hardware_get_devices()
+        return [AudioDevice(device_id) for device_id in device_ids]
+
+    @staticmethod
+    def get_default_output_device() -> Optional[AudioDevice]:
+        """Get the default output device
+
+        Returns:
+            AudioDevice object or None if no default
+        """
+        device_id = capi.audio_hardware_get_default_output_device()
+        if device_id == 0:
+            return None
+        return AudioDevice(device_id)
+
+    @staticmethod
+    def get_default_input_device() -> Optional[AudioDevice]:
+        """Get the default input device
+
+        Returns:
+            AudioDevice object or None if no default
+        """
+        device_id = capi.audio_hardware_get_default_input_device()
+        if device_id == 0:
+            return None
+        return AudioDevice(device_id)
+
+    @staticmethod
+    def get_output_devices() -> List[AudioDevice]:
+        """Get all output devices
+
+        Returns:
+            List of AudioDevice objects that have output capability
+        """
+        # For now, return all devices - would need to filter by checking
+        # stream configuration for output scope
+        return AudioDeviceManager.get_devices()
+
+    @staticmethod
+    def get_input_devices() -> List[AudioDevice]:
+        """Get all input devices
+
+        Returns:
+            List of AudioDevice objects that have input capability
+        """
+        # For now, return all devices - would need to filter by checking
+        # stream configuration for input scope
+        return AudioDeviceManager.get_devices()
+
+    @staticmethod
+    def find_device_by_name(name: str) -> Optional[AudioDevice]:
+        """Find a device by name
+
+        Args:
+            name: Device name to search for (case-insensitive)
+
+        Returns:
+            AudioDevice object or None if not found
+        """
+        for device in AudioDeviceManager.get_devices():
+            if device.name.lower() == name.lower():
+                return device
+        return None
+
+    @staticmethod
+    def find_device_by_uid(uid: str) -> Optional[AudioDevice]:
+        """Find a device by UID
+
+        Args:
+            uid: Device UID to search for
+
+        Returns:
+            AudioDevice object or None if not found
+        """
+        for device in AudioDeviceManager.get_devices():
+            try:
+                device_uid = device.uid
+                if device_uid and device_uid == uid:
+                    return device
+            except Exception:
+                # Some devices may not have UID property accessible
+                continue
+        return None

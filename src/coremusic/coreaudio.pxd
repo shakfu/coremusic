@@ -162,6 +162,36 @@ cdef extern from "CoreAudio/AudioHardware.h":
         kAudioHardwarePropertyTapList = 1953526563
         kAudioHardwarePropertyTranslateUIDToTap = 1969841268
 
+    # Common AudioObject properties (for devices)
+    ctypedef enum:
+        kAudioObjectPropertyName = 1819173229  # 'lnam'
+        kAudioObjectPropertyManufacturer = 1819107691  # 'lmak'
+        kAudioObjectPropertyElementName = 1818454126  # 'lchn'
+        kAudioObjectPropertyOwnedObjects = 1870098020  # 'ownd'
+
+    # AudioObject property scopes
+    ctypedef enum:
+        kAudioObjectPropertyScopeGlobal = 1735159650  # 'glob'
+        kAudioObjectPropertyScopeInput = 1768845428  # 'inpt'
+        kAudioObjectPropertyScopeOutput = 1869968496  # 'outp'
+        kAudioObjectPropertyScopePlayThrough = 1886681200  # 'ptru'
+
+    # AudioObject property elements
+    ctypedef enum:
+        kAudioObjectPropertyElementMain = 0  # Main element
+        kAudioObjectPropertyElementMaster = 0  # Master element (deprecated, same as Main)
+
+    ctypedef enum:
+        kAudioDevicePropertyDeviceUID = 1969841184  # 'uid '
+        kAudioDevicePropertyModelUID = 1836411236  # 'muid'
+        kAudioDevicePropertyTransportType = 1953653102  # 'tran'
+        kAudioDevicePropertyDeviceIsAlive = 1819898990  # 'livn'
+        kAudioDevicePropertyDeviceCanBeDefaultDevice = 1684629862  # 'dflt'
+        kAudioDevicePropertyNominalSampleRate = 1853059700  # 'nsrt'
+        kAudioDevicePropertyAvailableNominalSampleRates = 1853059619  # 'nsr#'
+        kAudioDevicePropertyIsHidden = 1751737454  # 'hidn'
+        kAudioDevicePropertyPreferredChannelsForStereo = 1684237420  # 'dch2'
+        kAudioDevicePropertyPreferredChannelLayout = 1936879468  # 'srnd'
 
     ctypedef enum:
         kAudioDevicePropertyPlugIn = 1886156135

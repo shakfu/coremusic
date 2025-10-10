@@ -42,6 +42,118 @@ def audio_hardware_destroy_aggregate_device(int in_device_id) -> int:
     return ca.AudioHardwareDestroyAggregateDevice(in_device_id)
 
 
+# Audio Hardware Device Functions
+def audio_object_get_property_data(int object_id, int property_selector, int scope, int element):
+    """Get property data from an AudioObject"""
+    cdef ca.AudioObjectPropertyAddress address
+    cdef cf.UInt32 data_size = 0
+    cdef cf.OSStatus status
+    cdef char* buffer
+    cdef bytes result
+
+    address.mSelector = property_selector
+    address.mScope = scope
+    address.mElement = element
+
+    # Get the data size
+    status = ca.AudioObjectGetPropertyDataSize(object_id, &address, 0, <void*>0, &data_size)
+    if status != 0:
+        raise RuntimeError(f"AudioObjectGetPropertyDataSize failed with status: {status}")
+
+    if data_size == 0:
+        return b''
+
+    # Allocate buffer
+    buffer = <char*>malloc(data_size)
+    if buffer == <char*>0:
+        raise MemoryError("Failed to allocate buffer")
+
+    try:
+        status = ca.AudioObjectGetPropertyData(object_id, &address, 0, <void*>0, &data_size, buffer)
+        if status != 0:
+            raise RuntimeError(f"AudioObjectGetPropertyData failed with status: {status}")
+
+        # Copy to Python bytes object
+        result = buffer[:data_size]
+        return result
+    finally:
+        free(buffer)
+
+
+def audio_hardware_get_devices() -> list:
+    """Get list of all audio device IDs"""
+    cdef ca.AudioObjectPropertyAddress address
+    cdef cf.UInt32 data_size = 0
+    cdef cf.OSStatus status
+    cdef ca.AudioObjectID* device_ids
+    cdef int device_count
+    cdef list devices = []
+
+    address.mSelector = ca.kAudioHardwarePropertyDevices
+    address.mScope = 0  # kAudioObjectPropertyScopeGlobal
+    address.mElement = 0  # kAudioObjectPropertyElementMain
+
+    # Get the data size
+    status = ca.AudioObjectGetPropertyDataSize(ca.kAudioObjectSystemObject, &address, 0, NULL, &data_size)
+    if status != 0:
+        return []
+
+    device_count = data_size // sizeof(ca.AudioObjectID)
+    if device_count == 0:
+        return []
+
+    # Allocate buffer
+    device_ids = <ca.AudioObjectID*>malloc(data_size)
+    if device_ids == NULL:
+        return []
+
+    try:
+        status = ca.AudioObjectGetPropertyData(ca.kAudioObjectSystemObject, &address, 0, NULL, &data_size, device_ids)
+        if status == 0:
+            for i in range(device_count):
+                devices.append(device_ids[i])
+    finally:
+        free(device_ids)
+
+    return devices
+
+
+def audio_hardware_get_default_output_device() -> int:
+    """Get the default output device ID"""
+    cdef ca.AudioObjectPropertyAddress address
+    cdef cf.UInt32 data_size = sizeof(ca.AudioObjectID)
+    cdef ca.AudioObjectID device_id = 0
+    cdef cf.OSStatus status
+
+    address.mSelector = ca.kAudioHardwarePropertyDefaultOutputDevice
+    address.mScope = 0  # kAudioObjectPropertyScopeGlobal
+    address.mElement = 0  # kAudioObjectPropertyElementMain
+
+    status = ca.AudioObjectGetPropertyData(ca.kAudioObjectSystemObject, &address, 0, NULL, &data_size, &device_id)
+    if status != 0:
+        return 0
+
+    return device_id
+
+
+def audio_hardware_get_default_input_device() -> int:
+    """Get the default input device ID"""
+    cdef ca.AudioObjectPropertyAddress address
+    cdef cf.UInt32 data_size = sizeof(ca.AudioObjectID)
+    cdef ca.AudioObjectID device_id = 0
+    cdef cf.OSStatus status
+
+    address.mSelector = ca.kAudioHardwarePropertyDefaultInputDevice
+    address.mScope = 0  # kAudioObjectPropertyScopeGlobal
+    address.mElement = 0  # kAudioObjectPropertyElementMain
+
+    status = ca.AudioObjectGetPropertyData(ca.kAudioObjectSystemObject, &address, 0, NULL, &data_size, &device_id)
+    if status != 0:
+        return 0
+
+    return device_id
+
+
 # Audio File Functions
 def audio_file_open_url(str file_path, int permissions=1, int file_type_hint=0):
     """Open an audio file at the given path"""
@@ -460,6 +572,53 @@ def get_audio_file_property_audio_data_packet_count():
 
 def get_audio_file_property_estimated_duration():
     return at.kAudioFilePropertyEstimatedDuration
+
+# AudioObject/Device property constants
+def get_audio_object_property_name():
+    return ca.kAudioObjectPropertyName
+
+def get_audio_object_property_manufacturer():
+    return ca.kAudioObjectPropertyManufacturer
+
+def get_audio_device_property_device_uid():
+    return ca.kAudioDevicePropertyDeviceUID
+
+def get_audio_device_property_model_uid():
+    return ca.kAudioDevicePropertyModelUID
+
+def get_audio_device_property_transport_type():
+    return ca.kAudioDevicePropertyTransportType
+
+def get_audio_device_property_device_is_alive():
+    return ca.kAudioDevicePropertyDeviceIsAlive
+
+def get_audio_device_property_nominal_sample_rate():
+    return ca.kAudioDevicePropertyNominalSampleRate
+
+def get_audio_device_property_available_nominal_sample_rates():
+    return ca.kAudioDevicePropertyAvailableNominalSampleRates
+
+def get_audio_device_property_is_hidden():
+    return ca.kAudioDevicePropertyIsHidden
+
+def get_audio_device_property_preferred_channels_for_stereo():
+    return ca.kAudioDevicePropertyPreferredChannelsForStereo
+
+def get_audio_device_property_stream_configuration():
+    return ca.kAudioDevicePropertyStreamConfiguration
+
+# AudioObject scope constants
+def get_audio_object_property_scope_global():
+    return ca.kAudioObjectPropertyScopeGlobal
+
+def get_audio_object_property_scope_input():
+    return ca.kAudioObjectPropertyScopeInput
+
+def get_audio_object_property_scope_output():
+    return ca.kAudioObjectPropertyScopeOutput
+
+def get_audio_object_property_element_main():
+    return ca.kAudioObjectPropertyElementMain
 
 
 # AudioComponent Functions

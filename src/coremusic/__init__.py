@@ -10,6 +10,7 @@ from .objects import (
     AudioUnitError,
     MIDIError,
     MusicPlayerError,
+    AudioDeviceError,
 
     # Audio formats and data structures
     AudioFormat,
@@ -32,4 +33,14 @@ from .objects import (
     MIDIPort,
     MIDIInputPort,
     MIDIOutputPort,
+
+    # Audio Device & Hardware
+    AudioDevice,
+    AudioDeviceManager,
 )
+
+# NumPy availability flag
+try:
+    from .objects import NUMPY_AVAILABLE
+except ImportError:
+    NUMPY_AVAILABLE = False
