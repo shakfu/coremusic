@@ -38,15 +38,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - Automatic format conversion on read/write via client format property
   - Simplified file I/O compared to lower-level AudioFile API
 
+- **AUGraph API** - Audio Unit graph framework for managing and connecting multiple AudioUnits
+  - Functional API with 21 wrapper functions for AUGraph operations
+  - `au_graph_new()`, `au_graph_dispose()`, `au_graph_open()`, `au_graph_close()`
+  - `au_graph_initialize()`, `au_graph_uninitialize()`, `au_graph_start()`, `au_graph_stop()`
+  - `au_graph_add_node()`, `au_graph_remove_node()`, `au_graph_get_node_count()`
+  - `au_graph_connect_node_input()`, `au_graph_disconnect_node_input()`, `au_graph_update()`
+  - 3 state query functions: `au_graph_is_open()`, `au_graph_is_initialized()`, `au_graph_is_running()`
+  - CPU load monitoring: `au_graph_get_cpu_load()`, `au_graph_get_max_cpu_load()`
+  - 5 error code getter functions for AUGraph-specific errors
+  - Object-oriented `AUGraph` class with automatic resource management
+  - Context manager support for safe graph lifecycle management
+  - Node management with `AudioComponentDescription` integration
+  - Connection management for building audio processing graphs
+  - Method chaining support for fluent API (e.g., `graph.open().initialize()`)
+  - Properties for state queries: `is_open`, `is_initialized`, `is_running`, `cpu_load`, `node_count`
+
 - **Comprehensive test coverage** for new APIs
   - `test_audiotoolbox_audio_converter.py` - 12 functional API tests
   - `test_audiotoolbox_extended_audio_file.py` - 14 functional API tests
   - `test_objects_audio_converter.py` - 29 object-oriented wrapper tests
+  - `test_augraph.py` - 16 AUGraph tests (4 functional, 11 OO, 1 integration)
   - Tests cover creation, conversion, I/O operations, property access, error handling
   - Real-world testing with actual audio files
 
 - **Exception hierarchy** expanded
   - Added `AudioConverterError` for converter-specific exceptions
+  - Added `AUGraphError` for graph operation exceptions
   - Proper error propagation with detailed error messages
 
 ### Changed
@@ -56,6 +74,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Fixed
 
+- **Critical fix for AudioDevice string properties** - Added proper CFStringRef handling
+  - Previously, `audio_object_get_property_data()` returned raw CFStringRef pointers instead of actual string content
+  - Added new `audio_object_get_property_string()` function that properly dereferences CFStringRef using CoreFoundation APIs
+  - Device names, UIDs, and manufacturer strings now correctly use CFStringGetCString for stable, proper string extraction
+  - Fixes unstable device name/UID issues where properties returned random garbage on each read
+  - All AudioDevice string properties (name, uid, manufacturer, model_uid) now work correctly
 - Fixed UID string handling in `AudioDevice._get_property_string()` to strip both leading and trailing null bytes (changed from `.rstrip('\x00')` to `.strip('\x00')`)
 - Improved `test_audio_device_manager_find_by_uid` test resilience to handle devices with inconsistent UID encoding
 

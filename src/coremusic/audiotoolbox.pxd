@@ -1260,3 +1260,80 @@ cdef extern from "AudioToolbox/MusicPlayer.h":
     cdef OSStatus MusicEventIteratorHasPreviousEvent(MusicEventIterator inIterator, Boolean* outHasPrevEvent)
     cdef OSStatus MusicEventIteratorHasNextEvent(MusicEventIterator inIterator, Boolean* outHasNextEvent)
     cdef OSStatus MusicEventIteratorHasCurrentEvent(MusicEventIterator inIterator, Boolean* outHasCurEvent)
+
+
+# -----------------------------------------------------------------------------
+# AUGraph API
+# -----------------------------------------------------------------------------
+
+cdef extern from "AudioToolbox/AUGraph.h":
+
+    # Type definitions
+    ctypedef struct OpaqueAUGraph
+    ctypedef OpaqueAUGraph* AUGraph
+    ctypedef SInt32 AUNode
+
+    # Error codes
+    ctypedef enum:
+        kAUGraphErr_NodeNotFound = -10860
+        kAUGraphErr_InvalidConnection = -10861
+        kAUGraphErr_OutputNodeErr = -10862
+        kAUGraphErr_CannotDoInCurrentContext = -10863
+        kAUGraphErr_InvalidAudioUnit = -10864
+
+    # Node interaction types
+    ctypedef enum:
+        kAUNodeInteraction_Connection = 1
+        kAUNodeInteraction_InputCallback = 2
+
+    # Structures
+    ctypedef struct AudioUnitNodeConnection:
+        AUNode sourceNode
+        UInt32 sourceOutputNumber
+        AUNode destNode
+        UInt32 destInputNumber
+
+    ctypedef AudioUnitNodeConnection AUNodeConnection
+
+    ctypedef struct AUNodeRenderCallback:
+        AUNode destNode
+        UInt32 destInputNumber
+        AURenderCallbackStruct cback
+
+    ctypedef struct AUNodeInteraction:
+        UInt32 nodeInteractionType
+        # Union not fully declared - we'll handle at Python level
+
+    # Graph lifecycle
+    cdef OSStatus NewAUGraph(AUGraph* outGraph)
+    cdef OSStatus DisposeAUGraph(AUGraph inGraph)
+    cdef OSStatus AUGraphOpen(AUGraph inGraph)
+    cdef OSStatus AUGraphClose(AUGraph inGraph)
+    cdef OSStatus AUGraphInitialize(AUGraph inGraph)
+    cdef OSStatus AUGraphUninitialize(AUGraph inGraph)
+
+    # Graph control
+    cdef OSStatus AUGraphStart(AUGraph inGraph)
+    cdef OSStatus AUGraphStop(AUGraph inGraph)
+    cdef OSStatus AUGraphIsOpen(AUGraph inGraph, Boolean* outIsOpen)
+    cdef OSStatus AUGraphIsInitialized(AUGraph inGraph, Boolean* outIsInitialized)
+    cdef OSStatus AUGraphIsRunning(AUGraph inGraph, Boolean* outIsRunning)
+
+    # Node management
+    cdef OSStatus AUGraphAddNode(AUGraph inGraph, const AudioComponentDescription* inDescription, AUNode* outNode)
+    cdef OSStatus AUGraphRemoveNode(AUGraph inGraph, AUNode inNode)
+    cdef OSStatus AUGraphGetNodeCount(AUGraph inGraph, UInt32* outNumberOfNodes)
+    cdef OSStatus AUGraphGetIndNode(AUGraph inGraph, UInt32 inIndex, AUNode* outNode)
+    cdef OSStatus AUGraphNodeInfo(AUGraph inGraph, AUNode inNode, AudioComponentDescription* outDescription, AudioUnit* outAudioUnit)
+
+    # Connections
+    cdef OSStatus AUGraphConnectNodeInput(AUGraph inGraph, AUNode inSourceNode, UInt32 inSourceOutputNumber, AUNode inDestNode, UInt32 inDestInputNumber)
+    cdef OSStatus AUGraphDisconnectNodeInput(AUGraph inGraph, AUNode inDestNode, UInt32 inDestInputNumber)
+    cdef OSStatus AUGraphClearConnections(AUGraph inGraph)
+
+    # Graph updates
+    cdef OSStatus AUGraphUpdate(AUGraph inGraph, Boolean* outIsUpdated)
+
+    # Utilities
+    cdef OSStatus AUGraphGetCPULoad(AUGraph inGraph, Float32* outAverageCPULoad)
+    cdef OSStatus AUGraphGetMaxCPULoad(AUGraph inGraph, Float32* outMaxLoad)

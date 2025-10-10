@@ -12,6 +12,7 @@ from .objects import (
     MIDIError,
     MusicPlayerError,
     AudioDeviceError,
+    AUGraphError,
 
     # Audio formats and data structures
     AudioFormat,
@@ -42,6 +43,9 @@ from .objects import (
     # Audio Device & Hardware
     AudioDevice,
     AudioDeviceManager,
+
+    # AUGraph Framework
+    AUGraph,
 )
 
 # NumPy availability flag

@@ -44,7 +44,11 @@ def audio_hardware_destroy_aggregate_device(int in_device_id) -> int:
 
 # Audio Hardware Device Functions
 def audio_object_get_property_data(int object_id, int property_selector, int scope, int element):
-    """Get property data from an AudioObject"""
+    """Get property data from an AudioObject
+
+    WARNING: For string properties (like device names), use audio_object_get_property_string instead.
+    This function returns raw bytes which may be a CFStringRef pointer for string properties.
+    """
     cdef ca.AudioObjectPropertyAddress address
     cdef cf.UInt32 data_size = 0
     cdef cf.OSStatus status
@@ -78,6 +82,57 @@ def audio_object_get_property_data(int object_id, int property_selector, int sco
         return result
     finally:
         free(buffer)
+
+
+def audio_object_get_property_string(int object_id, int property_selector, int scope, int element):
+    """Get a string property from an AudioObject
+
+    This properly handles CFStringRef properties by dereferencing the pointer
+    and extracting the actual string content using CoreFoundation APIs.
+    """
+    cdef ca.AudioObjectPropertyAddress address
+    cdef cf.UInt32 data_size = sizeof(cf.CFStringRef)
+    cdef cf.OSStatus status
+    cdef cf.CFStringRef string_ref
+    cdef char buffer[1024]
+    cdef bytes result
+    cdef cf.CFIndex length
+    cdef cf.CFIndex max_size
+    cdef char* large_buffer
+
+    address.mSelector = property_selector
+    address.mScope = scope
+    address.mElement = element
+
+    # Get the CFStringRef
+    status = ca.AudioObjectGetPropertyData(object_id, &address, 0, <void*>0, &data_size, &string_ref)
+    if status != 0:
+        raise RuntimeError(f"AudioObjectGetPropertyData failed with status: {status}")
+
+    if string_ref == <cf.CFStringRef>0:
+        return b''
+
+    # Extract the C string from the CFStringRef
+    if cf.CFStringGetCString(string_ref, buffer, sizeof(buffer), cf.kCFStringEncodingUTF8):
+        result = buffer
+        return result
+
+    # Fallback: try to get length and allocate larger buffer
+    length = cf.CFStringGetLength(string_ref)
+    max_size = cf.CFStringGetMaximumSizeForEncoding(length, cf.kCFStringEncodingUTF8)
+    large_buffer = <char*>malloc(max_size + 1)
+
+    if large_buffer == <char*>0:
+        return b''
+
+    try:
+        if cf.CFStringGetCString(string_ref, large_buffer, max_size + 1, cf.kCFStringEncodingUTF8):
+            result = large_buffer
+            return result
+        else:
+            return b''
+    finally:
+        free(large_buffer)
 
 
 def audio_hardware_get_devices() -> list:
@@ -4871,4 +4926,442 @@ cdef class CoreAudioObject:
     def _set_object_id(self, object_id: int) -> None:
         """Set object ID (for internal use)"""
         self._object_id = object_id
+
+
+# ============================================================================
+# AUGraph API
+# ============================================================================
+
+def au_graph_new() -> int:
+    """Create a new AUGraph
+
+    Returns:
+        AUGraph ID
+
+    Raises:
+        RuntimeError: If graph creation fails
+    """
+    cdef at.AUGraph graph
+    cdef cf.OSStatus status
+
+    status = at.NewAUGraph(&graph)
+    if status != 0:
+        raise RuntimeError(f"NewAUGraph failed with status: {status}")
+
+    return <long>graph
+
+
+def au_graph_dispose(long graph_id):
+    """Dispose an AUGraph
+
+    Args:
+        graph_id: AUGraph ID
+
+    Raises:
+        RuntimeError: If disposal fails
+    """
+    cdef cf.OSStatus status = at.DisposeAUGraph(<at.AUGraph>graph_id)
+    if status != 0:
+        raise RuntimeError(f"DisposeAUGraph failed with status: {status}")
+
+
+def au_graph_open(long graph_id):
+    """Open an AUGraph (opens AudioUnits but doesn't initialize)
+
+    Args:
+        graph_id: AUGraph ID
+
+    Raises:
+        RuntimeError: If open fails
+    """
+    cdef cf.OSStatus status = at.AUGraphOpen(<at.AUGraph>graph_id)
+    if status != 0:
+        raise RuntimeError(f"AUGraphOpen failed with status: {status}")
+
+
+def au_graph_close(long graph_id):
+    """Close an AUGraph
+
+    Args:
+        graph_id: AUGraph ID
+
+    Raises:
+        RuntimeError: If close fails
+    """
+    cdef cf.OSStatus status = at.AUGraphClose(<at.AUGraph>graph_id)
+    if status != 0:
+        raise RuntimeError(f"AUGraphClose failed with status: {status}")
+
+
+def au_graph_initialize(long graph_id):
+    """Initialize an AUGraph (prepares for rendering)
+
+    Args:
+        graph_id: AUGraph ID
+
+    Raises:
+        RuntimeError: If initialization fails
+    """
+    cdef cf.OSStatus status = at.AUGraphInitialize(<at.AUGraph>graph_id)
+    if status != 0:
+        raise RuntimeError(f"AUGraphInitialize failed with status: {status}")
+
+
+def au_graph_uninitialize(long graph_id):
+    """Uninitialize an AUGraph
+
+    Args:
+        graph_id: AUGraph ID
+
+    Raises:
+        RuntimeError: If uninitialization fails
+    """
+    cdef cf.OSStatus status = at.AUGraphUninitialize(<at.AUGraph>graph_id)
+    if status != 0:
+        raise RuntimeError(f"AUGraphUninitialize failed with status: {status}")
+
+
+def au_graph_start(long graph_id):
+    """Start an AUGraph (begins rendering)
+
+    Args:
+        graph_id: AUGraph ID
+
+    Raises:
+        RuntimeError: If start fails
+    """
+    cdef cf.OSStatus status = at.AUGraphStart(<at.AUGraph>graph_id)
+    if status != 0:
+        raise RuntimeError(f"AUGraphStart failed with status: {status}")
+
+
+def au_graph_stop(long graph_id):
+    """Stop an AUGraph (stops rendering)
+
+    Args:
+        graph_id: AUGraph ID
+
+    Raises:
+        RuntimeError: If stop fails
+    """
+    cdef cf.OSStatus status = at.AUGraphStop(<at.AUGraph>graph_id)
+    if status != 0:
+        raise RuntimeError(f"AUGraphStop failed with status: {status}")
+
+
+def au_graph_is_open(long graph_id) -> bool:
+    """Check if AUGraph is open
+
+    Args:
+        graph_id: AUGraph ID
+
+    Returns:
+        True if open, False otherwise
+
+    Raises:
+        RuntimeError: If query fails
+    """
+    cdef cf.Boolean is_open
+    cdef cf.OSStatus status = at.AUGraphIsOpen(<at.AUGraph>graph_id, &is_open)
+    if status != 0:
+        raise RuntimeError(f"AUGraphIsOpen failed with status: {status}")
+    return bool(is_open)
+
+
+def au_graph_is_initialized(long graph_id) -> bool:
+    """Check if AUGraph is initialized
+
+    Args:
+        graph_id: AUGraph ID
+
+    Returns:
+        True if initialized, False otherwise
+
+    Raises:
+        RuntimeError: If query fails
+    """
+    cdef cf.Boolean is_initialized
+    cdef cf.OSStatus status = at.AUGraphIsInitialized(<at.AUGraph>graph_id, &is_initialized)
+    if status != 0:
+        raise RuntimeError(f"AUGraphIsInitialized failed with status: {status}")
+    return bool(is_initialized)
+
+
+def au_graph_is_running(long graph_id) -> bool:
+    """Check if AUGraph is running
+
+    Args:
+        graph_id: AUGraph ID
+
+    Returns:
+        True if running, False otherwise
+
+    Raises:
+        RuntimeError: If query fails
+    """
+    cdef cf.Boolean is_running
+    cdef cf.OSStatus status = at.AUGraphIsRunning(<at.AUGraph>graph_id, &is_running)
+    if status != 0:
+        raise RuntimeError(f"AUGraphIsRunning failed with status: {status}")
+    return bool(is_running)
+
+
+def au_graph_add_node(long graph_id, dict description) -> int:
+    """Add a node to an AUGraph
+
+    Args:
+        graph_id: AUGraph ID
+        description: AudioComponentDescription as dict with keys:
+                    'type', 'subtype', 'manufacturer', 'flags', 'flags_mask'
+
+    Returns:
+        Node ID
+
+    Raises:
+        RuntimeError: If adding node fails
+    """
+    cdef at.AudioComponentDescription desc
+    cdef at.AUNode node
+    cdef cf.OSStatus status
+
+    # Convert dict to AudioComponentDescription
+    desc.componentType = description['type']
+    desc.componentSubType = description['subtype']
+    desc.componentManufacturer = description['manufacturer']
+    desc.componentFlags = description.get('flags', 0)
+    desc.componentFlagsMask = description.get('flags_mask', 0)
+
+    status = at.AUGraphAddNode(<at.AUGraph>graph_id, &desc, &node)
+    if status != 0:
+        raise RuntimeError(f"AUGraphAddNode failed with status: {status}")
+
+    return node
+
+
+def au_graph_remove_node(long graph_id, int node_id):
+    """Remove a node from an AUGraph
+
+    Args:
+        graph_id: AUGraph ID
+        node_id: Node ID to remove
+
+    Raises:
+        RuntimeError: If removing node fails
+    """
+    cdef cf.OSStatus status = at.AUGraphRemoveNode(<at.AUGraph>graph_id, <at.AUNode>node_id)
+    if status != 0:
+        raise RuntimeError(f"AUGraphRemoveNode failed with status: {status}")
+
+
+def au_graph_get_node_count(long graph_id) -> int:
+    """Get the number of nodes in an AUGraph
+
+    Args:
+        graph_id: AUGraph ID
+
+    Returns:
+        Number of nodes
+
+    Raises:
+        RuntimeError: If query fails
+    """
+    cdef cf.UInt32 count
+    cdef cf.OSStatus status = at.AUGraphGetNodeCount(<at.AUGraph>graph_id, &count)
+    if status != 0:
+        raise RuntimeError(f"AUGraphGetNodeCount failed with status: {status}")
+    return count
+
+
+def au_graph_get_ind_node(long graph_id, int index) -> int:
+    """Get node at index
+
+    Args:
+        graph_id: AUGraph ID
+        index: Node index
+
+    Returns:
+        Node ID
+
+    Raises:
+        RuntimeError: If query fails
+    """
+    cdef at.AUNode node
+    cdef cf.OSStatus status = at.AUGraphGetIndNode(<at.AUGraph>graph_id, index, &node)
+    if status != 0:
+        raise RuntimeError(f"AUGraphGetIndNode failed with status: {status}")
+    return node
+
+
+def au_graph_node_info(long graph_id, int node_id) -> tuple:
+    """Get information about a node
+
+    Args:
+        graph_id: AUGraph ID
+        node_id: Node ID
+
+    Returns:
+        Tuple of (description_dict, audio_unit_id)
+
+    Raises:
+        RuntimeError: If query fails
+    """
+    cdef at.AudioComponentDescription desc
+    cdef at.AudioUnit audio_unit
+    cdef cf.OSStatus status
+
+    status = at.AUGraphNodeInfo(<at.AUGraph>graph_id, <at.AUNode>node_id, &desc, &audio_unit)
+    if status != 0:
+        raise RuntimeError(f"AUGraphNodeInfo failed with status: {status}")
+
+    desc_dict = {
+        'type': desc.componentType,
+        'subtype': desc.componentSubType,
+        'manufacturer': desc.componentManufacturer,
+        'flags': desc.componentFlags,
+        'flags_mask': desc.componentFlagsMask
+    }
+
+    return (desc_dict, <long>audio_unit)
+
+
+def au_graph_connect_node_input(long graph_id, int source_node, int source_output,
+                                  int dest_node, int dest_input):
+    """Connect two nodes
+
+    Args:
+        graph_id: AUGraph ID
+        source_node: Source node ID
+        source_output: Source output bus number
+        dest_node: Destination node ID
+        dest_input: Destination input bus number
+
+    Raises:
+        RuntimeError: If connection fails
+    """
+    cdef cf.OSStatus status
+
+    status = at.AUGraphConnectNodeInput(
+        <at.AUGraph>graph_id,
+        <at.AUNode>source_node,
+        source_output,
+        <at.AUNode>dest_node,
+        dest_input
+    )
+    if status != 0:
+        raise RuntimeError(f"AUGraphConnectNodeInput failed with status: {status}")
+
+
+def au_graph_disconnect_node_input(long graph_id, int dest_node, int dest_input):
+    """Disconnect a node's input
+
+    Args:
+        graph_id: AUGraph ID
+        dest_node: Destination node ID
+        dest_input: Destination input bus number
+
+    Raises:
+        RuntimeError: If disconnection fails
+    """
+    cdef cf.OSStatus status
+
+    status = at.AUGraphDisconnectNodeInput(
+        <at.AUGraph>graph_id,
+        <at.AUNode>dest_node,
+        dest_input
+    )
+    if status != 0:
+        raise RuntimeError(f"AUGraphDisconnectNodeInput failed with status: {status}")
+
+
+def au_graph_clear_connections(long graph_id):
+    """Clear all connections in a graph
+
+    Args:
+        graph_id: AUGraph ID
+
+    Raises:
+        RuntimeError: If clearing connections fails
+    """
+    cdef cf.OSStatus status = at.AUGraphClearConnections(<at.AUGraph>graph_id)
+    if status != 0:
+        raise RuntimeError(f"AUGraphClearConnections failed with status: {status}")
+
+
+def au_graph_update(long graph_id) -> bool:
+    """Update the graph after making changes
+
+    Args:
+        graph_id: AUGraph ID
+
+    Returns:
+        True if update completed, False if pending
+
+    Raises:
+        RuntimeError: If update fails
+    """
+    cdef cf.Boolean is_updated
+    cdef cf.OSStatus status = at.AUGraphUpdate(<at.AUGraph>graph_id, &is_updated)
+    if status != 0:
+        raise RuntimeError(f"AUGraphUpdate failed with status: {status}")
+    return bool(is_updated)
+
+
+def au_graph_get_cpu_load(long graph_id) -> float:
+    """Get current CPU load of the graph
+
+    Args:
+        graph_id: AUGraph ID
+
+    Returns:
+        CPU load as percentage (0.0-1.0)
+
+    Raises:
+        RuntimeError: If query fails
+    """
+    cdef cf.Float32 cpu_load
+    cdef cf.OSStatus status = at.AUGraphGetCPULoad(<at.AUGraph>graph_id, &cpu_load)
+    if status != 0:
+        raise RuntimeError(f"AUGraphGetCPULoad failed with status: {status}")
+    return cpu_load
+
+
+def au_graph_get_max_cpu_load(long graph_id) -> float:
+    """Get maximum CPU load of the graph since last query
+
+    Args:
+        graph_id: AUGraph ID
+
+    Returns:
+        Maximum CPU load as percentage (0.0-1.0)
+
+    Raises:
+        RuntimeError: If query fails
+    """
+    cdef cf.Float32 max_load
+    cdef cf.OSStatus status = at.AUGraphGetMaxCPULoad(<at.AUGraph>graph_id, &max_load)
+    if status != 0:
+        raise RuntimeError(f"AUGraphGetMaxCPULoad failed with status: {status}")
+    return max_load
+
+
+# AUGraph error code getters
+def get_au_graph_err_node_not_found() -> int:
+    """Get error code for node not found"""
+    return -10860
+
+def get_au_graph_err_invalid_connection() -> int:
+    """Get error code for invalid connection"""
+    return -10861
+
+def get_au_graph_err_output_node_err() -> int:
+    """Get error code for output node error"""
+    return -10862
+
+def get_au_graph_err_cannot_do_in_current_context() -> int:
+    """Get error code for cannot do in current context"""
+    return -10863
+
+def get_au_graph_err_invalid_audio_unit() -> int:
+    """Get error code for invalid audio unit"""
+    return -10864
 
