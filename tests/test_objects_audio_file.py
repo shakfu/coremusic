@@ -87,12 +87,13 @@ class TestAudioFile:
             assert len(property_data) >= 40  # AudioStreamBasicDescription size
 
     def test_audio_file_duration_property(self, amen_wav_path):
-        """Test AudioFile duration property (placeholder implementation)"""
+        """Test AudioFile duration property"""
         with cm.AudioFile(amen_wav_path) as audio_file:
             duration = audio_file.duration
             assert isinstance(duration, float)
-            # Note: Current implementation returns 0.0 as placeholder
-            assert duration == 0.0
+            # The amen.wav file is approximately 2.74 seconds
+            assert duration > 0.0
+            assert 2.0 < duration < 3.0
 
     def test_audio_file_repr(self, amen_wav_path):
         """Test AudioFile string representation"""

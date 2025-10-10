@@ -157,9 +157,30 @@ class AudioFile(capi.CoreAudioObject):
                     self.object_id,
                     capi.get_audio_file_property_data_format()
                 )
-                # Parse format data into AudioFormat
-                # This would need implementation based on the format_data structure
-                self._format = AudioFormat(44100.0, 'lpcm')  # Placeholder
+                # Parse AudioStreamBasicDescription (40 bytes)
+                # struct: double + 8 x UInt32
+                import struct
+                if len(format_data) >= 40:
+                    asbd = struct.unpack('<dLLLLLLLL', format_data[:40])
+                    sample_rate, format_id_int, format_flags, bytes_per_packet, \
+                    frames_per_packet, bytes_per_frame, channels_per_frame, \
+                    bits_per_channel, reserved = asbd
+
+                    # Convert format_id from integer to fourcc string
+                    format_id = capi.int_to_fourchar(format_id_int)
+
+                    self._format = AudioFormat(
+                        sample_rate=sample_rate,
+                        format_id=format_id,
+                        format_flags=format_flags,
+                        bytes_per_packet=bytes_per_packet,
+                        frames_per_packet=frames_per_packet,
+                        bytes_per_frame=bytes_per_frame,
+                        channels_per_frame=channels_per_frame,
+                        bits_per_channel=bits_per_channel
+                    )
+                else:
+                    raise AudioFileError(f"Invalid format data size: {len(format_data)} bytes")
             except Exception as e:
                 raise AudioFileError(f"Failed to get format: {e}")
 
@@ -189,9 +210,37 @@ class AudioFile(capi.CoreAudioObject):
 
     @property
     def duration(self) -> float:
-        """Duration in seconds (placeholder implementation)"""
-        # This would need proper implementation based on frame count and sample rate
-        return 0.0
+        """Duration in seconds"""
+        self._ensure_not_disposed()
+        if not self._is_open:
+            self.open()
+
+        try:
+            # Try to get estimated duration property
+            import struct
+            duration_data = capi.audio_file_get_property(
+                self.object_id,
+                capi.get_audio_file_property_estimated_duration()
+            )
+            if len(duration_data) >= 8:
+                # Duration is a Float64 (double)
+                duration = struct.unpack('<d', duration_data[:8])[0]
+                return duration
+            else:
+                # Fallback: calculate from packet count and sample rate
+                packet_count_data = capi.audio_file_get_property(
+                    self.object_id,
+                    capi.get_audio_file_property_audio_data_packet_count()
+                )
+                if len(packet_count_data) >= 8:
+                    packet_count = struct.unpack('<Q', packet_count_data[:8])[0]
+                    format = self.format
+                    if format.sample_rate > 0:
+                        return packet_count * format.frames_per_packet / format.sample_rate
+                return 0.0
+        except Exception:
+            # If all methods fail, return 0.0
+            return 0.0
 
     def __repr__(self) -> str:
         status = "open" if self._is_open else "closed"

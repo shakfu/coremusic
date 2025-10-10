@@ -455,6 +455,12 @@ def get_audio_file_property_data_format():
 def get_audio_file_property_maximum_packet_size():
     return at.kAudioFilePropertyMaximumPacketSize
 
+def get_audio_file_property_audio_data_packet_count():
+    return at.kAudioFilePropertyAudioDataPacketCount
+
+def get_audio_file_property_estimated_duration():
+    return at.kAudioFilePropertyEstimatedDuration
+
 
 # AudioComponent Functions
 def audio_component_find_next(description_dict):
