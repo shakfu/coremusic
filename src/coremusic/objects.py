@@ -564,6 +564,238 @@ class AudioUnit(capi.CoreAudioObject):
         except Exception as e:
             raise AudioUnitError(f"Failed to set property: {e}")
 
+    # ========================================================================
+    # Advanced AudioUnit Features
+    # ========================================================================
+
+    def get_stream_format(self, scope: str = 'output', element: int = 0) -> AudioFormat:
+        """Get the stream format for a specific scope and element
+
+        Args:
+            scope: 'input', 'output', or 'global' (default: 'output')
+            element: Element index (default: 0)
+
+        Returns:
+            AudioFormat object with the current stream format
+        """
+        self._ensure_not_disposed()
+
+        # Map scope name to constant
+        scope_map = {
+            'input': capi.get_audio_unit_scope_input(),
+            'output': capi.get_audio_unit_scope_output(),
+            'global': capi.get_audio_unit_scope_global()
+        }
+        scope_val = scope_map.get(scope.lower())
+        if scope_val is None:
+            raise AudioUnitError(f"Invalid scope: {scope}")
+
+        try:
+            import struct
+            asbd_data = self.get_property(
+                capi.get_audio_unit_property_stream_format(),
+                scope_val,
+                element
+            )
+
+            if len(asbd_data) >= 40:
+                asbd = struct.unpack('<dLLLLLLLL', asbd_data[:40])
+                sample_rate, format_id_int, format_flags, bytes_per_packet, \
+                frames_per_packet, bytes_per_frame, channels_per_frame, \
+                bits_per_channel, reserved = asbd
+
+                format_id = capi.int_to_fourchar(format_id_int)
+
+                return AudioFormat(
+                    sample_rate=sample_rate,
+                    format_id=format_id,
+                    format_flags=format_flags,
+                    bytes_per_packet=bytes_per_packet,
+                    frames_per_packet=frames_per_packet,
+                    bytes_per_frame=bytes_per_frame,
+                    channels_per_frame=channels_per_frame,
+                    bits_per_channel=bits_per_channel
+                )
+            else:
+                raise AudioUnitError(f"Invalid ASBD data size: {len(asbd_data)}")
+        except Exception as e:
+            raise AudioUnitError(f"Failed to get stream format: {e}")
+
+    def set_stream_format(self, format: AudioFormat, scope: str = 'output', element: int = 0) -> None:
+        """Set the stream format for a specific scope and element
+
+        Args:
+            format: AudioFormat object with desired format
+            scope: 'input', 'output', or 'global' (default: 'output')
+            element: Element index (default: 0)
+        """
+        self._ensure_not_disposed()
+
+        # Map scope name to constant
+        scope_map = {
+            'input': capi.get_audio_unit_scope_input(),
+            'output': capi.get_audio_unit_scope_output(),
+            'global': capi.get_audio_unit_scope_global()
+        }
+        scope_val = scope_map.get(scope.lower())
+        if scope_val is None:
+            raise AudioUnitError(f"Invalid scope: {scope}")
+
+        try:
+            import struct
+            # Convert format_id to integer
+            format_id_int = capi.fourchar_to_int(format.format_id) if isinstance(format.format_id, str) else format.format_id
+
+            # Pack AudioStreamBasicDescription
+            asbd_data = struct.pack('<dLLLLLLLL',
+                format.sample_rate,
+                format_id_int,
+                format.format_flags,
+                format.bytes_per_packet,
+                format.frames_per_packet,
+                format.bytes_per_frame,
+                format.channels_per_frame,
+                format.bits_per_channel,
+                0  # reserved
+            )
+
+            self.set_property(
+                capi.get_audio_unit_property_stream_format(),
+                scope_val,
+                element,
+                asbd_data
+            )
+        except Exception as e:
+            raise AudioUnitError(f"Failed to set stream format: {e}")
+
+    @property
+    def sample_rate(self) -> float:
+        """Get the sample rate (kAudioUnitProperty_SampleRate on global scope)"""
+        self._ensure_not_disposed()
+        try:
+            import struct
+            data = self.get_property(2, capi.get_audio_unit_scope_global(), 0)  # kAudioUnitProperty_SampleRate = 2
+            if len(data) >= 8:
+                return struct.unpack('<d', data[:8])[0]
+            return 0.0
+        except Exception:
+            # Fallback to stream format sample rate
+            try:
+                return self.get_stream_format('output', 0).sample_rate
+            except Exception:
+                return 0.0
+
+    @sample_rate.setter
+    def sample_rate(self, rate: float) -> None:
+        """Set the sample rate (kAudioUnitProperty_SampleRate on global scope)"""
+        self._ensure_not_disposed()
+        try:
+            import struct
+            data = struct.pack('<d', rate)
+            self.set_property(2, capi.get_audio_unit_scope_global(), 0, data)  # kAudioUnitProperty_SampleRate = 2
+        except Exception as e:
+            raise AudioUnitError(f"Failed to set sample rate: {e}")
+
+    @property
+    def latency(self) -> float:
+        """Get the latency in seconds (kAudioUnitProperty_Latency)"""
+        self._ensure_not_disposed()
+        try:
+            import struct
+            data = self.get_property(12, capi.get_audio_unit_scope_global(), 0)  # kAudioUnitProperty_Latency = 12
+            if len(data) >= 8:
+                return struct.unpack('<d', data[:8])[0]
+            return 0.0
+        except Exception:
+            return 0.0
+
+    @property
+    def cpu_load(self) -> float:
+        """Get the CPU load as a fraction (0.0 to 1.0) (kAudioUnitProperty_CPULoad)"""
+        self._ensure_not_disposed()
+        try:
+            import struct
+            data = self.get_property(6, capi.get_audio_unit_scope_global(), 0)  # kAudioUnitProperty_CPULoad = 6
+            if len(data) >= 4:
+                return struct.unpack('<f', data[:4])[0]
+            return 0.0
+        except Exception:
+            return 0.0
+
+    @property
+    def max_frames_per_slice(self) -> int:
+        """Get the maximum frames per slice (kAudioUnitProperty_MaximumFramesPerSlice)"""
+        self._ensure_not_disposed()
+        try:
+            import struct
+            data = self.get_property(14, capi.get_audio_unit_scope_global(), 0)  # kAudioUnitProperty_MaximumFramesPerSlice = 14
+            if len(data) >= 4:
+                return struct.unpack('<L', data[:4])[0]
+            return 0
+        except Exception:
+            return 0
+
+    @max_frames_per_slice.setter
+    def max_frames_per_slice(self, frames: int) -> None:
+        """Set the maximum frames per slice (kAudioUnitProperty_MaximumFramesPerSlice)"""
+        self._ensure_not_disposed()
+        try:
+            import struct
+            data = struct.pack('<L', frames)
+            self.set_property(14, capi.get_audio_unit_scope_global(), 0, data)  # kAudioUnitProperty_MaximumFramesPerSlice = 14
+        except Exception as e:
+            raise AudioUnitError(f"Failed to set max frames per slice: {e}")
+
+    def get_parameter_list(self, scope: str = 'global') -> List[int]:
+        """Get list of available parameter IDs (kAudioUnitProperty_ParameterList)
+
+        Args:
+            scope: 'input', 'output', or 'global' (default: 'global')
+
+        Returns:
+            List of parameter IDs
+        """
+        self._ensure_not_disposed()
+
+        scope_map = {
+            'input': capi.get_audio_unit_scope_input(),
+            'output': capi.get_audio_unit_scope_output(),
+            'global': capi.get_audio_unit_scope_global()
+        }
+        scope_val = scope_map.get(scope.lower())
+        if scope_val is None:
+            raise AudioUnitError(f"Invalid scope: {scope}")
+
+        try:
+            import struct
+            data = self.get_property(3, scope_val, 0)  # kAudioUnitProperty_ParameterList = 3
+            # Data is an array of UInt32 parameter IDs
+            param_count = len(data) // 4
+            if param_count > 0:
+                return list(struct.unpack(f'<{param_count}L', data[:param_count * 4]))
+            return []
+        except Exception:
+            return []
+
+    def render(self, num_frames: int, timestamp: Optional[int] = None) -> bytes:
+        """Render audio frames (for offline processing)
+
+        Args:
+            num_frames: Number of frames to render
+            timestamp: Optional timestamp (default: None uses current time)
+
+        Returns:
+            Rendered audio data as bytes
+
+        Note: This is a simplified render method for offline processing.
+        For real-time audio, use render callbacks with the audio player infrastructure.
+        """
+        # This would require implementing AudioUnitRender which needs more infrastructure
+        raise NotImplementedError(
+            "Direct rendering not yet implemented. "
+            "Use the audio player infrastructure with render callbacks for real-time audio."
+        )
+
     def __enter__(self):
         self.initialize()
         return self
