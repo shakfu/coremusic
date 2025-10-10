@@ -10,7 +10,7 @@ automatic resource cleanup, but are implemented as pure Python classes for
 simplicity.
 """
 
-from typing import Optional, Union, List, Dict, Any, Tuple, Iterator
+from typing import Optional, Union, List, Dict, Any, Tuple, Iterator, TYPE_CHECKING
 from pathlib import Path
 import struct
 
@@ -19,10 +19,14 @@ from . import capi
 # Check if NumPy is available
 try:
     import numpy as np
+    from numpy.typing import NDArray
     NUMPY_AVAILABLE = True
 except ImportError:
     NUMPY_AVAILABLE = False
     np = None  # type: ignore
+    if TYPE_CHECKING:
+        # For type checking purposes when NumPy isn't installed
+        from numpy.typing import NDArray
 
 # ============================================================================
 # Exception Hierarchy
@@ -110,7 +114,7 @@ class AudioFormat:
             'bits_per_channel': self.bits_per_channel
         }
 
-    def to_numpy_dtype(self):
+    def to_numpy_dtype(self) -> 'np.dtype[Any]':
         """
         Convert audio format to NumPy dtype for audio data arrays.
 
@@ -170,7 +174,7 @@ class AudioFile(capi.CoreAudioObject):
         self._format: Optional[AudioFormat] = None
         self._is_open = False
 
-    def open(self):
+    def open(self) -> 'AudioFile':
         """Open the audio file"""
         self._ensure_not_disposed()
         if not self._is_open:
@@ -193,11 +197,11 @@ class AudioFile(capi.CoreAudioObject):
                 self._is_open = False
                 self.dispose()
 
-    def __enter__(self):
+    def __enter__(self) -> 'AudioFile':
         self.open()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.close()
 
     @property
@@ -242,7 +246,7 @@ class AudioFile(capi.CoreAudioObject):
 
         return self._format
 
-    def read_packets(self, start_packet: int, packet_count: int):
+    def read_packets(self, start_packet: int, packet_count: int) -> Tuple[bytes, int]:
         """Read audio packets from the file"""
         self._ensure_not_disposed()
         if not self._is_open:
@@ -253,7 +257,7 @@ class AudioFile(capi.CoreAudioObject):
         except Exception as e:
             raise AudioFileError(f"Failed to read packets: {e}")
 
-    def read_as_numpy(self, start_packet: int = 0, packet_count: Optional[int] = None):
+    def read_as_numpy(self, start_packet: int = 0, packet_count: Optional[int] = None) -> 'NDArray[Any]':
         """
         Read audio data from the file as a NumPy array.
 
@@ -330,7 +334,7 @@ class AudioFile(capi.CoreAudioObject):
                 raise
             raise AudioFileError(f"Failed to read as NumPy array: {e}")
 
-    def get_property(self, property_id: int):
+    def get_property(self, property_id: int) -> bytes:
         """Get a property from the audio file"""
         self._ensure_not_disposed()
         if not self._is_open:
@@ -399,7 +403,7 @@ class AudioFileStream(capi.CoreAudioObject):
         self._file_type_hint = file_type_hint
         self._is_open = False
 
-    def open(self):
+    def open(self) -> 'AudioFileStream':
         """Open the audio file stream"""
         self._ensure_not_disposed()
         if not self._is_open:
@@ -453,7 +457,7 @@ class AudioFileStream(capi.CoreAudioObject):
         except Exception as e:
             raise AudioFileError(f"Failed to seek: {e}")
 
-    def get_property(self, property_id: int):
+    def get_property(self, property_id: int) -> bytes:
         """Get a property from the audio file stream"""
         self._ensure_not_disposed()
         if not self._is_open:
@@ -970,7 +974,7 @@ class MIDIPort(capi.CoreAudioObject):
     def __init__(self, name: str):
         super().__init__()
         self._name = name
-        self._client = None  # Reference to parent MIDIClient
+        self._client: Optional['MIDIClient'] = None  # Reference to parent MIDIClient
 
     @property
     def name(self) -> str:
@@ -1107,7 +1111,7 @@ class AudioDevice(capi.CoreAudioObject):
         super().__init__()
         self._set_object_id(device_id)
 
-    def _get_property_string(self, property_id: int, scope: int = None, element: int = 0) -> str:
+    def _get_property_string(self, property_id: int, scope: Optional[int] = None, element: int = 0) -> str:
         """Get a string property from the device"""
         if scope is None:
             scope = capi.get_audio_object_property_scope_global()
@@ -1127,7 +1131,7 @@ class AudioDevice(capi.CoreAudioObject):
         except Exception:
             return ""
 
-    def _get_property_uint32(self, property_id: int, scope: int = None, element: int = 0) -> int:
+    def _get_property_uint32(self, property_id: int, scope: Optional[int] = None, element: int = 0) -> int:
         """Get a UInt32 property from the device"""
         if scope is None:
             scope = capi.get_audio_object_property_scope_global()
@@ -1145,7 +1149,7 @@ class AudioDevice(capi.CoreAudioObject):
         except Exception:
             return 0
 
-    def _get_property_float64(self, property_id: int, scope: int = None, element: int = 0) -> float:
+    def _get_property_float64(self, property_id: int, scope: Optional[int] = None, element: int = 0) -> float:
         """Get a Float64 property from the device"""
         if scope is None:
             scope = capi.get_audio_object_property_scope_global()
