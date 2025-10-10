@@ -438,6 +438,420 @@ def audio_file_stream_seek(long stream_id, long packet_offset):
     }
 
 
+# ============================================================================
+# AudioConverter Functions
+# ============================================================================
+
+def audio_converter_new(source_format: dict, dest_format: dict) -> int:
+    """Create a new AudioConverter
+
+    Args:
+        source_format: Source audio format dictionary (AudioStreamBasicDescription)
+        dest_format: Destination audio format dictionary (AudioStreamBasicDescription)
+
+    Returns:
+        AudioConverter ID
+    """
+    cdef at.AudioStreamBasicDescription src_format
+    cdef at.AudioStreamBasicDescription dst_format
+    cdef at.AudioConverterRef converter
+
+    # Set up source format
+    src_format.mSampleRate = source_format.get('sample_rate', 44100.0)
+    src_format.mFormatID = source_format.get('format_id', ca.kAudioFormatLinearPCM)
+    src_format.mFormatFlags = source_format.get('format_flags',
+        ca.kLinearPCMFormatFlagIsSignedInteger | ca.kLinearPCMFormatFlagIsPacked)
+    src_format.mBytesPerPacket = source_format.get('bytes_per_packet', 4)
+    src_format.mFramesPerPacket = source_format.get('frames_per_packet', 1)
+    src_format.mBytesPerFrame = source_format.get('bytes_per_frame', 4)
+    src_format.mChannelsPerFrame = source_format.get('channels_per_frame', 2)
+    src_format.mBitsPerChannel = source_format.get('bits_per_channel', 16)
+    src_format.mReserved = 0
+
+    # Set up destination format
+    dst_format.mSampleRate = dest_format.get('sample_rate', 44100.0)
+    dst_format.mFormatID = dest_format.get('format_id', ca.kAudioFormatLinearPCM)
+    dst_format.mFormatFlags = dest_format.get('format_flags',
+        ca.kLinearPCMFormatFlagIsSignedInteger | ca.kLinearPCMFormatFlagIsPacked)
+    dst_format.mBytesPerPacket = dest_format.get('bytes_per_packet', 4)
+    dst_format.mFramesPerPacket = dest_format.get('frames_per_packet', 1)
+    dst_format.mBytesPerFrame = dest_format.get('bytes_per_frame', 4)
+    dst_format.mChannelsPerFrame = dest_format.get('channels_per_frame', 2)
+    dst_format.mBitsPerChannel = dest_format.get('bits_per_channel', 16)
+    dst_format.mReserved = 0
+
+    cdef cf.OSStatus status = at.AudioConverterNew(&src_format, &dst_format, &converter)
+    if status != 0:
+        raise RuntimeError(f"AudioConverterNew failed with status: {status}")
+
+    return <long>converter
+
+
+def audio_converter_dispose(long converter_id):
+    """Dispose of an AudioConverter"""
+    cdef at.AudioConverterRef converter = <at.AudioConverterRef>converter_id
+    cdef cf.OSStatus status = at.AudioConverterDispose(converter)
+    if status != 0:
+        raise RuntimeError(f"AudioConverterDispose failed with status: {status}")
+
+
+def audio_converter_convert_buffer(long converter_id, bytes input_data) -> bytes:
+    """Convert audio data using AudioConverter
+
+    Args:
+        converter_id: AudioConverter ID
+        input_data: Input audio data bytes
+
+    Returns:
+        Converted audio data bytes
+    """
+    cdef at.AudioConverterRef converter = <at.AudioConverterRef>converter_id
+    cdef cf.UInt32 input_data_size = len(input_data)
+    cdef cf.UInt32 output_data_size = input_data_size * 4  # Allocate extra space
+    cdef char* input_buffer = <char*><bytes>input_data
+    cdef char* output_buffer = <char*>malloc(output_data_size)
+    cdef cf.OSStatus status
+
+    if output_buffer == <char*>0:
+        raise MemoryError("Failed to allocate output buffer")
+
+    try:
+        status = at.AudioConverterConvertBuffer(
+            converter,
+            input_data_size,
+            input_buffer,
+            &output_data_size,
+            output_buffer
+        )
+
+        if status != 0:
+            raise RuntimeError(f"AudioConverterConvertBuffer failed with status: {status}")
+
+        result = output_buffer[:output_data_size]
+        return result
+    finally:
+        free(output_buffer)
+
+
+def audio_converter_get_property(long converter_id, int property_id) -> bytes:
+    """Get a property from an AudioConverter
+
+    Args:
+        converter_id: AudioConverter ID
+        property_id: Property ID
+
+    Returns:
+        Property data as bytes
+    """
+    cdef at.AudioConverterRef converter = <at.AudioConverterRef>converter_id
+    cdef cf.UInt32 data_size = 0
+    cdef cf.OSStatus status
+
+    # Get property size
+    status = at.AudioConverterGetPropertyInfo(converter, property_id, &data_size, NULL)
+    if status != 0:
+        raise RuntimeError(f"AudioConverterGetPropertyInfo failed with status: {status}")
+
+    if data_size == 0:
+        return b''
+
+    cdef char* buffer = <char*>malloc(data_size)
+    if buffer == <char*>0:
+        raise MemoryError("Failed to allocate buffer")
+
+    try:
+        status = at.AudioConverterGetProperty(converter, property_id, &data_size, buffer)
+        if status != 0:
+            raise RuntimeError(f"AudioConverterGetProperty failed with status: {status}")
+
+        result = buffer[:data_size]
+        return result
+    finally:
+        free(buffer)
+
+
+def audio_converter_set_property(long converter_id, int property_id, bytes data):
+    """Set a property on an AudioConverter
+
+    Args:
+        converter_id: AudioConverter ID
+        property_id: Property ID
+        data: Property data as bytes
+    """
+    cdef at.AudioConverterRef converter = <at.AudioConverterRef>converter_id
+    cdef cf.UInt32 data_size = len(data)
+    cdef char* buffer = <char*><bytes>data
+
+    cdef cf.OSStatus status = at.AudioConverterSetProperty(converter, property_id, data_size, buffer)
+    if status != 0:
+        raise RuntimeError(f"AudioConverterSetProperty failed with status: {status}")
+
+
+def audio_converter_reset(long converter_id):
+    """Reset an AudioConverter to its initial state"""
+    cdef at.AudioConverterRef converter = <at.AudioConverterRef>converter_id
+    cdef cf.OSStatus status = at.AudioConverterReset(converter)
+    if status != 0:
+        raise RuntimeError(f"AudioConverterReset failed with status: {status}")
+
+
+# AudioConverter property getters
+def get_audio_converter_property_min_input_buffer_size() -> int:
+    return at.kAudioConverterPropertyMinimumInputBufferSize
+
+def get_audio_converter_property_min_output_buffer_size() -> int:
+    return at.kAudioConverterPropertyMinimumOutputBufferSize
+
+def get_audio_converter_property_max_input_packet_size() -> int:
+    return at.kAudioConverterPropertyMaximumInputPacketSize
+
+def get_audio_converter_property_max_output_packet_size() -> int:
+    return at.kAudioConverterPropertyMaximumOutputPacketSize
+
+def get_audio_converter_property_sample_rate_converter_quality() -> int:
+    return at.kAudioConverterSampleRateConverterQuality
+
+def get_audio_converter_property_codec_quality() -> int:
+    return at.kAudioConverterCodecQuality
+
+def get_audio_converter_quality_max() -> int:
+    return at.kAudioConverterQuality_Max
+
+def get_audio_converter_quality_high() -> int:
+    return at.kAudioConverterQuality_High
+
+def get_audio_converter_quality_medium() -> int:
+    return at.kAudioConverterQuality_Medium
+
+def get_audio_converter_quality_low() -> int:
+    return at.kAudioConverterQuality_Low
+
+def get_audio_converter_quality_min() -> int:
+    return at.kAudioConverterQuality_Min
+
+
+# ============================================================================
+# ExtendedAudioFile Functions
+# ============================================================================
+
+def extended_audio_file_open_url(str file_path) -> int:
+    """Open an audio file with ExtendedAudioFile
+
+    Args:
+        file_path: Path to audio file
+
+    Returns:
+        ExtAudioFile ID
+    """
+    cdef cf.CFStringRef cf_path = cf.CFStringCreateWithCString(NULL, file_path.encode('utf-8'), cf.kCFStringEncodingUTF8)
+    cdef cf.CFURLRef url = cf.CFURLCreateWithFileSystemPath(NULL, cf_path, cf.kCFURLPOSIXPathStyle, False)
+    cdef at.ExtAudioFileRef ext_file
+
+    if url == NULL:
+        cf.CFRelease(cf_path)
+        raise ValueError(f"Failed to create URL from path: {file_path}")
+
+    cdef cf.OSStatus status = at.ExtAudioFileOpenURL(url, &ext_file)
+
+    cf.CFRelease(url)
+    cf.CFRelease(cf_path)
+
+    if status != 0:
+        raise RuntimeError(f"ExtAudioFileOpenURL failed with status: {status}")
+
+    return <long>ext_file
+
+
+def extended_audio_file_create_with_url(str file_path, int file_type, source_format: dict,
+                                         int codec_manufacturer=0) -> int:
+    """Create a new audio file with ExtendedAudioFile
+
+    Args:
+        file_path: Path for new audio file
+        file_type: Audio file type (e.g., kAudioFileWAVEType)
+        source_format: Audio format dictionary (AudioStreamBasicDescription)
+        codec_manufacturer: Codec manufacturer code (default: 0)
+
+    Returns:
+        ExtAudioFile ID
+    """
+    cdef cf.CFStringRef cf_path = cf.CFStringCreateWithCString(NULL, file_path.encode('utf-8'), cf.kCFStringEncodingUTF8)
+    cdef cf.CFURLRef url = cf.CFURLCreateWithFileSystemPath(NULL, cf_path, cf.kCFURLPOSIXPathStyle, False)
+    cdef at.AudioStreamBasicDescription format
+    cdef at.ExtAudioFileRef ext_file
+
+    if url == NULL:
+        cf.CFRelease(cf_path)
+        raise ValueError(f"Failed to create URL from path: {file_path}")
+
+    # Set up audio format
+    format.mSampleRate = source_format.get('sample_rate', 44100.0)
+    format.mFormatID = source_format.get('format_id', ca.kAudioFormatLinearPCM)
+    format.mFormatFlags = source_format.get('format_flags',
+        ca.kLinearPCMFormatFlagIsSignedInteger | ca.kLinearPCMFormatFlagIsPacked)
+    format.mBytesPerPacket = source_format.get('bytes_per_packet', 4)
+    format.mFramesPerPacket = source_format.get('frames_per_packet', 1)
+    format.mBytesPerFrame = source_format.get('bytes_per_frame', 4)
+    format.mChannelsPerFrame = source_format.get('channels_per_frame', 2)
+    format.mBitsPerChannel = source_format.get('bits_per_channel', 16)
+    format.mReserved = 0
+
+    cdef cf.OSStatus status = at.ExtAudioFileCreateWithURL(
+        url,
+        file_type,
+        &format,
+        NULL,  # channel layout
+        at.kAudioFileFlags_EraseFile,
+        &ext_file
+    )
+
+    cf.CFRelease(url)
+    cf.CFRelease(cf_path)
+
+    if status != 0:
+        raise RuntimeError(f"ExtAudioFileCreateWithURL failed with status: {status}")
+
+    return <long>ext_file
+
+
+def extended_audio_file_dispose(long ext_file_id):
+    """Dispose of an ExtendedAudioFile"""
+    cdef at.ExtAudioFileRef ext_file = <at.ExtAudioFileRef>ext_file_id
+    cdef cf.OSStatus status = at.ExtAudioFileDispose(ext_file)
+    if status != 0:
+        raise RuntimeError(f"ExtAudioFileDispose failed with status: {status}")
+
+
+def extended_audio_file_read(long ext_file_id, int num_frames) -> tuple:
+    """Read audio frames from ExtendedAudioFile
+
+    Args:
+        ext_file_id: ExtAudioFile ID
+        num_frames: Number of frames to read
+
+    Returns:
+        Tuple of (audio_data_bytes, frames_read)
+    """
+    cdef at.ExtAudioFileRef ext_file = <at.ExtAudioFileRef>ext_file_id
+    cdef cf.UInt32 frames_to_read = num_frames
+    cdef cf.UInt32 buffer_size = num_frames * 4 * 2  # Assume stereo 16-bit for now
+    cdef char* buffer = <char*>malloc(buffer_size)
+    cdef at.AudioBufferList buffer_list
+    cdef cf.OSStatus status
+
+    if buffer == <char*>0:
+        raise MemoryError("Failed to allocate read buffer")
+
+    try:
+        buffer_list.mNumberBuffers = 1
+        buffer_list.mBuffers[0].mNumberChannels = 2
+        buffer_list.mBuffers[0].mDataByteSize = buffer_size
+        buffer_list.mBuffers[0].mData = buffer
+
+        status = at.ExtAudioFileRead(ext_file, &frames_to_read, &buffer_list)
+        if status != 0:
+            raise RuntimeError(f"ExtAudioFileRead failed with status: {status}")
+
+        actual_size = buffer_list.mBuffers[0].mDataByteSize
+        result = buffer[:actual_size]
+        return (result, frames_to_read)
+    finally:
+        free(buffer)
+
+
+def extended_audio_file_write(long ext_file_id, int num_frames, bytes audio_data):
+    """Write audio frames to ExtendedAudioFile
+
+    Args:
+        ext_file_id: ExtAudioFile ID
+        num_frames: Number of frames to write
+        audio_data: Audio data bytes
+    """
+    cdef at.ExtAudioFileRef ext_file = <at.ExtAudioFileRef>ext_file_id
+    cdef cf.UInt32 frames = num_frames
+    cdef char* buffer = <char*><bytes>audio_data
+    cdef cf.UInt32 buffer_size = len(audio_data)
+
+    cdef at.AudioBufferList buffer_list
+    buffer_list.mNumberBuffers = 1
+    buffer_list.mBuffers[0].mNumberChannels = 2
+    buffer_list.mBuffers[0].mDataByteSize = buffer_size
+    buffer_list.mBuffers[0].mData = buffer
+
+    cdef cf.OSStatus status = at.ExtAudioFileWrite(ext_file, frames, &buffer_list)
+    if status != 0:
+        raise RuntimeError(f"ExtAudioFileWrite failed with status: {status}")
+
+
+def extended_audio_file_get_property(long ext_file_id, int property_id) -> bytes:
+    """Get a property from an ExtendedAudioFile
+
+    Args:
+        ext_file_id: ExtAudioFile ID
+        property_id: Property ID
+
+    Returns:
+        Property data as bytes
+    """
+    cdef at.ExtAudioFileRef ext_file = <at.ExtAudioFileRef>ext_file_id
+    cdef cf.UInt32 data_size = sizeof(at.AudioStreamBasicDescription)  # Start with a reasonable size
+    cdef char* buffer = <char*>malloc(data_size)
+    cdef cf.OSStatus status
+
+    if buffer == <char*>0:
+        raise MemoryError("Failed to allocate buffer")
+
+    try:
+        status = at.ExtAudioFileGetProperty(ext_file, property_id, &data_size, buffer)
+        if status != 0:
+            raise RuntimeError(f"ExtAudioFileGetProperty failed with status: {status}")
+
+        result = buffer[:data_size]
+        return result
+    finally:
+        free(buffer)
+
+
+def extended_audio_file_set_property(long ext_file_id, int property_id, bytes data):
+    """Set a property on an ExtendedAudioFile
+
+    Args:
+        ext_file_id: ExtAudioFile ID
+        property_id: Property ID
+        data: Property data as bytes
+    """
+    cdef at.ExtAudioFileRef ext_file = <at.ExtAudioFileRef>ext_file_id
+    cdef cf.UInt32 data_size = len(data)
+    cdef char* buffer = <char*><bytes>data
+
+    cdef cf.OSStatus status = at.ExtAudioFileSetProperty(ext_file, property_id, data_size, buffer)
+    if status != 0:
+        raise RuntimeError(f"ExtAudioFileSetProperty failed with status: {status}")
+
+
+# ExtendedAudioFile property getters
+def get_extended_audio_file_property_file_data_format() -> int:
+    return at.kExtAudioFileProperty_FileDataFormat
+
+def get_extended_audio_file_property_client_data_format() -> int:
+    return at.kExtAudioFileProperty_ClientDataFormat
+
+def get_extended_audio_file_property_file_channel_layout() -> int:
+    return at.kExtAudioFileProperty_FileChannelLayout
+
+def get_extended_audio_file_property_client_channel_layout() -> int:
+    return at.kExtAudioFileProperty_ClientChannelLayout
+
+def get_extended_audio_file_property_codec_manufacturer() -> int:
+    return at.kExtAudioFileProperty_CodecManufacturer
+
+def get_extended_audio_file_property_audio_file() -> int:
+    return at.kExtAudioFileProperty_AudioFile
+
+def get_extended_audio_file_property_file_length_frames() -> int:
+    return at.kExtAudioFileProperty_FileLengthFrames
+
+
 # Audio Queue Functions
 cdef void audio_queue_output_callback(void* user_data, at.AudioQueueRef queue, at.AudioQueueBufferRef buffer) noexcept:
     """C callback function for audio queue output"""

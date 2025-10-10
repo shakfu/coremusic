@@ -15,6 +15,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **AudioConverter API** - Complete audio format conversion framework
+  - Functional API with 13 wrapper functions for AudioConverter operations
+  - `audio_converter_new()`, `audio_converter_dispose()`, `audio_converter_convert_buffer()`
+  - `audio_converter_get_property()`, `audio_converter_set_property()`, `audio_converter_reset()`
+  - 6 property ID getter functions for converter configuration
+  - Object-oriented `AudioConverter` class with automatic resource management
+  - Context manager support for safe resource cleanup
+  - Support for stereo↔mono conversion, bit depth changes, and format conversions
+
+- **ExtendedAudioFile API** - High-level audio file I/O with automatic format conversion
+  - Functional API with 14 wrapper functions for ExtendedAudioFile operations
+  - `extended_audio_file_open_url()`, `extended_audio_file_create_with_url()`
+  - `extended_audio_file_read()`, `extended_audio_file_write()`, `extended_audio_file_dispose()`
+  - `extended_audio_file_get_property()`, `extended_audio_file_set_property()`
+  - 7 property ID getter functions for file format access
+  - Object-oriented `ExtendedAudioFile` class with context manager support
+  - Automatic format conversion on read/write via client format property
+  - Simplified file I/O compared to lower-level AudioFile API
+
+- **Comprehensive test coverage** for new APIs
+  - `test_audiotoolbox_audio_converter.py` - 12 functional API tests
+  - `test_audiotoolbox_extended_audio_file.py` - 14 functional API tests
+  - `test_objects_audio_converter.py` - 29 object-oriented wrapper tests
+  - Tests cover creation, conversion, I/O operations, property access, error handling
+  - Real-world testing with actual audio files
+
+- **Exception hierarchy** expanded
+  - Added `AudioConverterError` for converter-specific exceptions
+  - Proper error propagation with detailed error messages
+
+### Changed
+
+- Enhanced `AudioFormat` class integration with converter APIs
+- Improved error handling consistency across audio conversion operations
+
+### Fixed
+
+- Fixed UID string handling in `AudioDevice._get_property_string()` to strip both leading and trailing null bytes (changed from `.rstrip('\x00')` to `.strip('\x00')`)
+- Improved `test_audio_device_manager_find_by_uid` test resilience to handle devices with inconsistent UID encoding
+
+---
+
 ## [0.1.2]
 
 ### Added

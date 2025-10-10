@@ -480,6 +480,382 @@ class AudioFileStream(capi.CoreAudioObject):
             super().dispose()
 
 # ============================================================================
+# AudioConverter Framework
+# ============================================================================
+
+class AudioConverterError(CoreAudioError):
+    """Exception for AudioConverter operations"""
+    pass
+
+
+class AudioConverter(capi.CoreAudioObject):
+    """Audio format converter for sample rate and format conversion
+
+    Provides high-level interface for converting between audio formats,
+    sample rates, bit depths, and channel configurations.
+    """
+
+    def __init__(self, source_format: AudioFormat, dest_format: AudioFormat):
+        """Create an AudioConverter
+
+        Args:
+            source_format: Source audio format
+            dest_format: Destination audio format
+
+        Raises:
+            AudioConverterError: If converter creation fails
+        """
+        super().__init__()
+        self._source_format = source_format
+        self._dest_format = dest_format
+
+        try:
+            converter_id = capi.audio_converter_new(
+                source_format.to_dict(),
+                dest_format.to_dict()
+            )
+            self._set_object_id(converter_id)
+        except Exception as e:
+            raise AudioConverterError(f"Failed to create converter: {e}")
+
+    @property
+    def source_format(self) -> AudioFormat:
+        """Get source audio format"""
+        return self._source_format
+
+    @property
+    def dest_format(self) -> AudioFormat:
+        """Get destination audio format"""
+        return self._dest_format
+
+    def convert(self, audio_data: bytes) -> bytes:
+        """Convert audio data from source to destination format
+
+        Args:
+            audio_data: Input audio data in source format
+
+        Returns:
+            Converted audio data in destination format
+
+        Raises:
+            AudioConverterError: If conversion fails
+        """
+        self._ensure_not_disposed()
+        try:
+            return capi.audio_converter_convert_buffer(self.object_id, audio_data)
+        except Exception as e:
+            raise AudioConverterError(f"Failed to convert audio: {e}")
+
+    def get_property(self, property_id: int) -> bytes:
+        """Get a property from the converter
+
+        Args:
+            property_id: Property ID
+
+        Returns:
+            Property data as bytes
+
+        Raises:
+            AudioConverterError: If getting property fails
+        """
+        self._ensure_not_disposed()
+        try:
+            return capi.audio_converter_get_property(self.object_id, property_id)
+        except Exception as e:
+            raise AudioConverterError(f"Failed to get property: {e}")
+
+    def set_property(self, property_id: int, data: bytes) -> None:
+        """Set a property on the converter
+
+        Args:
+            property_id: Property ID
+            data: Property data as bytes
+
+        Raises:
+            AudioConverterError: If setting property fails
+        """
+        self._ensure_not_disposed()
+        try:
+            capi.audio_converter_set_property(self.object_id, property_id, data)
+        except Exception as e:
+            raise AudioConverterError(f"Failed to set property: {e}")
+
+    def reset(self) -> None:
+        """Reset the converter to its initial state"""
+        self._ensure_not_disposed()
+        try:
+            capi.audio_converter_reset(self.object_id)
+        except Exception as e:
+            raise AudioConverterError(f"Failed to reset converter: {e}")
+
+    def dispose(self) -> None:
+        """Dispose of the audio converter"""
+        if not self.is_disposed:
+            try:
+                capi.audio_converter_dispose(self.object_id)
+            except:
+                pass  # Best effort cleanup
+            finally:
+                super().dispose()
+
+    def __enter__(self) -> 'AudioConverter':
+        """Enter context manager"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit context manager and dispose"""
+        self.dispose()
+
+    def __repr__(self) -> str:
+        return f"AudioConverter({self._source_format} -> {self._dest_format})"
+
+
+# ============================================================================
+# ExtendedAudioFile Framework
+# ============================================================================
+
+class ExtendedAudioFile(capi.CoreAudioObject):
+    """Extended audio file with automatic format conversion
+
+    Provides high-level file I/O with automatic format conversion.
+    Easier to use than AudioFile for common operations.
+    """
+
+    def __init__(self, path: Union[str, Path]):
+        """Create an ExtendedAudioFile
+
+        Args:
+            path: Path to audio file
+
+        Note:
+            File is not opened automatically. Call open() or use as context manager.
+        """
+        super().__init__()
+        self._path = str(path)
+        self._is_open = False
+        self._file_format: Optional[AudioFormat] = None
+        self._client_format: Optional[AudioFormat] = None
+
+    def open(self) -> 'ExtendedAudioFile':
+        """Open the audio file for reading
+
+        Returns:
+            Self for method chaining
+
+        Raises:
+            AudioFileError: If opening fails
+        """
+        self._ensure_not_disposed()
+        if not self._is_open:
+            try:
+                file_id = capi.extended_audio_file_open_url(self._path)
+                self._set_object_id(file_id)
+                self._is_open = True
+            except Exception as e:
+                raise AudioFileError(f"Failed to open file {self._path}: {e}")
+        return self
+
+    @classmethod
+    def create(cls, path: Union[str, Path], file_type: int,
+               format: AudioFormat) -> 'ExtendedAudioFile':
+        """Create a new audio file for writing
+
+        Args:
+            path: Path for new file
+            file_type: Audio file type (e.g., kAudioFileWAVEType)
+            format: Audio format for the file
+
+        Returns:
+            Opened ExtendedAudioFile instance
+
+        Raises:
+            AudioFileError: If creation fails
+        """
+        file = cls(path)
+        try:
+            file_id = capi.extended_audio_file_create_with_url(
+                str(path),
+                file_type,
+                format.to_dict()
+            )
+            file._set_object_id(file_id)
+            file._is_open = True
+            file._file_format = format
+            return file
+        except Exception as e:
+            raise AudioFileError(f"Failed to create file {path}: {e}")
+
+    def close(self) -> None:
+        """Close the audio file"""
+        if self._is_open:
+            try:
+                capi.extended_audio_file_dispose(self.object_id)
+            except Exception as e:
+                raise AudioFileError(f"Failed to close file: {e}")
+            finally:
+                self._is_open = False
+                self.dispose()
+
+    def __enter__(self) -> 'ExtendedAudioFile':
+        if not self._is_open:
+            self.open()
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.close()
+
+    @property
+    def file_format(self) -> AudioFormat:
+        """Get the file's native audio format
+
+        Returns:
+            File's audio format
+
+        Raises:
+            AudioFileError: If getting format fails
+        """
+        self._ensure_not_disposed()
+        if not self._is_open:
+            self.open()
+
+        if self._file_format is None:
+            try:
+                format_data = capi.extended_audio_file_get_property(
+                    self.object_id,
+                    capi.get_extended_audio_file_property_file_data_format()
+                )
+                # Parse AudioStreamBasicDescription (40 bytes)
+                if len(format_data) >= 40:
+                    asbd = struct.unpack('<dLLLLLLLL', format_data[:40])
+                    sample_rate, format_id_int, format_flags, bytes_per_packet, \
+                    frames_per_packet, bytes_per_frame, channels_per_frame, \
+                    bits_per_channel, reserved = asbd
+
+                    format_id = capi.int_to_fourchar(format_id_int)
+
+                    self._file_format = AudioFormat(
+                        sample_rate=sample_rate,
+                        format_id=format_id,
+                        format_flags=format_flags,
+                        bytes_per_packet=bytes_per_packet,
+                        frames_per_packet=frames_per_packet,
+                        bytes_per_frame=bytes_per_frame,
+                        channels_per_frame=channels_per_frame,
+                        bits_per_channel=bits_per_channel
+                    )
+                else:
+                    raise AudioFileError(f"Invalid format data size: {len(format_data)} bytes")
+            except Exception as e:
+                raise AudioFileError(f"Failed to get file format: {e}")
+
+        return self._file_format
+
+    @property
+    def client_format(self) -> Optional[AudioFormat]:
+        """Get the client audio format (for automatic conversion)
+
+        Returns:
+            Client audio format or None if not set
+        """
+        return self._client_format
+
+    @client_format.setter
+    def client_format(self, format: AudioFormat) -> None:
+        """Set the client audio format for automatic conversion
+
+        Args:
+            format: Desired audio format for read/write operations
+
+        Raises:
+            AudioFileError: If setting format fails
+        """
+        self._ensure_not_disposed()
+        if not self._is_open:
+            self.open()
+
+        try:
+            format_bytes = struct.pack('<dLLLLLLLL',
+                format.sample_rate,
+                capi.fourchar_to_int(format.format_id),
+                format.format_flags,
+                format.bytes_per_packet,
+                format.frames_per_packet,
+                format.bytes_per_frame,
+                format.channels_per_frame,
+                format.bits_per_channel,
+                0  # reserved
+            )
+            capi.extended_audio_file_set_property(
+                self.object_id,
+                capi.get_extended_audio_file_property_client_data_format(),
+                format_bytes
+            )
+            self._client_format = format
+        except Exception as e:
+            raise AudioFileError(f"Failed to set client format: {e}")
+
+    def read(self, num_frames: int) -> Tuple[bytes, int]:
+        """Read audio frames from the file
+
+        Automatically converts to client format if set.
+
+        Args:
+            num_frames: Number of frames to read
+
+        Returns:
+            Tuple of (audio_data_bytes, frames_read)
+
+        Raises:
+            AudioFileError: If reading fails
+        """
+        self._ensure_not_disposed()
+        if not self._is_open:
+            self.open()
+
+        try:
+            return capi.extended_audio_file_read(self.object_id, num_frames)
+        except Exception as e:
+            raise AudioFileError(f"Failed to read frames: {e}")
+
+    def write(self, num_frames: int, audio_data: bytes) -> None:
+        """Write audio frames to the file
+
+        Automatically converts from client format if set.
+
+        Args:
+            num_frames: Number of frames to write
+            audio_data: Audio data bytes
+
+        Raises:
+            AudioFileError: If writing fails
+        """
+        self._ensure_not_disposed()
+        if not self._is_open:
+            raise AudioFileError("File not open")
+
+        try:
+            capi.extended_audio_file_write(self.object_id, num_frames, audio_data)
+        except Exception as e:
+            raise AudioFileError(f"Failed to write frames: {e}")
+
+    def __repr__(self) -> str:
+        status = "open" if self._is_open else "closed"
+        return f"ExtendedAudioFile({self._path}, {status})"
+
+    def dispose(self) -> None:
+        """Dispose of the extended audio file"""
+        if not self.is_disposed:
+            if self._is_open:
+                try:
+                    capi.extended_audio_file_dispose(self.object_id)
+                except:
+                    pass  # Best effort cleanup
+                finally:
+                    self._is_open = False
+            super().dispose()
+
+
+# ============================================================================
 # Audio Queue Framework
 # ============================================================================
 
@@ -1125,8 +1501,8 @@ class AudioDevice(capi.CoreAudioObject):
             )
             if data:
                 # CFString is returned, decode as UTF-8
-                # Remove any null terminators
-                return data.decode('utf-8', errors='ignore').rstrip('\x00')
+                # Remove any leading/trailing null terminators
+                return data.decode('utf-8', errors='ignore').strip('\x00')
             return ""
         except Exception:
             return ""

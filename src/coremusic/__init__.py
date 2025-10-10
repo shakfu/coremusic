@@ -8,6 +8,7 @@ from .objects import (
     AudioFileError,
     AudioQueueError,
     AudioUnitError,
+    AudioConverterError,
     MIDIError,
     MusicPlayerError,
     AudioDeviceError,
@@ -18,6 +19,10 @@ from .objects import (
     # Audio File Framework
     AudioFile,
     AudioFileStream,
+    ExtendedAudioFile,
+
+    # AudioConverter Framework
+    AudioConverter,
 
     # Audio Queue Framework
     AudioBuffer,

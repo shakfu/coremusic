@@ -83,6 +83,12 @@ cdef extern from "AudioToolbox/AudioFile.h":
     ctypedef struct OpaqueAudioFileID
     ctypedef OpaqueAudioFileID* AudioFileID
 
+    # AudioFileFlags constants
+    ctypedef enum:
+        kAudioFileFlags_EraseFile = 1
+        kAudioFileFlags_DontPageAlignAudioData = 2
+
+    # Audio file type IDs
     ctypedef enum:
         kAudioFileAIFFType = 1095321158  # 'AIFF'
         kAudioFileAIFCType = 1095321155  # 'AIFC'
@@ -703,6 +709,8 @@ cdef extern from "AudioToolbox/ExtendedAudioFile.h":
                                          ExtAudioFilePropertyID inPropertyID,
                                          UInt32 inPropertyDataSize,
                                          const void* inPropertyData)
+
+    cdef OSStatus ExtAudioFileDispose(ExtAudioFileRef inExtAudioFile)
 
 
 cdef extern from "AudioToolbox/AudioFormat.h":

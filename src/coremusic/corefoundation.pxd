@@ -46,6 +46,15 @@ cdef extern from "CoreFoundation/CoreFoundation.h":
     ctypedef void* CFTypeRef
 
     cdef CFURLRef CFURLCreateFromFileSystemRepresentation(CFAllocatorRef allocator, const UInt8* buffer, CFIndex bufLen, Boolean isDirectory)
+
+    # CFURL path style constants
+    ctypedef enum CFURLPathStyle:
+        kCFURLPOSIXPathStyle = 0
+        kCFURLHFSPathStyle = 1
+        kCFURLWindowsPathStyle = 2
+
+    cdef CFURLRef CFURLCreateWithFileSystemPath(CFAllocatorRef allocator, CFStringRef filePath, CFURLPathStyle pathStyle, Boolean isDirectory)
+
     cdef void CFRelease(CFTypeRef cf)
     cdef CFAllocatorRef kCFAllocatorDefault
 
