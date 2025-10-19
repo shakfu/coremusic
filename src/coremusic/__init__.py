@@ -61,3 +61,12 @@ from .async_io import (
     open_audio_file_async,
     create_output_queue_async,
 )
+
+# Import high-level utilities
+from .utilities import (
+    AudioAnalyzer,
+    AudioFormatPresets,
+    batch_convert,
+    convert_audio_file,
+    trim_audio,
+)

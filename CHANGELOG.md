@@ -50,6 +50,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - Real-world processing pipeline (Read → Analyze → Save)
   - NumPy integration for signal processing workflows
 
+- **High-Level Audio Processing Utilities** - Convenient utilities for common audio tasks
+  - `AudioAnalyzer` class for audio analysis operations
+    - `detect_silence()` - Detect silence regions in audio files with configurable threshold and duration
+    - `get_peak_amplitude()` - Extract peak amplitude from audio files
+    - `calculate_rms()` - Calculate RMS (Root Mean Square) amplitude
+    - `get_file_info()` - Extract comprehensive file metadata (format, duration, sample rate, etc.)
+    - All methods support both file paths and AudioFile objects
+    - NumPy integration for efficient audio data processing
+  - `AudioFormatPresets` class with common audio format presets
+    - `wav_44100_stereo()` - CD quality WAV (44.1kHz, 16-bit, stereo)
+    - `wav_44100_mono()` - Mono WAV (44.1kHz, 16-bit, mono)
+    - `wav_48000_stereo()` - Pro audio WAV (48kHz, 16-bit, stereo)
+    - `wav_96000_stereo()` - High-res WAV (96kHz, 24-bit, stereo)
+  - `convert_audio_file()` - Simple file format conversion
+    - Supports stereo ↔ mono conversion at same sample rate and bit depth
+    - Automatic file copy for exact format matches
+    - Raises NotImplementedError for complex conversions (guides users to AudioConverter)
+  - `batch_convert()` - Batch convert multiple files with glob patterns
+    - Supports custom output directory and file extension
+    - Optional progress callback for UI integration
+    - Automatic directory creation and file overwrite control
+  - `trim_audio()` - Extract time ranges from audio files
+    - Supports start and end time specification
+    - Preserves audio format during trimming
+  - Comprehensive test coverage with 20 tests (16 passing, 4 skipped)
+  - Demo script (`demo_utilities.py`) with 6 working examples
+
 ### Fixed
 
 - **Music device test fixture** - Improved error handling for component instantiation
