@@ -17,6 +17,9 @@ requires-dist = [
     { name = "setuptools", specifier = ">=80.9.0" },
 ]
 
+[package.metadata.requires-dev]
+dev = []
+
 [[package]]
 name = "cython"
 version = "3.1.4"

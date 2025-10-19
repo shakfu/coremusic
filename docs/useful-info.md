@@ -15,7 +15,7 @@
 
 - [github-topics-audiounits](https://github.com/topics/audio-units) - github topics for 'audiounits'
 
-- [Simple intro to CoreAudio](https://jamesalvarez.co.uk/blog/a-simple-introduction-to-core-audio/) - 
+- [Simple intro to CoreAudio](https://jamesalvarez.co.uk/blog/a-simple-introduction-to-core-audio/) -
 
 - [Getting Started with Audio Queues in Core Audio](https://pjrader1.hashnode.dev/getting-started-with-audio-queues-in-core-audio)
 
