@@ -17,6 +17,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- **Async I/O Support** - Complete async/await support for non-blocking audio operations
+  - `AsyncAudioFile` class for asynchronous file reading with chunk streaming
+  - `AsyncAudioQueue` class for non-blocking audio queue operations
+  - Async context manager support (`async with`) for automatic resource cleanup
+  - Async chunk streaming via `read_chunks_async()` - yields audio data without blocking event loop
+  - Async packet reading via `read_packets_async()` for fine-grained control
+  - NumPy integration with `read_as_numpy_async()` and `read_chunks_numpy_async()`
+  - Executor-based approach using `asyncio.to_thread()` for CPU-bound operations
+  - Convenience functions: `open_audio_file_async()`, `create_output_queue_async()`
+  - Full backward compatibility - existing synchronous API completely untouched
+  - Enables concurrent file processing and integration with modern async frameworks (FastAPI, aiohttp, etc.)
+
+- **Comprehensive async test coverage**
+  - `test_async_io.py` - 22 async tests covering all async functionality
+  - Tests for async file operations (open, close, context managers)
+  - Tests for async packet reading and chunk streaming
+  - Tests for concurrent file access and processing pipelines
+  - Tests for AudioQueue lifecycle management with async operations
+  - Tests for NumPy integration with async streaming
+  - Real-world async processing pipeline examples
+  - 100% pass rate (22/22 tests passing when NumPy available)
+
+- **Demo script for async I/O** (`demo_async_io.py`)
+  - 6 comprehensive examples demonstrating async capabilities
+  - Basic async file reading with format inspection
+  - Streaming large files in chunks without blocking
+  - Async AudioQueue creation and playback control
+  - Concurrent file processing (batch operations)
+  - Real-world processing pipeline (Read → Analyze → Save)
+  - NumPy integration for signal processing workflows
+
+### Fixed
+
+- **Music device test fixture** - Improved error handling for component instantiation
+  - Added graceful skip when `AudioComponentInstanceNew` returns status -128
+  - Status -128 indicates macOS security restrictions preventing instantiation
+  - Tests now properly skip instead of erroring when components cannot be instantiated
+  - Improved test robustness across different macOS security configurations
+  - Affects `test_audiotoolbox_music_device.py` fixture for music device unit tests
+
 ## [0.1.3]
 
 ### Added
