@@ -10,4 +10,6 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = []
+dev = [
+    "numpy>=2.3.4",
+]

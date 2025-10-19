@@ -156,7 +156,15 @@ class TestMusicDeviceBasicOperations:
             pytest.skip("No music device components available")
 
         # Create instance
-        unit = cm.audio_component_instance_new(component)
+        try:
+            unit = cm.audio_component_instance_new(component)
+        except RuntimeError as e:
+            # Status -128 indicates component cannot be instantiated
+            # This is often due to macOS security restrictions or sandboxing
+            if "-128" in str(e):
+                pytest.skip(f"Music device component cannot be instantiated (macOS restriction): {e}")
+            raise
+
         yield unit
 
         # Cleanup

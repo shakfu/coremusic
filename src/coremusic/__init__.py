@@ -53,3 +53,11 @@ try:
     from .objects import NUMPY_AVAILABLE
 except ImportError:
     NUMPY_AVAILABLE = False
+
+# Import async I/O classes
+from .async_io import (
+    AsyncAudioFile,
+    AsyncAudioQueue,
+    open_audio_file_async,
+    create_output_queue_async,
+)
