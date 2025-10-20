@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.1.4]
+
 ### Added
 
 - **Async I/O Support** - Complete async/await support for non-blocking audio operations
@@ -74,8 +76,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - `trim_audio()` - Extract time ranges from audio files
     - Supports start and end time specification
     - Preserves audio format during trimming
-  - Comprehensive test coverage with 20 tests (16 passing, 4 skipped)
-  - Demo script (`demo_utilities.py`) with 6 working examples
+  - `AudioEffectsChain` class for high-level AUGraph management
+    - Pythonic wrapper for audio processing graphs with automatic resource management
+    - Methods: `add_effect()`, `add_output()`, `connect()`, `open()`, `initialize()`, `start()`, `stop()`
+    - Support for method chaining (e.g., `chain.open().initialize().start()`)
+    - Context manager support for automatic cleanup
+    - Node management with FourCC-based AudioUnit identification
+  - `create_simple_effect_chain()` - Convenience function for quick effect chain creation
+  - Comprehensive test coverage with 35 tests (28 passing, 7 skipped)
+  - Demo script (`tests/demos/demo_utilities.py`) with 10 working examples
+
+- **AudioUnit Name-Based Discovery** - Find and load AudioUnits by name instead of FourCC codes
+  - `find_audio_unit_by_name()` - Search for AudioUnits by name (e.g., 'AUDelay')
+    - Returns `AudioComponent` object (can create instances directly)
+    - Case-insensitive substring matching by default
+    - Returns `None` if no matching AudioUnit found
+    - Iterates through all available AudioComponents using CoreAudio's `AudioComponentFindNext`
+    - Example: `component = cm.find_audio_unit_by_name('AUDelay')`
+  - `list_available_audio_units()` - List all available AudioUnits on the system
+    - Returns list of dicts with 'name', 'type', 'subtype', 'manufacturer', 'flags'
+    - Optional filtering by FourCC type code (e.g., 'aufx' for audio effects)
+    - Discovers 676 AudioUnits on typical macOS system
+    - Example: `units = cm.list_available_audio_units(filter_type='aufx')`
+  - `get_audiounit_names()` - Get simple list of AudioUnit names
+    - Returns list of strings (names only, lightweight)
+    - Optional filtering by FourCC type code
+    - Example: `names = cm.get_audiounit_names()`
+  - `AudioEffectsChain.add_effect_by_name()` - Add effects to chain by name
+    - Convenience method that automatically finds and adds AudioUnits
+    - Example: `delay_node = chain.add_effect_by_name('AUDelay')`
+  - Low-level C API wrappers in `src/coremusic/capi.pyx`:
+    - `audio_component_copy_name()` - Get human-readable AudioComponent name
+    - `audio_component_get_description()` - Get AudioComponentDescription
+    - Updated `audio_component_find_next()` with iteration support
+  - Proper CoreFoundation memory management with CFRelease for CFStringRef
+  - Comprehensive test coverage with 11 tests (100% passing)
+  - Documentation in `docs/audiounit_name_lookup.md` with usage examples
+  - Demo examples in `tests/demos/demo_utilities.py` (Example 10)
 
 ### Fixed
 
