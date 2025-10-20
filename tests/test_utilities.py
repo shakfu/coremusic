@@ -141,12 +141,8 @@ class TestBatchProcessing:
             assert format.sample_rate == 44100.0
             assert format.channels_per_frame == 1  # Mono
 
-    @pytest.mark.skip(reason="AudioConverter sample rate conversion requires callback-based API - TODO")
     def test_convert_audio_file_sample_rate(self, amen_wav_path, temp_dir):
         """Test sample rate conversion (44.1kHz -> 48kHz)"""
-        # Note: Sample rate conversion with AudioConverter requires the callback-based
-        # AudioConverterFillComplexBuffer API, not the simple buffer conversion.
-        # This is a known limitation that should be addressed in a future update.
         output_path = os.path.join(temp_dir, "output_48k.wav")
         output_format = cm.AudioFormatPresets.wav_48000_stereo()
 
@@ -154,6 +150,7 @@ class TestBatchProcessing:
 
         # Verify output file was created
         assert os.path.exists(output_path)
+        assert os.path.getsize(output_path) > 0
 
         # Verify format
         with cm.AudioFile(output_path) as audio:
@@ -161,11 +158,8 @@ class TestBatchProcessing:
             assert format.sample_rate == 48000.0
             assert format.channels_per_frame == 2  # Still stereo
 
-    @pytest.mark.skip(reason="AudioConverter bit depth conversion requires callback-based API - TODO")
     def test_convert_audio_file_bit_depth(self, amen_wav_path, temp_dir):
         """Test bit depth conversion (16-bit -> 24-bit)"""
-        # Note: Bit depth conversion with AudioConverter may require the callback-based
-        # AudioConverterFillComplexBuffer API for some format combinations.
         output_path = os.path.join(temp_dir, "output_24bit.wav")
         output_format = cm.AudioFormatPresets.wav_96000_stereo()  # 24-bit
 
@@ -173,6 +167,7 @@ class TestBatchProcessing:
 
         # Verify output file was created
         assert os.path.exists(output_path)
+        assert os.path.getsize(output_path) > 0
 
         # Verify format
         with cm.AudioFile(output_path) as audio:
@@ -180,6 +175,35 @@ class TestBatchProcessing:
             assert format.sample_rate == 96000.0
             assert format.bits_per_channel == 24
             assert format.channels_per_frame == 2
+
+    def test_convert_audio_file_combined_conversions(self, amen_wav_path, temp_dir):
+        """Test combined sample rate and channel conversion (44.1kHz stereo -> 48kHz mono)"""
+        output_path = os.path.join(temp_dir, "output_48k_mono.wav")
+
+        # Create custom format: 48kHz mono 16-bit
+        output_format = cm.AudioFormat(
+            sample_rate=48000.0,
+            format_id='lpcm',
+            format_flags=12,
+            bytes_per_packet=2,
+            frames_per_packet=1,
+            bytes_per_frame=2,
+            channels_per_frame=1,
+            bits_per_channel=16
+        )
+
+        cm.convert_audio_file(amen_wav_path, output_path, output_format)
+
+        # Verify output file was created
+        assert os.path.exists(output_path)
+        assert os.path.getsize(output_path) > 0
+
+        # Verify format
+        with cm.AudioFile(output_path) as audio:
+            format = audio.format
+            assert format.sample_rate == 48000.0
+            assert format.channels_per_frame == 1  # Mono
+            assert format.bits_per_channel == 16
 
     def test_batch_convert_single_file(self, amen_wav_path, temp_dir):
         """Test batch conversion with single file"""

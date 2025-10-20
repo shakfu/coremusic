@@ -368,33 +368,34 @@ def convert_audio_file(
 ) -> None:
     """Convert a single audio file to a different format.
 
-    Currently supports channel count conversion (stereo <-> mono) using AudioConverter.
-    For sample rate and bit depth conversions, use AudioConverter directly with the
-    callback-based API (AudioConverterFillComplexBuffer).
+    Supports ALL conversion types:
+    - Channel count (stereo <-> mono)
+    - Sample rate (e.g., 44.1kHz -> 48kHz)
+    - Bit depth (e.g., 16-bit -> 24-bit)
+    - Combinations of the above
 
     Args:
         input_path: Input file path
         output_path: Output file path
         output_format: Target AudioFormat
 
-    Raises:
-        NotImplementedError: For sample rate or bit depth conversions
-
     Example:
         ```python
         import coremusic as cm
 
-        # Convert to mono (supported)
-        output_format = cm.AudioFormatPresets.wav_44100_mono()
-        cm.convert_audio_file("input.wav", "output.wav", output_format)
+        # Convert to different sample rate
+        cm.convert_audio_file(
+            "input_44100.wav",
+            "output_48000.wav",
+            cm.AudioFormat(48000.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
+        )
 
-        # For sample rate conversion, use AudioConverter directly:
-        with cm.AudioFile("input.wav") as input_file:
-            source_format = input_file.format
-            target_format = cm.AudioFormatPresets.wav_48000_stereo()
-            with cm.AudioConverter(source_format, target_format) as converter:
-                # Use callback-based conversion API...
-                pass
+        # Convert to mono AND change sample rate
+        cm.convert_audio_file(
+            "stereo_44100.wav",
+            "mono_48000.wav",
+            cm.AudioFormat(48000.0, 'lpcm', channels_per_frame=1, bits_per_channel=16)
+        )
         ```
     """
     # Read source file
@@ -402,46 +403,53 @@ def convert_audio_file(
         source_format = input_file.format
 
         # If formats match exactly, just copy
-        if (source_format.sample_rate == output_format.sample_rate and
-            source_format.channels_per_frame == output_format.channels_per_frame and
-            source_format.bits_per_channel == output_format.bits_per_channel):
+        if _formats_match(source_format, output_format):
             import shutil
             shutil.copy(input_path, output_path)
             return
 
-        # For simple conversions (channel count only), use AudioConverter
-        if (source_format.sample_rate == output_format.sample_rate and
-            source_format.bits_per_channel == output_format.bits_per_channel and
-            source_format.channels_per_frame != output_format.channels_per_frame):
+        # Read all audio data
+        audio_data, packet_count = input_file.read_packets(0, 999999999)
 
-            # Read all audio data
-            audio_data, packet_count = input_file.read_packets(0, 999999999)
+        # Determine which conversion method to use
+        needs_complex_conversion = (
+            source_format.sample_rate != output_format.sample_rate or
+            source_format.bits_per_channel != output_format.bits_per_channel
+        )
 
-            # Convert using AudioConverter
-            with AudioConverter(source_format, output_format) as converter:
+        # Convert using AudioConverter
+        with AudioConverter(source_format, output_format) as converter:
+            if needs_complex_conversion:
+                # Use callback-based API for complex conversions
+                converted_data = converter.convert_with_callback(audio_data, packet_count)
+            else:
+                # Use simple buffer API for channel-only conversions
                 converted_data = converter.convert(audio_data)
 
-            # Calculate number of frames from converted data
-            num_frames = len(converted_data) // output_format.bytes_per_frame
+        # Calculate number of frames from converted data
+        num_frames = len(converted_data) // output_format.bytes_per_frame
 
-            # Write to output file
-            from . import capi
-            output_ext_file = ExtendedAudioFile.create(
-                output_path,
-                capi.get_audio_file_wave_type(),
-                output_format
-            )
-            try:
-                output_ext_file.write(num_frames, converted_data)
-            finally:
-                output_ext_file.close()
-        else:
-            # For other conversions, need callback-based AudioConverter API
-            raise NotImplementedError(
-                f"Sample rate and bit depth conversions require callback-based AudioConverter API. "
-                f"Currently only channel count conversion is supported in utilities. "
-                f"Use AudioConverter with AudioConverterFillComplexBuffer directly for these conversions."
-            )
+        # Write to output file
+        from . import capi
+        output_ext_file = ExtendedAudioFile.create(
+            output_path,
+            capi.get_audio_file_wave_type(),
+            output_format
+        )
+        try:
+            output_ext_file.write(num_frames, converted_data)
+        finally:
+            output_ext_file.close()
+
+
+def _formats_match(fmt1: AudioFormat, fmt2: AudioFormat) -> bool:
+    """Check if two formats are identical"""
+    return (
+        fmt1.sample_rate == fmt2.sample_rate and
+        fmt1.channels_per_frame == fmt2.channels_per_frame and
+        fmt1.bits_per_channel == fmt2.bits_per_channel and
+        fmt1.format_id == fmt2.format_id
+    )
 
 
 # ============================================================================

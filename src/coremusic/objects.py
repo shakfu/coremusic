@@ -531,6 +531,10 @@ class AudioConverter(capi.CoreAudioObject):
     def convert(self, audio_data: bytes) -> bytes:
         """Convert audio data from source to destination format
 
+        This method uses the simple buffer-based API (AudioConverterConvertBuffer)
+        which only supports conversions where the input/output sizes are predictable.
+        For complex conversions (sample rate, bit depth), use convert_with_callback().
+
         Args:
             audio_data: Input audio data in source format
 
@@ -543,6 +547,71 @@ class AudioConverter(capi.CoreAudioObject):
         self._ensure_not_disposed()
         try:
             return capi.audio_converter_convert_buffer(self.object_id, audio_data)
+        except Exception as e:
+            raise AudioConverterError(f"Failed to convert audio: {e}")
+
+    def convert_with_callback(
+        self,
+        input_data: bytes,
+        input_packet_count: int,
+        output_packet_count: Optional[int] = None
+    ) -> bytes:
+        """Convert audio using callback-based API for complex conversions
+
+        This method supports all types of conversions including:
+        - Sample rate changes (e.g., 44.1kHz -> 48kHz)
+        - Bit depth changes (e.g., 16-bit -> 24-bit)
+        - Channel count changes (stereo <-> mono)
+        - Combinations of the above
+
+        Args:
+            input_data: Input audio data as bytes
+            input_packet_count: Number of packets in input data
+            output_packet_count: Expected output packets (auto-calculated if None)
+
+        Returns:
+            Converted audio data as bytes
+
+        Raises:
+            AudioConverterError: If conversion fails
+
+        Example:
+            ```python
+            # Convert 44.1kHz to 48kHz
+            source_format = AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
+            dest_format = AudioFormat(48000.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
+
+            with AudioConverter(source_format, dest_format) as converter:
+                # Read input data
+                with AudioFile("input_44100.wav") as af:
+                    input_data, packet_count = af.read_packets(0, 999999999)
+
+                # Convert
+                output_data = converter.convert_with_callback(input_data, packet_count)
+
+                # Write output
+                with ExtendedAudioFile.create("output_48000.wav", 'WAVE', dest_format) as out:
+                    num_frames = len(output_data) // dest_format.bytes_per_frame
+                    out.write(num_frames, output_data)
+            ```
+        """
+        self._ensure_not_disposed()
+
+        # Auto-calculate output packet count if not provided
+        if output_packet_count is None:
+            # Estimate based on sample rate ratio
+            rate_ratio = self._dest_format.sample_rate / self._source_format.sample_rate
+            output_packet_count = int(input_packet_count * rate_ratio * 1.1)  # 10% extra
+
+        try:
+            output_data, actual_packets = capi.audio_converter_fill_complex_buffer(
+                self.object_id,
+                input_data,
+                input_packet_count,
+                output_packet_count,
+                self._source_format.to_dict()
+            )
+            return output_data
         except Exception as e:
             raise AudioConverterError(f"Failed to convert audio: {e}")
 

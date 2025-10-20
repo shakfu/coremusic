@@ -17,6 +17,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- **Complex Audio Conversion Support** - Full callback-based AudioConverter API for advanced audio format conversions
+  - **Callback Infrastructure** in Cython layer (`src/coremusic/capi.pyx`)
+    - `AudioConverterCallbackData` struct for passing data between Python and C callback
+    - `audio_converter_input_callback()` - C callback function with `nogil` and `noexcept` for providing input data on demand
+    - `audio_converter_fill_complex_buffer()` - Python wrapper for Apple's `AudioConverterFillComplexBuffer` API
+    - Proper GIL management for thread-safe operation
+    - Safe memory allocation/deallocation with automatic cleanup
+  - **Enhanced AudioConverter class** (`src/coremusic/objects.py`)
+    - `convert_with_callback()` method supporting all conversion types:
+      - Sample rate changes (e.g., 44.1kHz → 48kHz, 48kHz → 96kHz)
+      - Bit depth changes (e.g., 16-bit → 24-bit)
+      - Channel count changes (stereo ↔ mono)
+      - Combined conversions (e.g., 44.1kHz stereo → 48kHz mono)
+    - Auto-calculation of output packet count based on sample rate ratio
+    - Comprehensive documentation with usage examples
+  - **Updated utilities** (`src/coremusic/utilities.py`)
+    - `convert_audio_file()` now supports ALL conversion types (previously only channel count)
+    - Automatically chooses between simple buffer API and callback API based on conversion type
+    - Added `_formats_match()` helper function for format comparison
+    - Removed NotImplementedError for complex conversions
+  - **Comprehensive test coverage**
+    - 6 new tests in `test_objects_audio_converter.py`:
+      - Sample rate conversion (44.1kHz ↔ 48kHz)
+      - Real file sample rate conversion with verification
+      - Combined sample rate and channel conversion
+      - Auto output packet count calculation
+    - 3 previously skipped tests now enabled in `test_utilities.py`:
+      - `test_convert_audio_file_sample_rate`
+      - `test_convert_audio_file_bit_depth`
+      - `test_convert_audio_file_combined_conversions`
+    - All tests passing (474 passed, 36 skipped, 0 failures)
+    - Duration preservation verified (< 0.000003s error for 2.743s audio)
+  - **Documentation** in `docs/COMPLEX_AUDIO_CONVERSION.md`
+    - Complete implementation guide with code examples
+    - Technical details on callback mechanism and memory management
+    - Usage examples and best practices
+    - Implementation status updated
+
 ## [0.1.4]
 
 ### Added

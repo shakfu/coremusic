@@ -650,6 +650,182 @@ def audio_converter_reset(long converter_id):
         raise RuntimeError(f"AudioConverterReset failed with status: {status}")
 
 
+# ============================================================================
+# AudioConverter Callback-based Complex Conversion
+# ============================================================================
+
+cdef struct AudioConverterCallbackData:
+    char* input_buffer         # Pointer to input data
+    cf.UInt32 input_buffer_size # Total size of input buffer
+    cf.UInt32 packets_read     # Packets consumed so far
+    cf.UInt32 total_packets    # Total packets available
+    cf.UInt32 packet_size      # Size of each packet in bytes
+    at.AudioStreamBasicDescription source_format  # Input format
+
+
+cdef at.OSStatus audio_converter_input_callback(
+    at.AudioConverterRef converter,
+    cf.UInt32* num_packets,
+    at.AudioBufferList* buffer_list,
+    at.AudioStreamPacketDescription** packet_descriptions,
+    void* user_data
+) noexcept nogil:
+    """Callback that provides input data to AudioConverter on demand
+
+    This function is called by AudioConverter when it needs more input data.
+    It must:
+    1. Read the requested number of packets from input
+    2. Fill the AudioBufferList with data
+    3. Update num_packets with actual count provided
+    4. Return 0 for success, or error code
+    """
+    cdef AudioConverterCallbackData* data
+    cdef cf.UInt32 requested_packets
+    cdef cf.UInt32 available_packets
+    cdef cf.UInt32 packets_to_provide
+    cdef cf.UInt32 bytes_to_copy
+    cdef char* source_ptr
+    cdef char* dest_ptr
+    cdef cf.UInt32 offset
+
+    if user_data == NULL:
+        return -50  # paramErr
+
+    data = <AudioConverterCallbackData*>user_data
+    requested_packets = num_packets[0]
+
+    # Calculate how many packets we can provide
+    available_packets = data.total_packets - data.packets_read
+    if available_packets == 0:
+        num_packets[0] = 0
+        return 0  # End of data
+
+    packets_to_provide = requested_packets if requested_packets < available_packets else available_packets
+    bytes_to_copy = packets_to_provide * data.packet_size
+
+    # Calculate offset into input buffer
+    offset = data.packets_read * data.packet_size
+
+    # Get pointer to input data
+    source_ptr = data.input_buffer + offset
+
+    # Fill AudioBufferList
+    if buffer_list.mNumberBuffers > 0:
+        dest_ptr = <char*>buffer_list.mBuffers[0].mData
+        memcpy(dest_ptr, source_ptr, bytes_to_copy)
+        buffer_list.mBuffers[0].mDataByteSize = bytes_to_copy
+        buffer_list.mBuffers[0].mNumberChannels = data.source_format.mChannelsPerFrame
+
+    # Update packets read
+    data.packets_read += packets_to_provide
+    num_packets[0] = packets_to_provide
+
+    return 0  # noErr
+
+
+def audio_converter_fill_complex_buffer(
+    long converter_id,
+    bytes input_data,
+    int input_packet_count,
+    int output_packet_count,
+    dict source_format_dict
+) -> tuple:
+    """Convert audio using callback-based API for complex conversions
+
+    This method supports all types of conversions including:
+    - Sample rate changes (e.g., 44.1kHz -> 48kHz)
+    - Bit depth changes (e.g., 16-bit -> 24-bit)
+    - Channel count changes (stereo <-> mono)
+    - Codec conversions (e.g., MP3 -> PCM)
+
+    Args:
+        converter_id: AudioConverter ID
+        input_data: Input audio data as bytes
+        input_packet_count: Number of packets in input data
+        output_packet_count: Number of output packets to produce
+        source_format_dict: Source AudioStreamBasicDescription as dict
+
+    Returns:
+        (output_data, actual_packet_count) tuple
+
+    Raises:
+        RuntimeError: If conversion fails
+        MemoryError: If buffer allocation fails
+    """
+    cdef at.AudioConverterRef converter = <at.AudioConverterRef>converter_id
+    cdef AudioConverterCallbackData callback_data
+    cdef at.AudioBufferList* output_buffer_list
+    cdef cf.UInt32 output_data_packet_size = output_packet_count
+    cdef cf.OSStatus status
+    cdef char* output_buffer
+    cdef cf.UInt32 output_buffer_size
+    cdef bytes result
+    cdef char* input_ptr
+
+    # Get pointer to input data (Python bytes object)
+    input_ptr = <char*><bytes>input_data
+
+    # Initialize callback data
+    callback_data.input_buffer = input_ptr
+    callback_data.input_buffer_size = len(input_data)
+    callback_data.packets_read = 0
+    callback_data.total_packets = input_packet_count
+    callback_data.packet_size = source_format_dict['bytes_per_packet']
+
+    # Fill source format structure
+    callback_data.source_format.mSampleRate = source_format_dict['sample_rate']
+    callback_data.source_format.mFormatID = source_format_dict['format_id']
+    callback_data.source_format.mFormatFlags = source_format_dict['format_flags']
+    callback_data.source_format.mBytesPerPacket = source_format_dict['bytes_per_packet']
+    callback_data.source_format.mFramesPerPacket = source_format_dict['frames_per_packet']
+    callback_data.source_format.mBytesPerFrame = source_format_dict['bytes_per_frame']
+    callback_data.source_format.mChannelsPerFrame = source_format_dict['channels_per_frame']
+    callback_data.source_format.mBitsPerChannel = source_format_dict['bits_per_channel']
+    callback_data.source_format.mReserved = 0
+
+    # Allocate output buffer (estimate size generously)
+    # For sample rate conversion, output size = input_size * (output_rate / input_rate)
+    output_buffer_size = len(input_data) * 4  # 4x for safety
+    output_buffer = <char*>malloc(output_buffer_size)
+    if output_buffer == NULL:
+        raise MemoryError("Failed to allocate output buffer")
+
+    # Allocate and initialize AudioBufferList
+    output_buffer_list = <at.AudioBufferList*>malloc(sizeof(at.AudioBufferList) + sizeof(at.AudioBuffer))
+    if output_buffer_list == NULL:
+        free(output_buffer)
+        raise MemoryError("Failed to allocate AudioBufferList")
+
+    try:
+        output_buffer_list.mNumberBuffers = 1
+        output_buffer_list.mBuffers[0].mNumberChannels = callback_data.source_format.mChannelsPerFrame
+        output_buffer_list.mBuffers[0].mDataByteSize = output_buffer_size
+        output_buffer_list.mBuffers[0].mData = output_buffer
+
+        # Call AudioConverterFillComplexBuffer
+        status = at.AudioConverterFillComplexBuffer(
+            converter,
+            audio_converter_input_callback,  # Our callback function
+            &callback_data,                   # User data
+            &output_data_packet_size,         # In/Out: packet count
+            output_buffer_list,               # Output buffer
+            NULL                              # Packet descriptions (optional)
+        )
+
+        if status != 0:
+            raise RuntimeError(f"AudioConverterFillComplexBuffer failed with status: {status}")
+
+        # Extract result
+        actual_bytes = output_buffer_list.mBuffers[0].mDataByteSize
+        result = output_buffer[:actual_bytes]
+
+        return (result, output_data_packet_size)
+
+    finally:
+        free(output_buffer)
+        free(output_buffer_list)
+
+
 # AudioConverter property getters
 def get_audio_converter_property_min_input_buffer_size() -> int:
     return at.kAudioConverterPropertyMinimumInputBufferSize
