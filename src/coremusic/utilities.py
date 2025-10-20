@@ -687,12 +687,13 @@ class AudioEffectsChain:
             eq = chain.add_effect_by_name('AUGraphicEQ')
             ```
         """
-        codes = find_audio_unit_by_name(name)
-        if codes is None:
+        component = find_audio_unit_by_name(name)
+        if component is None:
             return None
 
-        effect_type, effect_subtype, manufacturer = codes
-        return self.add_effect(effect_type, effect_subtype, manufacturer)
+        # Extract FourCC codes from the component
+        desc = component._description
+        return self.add_effect(desc.type, desc.subtype, desc.manufacturer)
 
     def add_output(self, output_type: str = 'auou', output_subtype: str = 'def ') -> int:
         """Add an output node to the chain.
@@ -877,36 +878,40 @@ def create_simple_effect_chain(
 # AudioUnit Discovery by Name
 # ============================================================================
 
-def find_audio_unit_by_name(name: str, case_sensitive: bool = False) -> Optional[Tuple[str, str, str]]:
+def find_audio_unit_by_name(name: str, case_sensitive: bool = False):
     """Find an AudioUnit by name (searches all available AudioComponents).
 
     This function iterates through all available AudioComponents and matches
-    by name, similar to the C++ pattern you provided. Returns the FourCC codes
-    needed to create the AudioUnit.
+    by name. Returns an AudioComponent object that can be used to create
+    AudioUnit instances.
 
     Args:
         name: Name or partial name to search for (e.g., 'AUDelay', 'Reverb')
         case_sensitive: Whether to do case-sensitive matching (default: False)
 
     Returns:
-        Tuple of (type, subtype, manufacturer) as FourCC strings, or None if not found
+        AudioComponent object, or None if not found
 
     Example:
         ```python
         import coremusic as cm
 
-        # Find AUDelay
-        codes = cm.find_audio_unit_by_name('AUDelay')
-        if codes:
-            type_code, subtype_code, manufacturer = codes
-            chain = cm.AudioEffectsChain()
-            delay_node = chain.add_effect(type_code, subtype_code, manufacturer)
+        # Find AUDelay and create an instance
+        component = cm.find_audio_unit_by_name('AUDelay')
+        if component:
+            audio_unit = component.create_instance()
+            audio_unit.initialize()
+            # Use the audio unit...
+            audio_unit.dispose()
 
-        # Or use the convenience function
-        delay_node = chain.add_effect_by_name('AUDelay')
+        # Or get the FourCC codes if needed
+        if component:
+            desc = component._description
+            print(f"Type: {desc.type}, Subtype: {desc.subtype}")
         ```
     """
     from . import capi
+    from .objects import AudioComponent, AudioComponentDescription
 
     # Wildcard description to iterate through all components
     desc_dict = {
@@ -935,14 +940,25 @@ def find_audio_unit_by_name(name: str, case_sensitive: bool = False) -> Optional
             # Check if name matches (substring match)
             if search_name in match_name:
                 # Get the description
-                desc = capi.audio_component_get_description(component_id)
+                desc_dict_result = capi.audio_component_get_description(component_id)
 
-                # Convert to FourCC strings
-                type_fourcc = capi.int_to_fourchar(desc['type'])
-                subtype_fourcc = capi.int_to_fourchar(desc['subtype'])
-                manufacturer_fourcc = capi.int_to_fourchar(desc['manufacturer'])
+                # Convert to FourCC strings and create description
+                type_fourcc = capi.int_to_fourchar(desc_dict_result['type'])
+                subtype_fourcc = capi.int_to_fourchar(desc_dict_result['subtype'])
+                manufacturer_fourcc = capi.int_to_fourchar(desc_dict_result['manufacturer'])
 
-                return (type_fourcc, subtype_fourcc, manufacturer_fourcc)
+                # Create AudioComponent object
+                desc = AudioComponentDescription(
+                    type=type_fourcc,
+                    subtype=subtype_fourcc,
+                    manufacturer=manufacturer_fourcc,
+                    flags=desc_dict_result['flags'],
+                    flags_mask=desc_dict_result['flags_mask']
+                )
+
+                component = AudioComponent(desc)
+                component._set_object_id(component_id)
+                return component
 
     return None
 

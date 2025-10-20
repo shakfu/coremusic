@@ -535,42 +535,51 @@ class TestAudioUnitDiscovery:
 
     def test_find_audio_unit_by_name_audelay(self):
         """Test finding AUDelay by name"""
-        codes = cm.find_audio_unit_by_name('AUDelay')
+        component = cm.find_audio_unit_by_name('AUDelay')
 
         # AUDelay should always be available on macOS
-        assert codes is not None
-        assert len(codes) == 3  # (type, subtype, manufacturer)
+        assert component is not None
+        from coremusic.objects import AudioComponent
+        assert isinstance(component, AudioComponent)
 
-        type_code, subtype_code, manufacturer = codes
-        assert isinstance(type_code, str)
-        assert isinstance(subtype_code, str)
-        assert isinstance(manufacturer, str)
+        # Check description
+        desc = component._description
+        assert desc.type == 'aufx'
+        assert desc.subtype == 'dely'
+        assert desc.manufacturer == 'appl'
 
-        # AUDelay is an audio effect ('aufx'), delay type ('dely'), Apple manufacturer ('appl')
-        assert type_code == 'aufx'
-        assert subtype_code == 'dely'
-        assert manufacturer == 'appl'
+        # Can create instance
+        unit = component.create_instance()
+        assert unit is not None
+        unit.dispose()
 
     def test_find_audio_unit_by_name_case_insensitive(self):
         """Test case-insensitive name matching"""
         # These should all find the same unit
-        codes1 = cm.find_audio_unit_by_name('audelay')
-        codes2 = cm.find_audio_unit_by_name('AUDELAY')
-        codes3 = cm.find_audio_unit_by_name('AuDelay')
+        component1 = cm.find_audio_unit_by_name('audelay')
+        component2 = cm.find_audio_unit_by_name('AUDELAY')
+        component3 = cm.find_audio_unit_by_name('AuDelay')
 
-        assert codes1 is not None
-        assert codes1 == codes2 == codes3
+        assert component1 is not None
+        assert component2 is not None
+        assert component3 is not None
+
+        # Same AudioUnit (same description)
+        assert component1._description.type == component2._description.type
+        assert component1._description.subtype == component2._description.subtype
 
     def test_find_audio_unit_by_name_not_found(self):
         """Test searching for non-existent AudioUnit"""
-        codes = cm.find_audio_unit_by_name('NonExistentAudioUnit12345')
-        assert codes is None
+        component = cm.find_audio_unit_by_name('NonExistentAudioUnit12345')
+        assert component is None
 
     def test_find_audio_unit_by_name_partial_match(self):
         """Test partial name matching"""
         # Search for 'Delay' should find an AudioUnit containing 'Delay'
-        codes = cm.find_audio_unit_by_name('Delay')
-        assert codes is not None
+        component = cm.find_audio_unit_by_name('Delay')
+        assert component is not None
+        from coremusic.objects import AudioComponent
+        assert isinstance(component, AudioComponent)
 
     def test_audio_effects_chain_add_effect_by_name(self):
         """Test adding effect to chain by name"""

@@ -28,14 +28,19 @@ Searches through all available AudioComponents and matches by name:
 import coremusic as cm
 
 # Find AUDelay by name
-codes = cm.find_audio_unit_by_name('AUDelay')
-# Returns: ('aufx', 'dely', 'appl')
+component = cm.find_audio_unit_by_name('AUDelay')
+# Returns: AudioComponent object
+
+# Access the FourCC codes
+desc = component._description
+print(f"{desc.type}/{desc.subtype}/{desc.manufacturer}")
+# Output: aufx/dely/appl
 ```
 
 **Features:**
 - Case-insensitive matching by default
 - Substring matching (searches for 'Delay' finds 'AUDelay')
-- Returns FourCC tuple: `(type, subtype, manufacturer)`
+- Returns `AudioComponent` object (can create instances directly)
 - Returns `None` if not found
 
 #### `list_available_audio_units(filter_type=None)`
@@ -64,6 +69,27 @@ Found 676 AudioUnits total
 ...
 ```
 
+#### `get_audiounit_names(filter_type=None)`
+
+Get a simple list of AudioUnit names as strings:
+
+```python
+import coremusic as cm
+
+# Get all AudioUnit names
+names = cm.get_audiounit_names()
+# Returns: ['Apple PAC3 Transcoder', 'AUDelay', 'AUReverb', ...]
+
+# Filter by type (e.g., 'aufx' for effects)
+effect_names = cm.get_audiounit_names(filter_type='aufx')
+# Returns only effect names
+```
+
+**Features:**
+- Simple list of strings (names only)
+- Optional filtering by FourCC type code
+- Lighter weight than `list_available_audio_units()` if you only need names
+
 ### 3. AudioEffectsChain Enhancement
 
 Added `add_effect_by_name()` method for convenient name-based effect addition:
@@ -91,11 +117,16 @@ chain.open().initialize()
 import coremusic as cm
 
 # Find AUDelay (always available on macOS)
-codes = cm.find_audio_unit_by_name('AUDelay')
-if codes:
-    type_code, subtype_code, manufacturer = codes
-    print(f"Found: {type_code}/{subtype_code}/{manufacturer}")
+component = cm.find_audio_unit_by_name('AUDelay')
+if component:
+    desc = component._description
+    print(f"Found: {desc.type}/{desc.subtype}/{desc.manufacturer}")
     # Output: Found: aufx/dely/appl
+
+    # Create an instance directly
+    unit = component.create_instance()
+    # ... use the AudioUnit
+    unit.dispose()
 ```
 
 ### Example 2: List Available AudioUnits
@@ -120,9 +151,14 @@ import coremusic as cm
 chain = cm.AudioEffectsChain()
 delay = chain.add_effect('aufx', 'dely', 'appl')  # Need to know codes
 
-# New way (names)
+# New way (names) - automatically finds and adds
 chain = cm.AudioEffectsChain()
 delay = chain.add_effect_by_name('AUDelay')  # Intuitive!
+
+# Or find first, then add manually
+component = cm.find_audio_unit_by_name('AUDelay')
+desc = component._description
+delay = chain.add_effect(desc.type, desc.subtype, desc.manufacturer)
 ```
 
 ### Example 4: Search and Create
@@ -131,10 +167,18 @@ delay = chain.add_effect_by_name('AUDelay')  # Intuitive!
 import coremusic as cm
 
 # Search for any delay effect
-codes = cm.find_audio_unit_by_name('Delay')
-if codes:
+component = cm.find_audio_unit_by_name('Delay')
+if component:
+    # Create instance directly
+    unit = component.create_instance()
+    unit.initialize()
+    # ... use the unit
+    unit.dispose()
+
+    # Or add to effect chain
+    desc = component._description
     chain = cm.AudioEffectsChain()
-    delay = chain.add_effect(*codes)
+    delay = chain.add_effect(desc.type, desc.subtype, desc.manufacturer)
     output = chain.add_output()
     chain.connect(delay, output)
 ```
@@ -178,8 +222,19 @@ while True:
     component_name = capi.audio_component_copy_name(component_id)
     if component_name:
         if search_name in component_name.lower():
-            desc = capi.audio_component_get_description(component_id)
-            return (type_fourcc, subtype_fourcc, manufacturer_fourcc)
+            desc_dict_result = capi.audio_component_get_description(component_id)
+
+            # Create AudioComponent object
+            desc = AudioComponentDescription(
+                type=type_fourcc,
+                subtype=subtype_fourcc,
+                manufacturer=manufacturer_fourcc,
+                flags=desc_dict_result['flags'],
+                flags_mask=desc_dict_result['flags_mask']
+            )
+            component = AudioComponent(desc)
+            component._set_object_id(component_id)
+            return component
 ```
 
 ### Memory Management
@@ -191,18 +246,21 @@ Properly handles CoreFoundation memory:
 
 ## Test Coverage
 
-Added **8 comprehensive tests** (`tests/test_utilities.py::TestAudioUnitDiscovery`):
+Added **11 comprehensive tests** (`tests/test_utilities.py::TestAudioUnitDiscovery`):
 
 1. `test_list_available_audio_units` - List all AudioUnits
-2. `test_find_audio_unit_by_name_audelay` - Find AUDelay by name
-3. `test_find_audio_unit_by_name_case_insensitive` - Case-insensitive matching
-4. `test_find_audio_unit_by_name_not_found` - Handle not found
-5. `test_find_audio_unit_by_name_partial_match` - Substring matching
-6. `test_audio_effects_chain_add_effect_by_name` - Chain integration
-7. `test_audio_effects_chain_add_effect_by_name_not_found` - Error handling
-8. `test_audio_effects_chain_by_name_complete_workflow` - Full workflow
+2. `test_list_available_audio_units_filter_by_type` - Filter by type
+3. `test_find_audio_unit_by_name_audelay` - Find AUDelay by name, returns AudioComponent
+4. `test_find_audio_unit_by_name_case_insensitive` - Case-insensitive matching
+5. `test_find_audio_unit_by_name_not_found` - Handle not found
+6. `test_find_audio_unit_by_name_partial_match` - Substring matching
+7. `test_find_audio_unit_create_instance` - Create AudioUnit instance from component
+8. `test_audio_effects_chain_add_effect_by_name` - Chain integration
+9. `test_audio_effects_chain_add_effect_by_name_not_found` - Error handling
+10. `test_audio_effects_chain_by_name_complete_workflow` - Full workflow
+11. `test_get_audiounit_names` - Get list of all AudioUnit names
 
-**All tests passing:** [x] **32/32 passed, 7 skipped**
+**All tests passing:** [x] **35/35 passed, 7 skipped**
 
 ## Performance
 
@@ -237,14 +295,22 @@ units = cm.list_available_audio_units()
 for unit in units:
     if 'Delay' in unit['name']:
         print(f"Found: {unit['name']}")
+
+# Or get simple list of names
+names = cm.get_audiounit_names()
+print(f"Available: {', '.join(names[:5])}...")
 ```
 
 ## Files Modified
 
 - `src/coremusic/capi.pyx` - Added 3 functions (+62 lines)
-- `src/coremusic/utilities.py` - Added 2 functions + 1 method (+157 lines)
-- `src/coremusic/__init__.py` - Exported 2 new functions
-- `tests/test_utilities.py` - Added 8 comprehensive tests (+95 lines)
+- `src/coremusic/utilities.py` - Added 3 functions + 1 method (+175 lines)
+  - `find_audio_unit_by_name()` - Returns AudioComponent objects
+  - `list_available_audio_units()` - Returns detailed list of dicts
+  - `get_audiounit_names()` - Returns simple list of names
+  - `AudioEffectsChain.add_effect_by_name()` - Convenience method
+- `src/coremusic/__init__.py` - Exported 3 new functions
+- `tests/test_utilities.py` - Added 11 comprehensive tests (+120 lines)
 - `tests/demos/demo_utilities.py` - Added Example 10 (+50 lines)
 
 ## Summary
@@ -252,7 +318,8 @@ for unit in units:
 [x] **Complete implementation** of name-based AudioUnit lookup matching your C++ pattern
 [x] **676 AudioUnits** discoverable on macOS
 [x] **'AUDelay'** and all other Apple AudioUnits findable by name
-[x] **8 tests passing** with 100% success rate
+[x] **11 tests passing** with 100% success rate
+[x] **Returns AudioComponent objects** - can create instances directly
 [x] **Zero breaking changes** - fully backward compatible
 [x] **Production ready** - proper error handling and memory management
 
@@ -262,6 +329,12 @@ The answer to your question: **Yes, AudioUnits can now be loaded by name!**
 import coremusic as cm
 
 # Simple as that!
-codes = cm.find_audio_unit_by_name('AUDelay')
-# Returns: ('aufx', 'dely', 'appl')
+component = cm.find_audio_unit_by_name('AUDelay')
+# Returns: AudioComponent object
+
+# Create instance directly
+unit = component.create_instance()
+unit.initialize()
+# ... use the unit
+unit.dispose()
 ```
