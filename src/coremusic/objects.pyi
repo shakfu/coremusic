@@ -26,39 +26,48 @@ NUMPY_AVAILABLE: bool
 
 class CoreAudioError(Exception):
     """Base exception for CoreAudio errors"""
+
     status_code: int
     def __init__(self, message: str, status_code: int = 0) -> None: ...
 
 class AudioFileError(CoreAudioError):
     """Exception for AudioFile operations"""
+
     ...
 
 class AudioQueueError(CoreAudioError):
     """Exception for AudioQueue operations"""
+
     ...
 
 class AudioUnitError(CoreAudioError):
     """Exception for AudioUnit operations"""
+
     ...
 
 class AudioConverterError(CoreAudioError):
     """Exception for AudioConverter operations"""
+
     ...
 
 class MIDIError(CoreAudioError):
     """Exception for MIDI operations"""
+
     ...
 
 class MusicPlayerError(CoreAudioError):
     """Exception for MusicPlayer operations"""
+
     ...
 
 class AudioDeviceError(CoreAudioError):
     """Exception for AudioDevice operations"""
+
     ...
 
 class AUGraphError(CoreAudioError):
     """Exception for AUGraph operations"""
+
     ...
 
 # ============================================================================
@@ -86,9 +95,8 @@ class AudioFormat:
         frames_per_packet: int = 0,
         bytes_per_frame: int = 0,
         channels_per_frame: int = 2,
-        bits_per_channel: int = 16
+        bits_per_channel: int = 16,
     ) -> None: ...
-
     @property
     def is_pcm(self) -> bool:
         """Check if this is a PCM format"""
@@ -163,15 +171,13 @@ class AudioFile(capi.CoreAudioObject):
     """High-level audio file operations with automatic resource management"""
 
     def __init__(self, path: Union[str, Path], mode: str = "r") -> None: ...
-
     def __enter__(self) -> AudioFile: ...
     def __exit__(
         self,
         exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType]
+        exc_tb: Optional[TracebackType],
     ) -> None: ...
-
     @property
     def path(self) -> Path:
         """File path"""
@@ -224,10 +230,7 @@ class AudioFile(capi.CoreAudioObject):
         ...
 
     def read_frames_numpy(
-        self,
-        start: int = 0,
-        count: Optional[int] = None,
-        dtype: Optional[Any] = None
+        self, start: int = 0, count: Optional[int] = None, dtype: Optional[Any] = None
     ) -> NDArray:
         """Read audio frames as NumPy array (requires NumPy)"""
         ...
@@ -242,15 +245,13 @@ class AudioFileStream(capi.CoreAudioObject):
     """Streaming audio file parser"""
 
     def __init__(self, file_type_hint: str = "") -> None: ...
-
     def __enter__(self) -> AudioFileStream: ...
     def __exit__(
         self,
         exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType]
+        exc_tb: Optional[TracebackType],
     ) -> None: ...
-
     @property
     def format(self) -> Optional[AudioFormat]:
         """Audio format (available after parsing begins)"""
@@ -286,16 +287,16 @@ class AudioFileStream(capi.CoreAudioObject):
 class AudioConverter(capi.CoreAudioObject):
     """Audio format converter"""
 
-    def __init__(self, source_format: AudioFormat, dest_format: AudioFormat) -> None: ...
-
+    def __init__(
+        self, source_format: AudioFormat, dest_format: AudioFormat
+    ) -> None: ...
     def __enter__(self) -> AudioConverter: ...
     def __exit__(
         self,
         exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType]
+        exc_tb: Optional[TracebackType],
     ) -> None: ...
-
     @property
     def source_format(self) -> AudioFormat:
         """Source audio format"""
@@ -344,17 +345,15 @@ class ExtendedAudioFile(capi.CoreAudioObject):
         path: Union[str, Path],
         mode: str = "r",
         file_type: Optional[str] = None,
-        format: Optional[AudioFormat] = None
+        format: Optional[AudioFormat] = None,
     ) -> None: ...
-
     def __enter__(self) -> ExtendedAudioFile: ...
     def __exit__(
         self,
         exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType]
+        exc_tb: Optional[TracebackType],
     ) -> None: ...
-
     @property
     def path(self) -> Path:
         """File path"""
@@ -372,7 +371,6 @@ class ExtendedAudioFile(capi.CoreAudioObject):
 
     @client_format.setter
     def client_format(self, format: AudioFormat) -> None: ...
-
     @property
     def frame_count(self) -> int:
         """Total number of frames"""
@@ -408,7 +406,6 @@ class AudioBuffer(capi.CoreAudioObject):
     """Audio queue buffer"""
 
     def __init__(self, queue_id: int, buffer_size: int) -> None: ...
-
     @property
     def capacity(self) -> int:
         """Buffer capacity in bytes"""
@@ -428,20 +425,14 @@ class AudioBuffer(capi.CoreAudioObject):
 class AudioQueue(capi.CoreAudioObject):
     """Audio queue for playback or recording"""
 
-    def __init__(
-        self,
-        format: AudioFormat,
-        is_input: bool = False
-    ) -> None: ...
-
+    def __init__(self, format: AudioFormat, is_input: bool = False) -> None: ...
     def __enter__(self) -> AudioQueue: ...
     def __exit__(
         self,
         exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType]
+        exc_tb: Optional[TracebackType],
     ) -> None: ...
-
     @property
     def format(self) -> AudioFormat:
         """Audio format"""
@@ -510,16 +501,14 @@ class AudioComponentDescription:
         component_subtype: str,
         component_manufacturer: str = "appl",
         component_flags: int = 0,
-        component_flags_mask: int = 0
+        component_flags_mask: int = 0,
     ) -> None: ...
-
     def to_dict(self) -> Dict[str, int]:
         """Convert to dictionary with FourCC as integers"""
         ...
 
     @classmethod
     def from_dict(cls, data: Dict[str, int]) -> AudioComponentDescription: ...
-
     @classmethod
     def default_output(cls) -> AudioComponentDescription:
         """Create description for default output unit"""
@@ -537,7 +526,6 @@ class AudioComponent(capi.CoreAudioObject):
     """Audio component for discovery and instantiation"""
 
     def __init__(self, description: AudioComponentDescription) -> None: ...
-
     @property
     def name(self) -> str:
         """Component name"""
@@ -569,17 +557,15 @@ class AudioUnit(capi.CoreAudioObject):
 
     def __init__(
         self,
-        component: Optional[Union[AudioComponent, AudioComponentDescription]] = None
+        component: Optional[Union[AudioComponent, AudioComponentDescription]] = None,
     ) -> None: ...
-
     def __enter__(self) -> AudioUnit: ...
     def __exit__(
         self,
         exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType]
+        exc_tb: Optional[TracebackType],
     ) -> None: ...
-
     @property
     def is_initialized(self) -> bool:
         """Whether the unit is initialized"""
@@ -606,19 +592,12 @@ class AudioUnit(capi.CoreAudioObject):
         """Stop the AudioUnit output"""
         ...
 
-    def get_stream_format(
-        self,
-        scope: str = "output",
-        element: int = 0
-    ) -> AudioFormat:
+    def get_stream_format(self, scope: str = "output", element: int = 0) -> AudioFormat:
         """Get stream format for scope/element"""
         ...
 
     def set_stream_format(
-        self,
-        format: AudioFormat,
-        scope: str = "output",
-        element: int = 0
+        self, format: AudioFormat, scope: str = "output", element: int = 0
     ) -> None:
         """Set stream format for scope/element"""
         ...
@@ -628,10 +607,7 @@ class AudioUnit(capi.CoreAudioObject):
         ...
 
     def set_sample_rate(
-        self,
-        sample_rate: float,
-        scope: str = "output",
-        element: int = 0
+        self, sample_rate: float, scope: str = "output", element: int = 0
     ) -> None:
         """Set sample rate"""
         ...
@@ -672,7 +648,6 @@ class MIDIPort(capi.CoreAudioObject):
     """Base class for MIDI ports"""
 
     def __init__(self, client_id: int, name: str, is_input: bool) -> None: ...
-
     @property
     def name(self) -> str:
         """Port name"""
@@ -711,15 +686,13 @@ class MIDIClient(capi.CoreAudioObject):
     """MIDI client for managing MIDI connections"""
 
     def __init__(self, name: str) -> None: ...
-
     def __enter__(self) -> MIDIClient: ...
     def __exit__(
         self,
         exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType]
+        exc_tb: Optional[TracebackType],
     ) -> None: ...
-
     @property
     def name(self) -> str:
         """Client name"""
@@ -761,7 +734,6 @@ class AudioDevice(capi.CoreAudioObject):
     """Audio hardware device"""
 
     def __init__(self, device_id: int) -> None: ...
-
     @property
     def device_id(self) -> int:
         """Device ID"""
@@ -799,7 +771,6 @@ class AudioDevice(capi.CoreAudioObject):
 
     @sample_rate.setter
     def sample_rate(self, rate: float) -> None: ...
-
     @property
     def available_sample_rates(self) -> List[float]:
         """Available sample rates"""
@@ -854,15 +825,13 @@ class AUGraph(capi.CoreAudioObject):
     """Audio processing graph"""
 
     def __init__(self) -> None: ...
-
     def __enter__(self) -> AUGraph: ...
     def __exit__(
         self,
         exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType]
+        exc_tb: Optional[TracebackType],
     ) -> None: ...
-
     @property
     def is_open(self) -> bool:
         """Whether the graph is open"""
@@ -896,11 +865,7 @@ class AUGraph(capi.CoreAudioObject):
         ...
 
     def connect_nodes(
-        self,
-        source_node: int,
-        source_output: int,
-        dest_node: int,
-        dest_input: int
+        self, source_node: int, source_output: int, dest_node: int, dest_input: int
     ) -> None:
         """Connect two nodes"""
         ...

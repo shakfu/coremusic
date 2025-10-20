@@ -61,6 +61,7 @@ __all__ = [
 # Async Audio File
 # ============================================================================
 
+
 class AsyncAudioFile:
     """Async audio file operations with automatic resource management.
 
@@ -87,7 +88,7 @@ class AsyncAudioFile:
         self._audio_file = AudioFile(path)
         self._path = str(path)
 
-    async def __aenter__(self) -> 'AsyncAudioFile':
+    async def __aenter__(self) -> "AsyncAudioFile":
         """Async context manager entry."""
         await asyncio.to_thread(self._audio_file.open)
         return self
@@ -96,7 +97,7 @@ class AsyncAudioFile:
         """Async context manager exit."""
         await asyncio.to_thread(self._audio_file.close)
 
-    async def open_async(self) -> 'AsyncAudioFile':
+    async def open_async(self) -> "AsyncAudioFile":
         """Open the audio file asynchronously.
 
         Returns:
@@ -124,7 +125,9 @@ class AsyncAudioFile:
         """Get file path."""
         return self._path
 
-    async def read_packets_async(self, start_packet: int, packet_count: int) -> tuple[bytes, int]:
+    async def read_packets_async(
+        self, start_packet: int, packet_count: int
+    ) -> tuple[bytes, int]:
         """Read audio packets asynchronously.
 
         Args:
@@ -134,13 +137,15 @@ class AsyncAudioFile:
         Returns:
             Tuple of (audio data as bytes, actual packet count)
         """
-        return await asyncio.to_thread(self._audio_file.read_packets, start_packet, packet_count)
+        return await asyncio.to_thread(
+            self._audio_file.read_packets, start_packet, packet_count
+        )
 
     async def read_chunks_async(
         self,
         chunk_size: int = 4096,
         start_packet: int = 0,
-        total_packets: Optional[int] = None
+        total_packets: Optional[int] = None,
     ) -> AsyncIterator[bytes]:
         """Stream audio data in chunks asynchronously.
 
@@ -169,9 +174,7 @@ class AsyncAudioFile:
         while True:
             remaining = chunk_size
             chunk_data, actual_count = await asyncio.to_thread(
-                self._audio_file.read_packets,
-                current_packet,
-                remaining
+                self._audio_file.read_packets, current_packet, remaining
             )
 
             if not chunk_data or actual_count == 0:
@@ -184,15 +187,17 @@ class AsyncAudioFile:
             await asyncio.sleep(0)
 
             # Stop if we've read the requested number of packets
-            if total_packets is not None and current_packet >= start_packet + total_packets:
+            if (
+                total_packets is not None
+                and current_packet >= start_packet + total_packets
+            ):
                 break
 
     if NUMPY_AVAILABLE:
+
         async def read_as_numpy_async(
-            self,
-            start_packet: int = 0,
-            packet_count: Optional[int] = None
-        ) -> 'NDArray':
+            self, start_packet: int = 0, packet_count: Optional[int] = None
+        ) -> "NDArray":
             """Read audio data as NumPy array asynchronously.
 
             Args:
@@ -203,17 +208,15 @@ class AsyncAudioFile:
                 NumPy array with shape (frames, channels)
             """
             return await asyncio.to_thread(
-                self._audio_file.read_as_numpy,
-                start_packet,
-                packet_count
+                self._audio_file.read_as_numpy, start_packet, packet_count
             )
 
         async def read_chunks_numpy_async(
             self,
             chunk_size: int = 4096,
             start_packet: int = 0,
-            total_packets: Optional[int] = None
-        ) -> AsyncIterator['NDArray']:
+            total_packets: Optional[int] = None,
+        ) -> AsyncIterator["NDArray"]:
             """Stream audio data as NumPy arrays asynchronously.
 
             Args:
@@ -239,9 +242,7 @@ class AsyncAudioFile:
                 remaining = chunk_size
                 try:
                     chunk = await asyncio.to_thread(
-                        self._audio_file.read_as_numpy,
-                        current_packet,
-                        remaining
+                        self._audio_file.read_as_numpy, current_packet, remaining
                     )
                 except Exception:
                     break
@@ -258,7 +259,10 @@ class AsyncAudioFile:
                 await asyncio.sleep(0)
 
                 # Stop if we've read the requested number of packets
-                if total_packets is not None and current_packet >= start_packet + total_packets:
+                if (
+                    total_packets is not None
+                    and current_packet >= start_packet + total_packets
+                ):
                     break
 
     def __repr__(self) -> str:
@@ -268,6 +272,7 @@ class AsyncAudioFile:
 # ============================================================================
 # Async Audio Queue
 # ============================================================================
+
 
 class AsyncAudioQueue:
     """Async audio queue for non-blocking playback and recording.
@@ -297,7 +302,7 @@ class AsyncAudioQueue:
         self._queue = audio_queue
 
     @classmethod
-    async def new_output_async(cls, audio_format: AudioFormat) -> 'AsyncAudioQueue':
+    async def new_output_async(cls, audio_format: AudioFormat) -> "AsyncAudioQueue":
         """Create a new output audio queue asynchronously.
 
         Args:
@@ -309,7 +314,7 @@ class AsyncAudioQueue:
         queue = await asyncio.to_thread(AudioQueue.new_output, audio_format)
         return cls(queue)
 
-    async def __aenter__(self) -> 'AsyncAudioQueue':
+    async def __aenter__(self) -> "AsyncAudioQueue":
         """Async context manager entry."""
         return self
 
@@ -368,6 +373,7 @@ class AsyncAudioQueue:
 # ============================================================================
 # Convenience Functions
 # ============================================================================
+
 
 async def open_audio_file_async(path: Union[str, Path]) -> AsyncAudioFile:
     """Open an audio file asynchronously.

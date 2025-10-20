@@ -1,5 +1,18 @@
 ## API Reference
 
+**Note:** This document covers the **functional C API** (`coremusic.capi`). These functions require explicit import:
+
+```python
+import coremusic.capi as capi
+
+# Example usage
+file_id = capi.audio_file_open_url("file.wav", capi.get_audio_file_read_permission(), 0)
+```
+
+For the recommended **object-oriented API**, see the main README.md.
+
+---
+
 ### Audio File Operations
 
 #### `audio_file_open_url(file_path, permissions, file_type_hint)`

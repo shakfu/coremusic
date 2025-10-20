@@ -9,11 +9,9 @@ from .capi import (
     # Base classes
     CoreAudioObject as CoreAudioObject,
     AudioPlayer as AudioPlayer,
-
     # Utility functions
     fourchar_to_int as fourchar_to_int,
     int_to_fourchar as int_to_fourchar,
-
     # All other functions are available but not explicitly listed here
     # See capi.pyi for complete function signatures
 )
@@ -30,40 +28,31 @@ from .objects import (
     MusicPlayerError as MusicPlayerError,
     AudioDeviceError as AudioDeviceError,
     AUGraphError as AUGraphError,
-
     # Audio formats and data structures
     AudioFormat as AudioFormat,
-
     # Audio File Framework
     AudioFile as AudioFile,
     AudioFileStream as AudioFileStream,
     ExtendedAudioFile as ExtendedAudioFile,
-
     # AudioConverter Framework
     AudioConverter as AudioConverter,
-
     # Audio Queue Framework
     AudioBuffer as AudioBuffer,
     AudioQueue as AudioQueue,
-
     # Audio Component & AudioUnit Framework
     AudioComponentDescription as AudioComponentDescription,
     AudioComponent as AudioComponent,
     AudioUnit as AudioUnit,
-
     # MIDI Framework
     MIDIClient as MIDIClient,
     MIDIPort as MIDIPort,
     MIDIInputPort as MIDIInputPort,
     MIDIOutputPort as MIDIOutputPort,
-
     # Audio Device & Hardware
     AudioDevice as AudioDevice,
     AudioDeviceManager as AudioDeviceManager,
-
     # AUGraph Framework
     AUGraph as AUGraph,
-
     # NumPy availability flag
     NUMPY_AVAILABLE as NUMPY_AVAILABLE,
 )

@@ -134,7 +134,7 @@ pip install coremusic
 
 `coremusic` provides two complementary APIs that can be used together or independently:
 
-### Functional API (Traditional)
+### Functional API (Advanced)
 
 The functional API provides direct access to CoreAudio C functions with minimal wrapping. This approach offers:
 
@@ -142,6 +142,7 @@ The functional API provides direct access to CoreAudio C functions with minimal 
 - Maximum performance and control
 - Familiar interface for CoreAudio developers
 - Fine-grained resource management
+- **Requires explicit import**: `import coremusic.capi as capi`
 
 ### Object-Oriented API (Modern)
 
@@ -185,25 +186,25 @@ finally:
     audio_file.close()
 ```
 
-#### Functional API (Traditional)
+#### Functional API (Advanced)
 
 ```python
-import coremusic as cm
+import coremusic.capi as capi
 
 # Open an audio file
-audio_file = cm.audio_file_open_url("path/to/audio.wav")
+audio_file = capi.audio_file_open_url("path/to/audio.wav")
 
 # Get file format information
-format_data = cm.audio_file_get_property(
+format_data = capi.audio_file_get_property(
     audio_file,
-    cm.get_audio_file_property_data_format()
+    capi.get_audio_file_property_data_format()
 )
 
 # Read audio packets
-packet_data, packets_read = cm.audio_file_read_packets(audio_file, 0, 1000)
+packet_data, packets_read = capi.audio_file_read_packets(audio_file, 0, 1000)
 
 # Close the file (manual cleanup required)
-cm.audio_file_close(audio_file)
+capi.audio_file_close(audio_file)
 ```
 
 ### AudioUnit Operations
@@ -245,33 +246,33 @@ finally:
     unit.dispose()
 ```
 
-#### Functional API (Traditional)
+#### Functional API (Advanced)
 
 ```python
-import coremusic as cm
+import coremusic.capi as capi
 
 # Find default output AudioUnit
 description = {
-    'type': cm.fourchar_to_int('auou'),
-    'subtype': cm.fourchar_to_int('def '),
-    'manufacturer': cm.fourchar_to_int('appl'),
+    'type': capi.fourchar_to_int('auou'),
+    'subtype': capi.fourchar_to_int('def '),
+    'manufacturer': capi.fourchar_to_int('appl'),
     'flags': 0,
     'flags_mask': 0
 }
 
-component_id = cm.audio_component_find_next(description)
-audio_unit = cm.audio_component_instance_new(component_id)
+component_id = capi.audio_component_find_next(description)
+audio_unit = capi.audio_component_instance_new(component_id)
 
 # Initialize and start
-cm.audio_unit_initialize(audio_unit)
-cm.audio_output_unit_start(audio_unit)
+capi.audio_unit_initialize(audio_unit)
+capi.audio_output_unit_start(audio_unit)
 
 # ... perform audio operations ...
 
 # Manual cleanup required
-cm.audio_output_unit_stop(audio_unit)
-cm.audio_unit_uninitialize(audio_unit)
-cm.audio_component_instance_dispose(audio_unit)
+capi.audio_output_unit_stop(audio_unit)
+capi.audio_unit_uninitialize(audio_unit)
+capi.audio_component_instance_dispose(audio_unit)
 ```
 
 ### AudioQueue Operations
@@ -311,10 +312,10 @@ finally:
     queue.dispose()
 ```
 
-#### Functional API (Traditional)
+#### Functional API (Advanced)
 
 ```python
-import coremusic as cm
+import coremusic.capi as capi
 
 # Define audio format
 format_dict = {
@@ -325,19 +326,19 @@ format_dict = {
 }
 
 # Create audio queue
-queue_id = cm.audio_queue_new_output(format_dict)
+queue_id = capi.audio_queue_new_output(format_dict)
 try:
     # Allocate and enqueue buffers
-    buffer_id = cm.audio_queue_allocate_buffer(queue_id, 1024)
-    cm.audio_queue_enqueue_buffer(queue_id, buffer_id)
+    buffer_id = capi.audio_queue_allocate_buffer(queue_id, 1024)
+    capi.audio_queue_enqueue_buffer(queue_id, buffer_id)
 
     # Start and stop playback
-    cm.audio_queue_start(queue_id)
+    capi.audio_queue_start(queue_id)
     # ... playback operations ...
-    cm.audio_queue_stop(queue_id)
+    capi.audio_queue_stop(queue_id)
 
 finally:
-    cm.audio_queue_dispose(queue_id)
+    capi.audio_queue_dispose(queue_id)
 ```
 
 ### MIDI Operations
@@ -362,28 +363,28 @@ finally:
     client.dispose()
 ```
 
-#### Functional API (Traditional)
+#### Functional API (Advanced)
 
 ```python
-import coremusic as cm
+import coremusic.capi as capi
 
 # Create MIDI client
-client_id = cm.midi_client_create("My MIDI App")
+client_id = capi.midi_client_create("My MIDI App")
 try:
     # Create ports
-    input_port_id = cm.midi_input_port_create(client_id, "Input")
-    output_port_id = cm.midi_output_port_create(client_id, "Output")
+    input_port_id = capi.midi_input_port_create(client_id, "Input")
+    output_port_id = capi.midi_output_port_create(client_id, "Output")
 
     # Send MIDI data
     note_on_data = b'\x90\x60\x7F'
-    cm.midi_send(output_port_id, destination_id, note_on_data, 0)
+    capi.midi_send(output_port_id, destination_id, note_on_data, 0)
 
     # Clean up ports
-    cm.midi_port_dispose(input_port_id)
-    cm.midi_port_dispose(output_port_id)
+    capi.midi_port_dispose(input_port_id)
+    capi.midi_port_dispose(output_port_id)
 
 finally:
-    cm.midi_client_dispose(client_id)
+    capi.midi_client_dispose(client_id)
 ```
 
 ### Audio Player Example
@@ -415,12 +416,12 @@ player.stop()
 ### CoreMIDI Basic Usage
 
 ```python
-import coremusic as cm
+import coremusic.capi as capi
 
 # Create MIDI 1.0 Universal Packets
-ump = cm.midi1_channel_voice_message(
+ump = capi.midi1_channel_voice_message(
     group=0,
-    status=cm.get_midi_status_note_on(),
+    status=capi.get_midi_status_note_on(),
     channel=0,
     data1=60,  # Middle C
     data2=100  # Velocity
@@ -428,15 +429,15 @@ ump = cm.midi1_channel_voice_message(
 print(f"MIDI UMP: {ump:08X}")
 
 # Get MIDI device information
-device_count = cm.midi_get_number_of_devices()
+device_count = capi.midi_get_number_of_devices()
 print(f"MIDI devices: {device_count}")
 
-source_count = cm.midi_get_number_of_sources()
+source_count = capi.midi_get_number_of_sources()
 print(f"MIDI sources: {source_count}")
 
 # Create a virtual MIDI device
 try:
-    device = cm.midi_device_create("My Virtual Device")
+    device = capi.midi_device_create("My Virtual Device")
     print(f"Created device: {device}")
 except RuntimeError as e:
     print(f"Device creation failed: {e}")
@@ -445,27 +446,27 @@ except RuntimeError as e:
 ### MIDI Thru Connection Example
 
 ```python
-import coremusic as cm
+import coremusic.capi as capi
 
 # Initialize thru connection parameters
-params = cm.midi_thru_connection_params_initialize()
+params = capi.midi_thru_connection_params_initialize()
 
 # Configure channel mapping (route channel 1 to channel 2)
 params['channelMap'][0] = 1  # Channel 1 (0-indexed) -> Channel 2
 
 # Add a note number transform (transpose up one octave)
 params['noteNumber'] = {
-    'transform': cm.get_midi_transform_add(),
+    'transform': capi.get_midi_transform_add(),
     'value': 12  # Add 12 semitones
 }
 
 # Create the thru connection
 try:
-    connection = cm.midi_thru_connection_create_with_params(params)
+    connection = capi.midi_thru_connection_create_with_params(params)
     print(f"Created thru connection: {connection}")
 
     # Clean up
-    cm.midi_thru_connection_dispose(connection)
+    capi.midi_thru_connection_dispose(connection)
 except RuntimeError as e:
     print(f"Thru connection failed: {e}")
 ```
@@ -555,7 +556,7 @@ The complete test suite covers:
 #### Object-Oriented API Layer
 - **`src/coremusic/objects.pyx`**: Cython extension base class for automatic resource management
 - **`src/coremusic/oo.py`**: Object-oriented wrappers with automatic cleanup and context managers
-- **`src/coremusic/__init__.py`**: Package entry point exposing both functional and OO APIs
+- **`src/coremusic/__init__.py`**: Package entry point exposing OO API (functional API via `capi` submodule)
 
 #### Build Configuration
 - **`setup.py`**: Build configuration linking CoreAudio and CoreMIDI frameworks
@@ -627,18 +628,32 @@ make wheel
 
 ### Migration Guide
 
-Existing functional API code can be gradually migrated:
+**Migrating to new namespace (functional API users):**
+
+```python
+# Before (old pattern - deprecated)
+import coremusic as cm
+audio_file = cm.audio_file_open_url("file.wav")  # No longer works
+
+# After (new pattern - functional API)
+import coremusic.capi as capi
+audio_file = capi.audio_file_open_url("file.wav")  # Correct
+```
+
+**Migrating to object-oriented API (recommended):**
 
 ```python
 # Before (Functional API)
-audio_file = cm.audio_file_open_url("file.wav")
+import coremusic.capi as capi
+audio_file = capi.audio_file_open_url("file.wav")
 try:
-    format_data = cm.audio_file_get_property(audio_file, property_id)
-    data, count = cm.audio_file_read_packets(audio_file, 0, 1000)
+    format_data = capi.audio_file_get_property(audio_file, property_id)
+    data, count = capi.audio_file_read_packets(audio_file, 0, 1000)
 finally:
-    cm.audio_file_close(audio_file)
+    capi.audio_file_close(audio_file)
 
 # After (Object-Oriented API)
+import coremusic as cm
 with cm.AudioFile("file.wav") as audio_file:
     format_info = audio_file.format
     data, count = audio_file.read_packets(0, 1000)

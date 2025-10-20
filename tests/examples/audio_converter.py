@@ -74,7 +74,7 @@ def convert_audio_file(input_path, output_path, target_sample_rate=None):
             # Use the high-level conversion utility
             print("Converting...")
             try:
-                cm.convert_audio_file(input_path, output_path, dst_fmt)
+                capi.convert_audio_file(input_path, output_path, dst_fmt)
                 print("Conversion complete!")
                 print()
 

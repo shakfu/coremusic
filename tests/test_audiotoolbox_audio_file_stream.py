@@ -2,10 +2,9 @@ import os
 import struct
 import time
 import wave
-
 import pytest
-
 import coremusic as cm
+import coremusic.capi as capi
 
 
 class TestAudioFileStreamConstants:
@@ -13,47 +12,67 @@ class TestAudioFileStreamConstants:
 
     def test_audio_file_stream_property_constants(self):
         """Test AudioFileStream property constants"""
-        assert cm.get_audio_file_stream_property_ready_to_produce_packets() is not None
-        assert cm.get_audio_file_stream_property_file_format() is not None
-        assert cm.get_audio_file_stream_property_data_format() is not None
-        assert cm.get_audio_file_stream_property_format_list() is not None
-        assert cm.get_audio_file_stream_property_magic_cookie_data() is not None
-        assert cm.get_audio_file_stream_property_audio_data_byte_count() is not None
-        assert cm.get_audio_file_stream_property_audio_data_packet_count() is not None
-        assert cm.get_audio_file_stream_property_maximum_packet_size() is not None
-        assert cm.get_audio_file_stream_property_data_offset() is not None
-        assert cm.get_audio_file_stream_property_channel_layout() is not None
-        assert cm.get_audio_file_stream_property_packet_to_frame() is not None
-        assert cm.get_audio_file_stream_property_frame_to_packet() is not None
-        assert cm.get_audio_file_stream_property_packet_to_byte() is not None
-        assert cm.get_audio_file_stream_property_byte_to_packet() is not None
-        assert cm.get_audio_file_stream_property_packet_table_info() is not None
-        assert cm.get_audio_file_stream_property_packet_size_upper_bound() is not None
-        assert cm.get_audio_file_stream_property_average_bytes_per_packet() is not None
-        assert cm.get_audio_file_stream_property_bit_rate() is not None
-        assert cm.get_audio_file_stream_property_info_dictionary() is not None
+        assert capi.get_audio_file_stream_property_ready_to_produce_packets(
+            ) is not None
+        assert capi.get_audio_file_stream_property_file_format() is not None
+        assert capi.get_audio_file_stream_property_data_format() is not None
+        assert capi.get_audio_file_stream_property_format_list() is not None
+        assert capi.get_audio_file_stream_property_magic_cookie_data(
+            ) is not None
+        assert capi.get_audio_file_stream_property_audio_data_byte_count(
+            ) is not None
+        assert capi.get_audio_file_stream_property_audio_data_packet_count(
+            ) is not None
+        assert capi.get_audio_file_stream_property_maximum_packet_size(
+            ) is not None
+        assert capi.get_audio_file_stream_property_data_offset() is not None
+        assert capi.get_audio_file_stream_property_channel_layout() is not None
+        assert capi.get_audio_file_stream_property_packet_to_frame(
+            ) is not None
+        assert capi.get_audio_file_stream_property_frame_to_packet(
+            ) is not None
+        assert capi.get_audio_file_stream_property_packet_to_byte() is not None
+        assert capi.get_audio_file_stream_property_byte_to_packet() is not None
+        assert capi.get_audio_file_stream_property_packet_table_info(
+            ) is not None
+        assert capi.get_audio_file_stream_property_packet_size_upper_bound(
+            ) is not None
+        assert capi.get_audio_file_stream_property_average_bytes_per_packet(
+            ) is not None
+        assert capi.get_audio_file_stream_property_bit_rate() is not None
+        assert capi.get_audio_file_stream_property_info_dictionary(
+            ) is not None
 
     def test_audio_file_stream_flag_constants(self):
         """Test AudioFileStream flag constants"""
-        assert cm.get_audio_file_stream_property_flag_property_is_cached() is not None
-        assert cm.get_audio_file_stream_property_flag_cache_property() is not None
-        assert cm.get_audio_file_stream_parse_flag_discontinuity() is not None
-        assert cm.get_audio_file_stream_seek_flag_offset_is_estimated() is not None
+        assert capi.get_audio_file_stream_property_flag_property_is_cached(
+            ) is not None
+        assert capi.get_audio_file_stream_property_flag_cache_property(
+            ) is not None
+        assert capi.get_audio_file_stream_parse_flag_discontinuity(
+            ) is not None
+        assert capi.get_audio_file_stream_seek_flag_offset_is_estimated(
+            ) is not None
 
     def test_audio_file_stream_error_constants(self):
         """Test AudioFileStream error constants"""
-        assert cm.get_audio_file_stream_error_unsupported_file_type() is not None
-        assert cm.get_audio_file_stream_error_unsupported_data_format() is not None
-        assert cm.get_audio_file_stream_error_unsupported_property() is not None
-        assert cm.get_audio_file_stream_error_bad_property_size() is not None
-        assert cm.get_audio_file_stream_error_not_optimized() is not None
-        assert cm.get_audio_file_stream_error_invalid_packet_offset() is not None
-        assert cm.get_audio_file_stream_error_invalid_file() is not None
-        assert cm.get_audio_file_stream_error_value_unknown() is not None
-        assert cm.get_audio_file_stream_error_data_unavailable() is not None
-        assert cm.get_audio_file_stream_error_illegal_operation() is not None
-        assert cm.get_audio_file_stream_error_unspecified_error() is not None
-        assert cm.get_audio_file_stream_error_discontinuity_cant_recover() is not None
+        assert capi.get_audio_file_stream_error_unsupported_file_type(
+            ) is not None
+        assert capi.get_audio_file_stream_error_unsupported_data_format(
+            ) is not None
+        assert capi.get_audio_file_stream_error_unsupported_property(
+            ) is not None
+        assert capi.get_audio_file_stream_error_bad_property_size() is not None
+        assert capi.get_audio_file_stream_error_not_optimized() is not None
+        assert capi.get_audio_file_stream_error_invalid_packet_offset(
+            ) is not None
+        assert capi.get_audio_file_stream_error_invalid_file() is not None
+        assert capi.get_audio_file_stream_error_value_unknown() is not None
+        assert capi.get_audio_file_stream_error_data_unavailable() is not None
+        assert capi.get_audio_file_stream_error_illegal_operation() is not None
+        assert capi.get_audio_file_stream_error_unspecified_error() is not None
+        assert capi.get_audio_file_stream_error_discontinuity_cant_recover(
+            ) is not None
 
 
 class TestAudioFileStreamBasicOperations:
@@ -61,40 +80,31 @@ class TestAudioFileStreamBasicOperations:
 
     def test_audio_file_stream_open_close(self):
         """Test opening and closing an AudioFileStream"""
-        # Test opening without file type hint
-        stream_id = cm.audio_file_stream_open()
+        stream_id = capi.audio_file_stream_open()
         assert isinstance(stream_id, int)
         assert stream_id != 0
-
-        # Test closing
-        result = cm.audio_file_stream_close(stream_id)
-        assert result == 0  # noErr
-
-        # Test opening with file type hint
-        wav_type = cm.get_audio_file_wave_type()
-        stream_id = cm.audio_file_stream_open(wav_type)
+        result = capi.audio_file_stream_close(stream_id)
+        assert result == 0
+        wav_type = capi.get_audio_file_wave_type()
+        stream_id = capi.audio_file_stream_open(wav_type)
         assert isinstance(stream_id, int)
         assert stream_id != 0
-
-        result = cm.audio_file_stream_close(stream_id)
+        result = capi.audio_file_stream_close(stream_id)
         assert result == 0
 
     def test_audio_file_stream_parse_empty_data(self):
         """Test parsing empty data through AudioFileStream"""
-        stream_id = cm.audio_file_stream_open()
-
+        stream_id = capi.audio_file_stream_open()
         try:
-            # Parse empty bytes should work (no-op)
-            result = cm.audio_file_stream_parse_bytes(stream_id, b"")
+            result = capi.audio_file_stream_parse_bytes(stream_id, b'')
             assert result == 0
-
-            # Parse with discontinuity flag
-            discontinuity_flag = cm.get_audio_file_stream_parse_flag_discontinuity()
-            result = cm.audio_file_stream_parse_bytes(stream_id, b"", discontinuity_flag)
+            discontinuity_flag = (capi.
+                get_audio_file_stream_parse_flag_discontinuity())
+            result = capi.audio_file_stream_parse_bytes(stream_id, b'',
+                discontinuity_flag)
             assert result == 0
-
         finally:
-            cm.audio_file_stream_close(stream_id)
+            capi.audio_file_stream_close(stream_id)
 
 
 class TestAudioFileStreamWithWaveFile:
@@ -104,9 +114,9 @@ class TestAudioFileStreamWithWaveFile:
     def wav_file_path(self):
         """Path to test WAV file"""
         test_dir = os.path.dirname(os.path.abspath(__file__))
-        wav_path = os.path.join(test_dir, "amen.wav")
+        wav_path = os.path.join(test_dir, 'amen.wav')
         if not os.path.exists(wav_path):
-            pytest.skip(f"Test WAV file not found: {wav_path}")
+            pytest.skip(f'Test WAV file not found: {wav_path}')
         return wav_path
 
     @pytest.fixture
@@ -117,113 +127,78 @@ class TestAudioFileStreamWithWaveFile:
 
     def test_audio_file_stream_parse_wav_header(self, wav_data):
         """Test parsing WAV file header through AudioFileStream"""
-        stream_id = cm.audio_file_stream_open(cm.get_audio_file_wave_type())
-
+        stream_id = capi.audio_file_stream_open(capi.get_audio_file_wave_type()
+            )
         try:
-            # Parse the first chunk of WAV data (header)
-            header_chunk = wav_data[:1024]  # First 1KB should contain header
-            result = cm.audio_file_stream_parse_bytes(stream_id, header_chunk)
-            assert result == 0
-
-            # Try to get basic properties after parsing header
-            # Note: These might not be available immediately after header parsing
-            # depending on WAV file structure, but the calls should not crash
-            try:
-                ready = cm.audio_file_stream_get_property(
-                    stream_id,
-                    cm.get_audio_file_stream_property_ready_to_produce_packets()
+            header_chunk = wav_data[:1024]
+            result = capi.audio_file_stream_parse_bytes(stream_id, header_chunk
                 )
+            assert result == 0
+            try:
+                ready = capi.audio_file_stream_get_property(stream_id, capi
+                    .get_audio_file_stream_property_ready_to_produce_packets())
                 assert isinstance(ready, int)
             except RuntimeError:
-                # Property might not be available yet - this is ok
                 pass
-
             try:
-                file_format = cm.audio_file_stream_get_property(
-                    stream_id,
-                    cm.get_audio_file_stream_property_file_format()
-                )
+                file_format = capi.audio_file_stream_get_property(stream_id,
+                    capi.get_audio_file_stream_property_file_format())
                 assert isinstance(file_format, int)
-                # Should match WAVE fourcc
-                assert file_format == cm.get_audio_file_wave_type()
+                assert file_format == capi.get_audio_file_wave_type()
             except RuntimeError:
-                # Property might not be available yet - this is ok
                 pass
-
         finally:
-            cm.audio_file_stream_close(stream_id)
+            capi.audio_file_stream_close(stream_id)
 
     def test_audio_file_stream_incremental_parsing(self, wav_data):
         """Test incremental parsing of WAV file data"""
-        stream_id = cm.audio_file_stream_open(cm.get_audio_file_wave_type())
-
+        stream_id = capi.audio_file_stream_open(capi.get_audio_file_wave_type()
+            )
         try:
-            # Parse data in chunks
             chunk_size = 512
-            for i in range(0, min(len(wav_data), 4096), chunk_size):  # Parse first 4KB
+            for i in range(0, min(len(wav_data), 4096), chunk_size):
                 chunk = wav_data[i:i + chunk_size]
                 if chunk:
-                    result = cm.audio_file_stream_parse_bytes(stream_id, chunk)
+                    result = capi.audio_file_stream_parse_bytes(stream_id,
+                        chunk)
                     assert result == 0
-
-            # After parsing some data, try to get properties
             try:
-                file_format = cm.audio_file_stream_get_property(
-                    stream_id,
-                    cm.get_audio_file_stream_property_file_format()
-                )
-                assert file_format == cm.get_audio_file_wave_type()
+                file_format = capi.audio_file_stream_get_property(stream_id,
+                    capi.get_audio_file_stream_property_file_format())
+                assert file_format == capi.get_audio_file_wave_type()
             except RuntimeError:
-                # Property might not be available - acceptable for streaming
                 pass
-
         finally:
-            cm.audio_file_stream_close(stream_id)
+            capi.audio_file_stream_close(stream_id)
 
     def test_audio_file_stream_data_format_property(self, wav_data):
         """Test getting data format property from parsed WAV data"""
-        stream_id = cm.audio_file_stream_open(cm.get_audio_file_wave_type())
-
+        stream_id = capi.audio_file_stream_open(capi.get_audio_file_wave_type()
+            )
         try:
-            # Parse enough data to get format information
-            # WAV files typically have format info early in the file
-            result = cm.audio_file_stream_parse_bytes(stream_id, wav_data[:2048])
+            result = capi.audio_file_stream_parse_bytes(stream_id, wav_data
+                [:2048])
             assert result == 0
-
-            # Try to get the data format
             try:
-                data_format = cm.audio_file_stream_get_property(
-                    stream_id,
-                    cm.get_audio_file_stream_property_data_format()
-                )
-
-                # Should return a dictionary with AudioStreamBasicDescription fields
+                data_format = capi.audio_file_stream_get_property(stream_id,
+                    capi.get_audio_file_stream_property_data_format())
                 assert isinstance(data_format, dict)
-
-                # Check required fields
-                required_fields = [
-                    'sample_rate', 'format_id', 'format_flags',
-                    'bytes_per_packet', 'frames_per_packet', 'bytes_per_frame',
-                    'channels_per_frame', 'bits_per_channel', 'reserved'
-                ]
-
+                required_fields = ['sample_rate', 'format_id',
+                    'format_flags', 'bytes_per_packet', 'frames_per_packet',
+                    'bytes_per_frame', 'channels_per_frame',
+                    'bits_per_channel', 'reserved']
                 for field in required_fields:
                     assert field in data_format
                     assert isinstance(data_format[field], (int, float))
-
-                # Verify reasonable values for WAV file
                 assert data_format['sample_rate'] > 0
-                assert data_format['format_id'] == cm.get_audio_format_linear_pcm()
+                assert data_format['format_id'
+                    ] == capi.get_audio_format_linear_pcm()
                 assert data_format['channels_per_frame'] > 0
                 assert data_format['bits_per_channel'] > 0
-
             except RuntimeError as e:
-                # If data format is not available yet, that's acceptable
-                # but the error should be a known CoreAudio error
-                print(f"Data format not yet available: {e}")
-
+                print(f'Data format not yet available: {e}')
         finally:
-            cm.audio_file_stream_close(stream_id)
+            capi.audio_file_stream_close(stream_id)
 
 
 class TestAudioFileStreamSeek:
@@ -231,12 +206,10 @@ class TestAudioFileStreamSeek:
 
     def test_audio_file_stream_seek_operations(self):
         """Test seek operations on AudioFileStream"""
-        stream_id = cm.audio_file_stream_open()
-
+        stream_id = capi.audio_file_stream_open()
         try:
-            # Test seeking to packet 0
             try:
-                seek_result = cm.audio_file_stream_seek(stream_id, 0)
+                seek_result = capi.audio_file_stream_seek(stream_id, 0)
                 assert isinstance(seek_result, dict)
                 assert 'byte_offset' in seek_result
                 assert 'flags' in seek_result
@@ -245,11 +218,9 @@ class TestAudioFileStreamSeek:
                 assert isinstance(seek_result['flags'], int)
                 assert isinstance(seek_result['is_estimated'], bool)
             except RuntimeError:
-                # Seeking might not be supported without parsed data - this is ok
                 pass
-
         finally:
-            cm.audio_file_stream_close(stream_id)
+            capi.audio_file_stream_close(stream_id)
 
 
 class TestAudioFileStreamPropertyInfo:
@@ -257,30 +228,16 @@ class TestAudioFileStreamPropertyInfo:
 
     def test_audio_file_stream_property_access_behavior(self):
         """Test property access behavior before parsing data"""
-        stream_id = cm.audio_file_stream_open()
-
+        stream_id = capi.audio_file_stream_open()
         try:
-            # Ready to produce packets should be available and return 0 (not ready)
-            ready = cm.audio_file_stream_get_property(
-                stream_id,
-                cm.get_audio_file_stream_property_ready_to_produce_packets()
-            )
-            assert ready == 0  # Not ready to produce packets yet
-
-            # File format should not be available yet and raise RuntimeError
+            ready = capi.audio_file_stream_get_property(stream_id, capi.
+                get_audio_file_stream_property_ready_to_produce_packets())
+            assert ready == 0
             with pytest.raises(RuntimeError):
-                cm.audio_file_stream_get_property(
-                    stream_id,
-                    cm.get_audio_file_stream_property_file_format()
-                )
-
-            # Data format should not be available yet and raise RuntimeError
+                capi.audio_file_stream_get_property(stream_id, capi.
+                    get_audio_file_stream_property_file_format())
             with pytest.raises(RuntimeError):
-                cm.audio_file_stream_get_property(
-                    stream_id,
-                    cm.get_audio_file_stream_property_data_format()
-                )
-
+                capi.audio_file_stream_get_property(stream_id, capi.
+                    get_audio_file_stream_property_data_format())
         finally:
-            cm.audio_file_stream_close(stream_id)
-
+            capi.audio_file_stream_close(stream_id)

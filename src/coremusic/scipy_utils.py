@@ -38,6 +38,7 @@ import warnings
 try:
     import numpy as np
     from numpy.typing import NDArray
+
     NUMPY_AVAILABLE = True
 except ImportError:
     NUMPY_AVAILABLE = False
@@ -48,6 +49,7 @@ except ImportError:
 try:
     import scipy.signal
     import scipy.fft
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
@@ -58,8 +60,7 @@ def _require_scipy(func_name: str = "this function"):
     """Raise ImportError if SciPy is not available."""
     if not SCIPY_AVAILABLE:
         raise ImportError(
-            f"SciPy is required to use {func_name}. "
-            "Install it with: pip install scipy"
+            f"SciPy is required to use {func_name}. Install it with: pip install scipy"
         )
 
 
@@ -67,8 +68,7 @@ def _require_numpy(func_name: str = "this function"):
     """Raise ImportError if NumPy is not available."""
     if not NUMPY_AVAILABLE:
         raise ImportError(
-            f"NumPy is required to use {func_name}. "
-            "Install it with: pip install numpy"
+            f"NumPy is required to use {func_name}. Install it with: pip install numpy"
         )
 
 
@@ -77,34 +77,35 @@ def _require_numpy(func_name: str = "this function"):
 # ============================================================================
 
 __all__ = [
-    'SCIPY_AVAILABLE',
+    "SCIPY_AVAILABLE",
     # Filter design
-    'design_butterworth_filter',
-    'design_chebyshev_filter',
+    "design_butterworth_filter",
+    "design_chebyshev_filter",
     # Filter application
-    'apply_filter',
-    'apply_lowpass_filter',
-    'apply_highpass_filter',
-    'apply_bandpass_filter',
+    "apply_filter",
+    "apply_lowpass_filter",
+    "apply_highpass_filter",
+    "apply_bandpass_filter",
     # Resampling
-    'resample_audio',
+    "resample_audio",
     # Spectral analysis
-    'compute_spectrum',
-    'compute_fft',
-    'compute_spectrogram',
+    "compute_spectrum",
+    "compute_fft",
+    "compute_spectrogram",
     # High-level processor
-    'AudioSignalProcessor',
+    "AudioSignalProcessor",
 ]
 
 # ============================================================================
 # Filter Design Utilities
 # ============================================================================
 
+
 def design_butterworth_filter(
     cutoff: Union[float, Tuple[float, float]],
     sample_rate: float,
     order: int = 5,
-    filter_type: Literal['lowpass', 'highpass', 'bandpass', 'bandstop'] = 'lowpass'
+    filter_type: Literal["lowpass", "highpass", "bandpass", "bandstop"] = "lowpass",
 ) -> Tuple[NDArray, NDArray]:
     """Design a Butterworth filter.
 
@@ -140,7 +141,9 @@ def design_butterworth_filter(
     else:
         normalized_cutoff = cutoff / nyquist
 
-    b, a = scipy.signal.butter(order, normalized_cutoff, btype=filter_type, analog=False)
+    b, a = scipy.signal.butter(
+        order, normalized_cutoff, btype=filter_type, analog=False
+    )
     return b, a
 
 
@@ -149,7 +152,7 @@ def design_chebyshev_filter(
     sample_rate: float,
     order: int = 5,
     ripple_db: float = 0.5,
-    filter_type: Literal['lowpass', 'highpass', 'bandpass', 'bandstop'] = 'lowpass'
+    filter_type: Literal["lowpass", "highpass", "bandpass", "bandstop"] = "lowpass",
 ) -> Tuple[NDArray, NDArray]:
     """Design a Chebyshev Type I filter.
 
@@ -175,8 +178,9 @@ def design_chebyshev_filter(
     else:
         normalized_cutoff = cutoff / nyquist
 
-    b, a = scipy.signal.cheby1(order, ripple_db, normalized_cutoff,
-                               btype=filter_type, analog=False)
+    b, a = scipy.signal.cheby1(
+        order, ripple_db, normalized_cutoff, btype=filter_type, analog=False
+    )
     return b, a
 
 
@@ -184,11 +188,9 @@ def design_chebyshev_filter(
 # Filter Application
 # ============================================================================
 
+
 def apply_filter(
-    audio_data: NDArray,
-    b: NDArray,
-    a: NDArray,
-    zero_phase: bool = True
+    audio_data: NDArray, b: NDArray, a: NDArray, zero_phase: bool = True
 ) -> NDArray:
     """Apply a digital filter to audio data.
 
@@ -237,7 +239,7 @@ def apply_filter(
 def apply_scipy_filter(
     audio_data: NDArray,
     filter_output: Union[Tuple[NDArray, NDArray], Any],
-    zero_phase: bool = True
+    zero_phase: bool = True,
 ) -> NDArray:
     """Apply a filter designed by scipy.signal functions directly.
 
@@ -284,8 +286,10 @@ def apply_scipy_filter(
     if isinstance(filter_output, tuple) and len(filter_output) == 2:
         b, a = filter_output
         # Ensure they are arrays
-        if not (hasattr(b, '__len__') and hasattr(a, '__len__')):
-            raise ValueError("filter_output must contain array-like b and a coefficients")
+        if not (hasattr(b, "__len__") and hasattr(a, "__len__")):
+            raise ValueError(
+                "filter_output must contain array-like b and a coefficients"
+            )
     else:
         raise ValueError(
             "filter_output must be a (b, a) tuple from scipy.signal filter design functions. "
@@ -297,10 +301,7 @@ def apply_scipy_filter(
 
 
 def apply_lowpass_filter(
-    audio_data: NDArray,
-    cutoff: float,
-    sample_rate: float,
-    order: int = 5
+    audio_data: NDArray, cutoff: float, sample_rate: float, order: int = 5
 ) -> NDArray:
     """Apply a lowpass filter to audio data.
 
@@ -322,15 +323,12 @@ def apply_lowpass_filter(
     Raises:
         ImportError: If SciPy is not installed
     """
-    b, a = design_butterworth_filter(cutoff, sample_rate, order, 'lowpass')
+    b, a = design_butterworth_filter(cutoff, sample_rate, order, "lowpass")
     return apply_filter(audio_data, b, a, zero_phase=True)
 
 
 def apply_highpass_filter(
-    audio_data: NDArray,
-    cutoff: float,
-    sample_rate: float,
-    order: int = 5
+    audio_data: NDArray, cutoff: float, sample_rate: float, order: int = 5
 ) -> NDArray:
     """Apply a highpass filter to audio data.
 
@@ -352,7 +350,7 @@ def apply_highpass_filter(
     Raises:
         ImportError: If SciPy is not installed
     """
-    b, a = design_butterworth_filter(cutoff, sample_rate, order, 'highpass')
+    b, a = design_butterworth_filter(cutoff, sample_rate, order, "highpass")
     return apply_filter(audio_data, b, a, zero_phase=True)
 
 
@@ -361,7 +359,7 @@ def apply_bandpass_filter(
     lowcut: float,
     highcut: float,
     sample_rate: float,
-    order: int = 5
+    order: int = 5,
 ) -> NDArray:
     """Apply a bandpass filter to audio data.
 
@@ -385,7 +383,7 @@ def apply_bandpass_filter(
     Raises:
         ImportError: If SciPy is not installed
     """
-    b, a = design_butterworth_filter((lowcut, highcut), sample_rate, order, 'bandpass')
+    b, a = design_butterworth_filter((lowcut, highcut), sample_rate, order, "bandpass")
     return apply_filter(audio_data, b, a, zero_phase=True)
 
 
@@ -393,11 +391,12 @@ def apply_bandpass_filter(
 # Resampling
 # ============================================================================
 
+
 def resample_audio(
     audio_data: NDArray,
     original_rate: float,
     target_rate: float,
-    method: Literal['fft', 'polyphase'] = 'fft'
+    method: Literal["fft", "polyphase"] = "fft",
 ) -> NDArray:
     """Resample audio to a different sample rate using SciPy.
 
@@ -434,7 +433,7 @@ def resample_audio(
     # Calculate number of samples in resampled signal
     num_samples = int(len(audio_data) * target_rate / original_rate)
 
-    if method == 'fft':
+    if method == "fft":
         # Handle multi-channel audio
         if audio_data.ndim == 1:
             return scipy.signal.resample(audio_data, num_samples)
@@ -446,9 +445,10 @@ def resample_audio(
         else:
             raise ValueError(f"Audio data must be 1D or 2D, got {audio_data.ndim}D")
 
-    elif method == 'polyphase':
+    elif method == "polyphase":
         # Compute rational approximation of rate ratio
         from fractions import Fraction
+
         ratio = Fraction(target_rate / original_rate).limit_denominator(1000)
         up = ratio.numerator
         down = ratio.denominator
@@ -458,7 +458,9 @@ def resample_audio(
         elif audio_data.ndim == 2:
             resampled = np.zeros((num_samples, audio_data.shape[1]))
             for ch in range(audio_data.shape[1]):
-                resampled[:, ch] = scipy.signal.resample_poly(audio_data[:, ch], up, down)
+                resampled[:, ch] = scipy.signal.resample_poly(
+                    audio_data[:, ch], up, down
+                )
             return resampled
         else:
             raise ValueError(f"Audio data must be 1D or 2D, got {audio_data.ndim}D")
@@ -471,11 +473,12 @@ def resample_audio(
 # Spectral Analysis
 # ============================================================================
 
+
 def compute_spectrum(
     audio_data: NDArray,
     sample_rate: float,
-    window: Optional[str] = 'hann',
-    nperseg: Optional[int] = None
+    window: Optional[str] = "hann",
+    nperseg: Optional[int] = None,
 ) -> Tuple[NDArray, NDArray]:
     """Compute the frequency spectrum of audio data.
 
@@ -517,17 +520,15 @@ def compute_spectrum(
     frequencies, spectrum = scipy.signal.welch(
         audio_data,
         fs=sample_rate,
-        window=window if window else 'boxcar',
-        nperseg=nperseg
+        window=window if window else "boxcar",
+        nperseg=nperseg,
     )
 
     return frequencies, spectrum
 
 
 def compute_fft(
-    audio_data: NDArray,
-    sample_rate: float,
-    window: Optional[str] = 'hann'
+    audio_data: NDArray, sample_rate: float, window: Optional[str] = "hann"
 ) -> Tuple[NDArray, NDArray]:
     """Compute the Fast Fourier Transform of audio data.
 
@@ -578,9 +579,9 @@ def compute_fft(
 def compute_spectrogram(
     audio_data: NDArray,
     sample_rate: float,
-    window: str = 'hann',
+    window: str = "hann",
     nperseg: int = 256,
-    noverlap: Optional[int] = None
+    noverlap: Optional[int] = None,
 ) -> Tuple[NDArray, NDArray, NDArray]:
     """Compute spectrogram of audio data.
 
@@ -620,11 +621,7 @@ def compute_spectrogram(
         audio_data = audio_data[:, 0]
 
     frequencies, times, spectrogram = scipy.signal.spectrogram(
-        audio_data,
-        fs=sample_rate,
-        window=window,
-        nperseg=nperseg,
-        noverlap=noverlap
+        audio_data, fs=sample_rate, window=window, nperseg=nperseg, noverlap=noverlap
     )
 
     return frequencies, times, spectrogram
@@ -633,6 +630,7 @@ def compute_spectrogram(
 # ============================================================================
 # AudioSignalProcessor Class
 # ============================================================================
+
 
 class AudioSignalProcessor:
     """High-level audio signal processing interface using SciPy.
@@ -677,7 +675,7 @@ class AudioSignalProcessor:
         self.sample_rate = float(sample_rate)
         self._original_data = audio_data.copy()
 
-    def lowpass(self, cutoff: float, order: int = 5) -> 'AudioSignalProcessor':
+    def lowpass(self, cutoff: float, order: int = 5) -> "AudioSignalProcessor":
         """Apply lowpass filter (chainable).
 
         Args:
@@ -687,11 +685,12 @@ class AudioSignalProcessor:
         Returns:
             Self for method chaining
         """
-        self.audio_data = apply_lowpass_filter(self.audio_data, cutoff,
-                                              self.sample_rate, order)
+        self.audio_data = apply_lowpass_filter(
+            self.audio_data, cutoff, self.sample_rate, order
+        )
         return self
 
-    def highpass(self, cutoff: float, order: int = 5) -> 'AudioSignalProcessor':
+    def highpass(self, cutoff: float, order: int = 5) -> "AudioSignalProcessor":
         """Apply highpass filter (chainable).
 
         Args:
@@ -701,11 +700,14 @@ class AudioSignalProcessor:
         Returns:
             Self for method chaining
         """
-        self.audio_data = apply_highpass_filter(self.audio_data, cutoff,
-                                               self.sample_rate, order)
+        self.audio_data = apply_highpass_filter(
+            self.audio_data, cutoff, self.sample_rate, order
+        )
         return self
 
-    def bandpass(self, lowcut: float, highcut: float, order: int = 5) -> 'AudioSignalProcessor':
+    def bandpass(
+        self, lowcut: float, highcut: float, order: int = 5
+    ) -> "AudioSignalProcessor":
         """Apply bandpass filter (chainable).
 
         Args:
@@ -716,11 +718,14 @@ class AudioSignalProcessor:
         Returns:
             Self for method chaining
         """
-        self.audio_data = apply_bandpass_filter(self.audio_data, lowcut, highcut,
-                                               self.sample_rate, order)
+        self.audio_data = apply_bandpass_filter(
+            self.audio_data, lowcut, highcut, self.sample_rate, order
+        )
         return self
 
-    def resample(self, target_rate: float, method: str = 'fft') -> 'AudioSignalProcessor':
+    def resample(
+        self, target_rate: float, method: str = "fft"
+    ) -> "AudioSignalProcessor":
         """Resample audio to different sample rate (chainable).
 
         Args:
@@ -730,12 +735,13 @@ class AudioSignalProcessor:
         Returns:
             Self for method chaining
         """
-        self.audio_data = resample_audio(self.audio_data, self.sample_rate,
-                                        target_rate, method)
+        self.audio_data = resample_audio(
+            self.audio_data, self.sample_rate, target_rate, method
+        )
         self.sample_rate = target_rate
         return self
 
-    def normalize(self, target_level: float = 1.0) -> 'AudioSignalProcessor':
+    def normalize(self, target_level: float = 1.0) -> "AudioSignalProcessor":
         """Normalize audio to target level (chainable).
 
         Args:
@@ -765,7 +771,7 @@ class AudioSignalProcessor:
         """
         return self.sample_rate
 
-    def reset(self) -> 'AudioSignalProcessor':
+    def reset(self) -> "AudioSignalProcessor":
         """Reset to original audio data (chainable).
 
         Returns:
@@ -806,5 +812,3 @@ class AudioSignalProcessor:
             Tuple of (frequencies, times, spectrogram)
         """
         return compute_spectrogram(self.audio_data, self.sample_rate, **kwargs)
-
-

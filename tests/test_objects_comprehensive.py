@@ -1,10 +1,8 @@
-#!/usr/bin/env python3
 """Comprehensive tests for the object-oriented coremusic API functionality."""
-
 import pytest
 import os
-
 import coremusic as cm
+import coremusic.capi as capi
 
 
 class TestObjectOrientedAPIFunctionality:
@@ -12,10 +10,8 @@ class TestObjectOrientedAPIFunctionality:
 
     def test_audio_format_functionality(self):
         """Test AudioFormat class functionality"""
-        # Test creation
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
-
-        # Test properties
+        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
+            bits_per_channel=16)
         assert format.is_pcm
         assert format.is_stereo
         assert not format.is_mono
@@ -23,294 +19,213 @@ class TestObjectOrientedAPIFunctionality:
         assert format.format_id == 'lpcm'
         assert format.channels_per_frame == 2
         assert format.bits_per_channel == 16
-
-        # Test repr
         repr_str = repr(format)
         assert 'AudioFormat' in repr_str
         assert '44100.0' in repr_str
 
     def test_exception_hierarchy_functionality(self):
         """Test exception hierarchy functionality"""
-        # Test basic exception
         try:
-            raise cm.CoreAudioError("Test error", 42)
+            raise cm.CoreAudioError('Test error', 42)
         except cm.CoreAudioError as e:
-            assert str(e) == "Test error"
+            assert str(e) == 'Test error'
             assert e.status_code == 42
-
-        # Test derived exceptions
         with pytest.raises(cm.AudioFileError):
-            raise cm.AudioFileError("File error")
-
-        with pytest.raises(cm.CoreAudioError):  # Should catch derived exception
-            raise cm.MIDIError("MIDI error")
+            raise cm.AudioFileError('File error')
+        with pytest.raises(cm.CoreAudioError):
+            raise cm.MIDIError('MIDI error')
 
     def test_core_audio_object_functionality(self):
         """Test CoreAudioObject base functionality"""
         obj = cm.CoreAudioObject()
-
-        # Test initial state
         assert not obj.is_disposed
-
-        # Test disposal
         obj.dispose()
         assert obj.is_disposed
-
-        # Test disposed check
-        with pytest.raises(RuntimeError, match="has been disposed"):
+        with pytest.raises(RuntimeError, match='has been disposed'):
             obj._ensure_not_disposed()
 
     @pytest.fixture
     def amen_wav_path(self):
         """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
+        path = os.path.join('tests', 'amen.wav')
         if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
+            pytest.skip(f'Test audio file not found: {path}')
         return path
 
     def test_audio_file_functionality(self, amen_wav_path):
         """Test AudioFile functionality with real file"""
-        # Test context manager
         with cm.AudioFile(amen_wav_path) as audio_file:
             assert isinstance(audio_file, cm.AudioFile)
             assert not audio_file.is_disposed
-
-            # Test format property
             format = audio_file.format
             assert isinstance(format, cm.AudioFormat)
-
-            # Test reading packets
             data, packet_count = audio_file.read_packets(0, 10)
             assert isinstance(data, bytes)
             assert isinstance(packet_count, int)
             assert len(data) > 0
-
-        # Should be disposed after context
         assert audio_file.is_disposed
 
     def test_audio_file_stream_functionality(self):
         """Test AudioFileStream functionality"""
         stream = cm.AudioFileStream()
-
-        # Test opening and closing
         stream.open()
         assert not stream.is_disposed
-
-        # Test ready property
         ready = stream.ready_to_produce_packets
         assert isinstance(ready, bool)
-
         stream.close()
         assert stream.is_disposed
 
     def test_audio_queue_functionality(self):
         """Test AudioQueue functionality"""
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
-
-        # Test queue creation (may fail in test environment due to no audio hardware)
+        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
+            bits_per_channel=16)
         try:
             queue = cm.AudioQueue.new_output(format)
             assert isinstance(queue, cm.AudioQueue)
             assert not queue.is_disposed
-
             try:
-                # Test buffer allocation
                 buffer = queue.allocate_buffer(1024)
                 assert isinstance(buffer, cm.AudioBuffer)
                 assert buffer.buffer_size == 1024
-
-                # Test buffer operations
                 queue.enqueue_buffer(buffer)
-
-                # Test playbook control (may fail without audio hardware)
                 try:
                     queue.start()
                     queue.stop()
                 except cm.AudioQueueError:
-                    pass  # Expected in test environment
-
+                    pass
             finally:
                 queue.dispose()
                 assert queue.is_disposed
-
         except cm.AudioQueueError as e:
-            # Expected in test environment without audio hardware
-            if "status: -50" in str(e):
-                pytest.skip("AudioQueue creation failed - no audio hardware available")
+            if 'status: -50' in str(e):
+                pytest.skip(
+                    'AudioQueue creation failed - no audio hardware available')
             else:
                 raise
 
     def test_audio_component_description_functionality(self):
         """Test AudioComponentDescription functionality"""
-        desc = cm.AudioComponentDescription('auou', 'def ', 'appl', flags=1, flags_mask=2)
-
+        desc = cm.AudioComponentDescription('auou', 'def ', 'appl', flags=1,
+            flags_mask=2)
         assert desc.type == 'auou'
         assert desc.subtype == 'def '
         assert desc.manufacturer == 'appl'
         assert desc.flags == 1
         assert desc.flags_mask == 2
-
-        # Test dict conversion (converts fourcc strings to integers)
         dict_repr = desc.to_dict()
-        expected = {
-            'type': cm.fourchar_to_int('auou'),
-            'subtype': cm.fourchar_to_int('def '),
-            'manufacturer': cm.fourchar_to_int('appl'),
-            'flags': 1,
-            'flags_mask': 2
-        }
+        expected = {'type': capi.fourchar_to_int('auou'), 'subtype': capi.
+            fourchar_to_int('def '), 'manufacturer': capi.fourchar_to_int(
+            'appl'), 'flags': 1, 'flags_mask': 2}
         assert dict_repr == expected
 
     def test_audio_unit_functionality(self):
         """Test AudioUnit functionality"""
         try:
-            # Test default output creation
             unit = cm.AudioUnit.default_output()
             assert isinstance(unit, cm.AudioUnit)
             assert not unit.is_disposed
             assert not unit.is_initialized
-
-            # Test context manager
             with unit:
                 assert unit.is_initialized
-
-            # Should be uninitialized and disposed after context
             assert not unit.is_initialized
             assert unit.is_disposed
-
         except cm.AudioUnitError as e:
-            if "not found" in str(e):
-                pytest.skip("Default output AudioUnit not available in test environment")
+            if 'not found' in str(e):
+                pytest.skip(
+                    'Default output AudioUnit not available in test environment'
+                    )
             else:
                 raise
 
     def test_midi_client_functionality(self):
         """Test MIDIClient functionality"""
-        client = cm.MIDIClient("Test Client")
+        client = cm.MIDIClient('Test Client')
         assert isinstance(client, cm.MIDIClient)
-        assert client.name == "Test Client"
+        assert client.name == 'Test Client'
         assert not client.is_disposed
-
         try:
-            # Test port creation
-            input_port = client.create_input_port("Test Input")
-            output_port = client.create_output_port("Test Output")
-
+            input_port = client.create_input_port('Test Input')
+            output_port = client.create_output_port('Test Output')
             assert isinstance(input_port, cm.MIDIInputPort)
             assert isinstance(output_port, cm.MIDIOutputPort)
-            assert input_port.name == "Test Input"
-            assert output_port.name == "Test Output"
-
+            assert input_port.name == 'Test Input'
+            assert output_port.name == 'Test Output'
         finally:
             client.dispose()
             assert client.is_disposed
 
     def test_dual_api_consistency(self, amen_wav_path):
         """Test consistency between functional and OO APIs"""
-        # Test that both APIs can work together
-
-        # Use functional API
-        fourcc_func = cm.fourchar_to_int('TEST')
-
-        # Use OO API
+        fourcc_func = capi.fourchar_to_int('TEST')
         format_oo = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2)
-
-        # Both should work
         assert isinstance(fourcc_func, int)
         assert format_oo.is_pcm
-
-        # Test file operations with both APIs
-        func_file_id = cm.audio_file_open_url(amen_wav_path)
+        func_file_id = capi.audio_file_open_url(amen_wav_path)
         try:
-            func_data, func_count = cm.audio_file_read_packets(func_file_id, 0, 5)
+            func_data, func_count = capi.audio_file_read_packets(func_file_id,
+                0, 5)
         finally:
-            cm.audio_file_close(func_file_id)
-
+            capi.audio_file_close(func_file_id)
         with cm.AudioFile(amen_wav_path) as oo_file:
             oo_data, oo_count = oo_file.read_packets(0, 5)
-
-        # Results should be consistent
         assert func_data == oo_data
         assert func_count == oo_count
 
     def test_error_handling_functionality(self):
         """Test error handling in OO API"""
-        # Test file errors
         with pytest.raises(cm.AudioFileError):
-            with cm.AudioFile("/nonexistent/file.wav"):
+            with cm.AudioFile('/nonexistent/file.wav'):
                 pass
-
-        # Test queue errors
         invalid_format = cm.AudioFormat(0.0, '', channels_per_frame=0)
         with pytest.raises(cm.AudioQueueError):
             cm.AudioQueue.new_output(invalid_format)
-
-        # Test operations on disposed objects
         obj = cm.CoreAudioObject()
         obj.dispose()
-        with pytest.raises(RuntimeError, match="has been disposed"):
+        with pytest.raises(RuntimeError, match='has been disposed'):
             obj._ensure_not_disposed()
 
     def test_resource_management_functionality(self, amen_wav_path):
         """Test proper resource management"""
-        # Create multiple objects and ensure they can be properly disposed
         objects = []
-
-        # Audio files
         for _ in range(3):
             audio_file = cm.AudioFile(amen_wav_path)
             audio_file.open()
             objects.append(audio_file)
-
-        # Audio queues (may fail due to no hardware)
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
+        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
+            bits_per_channel=16)
         for _ in range(3):
             try:
                 queue = cm.AudioQueue.new_output(format)
                 objects.append(queue)
             except cm.AudioQueueError:
-                # Skip queue creation if hardware not available
                 pass
-
-        # MIDI clients
         for i in range(3):
-            client = cm.MIDIClient(f"Test Client {i}")
+            client = cm.MIDIClient(f'Test Client {i}')
             objects.append(client)
-
-        # Dispose all objects
         for obj in objects:
             obj.dispose()
             assert obj.is_disposed
 
     def test_polymorphism_functionality(self):
         """Test polymorphic behavior"""
-        # All these should be CoreAudioObjects
-        objects = [
-            cm.CoreAudioObject(),
-            cm.AudioFile("/dummy/path"),
-            cm.AudioFileStream(),
-        ]
-
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
+        objects = [cm.CoreAudioObject(), cm.AudioFile('/dummy/path'), cm.
+            AudioFileStream()]
+        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
+            bits_per_channel=16)
         try:
             queue = cm.AudioQueue.new_output(format)
             objects.append(queue)
         except cm.AudioQueueError:
-            pass  # Queue creation might fail in test environment
-
+            pass
         try:
-            client = cm.MIDIClient("Test Client")
+            client = cm.MIDIClient('Test Client')
             objects.append(client)
         except cm.MIDIError:
-            pass  # MIDI might not be available
-
-        # Test polymorphic behavior
+            pass
         for obj in objects:
             assert isinstance(obj, cm.CoreAudioObject)
             assert hasattr(obj, 'is_disposed')
             assert hasattr(obj, 'dispose')
             assert hasattr(obj, '_ensure_not_disposed')
-
-            # Clean up
             if not obj.is_disposed:
                 obj.dispose()

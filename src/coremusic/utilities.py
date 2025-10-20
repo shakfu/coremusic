@@ -16,7 +16,6 @@ from pathlib import Path
 import glob
 
 
-
 from .objects import (
     AudioFile,
     AudioConverter,
@@ -37,7 +36,7 @@ __all__ = [
     "AudioAnalyzer",
     "AudioEffectsChain",
     "AudioFormatPresets",
-    "batch_convert", 
+    "batch_convert",
     "convert_audio_file",
     "create_simple_effect_chain",
     "find_audio_unit_by_name",
@@ -49,6 +48,7 @@ __all__ = [
 # ============================================================================
 # Audio Analysis Utilities
 # ============================================================================
+
 
 class AudioAnalyzer:
     """High-level audio analysis utilities.
@@ -75,7 +75,7 @@ class AudioAnalyzer:
     def detect_silence(
         audio_file: Union[str, Path, AudioFile],
         threshold_db: float = -40.0,
-        min_duration: float = 0.5
+        min_duration: float = 0.5,
     ) -> List[Tuple[float, float]]:
         """Detect silence regions in an audio file.
 
@@ -96,7 +96,9 @@ class AudioAnalyzer:
             ```
         """
         if not NUMPY_AVAILABLE:
-            raise ImportError("NumPy is required for silence detection. Install with: pip install numpy")
+            raise ImportError(
+                "NumPy is required for silence detection. Install with: pip install numpy"
+            )
 
         # Open file if path provided
         should_close = False
@@ -178,7 +180,9 @@ class AudioAnalyzer:
             ```
         """
         if not NUMPY_AVAILABLE:
-            raise ImportError("NumPy is required for peak detection. Install with: pip install numpy")
+            raise ImportError(
+                "NumPy is required for peak detection. Install with: pip install numpy"
+            )
 
         # Open file if path provided
         should_close = False
@@ -221,7 +225,9 @@ class AudioAnalyzer:
             ```
         """
         if not NUMPY_AVAILABLE:
-            raise ImportError("NumPy is required for RMS calculation. Install with: pip install numpy")
+            raise ImportError(
+                "NumPy is required for RMS calculation. Install with: pip install numpy"
+            )
 
         # Open file if path provided
         should_close = False
@@ -240,7 +246,7 @@ class AudioAnalyzer:
                 audio_data = audio_data.astype(np.float32) / max_val
 
             # Calculate RMS
-            return float(np.sqrt(np.mean(audio_data ** 2)))
+            return float(np.sqrt(np.mean(audio_data**2)))
 
         finally:
             if should_close:
@@ -268,22 +274,22 @@ class AudioAnalyzer:
             format = af.format
 
             info = {
-                'path': str(audio_file),
-                'duration': af.duration,
-                'sample_rate': format.sample_rate,
-                'format_id': format.format_id,
-                'channels': format.channels_per_frame,
-                'bits_per_channel': format.bits_per_channel,
-                'is_pcm': format.is_pcm,
-                'is_stereo': format.is_stereo,
-                'is_mono': format.is_mono,
+                "path": str(audio_file),
+                "duration": af.duration,
+                "sample_rate": format.sample_rate,
+                "format_id": format.format_id,
+                "channels": format.channels_per_frame,
+                "bits_per_channel": format.bits_per_channel,
+                "is_pcm": format.is_pcm,
+                "is_stereo": format.is_stereo,
+                "is_mono": format.is_mono,
             }
 
             # Add peak and RMS if NumPy available
             if NUMPY_AVAILABLE:
                 try:
-                    info['peak_amplitude'] = AudioAnalyzer.get_peak_amplitude(af)
-                    info['rms'] = AudioAnalyzer.calculate_rms(af)
+                    info["peak_amplitude"] = AudioAnalyzer.get_peak_amplitude(af)
+                    info["rms"] = AudioAnalyzer.calculate_rms(af)
                 except Exception:
                     pass  # Skip if reading fails
 
@@ -294,13 +300,14 @@ class AudioAnalyzer:
 # Batch Processing Utilities
 # ============================================================================
 
+
 def batch_convert(
     input_pattern: str,
     output_format: AudioFormat,
     output_dir: Optional[str] = None,
     output_extension: str = "wav",
     overwrite: bool = False,
-    progress_callback: Optional[Callable[[str, int, int], None]] = None
+    progress_callback: Optional[Callable[[str, int, int], None]] = None,
 ) -> List[str]:
     """Batch convert audio files to a specified format.
 
@@ -378,9 +385,7 @@ def batch_convert(
 
 
 def convert_audio_file(
-    input_path: str,
-    output_path: str,
-    output_format: AudioFormat
+    input_path: str, output_path: str, output_format: AudioFormat
 ) -> None:
     """Convert a single audio file to a different format.
 
@@ -421,6 +426,7 @@ def convert_audio_file(
         # If formats match exactly, just copy
         if _formats_match(source_format, output_format):
             import shutil
+
             shutil.copy(input_path, output_path)
             return
 
@@ -429,15 +435,17 @@ def convert_audio_file(
 
         # Determine which conversion method to use
         needs_complex_conversion = (
-            source_format.sample_rate != output_format.sample_rate or
-            source_format.bits_per_channel != output_format.bits_per_channel
+            source_format.sample_rate != output_format.sample_rate
+            or source_format.bits_per_channel != output_format.bits_per_channel
         )
 
         # Convert using AudioConverter
         with AudioConverter(source_format, output_format) as converter:
             if needs_complex_conversion:
                 # Use callback-based API for complex conversions
-                converted_data = converter.convert_with_callback(audio_data, packet_count)
+                converted_data = converter.convert_with_callback(
+                    audio_data, packet_count
+                )
             else:
                 # Use simple buffer API for channel-only conversions
                 converted_data = converter.convert(audio_data)
@@ -447,10 +455,9 @@ def convert_audio_file(
 
         # Write to output file
         from . import capi
+
         output_ext_file = ExtendedAudioFile.create(
-            output_path,
-            capi.get_audio_file_wave_type(),
-            output_format
+            output_path, capi.get_audio_file_wave_type(), output_format
         )
         try:
             output_ext_file.write(num_frames, converted_data)
@@ -461,16 +468,17 @@ def convert_audio_file(
 def _formats_match(fmt1: AudioFormat, fmt2: AudioFormat) -> bool:
     """Check if two formats are identical"""
     return (
-        fmt1.sample_rate == fmt2.sample_rate and
-        fmt1.channels_per_frame == fmt2.channels_per_frame and
-        fmt1.bits_per_channel == fmt2.bits_per_channel and
-        fmt1.format_id == fmt2.format_id
+        fmt1.sample_rate == fmt2.sample_rate
+        and fmt1.channels_per_frame == fmt2.channels_per_frame
+        and fmt1.bits_per_channel == fmt2.bits_per_channel
+        and fmt1.format_id == fmt2.format_id
     )
 
 
 # ============================================================================
 # Format Conversion Helpers
 # ============================================================================
+
 
 class AudioFormatPresets:
     """Common audio format presets for easy format conversion.
@@ -490,13 +498,13 @@ class AudioFormatPresets:
         """Standard CD quality WAV: 44.1kHz, 16-bit, stereo"""
         return AudioFormat(
             sample_rate=44100.0,
-            format_id='lpcm',
+            format_id="lpcm",
             format_flags=12,  # kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked
             bytes_per_packet=4,
             frames_per_packet=1,
             bytes_per_frame=4,
             channels_per_frame=2,
-            bits_per_channel=16
+            bits_per_channel=16,
         )
 
     @staticmethod
@@ -504,13 +512,13 @@ class AudioFormatPresets:
         """Mono WAV: 44.1kHz, 16-bit, mono"""
         return AudioFormat(
             sample_rate=44100.0,
-            format_id='lpcm',
+            format_id="lpcm",
             format_flags=12,
             bytes_per_packet=2,
             frames_per_packet=1,
             bytes_per_frame=2,
             channels_per_frame=1,
-            bits_per_channel=16
+            bits_per_channel=16,
         )
 
     @staticmethod
@@ -518,13 +526,13 @@ class AudioFormatPresets:
         """Pro audio WAV: 48kHz, 16-bit, stereo"""
         return AudioFormat(
             sample_rate=48000.0,
-            format_id='lpcm',
+            format_id="lpcm",
             format_flags=12,
             bytes_per_packet=4,
             frames_per_packet=1,
             bytes_per_frame=4,
             channels_per_frame=2,
-            bits_per_channel=16
+            bits_per_channel=16,
         )
 
     @staticmethod
@@ -532,13 +540,13 @@ class AudioFormatPresets:
         """High-res audio WAV: 96kHz, 24-bit, stereo"""
         return AudioFormat(
             sample_rate=96000.0,
-            format_id='lpcm',
+            format_id="lpcm",
             format_flags=12,
             bytes_per_packet=6,
             frames_per_packet=1,
             bytes_per_frame=6,
             channels_per_frame=2,
-            bits_per_channel=24
+            bits_per_channel=24,
         )
 
 
@@ -546,11 +554,12 @@ class AudioFormatPresets:
 # Audio File Operations
 # ============================================================================
 
+
 def trim_audio(
     input_path: str,
     output_path: str,
     start_time: float = 0.0,
-    end_time: Optional[float] = None
+    end_time: Optional[float] = None,
 ) -> None:
     """Trim an audio file to a specific time range.
 
@@ -583,14 +592,17 @@ def trim_audio(
             packet_count = None  # Read to end
 
         # Read trimmed data
-        data, actual_count = input_file.read_packets(start_packet, packet_count or 999999999)
+        data, actual_count = input_file.read_packets(
+            start_packet, packet_count or 999999999
+        )
 
         # Write to output file using ExtendedAudioFile
         from . import capi
+
         output_ext_file = ExtendedAudioFile.create(
             output_path,
             capi.get_audio_file_wave_type(),  # WAV file
-            format
+            format,
         )
         try:
             output_ext_file.write(actual_count, data)
@@ -601,6 +613,7 @@ def trim_audio(
 # ============================================================================
 # Audio Effects Chain
 # ============================================================================
+
 
 class AudioEffectsChain:
     """High-level audio effects chain using AUGraph.
@@ -639,6 +652,7 @@ class AudioEffectsChain:
     def __init__(self):
         """Create a new audio effects chain"""
         from .objects import AUGraph
+
         self._graph = AUGraph()
         self._nodes = {}  # Map of node_id -> description
 
@@ -651,8 +665,8 @@ class AudioEffectsChain:
         self,
         effect_type: str,
         effect_subtype: str,
-        manufacturer: str = 'appl',
-        flags: int = 0
+        manufacturer: str = "appl",
+        flags: int = 0,
     ) -> int:
         """Add an audio effect to the chain.
 
@@ -684,7 +698,7 @@ class AudioEffectsChain:
             subtype=effect_subtype,
             manufacturer=manufacturer,
             flags=flags,
-            flags_mask=0
+            flags_mask=0,
         )
 
         node_id = self._graph.add_node(desc)
@@ -719,7 +733,9 @@ class AudioEffectsChain:
         desc = component._description
         return self.add_effect(desc.type, desc.subtype, desc.manufacturer)
 
-    def add_output(self, output_type: str = 'auou', output_subtype: str = 'def ') -> int:
+    def add_output(
+        self, output_type: str = "auou", output_subtype: str = "def "
+    ) -> int:
         """Add an output node to the chain.
 
         Args:
@@ -738,10 +754,11 @@ class AudioEffectsChain:
             output = chain.add_output('auou', 'sys ')
             ```
         """
-        return self.add_effect(output_type, output_subtype, 'appl')
+        return self.add_effect(output_type, output_subtype, "appl")
 
-    def connect(self, source_node: int, dest_node: int,
-                source_bus: int = 0, dest_bus: int = 0) -> None:
+    def connect(
+        self, source_node: int, dest_node: int, source_bus: int = 0, dest_bus: int = 0
+    ) -> None:
         """Connect two nodes in the effects chain.
 
         Args:
@@ -759,10 +776,7 @@ class AudioEffectsChain:
             chain.connect(eq_node, output_node)
             ```
         """
-        self._graph.connect(
-            source_node, source_bus,
-            dest_node, dest_bus
-        )
+        self._graph.connect(source_node, source_bus, dest_node, dest_bus)
 
     def disconnect(self, dest_node: int, dest_bus: int = 0) -> None:
         """Disconnect a node input.
@@ -783,7 +797,7 @@ class AudioEffectsChain:
             del self._nodes[node_id]
         self._graph.remove_node(node_id)
 
-    def open(self) -> 'AudioEffectsChain':
+    def open(self) -> "AudioEffectsChain":
         """Open the graph (opens all AudioUnits).
 
         Returns:
@@ -792,7 +806,7 @@ class AudioEffectsChain:
         self._graph.open()
         return self
 
-    def initialize(self) -> 'AudioEffectsChain':
+    def initialize(self) -> "AudioEffectsChain":
         """Initialize the graph (prepares for rendering).
 
         Returns:
@@ -818,7 +832,7 @@ class AudioEffectsChain:
             pass
         self._graph.dispose()
 
-    def __enter__(self) -> 'AudioEffectsChain':
+    def __enter__(self) -> "AudioEffectsChain":
         """Context manager entry"""
         return self
 
@@ -848,8 +862,7 @@ class AudioEffectsChain:
 
 
 def create_simple_effect_chain(
-    effect_types: List[Tuple[str, str, str]],
-    auto_connect: bool = True
+    effect_types: List[Tuple[str, str, str]], auto_connect: bool = True
 ) -> AudioEffectsChain:
     """Create a simple linear effects chain.
 
@@ -902,6 +915,7 @@ def create_simple_effect_chain(
 # AudioUnit Discovery by Name
 # ============================================================================
 
+
 def find_audio_unit_by_name(name: str, case_sensitive: bool = False):
     """Find an AudioUnit by name (searches all available AudioComponents).
 
@@ -939,11 +953,11 @@ def find_audio_unit_by_name(name: str, case_sensitive: bool = False):
 
     # Wildcard description to iterate through all components
     desc_dict = {
-        'type': 0,
-        'subtype': 0,
-        'manufacturer': 0,
-        'flags': 0,
-        'flags_mask': 0
+        "type": 0,
+        "subtype": 0,
+        "manufacturer": 0,
+        "flags": 0,
+        "flags_mask": 0,
     }
 
     component_id = 0  # Start with NULL
@@ -967,17 +981,19 @@ def find_audio_unit_by_name(name: str, case_sensitive: bool = False):
                 desc_dict_result = capi.audio_component_get_description(component_id)
 
                 # Convert to FourCC strings and create description
-                type_fourcc = capi.int_to_fourchar(desc_dict_result['type'])
-                subtype_fourcc = capi.int_to_fourchar(desc_dict_result['subtype'])
-                manufacturer_fourcc = capi.int_to_fourchar(desc_dict_result['manufacturer'])
+                type_fourcc = capi.int_to_fourchar(desc_dict_result["type"])
+                subtype_fourcc = capi.int_to_fourchar(desc_dict_result["subtype"])
+                manufacturer_fourcc = capi.int_to_fourchar(
+                    desc_dict_result["manufacturer"]
+                )
 
                 # Create AudioComponent object
                 desc = AudioComponentDescription(
                     type=type_fourcc,
                     subtype=subtype_fourcc,
                     manufacturer=manufacturer_fourcc,
-                    flags=desc_dict_result['flags'],
-                    flags_mask=desc_dict_result['flags_mask']
+                    flags=desc_dict_result["flags"],
+                    flags_mask=desc_dict_result["flags_mask"],
                 )
 
                 component = AudioComponent(desc)
@@ -987,7 +1003,9 @@ def find_audio_unit_by_name(name: str, case_sensitive: bool = False):
     return None
 
 
-def list_available_audio_units(filter_type: Optional[str] = None) -> List[Dict[str, Any]]:
+def list_available_audio_units(
+    filter_type: Optional[str] = None,
+) -> List[Dict[str, Any]]:
     """List all available AudioUnits with their names and FourCC codes.
 
     Args:
@@ -1015,11 +1033,11 @@ def list_available_audio_units(filter_type: Optional[str] = None) -> List[Dict[s
     type_int = capi.fourchar_to_int(filter_type) if filter_type else 0
 
     desc_dict = {
-        'type': type_int,
-        'subtype': 0,
-        'manufacturer': 0,
-        'flags': 0,
-        'flags_mask': 0
+        "type": type_int,
+        "subtype": 0,
+        "manufacturer": 0,
+        "flags": 0,
+        "flags_mask": 0,
     }
 
     # Iterate through all components
@@ -1035,13 +1053,15 @@ def list_available_audio_units(filter_type: Optional[str] = None) -> List[Dict[s
         if component_name:
             desc = capi.audio_component_get_description(component_id)
 
-            results.append({
-                'name': component_name,
-                'type': capi.int_to_fourchar(desc['type']),
-                'subtype': capi.int_to_fourchar(desc['subtype']),
-                'manufacturer': capi.int_to_fourchar(desc['manufacturer']),
-                'flags': desc['flags']
-            })
+            results.append(
+                {
+                    "name": component_name,
+                    "type": capi.int_to_fourchar(desc["type"]),
+                    "subtype": capi.int_to_fourchar(desc["subtype"]),
+                    "manufacturer": capi.int_to_fourchar(desc["manufacturer"]),
+                    "flags": desc["flags"],
+                }
+            )
 
     return results
 
@@ -1082,4 +1102,4 @@ def get_audiounit_names(filter_type: Optional[str] = None) -> List[str]:
         ```
     """
     units = list_available_audio_units(filter_type)
-    return [unit['name'] for unit in units]
+    return [unit["name"] for unit in units]

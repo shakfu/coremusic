@@ -12,6 +12,7 @@ from typing import Dict, List, Tuple, Optional, Any
 
 class CoreAudioObject:
     """Base class for CoreAudio objects with automatic resource management."""
+
     object_id: int
     is_disposed: bool
 
@@ -52,7 +53,9 @@ def audio_file_get_property(file_id: int, property_id: int) -> bytes:
     """Get a property from an audio file."""
     ...
 
-def audio_file_read_packets(file_id: int, start_packet: int, packet_count: int) -> Tuple[bytes, int]:
+def audio_file_read_packets(
+    file_id: int, start_packet: int, packet_count: int
+) -> Tuple[bytes, int]:
     """Read audio packets from file. Returns (data, actual_count)."""
     ...
 
@@ -136,11 +139,15 @@ def audio_unit_uninitialize(unit_id: int) -> None:
     """Uninitialize an AudioUnit."""
     ...
 
-def audio_unit_get_property(unit_id: int, property_id: int, scope: int, element: int) -> bytes:
+def audio_unit_get_property(
+    unit_id: int, property_id: int, scope: int, element: int
+) -> bytes:
     """Get a property from AudioUnit."""
     ...
 
-def audio_unit_set_property(unit_id: int, property_id: int, scope: int, element: int, data: bytes) -> None:
+def audio_unit_set_property(
+    unit_id: int, property_id: int, scope: int, element: int, data: bytes
+) -> None:
     """Set a property on AudioUnit."""
     ...
 
@@ -176,7 +183,9 @@ def audio_hardware_unload() -> None:
     """Unload audio hardware."""
     ...
 
-def audio_object_get_property_data(object_id: int, property_id: int, scope: int, element: int) -> bytes:
+def audio_object_get_property_data(
+    object_id: int, property_id: int, scope: int, element: int
+) -> bytes:
     """Get property data from an AudioObject."""
     ...
 
@@ -204,11 +213,15 @@ def audio_services_play_alert_sound(sound_id: int) -> None:
     """Play an alert sound."""
     ...
 
-def audio_services_get_property(property_id: int, specifier_size: int, specifier: bytes) -> bytes:
+def audio_services_get_property(
+    property_id: int, specifier_size: int, specifier: bytes
+) -> bytes:
     """Get an AudioServices property."""
     ...
 
-def audio_services_set_property(property_id: int, specifier_size: int, specifier: bytes, data: bytes) -> None:
+def audio_services_set_property(
+    property_id: int, specifier_size: int, specifier: bytes, data: bytes
+) -> None:
     """Set an AudioServices property."""
     ...
 
@@ -248,7 +261,9 @@ def midi_send(port_id: int, destination_id: int, data: bytes, timestamp: int) ->
     """Send MIDI data."""
     ...
 
-def create_midi_note_message(channel: int, note: int, velocity: int, release_velocity: int, duration: float) -> bytes:
+def create_midi_note_message(
+    channel: int, note: int, velocity: int, release_velocity: int, duration: float
+) -> bytes:
     """Create a MIDI note message."""
     ...
 
@@ -344,7 +359,6 @@ def get_audio_unit_property_latency() -> int: ...
 def get_audio_unit_property_cpu_load() -> int: ...
 def get_audio_unit_property_maximum_frames_per_slice() -> int: ...
 def get_audio_unit_property_parameter_list() -> int: ...
-
 def get_audio_unit_scope_global() -> int: ...
 def get_audio_unit_scope_input() -> int: ...
 def get_audio_unit_scope_output() -> int: ...
@@ -362,7 +376,6 @@ def get_audio_device_property_available_nominal_sample_rates() -> int: ...
 def get_audio_device_property_is_hidden() -> int: ...
 def get_audio_device_property_preferred_channels_for_stereo() -> int: ...
 def get_audio_device_property_stream_configuration() -> int: ...
-
 def get_audio_object_property_name() -> int: ...
 def get_audio_object_property_manufacturer() -> int: ...
 def get_audio_object_property_element_name() -> int: ...
@@ -383,7 +396,9 @@ def get_audio_component_type_music_device() -> int: ...
 # Audio Converter Operations (MISSING)
 # ============================================================================
 
-def audio_converter_new(source_format: Dict[str, Any], dest_format: Dict[str, Any]) -> int:
+def audio_converter_new(
+    source_format: Dict[str, Any], dest_format: Dict[str, Any]
+) -> int:
     """Create a new audio converter."""
     ...
 
@@ -399,7 +414,9 @@ def audio_converter_get_property(converter_id: int, property_id: int) -> bytes:
     """Get a property from audio converter."""
     ...
 
-def audio_converter_set_property(converter_id: int, property_id: int, data: bytes) -> None:
+def audio_converter_set_property(
+    converter_id: int, property_id: int, data: bytes
+) -> None:
     """Set a property on audio converter."""
     ...
 
@@ -415,7 +432,13 @@ def extended_audio_file_open_url(file_path: str) -> int:
     """Open an extended audio file."""
     ...
 
-def extended_audio_file_create_with_url(file_path: str, file_type: int, source_format: Dict[str, Any], channel_layout: Optional[bytes], flags: int) -> int:
+def extended_audio_file_create_with_url(
+    file_path: str,
+    file_type: int,
+    source_format: Dict[str, Any],
+    channel_layout: Optional[bytes],
+    flags: int,
+) -> int:
     """Create a new extended audio file."""
     ...
 
@@ -427,7 +450,9 @@ def extended_audio_file_read(ext_file_id: int, num_frames: int) -> Tuple[bytes, 
     """Read frames from extended audio file."""
     ...
 
-def extended_audio_file_write(ext_file_id: int, num_frames: int, audio_data: bytes) -> None:
+def extended_audio_file_write(
+    ext_file_id: int, num_frames: int, audio_data: bytes
+) -> None:
     """Write frames to extended audio file."""
     ...
 
@@ -435,7 +460,9 @@ def extended_audio_file_get_property(ext_file_id: int, property_id: int) -> byte
     """Get a property from extended audio file."""
     ...
 
-def extended_audio_file_set_property(ext_file_id: int, property_id: int, data: bytes) -> None:
+def extended_audio_file_set_property(
+    ext_file_id: int, property_id: int, data: bytes
+) -> None:
     """Set a property on extended audio file."""
     ...
 
@@ -507,11 +534,15 @@ def au_graph_node_info(graph_id: int, node: int) -> int:
     """Get AudioUnit for node in AUGraph."""
     ...
 
-def au_graph_connect_node_input(graph_id: int, source_node: int, source_output: int, dest_node: int, dest_input: int) -> None:
+def au_graph_connect_node_input(
+    graph_id: int, source_node: int, source_output: int, dest_node: int, dest_input: int
+) -> None:
     """Connect nodes in AUGraph."""
     ...
 
-def au_graph_disconnect_node_input(graph_id: int, dest_node: int, dest_input: int) -> None:
+def au_graph_disconnect_node_input(
+    graph_id: int, dest_node: int, dest_input: int
+) -> None:
     """Disconnect node input in AUGraph."""
     ...
 
@@ -611,31 +642,49 @@ def music_sequence_get_sequence_type(sequence_id: int) -> int:
     """Get sequence type."""
     ...
 
-def music_sequence_file_load(sequence_id: int, file_path: str, file_type_hint: int, flags: int) -> None:
+def music_sequence_file_load(
+    sequence_id: int, file_path: str, file_type_hint: int, flags: int
+) -> None:
     """Load sequence from file."""
     ...
 
-def music_track_new_midi_note_event(track_id: int, timestamp: float, note_message: bytes) -> None:
+def music_track_new_midi_note_event(
+    track_id: int, timestamp: float, note_message: bytes
+) -> None:
     """Add MIDI note event to track."""
     ...
 
-def music_track_new_midi_channel_event(track_id: int, timestamp: float, channel_message: bytes) -> None:
+def music_track_new_midi_channel_event(
+    track_id: int, timestamp: float, channel_message: bytes
+) -> None:
     """Add MIDI channel event to track."""
     ...
 
-def music_track_new_extended_tempo_event(track_id: int, timestamp: float, bpm: float) -> None:
+def music_track_new_extended_tempo_event(
+    track_id: int, timestamp: float, bpm: float
+) -> None:
     """Add tempo event to track."""
     ...
 
-def music_device_midi_event(unit_id: int, status: int, data1: int, data2: int, offset_sample_frame: int) -> None:
+def music_device_midi_event(
+    unit_id: int, status: int, data1: int, data2: int, offset_sample_frame: int
+) -> None:
     """Send MIDI event to music device."""
     ...
 
-def music_device_start_note(unit_id: int, instrument_id: int, group_id: int, note_params: bytes, offset_sample_frame: int) -> int:
+def music_device_start_note(
+    unit_id: int,
+    instrument_id: int,
+    group_id: int,
+    note_params: bytes,
+    offset_sample_frame: int,
+) -> int:
     """Start a note on music device."""
     ...
 
-def music_device_stop_note(unit_id: int, group_id: int, note_instance_id: int, offset_sample_frame: int) -> None:
+def music_device_stop_note(
+    unit_id: int, group_id: int, note_instance_id: int, offset_sample_frame: int
+) -> None:
     """Stop a note on music device."""
     ...
 
@@ -764,7 +813,9 @@ def midi1_up_note_off(group: int, channel: int, note: int, velocity: int) -> int
     """Create MIDI 1.0 UMP note off."""
     ...
 
-def midi1_up_control_change(group: int, channel: int, controller: int, value: int) -> int:
+def midi1_up_control_change(
+    group: int, channel: int, controller: int, value: int
+) -> int:
     """Create MIDI 1.0 UMP control change."""
     ...
 
@@ -776,27 +827,62 @@ def midi1_up_system_common(group: int, status: int, byte1: int, byte2: int) -> i
     """Create MIDI 1.0 UMP system common."""
     ...
 
-def midi1_up_sysex(group: int, status: int, bytes_used: int, byte1: int, byte2: int, byte3: int, byte4: int, byte5: int, byte6: int) -> Tuple[int, int]:
+def midi1_up_sysex(
+    group: int,
+    status: int,
+    bytes_used: int,
+    byte1: int,
+    byte2: int,
+    byte3: int,
+    byte4: int,
+    byte5: int,
+    byte6: int,
+) -> Tuple[int, int]:
     """Create MIDI 1.0 UMP SysEx."""
     ...
 
-def midi1_up_channel_voice_message(group: int, status: int, channel: int, data1: int, data2: int) -> int:
+def midi1_up_channel_voice_message(
+    group: int, status: int, channel: int, data1: int, data2: int
+) -> int:
     """Create MIDI 1.0 UMP channel voice message."""
     ...
 
-def midi2_note_on(group: int, channel: int, note: int, attribute_type: int, attribute_data: int, velocity: int) -> Tuple[int, int]:
+def midi2_note_on(
+    group: int,
+    channel: int,
+    note: int,
+    attribute_type: int,
+    attribute_data: int,
+    velocity: int,
+) -> Tuple[int, int]:
     """Create MIDI 2.0 UMP note on."""
     ...
 
-def midi2_note_off(group: int, channel: int, note: int, attribute_type: int, attribute_data: int, velocity: int) -> Tuple[int, int]:
+def midi2_note_off(
+    group: int,
+    channel: int,
+    note: int,
+    attribute_type: int,
+    attribute_data: int,
+    velocity: int,
+) -> Tuple[int, int]:
     """Create MIDI 2.0 UMP note off."""
     ...
 
-def midi2_control_change(group: int, channel: int, controller: int, value: int) -> Tuple[int, int]:
+def midi2_control_change(
+    group: int, channel: int, controller: int, value: int
+) -> Tuple[int, int]:
     """Create MIDI 2.0 UMP control change."""
     ...
 
-def midi2_program_change(group: int, channel: int, bank_valid: bool, program: int, bank_msb: int, bank_lsb: int) -> Tuple[int, int]:
+def midi2_program_change(
+    group: int,
+    channel: int,
+    bank_valid: bool,
+    program: int,
+    bank_msb: int,
+    bank_lsb: int,
+) -> Tuple[int, int]:
     """Create MIDI 2.0 UMP program change."""
     ...
 
@@ -804,7 +890,9 @@ def midi2_pitch_bend(group: int, channel: int, value: int) -> Tuple[int, int]:
     """Create MIDI 2.0 UMP pitch bend."""
     ...
 
-def midi2_channel_voice_message(group: int, status: int, channel: int, index: int, value: int) -> Tuple[int, int]:
+def midi2_channel_voice_message(
+    group: int, status: int, channel: int, index: int, value: int
+) -> Tuple[int, int]:
     """Create MIDI 2.0 UMP channel voice message."""
     ...
 
@@ -821,11 +909,20 @@ def midi_device_dispose(device_id: int) -> None:
     """Dispose of MIDI device."""
     ...
 
-def midi_device_add_entity(device_id: int, name: str, embedded: bool, num_sources: int, num_destinations: int) -> int:
+def midi_device_add_entity(
+    device_id: int, name: str, embedded: bool, num_sources: int, num_destinations: int
+) -> int:
     """Add entity to device."""
     ...
 
-def midi_device_new_entity(device_id: int, name: str, protocol: int, embedded: bool, num_sources: int, num_destinations: int) -> int:
+def midi_device_new_entity(
+    device_id: int,
+    name: str,
+    protocol: int,
+    embedded: bool,
+    num_sources: int,
+    num_destinations: int,
+) -> int:
     """Create new entity in device."""
     ...
 
@@ -833,7 +930,9 @@ def midi_device_remove_entity(device_id: int, entity_id: int) -> None:
     """Remove entity from device."""
     ...
 
-def midi_entity_add_or_remove_endpoints(entity_id: int, num_sources: int, num_destinations: int) -> None:
+def midi_entity_add_or_remove_endpoints(
+    entity_id: int, num_sources: int, num_destinations: int
+) -> None:
     """Add or remove endpoints in entity."""
     ...
 

@@ -168,7 +168,7 @@ def example_4_file_conversion():
         print(f"Target format: {output_format}")
 
         print("\nConverting...")
-        cm.convert_audio_file(test_file, output_file, output_format)
+        capi.convert_audio_file(test_file, output_file, output_format)
 
         # Verify output
         with cm.AudioFile(output_file) as audio:
@@ -211,7 +211,7 @@ def example_5_batch_conversion():
 
         # Batch convert
         print("\nBatch converting...")
-        converted = cm.batch_convert(
+        converted = capi.batch_convert(
             input_pattern=f"{input_dir}/*.wav",
             output_format=output_format,
             output_dir=output_dir,
@@ -253,7 +253,7 @@ def example_6_integration_workflow():
         print("-" * 40)
 
         output_file = os.path.join(temp_dir, "converted_mono.wav")
-        cm.convert_audio_file(
+        capi.convert_audio_file(
             test_file,
             output_file,
             cm.AudioFormatPresets.wav_44100_mono()
@@ -353,7 +353,7 @@ def example_8_simple_effect_chain_builder():
     print("  - Matrix Mixer ('aumi', 'mxmx', 'appl')")
     print("  - Default Output (auto-added)")
 
-    chain = cm.create_simple_effect_chain([
+    chain = capi.create_simple_effect_chain([
         ('aumi', '3dem', 'appl'),   # 3D Mixer
         ('aumi', 'mxmx', 'appl'),   # Matrix Mixer
     ], auto_connect=True)
@@ -492,7 +492,7 @@ def example_10_audiounit_name_based_lookup():
 
     # List available AudioUnits
     print("1. Listing available AudioUnits...")
-    units = cm.list_available_audio_units()
+    units = capi.list_available_audio_units()
     print(f"   Found {len(units)} AudioUnits on this system")
 
     # Show first 5
@@ -504,7 +504,7 @@ def example_10_audiounit_name_based_lookup():
     # Find specific AudioUnit by name
     print("\n2. Finding AudioUnit by name...")
     print("   Searching for 'AUDelay'...")
-    codes = cm.find_audio_unit_by_name('AUDelay')
+    codes = capi.find_audio_unit_by_name('AUDelay')
     if codes:
         type_code, subtype_code, manufacturer = codes
         print(f"   ✓ Found: {type_code}/{subtype_code}/{manufacturer}")

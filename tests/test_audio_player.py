@@ -5,6 +5,7 @@ import time
 import sys
 
 import coremusic as cm
+import coremusic.capi as capi
 
 
 def test_audio_playback():
@@ -65,6 +66,6 @@ def test_audio_playback():
         assert False
 
 def test_module_test_error():
-    error_code = cm.test_error()
+    error_code = capi.test_error()
     assert error_code
     print(f"✓ Basic module test passed (error code: {error_code})")

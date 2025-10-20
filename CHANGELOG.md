@@ -21,6 +21,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Changed
 
+- **Namespace Refactoring** - Separated object-oriented API from functional C API for cleaner, more Pythonic interface
+  - **Object-Oriented API is now the primary interface** - All high-level classes available directly from `import coremusic as cm`
+  - **Functional C API moved to explicit namespace** - Low-level C functions now require `import coremusic.capi as capi`
+  - **Cleaner main namespace** - `coremusic.*` now contains only Pythonic object-oriented classes and utilities
+  - **Advanced users retain full access** - Complete functional API still available via `capi` submodule
+  - **Re-exported base classes** - `CoreAudioObject` and `AudioPlayer` properly exported from main namespace
+  - **Comprehensive migration** - 1,126 functional API calls migrated across 27 files (tests, demos, scripts)
+  - **Zero test regressions** - All 516 tests passing after migration
+
+  **Before (intermingled APIs):**
+  ```python
+  import coremusic as cm
+
+  # Mix of OO and functional APIs in same namespace
+  file = cm.AudioFile("audio.wav")  # OO class
+  file_id = cm.audio_file_open_url("audio.wav")  # functional C API
+  ```
+
+  **After (clean separation):**
+  ```python
+  import coremusic as cm
+  import coremusic.capi as capi
+
+  # Object-oriented API (primary interface)
+  file = cm.AudioFile("audio.wav")
+
+  # Functional C API (advanced usage)
+  file_id = capi.audio_file_open_url("audio.wav")
+  ```
+
+  **Impact:**
+  - **Most users** - No changes needed if using OO API (`AudioFile`, `AudioQueue`, `AudioUnit`, etc.)
+  - **Advanced users** - Add `import coremusic.capi as capi` and prefix functional calls with `capi.`
+  - **SciPy utilities** - Already required explicit import: `import coremusic.scipy_utils as spu`
+
 - Removed auto-import of scipy utilities in `__init__.py`
 
 ## [0.1.5]
