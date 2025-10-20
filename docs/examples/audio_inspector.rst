@@ -305,7 +305,6 @@ Key sections:
 See Also
 --------
 
-- :doc:`audio_converter` - Audio format conversion example
 - :doc:`../tutorials/audio_file_basics` - Audio file tutorial
 - :doc:`../api/audio_file` - AudioFile API reference
 - :doc:`../cookbook/file_operations` - File operation recipes

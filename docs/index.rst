@@ -101,28 +101,6 @@ Documentation Contents
    :caption: API Reference
 
    api/index
-   api/audio_file
-   api/audio_unit
-   api/audio_queue
-   api/midi
-   api/utilities
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Advanced Topics
-
-   advanced/performance
-   advanced/real_time_processing
-   advanced/multi_channel
-   advanced/custom_audio_units
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Development
-
-   contributing
-   changelog
-   license
 
 Indices and tables
 ==================

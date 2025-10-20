@@ -7,46 +7,7 @@ Complete, working examples demonstrating coremusic capabilities.
    :maxdepth: 2
    :caption: Basic Examples
 
-   audio_player
-   audio_converter
    audio_inspector
-   midi_monitor
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Audio Processing
-
-   real_time_processor
-   batch_converter
-   audio_analyzer
-   waveform_generator
-
-.. toctree::
-   :maxdepth: 2
-   :caption: AudioUnit Examples
-
-   audiounit_explorer
-   effect_chain
-   custom_processor
-   parameter_controller
-
-.. toctree::
-   :maxdepth: 2
-   :caption: MIDI Examples
-
-   midi_router
-   midi_transformer
-   virtual_keyboard
-   midi_recorder
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Advanced Examples
-
-   multi_channel_processor
-   low_latency_streamer
-   audio_visualizer
-   scipy_integration_demo
 
 Example Categories
 ------------------

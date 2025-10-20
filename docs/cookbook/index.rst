@@ -8,42 +8,6 @@ Ready-to-use recipes for common audio and MIDI processing tasks.
    :caption: File Operations
 
    file_operations
-   batch_processing
-   format_detection
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Audio Processing
-
-   audio_effects
-   sample_rate_conversion
-   channel_manipulation
-   normalization
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Real-time Audio
-
-   live_audio_processing
-   low_latency_playback
-   audio_monitoring
-
-.. toctree::
-   :maxdepth: 2
-   :caption: MIDI Processing
-
-   midi_routing
-   midi_filtering
-   midi_transformation
-   midi_recording
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Integration
-
-   numpy_integration
-   scipy_integration
-   multiprocessing
 
 Recipe Overview
 ---------------

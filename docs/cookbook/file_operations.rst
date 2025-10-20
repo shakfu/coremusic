@@ -417,6 +417,5 @@ Format Human-Readable Info
 See Also
 --------
 
-- :doc:`batch_processing` - Process multiple files
 - :doc:`../tutorials/audio_file_basics` - Audio file fundamentals
 - :doc:`../api/audio_file` - AudioFile API reference

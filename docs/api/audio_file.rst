@@ -36,26 +36,7 @@ Class Reference
    :undoc-members:
    :special-members: __init__, __enter__, __exit__
    :show-inheritance:
-
-   .. attribute:: path
-      :type: str
-
-      Path to the audio file.
-
-   .. attribute:: duration
-      :type: float
-
-      Duration of the audio file in seconds (read-only).
-
-   .. attribute:: frame_count
-      :type: int
-
-      Total number of audio frames (read-only).
-
-   .. attribute:: format
-      :type: AudioFormat
-
-      Audio format information (read-only).
+   :noindex:
 
 AudioFormat Class
 ^^^^^^^^^^^^^^^^^
@@ -88,46 +69,7 @@ Class Reference
    :members:
    :undoc-members:
    :show-inheritance:
-
-   .. attribute:: sample_rate
-      :type: float
-
-      Sample rate in Hz (e.g., 44100.0, 48000.0).
-
-   .. attribute:: format_id
-      :type: str
-
-      Format identifier as FourCC string (e.g., 'lpcm', 'aac ', 'mp3 ').
-
-   .. attribute:: format_flags
-      :type: int
-
-      Format-specific flags.
-
-   .. attribute:: bytes_per_packet
-      :type: int
-
-      Number of bytes per packet.
-
-   .. attribute:: frames_per_packet
-      :type: int
-
-      Number of frames per packet.
-
-   .. attribute:: bytes_per_frame
-      :type: int
-
-      Number of bytes per frame.
-
-   .. attribute:: channels_per_frame
-      :type: int
-
-      Number of audio channels (1=mono, 2=stereo, etc.).
-
-   .. attribute:: bits_per_channel
-      :type: int
-
-      Bit depth per channel (e.g., 16, 24, 32).
+   :noindex:
 
 Functional API
 --------------
@@ -138,8 +80,10 @@ Opening and Closing Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autofunction:: coremusic.audio_file_open_url
+   :noindex:
 
 .. autofunction:: coremusic.audio_file_close
+   :noindex:
 
 **Example:**
 
@@ -159,6 +103,7 @@ Reading Audio Data
 ^^^^^^^^^^^^^^^^^^
 
 .. autofunction:: coremusic.audio_file_read_packets
+   :noindex:
 
 **Example:**
 
@@ -178,6 +123,7 @@ File Properties
 ^^^^^^^^^^^^^^^
 
 .. autofunction:: coremusic.audio_file_get_property
+   :noindex:
 
 **Example:**
 
@@ -326,6 +272,4 @@ Audio Format Conversion
 See Also
 --------
 
-- :doc:`audio_converter` - Audio format conversion
-- :doc:`utilities` - Helper functions for audio processing
 - :doc:`../cookbook/file_operations` - Common file operation recipes

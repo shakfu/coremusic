@@ -453,12 +453,9 @@ Next Steps
 
 Now that you understand audio file basics, explore:
 
-- :doc:`format_conversion` - Convert between audio formats
-- :doc:`audio_playback` - Play audio files
 - :doc:`../cookbook/file_operations` - Common file operation recipes
 
 See Also
 --------
 
 - :doc:`../api/audio_file` - Complete AudioFile API reference
-- :doc:`../api/utilities` - Utility functions for audio processing

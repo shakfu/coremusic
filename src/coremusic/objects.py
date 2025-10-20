@@ -575,8 +575,8 @@ class AudioConverter(capi.CoreAudioObject):
         Raises:
             AudioConverterError: If conversion fails
 
-        Example:
-            ```python
+        Example::
+
             # Convert 44.1kHz to 48kHz
             source_format = AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
             dest_format = AudioFormat(48000.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
@@ -593,7 +593,6 @@ class AudioConverter(capi.CoreAudioObject):
                 with ExtendedAudioFile.create("output_48000.wav", 'WAVE', dest_format) as out:
                     num_frames = len(output_data) // dest_format.bytes_per_frame
                     out.write(num_frames, output_data)
-            ```
         """
         self._ensure_not_disposed()
 

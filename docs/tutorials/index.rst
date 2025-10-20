@@ -8,45 +8,6 @@ Step-by-step tutorials for common audio and MIDI tasks with coremusic.
    :caption: Audio Basics
 
    audio_file_basics
-   audio_playback
-   audio_recording
-   format_conversion
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Audio Processing
-
-   real_time_processing
-   audio_effects
-   multi_channel_audio
-   sample_rate_conversion
-
-.. toctree::
-   :maxdepth: 2
-   :caption: AudioUnit Development
-
-   audiounit_basics
-   custom_audio_units
-   audio_unit_chains
-   parameter_automation
-
-.. toctree::
-   :maxdepth: 2
-   :caption: MIDI
-
-   midi_basics
-   midi_routing
-   midi_transformation
-   virtual_midi_devices
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Advanced Topics
-
-   low_latency_audio
-   buffer_management
-   thread_safety
-   performance_optimization
 
 Tutorial Overview
 -----------------

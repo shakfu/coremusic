@@ -13,11 +13,6 @@ Core Modules
    :maxdepth: 2
 
    audio_file
-   audio_unit
-   audio_queue
-   audio_converter
-   midi
-   utilities
 
 Object-Oriented API
 -------------------
@@ -112,7 +107,6 @@ MIDI Functions
 .. autofunction:: coremusic.midi_client_dispose
 .. autofunction:: coremusic.midi_input_port_create
 .. autofunction:: coremusic.midi_output_port_create
-.. autofunction:: coremusic.midi_send
 
 Constants and Enumerations
 ---------------------------
@@ -121,15 +115,11 @@ AudioFormat Constants
 ^^^^^^^^^^^^^^^^^^^^^
 
 .. autofunction:: coremusic.get_audio_format_linear_pcm
-.. autofunction:: coremusic.get_audio_format_mpeg4aac
-.. autofunction:: coremusic.get_audio_format_apple_lossless
 
 AudioUnit Types
 ^^^^^^^^^^^^^^^
 
 .. autofunction:: coremusic.get_audio_unit_type_output
-.. autofunction:: coremusic.get_audio_unit_type_effect
-.. autofunction:: coremusic.get_audio_unit_type_generator
 
 Error Handling
 --------------
@@ -150,9 +140,3 @@ FourCC Conversion
 
 .. autofunction:: coremusic.fourchar_to_int
 .. autofunction:: coremusic.int_to_fourchar
-
-Type Conversion
-^^^^^^^^^^^^^^^
-
-.. autofunction:: coremusic.asbd_to_dict
-.. autofunction:: coremusic.dict_to_asbd
