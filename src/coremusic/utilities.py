@@ -368,21 +368,33 @@ def convert_audio_file(
 ) -> None:
     """Convert a single audio file to a different format.
 
-    Note: This is a simplified implementation that works best for WAV files.
-    For complex format conversions, use AudioConverter directly.
+    Currently supports channel count conversion (stereo <-> mono) using AudioConverter.
+    For sample rate and bit depth conversions, use AudioConverter directly with the
+    callback-based API (AudioConverterFillComplexBuffer).
 
     Args:
         input_path: Input file path
         output_path: Output file path
         output_format: Target AudioFormat
 
+    Raises:
+        NotImplementedError: For sample rate or bit depth conversions
+
     Example:
         ```python
         import coremusic as cm
 
-        # Convert to mono
+        # Convert to mono (supported)
         output_format = cm.AudioFormatPresets.wav_44100_mono()
         cm.convert_audio_file("input.wav", "output.wav", output_format)
+
+        # For sample rate conversion, use AudioConverter directly:
+        with cm.AudioFile("input.wav") as input_file:
+            source_format = input_file.format
+            target_format = cm.AudioFormatPresets.wav_48000_stereo()
+            with cm.AudioConverter(source_format, target_format) as converter:
+                # Use callback-based conversion API...
+                pass
         ```
     """
     # Read source file
@@ -397,7 +409,7 @@ def convert_audio_file(
             shutil.copy(input_path, output_path)
             return
 
-        # For simple conversions (stereo -> mono), use AudioConverter
+        # For simple conversions (channel count only), use AudioConverter
         if (source_format.sample_rate == output_format.sample_rate and
             source_format.bits_per_channel == output_format.bits_per_channel and
             source_format.channels_per_frame != output_format.channels_per_frame):
@@ -424,10 +436,11 @@ def convert_audio_file(
             finally:
                 output_ext_file.close()
         else:
-            # For other conversions, use basic copy (user should use AudioConverter directly)
+            # For other conversions, need callback-based AudioConverter API
             raise NotImplementedError(
-                f"Complex format conversion not yet supported in utilities. "
-                f"Use AudioConverter directly for sample rate or bit depth changes."
+                f"Sample rate and bit depth conversions require callback-based AudioConverter API. "
+                f"Currently only channel count conversion is supported in utilities. "
+                f"Use AudioConverter with AudioConverterFillComplexBuffer directly for these conversions."
             )
 
 
@@ -559,3 +572,275 @@ def trim_audio(
             output_ext_file.write(actual_count, data)
         finally:
             output_ext_file.close()
+
+
+# ============================================================================
+# Audio Effects Chain
+# ============================================================================
+
+class AudioEffectsChain:
+    """High-level audio effects chain using AUGraph.
+
+    Provides a simplified API for creating and managing chains of AudioUnit
+    effects for real-time audio processing.
+
+    Example:
+        ```python
+        import coremusic as cm
+
+        # Create an effects chain
+        chain = cm.AudioEffectsChain()
+
+        # Add effects (example effect types)
+        reverb_node = chain.add_effect('aumu', 'rvb2', 'appl')  # Reverb
+        eq_node = chain.add_effect('aufx', 'eqal', 'appl')      # EQ
+
+        # Connect to output
+        output_node = chain.add_output()
+        chain.connect(reverb_node, eq_node)
+        chain.connect(eq_node, output_node)
+
+        # Initialize and start
+        chain.initialize()
+        chain.start()
+
+        # ... process audio ...
+
+        # Cleanup
+        chain.stop()
+        chain.dispose()
+        ```
+    """
+
+    def __init__(self):
+        """Create a new audio effects chain"""
+        from .objects import AUGraph
+        self._graph = AUGraph()
+        self._nodes = {}  # Map of node_id -> description
+
+    @property
+    def graph(self):
+        """Get the underlying AUGraph"""
+        return self._graph
+
+    def add_effect(
+        self,
+        effect_type: str,
+        effect_subtype: str,
+        manufacturer: str = 'appl',
+        flags: int = 0
+    ) -> int:
+        """Add an audio effect to the chain.
+
+        Args:
+            effect_type: AudioUnit type (4-char code or string)
+            effect_subtype: AudioUnit subtype (4-char code or string)
+            manufacturer: Manufacturer code (default: 'appl' for Apple)
+            flags: Component flags (default: 0)
+
+        Returns:
+            Node ID for this effect
+
+        Example:
+            ```python
+            # Add a reverb effect
+            reverb = chain.add_effect('aumu', 'rvb2', 'appl')
+
+            # Add an EQ effect
+            eq = chain.add_effect('aufx', 'eqal', 'appl')
+
+            # Add a dynamics processor
+            dynamics = chain.add_effect('aufx', 'dcmp', 'appl')
+            ```
+        """
+        from .objects import AudioComponentDescription
+
+        desc = AudioComponentDescription(
+            type=effect_type,
+            subtype=effect_subtype,
+            manufacturer=manufacturer,
+            flags=flags,
+            flags_mask=0
+        )
+
+        node_id = self._graph.add_node(desc)
+        self._nodes[node_id] = desc
+        return node_id
+
+    def add_output(self, output_type: str = 'auou', output_subtype: str = 'def ') -> int:
+        """Add an output node to the chain.
+
+        Args:
+            output_type: Output type (default: 'auou' for AudioUnit Output)
+            output_subtype: Output subtype (default: 'def ' for default output)
+
+        Returns:
+            Node ID for the output
+
+        Example:
+            ```python
+            # Add default output
+            output = chain.add_output()
+
+            # Add system output
+            output = chain.add_output('auou', 'sys ')
+            ```
+        """
+        return self.add_effect(output_type, output_subtype, 'appl')
+
+    def connect(self, source_node: int, dest_node: int,
+                source_bus: int = 0, dest_bus: int = 0) -> None:
+        """Connect two nodes in the effects chain.
+
+        Args:
+            source_node: Source node ID
+            dest_node: Destination node ID
+            source_bus: Source output bus (default: 0)
+            dest_bus: Destination input bus (default: 0)
+
+        Example:
+            ```python
+            # Connect reverb to EQ
+            chain.connect(reverb_node, eq_node)
+
+            # Connect EQ to output
+            chain.connect(eq_node, output_node)
+            ```
+        """
+        self._graph.connect(
+            source_node, source_bus,
+            dest_node, dest_bus
+        )
+
+    def disconnect(self, dest_node: int, dest_bus: int = 0) -> None:
+        """Disconnect a node input.
+
+        Args:
+            dest_node: Destination node ID
+            dest_bus: Destination input bus (default: 0)
+        """
+        self._graph.disconnect(dest_node, dest_bus)
+
+    def remove_node(self, node_id: int) -> None:
+        """Remove a node from the chain.
+
+        Args:
+            node_id: Node ID to remove
+        """
+        if node_id in self._nodes:
+            del self._nodes[node_id]
+        self._graph.remove_node(node_id)
+
+    def open(self) -> 'AudioEffectsChain':
+        """Open the graph (opens all AudioUnits).
+
+        Returns:
+            Self for method chaining
+        """
+        self._graph.open()
+        return self
+
+    def initialize(self) -> 'AudioEffectsChain':
+        """Initialize the graph (prepares for rendering).
+
+        Returns:
+            Self for method chaining
+        """
+        self._graph.initialize()
+        return self
+
+    def start(self) -> None:
+        """Start audio rendering"""
+        self._graph.start()
+
+    def stop(self) -> None:
+        """Stop audio rendering"""
+        self._graph.stop()
+
+    def dispose(self) -> None:
+        """Dispose of the graph and all resources"""
+        try:
+            if self._graph.is_running:
+                self.stop()
+        except:
+            pass
+        self._graph.dispose()
+
+    def __enter__(self) -> 'AudioEffectsChain':
+        """Context manager entry"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit"""
+        self.dispose()
+
+    @property
+    def is_open(self) -> bool:
+        """Check if the graph is open"""
+        return self._graph.is_open
+
+    @property
+    def is_initialized(self) -> bool:
+        """Check if the graph is initialized"""
+        return self._graph.is_initialized
+
+    @property
+    def is_running(self) -> bool:
+        """Check if the graph is running"""
+        return self._graph.is_running
+
+    @property
+    def node_count(self) -> int:
+        """Get the number of nodes in the chain"""
+        return len(self._nodes)
+
+
+def create_simple_effect_chain(
+    effect_types: List[Tuple[str, str, str]],
+    auto_connect: bool = True
+) -> AudioEffectsChain:
+    """Create a simple linear effects chain.
+
+    Args:
+        effect_types: List of (type, subtype, manufacturer) tuples
+        auto_connect: Automatically connect effects in order (default: True)
+
+    Returns:
+        Configured AudioEffectsChain
+
+    Example:
+        ```python
+        import coremusic as cm
+
+        # Create a reverb -> EQ -> output chain
+        chain = cm.create_simple_effect_chain([
+            ('aumu', 'rvb2', 'appl'),  # Reverb
+            ('aufx', 'eqal', 'appl'),  # EQ
+        ])
+
+        # Initialize and start
+        chain.open().initialize().start()
+
+        # ... process audio ...
+
+        chain.dispose()
+        ```
+    """
+    chain = AudioEffectsChain()
+
+    # Add all effects
+    nodes = []
+    for effect_type, effect_subtype, manufacturer in effect_types:
+        node_id = chain.add_effect(effect_type, effect_subtype, manufacturer)
+        nodes.append(node_id)
+
+    # Add output
+    output_node = chain.add_output()
+    nodes.append(output_node)
+
+    # Auto-connect in linear chain
+    if auto_connect and len(nodes) > 1:
+        for i in range(len(nodes) - 1):
+            chain.connect(nodes[i], nodes[i + 1])
+
+    return chain

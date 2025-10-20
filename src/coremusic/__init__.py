@@ -69,4 +69,6 @@ from .utilities import (
     batch_convert,
     convert_audio_file,
     trim_audio,
+    AudioEffectsChain,
+    create_simple_effect_chain,
 )
