@@ -89,17 +89,17 @@ def demo_2_filter_application():
         print(f"  Shape: {audio.shape}")
         print(f"  Duration: {af.duration:.2f}s")
 
-        # Apply lowpass filter
+        # Apply lowpass filter - convenient wrapper
         print("\n1. Applying lowpass filter (cutoff=2000 Hz)...")
         filtered = cm.apply_lowpass_filter(audio, cutoff=2000, sample_rate=sample_rate)
         print(f"   Output shape: {filtered.shape}")
 
-        # Apply highpass filter
+        # Apply highpass filter - convenient wrapper
         print("\n2. Applying highpass filter (cutoff=100 Hz)...")
         filtered = cm.apply_highpass_filter(audio, cutoff=100, sample_rate=sample_rate)
         print(f"   Output shape: {filtered.shape}")
 
-        # Apply bandpass filter
+        # Apply bandpass filter - convenient wrapper
         print("\n3. Applying bandpass filter (300-5000 Hz)...")
         filtered = cm.apply_bandpass_filter(
             audio,
@@ -108,6 +108,16 @@ def demo_2_filter_application():
             sample_rate=sample_rate
         )
         print(f"   Output shape: {filtered.shape}")
+
+        # Apply scipy filter directly - NEW convenience API
+        print("\n4. Using scipy.signal filter directly...")
+        import scipy.signal
+        filtered = cm.apply_scipy_filter(
+            audio,
+            scipy.signal.butter(5, 1000, 'low', fs=sample_rate)
+        )
+        print(f"   Output shape: {filtered.shape}")
+        print("   (Applied scipy.signal.butter output directly!)")
 
     print("\n✓ Filter application demo complete\n")
 

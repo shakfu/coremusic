@@ -180,6 +180,137 @@ class TestFilterApplication:
 
 @pytest.mark.skipif(not cm.SCIPY_AVAILABLE or not cm.NUMPY_AVAILABLE,
                    reason="SciPy and NumPy required")
+class TestScipyFilterConvenience:
+    """Test convenience wrapper for scipy.signal filter functions"""
+
+    @pytest.fixture
+    def test_signal_mono(self):
+        """Generate mono test signal"""
+        import numpy as np
+        sample_rate = 44100
+        duration = 0.1
+        t = np.linspace(0, duration, int(sample_rate * duration))
+        signal = np.sin(2 * np.pi * 440 * t) + 0.5 * np.sin(2 * np.pi * 2000 * t)
+        return signal, sample_rate
+
+    @pytest.fixture
+    def test_signal_stereo(self):
+        """Generate stereo test signal"""
+        import numpy as np
+        sample_rate = 44100
+        duration = 0.1
+        t = np.linspace(0, duration, int(sample_rate * duration))
+        left = np.sin(2 * np.pi * 440 * t)
+        right = np.sin(2 * np.pi * 880 * t)
+        signal = np.column_stack([left, right])
+        return signal, sample_rate
+
+    def test_apply_scipy_filter_butter(self, test_signal_mono):
+        """Test applying scipy.signal.butter output directly"""
+        import scipy.signal
+        signal, sample_rate = test_signal_mono
+
+        # Design filter using scipy.signal.butter
+        filter_output = scipy.signal.butter(5, 1000, 'low', fs=sample_rate)
+
+        # Apply filter using convenience function
+        filtered = cm.apply_scipy_filter(signal, filter_output)
+
+        assert filtered is not None
+        assert filtered.shape == signal.shape
+        assert filtered.dtype == signal.dtype
+
+    def test_apply_scipy_filter_cheby1(self, test_signal_mono):
+        """Test applying scipy.signal.cheby1 output directly"""
+        import scipy.signal
+        signal, sample_rate = test_signal_mono
+
+        # Design filter using scipy.signal.cheby1
+        filter_output = scipy.signal.cheby1(4, 0.5, 2000, 'high', fs=sample_rate)
+
+        # Apply filter
+        filtered = cm.apply_scipy_filter(signal, filter_output)
+
+        assert filtered is not None
+        assert filtered.shape == signal.shape
+
+    def test_apply_scipy_filter_stereo(self, test_signal_stereo):
+        """Test applying scipy filter to stereo signal"""
+        import scipy.signal
+        signal, sample_rate = test_signal_stereo
+
+        # Design filter
+        filter_output = scipy.signal.butter(5, 1000, 'low', fs=sample_rate)
+
+        # Apply to stereo
+        filtered = cm.apply_scipy_filter(signal, filter_output)
+
+        assert filtered is not None
+        assert filtered.shape == signal.shape
+        assert filtered.ndim == 2
+
+    def test_apply_scipy_filter_bandpass(self, test_signal_mono):
+        """Test bandpass filter from scipy"""
+        import scipy.signal
+        signal, sample_rate = test_signal_mono
+
+        # Design bandpass filter
+        filter_output = scipy.signal.butter(4, [300, 3000], 'bandpass', fs=sample_rate)
+
+        # Apply filter
+        filtered = cm.apply_scipy_filter(signal, filter_output)
+
+        assert filtered is not None
+        assert filtered.shape == signal.shape
+
+    def test_apply_scipy_filter_no_zero_phase(self, test_signal_mono):
+        """Test applying filter without zero-phase filtering"""
+        import scipy.signal
+        signal, sample_rate = test_signal_mono
+
+        # Design filter
+        filter_output = scipy.signal.butter(5, 1000, 'low', fs=sample_rate)
+
+        # Apply without zero-phase
+        filtered = cm.apply_scipy_filter(signal, filter_output, zero_phase=False)
+
+        assert filtered is not None
+        assert filtered.shape == signal.shape
+
+    def test_apply_scipy_filter_invalid_input(self, test_signal_mono):
+        """Test error handling for invalid input"""
+        signal, sample_rate = test_signal_mono
+
+        # Test with non-tuple input
+        with pytest.raises(ValueError, match="must be a \\(b, a\\) tuple"):
+            cm.apply_scipy_filter(signal, "not a tuple")
+
+        # Test with wrong tuple length
+        with pytest.raises(ValueError, match="must be a \\(b, a\\) tuple"):
+            cm.apply_scipy_filter(signal, (1, 2, 3))
+
+    def test_apply_scipy_filter_matches_manual(self, test_signal_mono):
+        """Test that convenience function matches manual approach"""
+        import scipy.signal
+        import numpy as np
+        signal, sample_rate = test_signal_mono
+
+        # Design filter
+        filter_output = scipy.signal.butter(5, 1000, 'low', fs=sample_rate)
+        b, a = filter_output
+
+        # Apply using convenience function
+        filtered_convenience = cm.apply_scipy_filter(signal, filter_output)
+
+        # Apply manually
+        filtered_manual = cm.apply_filter(signal, b, a)
+
+        # Should produce identical results
+        np.testing.assert_array_almost_equal(filtered_convenience, filtered_manual)
+
+
+@pytest.mark.skipif(not cm.SCIPY_AVAILABLE or not cm.NUMPY_AVAILABLE,
+                   reason="SciPy and NumPy required")
 class TestResampling:
     """Test resampling functions"""
 

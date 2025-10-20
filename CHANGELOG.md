@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
     - Support for all standard filter types with customizable order
   - **Filter Application**
     - `apply_filter()` - Generic filter application with zero-phase filtering option
+    - `apply_scipy_filter()` - **NEW** Convenience wrapper accepting scipy.signal filter output directly
     - `apply_lowpass_filter()` - Convenient lowpass filtering
     - `apply_highpass_filter()` - Convenient highpass filtering
     - `apply_bandpass_filter()` - Convenient bandpass filtering
@@ -45,7 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
     - Integrated spectral analysis: `spectrum()`, `fft()`, `spectrogram()`
     - `reset()` method to restore original audio
   - **SCIPY_AVAILABLE** flag for feature detection
-  - **35 comprehensive tests** covering all SciPy functionality
+  - **42 comprehensive tests** covering all SciPy functionality (including 7 tests for convenience API)
   - **Demo script** (`tests/demos/demo_scipy_integration.py`) with 6 detailed examples
   - **Complete NumPy/SciPy ecosystem integration** for scientific audio processing
 
@@ -70,6 +71,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   filtered = cm.apply_lowpass_filter(audio, cutoff=2000, sample_rate=sr)
   resampled = cm.resample_audio(audio, original_rate=sr, target_rate=48000)
   freqs, spectrum = cm.compute_spectrum(audio, sample_rate=sr)
+
+  # Or use scipy.signal filters directly with convenience wrapper
+  import scipy.signal
+  filtered = cm.apply_scipy_filter(audio, scipy.signal.butter(5, 1000, 'low', fs=sr))
   ```
 
 - **Complex Audio Conversion Support** - Full callback-based AudioConverter API for advanced audio format conversions

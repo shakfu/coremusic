@@ -30,7 +30,7 @@ Example:
     ```
 """
 
-from typing import Optional, Tuple, Union, Literal
+from typing import Optional, Tuple, Union, Literal, Any
 import warnings
 
 # Check for NumPy availability
@@ -207,6 +207,67 @@ def apply_filter(
         return filtered
     else:
         raise ValueError(f"Audio data must be 1D or 2D, got {audio_data.ndim}D")
+
+
+def apply_scipy_filter(
+    audio_data: NDArray,
+    filter_output: Union[Tuple[NDArray, NDArray], Any],
+    zero_phase: bool = True
+) -> NDArray:
+    """Apply a filter designed by scipy.signal functions directly.
+
+    This is a convenience wrapper that accepts the output from scipy.signal
+    filter design functions (like butter, cheby1, etc.) and applies them to
+    audio data.
+
+    Args:
+        audio_data: Input audio array (mono or stereo)
+        filter_output: Output from scipy.signal.butter(), cheby1(), etc.
+                      Should be a tuple of (b, a) coefficients
+        zero_phase: If True, use filtfilt for zero-phase filtering (default)
+
+    Returns:
+        Filtered audio data with same shape as input
+
+    Example:
+        ```python
+        import scipy.signal
+        import coremusic as cm
+
+        # Design and apply filter in one line
+        filtered = cm.apply_scipy_filter(
+            audio_data,
+            scipy.signal.butter(5, 1000, 'low', fs=44100)
+        )
+
+        # Also works with other scipy filter functions
+        filtered = cm.apply_scipy_filter(
+            audio_data,
+            scipy.signal.cheby1(4, 0.5, 2000, 'high', fs=44100)
+        )
+        ```
+
+    Raises:
+        ImportError: If SciPy is not installed
+        ValueError: If filter_output is not a valid (b, a) tuple
+    """
+    _require_scipy("apply_scipy_filter")
+    _require_numpy("apply_scipy_filter")
+
+    # Validate filter output
+    if isinstance(filter_output, tuple) and len(filter_output) == 2:
+        b, a = filter_output
+        # Ensure they are arrays
+        if not (hasattr(b, '__len__') and hasattr(a, '__len__')):
+            raise ValueError("filter_output must contain array-like b and a coefficients")
+    else:
+        raise ValueError(
+            "filter_output must be a (b, a) tuple from scipy.signal filter design functions. "
+            f"Got {type(filter_output)}"
+        )
+
+    # Use the existing apply_filter function
+    return apply_filter(audio_data, b, a, zero_phase)
 
 
 def apply_lowpass_filter(

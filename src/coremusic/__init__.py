@@ -63,6 +63,7 @@ try:
         design_chebyshev_filter,
         # Filter application
         apply_filter,
+        apply_scipy_filter,
         apply_lowpass_filter,
         apply_highpass_filter,
         apply_bandpass_filter,
@@ -81,6 +82,7 @@ except ImportError:
     design_butterworth_filter = None  # type: ignore
     design_chebyshev_filter = None  # type: ignore
     apply_filter = None  # type: ignore
+    apply_scipy_filter = None  # type: ignore
     apply_lowpass_filter = None  # type: ignore
     apply_highpass_filter = None  # type: ignore
     apply_bandpass_filter = None  # type: ignore
