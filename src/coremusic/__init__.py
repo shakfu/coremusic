@@ -71,4 +71,6 @@ from .utilities import (
     trim_audio,
     AudioEffectsChain,
     create_simple_effect_chain,
+    find_audio_unit_by_name,
+    list_available_audio_units,
 )

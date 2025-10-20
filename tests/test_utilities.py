@@ -513,3 +513,102 @@ class TestAudioEffectsChain:
             assert chain.is_initialized
         finally:
             chain.dispose()
+
+
+class TestAudioUnitDiscovery:
+    """Test AudioUnit discovery by name"""
+
+    def test_list_available_audio_units(self):
+        """Test listing all available AudioUnits"""
+        units = cm.list_available_audio_units()
+
+        # Should find at least some AudioUnits on macOS
+        assert len(units) > 0
+        assert isinstance(units, list)
+
+        # Check structure of first unit
+        first_unit = units[0]
+        assert 'name' in first_unit
+        assert 'type' in first_unit
+        assert 'subtype' in first_unit
+        assert 'manufacturer' in first_unit
+
+    def test_find_audio_unit_by_name_audelay(self):
+        """Test finding AUDelay by name"""
+        codes = cm.find_audio_unit_by_name('AUDelay')
+
+        # AUDelay should always be available on macOS
+        assert codes is not None
+        assert len(codes) == 3  # (type, subtype, manufacturer)
+
+        type_code, subtype_code, manufacturer = codes
+        assert isinstance(type_code, str)
+        assert isinstance(subtype_code, str)
+        assert isinstance(manufacturer, str)
+
+        # AUDelay is an audio effect ('aufx'), delay type ('dely'), Apple manufacturer ('appl')
+        assert type_code == 'aufx'
+        assert subtype_code == 'dely'
+        assert manufacturer == 'appl'
+
+    def test_find_audio_unit_by_name_case_insensitive(self):
+        """Test case-insensitive name matching"""
+        # These should all find the same unit
+        codes1 = cm.find_audio_unit_by_name('audelay')
+        codes2 = cm.find_audio_unit_by_name('AUDELAY')
+        codes3 = cm.find_audio_unit_by_name('AuDelay')
+
+        assert codes1 is not None
+        assert codes1 == codes2 == codes3
+
+    def test_find_audio_unit_by_name_not_found(self):
+        """Test searching for non-existent AudioUnit"""
+        codes = cm.find_audio_unit_by_name('NonExistentAudioUnit12345')
+        assert codes is None
+
+    def test_find_audio_unit_by_name_partial_match(self):
+        """Test partial name matching"""
+        # Search for 'Delay' should find an AudioUnit containing 'Delay'
+        codes = cm.find_audio_unit_by_name('Delay')
+        assert codes is not None
+
+    def test_audio_effects_chain_add_effect_by_name(self):
+        """Test adding effect to chain by name"""
+        chain = cm.AudioEffectsChain()
+
+        # Add AUDelay by name
+        delay_node = chain.add_effect_by_name('AUDelay')
+        assert delay_node is not None
+        assert isinstance(delay_node, int)
+        assert chain.node_count == 1
+
+        chain.dispose()
+
+    def test_audio_effects_chain_add_effect_by_name_not_found(self):
+        """Test adding non-existent effect by name"""
+        chain = cm.AudioEffectsChain()
+
+        # Try to add non-existent effect
+        node = chain.add_effect_by_name('NonExistentEffect12345')
+        assert node is None
+        assert chain.node_count == 0
+
+        chain.dispose()
+
+    def test_audio_effects_chain_by_name_complete_workflow(self):
+        """Test complete workflow using name-based effect addition"""
+        chain = cm.AudioEffectsChain()
+
+        # Add effects by name
+        delay_node = chain.add_effect_by_name('AUDelay')
+        output_node = chain.add_output()
+
+        assert delay_node is not None
+        assert output_node is not None
+        assert chain.node_count == 2
+
+        # Connect
+        chain.connect(delay_node, output_node)
+
+        # Dispose
+        chain.dispose()

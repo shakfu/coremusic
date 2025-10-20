@@ -1091,10 +1091,22 @@ def get_audio_object_property_element_main():
 
 
 # AudioComponent Functions
-def audio_component_find_next(description_dict):
-    """Find an audio component matching the description"""
+def audio_component_find_next(description_dict, long previous_component_id=0):
+    """Find an audio component matching the description
+
+    Args:
+        description_dict: Dictionary with keys 'type', 'subtype', 'manufacturer', 'flags', 'flags_mask'
+        previous_component_id: Optional component ID to continue searching from (for iteration)
+
+    Returns:
+        Component ID (long) or None if no more components found
+    """
     cdef at.AudioComponentDescription desc
     cdef at.AudioComponent component
+    cdef at.AudioComponent previous = NULL
+
+    if previous_component_id != 0:
+        previous = <at.AudioComponent>previous_component_id
 
     desc.componentType = description_dict.get('type', 0)
     desc.componentSubType = description_dict.get('subtype', 0)
@@ -1102,7 +1114,7 @@ def audio_component_find_next(description_dict):
     desc.componentFlags = description_dict.get('flags', 0)
     desc.componentFlagsMask = description_dict.get('flags_mask', 0)
 
-    component = at.AudioComponentFindNext(NULL, &desc)
+    component = at.AudioComponentFindNext(previous, &desc)
 
     if component == NULL:
         return None
@@ -1130,6 +1142,59 @@ def audio_component_instance_dispose(long instance_id):
         raise RuntimeError(f"AudioComponentInstanceDispose failed with status: {status}")
 
     return status
+
+
+def audio_component_copy_name(long component_id):
+    """Get the name of an audio component
+
+    Args:
+        component_id: AudioComponent ID
+
+    Returns:
+        str: The name of the audio component, or None if failed
+    """
+    cdef at.AudioComponent component = <at.AudioComponent>component_id
+    cdef cf.CFStringRef name_ref = NULL
+
+    cdef cf.OSStatus status = at.AudioComponentCopyName(component, &name_ref)
+    if status != 0 or name_ref == NULL:
+        return None
+
+    # Convert CFString to Python string
+    cdef char buffer[256]
+    cdef str name = None
+
+    if cf.CFStringGetCString(name_ref, buffer, 256, cf.kCFStringEncodingUTF8):
+        name = buffer.decode('utf-8')
+
+    cf.CFRelease(name_ref)
+    return name
+
+
+def audio_component_get_description(long component_id):
+    """Get the description of an audio component
+
+    Args:
+        component_id: AudioComponent ID
+
+    Returns:
+        dict: AudioComponentDescription as a dictionary with keys:
+              'type', 'subtype', 'manufacturer', 'flags', 'flags_mask'
+    """
+    cdef at.AudioComponent component = <at.AudioComponent>component_id
+    cdef at.AudioComponentDescription desc
+
+    cdef cf.OSStatus status = at.AudioComponentGetDescription(component, &desc)
+    if status != 0:
+        raise RuntimeError(f"AudioComponentGetDescription failed with status: {status}")
+
+    return {
+        'type': desc.componentType,
+        'subtype': desc.componentSubType,
+        'manufacturer': desc.componentManufacturer,
+        'flags': desc.componentFlags,
+        'flags_mask': desc.componentFlagsMask
+    }
 
 
 # AudioUnit Functions

@@ -667,6 +667,33 @@ class AudioEffectsChain:
         self._nodes[node_id] = desc
         return node_id
 
+    def add_effect_by_name(self, name: str) -> Optional[int]:
+        """Add an audio effect to the chain by name.
+
+        This searches for an AudioUnit matching the given name and adds it
+        to the chain.
+
+        Args:
+            name: AudioUnit name (e.g., 'AUDelay', 'Reverb', 'AUGraphicEQ')
+
+        Returns:
+            Node ID for this effect, or None if not found
+
+        Example:
+            ```python
+            # Add effects by name instead of FourCC codes
+            delay = chain.add_effect_by_name('AUDelay')
+            reverb = chain.add_effect_by_name('Reverb')
+            eq = chain.add_effect_by_name('AUGraphicEQ')
+            ```
+        """
+        codes = find_audio_unit_by_name(name)
+        if codes is None:
+            return None
+
+        effect_type, effect_subtype, manufacturer = codes
+        return self.add_effect(effect_type, effect_subtype, manufacturer)
+
     def add_output(self, output_type: str = 'auou', output_subtype: str = 'def ') -> int:
         """Add an output node to the chain.
 
@@ -844,3 +871,136 @@ def create_simple_effect_chain(
             chain.connect(nodes[i], nodes[i + 1])
 
     return chain
+
+
+# ============================================================================
+# AudioUnit Discovery by Name
+# ============================================================================
+
+def find_audio_unit_by_name(name: str, case_sensitive: bool = False) -> Optional[Tuple[str, str, str]]:
+    """Find an AudioUnit by name (searches all available AudioComponents).
+
+    This function iterates through all available AudioComponents and matches
+    by name, similar to the C++ pattern you provided. Returns the FourCC codes
+    needed to create the AudioUnit.
+
+    Args:
+        name: Name or partial name to search for (e.g., 'AUDelay', 'Reverb')
+        case_sensitive: Whether to do case-sensitive matching (default: False)
+
+    Returns:
+        Tuple of (type, subtype, manufacturer) as FourCC strings, or None if not found
+
+    Example:
+        ```python
+        import coremusic as cm
+
+        # Find AUDelay
+        codes = cm.find_audio_unit_by_name('AUDelay')
+        if codes:
+            type_code, subtype_code, manufacturer = codes
+            chain = cm.AudioEffectsChain()
+            delay_node = chain.add_effect(type_code, subtype_code, manufacturer)
+
+        # Or use the convenience function
+        delay_node = chain.add_effect_by_name('AUDelay')
+        ```
+    """
+    from . import capi
+
+    # Wildcard description to iterate through all components
+    desc_dict = {
+        'type': 0,
+        'subtype': 0,
+        'manufacturer': 0,
+        'flags': 0,
+        'flags_mask': 0
+    }
+
+    component_id = 0  # Start with NULL
+    search_name = name if case_sensitive else name.lower()
+
+    while True:
+        # Find next component (passing previous component for iteration)
+        component_id = capi.audio_component_find_next(desc_dict, component_id)
+
+        if component_id is None:
+            break
+
+        # Get component name
+        component_name = capi.audio_component_copy_name(component_id)
+        if component_name:
+            match_name = component_name if case_sensitive else component_name.lower()
+
+            # Check if name matches (substring match)
+            if search_name in match_name:
+                # Get the description
+                desc = capi.audio_component_get_description(component_id)
+
+                # Convert to FourCC strings
+                type_fourcc = capi.int_to_fourchar(desc['type'])
+                subtype_fourcc = capi.int_to_fourchar(desc['subtype'])
+                manufacturer_fourcc = capi.int_to_fourchar(desc['manufacturer'])
+
+                return (type_fourcc, subtype_fourcc, manufacturer_fourcc)
+
+    return None
+
+
+def list_available_audio_units(filter_type: Optional[str] = None) -> List[Dict[str, Any]]:
+    """List all available AudioUnits with their names and FourCC codes.
+
+    Args:
+        filter_type: Optional type filter (e.g., 'aumu', 'aufx', 'auou')
+
+    Returns:
+        List of dictionaries with keys: 'name', 'type', 'subtype', 'manufacturer'
+
+    Example:
+        ```python
+        import coremusic as cm
+
+        # List all AudioUnits
+        units = cm.list_available_audio_units()
+        for unit in units:
+            print(f"{unit['name']}: {unit['type']}/{unit['subtype']}/{unit['manufacturer']}")
+
+        # List only music effects
+        effects = cm.list_available_audio_units(filter_type='aumu')
+        ```
+    """
+    from . import capi
+
+    results = []
+    type_int = capi.fourchar_to_int(filter_type) if filter_type else 0
+
+    desc_dict = {
+        'type': type_int,
+        'subtype': 0,
+        'manufacturer': 0,
+        'flags': 0,
+        'flags_mask': 0
+    }
+
+    # Iterate through all components
+    component_id = 0  # Start with NULL
+
+    while True:
+        component_id = capi.audio_component_find_next(desc_dict, component_id)
+
+        if component_id is None:
+            break
+
+        component_name = capi.audio_component_copy_name(component_id)
+        if component_name:
+            desc = capi.audio_component_get_description(component_id)
+
+            results.append({
+                'name': component_name,
+                'type': capi.int_to_fourchar(desc['type']),
+                'subtype': capi.int_to_fourchar(desc['subtype']),
+                'manufacturer': capi.int_to_fourchar(desc['manufacturer']),
+                'flags': desc['flags']
+            })
+
+    return results

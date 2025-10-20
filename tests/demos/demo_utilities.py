@@ -459,6 +459,7 @@ def main():
         ("Audio Effects Chain", example_7_audio_effects_chain),
         ("Simple Effect Chain Builder", example_8_simple_effect_chain_builder),
         ("AudioUnit FourCC Reference", example_9_audiounit_fourcc_reference),
+        ("AudioUnit Name-Based Lookup", example_10_audiounit_name_based_lookup),
     ]
 
     for i, (name, func) in enumerate(examples, 1):
@@ -480,3 +481,68 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def example_10_audiounit_name_based_lookup():
+    """Example 10: Finding AudioUnits by name instead of FourCC codes"""
+    print_section("Example 10: AudioUnit Name-Based Lookup")
+
+    print("CoreMusic supports finding AudioUnits by name,")
+    print("which is often more convenient than using FourCC codes.\n")
+
+    # List available AudioUnits
+    print("1. Listing available AudioUnits...")
+    units = cm.list_available_audio_units()
+    print(f"   Found {len(units)} AudioUnits on this system")
+
+    # Show first 5
+    print("\n   First 5 AudioUnits:")
+    for i, unit in enumerate(units[:5], 1):
+        print(f"   {i}. {unit['name']}")
+        print(f"      Type: {unit['type']}, Subtype: {unit['subtype']}, Manufacturer: {unit['manufacturer']}")
+
+    # Find specific AudioUnit by name
+    print("\n2. Finding AudioUnit by name...")
+    print("   Searching for 'AUDelay'...")
+    codes = cm.find_audio_unit_by_name('AUDelay')
+    if codes:
+        type_code, subtype_code, manufacturer = codes
+        print(f"   ✓ Found: {type_code}/{subtype_code}/{manufacturer}")
+    else:
+        print("   ✗ Not found")
+
+    # Create effect chain using names
+    print("\n3. Creating effect chain using names...")
+    chain = cm.AudioEffectsChain()
+
+    delay_node = chain.add_effect_by_name('AUDelay')
+    if delay_node:
+        print(f"   ✓ Added AUDelay (node {delay_node})")
+    else:
+        print("   ✗ Failed to add AUDelay")
+
+    output_node = chain.add_output()
+    print(f"   ✓ Added output (node {output_node})")
+
+    if delay_node:
+        chain.connect(delay_node, output_node)
+        print(f"   ✓ Connected chain")
+
+    print(f"\n   Chain has {chain.node_count} nodes")
+    chain.dispose()
+
+    # Comparison: FourCC vs Name-based
+    print("\n4. Comparison: FourCC vs Name-based approach")
+    print("\n   FourCC approach (explicit codes):")
+    print("   ```python")
+    print("   delay = chain.add_effect('aufx', 'dely', 'appl')  # Need to know codes")
+    print("   ```")
+
+    print("\n   Name-based approach (more intuitive):")
+    print("   ```python")
+    print("   delay = chain.add_effect_by_name('AUDelay')  # Use friendly name")
+    print("   ```")
+
+    print("\n   Both approaches are supported!")
+    print("   - Use FourCC for precise control and performance")
+    print("   - Use names for convenience and readability")
