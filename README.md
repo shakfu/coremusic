@@ -1,4 +1,4 @@
-# coremusic
+# CoreMusic: Complete Python bindings for Apple CoreAudio
 
 A comprehensive Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing both functional and object-oriented Python bindings for professional audio and MIDI development on macOS. This project exposes the complete CoreAudio and CoreMIDI C APIs through Python, enabling advanced audio applications, real-time processing, MIDI routing, and professional audio software development.
 

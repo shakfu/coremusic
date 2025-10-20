@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Added
 
+- sphinx docs, tutorials and examples.
+
 - **SciPy Signal Processing Integration** - Seamless integration with SciPy for advanced audio DSP workflows
   - **Filter Design** (`scipy_utils.py`)
     - `design_butterworth_filter()` - Design Butterworth filters (lowpass, highpass, bandpass, bandstop)

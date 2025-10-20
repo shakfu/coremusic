@@ -119,10 +119,10 @@ Exceptional test quality:
 
 ## Enhancement Opportunities
 
-### 1. ✅ **Streaming and Async I/O** 🎯 **[COMPLETED]**
+### 1. [x] **Streaming and Async I/O**  **[COMPLETED]**
 **Priority: HIGH**
 
-**Status:** ✅ **FULLY IMPLEMENTED**
+**Status:** [x] **FULLY IMPLEMENTED**
 
 **What was implemented:**
 ```python
@@ -189,18 +189,18 @@ async with cm.AsyncAudioFile("audio.wav") as audio:
   6. NumPy integration for signal processing
 
 **Benefits Delivered:**
-- ✅ Non-blocking file I/O for large files
-- ✅ Better integration with modern Python async frameworks (FastAPI, aiohttp, etc.)
-- ✅ Improved responsiveness in audio applications
-- ✅ Concurrent processing support for batch operations
-- ✅ Stream processing without loading entire files into memory
-- ✅ Production-ready with comprehensive test coverage
+- [x] Non-blocking file I/O for large files
+- [x] Better integration with modern Python async frameworks (FastAPI, aiohttp, etc.)
+- [x] Improved responsiveness in audio applications
+- [x] Concurrent processing support for batch operations
+- [x] Stream processing without loading entire files into memory
+- [x] Production-ready with comprehensive test coverage
 
 **Implementation Effort:** Medium - completed in full with async wrapper layer over C APIs
 
 ---
 
-### 2. **SciPy Integration** 🎯
+### 2. [x] **SciPy Integration**
 **Priority: MEDIUM-HIGH**
 
 **Gap:** NumPy integration exists, but no SciPy signal processing utilities.
@@ -230,10 +230,10 @@ filter_coeffs = format.design_filter(cutoff=1000, filter_type='lowpass')
 
 ---
 
-### 3. ✅ **High-Level Audio Processing Utilities** 🎯 **[COMPLETED]**
+### 3. [x] **High-Level Audio Processing Utilities**  **[COMPLETED]**
 **Priority: MEDIUM**
 
-**Status:** ✅ **FULLY IMPLEMENTED**
+**Status:** [x] **FULLY IMPLEMENTED**
 
 **What was implemented:**
 ```python
@@ -336,29 +336,29 @@ cm.trim_audio("input.wav", "output.wav", start_time=0.5, end_time=3.0)
   10. AudioUnit name-based lookup and discovery
 
 **Benefits Delivered:**
-- ✅ Faster development for common audio tasks
-- ✅ Reduced learning curve for audio processing beginners
-- ✅ Competitive convenience utilities similar to `pydub`, `librosa`
-- ✅ Maintains full access to low-level CoreAudio APIs for advanced usage
-- ✅ Clean separation between high-level utilities and core API
+- [x] Faster development for common audio tasks
+- [x] Reduced learning curve for audio processing beginners
+- [x] Competitive convenience utilities similar to `pydub`, `librosa`
+- [x] Maintains full access to low-level CoreAudio APIs for advanced usage
+- [x] Clean separation between high-level utilities and core API
 
 **Implementation Scope:**
-- ✅ Audio analysis utilities (COMPLETE)
-- ✅ Format presets (COMPLETE)
-- ✅ Batch processing (COMPLETE)
-- ✅ Simple file conversion (COMPLETE - stereo ↔ mono)
-- ✅ **Audio effects chain (COMPLETE)** - High-level AudioEffectsChain wrapper for AUGraph
-- ✅ **Simple effect chain builder (COMPLETE)** - `create_simple_effect_chain()` convenience function
-- ✅ **AudioUnit FourCC reference (COMPLETE)** - Comprehensive documentation and examples
-- ✅ **AudioUnit name-based lookup (COMPLETE)** - Find AudioUnits by name with `find_audio_unit_by_name()`, `list_available_audio_units()`, `get_audiounit_names()`
-- ✅ **Complex audio conversions (COMPLETE)** - Full callback-based AudioConverter API supporting sample rate, bit depth, and combined conversions
+- [x] Audio analysis utilities (COMPLETE)
+- [x] Format presets (COMPLETE)
+- [x] Batch processing (COMPLETE)
+- [x] Simple file conversion (COMPLETE - stereo ↔ mono)
+- [x] **Audio effects chain (COMPLETE)** - High-level AudioEffectsChain wrapper for AUGraph
+- [x] **Simple effect chain builder (COMPLETE)** - `create_simple_effect_chain()` convenience function
+- [x] **AudioUnit FourCC reference (COMPLETE)** - Comprehensive documentation and examples
+- [x] **AudioUnit name-based lookup (COMPLETE)** - Find AudioUnits by name with `find_audio_unit_by_name()`, `list_available_audio_units()`, `get_audiounit_names()`
+- [x] **Complex audio conversions (COMPLETE)** - Full callback-based AudioConverter API supporting sample rate, bit depth, and combined conversions
   - Callback infrastructure with `audio_converter_fill_complex_buffer()` wrapper
   - `AudioConverter.convert_with_callback()` method for all conversion types
   - `convert_audio_file()` utility automatically uses callback API when needed
   - Comprehensive test coverage with real file verification (474 tests passing)
   - Duration preservation verified (< 0.000003s error for 2.743s audio)
   - See `docs/COMPLEX_AUDIO_CONVERSION.md` for implementation details
-- ✅ **SciPy integration (COMPLETE)** - Full signal processing integration for advanced audio DSP
+- [x] **SciPy integration (COMPLETE)** - Full signal processing integration for advanced audio DSP
   - Filter design: Butterworth, Chebyshev filters with all types (lowpass, highpass, bandpass, bandstop)
   - Filter application: Generic and convenience functions with automatic mono/stereo handling
   - Resampling: High-quality using FFT and polyphase methods
@@ -367,25 +367,25 @@ cm.trim_audio("input.wav", "output.wav", start_time=0.5, end_time=3.0)
   - 35 comprehensive tests (509 total tests passing)
   - Complete demo script with 6 working examples
   - See `tests/demos/demo_scipy_integration.py` for usage examples
-- ⚠️ Advanced feature extraction (MFCC, mel-spectrograms) - Future enhancement
+- [!] Advanced feature extraction (MFCC, mel-spectrograms) - Future enhancement
 
 **Implementation Effort:** Medium - completed with clean utility layer over existing APIs
 
 **Latest Updates (2025):**
-- ✅ **AudioEffectsChain class** - Full AUGraph lifecycle management with Pythonic interface
-- ✅ **FourCC-based AudioUnit identification** - Precise AudioUnit specification without name lookup
-- ✅ **AudioUnit name-based discovery** - Find AudioUnits by name (e.g., 'AUDelay'), returns AudioComponent objects
+- [x] **AudioEffectsChain class** - Full AUGraph lifecycle management with Pythonic interface
+- [x] **FourCC-based AudioUnit identification** - Precise AudioUnit specification without name lookup
+- [x] **AudioUnit name-based discovery** - Find AudioUnits by name (e.g., 'AUDelay'), returns AudioComponent objects
   - `find_audio_unit_by_name()` - Search by name, case-insensitive
   - `list_available_audio_units()` - List all 676 available AudioUnits on macOS
   - `get_audiounit_names()` - Get simple list of AudioUnit names
   - `AudioEffectsChain.add_effect_by_name()` - Add effects by name instead of FourCC codes
-- ✅ **21 new tests** - All passing with 100% backward compatibility
-- ✅ **10 new demo examples** - Comprehensive usage documentation
+- [x] **21 new tests** - All passing with 100% backward compatibility
+- [x] **10 new demo examples** - Comprehensive usage documentation
 - **See IMPLEMENTATION_SUMMARY.md and docs/audiounit_name_lookup.md for complete details**
 
 ---
 
-### 4. **Documentation and Examples** 📚
+### 4. [x] **Documentation and Examples**
 **Priority: HIGH**
 
 **Gap:** Code is well-documented internally, but lacks external user documentation.
@@ -417,7 +417,7 @@ cm.trim_audio("input.wav", "output.wav", start_time=0.5, end_time=3.0)
 
 ---
 
-### 5. **Performance Optimizations** ⚡
+### 5. **Performance Optimizations**
 **Priority: MEDIUM-LOW**
 
 **Current state:** Already using Cython for performance.
@@ -447,7 +447,7 @@ cm.AudioFile.batch_process_parallel(
 
 ---
 
-### 6. **Plugin/Extension System** 🔌
+### 6. **Plugin/Extension System**
 **Priority: LOW**
 
 **What to add:**
@@ -472,7 +472,7 @@ available_plugins = cm.discover_audio_units(type='effect')
 
 ---
 
-### 7. **Type Hints and Static Analysis** 🔍
+### 7. **Type Hints and Static Analysis**
 **Priority: MEDIUM**
 
 **Gap:** Cython code may have limited type hint exposure.
@@ -491,7 +491,7 @@ available_plugins = cm.discover_audio_units(type='effect')
 
 ---
 
-### 8. **Packaging and Distribution** 📦
+### 8. **Packaging and Distribution**
 **Priority: MEDIUM**
 
 **Current state:** Builds from source.
@@ -515,7 +515,7 @@ available_plugins = cm.discover_audio_units(type='effect')
 
 ### Phase 1: Foundation (Immediate)
 1. [ ] **Documentation** - Sphinx docs, API reference, tutorials
-2. [x] **Type Hints** - Complete `.pyi` stubs for all modules ✅ **COMPLETED**
+2. [x] **Type Hints** - Complete `.pyi` stubs for all modules [x] **COMPLETED**
    - Created comprehensive `capi.pyi` with 401 function signatures
    - Created `objects.pyi` with 26 OO class definitions
    - Created `__init__.pyi` for package-level exports
@@ -526,7 +526,7 @@ available_plugins = cm.discover_audio_units(type='effect')
 3. [ ] **PyPI Distribution** - Pre-built wheels
 
 ### Phase 2: Enhancements (3-6 months)
-4. [x] **Async I/O** - Async file reading and AudioQueue operations ✅ **COMPLETED**
+4. [x] **Async I/O** - Async file reading and AudioQueue operations [x] **COMPLETED**
    - Implemented `AsyncAudioFile` with chunk streaming
    - Implemented `AsyncAudioQueue` for non-blocking operations
    - 22 comprehensive tests (100% passing)
@@ -534,7 +534,7 @@ available_plugins = cm.discover_audio_units(type='effect')
    - Demo script with 6 working examples
    - Full backward compatibility maintained
    - See `src/coremusic/async_io.py` and `demo_async_io.py`
-5. [x] **High-Level Utilities** - Audio analysis, batch processing, effects chains ✅ **COMPLETED**
+5. [x] **High-Level Utilities** - Audio analysis, batch processing, effects chains [x] **COMPLETED**
    - Implemented `AudioAnalyzer` class (silence detection, peak, RMS, file info)
    - Implemented `AudioFormatPresets` with 4 common formats
    - Implemented `batch_convert()` and `convert_audio_file()` utilities
@@ -569,7 +569,7 @@ available_plugins = cm.discover_audio_units(type='effect')
 ### Critical Actions
 1. **Publish to PyPI immediately** - The package is production-ready
 2. **Create comprehensive documentation** - Biggest barrier to adoption
-3. ~~**Add async/await support**~~ - ✅ **COMPLETED** - Modern Python best practice now implemented
+3. ~~**Add async/await support**~~ - [x] **COMPLETED** - Modern Python best practice now implemented
 
 ### Strategic Decisions
 - **Focus on usability over completeness** - The API coverage is already excellent
@@ -588,14 +588,14 @@ available_plugins = cm.discover_audio_units(type='effect')
 **CoreMusic is exceptional work** - comprehensive, well-tested, and professionally architected. The functional API coverage is complete, and the object-oriented layer provides excellent ergonomics.
 
 **Recent Enhancements:**
-- ✅ **Type hints** - Complete `.pyi` stubs with 100% coverage (mypy verified)
-- ✅ **Async I/O** - Full async/await support with streaming and concurrent operations
-- ✅ **Test quality** - 431 passing tests (up from 417), improved fixture handling
+- [x] **Type hints** - Complete `.pyi` stubs with 100% coverage (mypy verified)
+- [x] **Async I/O** - Full async/await support with streaming and concurrent operations
+- [x] **Test quality** - 431 passing tests (up from 417), improved fixture handling
 
 **Primary gaps are not in API coverage** but in:
 1. Documentation and examples
-2. ~~High-level convenience utilities~~ - ✅ **COMPLETED**
-3. ~~Modern Python patterns (async, type hints)~~ - ✅ **COMPLETED**
+2. ~~High-level convenience utilities~~ - [x] **COMPLETED**
+3. ~~Modern Python patterns (async, type hints)~~ - [x] **COMPLETED**
 4. Distribution and packaging
 
 The package is **ready for production use** today. With focused effort on documentation and packaging, it could become the definitive Python audio library for macOS.
@@ -617,7 +617,7 @@ The package is **ready for production use** today. With focused effort on docume
 
 ## Appendix: API Coverage Summary
 
-### ✅ Fully Wrapped (100%)
+### [x] Fully Wrapped (100%)
 - CoreAudio (hardware, devices, properties)
 - AudioFile (all file operations)
 - AudioFileStream (streaming file parsing)
@@ -633,14 +633,14 @@ The package is **ready for production use** today. With focused effort on docume
 - CoreMIDI (MIDI 1.0/2.0, UMP)
 - AUGraph (audio processing graphs)
 
-### ⚠️ Partially Wrapped / Missing
+### [!] Partially Wrapped / Missing
 - AudioWorkInterval (specialized, low priority)
 - CoreAudioClock (medium priority for sync apps)
 - AudioHardwareTapping (new, ObjC-only)
 - AudioCodec (covered by AudioConverter)
 - CAFFile structures (informational only)
 
-### 📊 Statistics
+###  Statistics
 - **Total Functions Wrapped**: 395+
 - **Test Files**: 25
 - **Total Tests**: 440
