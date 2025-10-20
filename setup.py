@@ -2,8 +2,11 @@ import os
 
 from setuptools import setup, Extension
 
-
 from Cython.Build import cythonize
+
+LIMITED_API = False
+LIMITED_API_PYTHON_VERSION = 0x030A0000 # 3.10
+
 
 os.environ['LDFLAGS'] = " ".join([
         "-framework CoreServices",
@@ -13,12 +16,21 @@ os.environ['LDFLAGS'] = " ".join([
         "-framework CoreAudio",
 ])
 
+DEFINE_MACROS = []
+
+if LIMITED_API:
+    DEFINE_MACROS.append(
+        ("Py_LIMITED_API", LIMITED_API_PYTHON_VERSION),
+    )
+
 extensions = [
     Extension("coremusic.capi",
         sources=[
             "src/coremusic/capi.pyx",
             "src/coremusic/audio_player.c"
         ],
+        define_macros=DEFINE_MACROS,
+        py_limited_api=LIMITED_API,
     ),
 ]
 

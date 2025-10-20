@@ -1,17 +1,43 @@
 [project]
 name = "coremusic"
-version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
-    "cython>=3.1.4",
-    "setuptools>=80.9.0",
+version = "0.1.5"
+authors = [
+  { name="Shakeeb Alireza", email="author@example.com" },
 ]
+description = "Python bindings for Apple CoreAudio"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/shakfu/coremusic"
+Issues = "https://github.com/shakfu/coremusic/issues"
 
 [dependency-groups]
 dev = [
     "numpy>=2.3.4",
     "scipy>=1.16.2",
     "sphinx>=8.2.3",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=0.24.0",
+    "twine>=6.2.0",
 ]
+
+[build-system]
+requires = ["setuptools >= 61", "cython"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

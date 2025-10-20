@@ -4,6 +4,7 @@ __pycache__
 
 .*_cache
 dist
+*.egg-info
 
 # Prerequisites
 *.d

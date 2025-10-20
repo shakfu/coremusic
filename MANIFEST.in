@@ -1,0 +1,6 @@
+include src/coremusic/*.pyi
+include src/coremusic/*.pxd
+include src/coremusic/*.pyx
+include src/coremusic/*.c
+include src/coremusic/*.h
+include src/coremusic/py.typed

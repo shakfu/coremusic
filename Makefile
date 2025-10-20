@@ -1,13 +1,18 @@
-.PHONY: all build test clean docs docs-clean docs-serve docs-pdf
+.PHONY: all build test clean docs docs-clean docs-serve docs-pdf check \
+		deploy publish
 
 all: build
 
 build:
-	@uv run python setup.py build_ext --inplace
-	@rm -rf ./build ./src/coremusic/capi.c
+	@uv sync --reinstall-package coremusic
+# 	@uv run python setup.py build_ext --inplace
+# 	@rm -rf ./build ./src/coremusic/capi.c
+
+# wheel:
+# 	@uv run python setup.py bdist_wheel
 
 wheel:
-	@uv run python setup.py bdist_wheel
+	@uv build
 
 test:
 	@uv run pytest
@@ -15,6 +20,12 @@ test:
 clean:
 	@rm -rf build src/*.egg-info
 	@rm -f *.so
+
+check: wheel
+	@uv run twine check dist/*
+
+publish: wheel
+	@uv run twine upload dist/*
 
 # Documentation targets
 docs:
