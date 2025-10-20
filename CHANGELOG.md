@@ -19,6 +19,59 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Added
 
+- **SciPy Signal Processing Integration** - Seamless integration with SciPy for advanced audio DSP workflows
+  - **Filter Design** (`scipy_utils.py`)
+    - `design_butterworth_filter()` - Design Butterworth filters (lowpass, highpass, bandpass, bandstop)
+    - `design_chebyshev_filter()` - Design Chebyshev Type I filters with configurable ripple
+    - Support for all standard filter types with customizable order
+  - **Filter Application**
+    - `apply_filter()` - Generic filter application with zero-phase filtering option
+    - `apply_lowpass_filter()` - Convenient lowpass filtering
+    - `apply_highpass_filter()` - Convenient highpass filtering
+    - `apply_bandpass_filter()` - Convenient bandpass filtering
+    - Automatic handling of mono and stereo audio
+  - **Resampling**
+    - `resample_audio()` - High-quality resampling using SciPy
+    - Support for both FFT and polyphase methods
+    - Automatic multi-channel handling
+  - **Spectral Analysis**
+    - `compute_spectrum()` - Power spectral density using Welch's method
+    - `compute_fft()` - Fast Fourier Transform with windowing
+    - `compute_spectrogram()` - Time-frequency analysis
+    - Configurable window functions (hann, hamming, blackman, etc.)
+  - **AudioSignalProcessor Class** - High-level interface for DSP workflows
+    - Method chaining for fluent API (e.g., `.lowpass(1000).normalize().get_audio()`)
+    - Built-in methods: `lowpass()`, `highpass()`, `bandpass()`, `resample()`, `normalize()`
+    - Integrated spectral analysis: `spectrum()`, `fft()`, `spectrogram()`
+    - `reset()` method to restore original audio
+  - **SCIPY_AVAILABLE** flag for feature detection
+  - **35 comprehensive tests** covering all SciPy functionality
+  - **Demo script** (`tests/demos/demo_scipy_integration.py`) with 6 detailed examples
+  - **Complete NumPy/SciPy ecosystem integration** for scientific audio processing
+
+  **Example Usage:**
+  ```python
+  import coremusic as cm
+
+  # Load and process audio
+  with cm.AudioFile("audio.wav") as af:
+      audio = af.read_as_numpy()
+      sr = af.format.sample_rate
+
+  # Use AudioSignalProcessor for chained operations
+  processor = cm.AudioSignalProcessor(audio, sr)
+  processed = (processor
+              .highpass(50)      # Remove rumble
+              .lowpass(15000)    # Remove ultrasonic
+              .normalize(0.9)    # Normalize
+              .get_audio())
+
+  # Or use individual functions
+  filtered = cm.apply_lowpass_filter(audio, cutoff=2000, sample_rate=sr)
+  resampled = cm.resample_audio(audio, original_rate=sr, target_rate=48000)
+  freqs, spectrum = cm.compute_spectrum(audio, sample_rate=sr)
+  ```
+
 - **Complex Audio Conversion Support** - Full callback-based AudioConverter API for advanced audio format conversions
   - **Callback Infrastructure** in Cython layer (`src/coremusic/capi.pyx`)
     - `AudioConverterCallbackData` struct for passing data between Python and C callback

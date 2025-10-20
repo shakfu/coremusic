@@ -54,6 +54,42 @@ try:
 except ImportError:
     NUMPY_AVAILABLE = False
 
+# SciPy availability flag and utilities
+try:
+    from .scipy_utils import (
+        SCIPY_AVAILABLE,
+        # Filter design
+        design_butterworth_filter,
+        design_chebyshev_filter,
+        # Filter application
+        apply_filter,
+        apply_lowpass_filter,
+        apply_highpass_filter,
+        apply_bandpass_filter,
+        # Resampling
+        resample_audio,
+        # Spectral analysis
+        compute_spectrum,
+        compute_fft,
+        compute_spectrogram,
+        # High-level processor
+        AudioSignalProcessor,
+    )
+except ImportError:
+    SCIPY_AVAILABLE = False
+    # Provide None placeholders for type checking
+    design_butterworth_filter = None  # type: ignore
+    design_chebyshev_filter = None  # type: ignore
+    apply_filter = None  # type: ignore
+    apply_lowpass_filter = None  # type: ignore
+    apply_highpass_filter = None  # type: ignore
+    apply_bandpass_filter = None  # type: ignore
+    resample_audio = None  # type: ignore
+    compute_spectrum = None  # type: ignore
+    compute_fft = None  # type: ignore
+    compute_spectrogram = None  # type: ignore
+    AudioSignalProcessor = None  # type: ignore
+
 # Import async I/O classes
 from .async_io import (
     AsyncAudioFile,

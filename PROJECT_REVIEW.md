@@ -358,7 +358,16 @@ cm.trim_audio("input.wav", "output.wav", start_time=0.5, end_time=3.0)
   - Comprehensive test coverage with real file verification (474 tests passing)
   - Duration preservation verified (< 0.000003s error for 2.743s audio)
   - See `docs/COMPLEX_AUDIO_CONVERSION.md` for implementation details
-- ⚠️ Feature extraction (MFCC, spectral) - Future enhancement (requires SciPy integration)
+- ✅ **SciPy integration (COMPLETE)** - Full signal processing integration for advanced audio DSP
+  - Filter design: Butterworth, Chebyshev filters with all types (lowpass, highpass, bandpass, bandstop)
+  - Filter application: Generic and convenience functions with automatic mono/stereo handling
+  - Resampling: High-quality using FFT and polyphase methods
+  - Spectral analysis: FFT, power spectrum, spectrograms with windowing options
+  - `AudioSignalProcessor` class for method chaining and fluent DSP workflows
+  - 35 comprehensive tests (509 total tests passing)
+  - Complete demo script with 6 working examples
+  - See `tests/demos/demo_scipy_integration.py` for usage examples
+- ⚠️ Advanced feature extraction (MFCC, mel-spectrograms) - Future enhancement
 
 **Implementation Effort:** Medium - completed with clean utility layer over existing APIs
 
