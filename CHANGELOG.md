@@ -17,7 +17,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.1.6]
+
+### Changed
+
+- Removed auto-import of scipy utilities in `__init__.py`
+
 ## [0.1.5]
+
+- First pypi release for python 3.11 - 3.14 inclusive.
 
 ### Added
 

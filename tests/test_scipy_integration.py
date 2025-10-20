@@ -4,6 +4,13 @@
 import os
 import pytest
 import coremusic as cm
+import coremusic.scipy_utils as spu
+
+if not (cm.NUMPY_AVAILABLE and spu.SCIPY_AVAILABLE):
+    pytest.skip("NumPy and SciPy are not available", allow_module_level=True)
+
+import numpy as np
+import scipy.signal
 
 
 class TestScipyAvailability:
@@ -11,27 +18,24 @@ class TestScipyAvailability:
 
     def test_scipy_available_flag_exists(self):
         """Test that SCIPY_AVAILABLE flag is defined"""
-        assert hasattr(cm, 'SCIPY_AVAILABLE')
-        assert isinstance(cm.SCIPY_AVAILABLE, bool)
+        assert hasattr(spu, 'SCIPY_AVAILABLE')
+        assert isinstance(spu.SCIPY_AVAILABLE, bool)
 
-    @pytest.mark.skipif(not cm.SCIPY_AVAILABLE, reason="SciPy not available")
     def test_scipy_functions_available(self):
         """Test that SciPy functions are available when SciPy is installed"""
-        assert cm.design_butterworth_filter is not None
-        assert cm.apply_lowpass_filter is not None
-        assert cm.resample_audio is not None
-        assert cm.compute_spectrum is not None
-        assert cm.AudioSignalProcessor is not None
+        assert spu.design_butterworth_filter is not None
+        assert spu.apply_lowpass_filter is not None
+        assert spu.resample_audio is not None
+        assert spu.compute_spectrum is not None
+        assert spu.AudioSignalProcessor is not None
 
 
-@pytest.mark.skipif(not cm.SCIPY_AVAILABLE or not cm.NUMPY_AVAILABLE,
-                   reason="SciPy and NumPy required")
 class TestFilterDesign:
     """Test filter design functions"""
 
     def test_design_butterworth_lowpass(self):
         """Test Butterworth lowpass filter design"""
-        b, a = cm.design_butterworth_filter(
+        b, a = spu.design_butterworth_filter(
             cutoff=1000,
             sample_rate=44100,
             order=5,
@@ -45,7 +49,7 @@ class TestFilterDesign:
 
     def test_design_butterworth_highpass(self):
         """Test Butterworth highpass filter design"""
-        b, a = cm.design_butterworth_filter(
+        b, a = spu.design_butterworth_filter(
             cutoff=100,
             sample_rate=44100,
             order=4,
@@ -59,7 +63,7 @@ class TestFilterDesign:
 
     def test_design_butterworth_bandpass(self):
         """Test Butterworth bandpass filter design"""
-        b, a = cm.design_butterworth_filter(
+        b, a = spu.design_butterworth_filter(
             cutoff=(300, 3000),
             sample_rate=44100,
             order=3,
@@ -73,7 +77,7 @@ class TestFilterDesign:
 
     def test_design_chebyshev_filter(self):
         """Test Chebyshev filter design"""
-        b, a = cm.design_chebyshev_filter(
+        b, a = spu.design_chebyshev_filter(
             cutoff=1000,
             sample_rate=44100,
             order=5,
@@ -87,15 +91,12 @@ class TestFilterDesign:
         assert len(a) == 6
 
 
-@pytest.mark.skipif(not cm.SCIPY_AVAILABLE or not cm.NUMPY_AVAILABLE,
-                   reason="SciPy and NumPy required")
 class TestFilterApplication:
     """Test filter application functions"""
 
     @pytest.fixture
     def test_signal_mono(self):
         """Generate test mono signal"""
-        import numpy as np
         sample_rate = 44100
         duration = 0.1  # 100ms
         t = np.linspace(0, duration, int(sample_rate * duration))
@@ -106,7 +107,6 @@ class TestFilterApplication:
     @pytest.fixture
     def test_signal_stereo(self):
         """Generate test stereo signal"""
-        import numpy as np
         sample_rate = 44100
         duration = 0.1
         t = np.linspace(0, duration, int(sample_rate * duration))
@@ -120,14 +120,13 @@ class TestFilterApplication:
         signal, sample_rate = test_signal_mono
 
         # Apply lowpass filter at 1000Hz (should remove 2000Hz component)
-        filtered = cm.apply_lowpass_filter(signal, cutoff=1000, sample_rate=sample_rate)
+        filtered = spu.apply_lowpass_filter(signal, cutoff=1000, sample_rate=sample_rate)
 
         assert filtered is not None
         assert filtered.shape == signal.shape
         assert filtered.dtype == signal.dtype
 
         # Verify attenuation of high frequencies
-        import numpy as np
         assert np.max(np.abs(filtered)) < np.max(np.abs(signal))
 
     def test_apply_highpass_filter_mono(self, test_signal_mono):
@@ -135,7 +134,7 @@ class TestFilterApplication:
         signal, sample_rate = test_signal_mono
 
         # Apply highpass filter at 1500Hz (should remove 440Hz component)
-        filtered = cm.apply_highpass_filter(signal, cutoff=1500, sample_rate=sample_rate)
+        filtered = spu.apply_highpass_filter(signal, cutoff=1500, sample_rate=sample_rate)
 
         assert filtered is not None
         assert filtered.shape == signal.shape
@@ -145,7 +144,7 @@ class TestFilterApplication:
         signal, sample_rate = test_signal_mono
 
         # Apply bandpass filter 300-500Hz (should attenuate both components)
-        filtered = cm.apply_bandpass_filter(
+        filtered = spu.apply_bandpass_filter(
             signal,
             lowcut=300,
             highcut=500,
@@ -160,8 +159,8 @@ class TestFilterApplication:
         signal, sample_rate = test_signal_stereo
 
         # Design and apply filter
-        b, a = cm.design_butterworth_filter(1000, sample_rate, order=5)
-        filtered = cm.apply_filter(signal, b, a, zero_phase=True)
+        b, a = spu.design_butterworth_filter(1000, sample_rate, order=5)
+        filtered = spu.apply_filter(signal, b, a, zero_phase=True)
 
         assert filtered is not None
         assert filtered.shape == signal.shape
@@ -171,22 +170,19 @@ class TestFilterApplication:
         """Test lowpass filter on stereo signal"""
         signal, sample_rate = test_signal_stereo
 
-        filtered = cm.apply_lowpass_filter(signal, cutoff=1000, sample_rate=sample_rate)
+        filtered = spu.apply_lowpass_filter(signal, cutoff=1000, sample_rate=sample_rate)
 
         assert filtered is not None
         assert filtered.shape == signal.shape
         assert filtered.ndim == 2
 
 
-@pytest.mark.skipif(not cm.SCIPY_AVAILABLE or not cm.NUMPY_AVAILABLE,
-                   reason="SciPy and NumPy required")
 class TestScipyFilterConvenience:
     """Test convenience wrapper for scipy.signal filter functions"""
 
     @pytest.fixture
     def test_signal_mono(self):
         """Generate mono test signal"""
-        import numpy as np
         sample_rate = 44100
         duration = 0.1
         t = np.linspace(0, duration, int(sample_rate * duration))
@@ -196,7 +192,6 @@ class TestScipyFilterConvenience:
     @pytest.fixture
     def test_signal_stereo(self):
         """Generate stereo test signal"""
-        import numpy as np
         sample_rate = 44100
         duration = 0.1
         t = np.linspace(0, duration, int(sample_rate * duration))
@@ -207,14 +202,13 @@ class TestScipyFilterConvenience:
 
     def test_apply_scipy_filter_butter(self, test_signal_mono):
         """Test applying scipy.signal.butter output directly"""
-        import scipy.signal
         signal, sample_rate = test_signal_mono
 
         # Design filter using scipy.signal.butter
         filter_output = scipy.signal.butter(5, 1000, 'low', fs=sample_rate)
 
         # Apply filter using convenience function
-        filtered = cm.apply_scipy_filter(signal, filter_output)
+        filtered = spu.apply_scipy_filter(signal, filter_output)
 
         assert filtered is not None
         assert filtered.shape == signal.shape
@@ -222,28 +216,26 @@ class TestScipyFilterConvenience:
 
     def test_apply_scipy_filter_cheby1(self, test_signal_mono):
         """Test applying scipy.signal.cheby1 output directly"""
-        import scipy.signal
         signal, sample_rate = test_signal_mono
 
         # Design filter using scipy.signal.cheby1
         filter_output = scipy.signal.cheby1(4, 0.5, 2000, 'high', fs=sample_rate)
 
         # Apply filter
-        filtered = cm.apply_scipy_filter(signal, filter_output)
+        filtered = spu.apply_scipy_filter(signal, filter_output)
 
         assert filtered is not None
         assert filtered.shape == signal.shape
 
     def test_apply_scipy_filter_stereo(self, test_signal_stereo):
         """Test applying scipy filter to stereo signal"""
-        import scipy.signal
         signal, sample_rate = test_signal_stereo
 
         # Design filter
         filter_output = scipy.signal.butter(5, 1000, 'low', fs=sample_rate)
 
         # Apply to stereo
-        filtered = cm.apply_scipy_filter(signal, filter_output)
+        filtered = spu.apply_scipy_filter(signal, filter_output)
 
         assert filtered is not None
         assert filtered.shape == signal.shape
@@ -251,28 +243,26 @@ class TestScipyFilterConvenience:
 
     def test_apply_scipy_filter_bandpass(self, test_signal_mono):
         """Test bandpass filter from scipy"""
-        import scipy.signal
         signal, sample_rate = test_signal_mono
 
         # Design bandpass filter
         filter_output = scipy.signal.butter(4, [300, 3000], 'bandpass', fs=sample_rate)
 
         # Apply filter
-        filtered = cm.apply_scipy_filter(signal, filter_output)
+        filtered = spu.apply_scipy_filter(signal, filter_output)
 
         assert filtered is not None
         assert filtered.shape == signal.shape
 
     def test_apply_scipy_filter_no_zero_phase(self, test_signal_mono):
         """Test applying filter without zero-phase filtering"""
-        import scipy.signal
         signal, sample_rate = test_signal_mono
 
         # Design filter
         filter_output = scipy.signal.butter(5, 1000, 'low', fs=sample_rate)
 
         # Apply without zero-phase
-        filtered = cm.apply_scipy_filter(signal, filter_output, zero_phase=False)
+        filtered = spu.apply_scipy_filter(signal, filter_output, zero_phase=False)
 
         assert filtered is not None
         assert filtered.shape == signal.shape
@@ -283,16 +273,14 @@ class TestScipyFilterConvenience:
 
         # Test with non-tuple input
         with pytest.raises(ValueError, match="must be a \\(b, a\\) tuple"):
-            cm.apply_scipy_filter(signal, "not a tuple")
+            spu.apply_scipy_filter(signal, "not a tuple")
 
         # Test with wrong tuple length
         with pytest.raises(ValueError, match="must be a \\(b, a\\) tuple"):
-            cm.apply_scipy_filter(signal, (1, 2, 3))
+            spu.apply_scipy_filter(signal, (1, 2, 3))
 
     def test_apply_scipy_filter_matches_manual(self, test_signal_mono):
         """Test that convenience function matches manual approach"""
-        import scipy.signal
-        import numpy as np
         signal, sample_rate = test_signal_mono
 
         # Design filter
@@ -300,16 +288,16 @@ class TestScipyFilterConvenience:
         b, a = filter_output
 
         # Apply using convenience function
-        filtered_convenience = cm.apply_scipy_filter(signal, filter_output)
+        filtered_convenience = spu.apply_scipy_filter(signal, filter_output)
 
         # Apply manually
-        filtered_manual = cm.apply_filter(signal, b, a)
+        filtered_manual = spu.apply_filter(signal, b, a)
 
         # Should produce identical results
         np.testing.assert_array_almost_equal(filtered_convenience, filtered_manual)
 
 
-@pytest.mark.skipif(not cm.SCIPY_AVAILABLE or not cm.NUMPY_AVAILABLE,
+@pytest.mark.skipif(not spu.SCIPY_AVAILABLE or not cm.NUMPY_AVAILABLE,
                    reason="SciPy and NumPy required")
 class TestResampling:
     """Test resampling functions"""
@@ -317,7 +305,6 @@ class TestResampling:
     @pytest.fixture
     def test_audio(self):
         """Generate test audio"""
-        import numpy as np
         sample_rate = 44100
         duration = 0.1
         t = np.linspace(0, duration, int(sample_rate * duration))
@@ -328,7 +315,7 @@ class TestResampling:
         """Test upsampling (44.1kHz -> 48kHz)"""
         audio, original_rate = test_audio
 
-        resampled = cm.resample_audio(audio, original_rate=original_rate,
+        resampled = spu.resample_audio(audio, original_rate=original_rate,
                                      target_rate=48000, method='fft')
 
         assert resampled is not None
@@ -340,7 +327,7 @@ class TestResampling:
         """Test downsampling (44.1kHz -> 22.05kHz)"""
         audio, original_rate = test_audio
 
-        resampled = cm.resample_audio(audio, original_rate=original_rate,
+        resampled = spu.resample_audio(audio, original_rate=original_rate,
                                      target_rate=22050, method='fft')
 
         assert resampled is not None
@@ -351,7 +338,7 @@ class TestResampling:
         """Test polyphase resampling method"""
         audio, original_rate = test_audio
 
-        resampled = cm.resample_audio(audio, original_rate=original_rate,
+        resampled = spu.resample_audio(audio, original_rate=original_rate,
                                      target_rate=48000, method='polyphase')
 
         assert resampled is not None
@@ -361,15 +348,13 @@ class TestResampling:
         """Test resampling with same rate (should return copy)"""
         audio, original_rate = test_audio
 
-        resampled = cm.resample_audio(audio, original_rate=original_rate,
+        resampled = spu.resample_audio(audio, original_rate=original_rate,
                                      target_rate=original_rate)
 
-        import numpy as np
         assert np.array_equal(audio, resampled)
 
     def test_resample_audio_stereo(self):
         """Test resampling stereo audio"""
-        import numpy as np
         sample_rate = 44100
         duration = 0.1
         t = np.linspace(0, duration, int(sample_rate * duration))
@@ -377,7 +362,7 @@ class TestResampling:
         right = np.sin(2 * np.pi * 880 * t)
         stereo = np.column_stack([left, right])
 
-        resampled = cm.resample_audio(stereo, original_rate=sample_rate,
+        resampled = spu.resample_audio(stereo, original_rate=sample_rate,
                                      target_rate=48000)
 
         assert resampled is not None
@@ -385,15 +370,12 @@ class TestResampling:
         assert resampled.shape[1] == 2  # Still stereo
 
 
-@pytest.mark.skipif(not cm.SCIPY_AVAILABLE or not cm.NUMPY_AVAILABLE,
-                   reason="SciPy and NumPy required")
 class TestSpectralAnalysis:
     """Test spectral analysis functions"""
 
     @pytest.fixture
     def test_signal(self):
         """Generate test signal with known frequency"""
-        import numpy as np
         sample_rate = 44100
         duration = 0.5
         freq = 440  # A4 note
@@ -405,7 +387,7 @@ class TestSpectralAnalysis:
         """Test spectrum computation"""
         signal, sample_rate, freq = test_signal
 
-        frequencies, spectrum = cm.compute_spectrum(signal, sample_rate)
+        frequencies, spectrum = spu.compute_spectrum(signal, sample_rate)
 
         assert frequencies is not None
         assert spectrum is not None
@@ -417,14 +399,13 @@ class TestSpectralAnalysis:
         """Test FFT computation"""
         signal, sample_rate, freq = test_signal
 
-        frequencies, magnitudes = cm.compute_fft(signal, sample_rate)
+        frequencies, magnitudes = spu.compute_fft(signal, sample_rate)
 
         assert frequencies is not None
         assert magnitudes is not None
         assert len(frequencies) == len(magnitudes)
 
         # Find peak frequency
-        import numpy as np
         peak_idx = np.argmax(magnitudes)
         peak_freq = frequencies[peak_idx]
 
@@ -436,7 +417,7 @@ class TestSpectralAnalysis:
         signal, sample_rate, _ = test_signal
 
         for window in ['hann', 'hamming', 'blackman']:
-            frequencies, magnitudes = cm.compute_fft(signal, sample_rate, window=window)
+            frequencies, magnitudes = spu.compute_fft(signal, sample_rate, window=window)
             assert frequencies is not None
             assert magnitudes is not None
 
@@ -444,7 +425,7 @@ class TestSpectralAnalysis:
         """Test spectrogram computation"""
         signal, sample_rate, _ = test_signal
 
-        frequencies, times, spectrogram = cm.compute_spectrogram(signal, sample_rate)
+        frequencies, times, spectrogram = spu.compute_spectrogram(signal, sample_rate)
 
         assert frequencies is not None
         assert times is not None
@@ -453,15 +434,12 @@ class TestSpectralAnalysis:
         assert spectrogram.shape[1] == len(times)
 
 
-@pytest.mark.skipif(not cm.SCIPY_AVAILABLE or not cm.NUMPY_AVAILABLE,
-                   reason="SciPy and NumPy required")
 class TestAudioSignalProcessor:
     """Test AudioSignalProcessor class"""
 
     @pytest.fixture
     def test_audio(self):
         """Generate test audio"""
-        import numpy as np
         sample_rate = 44100
         duration = 0.2
         t = np.linspace(0, duration, int(sample_rate * duration))
@@ -472,7 +450,7 @@ class TestAudioSignalProcessor:
         """Test AudioSignalProcessor creation"""
         audio, sample_rate = test_audio
 
-        processor = cm.AudioSignalProcessor(audio, sample_rate)
+        processor = spu.AudioSignalProcessor(audio, sample_rate)
 
         assert processor is not None
         assert processor.get_sample_rate() == sample_rate
@@ -481,7 +459,7 @@ class TestAudioSignalProcessor:
         """Test lowpass filter method"""
         audio, sample_rate = test_audio
 
-        processor = cm.AudioSignalProcessor(audio, sample_rate)
+        processor = spu.AudioSignalProcessor(audio, sample_rate)
         processor.lowpass(1000)
 
         processed = processor.get_audio()
@@ -492,7 +470,7 @@ class TestAudioSignalProcessor:
         """Test highpass filter method"""
         audio, sample_rate = test_audio
 
-        processor = cm.AudioSignalProcessor(audio, sample_rate)
+        processor = spu.AudioSignalProcessor(audio, sample_rate)
         processor.highpass(500)
 
         processed = processor.get_audio()
@@ -502,7 +480,7 @@ class TestAudioSignalProcessor:
         """Test bandpass filter method"""
         audio, sample_rate = test_audio
 
-        processor = cm.AudioSignalProcessor(audio, sample_rate)
+        processor = spu.AudioSignalProcessor(audio, sample_rate)
         processor.bandpass(300, 3000)
 
         processed = processor.get_audio()
@@ -512,7 +490,7 @@ class TestAudioSignalProcessor:
         """Test resample method"""
         audio, sample_rate = test_audio
 
-        processor = cm.AudioSignalProcessor(audio, sample_rate)
+        processor = spu.AudioSignalProcessor(audio, sample_rate)
         processor.resample(48000)
 
         assert processor.get_sample_rate() == 48000
@@ -523,7 +501,7 @@ class TestAudioSignalProcessor:
         """Test normalize method"""
         audio, sample_rate = test_audio
 
-        processor = cm.AudioSignalProcessor(audio, sample_rate)
+        processor = spu.AudioSignalProcessor(audio, sample_rate)
         processor.normalize(target_level=0.5)
 
         import numpy as np
@@ -534,7 +512,7 @@ class TestAudioSignalProcessor:
         """Test method chaining"""
         audio, sample_rate = test_audio
 
-        processor = cm.AudioSignalProcessor(audio, sample_rate)
+        processor = spu.AudioSignalProcessor(audio, sample_rate)
 
         # Chain multiple operations
         processed = (processor
@@ -550,7 +528,7 @@ class TestAudioSignalProcessor:
         """Test reset method"""
         audio, sample_rate = test_audio
 
-        processor = cm.AudioSignalProcessor(audio, sample_rate)
+        processor = spu.AudioSignalProcessor(audio, sample_rate)
         processor.lowpass(1000)
 
         # Reset to original
@@ -563,7 +541,7 @@ class TestAudioSignalProcessor:
         """Test spectrum method"""
         audio, sample_rate = test_audio
 
-        processor = cm.AudioSignalProcessor(audio, sample_rate)
+        processor = spu.AudioSignalProcessor(audio, sample_rate)
         frequencies, spectrum = processor.spectrum()
 
         assert frequencies is not None
@@ -573,7 +551,7 @@ class TestAudioSignalProcessor:
         """Test FFT method"""
         audio, sample_rate = test_audio
 
-        processor = cm.AudioSignalProcessor(audio, sample_rate)
+        processor = spu.AudioSignalProcessor(audio, sample_rate)
         frequencies, magnitudes = processor.fft()
 
         assert frequencies is not None
@@ -583,7 +561,7 @@ class TestAudioSignalProcessor:
         """Test spectrogram method"""
         audio, sample_rate = test_audio
 
-        processor = cm.AudioSignalProcessor(audio, sample_rate)
+        processor = spu.AudioSignalProcessor(audio, sample_rate)
         frequencies, times, spectrogram = processor.spectrogram()
 
         assert frequencies is not None
@@ -591,8 +569,6 @@ class TestAudioSignalProcessor:
         assert spectrogram is not None
 
 
-@pytest.mark.skipif(not cm.SCIPY_AVAILABLE or not cm.NUMPY_AVAILABLE,
-                   reason="SciPy and NumPy required")
 class TestIntegrationWithAudioFile:
     """Test integration with AudioFile class"""
 
@@ -611,7 +587,7 @@ class TestIntegrationWithAudioFile:
             sample_rate = af.format.sample_rate
 
             # Apply lowpass filter
-            filtered = cm.apply_lowpass_filter(audio, cutoff=2000, sample_rate=sample_rate)
+            filtered = spu.apply_lowpass_filter(audio, cutoff=2000, sample_rate=sample_rate)
 
             assert filtered is not None
             assert filtered.shape == audio.shape
@@ -623,7 +599,7 @@ class TestIntegrationWithAudioFile:
             sample_rate = af.format.sample_rate
 
             # Create processor and apply operations
-            processor = cm.AudioSignalProcessor(audio, sample_rate)
+            processor = spu.AudioSignalProcessor(audio, sample_rate)
             processed = (processor
                         .highpass(50)       # Remove rumble
                         .lowpass(15000)     # Remove ultrasonic
@@ -640,7 +616,7 @@ class TestIntegrationWithAudioFile:
             sample_rate = af.format.sample_rate
 
             # Resample to 48kHz
-            resampled = cm.resample_audio(audio, original_rate=sample_rate,
+            resampled = spu.resample_audio(audio, original_rate=sample_rate,
                                          target_rate=48000)
 
             assert resampled is not None
@@ -657,7 +633,7 @@ class TestIntegrationWithAudioFile:
             sample_rate = af.format.sample_rate
 
             # Compute spectrum
-            frequencies, spectrum = cm.compute_spectrum(audio, sample_rate)
+            frequencies, spectrum = spu.compute_spectrum(audio, sample_rate)
 
             assert frequencies is not None
             assert spectrum is not None

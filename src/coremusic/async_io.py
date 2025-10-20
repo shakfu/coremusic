@@ -38,8 +38,6 @@ from .objects import (
     AudioFile,
     AudioQueue,
     AudioBuffer,
-    AudioFileError,
-    AudioQueueError,
     NUMPY_AVAILABLE,
 )
 
@@ -47,6 +45,17 @@ if NUMPY_AVAILABLE:
     import numpy as np
     from numpy.typing import NDArray
 
+
+# ============================================================================
+# Export
+# ============================================================================
+
+__all__ = [
+    "AsyncAudioFile",
+    "AsyncAudioQueue",
+    "open_audio_file_async",
+    "create_output_queue_async",
+]
 
 # ============================================================================
 # Async Audio File

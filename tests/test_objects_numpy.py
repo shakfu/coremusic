@@ -7,14 +7,11 @@ import pytest
 import coremusic as cm
 import os
 
-# Check if NumPy is available
-numpy_available = cm.NUMPY_AVAILABLE
 
-if numpy_available:
-    import numpy as np
+if not cm.NUMPY_AVAILABLE:
+    pytest.skip("NumPy is not available", allow_module_level=True)
 
-# Skip all tests if NumPy is not available
-pytestmark = pytest.mark.skipif(not numpy_available, reason="NumPy not available")
+import numpy as np
 
 
 class TestAudioFormatNumPy:
@@ -310,7 +307,6 @@ class TestNumPyAvailabilityFlag:
         """Test that NUMPY_AVAILABLE is a boolean"""
         assert isinstance(cm.NUMPY_AVAILABLE, bool)
 
-    @pytest.mark.skipif(not numpy_available, reason="NumPy not available")
     def test_numpy_available_when_installed(self):
         """Test that flag is True when NumPy is installed"""
         assert cm.NUMPY_AVAILABLE is True

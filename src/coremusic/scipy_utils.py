@@ -72,6 +72,30 @@ def _require_numpy(func_name: str = "this function"):
 
 
 # ============================================================================
+# Exports
+# ============================================================================
+
+__all__ = [
+    'SCIPY_AVAILABLE',
+    # Filter design
+    'design_butterworth_filter',
+    'design_chebyshev_filter',
+    # Filter application
+    'apply_filter',
+    'apply_lowpass_filter',
+    'apply_highpass_filter',
+    'apply_bandpass_filter',
+    # Resampling
+    'resample_audio',
+    # Spectral analysis
+    'compute_spectrum',
+    'compute_fft',
+    'compute_spectrogram',
+    # High-level processor
+    'AudioSignalProcessor',
+]
+
+# ============================================================================
 # Filter Design Utilities
 # ============================================================================
 
@@ -781,22 +805,3 @@ class AudioSignalProcessor:
         return compute_spectrogram(self.audio_data, self.sample_rate, **kwargs)
 
 
-__all__ = [
-    'SCIPY_AVAILABLE',
-    # Filter design
-    'design_butterworth_filter',
-    'design_chebyshev_filter',
-    # Filter application
-    'apply_filter',
-    'apply_lowpass_filter',
-    'apply_highpass_filter',
-    'apply_bandpass_filter',
-    # Resampling
-    'resample_audio',
-    # Spectral analysis
-    'compute_spectrum',
-    'compute_fft',
-    'compute_spectrogram',
-    # High-level processor
-    'AudioSignalProcessor',
-]

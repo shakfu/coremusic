@@ -15,13 +15,13 @@ from typing import Optional, Union, List, Tuple, Dict, Any, Callable
 from pathlib import Path
 import glob
 
+
+
 from .objects import (
     AudioFile,
     AudioConverter,
     AudioFormat,
     ExtendedAudioFile,
-    AudioFileError,
-    AudioConverterError,
     NUMPY_AVAILABLE,
 )
 
@@ -29,6 +29,22 @@ if NUMPY_AVAILABLE:
     import numpy as np
     from numpy.typing import NDArray
 
+# ============================================================================
+# Exports
+# ============================================================================
+
+__all__ = [
+    "AudioAnalyzer",
+    "AudioFormatPresets",
+    "batch_convert" , "convert_audio_file",
+    "convert_audio_file",
+    "trim_audio",
+    "AudioEffectsChain",
+    "create_simple_effect_chain",
+    "find_audio_unit_by_name",
+    "list_available_audio_units",
+    "get_audiounit_names",
+]
 
 # ============================================================================
 # Audio Analysis Utilities
