@@ -17,6 +17,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 import coremusic as cm
+import coremusic.scipy_utils as spu
 
 def check_dependencies():
     """Check if required dependencies are available"""
@@ -24,7 +25,7 @@ def check_dependencies():
         print("NumPy is required for this demo. Install with: pip install numpy")
         sys.exit(1)
 
-    if not cm.SCIPY_AVAILABLE:
+    if not spu.SCIPY_AVAILABLE:
         print("SciPy is required for this demo. Install with: pip install scipy")
         sys.exit(1)
 
@@ -44,12 +45,12 @@ def demo_1_filter_design():
 
     # Design lowpass filter
     print("\n1. Designing 5th-order Butterworth lowpass filter at 1kHz:")
-    b, a = cm.design_butterworth_filter(cutoff=1000, sample_rate=44100, order=5)
+    b, a = spu.design_butterworth_filter(cutoff=1000, sample_rate=44100, order=5)
     print(f"   Filter coefficients: b={len(b)} coeffs, a={len(a)} coeffs")
 
     # Design bandpass filter
     print("\n2. Designing bandpass filter (300-3000 Hz):")
-    b, a = cm.design_butterworth_filter(
+    b, a = spu.design_butterworth_filter(
         cutoff=(300, 3000),
         sample_rate=44100,
         order=4,
@@ -59,7 +60,7 @@ def demo_1_filter_design():
 
     # Design Chebyshev filter
     print("\n3. Designing Chebyshev Type I filter:")
-    b, a = cm.design_chebyshev_filter(
+    b, a = spu.design_chebyshev_filter(
         cutoff=2000,
         sample_rate=44100,
         order=5,
@@ -91,17 +92,17 @@ def demo_2_filter_application():
 
         # Apply lowpass filter - convenient wrapper
         print("\n1. Applying lowpass filter (cutoff=2000 Hz)...")
-        filtered = cm.apply_lowpass_filter(audio, cutoff=2000, sample_rate=sample_rate)
+        filtered = spu.apply_lowpass_filter(audio, cutoff=2000, sample_rate=sample_rate)
         print(f"   Output shape: {filtered.shape}")
 
         # Apply highpass filter - convenient wrapper
         print("\n2. Applying highpass filter (cutoff=100 Hz)...")
-        filtered = cm.apply_highpass_filter(audio, cutoff=100, sample_rate=sample_rate)
+        filtered = spu.apply_highpass_filter(audio, cutoff=100, sample_rate=sample_rate)
         print(f"   Output shape: {filtered.shape}")
 
         # Apply bandpass filter - convenient wrapper
         print("\n3. Applying bandpass filter (300-5000 Hz)...")
-        filtered = cm.apply_bandpass_filter(
+        filtered = spu.apply_bandpass_filter(
             audio,
             lowcut=300,
             highcut=5000,
@@ -112,7 +113,7 @@ def demo_2_filter_application():
         # Apply scipy filter directly - NEW convenience API
         print("\n4. Using scipy.signal filter directly...")
         import scipy.signal
-        filtered = cm.apply_scipy_filter(
+        filtered = spu.apply_scipy_filter(
             audio,
             scipy.signal.butter(5, 1000, 'low', fs=sample_rate)
         )
@@ -139,7 +140,7 @@ def demo_3_signal_processor():
         sample_rate = af.format.sample_rate
 
         print("\nCreating AudioSignalProcessor...")
-        processor = cm.AudioSignalProcessor(audio, sample_rate)
+        processor = spu.AudioSignalProcessor(audio, sample_rate)
 
         print("\nChaining operations:")
         print("  1. Highpass filter at 50 Hz (remove rumble)")
@@ -182,7 +183,7 @@ def demo_4_resampling():
 
         # Resample to 48kHz
         print("\n1. Resampling to 48000 Hz (FFT method)...")
-        resampled_48k = cm.resample_audio(
+        resampled_48k = spu.resample_audio(
             audio,
             original_rate=sample_rate,
             target_rate=48000,
@@ -193,7 +194,7 @@ def demo_4_resampling():
 
         # Resample to 22.05kHz
         print("\n2. Resampling to 22050 Hz (polyphase method)...")
-        resampled_22k = cm.resample_audio(
+        resampled_22k = spu.resample_audio(
             audio,
             original_rate=sample_rate,
             target_rate=22050,
@@ -223,7 +224,7 @@ def demo_5_spectral_analysis():
 
         # Compute FFT
         print("\n1. Computing FFT...")
-        frequencies, magnitudes = cm.compute_fft(audio, sample_rate, window='hann')
+        frequencies, magnitudes = spu.compute_fft(audio, sample_rate, window='hann')
         print(f"   Number of frequency bins: {len(frequencies)}")
         print(f"   Frequency range: 0 to {frequencies[-1]:.1f} Hz")
 
@@ -234,13 +235,13 @@ def demo_5_spectral_analysis():
 
         # Compute spectrum
         print("\n2. Computing power spectrum...")
-        frequencies, spectrum = cm.compute_spectrum(audio, sample_rate)
+        frequencies, spectrum = spu.compute_spectrum(audio, sample_rate)
         print(f"   Number of frequency bins: {len(frequencies)}")
         print(f"   Max power: {np.max(spectrum):.6f}")
 
         # Compute spectrogram
         print("\n3. Computing spectrogram...")
-        frequencies, times, spectrogram = cm.compute_spectrogram(
+        frequencies, times, spectrogram = spu.compute_spectrogram(
             audio,
             sample_rate,
             nperseg=256
@@ -294,7 +295,7 @@ def demo_6_visualization(has_matplotlib):
 
         # 2. FFT
         print("  Plotting FFT...")
-        freqs, mags = cm.compute_fft(audio, sample_rate)
+        freqs, mags = spu.compute_fft(audio, sample_rate)
         axes[0, 1].semilogy(freqs, mags)
         axes[0, 1].set_title('FFT Magnitude')
         axes[0, 1].set_xlabel('Frequency (Hz)')
@@ -303,7 +304,7 @@ def demo_6_visualization(has_matplotlib):
 
         # 3. Spectrum
         print("  Plotting power spectrum...")
-        freqs, spectrum = cm.compute_spectrum(audio, sample_rate)
+        freqs, spectrum = spu.compute_spectrum(audio, sample_rate)
         axes[1, 0].semilogy(freqs, spectrum)
         axes[1, 0].set_title('Power Spectrum')
         axes[1, 0].set_xlabel('Frequency (Hz)')
@@ -312,7 +313,7 @@ def demo_6_visualization(has_matplotlib):
 
         # 4. Spectrogram
         print("  Plotting spectrogram...")
-        freqs, times, Sxx = cm.compute_spectrogram(audio, sample_rate, nperseg=512)
+        freqs, times, Sxx = spu.compute_spectrogram(audio, sample_rate, nperseg=512)
         pcm = axes[1, 1].pcolormesh(times, freqs, 10 * np.log10(Sxx + 1e-10),
                                     shading='gouraud', cmap='viridis')
         axes[1, 1].set_title('Spectrogram')
@@ -338,7 +339,7 @@ def main():
 
     print(f"CoreMusic version: Available")
     print(f"NumPy available: {cm.NUMPY_AVAILABLE}")
-    print(f"SciPy available: {cm.SCIPY_AVAILABLE}")
+    print(f"SciPy available: {spu.SCIPY_AVAILABLE}")
     print(f"matplotlib available: {has_matplotlib}\n")
 
     demo_1_filter_design()

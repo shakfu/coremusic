@@ -13,6 +13,7 @@ Features:
 Example:
     ```python
     import coremusic as cm
+    import coremusic.scipy_utils as spu
 
     # Load audio file
     with cm.AudioFile("audio.wav") as af:
@@ -20,13 +21,13 @@ Example:
         data, sr = af.read_frames_numpy()
 
         # Apply lowpass filter
-        filtered = cm.apply_lowpass_filter(data, cutoff=1000, sample_rate=sr)
+        filtered = spu.apply_lowpass_filter(data, cutoff=1000, sample_rate=sr)
 
         # Resample to different rate
-        resampled = cm.resample_audio(data, original_rate=sr, target_rate=48000)
+        resampled = spu.resample_audio(data, original_rate=sr, target_rate=48000)
 
         # Compute spectrum
-        freqs, spectrum = cm.compute_spectrum(data, sample_rate=sr)
+        freqs, spectrum = spu.compute_spectrum(data, sample_rate=sr)
     ```
 """
 
@@ -256,16 +257,17 @@ def apply_scipy_filter(
     Example:
         ```python
         import scipy.signal
-        import coremusic as cm
+        import coremusic.scipy_utils as spu
+
 
         # Design and apply filter in one line
-        filtered = cm.apply_scipy_filter(
+        filtered = spu.apply_scipy_filter(
             audio_data,
             scipy.signal.butter(5, 1000, 'low', fs=44100)
         )
 
         # Also works with other scipy filter functions
-        filtered = cm.apply_scipy_filter(
+        filtered = spu.apply_scipy_filter(
             audio_data,
             scipy.signal.cheby1(4, 0.5, 2000, 'high', fs=44100)
         )
@@ -641,13 +643,14 @@ class AudioSignalProcessor:
     Example:
         ```python
         import coremusic as cm
+        import coremusic.scipy_utils as spu
 
         # Load audio
         with cm.AudioFile("audio.wav") as af:
             data, sr = af.read_frames_numpy()
 
         # Create processor
-        processor = cm.AudioSignalProcessor(data, sr)
+        processor = spu.AudioSignalProcessor(data, sr)
 
         # Chain operations
         processor.lowpass(1000).highpass(100).normalize()

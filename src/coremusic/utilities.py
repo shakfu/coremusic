@@ -35,15 +35,15 @@ if NUMPY_AVAILABLE:
 
 __all__ = [
     "AudioAnalyzer",
-    "AudioFormatPresets",
-    "batch_convert" , "convert_audio_file",
-    "convert_audio_file",
-    "trim_audio",
     "AudioEffectsChain",
+    "AudioFormatPresets",
+    "batch_convert", 
+    "convert_audio_file",
     "create_simple_effect_chain",
     "find_audio_unit_by_name",
-    "list_available_audio_units",
     "get_audiounit_names",
+    "list_available_audio_units",
+    "trim_audio",
 ]
 
 # ============================================================================

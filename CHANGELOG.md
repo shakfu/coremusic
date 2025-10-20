@@ -65,6 +65,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   **Example Usage:**
   ```python
   import coremusic as cm
+  import coremusic.scipy_utils as spu
 
   # Load and process audio
   with cm.AudioFile("audio.wav") as af:
@@ -72,7 +73,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
       sr = af.format.sample_rate
 
   # Use AudioSignalProcessor for chained operations
-  processor = cm.AudioSignalProcessor(audio, sr)
+  processor = spu.AudioSignalProcessor(audio, sr)
   processed = (processor
               .highpass(50)      # Remove rumble
               .lowpass(15000)    # Remove ultrasonic
@@ -80,13 +81,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
               .get_audio())
 
   # Or use individual functions
-  filtered = cm.apply_lowpass_filter(audio, cutoff=2000, sample_rate=sr)
-  resampled = cm.resample_audio(audio, original_rate=sr, target_rate=48000)
-  freqs, spectrum = cm.compute_spectrum(audio, sample_rate=sr)
+  filtered = spu.apply_lowpass_filter(audio, cutoff=2000, sample_rate=sr)
+  resampled = spu.resample_audio(audio, original_rate=sr, target_rate=48000)
+  freqs, spectrum = spu.compute_spectrum(audio, sample_rate=sr)
 
   # Or use scipy.signal filters directly with convenience wrapper
   import scipy.signal
-  filtered = cm.apply_scipy_filter(audio, scipy.signal.butter(5, 1000, 'low', fs=sr))
+  filtered = spu.apply_scipy_filter(audio, scipy.signal.butter(5, 1000, 'low', fs=sr))
   ```
 
 - **Complex Audio Conversion Support** - Full callback-based AudioConverter API for advanced audio format conversions

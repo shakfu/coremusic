@@ -19,3 +19,53 @@ from .async_io import *
 
 # Import high-level utilities
 from .utilities import *
+
+
+__all__ = [
+    # Exception hierarchy
+    "CoreAudioError",
+    "AudioFileError",
+    "AudioQueueError",
+    "AudioUnitError",
+    "AudioConverterError",
+    "MIDIError",
+    "MusicPlayerError",
+    "AudioDeviceError",
+    "AUGraphError",
+
+    # Audio formats and data structures
+    "AudioFormat",
+
+    # Audio File Framework
+    "AudioFile",
+    "AudioFileStream",
+    "ExtendedAudioFile",
+
+    # AudioConverter Framework
+    "AudioConverter",
+
+    # Audio Queue Framework
+    "AudioBuffer",
+    "AudioQueue",
+
+    # Audio Component & AudioUnit Framework
+    "AudioComponentDescription",
+    "AudioComponent",
+    "AudioUnit",
+
+    # MIDI Framework
+    "MIDIClient",
+    "MIDIPort",
+    "MIDIInputPort",
+    "MIDIOutputPort",
+
+    # Audio Device & Hardware
+    "AudioDevice",
+    "AudioDeviceManager",
+
+    # AUGraph Framework
+    "AUGraph",
+
+    # NumPy availability flag
+    "NUMPY_AVAILABLE",
+]
