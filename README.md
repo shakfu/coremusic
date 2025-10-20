@@ -78,10 +78,22 @@ A comprehensive Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, pro
 
 ## Installation
 
-### Prerequisites
+### From PyPI (Recommended)
+
+Install the latest version from PyPI:
+
+```bash
+pip install coremusic
+```
+
+**Supported Python versions:** 3.11, 3.12, 3.13, 3.14
+
+**Platform:** macOS only (CoreAudio frameworks are macOS-specific)
+
+### Prerequisites for Building from Source
 
 - macOS (CoreAudio frameworks are macOS-specific)
-- Python 3.6 or higher
+- Python 3.11 or higher
 - Cython
 - Xcode command line tools
 
