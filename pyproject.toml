@@ -13,4 +13,6 @@ dependencies = [
 dev = [
     "numpy>=2.3.4",
     "scipy>=1.16.2",
+    "sphinx>=8.2.3",
+    "sphinx-rtd-theme>=3.0.2",
 ]
