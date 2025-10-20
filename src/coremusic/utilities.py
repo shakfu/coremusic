@@ -1004,3 +1004,42 @@ def list_available_audio_units(filter_type: Optional[str] = None) -> List[Dict[s
             })
 
     return results
+
+
+def get_audiounit_names(filter_type: Optional[str] = None) -> List[str]:
+    """Get a list of all available AudioUnit names.
+
+    This is a convenience function that returns just the names of AudioUnits,
+    making it easy to see what's available or search for specific units.
+
+    Args:
+        filter_type: Optional type filter (e.g., 'aumu', 'aufx', 'auou')
+
+    Returns:
+        List of AudioUnit names as strings
+
+    Example:
+        ```python
+        import coremusic as cm
+
+        # Get all AudioUnit names
+        names = cm.get_audiounit_names()
+        print(f"Found {len(names)} AudioUnits:")
+        for name in names[:10]:
+            print(f"  - {name}")
+
+        # Filter by type
+        effects = cm.get_audiounit_names(filter_type='aufx')
+        print(f"Audio effects: {effects[:5]}")
+
+        # Check if specific unit is available
+        if 'AUDelay' in names:
+            print("AUDelay is available!")
+
+        # Search for units containing 'Reverb'
+        reverbs = [name for name in names if 'reverb' in name.lower()]
+        print(f"Found {len(reverbs)} reverb units: {reverbs}")
+        ```
+    """
+    units = list_available_audio_units(filter_type)
+    return [unit['name'] for unit in units]

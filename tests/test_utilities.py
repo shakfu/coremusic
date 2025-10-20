@@ -612,3 +612,38 @@ class TestAudioUnitDiscovery:
 
         # Dispose
         chain.dispose()
+
+    def test_get_audiounit_names(self):
+        """Test getting list of all AudioUnit names"""
+        names = cm.get_audiounit_names()
+
+        # Should find many AudioUnits on macOS
+        assert len(names) > 0
+        assert isinstance(names, list)
+
+        # All items should be strings
+        assert all(isinstance(name, str) for name in names)
+
+        # Should find Apple: AUDelay
+        assert any('AUDelay' in name for name in names)
+
+    def test_get_audiounit_names_filter(self):
+        """Test filtering AudioUnit names by type"""
+        # Get all effects
+        effects = cm.get_audiounit_names(filter_type='aufx')
+
+        assert len(effects) > 0
+        assert isinstance(effects, list)
+        assert all(isinstance(name, str) for name in effects)
+
+    def test_get_audiounit_names_usage(self):
+        """Test practical usage of get_audiounit_names"""
+        names = cm.get_audiounit_names()
+
+        # Search for delay units
+        delays = [name for name in names if 'delay' in name.lower()]
+        assert len(delays) > 0
+
+        # Check if specific unit is available
+        audelay_available = any('AUDelay' in name for name in names)
+        assert audelay_available is True
