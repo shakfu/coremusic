@@ -435,10 +435,10 @@ def main():
     print("""
 ╔══════════════════════════════════════════════════════════════════════╗
 ║                                                                      ║
-║           CoreMusic High-Level Utilities Demonstration              ║
+║           CoreMusic High-Level Utilities Demonstration               ║
 ║                                                                      ║
-║  This demo shows the high-level audio processing utilities built    ║
-║  on top of CoreMusic's CoreAudio APIs.                              ║
+║  This demo shows the high-level audio processing utilities built     ║
+║  on top of CoreMusic's CoreAudio APIs.                               ║
 ║                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════╝
     """)
