@@ -24,7 +24,7 @@ release:
 	@uv build --wheel --python 3.13
 	@uv build --wheel --python 3.14
 
-check: release
+check:
 	@uv run twine check dist/*
 
 publish:
