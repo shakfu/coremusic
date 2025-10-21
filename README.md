@@ -545,6 +545,7 @@ The complete test suite covers:
 ### Core Files
 
 #### Functional API Layer
+
 - **`src/coremusic/capi.pyx`**: Main Cython implementation with Python wrapper functions
 - **`src/coremusic/capi.pxd`**: Main Cython header importing all framework declarations
 - **`src/coremusic/coremidi.pxd`**: CoreMIDI framework declarations and structures
@@ -554,11 +555,13 @@ The complete test suite covers:
 - **`src/coremusic/audio_player.c/h`**: C implementation of audio player with render callbacks
 
 #### Object-Oriented API Layer
+
 - **`src/coremusic/objects.pyx`**: Cython extension base class for automatic resource management
 - **`src/coremusic/oo.py`**: Object-oriented wrappers with automatic cleanup and context managers
 - **`src/coremusic/__init__.py`**: Package entry point exposing OO API (functional API via `capi` submodule)
 
 #### Build Configuration
+
 - **`setup.py`**: Build configuration linking CoreAudio and CoreMIDI frameworks
 
 ### API Architecture
@@ -607,12 +610,12 @@ To build a wheel:
 make wheel
 ```
 
-
 ## API Migration and Best Practices
 
 ### Choosing Between APIs
 
 **Use Object-Oriented API when:**
+
 - Building new applications
 - Rapid prototyping and development
 - You want automatic resource management
@@ -620,6 +623,7 @@ make wheel
 - Team development where code safety is important
 
 **Use Functional API when:**
+
 - Maximum performance is critical
 - Porting existing CoreAudio C code
 - Need fine-grained control over resource lifetimes
@@ -671,16 +675,19 @@ with cm.AudioFile("file.wav") as audio_file:
 coremusic provides near-native performance through both APIs:
 
 **Functional API:**
+
 - Direct C API access with zero Python overhead
 - Explicit memory management for optimal control
 - Maximum performance for real-time audio processing
 
 **Object-Oriented API:**
+
 - Minimal overhead layer built on functional API
 - Automatic resource management without performance penalty
 - Efficient Cython-based cleanup via `__dealloc__`
 
 **Common Performance Features:**
+
 - Optimized audio processing pipelines
 - Real-time audio callback support
 - Efficient memory management
@@ -757,4 +764,3 @@ For more information about CoreAudio development:
 - [AudioUnit App Extension](https://developer.apple.com/library/archive/documentation/General/Conceptual/ExtensibilityPG/AudioUnit.html#//apple_ref/doc/uid/TP40014214-CH22-SW1)
 
 - [AudioUnit Programming Guide](https://developer.apple.com/library/archive/documentation/MusicAudio/Conceptual/AudioUnitProgrammingGuide/Introduction/Introduction.html)
-

@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - **Zero test regressions** - All 516 tests passing after migration
 
   **Before (intermingled APIs):**
+
   ```python
   import coremusic as cm
 
@@ -40,6 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   ```
 
   **After (clean separation):**
+
   ```python
   import coremusic as cm
   import coremusic.capi as capi
@@ -98,6 +100,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - **Complete NumPy/SciPy ecosystem integration** for scientific audio processing
 
   **Example Usage:**
+
   ```python
   import coremusic as cm
   import coremusic.scipy_utils as spu
@@ -354,7 +357,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 - Dual API architecture supporting both functional and object-oriented patterns
 
-- Enhanced package structure with proper __init__.py imports
+- Enhanced package structure with proper **init**.py imports
 
 - Comprehensive test coverage for object-oriented APIs
   - Added tests for AudioFile, AudioUnit, AudioQueue OO classes
@@ -369,7 +372,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Fixed
 
-- Resource management issues with automatic cleanup via Cython __dealloc__
+- Resource management issues with automatic cleanup via Cython **dealloc**
 - Memory leaks in audio operations through proper disposal patterns
 
 ---
@@ -387,5 +390,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - Added CoreMIDI wrapper
 
 - Added CoreAudio wrapper
-
-

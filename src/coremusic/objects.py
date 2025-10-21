@@ -10,7 +10,7 @@ automatic resource cleanup, but are implemented as pure Python classes for
 simplicity.
 """
 
-from typing import Optional, Union, List, Dict, Any, Tuple, Iterator, TYPE_CHECKING
+from typing import Optional, Union, List, Dict, Any, Tuple, TYPE_CHECKING
 from pathlib import Path
 import struct
 
