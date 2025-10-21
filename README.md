@@ -546,13 +546,12 @@ The complete test suite covers:
 
 #### Functional API Layer
 
-- **`src/coremusic/capi.pyx`**: Main Cython implementation with Python wrapper functions
+- **`src/coremusic/capi.pyx`**: Main Cython implementation with Python wrapper functions and audio player with render callbacks
 - **`src/coremusic/capi.pxd`**: Main Cython header importing all framework declarations
 - **`src/coremusic/coremidi.pxd`**: CoreMIDI framework declarations and structures
 - **`src/coremusic/corefoundation.pxd`**: CoreFoundation framework declarations
 - **`src/coremusic/audiotoolbox.pxd`**: AudioToolbox framework declarations
 - **`src/coremusic/coreaudiotypes.pxd`**: CoreAudio types and structures
-- **`src/coremusic/audio_player.c/h`**: C implementation of audio player with render callbacks
 
 #### Object-Oriented API Layer
 
@@ -600,9 +599,11 @@ make
 
 The extension is built using Cython with the following process:
 
-1. Cython compiles `.pyx` files to C
+1. Cython compiles `.pyx` files to C (including render callbacks and audio player)
 2. C compiler links against CoreAudio frameworks
 3. Python extension module is created
+
+All audio playback functionality, including real-time render callbacks, is implemented purely in Cython without requiring separate C source files
 
 To build a wheel:
 

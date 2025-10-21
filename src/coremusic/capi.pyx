@@ -2,7 +2,6 @@ from . cimport corefoundation as cf
 from . cimport coreaudiotypes as ct
 from . cimport audiotoolbox as at
 from . cimport coreaudio as ca
-from . cimport audio_player as ap
 from . cimport coremidi as cm
 
 from libc.stdlib cimport malloc, free
@@ -32,13 +31,16 @@ def int_to_fourchar(n: int) -> str:
     )
 
 def audio_object_show(int object_id):
+    """Show an AudioObject"""
     ca.AudioObjectShow(object_id)
 
 def audio_hardware_unload() -> int:
+    """Unload the audio hardware"""
     return ca.AudioHardwareUnload()
 
 
 def audio_hardware_destroy_aggregate_device(int in_device_id) -> int:
+    """Destroy an audio hardware aggregate device"""
     return ca.AudioHardwareDestroyAggregateDevice(in_device_id)
 
 
@@ -828,36 +830,47 @@ def audio_converter_fill_complex_buffer(
 
 # AudioConverter property getters
 def get_audio_converter_property_min_input_buffer_size() -> int:
+    """Get the minimum input buffer size for an audio converter"""
     return at.kAudioConverterPropertyMinimumInputBufferSize
 
 def get_audio_converter_property_min_output_buffer_size() -> int:
+    """Get the minimum output buffer size for an audio converter"""
     return at.kAudioConverterPropertyMinimumOutputBufferSize
 
 def get_audio_converter_property_max_input_packet_size() -> int:
+    """Get the maximum input packet size for an audio converter"""
     return at.kAudioConverterPropertyMaximumInputPacketSize
 
 def get_audio_converter_property_max_output_packet_size() -> int:
+    """Get the maximum output packet size for an audio converter"""
     return at.kAudioConverterPropertyMaximumOutputPacketSize
 
 def get_audio_converter_property_sample_rate_converter_quality() -> int:
+    """Get the sample rate converter quality for an audio converter"""
     return at.kAudioConverterSampleRateConverterQuality
 
 def get_audio_converter_property_codec_quality() -> int:
+    """Get the codec quality for an audio converter"""
     return at.kAudioConverterCodecQuality
 
 def get_audio_converter_quality_max() -> int:
+    """Get the maximum quality for an audio converter"""
     return at.kAudioConverterQuality_Max
 
 def get_audio_converter_quality_high() -> int:
+    """Get the high quality for an audio converter"""
     return at.kAudioConverterQuality_High
 
 def get_audio_converter_quality_medium() -> int:
+    """Get the medium quality for an audio converter"""
     return at.kAudioConverterQuality_Medium
 
 def get_audio_converter_quality_low() -> int:
+    """Get the low quality for an audio converter"""
     return at.kAudioConverterQuality_Low
 
 def get_audio_converter_quality_min() -> int:
+    """Get the minimum quality for an audio converter"""
     return at.kAudioConverterQuality_Min
 
 
@@ -1062,24 +1075,31 @@ def extended_audio_file_set_property(long ext_file_id, int property_id, bytes da
 
 # ExtendedAudioFile property getters
 def get_extended_audio_file_property_file_data_format() -> int:
+    """Get the file data format for an extended audio file"""
     return at.kExtAudioFileProperty_FileDataFormat
 
 def get_extended_audio_file_property_client_data_format() -> int:
+    """Get the client data format for an extended audio file"""
     return at.kExtAudioFileProperty_ClientDataFormat
 
 def get_extended_audio_file_property_file_channel_layout() -> int:
+    """Get the file channel layout for an extended audio file"""
     return at.kExtAudioFileProperty_FileChannelLayout
 
 def get_extended_audio_file_property_client_channel_layout() -> int:
+    """Get the client channel layout for an extended audio file"""
     return at.kExtAudioFileProperty_ClientChannelLayout
 
 def get_extended_audio_file_property_codec_manufacturer() -> int:
+    """Get the codec manufacturer for an extended audio file"""
     return at.kExtAudioFileProperty_CodecManufacturer
 
 def get_extended_audio_file_property_audio_file() -> int:
+    """Get the audio file for an extended audio file"""
     return at.kExtAudioFileProperty_AudioFile
 
 def get_extended_audio_file_property_file_length_frames() -> int:
+    """Get the file length frames for an extended audio file"""
     return at.kExtAudioFileProperty_FileLengthFrames
 
 
@@ -1192,77 +1212,101 @@ def audio_queue_dispose(long queue_id, bint immediate=True):
 
 # Constant getter functions
 def get_audio_format_linear_pcm():
+    """Get the linear PCM format for an audio format"""
     return ca.kAudioFormatLinearPCM
 
 def get_linear_pcm_format_flag_is_signed_integer():
+    """Get the signed integer flag for a linear PCM format"""
     return ca.kLinearPCMFormatFlagIsSignedInteger
 
 def get_linear_pcm_format_flag_is_packed():
+    """Get the packed flag for a linear PCM format"""
     return ca.kLinearPCMFormatFlagIsPacked
 
 def get_audio_file_wave_type():
+    """Get the wave type for an audio file"""
     return at.kAudioFileWAVEType
 
 def get_audio_file_read_permission():
+    """Get the read permission for an audio file"""
     return at.kAudioFileReadPermission
 
 def get_audio_file_property_data_format():
+    """Get the data format for an audio file"""
     return at.kAudioFilePropertyDataFormat
 
 def get_audio_file_property_maximum_packet_size():
+    """Get the maximum packet size for an audio file"""
     return at.kAudioFilePropertyMaximumPacketSize
 
 def get_audio_file_property_audio_data_packet_count():
+    """Get the audio data packet count for an audio file"""
     return at.kAudioFilePropertyAudioDataPacketCount
 
 def get_audio_file_property_estimated_duration():
+    """Get the estimated duration for an audio file"""
     return at.kAudioFilePropertyEstimatedDuration
 
 # AudioObject/Device property constants
 def get_audio_object_property_name():
+    """Get the name for an audio object"""
     return ca.kAudioObjectPropertyName
 
 def get_audio_object_property_manufacturer():
+    """Get the manufacturer for an audio object"""
     return ca.kAudioObjectPropertyManufacturer
 
 def get_audio_device_property_device_uid():
+    """Get the device UID for an audio device"""
     return ca.kAudioDevicePropertyDeviceUID
 
 def get_audio_device_property_model_uid():
+    """Get the model UID for an audio device"""
     return ca.kAudioDevicePropertyModelUID
 
 def get_audio_device_property_transport_type():
+    """Get the transport type for an audio device"""
     return ca.kAudioDevicePropertyTransportType
 
 def get_audio_device_property_device_is_alive():
+    """Get the device is alive for an audio device"""
     return ca.kAudioDevicePropertyDeviceIsAlive
 
 def get_audio_device_property_nominal_sample_rate():
+    """Get the nominal sample rate for an audio device"""
     return ca.kAudioDevicePropertyNominalSampleRate
 
 def get_audio_device_property_available_nominal_sample_rates():
+    """Get the available nominal sample rates for an audio device"""
     return ca.kAudioDevicePropertyAvailableNominalSampleRates
 
 def get_audio_device_property_is_hidden():
+    """Get the is hidden for an audio device"""
     return ca.kAudioDevicePropertyIsHidden
 
 def get_audio_device_property_preferred_channels_for_stereo():
+    """Get the preferred channels for stereo for an audio device"""
     return ca.kAudioDevicePropertyPreferredChannelsForStereo
 
 def get_audio_device_property_stream_configuration():
+    """Get the stream configuration for an audio device"""
     return ca.kAudioDevicePropertyStreamConfiguration
 
 # AudioObject scope constants
 def get_audio_object_property_scope_global():
+    """Get the global scope for an audio object"""
     return ca.kAudioObjectPropertyScopeGlobal
 
 def get_audio_object_property_scope_input():
+    """Get the input scope for an audio object"""
     return ca.kAudioObjectPropertyScopeInput
 
 def get_audio_object_property_scope_output():
+    """Get the output scope for an audio object"""
     return ca.kAudioObjectPropertyScopeOutput
 
 def get_audio_object_property_element_main():
+    """Get the main element for an audio object"""
     return ca.kAudioObjectPropertyElementMain
 
 
@@ -1481,91 +1525,152 @@ def audio_output_unit_stop(long audio_unit_id):
 
 # AudioUnit constant getter functions
 def get_audio_unit_type_output():
+    """Get the output type for an audio unit"""
     return at.kAudioUnitType_Output
 
 def get_audio_component_type_music_device():
+    """Get the music device type for an audio unit"""
     return at.kAudioUnitType_MusicDevice
 
 def get_audio_unit_subtype_default_output():
+    """Get the default output type for an audio unit"""
     return at.kAudioUnitSubType_DefaultOutput
 
 def get_audio_unit_manufacturer_apple():
+    """Get the Apple manufacturer for an audio unit"""
     return at.kAudioUnitManufacturer_Apple
 
 def get_audio_unit_property_stream_format():
+    """Get the stream format for an audio unit"""
     return at.kAudioUnitProperty_StreamFormat
 
 def get_audio_unit_property_set_render_callback():
+    """Get the set render callback for an audio unit"""
     return at.kAudioUnitProperty_SetRenderCallback
 
 def get_audio_unit_scope_input():
+    """Get the input scope for an audio unit"""
     return at.kAudioUnitScope_Input
 
 def get_audio_unit_scope_output():
+    """Get the output scope for an audio unit"""
     return at.kAudioUnitScope_Output
 
 def get_audio_unit_scope_global():
+    """Get the global scope for an audio unit"""
     return at.kAudioUnitScope_Global
 
 def get_linear_pcm_format_flag_is_non_interleaved():
+    """Get the non-interleaved flag for a linear PCM format"""
     return ca.kLinearPCMFormatFlagIsNonInterleaved
 
 
-# ===== AUDIO PLAYBACK CALLBACK INFRASTRUCTURE =====
+# ===== PURE CYTHON AUDIO PLAYER IMPLEMENTATION =====
 
-# Simple approach: Create a working audio player that demonstrates the infrastructure
-# The full callback implementation requires careful C-level global variable management
-# which can be complex in Cython. For now, we'll focus on demonstrating the
-# complete AudioUnit setup that's ready for callback integration.
+# Constants for audio format
+DEF SAMPLE_RATE = 44100.0
+DEF CHANNELS = 2
+DEF BITS_PER_CHANNEL = 32  # Float32
 
+# Audio player state structure
+cdef struct AudioPlayerData:
+    ca.AudioBufferList* buffer_list
+    cf.UInt32 total_frames
+    cf.UInt32 current_frame
+    cf.Boolean playing
+    cf.Boolean loop
 
-# ===== WORKING AUDIO PLAYER IMPLEMENTATION =====
+# Render callback function
+cdef cf.OSStatus audio_player_render_callback(
+    void* user_data,
+    at.AudioUnitRenderActionFlags* action_flags,
+    const ca.AudioTimeStamp* time_stamp,
+    cf.UInt32 bus_number,
+    cf.UInt32 num_frames,
+    ca.AudioBufferList* io_data
+) noexcept nogil:
+    """Render callback that provides audio data to the output unit"""
+    cdef AudioPlayerData* player_data
+    cdef cf.UInt32 current_frame
+    cdef cf.UInt32 max_frames
+    cdef cf.Float32* output_data
+    cdef cf.Float32* input_data
+    cdef cf.UInt32 frame, out_sample, in_sample
+    cdef cf.UInt32 buffer_idx
 
-# The C audio player integration has been moved to audio_player.c
-# which provides a working demonstration of real audio playback using
-# our coremusic wrapper infrastructure.
+    if user_data == NULL or io_data == NULL:
+        return 0  # noErr
 
+    player_data = <AudioPlayerData*>user_data
 
-def demonstrate_callback_infrastructure():
-    """
-    Demonstrate that we have all the infrastructure needed for audio callbacks.
-    This shows the complete AudioUnit setup that would be needed for real playback.
-    """
-    print("AudioUnit Callback Infrastructure Demonstration")
-    print("   All components needed for real-time audio callbacks:")
-    print("   AudioComponent discovery and instantiation")
-    print("   AudioUnit lifecycle management")
-    print("   Format configuration and property setting")
-    print("   Callback structure definitions (AURenderCallbackStruct)")
-    print("   AudioUnit property setting for render callbacks")
-    print("   Real-time audio buffer management (AudioBufferList)")
-    print("   Hardware audio output control")
-    print()
-    print("For actual audio playback with render callbacks:")
-    print("   • The AudioUnit infrastructure is complete and functional")
-    print("   • Callback functions can be implemented in pure C extensions")
-    print("   • Or use higher-level Python audio libraries with our CoreAudio access")
-    print("   • All low-level CoreAudio APIs are now available through coremusic")
+    # Clear output buffers first
+    for buffer_idx in range(io_data.mNumberBuffers):
+        memset(io_data.mBuffers[buffer_idx].mData, 0, io_data.mBuffers[buffer_idx].mDataByteSize)
 
-    return True
+    # Check if we have data and are playing
+    if not player_data.playing or player_data.buffer_list == NULL or player_data.total_frames == 0:
+        return 0  # Return silence
 
+    current_frame = player_data.current_frame
+    max_frames = player_data.total_frames
 
-# ===== AUDIOPLAYER EXTENSION CLASS =====
+    output_data = <cf.Float32*>io_data.mBuffers[0].mData
+    input_data = <cf.Float32*>player_data.buffer_list.mBuffers[0].mData
+
+    # Copy audio data frame by frame
+    for frame in range(num_frames):
+        if current_frame >= max_frames:
+            if player_data.loop:
+                current_frame = 0  # Loop back to start
+            else:
+                player_data.playing = False
+                break  # Stop playing
+
+        # Copy stereo frame (2 channels)
+        out_sample = frame * 2
+        in_sample = current_frame * 2
+
+        if current_frame < max_frames:
+            output_data[out_sample] = input_data[in_sample]          # Left channel
+            output_data[out_sample + 1] = input_data[in_sample + 1]  # Right channel
+
+        current_frame += 1
+
+    player_data.current_frame = current_frame
+
+    return 0  # noErr
+
 
 cdef class AudioPlayer:
-    """Python wrapper for the C audio_player implementation"""
-    cdef ap.AudioOutput audio_output
+    """Pure Cython audio player using AudioUnit for playback"""
+    cdef AudioPlayerData player_data
+    cdef at.AudioUnit output_unit
     cdef bint initialized
 
     def __init__(self):
         """Initialize the AudioPlayer"""
-        memset(&self.audio_output, 0, sizeof(ap.AudioOutput))
+        memset(&self.player_data, 0, sizeof(AudioPlayerData))
+        self.output_unit = NULL
         self.initialized = False
 
     def load_file(self, str file_path):
-        """Load an audio file for playback"""
+        """Load an audio file for playback using ExtAudioFile"""
+        # Declare all C variables at the beginning
         cdef bytes path_bytes = file_path.encode('utf-8')
-        cdef cf.CFURLRef url_ref = cf.CFURLCreateFromFileSystemRepresentation(
+        cdef cf.CFURLRef url_ref
+        cdef at.ExtAudioFileRef audio_file
+        cdef cf.OSStatus status
+        cdef at.AudioStreamBasicDescription file_format
+        cdef at.AudioStreamBasicDescription client_format
+        cdef cf.UInt32 size
+        cdef cf.SInt64 file_length_frames
+        cdef cf.UInt32 bytes_per_buffer
+        cdef ca.AudioBufferList* buffer_list
+        cdef cf.UInt32 read_frames = 0
+        cdef cf.UInt32 frames_to_read
+        cdef ca.AudioBufferList temp_buffer_list
+
+        url_ref = cf.CFURLCreateFromFileSystemRepresentation(
             cf.kCFAllocatorDefault,
             <const cf.UInt8*>path_bytes,
             len(path_bytes),
@@ -1575,173 +1680,386 @@ cdef class AudioPlayer:
         if url_ref == NULL:
             raise ValueError(f"Could not create URL for file: {file_path}")
 
-        cdef cf.OSStatus result = ap.LoadAudioFile(url_ref, &self.audio_output.playerData)
+        # Open audio file
+        status = at.ExtAudioFileOpenURL(url_ref, &audio_file)
         cf.CFRelease(url_ref)
 
-        if result != 0:  # noErr is 0
-            raise RuntimeError(f"Failed to load audio file: {result}")
+        if status != 0:
+            raise RuntimeError(f"Could not open audio file: {status}")
 
-        return result
+        try:
+            # Get file format
+            size = sizeof(file_format)
+            status = at.ExtAudioFileGetProperty(
+                audio_file,
+                at.kExtAudioFileProperty_FileDataFormat,
+                &size,
+                &file_format
+            )
+            if status != 0:
+                raise RuntimeError(f"Could not get file format: {status}")
+
+            # Set client format (what we want the data converted to)
+            client_format.mSampleRate = SAMPLE_RATE
+            client_format.mFormatID = ca.kAudioFormatLinearPCM
+            client_format.mFormatFlags = ca.kLinearPCMFormatFlagIsFloat
+            client_format.mBytesPerPacket = sizeof(cf.Float32) * CHANNELS
+            client_format.mFramesPerPacket = 1
+            client_format.mBytesPerFrame = CHANNELS * sizeof(cf.Float32)
+            client_format.mChannelsPerFrame = CHANNELS
+            client_format.mBitsPerChannel = BITS_PER_CHANNEL
+            client_format.mReserved = 0
+
+            status = at.ExtAudioFileSetProperty(
+                audio_file,
+                at.kExtAudioFileProperty_ClientDataFormat,
+                sizeof(client_format),
+                &client_format
+            )
+            if status != 0:
+                raise RuntimeError(f"Could not set client format: {status}")
+
+            # Get file length in frames
+            size = sizeof(file_length_frames)
+            status = at.ExtAudioFileGetProperty(
+                audio_file,
+                at.kExtAudioFileProperty_FileLengthFrames,
+                &size,
+                &file_length_frames
+            )
+            if status != 0:
+                raise RuntimeError(f"Could not get file length: {status}")
+
+            # Account for sample rate conversion
+            file_length_frames = <cf.SInt64>(file_length_frames * (SAMPLE_RATE / file_format.mSampleRate))
+
+            # Allocate buffer for audio data
+            bytes_per_buffer = client_format.mBytesPerFrame * <cf.UInt32>file_length_frames
+
+            # Allocate AudioBufferList
+            buffer_list = <ca.AudioBufferList*>malloc(
+                sizeof(ca.AudioBufferList) + 0 * sizeof(ca.AudioBuffer)  # Single buffer
+            )
+            if buffer_list == NULL:
+                raise MemoryError("Could not allocate AudioBufferList")
+
+            buffer_list.mNumberBuffers = 1
+            buffer_list.mBuffers[0].mData = malloc(bytes_per_buffer)
+            if buffer_list.mBuffers[0].mData == NULL:
+                free(buffer_list)
+                raise MemoryError("Could not allocate audio buffer")
+
+            memset(buffer_list.mBuffers[0].mData, 0, bytes_per_buffer)
+            buffer_list.mBuffers[0].mDataByteSize = bytes_per_buffer
+            buffer_list.mBuffers[0].mNumberChannels = client_format.mChannelsPerFrame
+
+            # Read audio data in chunks
+            read_frames = 0
+            while read_frames < <cf.UInt32>file_length_frames:
+                frames_to_read = <cf.UInt32>file_length_frames - read_frames
+                if frames_to_read > 16384:
+                    frames_to_read = 16384  # Read in chunks
+
+                # Setup temporary buffer list for this chunk
+                temp_buffer_list.mNumberBuffers = 1
+                temp_buffer_list.mBuffers[0].mNumberChannels = client_format.mChannelsPerFrame
+                temp_buffer_list.mBuffers[0].mData = <char*>buffer_list.mBuffers[0].mData + (read_frames * client_format.mBytesPerFrame)
+                temp_buffer_list.mBuffers[0].mDataByteSize = frames_to_read * client_format.mBytesPerFrame
+
+                status = at.ExtAudioFileRead(audio_file, &frames_to_read, &temp_buffer_list)
+                if frames_to_read == 0:
+                    break
+
+                read_frames += frames_to_read
+
+            # Clean up old buffer if exists
+            if self.player_data.buffer_list != NULL:
+                if self.player_data.buffer_list.mBuffers[0].mData != NULL:
+                    free(self.player_data.buffer_list.mBuffers[0].mData)
+                free(self.player_data.buffer_list)
+
+            # Set up player data
+            self.player_data.buffer_list = buffer_list
+            self.player_data.total_frames = read_frames
+            self.player_data.current_frame = 0
+            self.player_data.playing = False
+            self.player_data.loop = False
+
+        finally:
+            at.ExtAudioFileDispose(audio_file)
+
+        return 0  # noErr
 
     def setup_output(self):
         """Setup the audio output unit"""
-        cdef cf.OSStatus result = ap.SetupAudioOutput(&self.audio_output)
-        if result != 0:  # noErr is 0
-            raise RuntimeError(f"Failed to setup audio output: {result}")
+        cdef at.AudioComponentDescription output_desc
+        cdef at.AudioComponent comp
+        cdef cf.OSStatus status
+
+        # Find default output AudioComponent
+        output_desc.componentType = at.kAudioUnitType_Output
+        output_desc.componentSubType = at.kAudioUnitSubType_DefaultOutput
+        output_desc.componentManufacturer = at.kAudioUnitManufacturer_Apple
+        output_desc.componentFlags = 0
+        output_desc.componentFlagsMask = 0
+
+        comp = at.AudioComponentFindNext(NULL, &output_desc)
+        if comp == NULL:
+            raise RuntimeError("Cannot find default output AudioComponent")
+
+        # Create AudioUnit instance
+        status = at.AudioComponentInstanceNew(comp, &self.output_unit)
+        if status != 0:
+            raise RuntimeError(f"Could not create AudioUnit instance: {status}")
+
+        # Set stream format
+        cdef at.AudioStreamBasicDescription stream_format
+        stream_format.mSampleRate = SAMPLE_RATE
+        stream_format.mFormatID = ca.kAudioFormatLinearPCM
+        stream_format.mFormatFlags = ca.kLinearPCMFormatFlagIsFloat
+        stream_format.mBytesPerPacket = sizeof(cf.Float32) * CHANNELS
+        stream_format.mFramesPerPacket = 1
+        stream_format.mBytesPerFrame = CHANNELS * sizeof(cf.Float32)
+        stream_format.mChannelsPerFrame = CHANNELS
+        stream_format.mBitsPerChannel = BITS_PER_CHANNEL
+        stream_format.mReserved = 0
+
+        status = at.AudioUnitSetProperty(
+            self.output_unit,
+            at.kAudioUnitProperty_StreamFormat,
+            at.kAudioUnitScope_Input,
+            0,
+            &stream_format,
+            sizeof(stream_format)
+        )
+        if status != 0:
+            raise RuntimeError(f"Could not set stream format: {status}")
+
+        # Set render callback
+        cdef at.AURenderCallbackStruct callback_struct
+        callback_struct.inputProc = audio_player_render_callback
+        callback_struct.inputProcRefCon = &self.player_data
+
+        status = at.AudioUnitSetProperty(
+            self.output_unit,
+            at.kAudioUnitProperty_SetRenderCallback,
+            at.kAudioUnitScope_Global,
+            0,
+            &callback_struct,
+            sizeof(callback_struct)
+        )
+        if status != 0:
+            raise RuntimeError(f"Could not set render callback: {status}")
+
+        # Initialize AudioUnit
+        status = at.AudioUnitInitialize(self.output_unit)
+        if status != 0:
+            raise RuntimeError(f"Could not initialize AudioUnit: {status}")
+
         self.initialized = True
-        return result
+        return 0  # noErr
 
     def start(self):
         """Start audio playback"""
         if not self.initialized:
             raise RuntimeError("AudioPlayer not initialized. Call setup_output() first.")
 
-        cdef cf.OSStatus result = ap.StartAudioOutput(&self.audio_output)
-        if result != 0:  # noErr is 0
-            raise RuntimeError(f"Failed to start audio output: {result}")
-        return result
+        self.player_data.playing = True
+        self.player_data.current_frame = 0
+
+        cdef cf.OSStatus status = at.AudioOutputUnitStart(self.output_unit)
+        if status != 0:
+            self.player_data.playing = False
+            raise RuntimeError(f"Could not start AudioUnit: {status}")
+
+        return 0  # noErr
 
     def stop(self):
         """Stop audio playback"""
         if not self.initialized:
-            return 0  # noErr is 0
+            return 0  # noErr
 
-        cdef cf.OSStatus result = ap.StopAudioOutput(&self.audio_output)
-        if result != 0:  # noErr is 0
-            raise RuntimeError(f"Failed to stop audio output: {result}")
-        return result
+        self.player_data.playing = False
+
+        cdef cf.OSStatus status = at.AudioOutputUnitStop(self.output_unit)
+        if status != 0:
+            raise RuntimeError(f"Could not stop AudioUnit: {status}")
+
+        return 0  # noErr
 
     def set_looping(self, bint loop):
         """Enable/disable looping playback"""
-        ap.SetLooping(&self.audio_output.playerData, loop)
+        self.player_data.loop = loop
 
     def reset_playback(self):
         """Reset playback to beginning"""
-        ap.ResetPlayback(&self.audio_output.playerData)
+        self.player_data.current_frame = 0
 
     def is_playing(self):
         """Check if audio is currently playing"""
-        return bool(ap.IsPlaying(&self.audio_output.playerData))
+        return bool(self.player_data.playing)
 
     def get_progress(self):
         """Get current playback progress as a float (0.0 to 1.0)"""
-        return ap.GetPlaybackProgress(&self.audio_output.playerData)
+        if self.player_data.total_frames == 0:
+            return 0.0
+        return <float>self.player_data.current_frame / <float>self.player_data.total_frames
 
     def __dealloc__(self):
         """Clean up resources when the object is destroyed"""
-        if self.initialized:
-            ap.StopAudioOutput(&self.audio_output)
-        ap.DisposeAudioPlayer(&self.audio_output.playerData)
-        if self.initialized:
-            ap.DisposeAudioOutput(&self.audio_output)
+        if self.initialized and self.output_unit != NULL:
+            at.AudioOutputUnitStop(self.output_unit)
+            at.AudioUnitUninitialize(self.output_unit)
+            at.AudioComponentInstanceDispose(self.output_unit)
+
+        if self.player_data.buffer_list != NULL:
+            if self.player_data.buffer_list.mBuffers[0].mData != NULL:
+                free(self.player_data.buffer_list.mBuffers[0].mData)
+            free(self.player_data.buffer_list)
+            self.player_data.buffer_list = NULL
 
 
 # AudioFileStream constant getter functions
 def get_audio_file_stream_property_ready_to_produce_packets():
+    """Get the ready to produce packets for an audio file stream"""
     return at.kAudioFileStreamProperty_ReadyToProducePackets
 
 def get_audio_file_stream_property_file_format():
+    """Get the file format for an audio file stream"""
     return at.kAudioFileStreamProperty_FileFormat
 
 def get_audio_file_stream_property_data_format():
+    """Get the data format for an audio file stream"""
     return at.kAudioFileStreamProperty_DataFormat
 
 def get_audio_file_stream_property_format_list():
+    """Get the format list for an audio file stream"""
     return at.kAudioFileStreamProperty_FormatList
 
 def get_audio_file_stream_property_magic_cookie_data():
+    """Get the magic cookie data for an audio file stream"""
     return at.kAudioFileStreamProperty_MagicCookieData
 
 def get_audio_file_stream_property_audio_data_byte_count():
+    """Get the audio data byte count for an audio file stream"""
     return at.kAudioFileStreamProperty_AudioDataByteCount
 
 def get_audio_file_stream_property_audio_data_packet_count():
+    """Get the audio data packet count for an audio file stream"""
     return at.kAudioFileStreamProperty_AudioDataPacketCount
 
 def get_audio_file_stream_property_maximum_packet_size():
+    """Get the maximum packet size for an audio file stream"""
     return at.kAudioFileStreamProperty_MaximumPacketSize
 
 def get_audio_file_stream_property_data_offset():
+    """Get the data offset for an audio file stream"""
     return at.kAudioFileStreamProperty_DataOffset
 
 def get_audio_file_stream_property_channel_layout():
+    """Get the channel layout for an audio file stream"""
     return at.kAudioFileStreamProperty_ChannelLayout
 
 def get_audio_file_stream_property_packet_to_frame():
+    """Get the packet to frame for an audio file stream"""
     return at.kAudioFileStreamProperty_PacketToFrame
 
 def get_audio_file_stream_property_frame_to_packet():
+    """Get the frame to packet for an audio file stream"""
     return at.kAudioFileStreamProperty_FrameToPacket
 
 def get_audio_file_stream_property_packet_to_byte():
+    """Get the packet to byte for an audio file stream"""
     return at.kAudioFileStreamProperty_PacketToByte
 
 def get_audio_file_stream_property_byte_to_packet():
+    """Get the byte to packet for an audio file stream"""
     return at.kAudioFileStreamProperty_ByteToPacket
 
 def get_audio_file_stream_property_packet_table_info():
+    """Get the packet table info for an audio file stream"""
     return at.kAudioFileStreamProperty_PacketTableInfo
 
 def get_audio_file_stream_property_packet_size_upper_bound():
+    """Get the packet size upper bound for an audio file stream"""
     return at.kAudioFileStreamProperty_PacketSizeUpperBound
 
 def get_audio_file_stream_property_average_bytes_per_packet():
+    """Get the average bytes per packet for an audio file stream"""
     return at.kAudioFileStreamProperty_AverageBytesPerPacket
 
 def get_audio_file_stream_property_bit_rate():
+    """Get the bit rate for an audio file stream"""
     return at.kAudioFileStreamProperty_BitRate
 
 def get_audio_file_stream_property_info_dictionary():
+    """Get the info dictionary for an audio file stream"""
     return at.kAudioFileStreamProperty_InfoDictionary
 
 # AudioFileStream flag getter functions
 def get_audio_file_stream_property_flag_property_is_cached():
+    """Get the property is cached flag for an audio file stream"""
     return at.kAudioFileStreamPropertyFlag_PropertyIsCached
 
 def get_audio_file_stream_property_flag_cache_property():
+    """Get the cache property flag for an audio file stream"""
     return at.kAudioFileStreamPropertyFlag_CacheProperty
 
 def get_audio_file_stream_parse_flag_discontinuity():
+    """Get the discontinuity flag for an audio file stream"""
     return at.kAudioFileStreamParseFlag_Discontinuity
 
 def get_audio_file_stream_seek_flag_offset_is_estimated():
+    """Get the offset is estimated flag for an audio file stream"""
     return at.kAudioFileStreamSeekFlag_OffsetIsEstimated
 
 # AudioFileStream error code getter functions
 def get_audio_file_stream_error_unsupported_file_type():
+    """Get the unsupported file type error for an audio file stream"""
     return at.kAudioFileStreamError_UnsupportedFileType
 
 def get_audio_file_stream_error_unsupported_data_format():
+    """Get the unsupported data format error for an audio file stream"""
     return at.kAudioFileStreamError_UnsupportedDataFormat
 
 def get_audio_file_stream_error_unsupported_property():
+    """Get the unsupported property error for an audio file stream"""
     return at.kAudioFileStreamError_UnsupportedProperty
 
 def get_audio_file_stream_error_bad_property_size():
+    """Get the bad property size error for an audio file stream"""
     return at.kAudioFileStreamError_BadPropertySize
 
 def get_audio_file_stream_error_not_optimized():
+    """Get the not optimized error for an audio file stream"""
     return at.kAudioFileStreamError_NotOptimized
 
 def get_audio_file_stream_error_invalid_packet_offset():
+    """Get the invalid packet offset error for an audio file stream"""
     return at.kAudioFileStreamError_InvalidPacketOffset
 
 def get_audio_file_stream_error_invalid_file():
+    """Get the invalid file error for an audio file stream"""
     return at.kAudioFileStreamError_InvalidFile
 
 def get_audio_file_stream_error_value_unknown():
+    """Get the value unknown error for an audio file stream"""
     return at.kAudioFileStreamError_ValueUnknown
 
 def get_audio_file_stream_error_data_unavailable():
+    """Get the data unavailable error for an audio file stream"""
     return at.kAudioFileStreamError_DataUnavailable
 
 def get_audio_file_stream_error_illegal_operation():
+    """Get the illegal operation error for an audio file stream"""
     return at.kAudioFileStreamError_IllegalOperation
 
 def get_audio_file_stream_error_unspecified_error():
+    """Get the unspecified error for an audio file stream"""
     return at.kAudioFileStreamError_UnspecifiedError
 
 def get_audio_file_stream_error_discontinuity_cant_recover():
+    """Get the discontinuity cant recover error for an audio file stream"""
     return at.kAudioFileStreamError_DiscontinuityCantRecover
 
 
@@ -1882,42 +2200,55 @@ def audio_services_set_property(int property_id, data, long specifier_value=0):
 
 # AudioServices constant getter functions
 def get_audio_services_no_error():
+    """Get the no error for an audio services"""
     return at.kAudioServicesNoError
 
 def get_audio_services_unsupported_property_error():
+    """Get the unsupported property error for an audio services"""
     return at.kAudioServicesUnsupportedPropertyError
 
 def get_audio_services_bad_property_size_error():
+    """Get the bad property size error for an audio services"""
     return at.kAudioServicesBadPropertySizeError
 
 def get_audio_services_bad_specifier_size_error():
+    """Get the bad specifier size error for an audio services"""
     return at.kAudioServicesBadSpecifierSizeError
 
 def get_audio_services_system_sound_unspecified_error():
+    """Get the system sound unspecified error for an audio services"""
     return at.kAudioServicesSystemSoundUnspecifiedError
 
 def get_audio_services_system_sound_client_timed_out_error():
+    """Get the system sound client timed out error for an audio services"""
     return at.kAudioServicesSystemSoundClientTimedOutError
 
 def get_audio_services_system_sound_exceeded_maximum_duration_error():
+    """Get the system sound exceeded maximum duration error for an audio services"""
     return at.kAudioServicesSystemSoundExceededMaximumDurationError
 
 def get_system_sound_id_user_preferred_alert():
+    """Get the user preferred alert for an audio services"""
     return at.kSystemSoundID_UserPreferredAlert
 
 def get_system_sound_id_flash_screen():
+    """Get the flash screen for an audio services"""
     return at.kSystemSoundID_FlashScreen
 
 def get_system_sound_id_vibrate():
+    """Get the vibrate for an audio services"""
     return at.kSystemSoundID_Vibrate
 
 def get_user_preferred_alert():
+    """Get the user preferred alert for an audio services"""
     return at.kUserPreferredAlert
 
 def get_audio_services_property_is_ui_sound():
+    """Get the is ui sound for an audio services"""
     return at.kAudioServicesPropertyIsUISound
 
 def get_audio_services_property_complete_playback_if_app_dies():
+    """Get the complete playback if app dies for an audio services"""
     return at.kAudioServicesPropertyCompletePlaybackIfAppDies
 
 

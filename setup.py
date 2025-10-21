@@ -27,7 +27,6 @@ extensions = [
     Extension("coremusic.capi",
         sources=[
             "src/coremusic/capi.pyx",
-            "src/coremusic/audio_player.c"
         ],
         define_macros=DEFINE_MACROS,
         py_limited_api=LIMITED_API,

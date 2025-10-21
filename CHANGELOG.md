@@ -17,6 +17,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Changed
+
+- **Pure Cython Audio Player Implementation** - Replaced C audio player with native Cython implementation
+  - **Removed C dependencies**: Eliminated `audio_player.c`, `audio_player.h`, and `audio_player.pxd` files
+  - **Simplified build process**: No separate C compilation needed, all audio playback in Cython
+  - **Cleaner architecture**: Consistent with existing callback patterns in the codebase
+  - **Same functionality**: All `AudioPlayer` methods work identically with same API
+  - **Pure Cython render callback**: `audio_player_render_callback()` implemented as `cdef` function with `noexcept nogil`
+  - **ExtAudioFile-based loading**: Uses already-wrapped ExtAudioFile APIs for audio file loading
+  - **AudioUnit integration**: Native AudioUnit setup and control entirely in Cython
+  - **Better maintainability**: All code in one language, easier to understand and extend
+  - **Proven pattern**: Follows same approach as existing `audio_queue_output_callback` and `audio_converter_input_callback`
+  - **Zero test regressions**: All 516 tests passing after migration
+  - **Fixed build configuration**: Updated `setup.py` and `pyproject.toml` for pure Cython build
+
+  **Technical Details:**
+  - Render callback handles real-time audio rendering, looping, and playback state
+  - Automatic format conversion to 44.1kHz stereo float32
+  - Sample-rate conversion and chunked reading for large files
+  - Full AudioUnit lifecycle management (initialize, start, stop, cleanup)
+  - Proper memory management with automatic buffer cleanup
+
+  **Impact:**
+  - **Users**: No API changes - `AudioPlayer` works exactly the same
+  - **Developers**: Simpler codebase with better maintainability
+  - **Build**: Faster compilation without separate C sources
+
 ## [0.1.6]
 
 ### Changed
