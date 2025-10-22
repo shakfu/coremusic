@@ -167,6 +167,60 @@ def audio_output_unit_stop(unit_id: int) -> None:
     """Stop AudioUnit output."""
     ...
 
+def audio_unit_find_all_components(
+    component_type: Optional[str] = None,
+    component_subtype: Optional[str] = None,
+    manufacturer: Optional[str] = None
+) -> List[int]:
+    """Find all AudioComponent IDs matching criteria."""
+    ...
+
+def audio_unit_get_component_info(component_id: int) -> Dict[str, Any]:
+    """Get component info dict with keys: name, type, subtype, manufacturer, version."""
+    ...
+
+def audio_unit_get_parameter_list(
+    audio_unit_id: int, scope: int = 0, element: int = 0
+) -> List[int]:
+    """Get list of parameter IDs."""
+    ...
+
+def audio_unit_get_parameter_info(
+    audio_unit_id: int, param_id: int, scope: int = 0, element: int = 0
+) -> Dict[str, Any]:
+    """Get parameter info dict with metadata."""
+    ...
+
+def audio_unit_get_parameter(
+    audio_unit_id: int, param_id: int, scope: int = 0, element: int = 0
+) -> float:
+    """Get current parameter value."""
+    ...
+
+def audio_unit_set_parameter(
+    audio_unit_id: int, param_id: int, value: float, scope: int = 0, element: int = 0
+) -> None:
+    """Set parameter value."""
+    ...
+
+def audio_unit_get_factory_presets(audio_unit_id: int) -> List[Dict[str, Any]]:
+    """Get list of factory preset dicts with keys: number, name."""
+    ...
+
+def audio_unit_set_current_preset(audio_unit_id: int, preset_number: int) -> None:
+    """Load a factory preset by number."""
+    ...
+
+def audio_unit_render(
+    audio_unit_id: int,
+    input_data: bytes,
+    num_frames: int,
+    sample_rate: float,
+    num_channels: int
+) -> bytes:
+    """Render audio through the AudioUnit."""
+    ...
+
 # ============================================================================
 # Audio Hardware & Device Operations
 # ============================================================================
@@ -792,24 +846,24 @@ def midi_send_data(port_id: int, dest_id: int, data: bytes, timestamp: int) -> N
     """Send MIDI data."""
     ...
 
-def midi_note_on(group: int, channel: int, note: int, velocity: int) -> bytes:
-    """Create MIDI note on message."""
+def midi_note_on(channel: int, note: int, velocity: int) -> Tuple[int, int, int]:
+    """Create MIDI note on message. Returns (status, data1, data2)."""
     ...
 
-def midi_note_off(group: int, channel: int, note: int, velocity: int) -> bytes:
-    """Create MIDI note off message."""
+def midi_note_off(channel: int, note: int, velocity: int = 0) -> Tuple[int, int, int]:
+    """Create MIDI note off message. Returns (status, data1, data2)."""
     ...
 
-def midi_control_change(group: int, channel: int, controller: int, value: int) -> bytes:
-    """Create MIDI control change message."""
+def midi_control_change(channel: int, controller: int, value: int) -> Tuple[int, int, int]:
+    """Create MIDI control change message. Returns (status, data1, data2)."""
     ...
 
-def midi_program_change(group: int, channel: int, program: int) -> bytes:
-    """Create MIDI program change message."""
+def midi_program_change(channel: int, program: int) -> Tuple[int, int, int]:
+    """Create MIDI program change message. Returns (status, data1, data2)."""
     ...
 
-def midi_pitch_bend(group: int, channel: int, value: int) -> bytes:
-    """Create MIDI pitch bend message."""
+def midi_pitch_bend(channel: int, value: int) -> Tuple[int, int, int]:
+    """Create MIDI pitch bend message. Returns (status, data1, data2)."""
     ...
 
 # MIDI 2.0 UMP Functions

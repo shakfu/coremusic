@@ -24,11 +24,19 @@ Example:
 
 import time
 import threading
-from typing import Optional, Callable, List, Tuple
+from typing import Optional, Callable, List, Tuple, Any, TYPE_CHECKING
 from dataclasses import dataclass
 
-from . import link
 from . import capi
+
+if TYPE_CHECKING:
+    from . import link as link_module  # type: ignore[attr-defined]
+else:
+    # Import at runtime (may fail during type checking)
+    try:
+        from . import link as link_module  # type: ignore[attr-defined]
+    except ImportError:
+        link_module = None  # type: ignore[assignment]
 
 
 # MIDI Clock Messages (System Real-Time Messages)
@@ -86,7 +94,7 @@ class LinkMIDIClock:
 
     def __init__(
         self,
-        session: link.LinkSession,
+        session: 'link_module.LinkSession',
         midi_port: int,
         midi_destination: int,
         quantum: float = 4.0
@@ -230,7 +238,7 @@ class LinkMIDISequencer:
 
     def __init__(
         self,
-        session: link.LinkSession,
+        session: 'link_module.LinkSession',
         midi_port: int,
         midi_destination: int,
         quantum: float = 4.0
@@ -283,12 +291,12 @@ class LinkMIDISequencer:
             duration: Note duration in beats
         """
         # Note On
-        note_on = capi.midi_note_on(channel, note, velocity)
-        self.schedule_event(beat, note_on)
+        status, data1, data2 = capi.midi_note_on(channel, note, velocity)
+        self.schedule_event(beat, bytes([status, data1, data2]))
 
         # Note Off
-        note_off = capi.midi_note_off(channel, note, 0)
-        self.schedule_event(beat + duration, note_off)
+        status, data1, data2 = capi.midi_note_off(channel, note, velocity=0)
+        self.schedule_event(beat + duration, bytes([status, data1, data2]))
 
     def schedule_cc(self, beat: float, channel: int, controller: int, value: int):
         """Schedule a MIDI CC message
@@ -299,8 +307,8 @@ class LinkMIDISequencer:
             controller: Controller number (0-127)
             value: Controller value (0-127)
         """
-        cc_message = capi.midi_control_change(channel, controller, value)
-        self.schedule_event(beat, cc_message)
+        status, data1, data2 = capi.midi_control_change(channel, controller, value)
+        self.schedule_event(beat, bytes([status, data1, data2]))
 
     def clear_events(self):
         """Clear all scheduled events"""
@@ -370,7 +378,7 @@ class LinkMIDISequencer:
 
 
 def link_beat_to_host_time(
-    session: link.LinkSession,
+    session: 'link_module.LinkSession',
     beat: float,
     quantum: float = 4.0
 ) -> int:
@@ -388,11 +396,12 @@ def link_beat_to_host_time(
     """
     state = session.capture_app_session_state()
     time_micros = state.time_at_beat(beat, quantum)
-    return session.clock.micros_to_ticks(time_micros)
+    result: int = session.clock.micros_to_ticks(time_micros)
+    return result
 
 
 def host_time_to_link_beat(
-    session: link.LinkSession,
+    session: 'link_module.LinkSession',
     host_time_ticks: int,
     quantum: float = 4.0
 ) -> float:
@@ -408,7 +417,8 @@ def host_time_to_link_beat(
     """
     time_micros = session.clock.ticks_to_micros(host_time_ticks)
     state = session.capture_app_session_state()
-    return state.beat_at_time(time_micros, quantum)
+    result: float = state.beat_at_time(time_micros, quantum)
+    return result
 
 
 __all__ = [

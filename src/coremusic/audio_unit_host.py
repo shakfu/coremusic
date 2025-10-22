@@ -24,36 +24,44 @@ class AudioUnitParameter:
     @property
     def name(self) -> str:
         """Parameter name"""
-        return self._info['name']
+        result: str = self._info['name']
+        return result
 
     @property
     def unit(self) -> int:
         """Parameter unit type"""
-        return self._info['unit']
+        result: int = self._info['unit']
+        return result
 
     @property
     def unit_name(self) -> str:
         """Parameter unit name (e.g., 'Hz', 'dB')"""
-        return self._info.get('unit_name', '')
+        result: str = self._info.get('unit_name', '')
+        return result
 
     @property
     def min_value(self) -> float:
         """Minimum parameter value"""
-        return self._info['min_value']
+        result: float = self._info['min_value']
+        return result
 
     @property
     def max_value(self) -> float:
         """Maximum parameter value"""
-        return self._info['max_value']
+        result: float = self._info['max_value']
+        return result
 
     @property
     def default_value(self) -> float:
         """Default parameter value"""
-        return self._info['default_value']
+        result: float = self._info['default_value']
+        return result
 
     @property
     def value(self) -> float:
         """Current parameter value"""
+        if self._plugin._unit_id is None:
+            raise RuntimeError("Plugin not instantiated")
         return capi.audio_unit_get_parameter(
             self._plugin._unit_id,
             self._param_id,
@@ -64,6 +72,8 @@ class AudioUnitParameter:
     @value.setter
     def value(self, new_value: float):
         """Set parameter value"""
+        if self._plugin._unit_id is None:
+            raise RuntimeError("Plugin not instantiated")
         # Clamp to valid range
         clamped = max(self.min_value, min(self.max_value, new_value))
         capi.audio_unit_set_parameter(
@@ -172,27 +182,32 @@ class AudioUnitPlugin:
     @property
     def name(self) -> str:
         """Plugin name"""
-        return self._info['name']
+        result: str = self._info['name']
+        return result
 
     @property
     def manufacturer(self) -> str:
         """Plugin manufacturer"""
-        return self._info['manufacturer']
+        result: str = self._info['manufacturer']
+        return result
 
     @property
     def version(self) -> int:
         """Plugin version"""
-        return self._info['version']
+        result: int = self._info['version']
+        return result
 
     @property
     def type(self) -> str:
         """Plugin type (e.g., 'aufx', 'aumu')"""
-        return self._info['type']
+        result: str = self._info['type']
+        return result
 
     @property
     def subtype(self) -> str:
         """Plugin subtype"""
-        return self._info['subtype']
+        result: str = self._info['subtype']
+        return result
 
     @property
     def is_initialized(self) -> bool:
@@ -263,6 +278,8 @@ class AudioUnitPlugin:
 
     def _discover_parameters(self):
         """Discover all parameters"""
+        if self._unit_id is None:
+            return
         param_ids = capi.audio_unit_get_parameter_list(self._unit_id)
 
         self._parameters = []
@@ -279,6 +296,8 @@ class AudioUnitPlugin:
 
     def _discover_presets(self):
         """Discover factory presets"""
+        if self._unit_id is None:
+            return
         preset_list = capi.audio_unit_get_factory_presets(self._unit_id)
         self._presets = [
             AudioUnitPreset(p['number'], p['name'])
@@ -290,6 +309,8 @@ class AudioUnitPlugin:
         """List of all parameters"""
         if not self._initialized:
             raise RuntimeError("Plugin not initialized")
+        if self._parameters is None:
+            return []
         return self._parameters
 
     @property
@@ -297,6 +318,8 @@ class AudioUnitPlugin:
         """List of factory presets"""
         if not self._initialized:
             raise RuntimeError("Plugin not initialized")
+        if self._presets is None:
+            return []
         return self._presets
 
     def get_parameter(self, name_or_id) -> Optional[AudioUnitParameter]:
@@ -305,12 +328,15 @@ class AudioUnitPlugin:
             raise RuntimeError("Plugin not initialized")
 
         if isinstance(name_or_id, int):
-            for param in self._parameters:
-                if param.id == name_or_id:
-                    return param
+            if self._parameters is not None:
+                for param in self._parameters:
+                    if param.id == name_or_id:
+                        return param
             return None
         else:
-            return self._parameter_map.get(name_or_id)
+            if self._parameter_map is not None:
+                return self._parameter_map.get(name_or_id)
+            return None
 
     def set_parameter(self, name_or_id, value: float):
         """Set parameter value by name or ID"""
@@ -321,7 +347,7 @@ class AudioUnitPlugin:
 
     def load_preset(self, preset: AudioUnitPreset):
         """Load a factory preset"""
-        if not self._initialized:
+        if not self._initialized or self._unit_id is None:
             raise RuntimeError("Plugin not initialized")
         capi.audio_unit_set_current_preset(self._unit_id, preset.number)
 
@@ -338,7 +364,7 @@ class AudioUnitPlugin:
         Returns:
             Processed audio as bytes (float32, interleaved)
         """
-        if not self._initialized:
+        if not self._initialized or self._unit_id is None:
             raise RuntimeError("Plugin not initialized")
 
         if num_frames is None:
@@ -366,7 +392,7 @@ class AudioUnitPlugin:
             RuntimeError: If plugin not initialized or MIDI send fails
             ValueError: If plugin is not an instrument type
         """
-        if not self._initialized:
+        if not self._initialized or self._unit_id is None:
             raise RuntimeError("Plugin not initialized")
         if self.type != 'aumu':  # kAudioUnitType_MusicDevice
             raise ValueError(f"MIDI only supported for instrument plugins (type 'aumu'), not '{self.type}'")
