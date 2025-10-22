@@ -86,6 +86,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - Added `make typecheck` target to Makefile
   - All 516 tests passing with full type safety
 
+- **AudioStreamBasicDescription parsing utility**
+  - Added `parse_audio_stream_basic_description()` function to `utilities` module
+  - Parses 40-byte ASBD structure from CoreAudio APIs into Python dictionary
+  - Returns all format fields: sample_rate, format_id, channels, bit depth, etc.
+  - Comprehensive documentation with structure layout and usage examples
+  - 3 test cases verifying parsing, validation, and compatibility with OO API
+  - Useful for functional API users who need to parse raw format data
+
+  **Example Usage:**
+
+  ```python
+  import coremusic as cm
+  import coremusic.capi as capi
+
+  file_id = capi.audio_file_open_url("audio.wav")
+  format_data = capi.audio_file_get_property(
+      file_id,
+      capi.get_audio_file_property_data_format()
+  )
+  asbd = cm.parse_audio_stream_basic_description(format_data)
+  print(f"{asbd['sample_rate']} Hz, {asbd['channels_per_frame']} channels")
+  capi.audio_file_close(file_id)
+  ```
+
 ### Fixed
 
 - **Sphinx documentation build warnings** - Eliminated all 41 warnings in documentation build

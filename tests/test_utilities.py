@@ -538,3 +538,76 @@ class TestAudioUnitDiscovery:
         assert len(delays) > 0
         audelay_available = any("AUDelay" in name for name in names)
         assert audelay_available is True
+
+
+class TestParseAudioStreamBasicDescription:
+    """Tests for parse_audio_stream_basic_description utility"""
+
+    def test_parse_audio_stream_basic_description(self):
+        """Test parsing AudioStreamBasicDescription from audio file"""
+        # Open test file
+        file_id = capi.audio_file_open_url("tests/amen.wav")
+
+        try:
+            # Get format data
+            format_data = capi.audio_file_get_property(
+                file_id, capi.get_audio_file_property_data_format()
+            )
+
+            # Parse it
+            asbd = cm.parse_audio_stream_basic_description(format_data)
+
+            # Verify all expected keys are present
+            expected_keys = {
+                "sample_rate",
+                "format_id",
+                "format_flags",
+                "bytes_per_packet",
+                "frames_per_packet",
+                "bytes_per_frame",
+                "channels_per_frame",
+                "bits_per_channel",
+                "reserved",
+            }
+            assert set(asbd.keys()) == expected_keys
+
+            # Verify data types
+            assert isinstance(asbd["sample_rate"], float)
+            assert isinstance(asbd["format_id"], str)
+            assert isinstance(asbd["format_flags"], int)
+            assert isinstance(asbd["channels_per_frame"], int)
+
+            # Verify expected values for amen.wav (44.1kHz, 16-bit, stereo)
+            assert asbd["sample_rate"] == 44100.0
+            assert asbd["format_id"] == "lpcm"
+            assert asbd["channels_per_frame"] == 2
+            assert asbd["bits_per_channel"] == 16
+
+        finally:
+            capi.audio_file_close(file_id)
+
+    def test_parse_audio_stream_basic_description_invalid_length(self):
+        """Test that invalid length raises ValueError"""
+        with pytest.raises(ValueError, match="must be exactly 40 bytes"):
+            cm.parse_audio_stream_basic_description(b"too short")
+
+    def test_parse_audio_stream_basic_description_matches_oo_api(self):
+        """Test that parsed ASBD matches object-oriented API"""
+        # Get format using functional API
+        file_id = capi.audio_file_open_url("tests/amen.wav")
+        format_data = capi.audio_file_get_property(
+            file_id, capi.get_audio_file_property_data_format()
+        )
+        asbd = cm.parse_audio_stream_basic_description(format_data)
+        capi.audio_file_close(file_id)
+
+        # Get format using OO API
+        with cm.AudioFile("tests/amen.wav") as audio:
+            fmt = audio.format
+
+            # Compare values
+            assert asbd["sample_rate"] == fmt.sample_rate
+            assert asbd["format_id"] == fmt.format_id
+            assert asbd["format_flags"] == fmt.format_flags
+            assert asbd["channels_per_frame"] == fmt.channels_per_frame
+            assert asbd["bits_per_channel"] == fmt.bits_per_channel

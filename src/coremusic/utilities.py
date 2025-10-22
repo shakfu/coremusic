@@ -9,11 +9,13 @@ Features:
 - Batch file processing and conversion
 - Format conversion helpers
 - File metadata extraction
+- AudioStreamBasicDescription parsing
 """
 
 from typing import Optional, Union, List, Tuple, Dict, Any, Callable
 from pathlib import Path
 import glob
+import struct
 
 
 from .objects import (
@@ -42,8 +44,116 @@ __all__ = [
     "find_audio_unit_by_name",
     "get_audiounit_names",
     "list_available_audio_units",
+    "parse_audio_stream_basic_description",
     "trim_audio",
 ]
+
+# ============================================================================
+# AudioStreamBasicDescription Parsing
+# ============================================================================
+
+
+def parse_audio_stream_basic_description(format_data: bytes) -> Dict[str, Any]:
+    """Parse AudioStreamBasicDescription from raw bytes.
+
+    AudioStreamBasicDescription (ASBD) is a CoreAudio structure that describes
+    audio data format. This function parses the raw 40-byte structure returned
+    by CoreAudio APIs into a Python dictionary.
+
+    Args:
+        format_data: 40 bytes of ASBD data from CoreAudio APIs
+            (e.g., from audio_file_get_property with kAudioFilePropertyDataFormat)
+
+    Returns:
+        Dictionary containing parsed ASBD fields:
+            - sample_rate (float): Sample rate in Hz
+            - format_id (str): Format identifier FourCC (e.g., 'lpcm', 'aac ')
+            - format_flags (int): Format-specific flags
+            - bytes_per_packet (int): Bytes per packet
+            - frames_per_packet (int): Frames per packet
+            - bytes_per_frame (int): Bytes per frame
+            - channels_per_frame (int): Number of channels
+            - bits_per_channel (int): Bits per channel
+            - reserved (int): Reserved field (usually 0)
+
+    Raises:
+        ValueError: If format_data is not exactly 40 bytes
+
+    Example::
+
+        import coremusic as cm
+        import coremusic.capi as capi
+
+        # Using functional API
+        file_id = capi.audio_file_open_url("audio.wav")
+        format_data = capi.audio_file_get_property(
+            file_id,
+            capi.get_audio_file_property_data_format()
+        )
+        asbd = cm.parse_audio_stream_basic_description(format_data)
+        print(f"Sample rate: {asbd['sample_rate']} Hz")
+        print(f"Channels: {asbd['channels_per_frame']}")
+        capi.audio_file_close(file_id)
+
+    Note:
+        If using the object-oriented API, prefer the AudioFile.format property
+        which automatically parses the format data::
+
+            with cm.AudioFile("audio.wav") as audio:
+                fmt = audio.format
+                print(fmt.sample_rate, fmt.channels_per_frame)
+
+    Structure Layout:
+        The AudioStreamBasicDescription structure is 40 bytes::
+
+            Offset  Size  Type     Field
+            ------  ----  -------  -------------------
+            0-7     8     Float64  mSampleRate
+            8-11    4     UInt32   mFormatID (FourCC)
+            12-15   4     UInt32   mFormatFlags
+            16-19   4     UInt32   mBytesPerPacket
+            20-23   4     UInt32   mFramesPerPacket
+            24-27   4     UInt32   mBytesPerFrame
+            28-31   4     UInt32   mChannelsPerFrame
+            32-35   4     UInt32   mBitsPerChannel
+            36-39   4     UInt32   mReserved
+    """
+    if len(format_data) != 40:
+        raise ValueError(
+            f"AudioStreamBasicDescription must be exactly 40 bytes, got {len(format_data)}"
+        )
+
+    # Parse sample rate (Float64, little-endian)
+    sample_rate: float = struct.unpack("<d", format_data[0:8])[0]
+
+    # Parse format ID (FourCC, stored as big-endian UInt32)
+    # Reverse bytes to get correct FourCC string representation
+    format_id_bytes = format_data[8:12]
+    format_id: str = format_id_bytes[::-1].decode("ascii")
+
+    # Parse remaining UInt32 fields (little-endian)
+    (
+        format_flags,
+        bytes_per_packet,
+        frames_per_packet,
+        bytes_per_frame,
+        channels_per_frame,
+        bits_per_channel,
+        reserved,
+    ) = struct.unpack("<7I", format_data[12:40])
+
+    return {
+        "sample_rate": sample_rate,
+        "format_id": format_id,
+        "format_flags": format_flags,
+        "bytes_per_packet": bytes_per_packet,
+        "frames_per_packet": frames_per_packet,
+        "bytes_per_frame": bytes_per_frame,
+        "channels_per_frame": channels_per_frame,
+        "bits_per_channel": bits_per_channel,
+        "reserved": reserved,
+    }
+
 
 # ============================================================================
 # Audio Analysis Utilities
