@@ -14,7 +14,7 @@ from pathlib import Path
 
 def format_bytes(num_bytes):
     """Format bytes as human-readable string."""
-    for unit in ['B', 'KB', 'MB', 'GB']:
+    for unit in ["B", "KB", "MB", "GB"]:
         if num_bytes < 1024.0:
             return f"{num_bytes:.2f} {unit}"
         num_bytes /= 1024.0
@@ -47,7 +47,7 @@ def get_channel_description(channels):
         2: "Stereo",
         4: "Quadraphonic",
         6: "5.1 Surround",
-        8: "7.1 Surround"
+        8: "7.1 Surround",
     }
     return channel_map.get(channels, f"{channels}-channel")
 
@@ -82,7 +82,9 @@ def inspect_audio_file(filepath):
             print("-" * 70)
             print(f"  Format ID:    {fmt.format_id}")
             print(f"  Sample Rate:  {fmt.sample_rate:,.0f} Hz")
-            print(f"  Channels:     {fmt.channels_per_frame} ({get_channel_description(fmt.channels_per_frame)})")
+            print(
+                f"  Channels:     {fmt.channels_per_frame} ({get_channel_description(fmt.channels_per_frame)})"
+            )
             print(f"  Bit Depth:    {fmt.bits_per_channel}-bit")
             print(f"  Bytes/Frame:  {fmt.bytes_per_frame}")
             print(f"  Bytes/Packet: {fmt.bytes_per_packet}")
@@ -96,7 +98,9 @@ def inspect_audio_file(filepath):
             # Calculate total frames from duration and sample rate
             total_frames = int(audio.duration * fmt.sample_rate)
             print(f"  Total Frames: {total_frames:,}")
-            print(f"  Duration:     {format_duration(audio.duration)} ({audio.duration:.3f}s)")
+            print(
+                f"  Duration:     {format_duration(audio.duration)} ({audio.duration:.3f}s)"
+            )
             print(f"  Minutes:      {audio.duration / 60:.2f}")
             print()
 
@@ -115,7 +119,7 @@ def inspect_audio_file(filepath):
             # Format-specific information
             print("FORMAT DETAILS")
             print("-" * 70)
-            if fmt.format_id == 'lpcm':
+            if fmt.format_id == "lpcm":
                 print(f"  Format Type:  Linear PCM (Uncompressed)")
                 is_float = fmt.format_flags & 0x01
                 is_big_endian = fmt.format_flags & 0x02
@@ -123,15 +127,17 @@ def inspect_audio_file(filepath):
                 is_packed = fmt.format_flags & 0x08
 
                 print(f"  Data Type:    {'Float' if is_float else 'Integer'}")
-                print(f"  Byte Order:   {'Big Endian' if is_big_endian else 'Little Endian'}")
+                print(
+                    f"  Byte Order:   {'Big Endian' if is_big_endian else 'Little Endian'}"
+                )
                 print(f"  Signed:       {'Yes' if is_signed else 'No'}")
                 print(f"  Packed:       {'Yes' if is_packed else 'No'}")
-            elif fmt.format_id in ['aac ', '.mp3', 'alac', 'flac']:
+            elif fmt.format_id in ["aac ", ".mp3", "alac", "flac"]:
                 format_names = {
-                    'aac ': 'AAC (Advanced Audio Coding) - Compressed',
-                    '.mp3': 'MP3 (MPEG-1 Audio Layer 3) - Compressed',
-                    'alac': 'Apple Lossless (ALAC) - Compressed Lossless',
-                    'flac': 'FLAC (Free Lossless Audio Codec) - Compressed Lossless'
+                    "aac ": "AAC (Advanced Audio Coding) - Compressed",
+                    ".mp3": "MP3 (MPEG-1 Audio Layer 3) - Compressed",
+                    "alac": "Apple Lossless (ALAC) - Compressed Lossless",
+                    "flac": "FLAC (Free Lossless Audio Codec) - Compressed Lossless",
                 }
                 print(f"  Format Type:  {format_names.get(fmt.format_id, 'Unknown')}")
             else:
@@ -143,7 +149,9 @@ def inspect_audio_file(filepath):
             print("-" * 70)
             total_samples = total_frames * fmt.channels_per_frame
             print(f"  Total Samples:    {total_samples:,}")
-            print(f"  Samples/Second:   {int(fmt.sample_rate * fmt.channels_per_frame):,}")
+            print(
+                f"  Samples/Second:   {int(fmt.sample_rate * fmt.channels_per_frame):,}"
+            )
 
             # Memory requirements
             memory_size = total_frames * fmt.bytes_per_frame
@@ -170,6 +178,7 @@ def inspect_audio_file(filepath):
     except Exception as e:
         print(f"\nUnexpected error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

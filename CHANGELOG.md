@@ -17,6 +17,85 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.1.7]
+
+### Added
+
+- **CoreAudioClock API** - Complete audio/MIDI synchronization and timing services
+  - **Low-level C API wrappers** in `capi.pyx`
+    - `ca_clock_new()` - Create new clock instances
+    - `ca_clock_dispose()` - Resource cleanup
+    - `ca_clock_start()` / `ca_clock_stop()` - Playback control
+    - `ca_clock_get_play_rate()` / `ca_clock_set_play_rate()` - Speed control
+    - `ca_clock_get_current_time()` - Time queries with format support
+    - Time format getter functions for seconds, beats, samples, host time
+  - **High-level AudioClock class** with context manager support
+    - Properties: `play_rate`, `is_running`, `is_disposed`
+    - Methods: `start()`, `stop()`, `get_time_seconds()`, `get_time_beats()`, `get_time_samples()`, `get_time_host()`
+    - Automatic resource management with `__enter__` and `__exit__`
+  - **ClockTimeFormat constants** for time format specifications
+    - `HOST_TIME` - mach_absolute_time()
+    - `SAMPLES` - Audio sample count
+    - `BEATS` - Musical beats
+    - `SECONDS` - Seconds
+    - `SMPTE_TIME` - SMPTE timecode
+  - **Comprehensive test coverage** - 21 tests covering all functionality
+    - Low-level API tests (create/dispose, start/stop, play rate, time formats)
+    - High-level API tests (context manager, properties, time getters)
+    - Timing accuracy verification (normal and half-speed)
+    - Error handling and multiple simultaneous clocks
+  - **Complete documentation**
+    - Sphinx API reference with autodoc integration
+    - Code examples in main index and getting started guide
+    - Detailed docstrings with RST formatting
+  - **Use cases**: DAWs, sequencers, MIDI sync, tempo control, audio/MIDI alignment
+
+  **Example Usage:**
+
+  ```python
+  import coremusic as cm
+
+  # High-level API
+  with cm.AudioClock() as clock:
+      clock.play_rate = 1.0  # Normal speed
+      clock.start()
+
+      # Get time in different formats
+      seconds = clock.get_time_seconds()
+      beats = clock.get_time_beats()
+      samples = clock.get_time_samples()
+
+      # Change speed for tempo sync
+      clock.play_rate = 0.5  # Half speed
+
+      clock.stop()
+
+  # Low-level API
+  import coremusic.capi as capi
+
+  clock_id = capi.ca_clock_new()
+  capi.ca_clock_start(clock_id)
+  # ... operations ...
+  capi.ca_clock_dispose(clock_id)
+  ```
+
+- **Full mypy type checking support**
+  - Added comprehensive type hints across entire Python codebase
+  - Configured strict mypy settings in `pyproject.toml`
+  - Fixed all type errors in `scipy_utils.py`, `utilities.py`, `async_io.py`
+  - Added `make typecheck` target to Makefile
+  - All 516 tests passing with full type safety
+
+### Fixed
+
+- **Sphinx documentation build warnings** - Eliminated all 41 warnings in documentation build
+  - Fixed AudioClock docstring RST formatting (changed markdown code blocks to RST format)
+  - Removed autofunction directives for non-exported capi functions
+  - Updated API reference to guide users to `coremusic.capi` module for low-level functions
+  - Updated audio file documentation examples to use correct import patterns
+  - Fixed Makefile documentation targets to properly delegate to docs/Makefile
+  - Documentation now builds cleanly with 0 warnings, 0 errors
+
 ### Changed
 
 - **Pure Cython Audio Player Implementation** - Replaced C audio player with native Cython implementation

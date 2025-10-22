@@ -1,4 +1,5 @@
 """Tests for AudioConverter and ExtendedAudioFile object-oriented classes."""
+
 import os
 import tempfile
 import pytest
@@ -13,31 +14,52 @@ class TestAudioConverter:
     @pytest.fixture
     def amen_wav_path(self):
         """Fixture providing path to amen.wav test file"""
-        path = os.path.join('tests', 'amen.wav')
+        path = os.path.join("tests", "amen.wav")
         if not os.path.exists(path):
-            pytest.skip(f'Test audio file not found: {path}')
+            pytest.skip(f"Test audio file not found: {path}")
         return path
 
     @pytest.fixture
     def source_format(self):
         """Fixture providing source audio format (44.1kHz, stereo, 16-bit)"""
-        return cm.AudioFormat(sample_rate=44100.0, format_id='lpcm',
-            format_flags=12, bytes_per_packet=4, frames_per_packet=1,
-            bytes_per_frame=4, channels_per_frame=2, bits_per_channel=16)
+        return cm.AudioFormat(
+            sample_rate=44100.0,
+            format_id="lpcm",
+            format_flags=12,
+            bytes_per_packet=4,
+            frames_per_packet=1,
+            bytes_per_frame=4,
+            channels_per_frame=2,
+            bits_per_channel=16,
+        )
 
     @pytest.fixture
     def dest_format_mono(self):
         """Fixture providing destination format (44.1kHz, mono, 16-bit)"""
-        return cm.AudioFormat(sample_rate=44100.0, format_id='lpcm',
-            format_flags=12, bytes_per_packet=2, frames_per_packet=1,
-            bytes_per_frame=2, channels_per_frame=1, bits_per_channel=16)
+        return cm.AudioFormat(
+            sample_rate=44100.0,
+            format_id="lpcm",
+            format_flags=12,
+            bytes_per_packet=2,
+            frames_per_packet=1,
+            bytes_per_frame=2,
+            channels_per_frame=1,
+            bits_per_channel=16,
+        )
 
     @pytest.fixture
     def dest_format_48k(self):
         """Fixture providing destination format (48kHz, stereo, 16-bit)"""
-        return cm.AudioFormat(sample_rate=48000.0, format_id='lpcm',
-            format_flags=12, bytes_per_packet=4, frames_per_packet=1,
-            bytes_per_frame=4, channels_per_frame=2, bits_per_channel=16)
+        return cm.AudioFormat(
+            sample_rate=48000.0,
+            format_id="lpcm",
+            format_flags=12,
+            bytes_per_packet=4,
+            frames_per_packet=1,
+            bytes_per_frame=4,
+            channels_per_frame=2,
+            bits_per_channel=16,
+        )
 
     def test_audio_converter_creation(self, source_format, dest_format_mono):
         """Test AudioConverter object creation"""
@@ -63,14 +85,15 @@ class TestAudioConverter:
         """Test AudioConverter conversion"""
         converter = cm.AudioConverter(source_format, dest_format_mono)
         num_frames = 100
-        input_data = b'\x00\x01' * (num_frames * 2)
+        input_data = b"\x00\x01" * (num_frames * 2)
         output_data = converter.convert(input_data)
         assert isinstance(output_data, bytes)
         assert len(output_data) > 0
         assert len(output_data) < len(input_data)
 
-    def test_audio_converter_sample_rate_conversion(self, source_format,
-        dest_format_48k):
+    def test_audio_converter_sample_rate_conversion(
+        self, source_format, dest_format_48k
+    ):
         """Test AudioConverter creation for sample rate conversion"""
         converter = cm.AudioConverter(source_format, dest_format_48k)
         assert isinstance(converter, cm.AudioConverter)
@@ -80,26 +103,24 @@ class TestAudioConverter:
     def test_audio_converter_reset(self, source_format, dest_format_mono):
         """Test AudioConverter reset"""
         converter = cm.AudioConverter(source_format, dest_format_mono)
-        input_data = b'\x00\x01' * 200
+        input_data = b"\x00\x01" * 200
         output1 = converter.convert(input_data)
         converter.reset()
         output2 = converter.convert(input_data)
         assert isinstance(output2, bytes)
         assert len(output2) > 0
 
-    def test_audio_converter_context_manager(self, source_format,
-        dest_format_mono):
+    def test_audio_converter_context_manager(self, source_format, dest_format_mono):
         """Test AudioConverter as context manager"""
         with cm.AudioConverter(source_format, dest_format_mono) as converter:
             assert isinstance(converter, cm.AudioConverter)
             assert not converter.is_disposed
-            input_data = b'\x00\x01\x02\x03' * 100
+            input_data = b"\x00\x01\x02\x03" * 100
             output_data = converter.convert(input_data)
             assert len(output_data) > 0
         assert converter.is_disposed
 
-    def test_audio_converter_manual_disposal(self, source_format,
-        dest_format_mono):
+    def test_audio_converter_manual_disposal(self, source_format, dest_format_mono):
         """Test AudioConverter manual disposal"""
         converter = cm.AudioConverter(source_format, dest_format_mono)
         assert not converter.is_disposed
@@ -108,114 +129,164 @@ class TestAudioConverter:
         converter.dispose()
         assert converter.is_disposed
 
-    def test_audio_converter_operations_after_disposal(self, source_format,
-        dest_format_mono):
+    def test_audio_converter_operations_after_disposal(
+        self, source_format, dest_format_mono
+    ):
         """Test operations after disposal raise errors"""
         converter = cm.AudioConverter(source_format, dest_format_mono)
         converter.dispose()
-        with pytest.raises(RuntimeError, match='has been disposed'):
-            converter.convert(b'\x00\x01')
-        with pytest.raises(RuntimeError, match='has been disposed'):
+        with pytest.raises(RuntimeError, match="has been disposed"):
+            converter.convert(b"\x00\x01")
+        with pytest.raises(RuntimeError, match="has been disposed"):
             converter.reset()
 
     def test_audio_converter_repr(self, source_format, dest_format_mono):
         """Test AudioConverter string representation"""
         converter = cm.AudioConverter(source_format, dest_format_mono)
         repr_str = repr(converter)
-        assert 'AudioConverter' in repr_str
-        assert '44100.0' in repr_str
+        assert "AudioConverter" in repr_str
+        assert "44100.0" in repr_str
 
-    def test_audio_converter_with_real_file(self, amen_wav_path,
-        source_format, dest_format_mono):
+    def test_audio_converter_with_real_file(
+        self, amen_wav_path, source_format, dest_format_mono
+    ):
         """Test AudioConverter with real audio file data"""
         with cm.AudioFile(amen_wav_path) as audio_file:
             data, packet_count = audio_file.read_packets(0, 100)
             assert len(data) > 0
-            with cm.AudioConverter(source_format, dest_format_mono
-                ) as converter:
+            with cm.AudioConverter(source_format, dest_format_mono) as converter:
                 mono_data = converter.convert(data)
                 assert len(mono_data) > 0
                 assert len(mono_data) < len(data)
 
     def test_audio_converter_error_handling(self):
         """Test AudioConverter error handling"""
-        invalid_format = cm.AudioFormat(sample_rate=0, format_id='lpcm',
-            format_flags=0, bytes_per_packet=0, frames_per_packet=0,
-            bytes_per_frame=0, channels_per_frame=0, bits_per_channel=0)
-        valid_format = cm.AudioFormat(sample_rate=44100.0, format_id='lpcm',
-            format_flags=12, bytes_per_packet=4, frames_per_packet=1,
-            bytes_per_frame=4, channels_per_frame=2, bits_per_channel=16)
+        invalid_format = cm.AudioFormat(
+            sample_rate=0,
+            format_id="lpcm",
+            format_flags=0,
+            bytes_per_packet=0,
+            frames_per_packet=0,
+            bytes_per_frame=0,
+            channels_per_frame=0,
+            bits_per_channel=0,
+        )
+        valid_format = cm.AudioFormat(
+            sample_rate=44100.0,
+            format_id="lpcm",
+            format_flags=12,
+            bytes_per_packet=4,
+            frames_per_packet=1,
+            bytes_per_frame=4,
+            channels_per_frame=2,
+            bits_per_channel=16,
+        )
         with pytest.raises(cm.AudioConverterError):
             cm.AudioConverter(invalid_format, valid_format)
 
-    def test_audio_converter_sample_rate_conversion_44100_to_48000(self,
-        source_format, dest_format_48k):
+    def test_audio_converter_sample_rate_conversion_44100_to_48000(
+        self, source_format, dest_format_48k
+    ):
         """Test sample rate conversion from 44.1kHz to 48kHz using callback API"""
         converter = cm.AudioConverter(source_format, dest_format_48k)
         num_input_frames = 100
-        input_data = b'\x00\x01\x02\x03' * num_input_frames
-        output_data = converter.convert_with_callback(input_data,
-            num_input_frames)
+        input_data = b"\x00\x01\x02\x03" * num_input_frames
+        output_data = converter.convert_with_callback(input_data, num_input_frames)
         assert isinstance(output_data, bytes)
         assert len(output_data) > 0
         expected_output_size = int(num_input_frames * (48000.0 / 44100.0) * 4)
-        assert abs(len(output_data) - expected_output_size
-            ) < expected_output_size * 0.2
+        assert abs(len(output_data) - expected_output_size) < expected_output_size * 0.2
         converter.dispose()
 
     def test_audio_converter_sample_rate_conversion_48000_to_44100(self):
         """Test sample rate conversion from 48kHz to 44.1kHz using callback API"""
-        source_format = cm.AudioFormat(sample_rate=48000.0, format_id=
-            'lpcm', format_flags=12, bytes_per_packet=4, frames_per_packet=
-            1, bytes_per_frame=4, channels_per_frame=2, bits_per_channel=16)
-        dest_format = cm.AudioFormat(sample_rate=44100.0, format_id='lpcm',
-            format_flags=12, bytes_per_packet=4, frames_per_packet=1,
-            bytes_per_frame=4, channels_per_frame=2, bits_per_channel=16)
+        source_format = cm.AudioFormat(
+            sample_rate=48000.0,
+            format_id="lpcm",
+            format_flags=12,
+            bytes_per_packet=4,
+            frames_per_packet=1,
+            bytes_per_frame=4,
+            channels_per_frame=2,
+            bits_per_channel=16,
+        )
+        dest_format = cm.AudioFormat(
+            sample_rate=44100.0,
+            format_id="lpcm",
+            format_flags=12,
+            bytes_per_packet=4,
+            frames_per_packet=1,
+            bytes_per_frame=4,
+            channels_per_frame=2,
+            bits_per_channel=16,
+        )
         converter = cm.AudioConverter(source_format, dest_format)
         num_input_frames = 100
-        input_data = b'\x00\x01\x02\x03' * num_input_frames
-        output_data = converter.convert_with_callback(input_data,
-            num_input_frames)
+        input_data = b"\x00\x01\x02\x03" * num_input_frames
+        output_data = converter.convert_with_callback(input_data, num_input_frames)
         assert isinstance(output_data, bytes)
         assert len(output_data) > 0
         expected_output_size = int(num_input_frames * (44100.0 / 48000.0) * 4)
-        assert abs(len(output_data) - expected_output_size
-            ) < expected_output_size * 0.2
+        assert abs(len(output_data) - expected_output_size) < expected_output_size * 0.2
         converter.dispose()
 
-    def test_audio_converter_sample_rate_conversion_with_real_file(self,
-        amen_wav_path):
+    def test_audio_converter_sample_rate_conversion_with_real_file(self, amen_wav_path):
         """Test sample rate conversion with real audio file"""
-        source_format = cm.AudioFormat(sample_rate=44100.0, format_id=
-            'lpcm', format_flags=12, bytes_per_packet=4, frames_per_packet=
-            1, bytes_per_frame=4, channels_per_frame=2, bits_per_channel=16)
-        dest_format = cm.AudioFormat(sample_rate=48000.0, format_id='lpcm',
-            format_flags=12, bytes_per_packet=4, frames_per_packet=1,
-            bytes_per_frame=4, channels_per_frame=2, bits_per_channel=16)
+        source_format = cm.AudioFormat(
+            sample_rate=44100.0,
+            format_id="lpcm",
+            format_flags=12,
+            bytes_per_packet=4,
+            frames_per_packet=1,
+            bytes_per_frame=4,
+            channels_per_frame=2,
+            bits_per_channel=16,
+        )
+        dest_format = cm.AudioFormat(
+            sample_rate=48000.0,
+            format_id="lpcm",
+            format_flags=12,
+            bytes_per_packet=4,
+            frames_per_packet=1,
+            bytes_per_frame=4,
+            channels_per_frame=2,
+            bits_per_channel=16,
+        )
         with cm.AudioFile(amen_wav_path) as audio_file:
             data, packet_count = audio_file.read_packets(0, 1000)
             assert len(data) > 0
             with cm.AudioConverter(source_format, dest_format) as converter:
-                converted_data = converter.convert_with_callback(data,
-                    packet_count)
+                converted_data = converter.convert_with_callback(data, packet_count)
                 assert len(converted_data) > 0
                 expected_size = int(len(data) * (48000.0 / 44100.0))
-                assert abs(len(converted_data) - expected_size
-                    ) < expected_size * 0.2
+                assert abs(len(converted_data) - expected_size) < expected_size * 0.2
 
     def test_audio_converter_combined_sample_rate_and_channel_conversion(self):
         """Test combined sample rate and channel conversion (44.1kHz stereo to 48kHz mono)"""
-        source_format = cm.AudioFormat(sample_rate=44100.0, format_id=
-            'lpcm', format_flags=12, bytes_per_packet=4, frames_per_packet=
-            1, bytes_per_frame=4, channels_per_frame=2, bits_per_channel=16)
-        dest_format = cm.AudioFormat(sample_rate=48000.0, format_id='lpcm',
-            format_flags=12, bytes_per_packet=2, frames_per_packet=1,
-            bytes_per_frame=2, channels_per_frame=1, bits_per_channel=16)
+        source_format = cm.AudioFormat(
+            sample_rate=44100.0,
+            format_id="lpcm",
+            format_flags=12,
+            bytes_per_packet=4,
+            frames_per_packet=1,
+            bytes_per_frame=4,
+            channels_per_frame=2,
+            bits_per_channel=16,
+        )
+        dest_format = cm.AudioFormat(
+            sample_rate=48000.0,
+            format_id="lpcm",
+            format_flags=12,
+            bytes_per_packet=2,
+            frames_per_packet=1,
+            bytes_per_frame=2,
+            channels_per_frame=1,
+            bits_per_channel=16,
+        )
         converter = cm.AudioConverter(source_format, dest_format)
         num_input_frames = 100
-        input_data = b'\x00\x01\x02\x03' * num_input_frames
-        output_data = converter.convert_with_callback(input_data,
-            num_input_frames)
+        input_data = b"\x00\x01\x02\x03" * num_input_frames
+        output_data = converter.convert_with_callback(input_data, num_input_frames)
         assert isinstance(output_data, bytes)
         assert len(output_data) > 0
         expected_frames = int(num_input_frames * (48000.0 / 44100.0))
@@ -223,14 +294,16 @@ class TestAudioConverter:
         assert abs(len(output_data) - expected_size) < expected_size * 0.3
         converter.dispose()
 
-    def test_audio_converter_with_callback_auto_output_packet_count(self,
-        source_format, dest_format_48k):
+    def test_audio_converter_with_callback_auto_output_packet_count(
+        self, source_format, dest_format_48k
+    ):
         """Test convert_with_callback with automatic output packet count calculation"""
         converter = cm.AudioConverter(source_format, dest_format_48k)
         num_input_frames = 100
-        input_data = b'\x00\x01\x02\x03' * num_input_frames
-        output_data = converter.convert_with_callback(input_data,
-            num_input_frames, output_packet_count=None)
+        input_data = b"\x00\x01\x02\x03" * num_input_frames
+        output_data = converter.convert_with_callback(
+            input_data, num_input_frames, output_packet_count=None
+        )
         assert isinstance(output_data, bytes)
         assert len(output_data) > 0
         converter.dispose()
@@ -242,15 +315,15 @@ class TestExtendedAudioFile:
     @pytest.fixture
     def amen_wav_path(self):
         """Fixture providing path to amen.wav test file"""
-        path = os.path.join('tests', 'amen.wav')
+        path = os.path.join("tests", "amen.wav")
         if not os.path.exists(path):
-            pytest.skip(f'Test audio file not found: {path}')
+            pytest.skip(f"Test audio file not found: {path}")
         return path
 
     @pytest.fixture
     def temp_audio_file(self):
         """Fixture providing temporary audio file path"""
-        fd, path = tempfile.mkstemp(suffix='.wav')
+        fd, path = tempfile.mkstemp(suffix=".wav")
         os.close(fd)
         yield path
         if os.path.exists(path):
@@ -262,9 +335,16 @@ class TestExtendedAudioFile:
     @pytest.fixture
     def pcm_format(self):
         """Fixture providing PCM audio format"""
-        return cm.AudioFormat(sample_rate=44100.0, format_id='lpcm',
-            format_flags=12, bytes_per_packet=4, frames_per_packet=1,
-            bytes_per_frame=4, channels_per_frame=2, bits_per_channel=16)
+        return cm.AudioFormat(
+            sample_rate=44100.0,
+            format_id="lpcm",
+            format_flags=12,
+            bytes_per_packet=4,
+            frames_per_packet=1,
+            bytes_per_frame=4,
+            channels_per_frame=2,
+            bits_per_channel=16,
+        )
 
     def test_extended_audio_file_creation(self, amen_wav_path):
         """Test ExtendedAudioFile object creation"""
@@ -304,8 +384,9 @@ class TestExtendedAudioFile:
             assert format.channels_per_frame == 2
             assert format.bits_per_channel == 16
 
-    def test_extended_audio_file_client_format_property(self, amen_wav_path,
-        pcm_format):
+    def test_extended_audio_file_client_format_property(
+        self, amen_wav_path, pcm_format
+    ):
         """Test ExtendedAudioFile client_format property"""
         with cm.ExtendedAudioFile(amen_wav_path) as ext_file:
             assert ext_file.client_format is None
@@ -326,8 +407,9 @@ class TestExtendedAudioFile:
 
     def test_extended_audio_file_create(self, temp_audio_file, pcm_format):
         """Test ExtendedAudioFile.create class method"""
-        ext_file = cm.ExtendedAudioFile.create(temp_audio_file, capi.
-            get_audio_file_wave_type(), pcm_format)
+        ext_file = cm.ExtendedAudioFile.create(
+            temp_audio_file, capi.get_audio_file_wave_type(), pcm_format
+        )
         try:
             assert isinstance(ext_file, cm.ExtendedAudioFile)
             assert ext_file.object_id != 0
@@ -342,24 +424,24 @@ class TestExtendedAudioFile:
 
     def test_extended_audio_file_write(self, temp_audio_file, pcm_format):
         """Test ExtendedAudioFile write method"""
-        ext_file = cm.ExtendedAudioFile.create(temp_audio_file, capi.
-            get_audio_file_wave_type(), pcm_format)
+        ext_file = cm.ExtendedAudioFile.create(
+            temp_audio_file, capi.get_audio_file_wave_type(), pcm_format
+        )
         try:
             num_frames = 500
-            test_pattern = bytes([(i * 13 % 256) for i in range(num_frames *
-                4)])
+            test_pattern = bytes([(i * 13 % 256) for i in range(num_frames * 4)])
             ext_file.write(num_frames, test_pattern)
             assert os.path.exists(temp_audio_file)
         finally:
             ext_file.close()
 
-    def test_extended_audio_file_write_then_read(self, temp_audio_file,
-        pcm_format):
+    def test_extended_audio_file_write_then_read(self, temp_audio_file, pcm_format):
         """Test write-then-read round-trip"""
         num_frames = 500
         test_pattern = bytes([(i * 13 % 256) for i in range(num_frames * 4)])
-        with cm.ExtendedAudioFile.create(temp_audio_file, capi.
-            get_audio_file_wave_type(), pcm_format) as ext_file:
+        with cm.ExtendedAudioFile.create(
+            temp_audio_file, capi.get_audio_file_wave_type(), pcm_format
+        ) as ext_file:
             ext_file.write(num_frames, test_pattern)
         with cm.ExtendedAudioFile(temp_audio_file) as ext_file:
             audio_data, frames_read = ext_file.read(num_frames)
@@ -387,28 +469,27 @@ class TestExtendedAudioFile:
         """Test ExtendedAudioFile string representation"""
         ext_file = cm.ExtendedAudioFile(amen_wav_path)
         repr_str = repr(ext_file)
-        assert 'ExtendedAudioFile' in repr_str
-        assert 'closed' in repr_str
+        assert "ExtendedAudioFile" in repr_str
+        assert "closed" in repr_str
         with ext_file:
             repr_str = repr(ext_file)
-            assert 'ExtendedAudioFile' in repr_str
-            assert 'open' in repr_str
+            assert "ExtendedAudioFile" in repr_str
+            assert "open" in repr_str
 
     def test_extended_audio_file_error_handling(self):
         """Test ExtendedAudioFile error handling"""
         with pytest.raises(cm.AudioFileError):
-            with cm.ExtendedAudioFile('/nonexistent/path.wav'):
+            with cm.ExtendedAudioFile("/nonexistent/path.wav"):
                 pass
 
-    def test_extended_audio_file_operations_on_disposed_object(self,
-        amen_wav_path):
+    def test_extended_audio_file_operations_on_disposed_object(self, amen_wav_path):
         """Test operations on disposed ExtendedAudioFile object"""
         ext_file = cm.ExtendedAudioFile(amen_wav_path)
         ext_file.open()
         ext_file.close()
-        with pytest.raises(RuntimeError, match='has been disposed'):
+        with pytest.raises(RuntimeError, match="has been disposed"):
             ext_file.read(100)
-        with pytest.raises(RuntimeError, match='has been disposed'):
+        with pytest.raises(RuntimeError, match="has been disposed"):
             _ = ext_file.file_format
 
     def test_extended_audio_file_format_conversion(self, amen_wav_path):
@@ -416,10 +497,16 @@ class TestExtendedAudioFile:
         with cm.ExtendedAudioFile(amen_wav_path) as ext_file:
             file_format = ext_file.file_format
             assert file_format.channels_per_frame == 2
-            mono_format = cm.AudioFormat(sample_rate=44100.0, format_id=
-                'lpcm', format_flags=12, bytes_per_packet=2,
-                frames_per_packet=1, bytes_per_frame=2, channels_per_frame=
-                1, bits_per_channel=16)
+            mono_format = cm.AudioFormat(
+                sample_rate=44100.0,
+                format_id="lpcm",
+                format_flags=12,
+                bytes_per_packet=2,
+                frames_per_packet=1,
+                bytes_per_frame=2,
+                channels_per_frame=1,
+                bits_per_channel=16,
+            )
             ext_file.client_format = mono_format
             data, frames_read = ext_file.read(100)
             assert len(data) > 0

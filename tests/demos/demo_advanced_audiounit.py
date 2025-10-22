@@ -34,7 +34,7 @@ def main():
         unit.initialize()
 
         # Get current output stream format
-        output_format = unit.get_stream_format('output', 0)
+        output_format = unit.get_stream_format("output", 0)
         print("Output Stream Format (Hardware-determined):")
         print(f"  Sample Rate: {output_format.sample_rate} Hz")
         print(f"  Format ID: {output_format.format_id}")
@@ -50,7 +50,7 @@ def main():
 
         # Try to get input format
         try:
-            input_format = unit.get_stream_format('input', 0)
+            input_format = unit.get_stream_format("input", 0)
             print("Input Stream Format:")
             print(f"  Sample Rate: {input_format.sample_rate} Hz")
             print(f"  Channels: {input_format.channels_per_frame}")
@@ -122,7 +122,7 @@ def main():
         unit.initialize()
 
         # Get parameters for all scopes
-        for scope in ['global', 'input', 'output']:
+        for scope in ["global", "input", "output"]:
             params = unit.get_parameter_list(scope)
             print(f"{scope.capitalize()} Scope Parameters:")
             if params:
@@ -162,33 +162,33 @@ def main():
     formats = [
         cm.AudioFormat(
             sample_rate=44100.0,
-            format_id='lpcm',
+            format_id="lpcm",
             format_flags=12,  # Signed integer, packed
             channels_per_frame=2,
             bits_per_channel=16,
             bytes_per_frame=4,
             bytes_per_packet=4,
-            frames_per_packet=1
+            frames_per_packet=1,
         ),
         cm.AudioFormat(
             sample_rate=48000.0,
-            format_id='lpcm',
+            format_id="lpcm",
             format_flags=9,  # Float, packed
             channels_per_frame=2,
             bits_per_channel=32,
             bytes_per_frame=8,
             bytes_per_packet=8,
-            frames_per_packet=1
+            frames_per_packet=1,
         ),
         cm.AudioFormat(
             sample_rate=96000.0,
-            format_id='lpcm',
+            format_id="lpcm",
             format_flags=12,  # Signed integer, packed
             channels_per_frame=6,  # 5.1 surround
             bits_per_channel=24,
             bytes_per_frame=18,
             bytes_per_packet=18,
-            frames_per_packet=1
+            frames_per_packet=1,
         ),
     ]
 
@@ -200,7 +200,7 @@ def main():
             # Calculate data rate
             bytes_per_second = fmt.sample_rate * fmt.bytes_per_frame
             mbps = (bytes_per_second * 8) / (1024 * 1024)
-            print(f"   Data Rate: {mbps:.2f} Mbps ({bytes_per_second/1024:.1f} KB/s)")
+            print(f"   Data Rate: {mbps:.2f} Mbps ({bytes_per_second / 1024:.1f} KB/s)")
 
     # ========================================================================
     # Summary
@@ -240,5 +240,5 @@ def main():
     print("=" * 80)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -15,7 +15,7 @@ class TestAudioUnitStreamFormat:
             unit.initialize()
 
             # Get output stream format
-            format = unit.get_stream_format('output', 0)
+            format = unit.get_stream_format("output", 0)
 
             assert isinstance(format, cm.AudioFormat)
             assert format.sample_rate > 0
@@ -32,7 +32,7 @@ class TestAudioUnitStreamFormat:
 
             # Get input stream format (may not be configured for output-only units)
             try:
-                format = unit.get_stream_format('input', 0)
+                format = unit.get_stream_format("input", 0)
                 assert isinstance(format, cm.AudioFormat)
             except cm.AudioUnitError:
                 # Some output units don't have input scope configured
@@ -49,21 +49,21 @@ class TestAudioUnitStreamFormat:
             # The output format is typically determined by hardware
             format = cm.AudioFormat(
                 sample_rate=48000.0,
-                format_id='lpcm',
+                format_id="lpcm",
                 format_flags=12,  # kLinearPCMFormatFlagIsSignedInteger | IsPacked
                 channels_per_frame=2,
                 bits_per_channel=16,
                 bytes_per_frame=4,
                 bytes_per_packet=4,
-                frames_per_packet=1
+                frames_per_packet=1,
             )
 
             # Set input format (this is what we'd feed to the unit)
             try:
-                unit.set_stream_format(format, 'input', 0)
+                unit.set_stream_format(format, "input", 0)
 
                 # Verify it was set
-                retrieved = unit.get_stream_format('input', 0)
+                retrieved = unit.get_stream_format("input", 0)
                 assert retrieved.sample_rate == 48000.0
                 assert retrieved.channels_per_frame == 2
             except cm.AudioUnitError:
@@ -79,11 +79,11 @@ class TestAudioUnitStreamFormat:
         unit = cm.AudioUnit.default_output()
         try:
             with pytest.raises(cm.AudioUnitError, match="Invalid scope"):
-                unit.get_stream_format('invalid', 0)
+                unit.get_stream_format("invalid", 0)
 
-            format = cm.AudioFormat(44100.0, 'lpcm')
+            format = cm.AudioFormat(44100.0, "lpcm")
             with pytest.raises(cm.AudioUnitError, match="Invalid scope"):
-                unit.set_stream_format(format, 'invalid', 0)
+                unit.set_stream_format(format, "invalid", 0)
 
         finally:
             unit.dispose()
@@ -117,7 +117,9 @@ class TestAudioUnitProperties:
                 rate = unit.sample_rate
                 # If it worked, verify the value
                 if rate > 0:
-                    assert rate == 48000.0 or rate == 44100.0  # May fall back to default
+                    assert (
+                        rate == 48000.0 or rate == 44100.0
+                    )  # May fall back to default
             except Exception:
                 pass  # Some units may not support this
 
@@ -188,7 +190,7 @@ class TestAudioUnitParameters:
         try:
             unit.initialize()
 
-            params = unit.get_parameter_list('global')
+            params = unit.get_parameter_list("global")
             assert isinstance(params, list)
             # Default output may have no parameters
             assert len(params) >= 0
@@ -202,7 +204,7 @@ class TestAudioUnitParameters:
         try:
             unit.initialize()
 
-            for scope in ['global', 'input', 'output']:
+            for scope in ["global", "input", "output"]:
                 params = unit.get_parameter_list(scope)
                 assert isinstance(params, list)
 
@@ -214,7 +216,7 @@ class TestAudioUnitParameters:
         unit = cm.AudioUnit.default_output()
         try:
             with pytest.raises(cm.AudioUnitError, match="Invalid scope"):
-                unit.get_parameter_list('invalid')
+                unit.get_parameter_list("invalid")
 
         finally:
             unit.dispose()
@@ -239,7 +241,7 @@ class TestAudioUnitAdvancedWorkflow:
             assert max_frames > 0
 
             # Check output format (hardware-determined)
-            output_format = unit.get_stream_format('output', 0)
+            output_format = unit.get_stream_format("output", 0)
             assert output_format.sample_rate > 0
             assert output_format.channels_per_frame > 0
 
@@ -268,7 +270,7 @@ class TestAudioUnitAdvancedWorkflow:
             assert max_frames > 0
 
             # Can read output format
-            output_format = unit.get_stream_format('output', 0)
+            output_format = unit.get_stream_format("output", 0)
             assert output_format.sample_rate > 0
 
         # Unit is uninitialized and disposed after context
@@ -312,11 +314,11 @@ class TestAudioUnitEdgeCases:
         unit.dispose()
 
         with pytest.raises(RuntimeError, match="has been disposed"):
-            unit.get_stream_format('output', 0)
+            unit.get_stream_format("output", 0)
 
-        format = cm.AudioFormat(44100.0, 'lpcm')
+        format = cm.AudioFormat(44100.0, "lpcm")
         with pytest.raises(RuntimeError, match="has been disposed"):
-            unit.set_stream_format(format, 'output', 0)
+            unit.set_stream_format(format, "output", 0)
 
     def test_parameter_list_after_disposal(self):
         """Test that parameter access after disposal raises error"""
@@ -324,4 +326,4 @@ class TestAudioUnitEdgeCases:
         unit.dispose()
 
         with pytest.raises(RuntimeError, match="has been disposed"):
-            unit.get_parameter_list('global')
+            unit.get_parameter_list("global")

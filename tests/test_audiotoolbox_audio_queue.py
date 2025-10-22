@@ -13,12 +13,17 @@ class TestAudioQueueOperations:
     @pytest.fixture
     def audio_format(self):
         """Fixture providing standard audio format"""
-        return {'sample_rate': 44100.0, 'format_id': capi.
-            get_audio_format_linear_pcm(), 'format_flags': capi.
-            get_linear_pcm_format_flag_is_signed_integer() | capi.
-            get_linear_pcm_format_flag_is_packed(), 'bytes_per_packet': 4,
-            'frames_per_packet': 1, 'bytes_per_frame': 4,
-            'channels_per_frame': 2, 'bits_per_channel': 16}
+        return {
+            "sample_rate": 44100.0,
+            "format_id": capi.get_audio_format_linear_pcm(),
+            "format_flags": capi.get_linear_pcm_format_flag_is_signed_integer()
+            | capi.get_linear_pcm_format_flag_is_packed(),
+            "bytes_per_packet": 4,
+            "frames_per_packet": 1,
+            "bytes_per_frame": 4,
+            "channels_per_frame": 2,
+            "bits_per_channel": 16,
+        }
 
     def test_audio_queue_creation(self, audio_format):
         """Test AudioQueue creation"""
@@ -51,7 +56,8 @@ class TestAudioQueueOperations:
                 time.sleep(0.1)
                 capi.audio_queue_stop(queue_id, True)
             except RuntimeError as e:
-                assert 'AudioQueueEnqueueBuffer failed' in str(e
-                    ) or 'AudioQueueStart failed' in str(e)
+                assert "AudioQueueEnqueueBuffer failed" in str(
+                    e
+                ) or "AudioQueueStart failed" in str(e)
         finally:
             capi.audio_queue_dispose(queue_id, True)

@@ -472,7 +472,7 @@ available_plugins = cm.discover_audio_units(type='effect')
 
 ---
 
-### 7. **Type Hints and Static Analysis**
+### 7. [x] **Type Hints and Static Analysis**
 **Priority: MEDIUM**
 
 **Gap:** Cython code may have limited type hint exposure.
@@ -491,7 +491,7 @@ available_plugins = cm.discover_audio_units(type='effect')
 
 ---
 
-### 8. **Packaging and Distribution**
+### 8. [x] **Packaging and Distribution**
 **Priority: MEDIUM**
 
 **Current state:** Builds from source.
@@ -514,7 +514,7 @@ available_plugins = cm.discover_audio_units(type='effect')
 ## Prioritized Roadmap
 
 ### Phase 1: Foundation (Immediate)
-1. [ ] **Documentation** - Sphinx docs, API reference, tutorials
+1. [x] **Documentation** - Sphinx docs, API reference, tutorials
 2. [x] **Type Hints** - Complete `.pyi` stubs for all modules [x] **COMPLETED**
    - Created comprehensive `capi.pyi` with 401 function signatures
    - Created `objects.pyi` with 26 OO class definitions
@@ -523,7 +523,7 @@ available_plugins = cm.discover_audio_units(type='effect')
    - **100% coverage** - all 390 functions fully typed
    - **Mypy verified** - passes strict type checking
    - See `TYPE_STUBS_SUMMARY.md` for details
-3. [ ] **PyPI Distribution** - Pre-built wheels
+3. [x] **PyPI Distribution** - Pre-built wheels
 
 ### Phase 2: Enhancements (3-6 months)
 4. [x] **Async I/O** - Async file reading and AudioQueue operations [x] **COMPLETED**
@@ -550,7 +550,7 @@ available_plugins = cm.discover_audio_units(type='effect')
    - 35 comprehensive tests (28 passing, 7 skipped)
    - Demo script with 10 working examples
    - See `src/coremusic/utilities.py`, `tests/demos/demo_utilities.py`, and `docs/audiounit_name_lookup.md`
-6. [ ] **SciPy Integration** - Signal processing utilities (filtering, resampling, FFT)
+6. [x] **SciPy Integration** - Signal processing utilities (filtering, resampling, FFT)
 
 ### Phase 3: Advanced Features (6-12 months)
 7. [ ] **CoreAudioClock** - Sync and timecode support (if user demand exists)

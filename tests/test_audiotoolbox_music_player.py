@@ -1,4 +1,5 @@
 """pytest test suite for MusicPlayer functionality."""
+
 import os
 import pytest
 import tempfile
@@ -51,37 +52,37 @@ class TestMusicPlayerHelpers:
     def test_create_midi_note_message(self):
         """Test creating MIDI note message"""
         msg = capi.create_midi_note_message(0, 60, 127, 64, 2.0)
-        assert msg['channel'] == 0
-        assert msg['note'] == 60
-        assert msg['velocity'] == 127
-        assert msg['release_velocity'] == 64
-        assert msg['duration'] == 2.0
+        assert msg["channel"] == 0
+        assert msg["note"] == 60
+        assert msg["velocity"] == 127
+        assert msg["release_velocity"] == 64
+        assert msg["duration"] == 2.0
         msg = capi.create_midi_note_message(1, 72, 100)
-        assert msg['channel'] == 1
-        assert msg['note'] == 72
-        assert msg['velocity'] == 100
-        assert msg['release_velocity'] == 0
-        assert msg['duration'] == 1.0
+        assert msg["channel"] == 1
+        assert msg["note"] == 72
+        assert msg["velocity"] == 100
+        assert msg["release_velocity"] == 0
+        assert msg["duration"] == 1.0
 
     def test_create_midi_channel_message(self):
         """Test creating MIDI channel message"""
         msg = capi.create_midi_channel_message(144, 60, 127)
-        assert msg['status'] == 144
-        assert msg['data1'] == 60
-        assert msg['data2'] == 127
+        assert msg["status"] == 144
+        assert msg["data1"] == 60
+        assert msg["data2"] == 127
         msg = capi.create_midi_channel_message(192, 10)
-        assert msg['status'] == 192
-        assert msg['data1'] == 10
-        assert msg['data2'] == 0
+        assert msg["status"] == 192
+        assert msg["data1"] == 10
+        assert msg["data2"] == 0
 
     def test_midi_message_bounds_checking(self):
         """Test that helper functions respect bounds"""
         msg = capi.create_midi_note_message(16, 60, 127)
-        assert msg['channel'] == 0
+        assert msg["channel"] == 0
         msg = capi.create_midi_note_message(0, 128, 127)
-        assert msg['note'] == 0
+        assert msg["note"] == 0
         msg = capi.create_midi_note_message(0, 60, 255)
-        assert msg['velocity'] == 127
+        assert msg["velocity"] == 127
 
 
 class TestMusicPlayerBasicOperations:
@@ -248,13 +249,15 @@ class TestMusicSequenceOperations:
         try:
             seq_type = capi.music_sequence_get_sequence_type(sequence)
             assert seq_type == capi.get_music_sequence_type_beats()
-            result = capi.music_sequence_set_sequence_type(sequence, capi.
-                get_music_sequence_type_seconds())
+            result = capi.music_sequence_set_sequence_type(
+                sequence, capi.get_music_sequence_type_seconds()
+            )
             assert result == 0
             seq_type = capi.music_sequence_get_sequence_type(sequence)
             assert seq_type == capi.get_music_sequence_type_seconds()
-            result = capi.music_sequence_set_sequence_type(sequence, capi.
-                get_music_sequence_type_beats())
+            result = capi.music_sequence_set_sequence_type(
+                sequence, capi.get_music_sequence_type_beats()
+            )
             assert result == 0
             seq_type = capi.music_sequence_get_sequence_type(sequence)
             assert seq_type == capi.get_music_sequence_type_beats()
@@ -266,8 +269,7 @@ class TestMusicSequenceOperations:
         sequence = capi.new_music_sequence()
         try:
             with pytest.raises(RuntimeError):
-                capi.music_sequence_file_load(sequence,
-                    '/path/that/does/not/exist.mid')
+                capi.music_sequence_file_load(sequence, "/path/that/does/not/exist.mid")
         finally:
             capi.dispose_music_sequence(sequence)
 
@@ -280,11 +282,13 @@ class TestMusicTrackOperations:
         sequence = capi.new_music_sequence()
         track = capi.music_sequence_new_track(sequence)
         try:
-            result = capi.music_track_new_midi_note_event(track, 0.0, 0, 60,
-                127, 64, 1.0)
+            result = capi.music_track_new_midi_note_event(
+                track, 0.0, 0, 60, 127, 64, 1.0
+            )
             assert result == 0
-            result = capi.music_track_new_midi_note_event(track, 1.0, 1, 67,
-                100, 50, 0.5)
+            result = capi.music_track_new_midi_note_event(
+                track, 1.0, 1, 67, 100, 50, 0.5
+            )
             assert result == 0
         finally:
             capi.dispose_music_sequence(sequence)
@@ -294,11 +298,9 @@ class TestMusicTrackOperations:
         sequence = capi.new_music_sequence()
         track = capi.music_sequence_new_track(sequence)
         try:
-            result = capi.music_track_new_midi_channel_event(track, 0.0, 
-                192, 10, 0)
+            result = capi.music_track_new_midi_channel_event(track, 0.0, 192, 10, 0)
             assert result == 0
-            result = capi.music_track_new_midi_channel_event(track, 0.5, 
-                176, 7, 100)
+            result = capi.music_track_new_midi_channel_event(track, 0.5, 176, 7, 100)
             assert result == 0
         finally:
             capi.dispose_music_sequence(sequence)
@@ -308,11 +310,9 @@ class TestMusicTrackOperations:
         sequence = capi.new_music_sequence()
         tempo_track = capi.music_sequence_get_tempo_track(sequence)
         try:
-            result = capi.music_track_new_extended_tempo_event(tempo_track,
-                0.0, 120.0)
+            result = capi.music_track_new_extended_tempo_event(tempo_track, 0.0, 120.0)
             assert result == 0
-            result = capi.music_track_new_extended_tempo_event(tempo_track,
-                4.0, 140.0)
+            result = capi.music_track_new_extended_tempo_event(tempo_track, 4.0, 140.0)
             assert result == 0
         finally:
             capi.dispose_music_sequence(sequence)
@@ -323,11 +323,9 @@ class TestMusicTrackOperations:
         tempo_track = capi.music_sequence_get_tempo_track(sequence)
         try:
             with pytest.raises(ValueError):
-                capi.music_track_new_extended_tempo_event(tempo_track, 0.0,
-                    -120.0)
+                capi.music_track_new_extended_tempo_event(tempo_track, 0.0, -120.0)
             with pytest.raises(ValueError):
-                capi.music_track_new_extended_tempo_event(tempo_track, 0.0, 0.0
-                    )
+                capi.music_track_new_extended_tempo_event(tempo_track, 0.0, 0.0)
         finally:
             capi.dispose_music_sequence(sequence)
 
@@ -371,8 +369,9 @@ class TestMusicPlayerErrorHandling:
         with pytest.raises(RuntimeError):
             capi.music_sequence_get_tempo_track(invalid_sequence)
         with pytest.raises(RuntimeError):
-            capi.music_sequence_set_sequence_type(invalid_sequence, capi.
-                get_music_sequence_type_beats())
+            capi.music_sequence_set_sequence_type(
+                invalid_sequence, capi.get_music_sequence_type_beats()
+            )
         with pytest.raises(RuntimeError):
             capi.music_sequence_get_sequence_type(invalid_sequence)
 
@@ -380,14 +379,13 @@ class TestMusicPlayerErrorHandling:
         """Test operations with invalid track handles"""
         invalid_track = 0
         with pytest.raises(RuntimeError):
-            capi.music_track_new_midi_note_event(invalid_track, 0.0, 0, 60,
-                127, 64, 1.0)
+            capi.music_track_new_midi_note_event(
+                invalid_track, 0.0, 0, 60, 127, 64, 1.0
+            )
         with pytest.raises(RuntimeError):
-            capi.music_track_new_midi_channel_event(invalid_track, 0.0, 192,
-                10, 0)
+            capi.music_track_new_midi_channel_event(invalid_track, 0.0, 192, 10, 0)
         with pytest.raises(RuntimeError):
-            capi.music_track_new_extended_tempo_event(invalid_track, 0.0, 120.0
-                )
+            capi.music_track_new_extended_tempo_event(invalid_track, 0.0, 120.0)
 
     def test_sequence_track_index_errors(self):
         """Test sequence track index error handling"""
@@ -415,14 +413,10 @@ class TestMusicPlayerIntegration:
             track = capi.music_sequence_new_track(sequence)
             tempo_track = capi.music_sequence_get_tempo_track(sequence)
             capi.music_track_new_extended_tempo_event(tempo_track, 0.0, 120.0)
-            capi.music_track_new_midi_note_event(track, 0.0, 0, 60, 127, 64,
-                1.0)
-            capi.music_track_new_midi_note_event(track, 1.0, 0, 64, 127, 64,
-                1.0)
-            capi.music_track_new_midi_note_event(track, 2.0, 0, 67, 127, 64,
-                1.0)
-            capi.music_track_new_midi_note_event(track, 3.0, 0, 72, 127, 64,
-                1.0)
+            capi.music_track_new_midi_note_event(track, 0.0, 0, 60, 127, 64, 1.0)
+            capi.music_track_new_midi_note_event(track, 1.0, 0, 64, 127, 64, 1.0)
+            capi.music_track_new_midi_note_event(track, 2.0, 0, 67, 127, 64, 1.0)
+            capi.music_track_new_midi_note_event(track, 3.0, 0, 72, 127, 64, 1.0)
             capi.music_player_set_sequence(player, sequence)
             retrieved_sequence = capi.music_player_get_sequence(player)
             assert retrieved_sequence == sequence
@@ -534,8 +528,7 @@ class TestMusicPlayerResourceManagement:
             track = capi.music_sequence_new_track(sequence)
             tempo_track = capi.music_sequence_get_tempo_track(sequence)
             capi.music_track_new_extended_tempo_event(tempo_track, 0.0, 120.0)
-            capi.music_track_new_midi_note_event(track, 0.0, 0, 60, 127, 64,
-                4.0)
+            capi.music_track_new_midi_note_event(track, 0.0, 0, 60, 127, 64, 4.0)
             capi.music_player_set_sequence(player, sequence)
             capi.music_player_preroll(player)
             capi.music_player_start(player)
@@ -547,5 +540,5 @@ class TestMusicPlayerResourceManagement:
             capi.dispose_music_player(player)
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

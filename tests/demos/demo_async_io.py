@@ -19,11 +19,12 @@ import coremusic as cm
 # Example 1: Basic Async File Reading
 # ============================================================================
 
+
 async def example_basic_file_reading():
     """Demonstrate basic async file reading."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Example 1: Basic Async File Reading")
-    print("="*70)
+    print("=" * 70)
 
     # Open file with async context manager
     async with cm.AsyncAudioFile("tests/amen.wav") as audio:
@@ -35,7 +36,9 @@ async def example_basic_file_reading():
         print(f"Bits per Channel: {audio.format.bits_per_channel}")
 
         # Read some packets asynchronously
-        data, packet_count = await audio.read_packets_async(start_packet=0, packet_count=100)
+        data, packet_count = await audio.read_packets_async(
+            start_packet=0, packet_count=100
+        )
         print(f"\nRead {packet_count} packets ({len(data)} bytes)")
 
 
@@ -43,11 +46,12 @@ async def example_basic_file_reading():
 # Example 2: Streaming Large Files in Chunks
 # ============================================================================
 
+
 async def example_streaming_chunks():
     """Demonstrate streaming audio data in chunks."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Example 2: Streaming Large Files in Chunks")
-    print("="*70)
+    print("=" * 70)
 
     total_bytes = 0
     chunk_count = 0
@@ -74,25 +78,28 @@ async def example_streaming_chunks():
 # Example 3: Async AudioQueue Playback
 # ============================================================================
 
+
 async def example_audio_queue():
     """Demonstrate async AudioQueue operations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Example 3: Async AudioQueue Playback")
-    print("="*70)
+    print("=" * 70)
 
     # Create audio format
     format = cm.AudioFormat(
         sample_rate=44100.0,
-        format_id='lpcm',
+        format_id="lpcm",
         format_flags=12,  # kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked
         bytes_per_packet=4,
         frames_per_packet=1,
         bytes_per_frame=4,
         channels_per_frame=2,
-        bits_per_channel=16
+        bits_per_channel=16,
     )
 
-    print(f"Creating audio queue: {format.sample_rate} Hz, {format.channels_per_frame} channels")
+    print(
+        f"Creating audio queue: {format.sample_rate} Hz, {format.channels_per_frame} channels"
+    )
 
     async with await cm.AsyncAudioQueue.new_output_async(format) as queue:
         print("Audio queue created successfully")
@@ -118,6 +125,7 @@ async def example_audio_queue():
 # Example 4: Concurrent File Processing
 # ============================================================================
 
+
 async def process_audio_file(file_path: str, file_id: int):
     """Process a single audio file (simulated)."""
     async with cm.AsyncAudioFile(file_path) as audio:
@@ -129,18 +137,18 @@ async def process_audio_file(file_path: str, file_id: int):
             chunks_processed += 1
 
         return {
-            'file_id': file_id,
-            'path': file_path,
-            'duration': audio.duration,
-            'chunks': chunks_processed
+            "file_id": file_id,
+            "path": file_path,
+            "duration": audio.duration,
+            "chunks": chunks_processed,
         }
 
 
 async def example_concurrent_processing():
     """Demonstrate concurrent processing of multiple files."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Example 4: Concurrent File Processing")
-    print("="*70)
+    print("=" * 70)
 
     # Process the same file multiple times concurrently (simulating batch processing)
     file_path = "tests/amen.wav"
@@ -151,34 +159,33 @@ async def example_concurrent_processing():
     results = await asyncio.gather(
         process_audio_file(file_path, 1),
         process_audio_file(file_path, 2),
-        process_audio_file(file_path, 3)
+        process_audio_file(file_path, 3),
     )
 
     # Display results
     for result in results:
-        print(f"File {result['file_id']}: "
-              f"{result['duration']:.2f}s, "
-              f"{result['chunks']} chunks processed")
+        print(
+            f"File {result['file_id']}: "
+            f"{result['duration']:.2f}s, "
+            f"{result['chunks']} chunks processed"
+        )
 
 
 # ============================================================================
 # Example 5: Real-World Processing Pipeline
 # ============================================================================
 
+
 async def example_processing_pipeline():
     """Demonstrate a real-world async audio processing pipeline."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Example 5: Real-World Processing Pipeline")
-    print("="*70)
+    print("=" * 70)
 
     async def analyze_chunk(chunk: bytes, chunk_id: int):
         """Simulate async chunk analysis (e.g., feature extraction)."""
         await asyncio.sleep(0.001)  # Simulate async work
-        return {
-            'chunk_id': chunk_id,
-            'size': len(chunk),
-            'processed': True
-        }
+        return {"chunk_id": chunk_id, "size": len(chunk), "processed": True}
 
     async def save_results(results):
         """Simulate async saving of results."""
@@ -216,20 +223,21 @@ async def example_processing_pipeline():
 # Example 6: NumPy Integration (if available)
 # ============================================================================
 
+
 async def example_numpy_integration():
     """Demonstrate async NumPy integration."""
     if not cm.NUMPY_AVAILABLE:
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("Example 6: NumPy Integration")
-        print("="*70)
+        print("=" * 70)
         print("NumPy not available - skipping")
         return
 
     import numpy as np
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Example 6: NumPy Integration")
-    print("="*70)
+    print("=" * 70)
 
     async with cm.AsyncAudioFile("tests/amen.wav") as audio:
         print(f"Reading audio as NumPy arrays...\n")
@@ -246,7 +254,9 @@ async def example_numpy_integration():
             chunk_count += 1
 
             if chunk_count % 5 == 0:
-                print(f"Chunk {chunk_count}: shape={chunk.shape}, max_amp={max_amplitude:.4f}")
+                print(
+                    f"Chunk {chunk_count}: shape={chunk.shape}, max_amp={max_amplitude:.4f}"
+                )
 
             # Limit for demo
             if chunk_count >= 10:
@@ -260,11 +270,12 @@ async def example_numpy_integration():
 # Main
 # ============================================================================
 
+
 async def main():
     """Run all examples."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CoreMusic Async I/O Demo")
-    print("="*70)
+    print("=" * 70)
 
     # Check if test file exists
     if not Path("tests/amen.wav").exists():
@@ -280,9 +291,9 @@ async def main():
     await example_processing_pipeline()
     await example_numpy_integration()
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("All examples completed!")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
 
 if __name__ == "__main__":

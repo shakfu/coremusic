@@ -1337,3 +1337,142 @@ cdef extern from "AudioToolbox/AUGraph.h":
     # Utilities
     cdef OSStatus AUGraphGetCPULoad(AUGraph inGraph, Float32* outAverageCPULoad)
     cdef OSStatus AUGraphGetMaxCPULoad(AUGraph inGraph, Float32* outMaxLoad)
+
+
+# ============================================================================
+# CoreAudioClock - Audio/MIDI Synchronization and Timing Services
+# ============================================================================
+
+cdef extern from "AudioToolbox/CoreAudioClock.h":
+    # Opaque clock reference
+    ctypedef struct OpaqueCAClock:
+        pass
+    ctypedef OpaqueCAClock* CAClockRef
+
+    # Time and tempo types
+    ctypedef Float64 CAClockBeats       # MIDI quarter notes
+    ctypedef Float64 CAClockTempo       # beats per minute
+    ctypedef Float64 CAClockSamples     # audio samples
+    ctypedef Float64 CAClockSeconds     # seconds
+
+    # Property IDs
+    ctypedef enum CAClockPropertyID:
+        kCAClockProperty_InternalTimebase       = 0x696E7462  # 'intb'
+        kCAClockProperty_TimebaseSource         = 0x69746273  # 'itbs'
+        kCAClockProperty_SyncMode               = 0x73796E6D  # 'synm'
+        kCAClockProperty_SyncSource             = 0x73796E73  # 'syns'
+        kCAClockProperty_SMPTEFormat            = 0x736D7066  # 'smpf'
+        kCAClockProperty_SMPTEOffset            = 0x736D706F  # 'smpo'
+        kCAClockProperty_MIDIClockDestinations  = 0x6D626364  # 'mbcd'
+        kCAClockProperty_MTCDestinations        = 0x6D746364  # 'mtcd'
+        kCAClockProperty_MTCFreewheelTime       = 0x6D746677  # 'mtfw'
+        kCAClockProperty_TempoMap               = 0x746D706F  # 'tmpo'
+        kCAClockProperty_MeterTrack             = 0x6D657472  # 'metr'
+        kCAClockProperty_Name                   = 0x6E616D65  # 'name'
+        kCAClockProperty_SendMIDISPP            = 0x6D737070  # 'mspp'
+
+    # Timebase types
+    ctypedef enum CAClockTimebase:
+        kCAClockTimebase_HostTime           = 0x686F7374  # 'host'
+        kCAClockTimebase_AudioDevice        = 0x61756469  # 'audi'
+        kCAClockTimebase_AudioOutputUnit    = 0x61756F75  # 'auou'
+
+    # Sync modes
+    ctypedef enum CAClockSyncMode:
+        kCAClockSyncMode_Internal               = 0x696E7472  # 'intr'
+        kCAClockSyncMode_MIDIClockTransport     = 0x6D636C6B  # 'mclk'
+        kCAClockSyncMode_MTCTransport           = 0x6D6D7463  # 'mmtc'
+
+    # SMPTE format (already defined in coreaudio.pxd as SMPTETimeType)
+    ctypedef SMPTETimeType CAClockSMPTEFormat
+
+    # Clock messages
+    ctypedef enum CAClockMessage:
+        kCAClockMessage_StartTimeSet        = 0x7374696D  # 'stim'
+        kCAClockMessage_Started             = 0x73747274  # 'strt'
+        kCAClockMessage_Stopped             = 0x73746F70  # 'stop'
+        kCAClockMessage_Armed               = 0x61726D64  # 'armd'
+        kCAClockMessage_Disarmed            = 0x6461726D  # 'darm'
+        kCAClockMessage_PropertyChanged     = 0x70636867  # 'pchg'
+        kCAClockMessage_WrongSMPTEFormat    = 0x3F736D70  # '?smp'
+
+    # Time formats
+    ctypedef enum CAClockTimeFormat:
+        kCAClockTimeFormat_HostTime         = 0x686F7374  # 'host'
+        kCAClockTimeFormat_Samples          = 0x73616D70  # 'samp'
+        kCAClockTimeFormat_Beats            = 0x62656174  # 'beat'
+        kCAClockTimeFormat_Seconds          = 0x73656373  # 'secs'
+        kCAClockTimeFormat_SMPTESeconds     = 0x736D7073  # 'smps'
+        kCAClockTimeFormat_SMPTETime        = 0x736D7074  # 'smpt'
+        kCAClockTimeFormat_AbsoluteSeconds  = 0x61736563  # 'asec'
+
+    # Clock time structure
+    ctypedef union CAClockTimeUnion:
+        UInt64          hostTime
+        CAClockSamples  samples
+        CAClockBeats    beats
+        CAClockSeconds  seconds
+        SMPTETime       smpte
+
+    ctypedef struct CAClockTime:
+        CAClockTimeFormat   format
+        UInt32              reserved
+        CAClockTimeUnion    time
+
+    # Tempo map entry
+    ctypedef struct CATempoMapEntry:
+        CAClockBeats    beats
+        CAClockTempo    tempoBPM
+
+    # Meter track entry
+    ctypedef struct CAMeterTrackEntry:
+        CAClockBeats    beats
+        UInt16          meterNumer
+        UInt16          meterDenom
+
+    # Listener callback
+    ctypedef void (*CAClockListenerProc)(void* userData, CAClockMessage message, const void* param)
+
+    # Clock lifecycle functions
+    cdef OSStatus CAClockNew(UInt32 inReservedFlags, CAClockRef* outCAClock)
+    cdef OSStatus CAClockDispose(CAClockRef inCAClock)
+
+    # Property functions
+    cdef OSStatus CAClockGetPropertyInfo(CAClockRef inCAClock, CAClockPropertyID inPropertyID, UInt32* outSize, Boolean* outWritable)
+    cdef OSStatus CAClockGetProperty(CAClockRef inCAClock, CAClockPropertyID inPropertyID, UInt32* ioSize, void* outData)
+    cdef OSStatus CAClockSetProperty(CAClockRef inCAClock, CAClockPropertyID inPropertyID, UInt32 inSize, const void* inData)
+
+    # Listener functions
+    cdef OSStatus CAClockAddListener(CAClockRef inCAClock, CAClockListenerProc inListenerProc, void* inUserData)
+    cdef OSStatus CAClockRemoveListener(CAClockRef inCAClock, CAClockListenerProc inListenerProc, void* inUserData)
+
+    # Time control functions
+    cdef OSStatus CAClockSetCurrentTime(CAClockRef inCAClock, const CAClockTime* inTime)
+    cdef OSStatus CAClockGetCurrentTime(CAClockRef inCAClock, CAClockTimeFormat inFormat, CAClockTime* outTime)
+    cdef OSStatus CAClockGetStartTime(CAClockRef inCAClock, CAClockTimeFormat inFormat, CAClockTime* outTime)
+
+    # Playback control
+    cdef OSStatus CAClockSetPlayRate(CAClockRef inCAClock, Float64 inRate)
+    cdef OSStatus CAClockGetPlayRate(CAClockRef inCAClock, Float64* outRate)
+    cdef OSStatus CAClockArm(CAClockRef inCAClock)
+    cdef OSStatus CAClockDisarm(CAClockRef inCAClock)
+    cdef OSStatus CAClockStart(CAClockRef inCAClock)
+    cdef OSStatus CAClockStop(CAClockRef inCAClock)
+
+    # Note: Some functions like CAClockSetCurrentTempo, CAClockSecondsToBeats may not be
+    # available in all macOS versions or may have different signatures
+
+    # Error codes
+    cdef enum:
+        kCAClock_UnknownPropertyError           = -66816
+        kCAClock_InvalidPropertySizeError       = -66815
+        kCAClock_InvalidTimeFormatError         = -66814
+        kCAClock_InvalidSyncModeError           = -66813
+        kCAClock_InvalidSyncSourceError         = -66812
+        kCAClock_InvalidTimebaseError           = -66811
+        kCAClock_InvalidTimebaseSourceError     = -66810
+        kCAClock_InvalidSMPTEFormatError        = -66809
+        kCAClock_InvalidSMPTEOffsetError        = -66808
+        kCAClock_InvalidUnitError               = -66807
+        kCAClock_InvalidPlayRateError           = -66806
+        kCAClock_CannotSetTimeError             = -66805

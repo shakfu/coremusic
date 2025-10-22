@@ -5937,3 +5937,169 @@ def get_au_graph_err_invalid_audio_unit() -> int:
     """Get error code for invalid audio unit"""
     return -10864
 
+
+# ============================================================================
+# CoreAudioClock - Audio/MIDI Synchronization and Timing
+# ============================================================================
+
+def ca_clock_new() -> int:
+    """Create a new CoreAudio clock
+
+    Returns:
+        Clock ID as integer
+
+    Raises:
+        RuntimeError: If clock creation fails
+    """
+    cdef at.CAClockRef clock_ref
+    cdef cf.OSStatus status = at.CAClockNew(0, &clock_ref)
+    if status != 0:
+        raise RuntimeError(f"CAClockNew failed with status: {status}")
+    return <long>clock_ref
+
+
+def ca_clock_dispose(long clock_id):
+    """Dispose a CoreAudio clock
+
+    Args:
+        clock_id: Clock ID to dispose
+
+    Raises:
+        RuntimeError: If disposal fails
+    """
+    cdef cf.OSStatus status = at.CAClockDispose(<at.CAClockRef>clock_id)
+    if status != 0:
+        raise RuntimeError(f"CAClockDispose failed with status: {status}")
+
+
+def ca_clock_get_current_time(long clock_id, int time_format) -> dict:
+    """Get current time from clock
+
+    Args:
+        clock_id: Clock ID
+        time_format: Time format (use get_ca_clock_time_format_* functions)
+
+    Returns:
+        Dictionary with time information
+
+    Raises:
+        RuntimeError: If getting time fails
+    """
+    cdef at.CAClockTime clock_time
+    cdef cf.OSStatus status = at.CAClockGetCurrentTime(
+        <at.CAClockRef>clock_id,
+        <at.CAClockTimeFormat>time_format,
+        &clock_time
+    )
+    if status != 0:
+        raise RuntimeError(f"CAClockGetCurrentTime failed with status: {status}")
+
+    result = {"format": clock_time.format}
+
+    # Extract value based on format
+    if clock_time.format == at.kCAClockTimeFormat_HostTime:
+        result["value"] = clock_time.time.hostTime
+    elif clock_time.format == at.kCAClockTimeFormat_Samples:
+        result["value"] = clock_time.time.samples
+    elif clock_time.format == at.kCAClockTimeFormat_Beats:
+        result["value"] = clock_time.time.beats
+    elif clock_time.format in (at.kCAClockTimeFormat_Seconds,
+                                at.kCAClockTimeFormat_SMPTESeconds,
+                                at.kCAClockTimeFormat_AbsoluteSeconds):
+        result["value"] = clock_time.time.seconds
+    elif clock_time.format == at.kCAClockTimeFormat_SMPTETime:
+        result["value"] = {
+            "hours": clock_time.time.smpte.mHours,
+            "minutes": clock_time.time.smpte.mMinutes,
+            "seconds": clock_time.time.smpte.mSeconds,
+            "frames": clock_time.time.smpte.mFrames,
+            "subframes": clock_time.time.smpte.mSubframes,
+            "subframe_divisor": clock_time.time.smpte.mSubframeDivisor,
+            "type": clock_time.time.smpte.mType,
+            "flags": clock_time.time.smpte.mFlags
+        }
+
+    return result
+
+
+def ca_clock_start(long clock_id):
+    """Start the clock
+
+    Args:
+        clock_id: Clock ID
+
+    Raises:
+        RuntimeError: If starting clock fails
+    """
+    cdef cf.OSStatus status = at.CAClockStart(<at.CAClockRef>clock_id)
+    if status != 0:
+        raise RuntimeError(f"CAClockStart failed with status: {status}")
+
+
+def ca_clock_stop(long clock_id):
+    """Stop the clock
+
+    Args:
+        clock_id: Clock ID
+
+    Raises:
+        RuntimeError: If stopping clock fails
+    """
+    cdef cf.OSStatus status = at.CAClockStop(<at.CAClockRef>clock_id)
+    if status != 0:
+        raise RuntimeError(f"CAClockStop failed with status: {status}")
+
+
+def ca_clock_set_play_rate(long clock_id, double rate):
+    """Set playback rate
+
+    Args:
+        clock_id: Clock ID
+        rate: Playback rate (1.0 = normal speed)
+
+    Raises:
+        RuntimeError: If setting rate fails
+    """
+    cdef cf.OSStatus status = at.CAClockSetPlayRate(<at.CAClockRef>clock_id, rate)
+    if status != 0:
+        raise RuntimeError(f"CAClockSetPlayRate failed with status: {status}")
+
+
+def ca_clock_get_play_rate(long clock_id) -> float:
+    """Get current playback rate
+
+    Args:
+        clock_id: Clock ID
+
+    Returns:
+        Current playback rate
+
+    Raises:
+        RuntimeError: If getting rate fails
+    """
+    cdef double rate
+    cdef cf.OSStatus status = at.CAClockGetPlayRate(<at.CAClockRef>clock_id, &rate)
+    if status != 0:
+        raise RuntimeError(f"CAClockGetPlayRate failed with status: {status}")
+    return rate
+
+
+def get_ca_clock_time_format_host_time() -> int:
+    """Get time format for host time"""
+    return at.kCAClockTimeFormat_HostTime
+
+def get_ca_clock_time_format_samples() -> int:
+    """Get time format for audio samples"""
+    return at.kCAClockTimeFormat_Samples
+
+def get_ca_clock_time_format_beats() -> int:
+    """Get time format for musical beats"""
+    return at.kCAClockTimeFormat_Beats
+
+def get_ca_clock_time_format_seconds() -> int:
+    """Get time format for seconds"""
+    return at.kCAClockTimeFormat_Seconds
+
+def get_ca_clock_time_format_smpte_time() -> int:
+    """Get time format for SMPTE time structure"""
+    return at.kCAClockTimeFormat_SMPTETime

@@ -63,6 +63,9 @@ __all__ = [
     "AudioDeviceManager",
     # AUGraph Framework
     "AUGraph",
+    # CoreAudioClock - Synchronization and Timing
+    "AudioClock",
+    "ClockTimeFormat",
     # Audio Player
     "AudioPlayer",
     # NumPy availability flag

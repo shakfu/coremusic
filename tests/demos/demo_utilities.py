@@ -23,16 +23,16 @@ import shutil
 from pathlib import Path
 
 # Add src to path for development
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 import coremusic as cm
 
 
 def print_section(title: str):
     """Print a section header"""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  {title}")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
 
 def example_1_file_info():
@@ -59,7 +59,11 @@ def example_1_file_info():
         print(f"\nAudio Analysis (requires NumPy):")
         print(f"Peak amplitude: {info['peak_amplitude']:.4f}")
         print(f"RMS level: {info['rms']:.4f}")
-        rms_db = 20 * __import__('numpy').log10(info['rms']) if info['rms'] > 0 else -float('inf')
+        rms_db = (
+            20 * __import__("numpy").log10(info["rms"])
+            if info["rms"] > 0
+            else -float("inf")
+        )
         print(f"RMS (dB): {rms_db:.2f} dB")
     else:
         print("\nNumPy not available - install with: pip install numpy")
@@ -84,15 +88,13 @@ def example_2_audio_analysis():
     # Detect silence regions
     print("Detecting silence regions (threshold: -40 dB, min duration: 0.1s)...")
     silence_regions = cm.AudioAnalyzer.detect_silence(
-        test_file,
-        threshold_db=-40.0,
-        min_duration=0.1
+        test_file, threshold_db=-40.0, min_duration=0.1
     )
 
     if silence_regions:
         print(f"Found {len(silence_regions)} silence region(s):")
         for i, (start, end) in enumerate(silence_regions, 1):
-            print(f"  {i}. {start:.2f}s - {end:.2f}s (duration: {end-start:.2f}s)")
+            print(f"  {i}. {start:.2f}s - {end:.2f}s (duration: {end - start:.2f}s)")
     else:
         print("No silence regions found")
 
@@ -104,7 +106,7 @@ def example_2_audio_analysis():
     # Calculate RMS
     rms = cm.AudioAnalyzer.calculate_rms(test_file)
     print(f"\nRMS level: {rms:.4f}")
-    rms_db = 20 * __import__('numpy').log10(rms) if rms > 0 else -float('inf')
+    rms_db = 20 * __import__("numpy").log10(rms) if rms > 0 else -float("inf")
     print(f"RMS (dB): {rms_db:.2f} dB")
 
     # Using AudioFile object directly
@@ -216,7 +218,7 @@ def example_5_batch_conversion():
             output_format=output_format,
             output_dir=output_dir,
             output_extension="wav",
-            progress_callback=progress_callback
+            progress_callback=progress_callback,
         )
 
         print(f"\nConverted {len(converted)} files:")
@@ -244,7 +246,9 @@ def example_6_integration_workflow():
 
         original_info = cm.AudioAnalyzer.get_file_info(test_file)
         print(f"File: {os.path.basename(test_file)}")
-        print(f"Format: {original_info['sample_rate']} Hz, {original_info['channels']} channels")
+        print(
+            f"Format: {original_info['sample_rate']} Hz, {original_info['channels']} channels"
+        )
         print(f"Duration: {original_info['duration']:.2f}s")
         print(f"Peak: {original_info['peak_amplitude']:.4f}")
         print(f"RMS: {original_info['rms']:.4f}")
@@ -254,9 +258,7 @@ def example_6_integration_workflow():
 
         output_file = os.path.join(temp_dir, "converted_mono.wav")
         capi.convert_audio_file(
-            test_file,
-            output_file,
-            cm.AudioFormatPresets.wav_44100_mono()
+            test_file, output_file, cm.AudioFormatPresets.wav_44100_mono()
         )
         print(f"Converted to: {output_file}")
 
@@ -264,7 +266,9 @@ def example_6_integration_workflow():
         print("-" * 40)
 
         converted_info = cm.AudioAnalyzer.get_file_info(output_file)
-        print(f"Format: {converted_info['sample_rate']} Hz, {converted_info['channels']} channels")
+        print(
+            f"Format: {converted_info['sample_rate']} Hz, {converted_info['channels']} channels"
+        )
         print(f"Duration: {converted_info['duration']:.2f}s")
         print(f"Peak: {converted_info['peak_amplitude']:.4f}")
         print(f"RMS: {converted_info['rms']:.4f}")
@@ -280,8 +284,10 @@ def example_6_integration_workflow():
         print(f"Converted size: {converted_size} bytes")
         print(f"Size reduction: {size_reduction:.1f}%")
 
-        peak_diff = abs(original_info['peak_amplitude'] - converted_info['peak_amplitude'])
-        peak_diff_pct = (peak_diff / original_info['peak_amplitude']) * 100
+        peak_diff = abs(
+            original_info["peak_amplitude"] - converted_info["peak_amplitude"]
+        )
+        peak_diff_pct = (peak_diff / original_info["peak_amplitude"]) * 100
         print(f"Peak difference: {peak_diff_pct:.1f}%")
 
 
@@ -298,7 +304,7 @@ def example_7_audio_effects_chain():
 
     # Add a 3D mixer (commonly available)
     print("   - Adding 3D Mixer effect ('aumi', '3dem', 'appl')")
-    mixer_node = chain.add_effect('aumi', '3dem', 'appl')
+    mixer_node = chain.add_effect("aumi", "3dem", "appl")
     print(f"     Node ID: {mixer_node}")
 
     # Add output
@@ -334,7 +340,7 @@ def example_7_audio_effects_chain():
     # Example using context manager
     print("\n6. Using context manager for automatic cleanup:")
     with cm.AudioEffectsChain() as chain2:
-        mixer = chain2.add_effect('aumi', '3dem', 'appl')
+        mixer = chain2.add_effect("aumi", "3dem", "appl")
         output = chain2.add_output()
         chain2.connect(mixer, output)
         print(f"   Created chain with {chain2.node_count} nodes")
@@ -353,10 +359,13 @@ def example_8_simple_effect_chain_builder():
     print("  - Matrix Mixer ('aumi', 'mxmx', 'appl')")
     print("  - Default Output (auto-added)")
 
-    chain = capi.create_simple_effect_chain([
-        ('aumi', '3dem', 'appl'),   # 3D Mixer
-        ('aumi', 'mxmx', 'appl'),   # Matrix Mixer
-    ], auto_connect=True)
+    chain = capi.create_simple_effect_chain(
+        [
+            ("aumi", "3dem", "appl"),  # 3D Mixer
+            ("aumi", "mxmx", "appl"),  # Matrix Mixer
+        ],
+        auto_connect=True,
+    )
 
     print(f"\nChain created:")
     print(f"  - Node count: {chain.node_count}")
@@ -468,6 +477,7 @@ def main():
         except Exception as e:
             print(f"\nError in example {i} ({name}): {e}")
             import traceback
+
             traceback.print_exc()
 
     print_section("Demo Complete")
@@ -499,12 +509,14 @@ def example_10_audiounit_name_based_lookup():
     print("\n   First 5 AudioUnits:")
     for i, unit in enumerate(units[:5], 1):
         print(f"   {i}. {unit['name']}")
-        print(f"      Type: {unit['type']}, Subtype: {unit['subtype']}, Manufacturer: {unit['manufacturer']}")
+        print(
+            f"      Type: {unit['type']}, Subtype: {unit['subtype']}, Manufacturer: {unit['manufacturer']}"
+        )
 
     # Find specific AudioUnit by name
     print("\n2. Finding AudioUnit by name...")
     print("   Searching for 'AUDelay'...")
-    codes = capi.find_audio_unit_by_name('AUDelay')
+    codes = capi.find_audio_unit_by_name("AUDelay")
     if codes:
         type_code, subtype_code, manufacturer = codes
         print(f"   ✓ Found: {type_code}/{subtype_code}/{manufacturer}")
@@ -515,7 +527,7 @@ def example_10_audiounit_name_based_lookup():
     print("\n3. Creating effect chain using names...")
     chain = cm.AudioEffectsChain()
 
-    delay_node = chain.add_effect_by_name('AUDelay')
+    delay_node = chain.add_effect_by_name("AUDelay")
     if delay_node:
         print(f"   ✓ Added AUDelay (node {delay_node})")
     else:

@@ -67,76 +67,98 @@ MIDIClient Class
    :undoc-members:
    :show-inheritance:
 
+AudioClock Class
+^^^^^^^^^^^^^^^^
+
+.. autoclass:: coremusic.AudioClock
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ClockTimeFormat
+^^^^^^^^^^^^^^^
+
+.. autoclass:: coremusic.ClockTimeFormat
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Functional API
 --------------
 
-Low-level C-style functions providing direct access to CoreAudio frameworks.
+Low-level C-style functions are available through the ``coremusic.capi`` module
+for advanced use cases requiring direct access to CoreAudio frameworks.
 
-Audio File Functions
-^^^^^^^^^^^^^^^^^^^^
+.. note::
+   The object-oriented API is recommended for most use cases. The functional
+   API in ``coremusic.capi`` provides low-level access when needed.
 
-.. autofunction:: coremusic.audio_file_open_url
-.. autofunction:: coremusic.audio_file_close
-.. autofunction:: coremusic.audio_file_read_packets
-.. autofunction:: coremusic.audio_file_get_property
+For direct access to low-level functions::
 
-AudioUnit Functions
-^^^^^^^^^^^^^^^^^^^
+    import coremusic.capi as capi
 
-.. autofunction:: coremusic.audio_component_find_next
-.. autofunction:: coremusic.audio_component_instance_new
-.. autofunction:: coremusic.audio_component_instance_dispose
-.. autofunction:: coremusic.audio_unit_initialize
-.. autofunction:: coremusic.audio_unit_uninitialize
-.. autofunction:: coremusic.audio_unit_set_property
-.. autofunction:: coremusic.audio_unit_get_property
+    # Low-level audio file operations
+    file_id = capi.audio_file_open_url("audio.wav")
+    # ... operations ...
+    capi.audio_file_close(file_id)
 
-AudioQueue Functions
-^^^^^^^^^^^^^^^^^^^^
-
-.. autofunction:: coremusic.audio_queue_new_output
-.. autofunction:: coremusic.audio_queue_dispose
-.. autofunction:: coremusic.audio_queue_start
-.. autofunction:: coremusic.audio_queue_stop
-.. autofunction:: coremusic.audio_queue_allocate_buffer
-
-MIDI Functions
-^^^^^^^^^^^^^^
-
-.. autofunction:: coremusic.midi_client_create
-.. autofunction:: coremusic.midi_client_dispose
-.. autofunction:: coremusic.midi_input_port_create
-.. autofunction:: coremusic.midi_output_port_create
-
-Constants and Enumerations
----------------------------
-
-AudioFormat Constants
-^^^^^^^^^^^^^^^^^^^^^
-
-.. autofunction:: coremusic.get_audio_format_linear_pcm
-
-AudioUnit Types
-^^^^^^^^^^^^^^^
-
-.. autofunction:: coremusic.get_audio_unit_type_output
+    # Low-level clock operations
+    clock_id = capi.ca_clock_new()
+    capi.ca_clock_start(clock_id)
+    # ... operations ...
+    capi.ca_clock_dispose(clock_id)
 
 Error Handling
 --------------
 
-Exception Classes
-^^^^^^^^^^^^^^^^^
+coremusic provides exception classes for different CoreAudio subsystems:
+
+.. autoexception:: coremusic.CoreAudioError
+   :members:
+   :show-inheritance:
 
 .. autoexception:: coremusic.AudioFileError
+   :members:
+   :show-inheritance:
+
 .. autoexception:: coremusic.AudioUnitError
+   :members:
+   :show-inheritance:
+
 .. autoexception:: coremusic.AudioQueueError
+   :members:
+   :show-inheritance:
+
+.. autoexception:: coremusic.AudioConverterError
+   :members:
+   :show-inheritance:
+
 .. autoexception:: coremusic.MIDIError
+   :members:
+   :show-inheritance:
+
+.. autoexception:: coremusic.MusicPlayerError
+   :members:
+   :show-inheritance:
+
+.. autoexception:: coremusic.AudioDeviceError
+   :members:
+   :show-inheritance:
+
+.. autoexception:: coremusic.AUGraphError
+   :members:
+   :show-inheritance:
 
 Utility Functions
 -----------------
 
-FourCC Conversion
-^^^^^^^^^^^^^^^^^
+Utility functions are available through ``coremusic.capi`` for FourCC conversion
+and other low-level operations::
 
-.. autofunction:: coremusic.fourchar_to_int
-.. autofunction:: coremusic.int_to_fourchar
+    import coremusic.capi as capi
+
+    # Convert FourCC string to integer
+    format_int = capi.fourchar_to_int('lpcm')
+
+    # Convert integer back to FourCC string
+    format_str = capi.int_to_fourchar(format_int)

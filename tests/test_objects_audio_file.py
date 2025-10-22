@@ -1,4 +1,5 @@
 """Tests for AudioFile and AudioFileStream object-oriented classes."""
+
 import os
 import pytest
 from pathlib import Path
@@ -12,9 +13,9 @@ class TestAudioFile:
     @pytest.fixture
     def amen_wav_path(self):
         """Fixture providing path to amen.wav test file"""
-        path = os.path.join('tests', 'amen.wav')
+        path = os.path.join("tests", "amen.wav")
         if not os.path.exists(path):
-            pytest.skip(f'Test audio file not found: {path}')
+            pytest.skip(f"Test audio file not found: {path}")
         return path
 
     def test_audio_file_creation(self, amen_wav_path):
@@ -83,17 +84,17 @@ class TestAudioFile:
         """Test AudioFile string representation"""
         audio_file = cm.AudioFile(amen_wav_path)
         repr_str = repr(audio_file)
-        assert 'AudioFile' in repr_str
-        assert 'closed' in repr_str
+        assert "AudioFile" in repr_str
+        assert "closed" in repr_str
         with audio_file:
             repr_str = repr(audio_file)
-            assert 'AudioFile' in repr_str
-            assert 'open' in repr_str
+            assert "AudioFile" in repr_str
+            assert "open" in repr_str
 
     def test_audio_file_error_handling(self):
         """Test AudioFile error handling"""
         with pytest.raises(cm.AudioFileError):
-            with cm.AudioFile('/nonexistent/path.wav'):
+            with cm.AudioFile("/nonexistent/path.wav"):
                 pass
 
     def test_audio_file_operations_on_disposed_object(self, amen_wav_path):
@@ -101,9 +102,9 @@ class TestAudioFile:
         audio_file = cm.AudioFile(amen_wav_path)
         audio_file.open()
         audio_file.close()
-        with pytest.raises(RuntimeError, match='has been disposed'):
+        with pytest.raises(RuntimeError, match="has been disposed"):
             audio_file.open()
-        with pytest.raises(RuntimeError, match='has been disposed'):
+        with pytest.raises(RuntimeError, match="has been disposed"):
             _ = audio_file.format
 
     def test_audio_file_automatic_disposal(self, amen_wav_path):
@@ -150,7 +151,7 @@ class TestAudioFileStream:
         stream = cm.AudioFileStream()
         stream.open()
         try:
-            dummy_data = b'RIFF\x00\x00\x00\x00WAVE'
+            dummy_data = b"RIFF\x00\x00\x00\x00WAVE"
             stream.parse_bytes(dummy_data)
         except cm.AudioFileError:
             pass
@@ -162,7 +163,7 @@ class TestAudioFileStream:
         stream = cm.AudioFileStream()
         assert stream.object_id == 0
         try:
-            stream.parse_bytes(b'dummy data')
+            stream.parse_bytes(b"dummy data")
             assert stream.object_id != 0
         except cm.AudioFileError:
             assert stream.object_id != 0
@@ -173,7 +174,7 @@ class TestAudioFileStream:
     def test_audio_file_stream_seek(self):
         """Test AudioFileStream seeking"""
         stream = cm.AudioFileStream()
-        with pytest.raises(cm.AudioFileError, match='Stream not open'):
+        with pytest.raises(cm.AudioFileError, match="Stream not open"):
             stream.seek(100)
         stream.open()
         try:
@@ -186,12 +187,11 @@ class TestAudioFileStream:
     def test_audio_file_stream_get_property(self):
         """Test AudioFileStream property getting"""
         stream = cm.AudioFileStream()
-        with pytest.raises(cm.AudioFileError, match='Stream not open'):
+        with pytest.raises(cm.AudioFileError, match="Stream not open"):
             stream.get_property(42)
         stream.open()
         try:
-            prop_id = (capi.
-                get_audio_file_stream_property_ready_to_produce_packets())
+            prop_id = capi.get_audio_file_stream_property_ready_to_produce_packets()
             stream.get_property(prop_id)
         except cm.AudioFileError:
             pass
@@ -214,9 +214,9 @@ class TestAudioFileStream:
         stream = cm.AudioFileStream()
         stream.open()
         stream.close()
-        with pytest.raises(RuntimeError, match='has been disposed'):
-            stream.parse_bytes(b'data')
-        with pytest.raises(RuntimeError, match='has been disposed'):
+        with pytest.raises(RuntimeError, match="has been disposed"):
+            stream.parse_bytes(b"data")
+        with pytest.raises(RuntimeError, match="has been disposed"):
             stream.seek(0)
 
     def test_audio_file_stream_error_handling(self):
@@ -234,17 +234,16 @@ class TestAudioFileIntegration:
     @pytest.fixture
     def amen_wav_path(self):
         """Fixture providing path to amen.wav test file"""
-        path = os.path.join('tests', 'amen.wav')
+        path = os.path.join("tests", "amen.wav")
         if not os.path.exists(path):
-            pytest.skip(f'Test audio file not found: {path}')
+            pytest.skip(f"Test audio file not found: {path}")
         return path
 
     def test_audio_file_vs_functional_api_consistency(self, amen_wav_path):
         """Test that OO API produces consistent results with functional API"""
         audio_file_id = capi.audio_file_open_url(amen_wav_path)
         try:
-            func_data, func_count = capi.audio_file_read_packets(audio_file_id,
-                0, 10)
+            func_data, func_count = capi.audio_file_read_packets(audio_file_id, 0, 10)
         finally:
             capi.audio_file_close(audio_file_id)
         with cm.AudioFile(amen_wav_path) as audio_file:

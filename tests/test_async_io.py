@@ -60,7 +60,7 @@ class TestAsyncAudioFile:
             assert isinstance(format, cm.AudioFormat)
 
             # Verify it's the expected WAV format
-            assert format.format_id == 'lpcm'
+            assert format.format_id == "lpcm"
             assert format.sample_rate == 44100.0
             assert format.channels_per_frame == 2
             assert format.is_pcm
@@ -81,7 +81,9 @@ class TestAsyncAudioFile:
         """Test async packet reading"""
         async with cm.AsyncAudioFile(amen_wav_path) as audio_file:
             # Read first 100 packets
-            data, packet_count = await audio_file.read_packets_async(start_packet=0, packet_count=100)
+            data, packet_count = await audio_file.read_packets_async(
+                start_packet=0, packet_count=100
+            )
             assert isinstance(data, bytes)
             assert len(data) > 0
             assert isinstance(packet_count, int)
@@ -118,7 +120,7 @@ class TestAsyncAudioFile:
             async for chunk in audio_file.read_chunks_async(
                 chunk_size=chunk_size,
                 start_packet=start_packet,
-                total_packets=total_packets
+                total_packets=total_packets,
             ):
                 chunks.append(chunk)
 
@@ -128,16 +130,13 @@ class TestAsyncAudioFile:
     @pytest.mark.asyncio
     async def test_async_concurrent_file_reads(self, amen_wav_path):
         """Test concurrent async file reads"""
+
         async def read_file():
             async with cm.AsyncAudioFile(amen_wav_path) as audio:
                 return await audio.read_packets_async(start_packet=0, packet_count=100)
 
         # Read same file concurrently
-        results = await asyncio.gather(
-            read_file(),
-            read_file(),
-            read_file()
-        )
+        results = await asyncio.gather(read_file(), read_file(), read_file())
 
         # All reads should succeed
         assert len(results) == 3
@@ -152,7 +151,9 @@ class TestAsyncAudioFile:
         try:
             assert isinstance(audio, cm.AsyncAudioFile)
             assert audio.format is not None
-            data, packet_count = await audio.read_packets_async(start_packet=0, packet_count=100)
+            data, packet_count = await audio.read_packets_async(
+                start_packet=0, packet_count=100
+            )
             assert isinstance(data, bytes)
         finally:
             await audio.close_async()
@@ -177,7 +178,9 @@ class TestAsyncAudioFileNumPy:
 
         async with cm.AsyncAudioFile(amen_wav_path) as audio_file:
             # Read as NumPy array
-            data = await audio_file.read_as_numpy_async(start_packet=0, packet_count=100)
+            data = await audio_file.read_as_numpy_async(
+                start_packet=0, packet_count=100
+            )
             assert isinstance(data, np.ndarray)
             assert data.ndim == 2  # Should be 2D (frames, channels)
             assert data.shape[1] == 2  # Stereo
@@ -192,7 +195,9 @@ class TestAsyncAudioFileNumPy:
             chunks = []
             chunk_size = 1024
 
-            async for chunk in audio_file.read_chunks_numpy_async(chunk_size=chunk_size):
+            async for chunk in audio_file.read_chunks_numpy_async(
+                chunk_size=chunk_size
+            ):
                 assert isinstance(chunk, np.ndarray)
                 assert chunk.ndim == 2
                 assert chunk.shape[1] == 2  # Stereo
@@ -213,13 +218,13 @@ class TestAsyncAudioQueue:
         """Create a valid audio format for testing"""
         return cm.AudioFormat(
             sample_rate=44100.0,
-            format_id='lpcm',
+            format_id="lpcm",
             format_flags=12,  # kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked
             bytes_per_packet=4,
             frames_per_packet=1,
             bytes_per_frame=4,
             channels_per_frame=2,
-            bits_per_channel=16
+            bits_per_channel=16,
         )
 
     @pytest.mark.asyncio
@@ -276,6 +281,7 @@ class TestAsyncAudioQueue:
     @pytest.mark.asyncio
     async def test_async_concurrent_queue_operations(self, audio_format):
         """Test concurrent async queue operations"""
+
         async def create_and_dispose_queue():
             queue = await cm.AsyncAudioQueue.new_output_async(audio_format)
             await asyncio.sleep(0.05)
@@ -285,7 +291,7 @@ class TestAsyncAudioQueue:
         await asyncio.gather(
             create_and_dispose_queue(),
             create_and_dispose_queue(),
-            create_and_dispose_queue()
+            create_and_dispose_queue(),
         )
 
 
@@ -309,7 +315,9 @@ class TestAsyncIntegration:
             # Create queue with same format
             async with await cm.AsyncAudioQueue.new_output_async(format) as queue:
                 # Read some audio data
-                data, packet_count = await audio.read_packets_async(start_packet=0, packet_count=1024)
+                data, packet_count = await audio.read_packets_async(
+                    start_packet=0, packet_count=1024
+                )
                 assert isinstance(data, bytes)
                 assert len(data) > 0
 
@@ -367,22 +375,20 @@ class TestAsyncIntegration:
             """Get file info asynchronously"""
             async with cm.AsyncAudioFile(path) as audio:
                 return {
-                    'path': path,
-                    'duration': audio.duration,
-                    'sample_rate': audio.format.sample_rate,
-                    'channels': audio.format.channels_per_frame
+                    "path": path,
+                    "duration": audio.duration,
+                    "sample_rate": audio.format.sample_rate,
+                    "channels": audio.format.channels_per_frame,
                 }
 
         # Process same file multiple times concurrently
         results = await asyncio.gather(
-            get_file_info(amen_path),
-            get_file_info(amen_path),
-            get_file_info(amen_path)
+            get_file_info(amen_path), get_file_info(amen_path), get_file_info(amen_path)
         )
 
         # All results should match
         assert len(results) == 3
         for result in results:
-            assert result['duration'] > 0
-            assert result['sample_rate'] == 44100.0
-            assert result['channels'] == 2
+            assert result["duration"] > 0
+            assert result["sample_rate"] == 44100.0
+            assert result["channels"] == 2

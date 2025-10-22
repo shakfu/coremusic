@@ -102,11 +102,11 @@ class TestAudioDevice:
         device = cm.AudioDeviceManager.get_default_output_device()
         assert device is not None
 
-        config = device.get_stream_configuration('output')
+        config = device.get_stream_configuration("output")
         # Currently returns dict with raw data length (AudioBufferList parsing not yet implemented)
         assert isinstance(config, dict)
-        assert 'raw_data_length' in config
-        assert config['raw_data_length'] > 0
+        assert "raw_data_length" in config
+        assert config["raw_data_length"] > 0
 
     def test_audio_device_stream_configuration_input(self):
         """Test getting input stream configuration"""
@@ -114,11 +114,11 @@ class TestAudioDevice:
         device = cm.AudioDeviceManager.get_default_input_device()
 
         if device is not None:
-            config = device.get_stream_configuration('input')
+            config = device.get_stream_configuration("input")
             # Currently returns dict with raw data length
             assert isinstance(config, dict)
-            assert 'raw_data_length' in config
-            assert config['raw_data_length'] >= 0
+            assert "raw_data_length" in config
+            assert config["raw_data_length"] >= 0
 
     def test_audio_device_manager_get_output_devices(self):
         """Test getting all output devices"""
@@ -131,7 +131,7 @@ class TestAudioDevice:
         for device in devices:
             assert isinstance(device, cm.AudioDevice)
             # Verify they can get stream configuration
-            config = device.get_stream_configuration('output')
+            config = device.get_stream_configuration("output")
             assert isinstance(config, dict)
 
     def test_audio_device_manager_get_input_devices(self):
@@ -144,7 +144,7 @@ class TestAudioDevice:
         for device in devices:
             assert isinstance(device, cm.AudioDevice)
             # Verify they can get stream configuration
-            config = device.get_stream_configuration('input')
+            config = device.get_stream_configuration("input")
             assert isinstance(config, dict)
 
     def test_audio_device_manager_find_by_name(self):
@@ -178,16 +178,20 @@ class TestAudioDevice:
         # If not found, this might be due to UID encoding issues
         # Some audio devices have UIDs with special characters that don't compare consistently
         if found_device is None:
-            pytest.skip(f"Could not find device by UID (UID may have encoding issues): {repr(device_uid)}")
+            pytest.skip(
+                f"Could not find device by UID (UID may have encoding issues): {repr(device_uid)}"
+            )
 
         # Normalize UIDs for comparison (strip whitespace and null bytes)
         # Some audio devices return UIDs with inconsistent encoding
-        expected_uid = device_uid.strip().strip('\x00')
-        actual_uid = found_device.uid.strip().strip('\x00')
+        expected_uid = device_uid.strip().strip("\x00")
+        actual_uid = found_device.uid.strip().strip("\x00")
 
         # If UIDs still don't match, skip test due to encoding issues
         if expected_uid != actual_uid:
-            pytest.skip(f"Device UIDs don't match due to encoding issues. Expected: {repr(expected_uid)}, Got: {repr(actual_uid)}")
+            pytest.skip(
+                f"Device UIDs don't match due to encoding issues. Expected: {repr(expected_uid)}, Got: {repr(actual_uid)}"
+            )
 
         assert actual_uid == expected_uid
 

@@ -1,9 +1,11 @@
 """Tests for AudioQueue and AudioBuffer object-oriented classes."""
+
 import pytest
 import time
 import coremusic as cm
 import coremusic.capi as capi
-pytestmark = pytest.mark.skip(reason='AudioQueue tests require audio hardware')
+
+pytestmark = pytest.mark.skip(reason="AudioQueue tests require audio hardware")
 
 
 class TestAudioBuffer:
@@ -29,8 +31,12 @@ class TestAudioQueue:
 
     def test_audio_queue_creation_with_format(self):
         """Test AudioQueue creation with AudioFormat"""
-        format = cm.AudioFormat(sample_rate=44100.0, format_id='lpcm',
-            channels_per_frame=2, bits_per_channel=16)
+        format = cm.AudioFormat(
+            sample_rate=44100.0,
+            format_id="lpcm",
+            channels_per_frame=2,
+            bits_per_channel=16,
+        )
         queue = cm.AudioQueue(format)
         assert isinstance(queue, cm.AudioQueue)
         assert isinstance(queue, cm.CoreAudioObject)
@@ -40,8 +46,13 @@ class TestAudioQueue:
 
     def test_audio_queue_new_output_factory(self):
         """Test AudioQueue.new_output factory method"""
-        format = cm.AudioFormat(sample_rate=48000.0, format_id='lpcm',
-            format_flags=12, channels_per_frame=2, bits_per_channel=16)
+        format = cm.AudioFormat(
+            sample_rate=48000.0,
+            format_id="lpcm",
+            format_flags=12,
+            channels_per_frame=2,
+            bits_per_channel=16,
+        )
         try:
             queue = cm.AudioQueue.new_output(format)
             assert isinstance(queue, cm.AudioQueue)
@@ -49,16 +60,16 @@ class TestAudioQueue:
             assert queue.object_id != 0
             queue.dispose()
         except cm.AudioQueueError as e:
-            if 'status: -50' in str(e):
-                pytest.skip(
-                    'AudioQueue creation failed - no audio hardware available')
+            if "status: -50" in str(e):
+                pytest.skip("AudioQueue creation failed - no audio hardware available")
             else:
                 raise
 
     def test_audio_queue_buffer_allocation(self):
         """Test AudioQueue buffer allocation"""
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
-            bits_per_channel=16)
+        format = cm.AudioFormat(
+            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
+        )
         queue = cm.AudioQueue.new_output(format)
         try:
             buffer = queue.allocate_buffer(1024)
@@ -73,8 +84,9 @@ class TestAudioQueue:
 
     def test_audio_queue_buffer_enqueue(self):
         """Test AudioQueue buffer enqueuing"""
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
-            bits_per_channel=16)
+        format = cm.AudioFormat(
+            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
+        )
         queue = cm.AudioQueue.new_output(format)
         try:
             buffer = queue.allocate_buffer(1024)
@@ -84,8 +96,9 @@ class TestAudioQueue:
 
     def test_audio_queue_playback_control(self):
         """Test AudioQueue playback control methods"""
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
-            bits_per_channel=16)
+        format = cm.AudioFormat(
+            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
+        )
         queue = cm.AudioQueue.new_output(format)
         try:
             queue.start()
@@ -97,8 +110,9 @@ class TestAudioQueue:
 
     def test_audio_queue_disposal(self):
         """Test AudioQueue disposal"""
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
-            bits_per_channel=16)
+        format = cm.AudioFormat(
+            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
+        )
         queue = cm.AudioQueue.new_output(format)
         buffer1 = queue.allocate_buffer(1024)
         buffer2 = queue.allocate_buffer(2048)
@@ -110,8 +124,9 @@ class TestAudioQueue:
 
     def test_audio_queue_disposal_with_immediate_flag(self):
         """Test AudioQueue disposal with immediate flag"""
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
-            bits_per_channel=16)
+        format = cm.AudioFormat(
+            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
+        )
         queue = cm.AudioQueue.new_output(format)
         try:
             queue.start()
@@ -124,38 +139,46 @@ class TestAudioQueue:
 
     def test_audio_queue_operations_on_disposed_object(self):
         """Test operations on disposed AudioQueue"""
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
-            bits_per_channel=16)
+        format = cm.AudioFormat(
+            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
+        )
         queue = cm.AudioQueue.new_output(format)
         queue.dispose()
-        with pytest.raises(RuntimeError, match='has been disposed'):
+        with pytest.raises(RuntimeError, match="has been disposed"):
             queue.allocate_buffer(1024)
-        with pytest.raises(RuntimeError, match='has been disposed'):
+        with pytest.raises(RuntimeError, match="has been disposed"):
             queue.start()
-        with pytest.raises(RuntimeError, match='has been disposed'):
+        with pytest.raises(RuntimeError, match="has been disposed"):
             queue.stop()
 
     def test_audio_queue_error_handling(self):
         """Test AudioQueue error handling"""
-        invalid_format = cm.AudioFormat(0.0, '', channels_per_frame=0,
-            bits_per_channel=0)
+        invalid_format = cm.AudioFormat(
+            0.0, "", channels_per_frame=0, bits_per_channel=0
+        )
         with pytest.raises(cm.AudioQueueError):
             cm.AudioQueue.new_output(invalid_format)
 
     def test_audio_queue_vs_functional_api_consistency(self):
         """Test AudioQueue OO API vs functional API consistency"""
-        format_dict = {'sample_rate': 44100.0, 'format_id': 'lpcm',
-            'format_flags': 0, 'bytes_per_packet': 0, 'frames_per_packet': 
-            0, 'bytes_per_frame': 0, 'channels_per_frame': 2,
-            'bits_per_channel': 16}
+        format_dict = {
+            "sample_rate": 44100.0,
+            "format_id": "lpcm",
+            "format_flags": 0,
+            "bytes_per_packet": 0,
+            "frames_per_packet": 0,
+            "bytes_per_frame": 0,
+            "channels_per_frame": 2,
+            "bits_per_channel": 16,
+        }
         func_queue_id = capi.audio_queue_new_output(format_dict)
         try:
-            func_buffer_id = capi.audio_queue_allocate_buffer(func_queue_id,
-                1024)
+            func_buffer_id = capi.audio_queue_allocate_buffer(func_queue_id, 1024)
         finally:
             capi.audio_queue_dispose(func_queue_id)
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
-            bits_per_channel=16)
+        format = cm.AudioFormat(
+            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
+        )
         oo_queue = cm.AudioQueue.new_output(format)
         try:
             oo_buffer = oo_queue.allocate_buffer(1024)
@@ -172,8 +195,9 @@ class TestAudioQueueIntegration:
 
     def test_audio_queue_full_workflow(self):
         """Test complete AudioQueue workflow"""
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
-            bits_per_channel=16)
+        format = cm.AudioFormat(
+            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
+        )
         queue = cm.AudioQueue.new_output(format)
         try:
             buffers = []
@@ -192,10 +216,12 @@ class TestAudioQueueIntegration:
 
     def test_audio_queue_multiple_instances(self):
         """Test creating multiple AudioQueue instances"""
-        format1 = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
-            bits_per_channel=16)
-        format2 = cm.AudioFormat(48000.0, 'lpcm', channels_per_frame=1,
-            bits_per_channel=24)
+        format1 = cm.AudioFormat(
+            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
+        )
+        format2 = cm.AudioFormat(
+            48000.0, "lpcm", channels_per_frame=1, bits_per_channel=24
+        )
         queue1 = cm.AudioQueue.new_output(format1)
         queue2 = cm.AudioQueue.new_output(format2)
         try:
@@ -212,8 +238,9 @@ class TestAudioQueueIntegration:
 
     def test_audio_queue_resource_management(self):
         """Test AudioQueue resource management under stress"""
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
-            bits_per_channel=16)
+        format = cm.AudioFormat(
+            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
+        )
         for i in range(5):
             queue = cm.AudioQueue.new_output(format)
             for j in range(3):
@@ -226,8 +253,9 @@ class TestAudioQueueIntegration:
 
     def test_audio_queue_error_recovery(self):
         """Test AudioQueue error handling and recovery"""
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2,
-            bits_per_channel=16)
+        format = cm.AudioFormat(
+            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
+        )
         queue = cm.AudioQueue.new_output(format)
         try:
             with pytest.raises(cm.AudioQueueError):

@@ -74,73 +74,66 @@ Class Reference
 Functional API
 --------------
 
-The functional API provides direct access to CoreAudio file operations.
+The functional API provides direct access to CoreAudio file operations through
+the ``coremusic.capi`` module.
+
+.. note::
+   The object-oriented ``AudioFile`` API is recommended for most use cases.
+   Use the functional API only when you need fine-grained control.
 
 Opening and Closing Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autofunction:: coremusic.audio_file_open_url
-   :noindex:
-
-.. autofunction:: coremusic.audio_file_close
-   :noindex:
-
 **Example:**
 
 .. code-block:: python
 
-   import coremusic as cm
+   import coremusic.capi as capi
 
    # Open audio file
-   file_id = cm.audio_file_open_url("audio.wav")
+   file_id = capi.audio_file_open_url("audio.wav")
    try:
        # Use file...
        pass
    finally:
-       cm.audio_file_close(file_id)
+       capi.audio_file_close(file_id)
 
 Reading Audio Data
 ^^^^^^^^^^^^^^^^^^
 
-.. autofunction:: coremusic.audio_file_read_packets
-   :noindex:
-
 **Example:**
 
 .. code-block:: python
 
-   import coremusic as cm
+   import coremusic.capi as capi
 
-   file_id = cm.audio_file_open_url("audio.wav")
+   file_id = capi.audio_file_open_url("audio.wav")
    try:
        # Read 1000 packets starting from packet 0
-       data, packets_read = cm.audio_file_read_packets(file_id, 0, 1000)
+       data, packets_read = capi.audio_file_read_packets(file_id, 0, 1000)
        print(f"Read {packets_read} packets, {len(data)} bytes")
    finally:
-       cm.audio_file_close(file_id)
+       capi.audio_file_close(file_id)
 
 File Properties
 ^^^^^^^^^^^^^^^
 
-.. autofunction:: coremusic.audio_file_get_property
-   :noindex:
-
 **Example:**
 
 .. code-block:: python
 
-   import coremusic as cm
+   import coremusic.capi as capi
 
-   file_id = cm.audio_file_open_url("audio.wav")
+   file_id = capi.audio_file_open_url("audio.wav")
    try:
        # Get audio format
-       format_data = cm.audio_file_get_property(
+       format_data = capi.audio_file_get_property(
            file_id,
-           cm.get_audio_file_property_data_format()
+           capi.get_audio_file_property_data_format()
        )
        print(f"Format: {format_data}")
    finally:
-       cm.audio_file_close(file_id)
+       capi.audio_file_close(file_id)
 
 Supported Formats
 -----------------
@@ -182,11 +175,11 @@ Use the provided constant functions to get appropriate flags:
 
 .. code-block:: python
 
-   import coremusic as cm
+   import coremusic.capi as capi
 
    # Get standard format flags
-   flags = cm.get_audio_format_flag_is_float() | \\
-           cm.get_audio_format_flag_is_packed()
+   flags = capi.get_audio_format_flag_is_float() | \\
+           capi.get_audio_format_flag_is_packed()
 
 Examples
 --------

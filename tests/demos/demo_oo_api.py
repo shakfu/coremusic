@@ -39,7 +39,7 @@ def demo_audio_devices():
         print(f"  Sample Rate:  {output_device.sample_rate:.0f} Hz")
 
         # Get stream configuration
-        output_config = output_device.get_stream_configuration('output')
+        output_config = output_device.get_stream_configuration("output")
         print(f"  Output Config: {output_config}")
     else:
         print("  No default output device found")
@@ -53,7 +53,7 @@ def demo_audio_devices():
         print(f"  Sample Rate:  {input_device.sample_rate:.0f} Hz")
 
         # Get stream configuration
-        input_config = input_device.get_stream_configuration('input')
+        input_config = input_device.get_stream_configuration("input")
         print(f"  Input Config:  {input_config}")
     else:
         print("  No default input device found")
@@ -71,7 +71,9 @@ def demo_audio_devices():
         device_uid = output_device.uid
         if device_uid:
             found = cm.AudioDeviceManager.find_device_by_uid(device_uid)
-            print(f"  Search by UID '{device_uid}': {'Found' if found else 'Not found'}")
+            print(
+                f"  Search by UID '{device_uid}': {'Found' if found else 'Not found'}"
+            )
 
 
 def demo_numpy_integration():
@@ -175,11 +177,44 @@ def demo_audio_format():
     import numpy as np
 
     formats = [
-        ("16-bit PCM", cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)),
-        ("24-bit PCM", cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=24)),
-        ("32-bit int PCM", cm.AudioFormat(44100.0, 'lpcm', format_flags=0, channels_per_frame=2, bits_per_channel=32)),
-        ("32-bit float PCM", cm.AudioFormat(44100.0, 'lpcm', format_flags=1, channels_per_frame=2, bits_per_channel=32)),
-        ("8-bit signed PCM", cm.AudioFormat(44100.0, 'lpcm', format_flags=0, channels_per_frame=1, bits_per_channel=8)),
+        (
+            "16-bit PCM",
+            cm.AudioFormat(44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16),
+        ),
+        (
+            "24-bit PCM",
+            cm.AudioFormat(44100.0, "lpcm", channels_per_frame=2, bits_per_channel=24),
+        ),
+        (
+            "32-bit int PCM",
+            cm.AudioFormat(
+                44100.0,
+                "lpcm",
+                format_flags=0,
+                channels_per_frame=2,
+                bits_per_channel=32,
+            ),
+        ),
+        (
+            "32-bit float PCM",
+            cm.AudioFormat(
+                44100.0,
+                "lpcm",
+                format_flags=1,
+                channels_per_frame=2,
+                bits_per_channel=32,
+            ),
+        ),
+        (
+            "8-bit signed PCM",
+            cm.AudioFormat(
+                44100.0,
+                "lpcm",
+                format_flags=0,
+                channels_per_frame=1,
+                bits_per_channel=8,
+            ),
+        ),
     ]
 
     print("\n  Format Type              NumPy dtype")
@@ -221,7 +256,9 @@ def demo_complete_workflow():
 
     with cm.AudioFile(test_file) as audio:
         audio_format = audio.format
-        print(f"  Audio File Format:    {audio_format.sample_rate:.0f} Hz, {audio_format.channels_per_frame} channels")
+        print(
+            f"  Audio File Format:    {audio_format.sample_rate:.0f} Hz, {audio_format.channels_per_frame} channels"
+        )
 
         # Check compatibility
         if audio_format.sample_rate != output_device.sample_rate:
@@ -265,6 +302,7 @@ def main():
     except Exception as e:
         print(f"\nError during demo: {e}")
         import traceback
+
         traceback.print_exc()
 
 

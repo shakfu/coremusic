@@ -55,7 +55,7 @@ def convert_audio_file(input_path, output_path, target_sample_rate=None):
                 frames_per_packet=src_fmt.frames_per_packet,
                 bytes_per_frame=src_fmt.bytes_per_frame,
                 channels_per_frame=src_fmt.channels_per_frame,
-                bits_per_channel=src_fmt.bits_per_channel
+                bits_per_channel=src_fmt.bits_per_channel,
             )
 
             print("Target Format:")
@@ -104,6 +104,7 @@ def convert_audio_file(input_path, output_path, target_sample_rate=None):
     except Exception as e:
         print(f"Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -111,7 +112,7 @@ def convert_audio_file(input_path, output_path, target_sample_rate=None):
 def main():
     """Main function."""
     parser = argparse.ArgumentParser(
-        description='Convert audio files between different sample rates',
+        description="Convert audio files between different sample rates",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -123,12 +124,12 @@ Examples:
 
   # Copy without conversion (same sample rate)
   python audio_converter.py input.wav output.wav
-        """
+        """,
     )
 
-    parser.add_argument('input', help='Input audio file')
-    parser.add_argument('output', help='Output audio file')
-    parser.add_argument('--rate', type=float, help='Target sample rate (Hz)')
+    parser.add_argument("input", help="Input audio file")
+    parser.add_argument("output", help="Output audio file")
+    parser.add_argument("--rate", type=float, help="Target sample rate (Hz)")
 
     args = parser.parse_args()
 
@@ -140,7 +141,7 @@ Examples:
     # Check if output file exists
     if Path(args.output).exists():
         response = input(f"Output file '{args.output}' exists. Overwrite? [y/N] ")
-        if response.lower() != 'y':
+        if response.lower() != "y":
             print("Cancelled.")
             sys.exit(0)
 

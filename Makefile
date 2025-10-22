@@ -36,23 +36,22 @@ publish:
 # Documentation targets
 docs:
 	@echo "Building HTML documentation..."
-	@cd docs && uv run sphinx-build -b html . _build/html
+	@cd docs && $(MAKE) html
 	@echo "Documentation built in docs/_build/html/index.html"
 
 docs-clean:
 	@echo "Cleaning documentation build..."
-	@rm -rf docs/_build
+	@cd docs && $(MAKE) clean
 
 docs-serve:
 	@echo "Starting documentation server at http://localhost:8000"
-	@cd docs/_build/html && uv run python -m http.server 8000
+	@cd docs/_build/html && python3 -m http.server 8000
 
 docs-pdf:
 	@echo "Building PDF documentation..."
-	@cd docs && uv run sphinx-build -b latex . _build/latex
-	@cd docs/_build/latex && make
+	@cd docs && $(MAKE) latexpdf
 	@echo "PDF documentation built in docs/_build/latex/coremusic.pdf"
 
 docs-linkcheck:
 	@echo "Checking documentation links..."
-	@cd docs && uv run sphinx-build -b linkcheck . _build/linkcheck
+	@cd docs && $(MAKE) linkcheck

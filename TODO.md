@@ -1,8 +1,24 @@
 # TODO
 
+## Done
+
+### [x] **CoreAudioClock** (macOS-only)
+**Priority: Medium** - Synchronization and timing services
+
+**What it provides:**
+- Audio/MIDI synchronization
+- SMPTE timecode support
+- MIDI Time Code (MTC) and MIDI beat clock
+- Tempo maps and time conversions
+- Clock sources (audio devices, host time, external sync)
+
+**Relevance:** Essential for DAWs, sequencers, and sync-dependent applications. Overlaps partially with MusicPlayer tempo functionality but provides broader sync capabilities.
+
+
+
 ## Missing/Unwrapped APIs
 
-### 1. [ ] **AudioWorkInterval** (macOS 10.16+, iOS 14.0+)
+### [ ] **AudioWorkInterval** (macOS 10.16+, iOS 14.0+)
 **Priority: Medium-Low** - Advanced feature for realtime workgroup management
 
 **What it provides:**
@@ -16,23 +32,7 @@
 
 ---
 
-### 2. [ ] **CoreAudioClock** (macOS-only)
-**Priority: Medium** - Synchronization and timing services
-
-**What it provides:**
-- Audio/MIDI synchronization
-- SMPTE timecode support
-- MIDI Time Code (MTC) and MIDI beat clock
-- Tempo maps and time conversions
-- Clock sources (audio devices, host time, external sync)
-
-**Relevance:** Essential for DAWs, sequencers, and sync-dependent applications. Overlaps partially with MusicPlayer tempo functionality but provides broader sync capabilities.
-
-**Recommendation:** Medium priority - would enhance pro audio and post-production use cases.
-
----
-
-### 3. [ ] **AudioHardwareTapping** (macOS 14.2+)
+### [ ] **AudioHardwareTapping** (macOS 14.2+)
 **Priority: Low** - Recent addition, Objective-C only
 
 **What it provides:**
@@ -45,7 +45,7 @@
 
 ---
 
-### 4. [ ] **CAFFile Data Structures**
+### [ ] **CAFFile Data Structures**
 **Priority: Low** - Informational only
 
 **What it provides:**
@@ -58,7 +58,7 @@
 
 ---
 
-### 5. [ ] **AudioCodec Component API**
+### [ ] **AudioCodec Component API**
 **Priority: Low-Medium** - Low-level codec interface
 
 **What it provides:**
@@ -74,7 +74,7 @@
 
 ## Enhancement Opportunities
 
-### 1. [ ] **Performance Optimizations**
+### [ ] **Performance Optimizations**
 **Priority: MEDIUM-LOW**
 
 **Current state:** Already using Cython for performance.
@@ -104,7 +104,7 @@ cm.AudioFile.batch_process_parallel(
 
 ---
 
-### 2. [ ] **Plugin/Extension System**
+### [ ] **Plugin/Extension System**
 **Priority: LOW**
 
 **What to add:**
@@ -129,7 +129,7 @@ available_plugins = cm.discover_audio_units(type='effect')
 
 ---
 
-### 3. **Packaging and Distribution**
+### **Packaging and Distribution**
 **Priority: MEDIUM**
 
 **Current state:** Builds from source.
@@ -151,15 +151,15 @@ available_plugins = cm.discover_audio_units(type='effect')
 
 ## Prioritized Roadmap
 
-### Phase 1: Foundation (Immediate)
+### Foundation (Immediate)
 1. [ ] **PyPI Distribution** - Pre-built wheels
 
-### Phase 2: Advanced Features (6-12 months)
+### Advanced Features (6-12 months)
 2. [ ] **CoreAudioClock** - Sync and timecode support (if user demand exists)
 3. [ ] **Performance Optimizations** - Memory mapping, zero-copy, parallel processing
 4. [ ] **Plugin System** - Custom AudioUnit registration (advanced users)
 
-### Phase 3: Specialized (12+ months, optional)
+### Specialized (12+ months, optional)
 5. [ ] **AudioWorkInterval** - For advanced realtime audio developers
 6. [ ] **AudioCodec API** - Direct codec component access (niche)
 7. [ ] **AudioHardwareTapping** - Process tapping (requires ObjC bridge)

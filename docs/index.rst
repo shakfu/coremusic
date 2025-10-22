@@ -20,6 +20,7 @@ Key Features
 - **Automatic Resource Management**: Context managers and automatic cleanup
 - **Professional Audio Support**: Real-time processing, multi-channel audio, hardware control
 - **Comprehensive MIDI**: MIDI 1.0/2.0 support, device management, advanced routing
+- **Precise Timing & Sync**: CoreAudioClock for audio/MIDI synchronization and tempo control
 
 Quick Start
 -----------
@@ -83,6 +84,29 @@ MIDI Operations
        output_port.send_data(destination, note_on)
    finally:
        client.dispose()
+
+Audio/MIDI Synchronization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+   import coremusic as cm
+   import time
+
+   # Use AudioClock for precise timing
+   with cm.AudioClock() as clock:
+       clock.play_rate = 1.0  # Normal speed
+       clock.start()
+
+       # Get time in different formats
+       seconds = clock.get_time_seconds()
+       beats = clock.get_time_beats()
+       samples = clock.get_time_samples()
+
+       # Change speed (for tempo sync)
+       clock.play_rate = 0.5  # Half speed
+
+       clock.stop()
 
 Documentation Contents
 ----------------------

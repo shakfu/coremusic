@@ -1,4 +1,5 @@
 """Tests for AUGraph API (both functional and object-oriented)."""
+
 import pytest
 import time
 import coremusic as cm
@@ -39,18 +40,21 @@ class TestAUGraphFunctionalAPI:
         graph_id = capi.au_graph_new()
         try:
             assert capi.au_graph_get_node_count(graph_id) == 0
-            desc = {'type': capi.fourchar_to_int('auou'), 'subtype': capi.
-                fourchar_to_int('def '), 'manufacturer': capi.
-                fourchar_to_int('appl'), 'flags': 0, 'flags_mask': 0}
+            desc = {
+                "type": capi.fourchar_to_int("auou"),
+                "subtype": capi.fourchar_to_int("def "),
+                "manufacturer": capi.fourchar_to_int("appl"),
+                "flags": 0,
+                "flags_mask": 0,
+            }
             node_id = capi.au_graph_add_node(graph_id, desc)
             assert node_id is not None
             assert capi.au_graph_get_node_count(graph_id) == 1
             retrieved_node = capi.au_graph_get_ind_node(graph_id, 0)
             assert retrieved_node == node_id
-            node_desc, audio_unit_id = capi.au_graph_node_info(graph_id,
-                node_id)
-            assert node_desc['type'] == desc['type']
-            assert node_desc['subtype'] == desc['subtype']
+            node_desc, audio_unit_id = capi.au_graph_node_info(graph_id, node_id)
+            assert node_desc["type"] == desc["type"]
+            assert node_desc["subtype"] == desc["subtype"]
             assert audio_unit_id >= 0
             capi.au_graph_remove_node(graph_id, node_id)
             assert capi.au_graph_get_node_count(graph_id) == 0
@@ -123,8 +127,9 @@ class TestAUGraphOO:
         graph = cm.AUGraph()
         try:
             assert graph.node_count == 0
-            desc = cm.AudioComponentDescription(type='auou', subtype='def ',
-                manufacturer='appl')
+            desc = cm.AudioComponentDescription(
+                type="auou", subtype="def ", manufacturer="appl"
+            )
             node_id = graph.add_node(desc)
             assert node_id is not None
             assert graph.node_count == 1
@@ -145,15 +150,21 @@ class TestAUGraphOO:
         graph = cm.AUGraph()
         try:
             graph.open()
-            generator_desc = cm.AudioComponentDescription(type='aumu',
-                subtype='dls ', manufacturer='appl')
+            generator_desc = cm.AudioComponentDescription(
+                type="aumu", subtype="dls ", manufacturer="appl"
+            )
             generator_node = graph.add_node(generator_desc)
-            output_desc = cm.AudioComponentDescription(type='auou', subtype
-                ='def ', manufacturer='appl')
+            output_desc = cm.AudioComponentDescription(
+                type="auou", subtype="def ", manufacturer="appl"
+            )
             output_node = graph.add_node(output_desc)
             assert graph.node_count == 2
-            graph.connect(source_node=generator_node, source_output=0,
-                dest_node=output_node, dest_input=0)
+            graph.connect(
+                source_node=generator_node,
+                source_output=0,
+                dest_node=output_node,
+                dest_input=0,
+            )
             is_updated = graph.update()
             assert isinstance(is_updated, bool)
             graph.disconnect(dest_node=output_node, dest_input=0)
@@ -178,27 +189,27 @@ class TestAUGraphOO:
         """Test AUGraph string representation"""
         graph = cm.AUGraph()
         repr_str = repr(graph)
-        assert 'AUGraph' in repr_str
-        assert 'nodes=0' in repr_str
+        assert "AUGraph" in repr_str
+        assert "nodes=0" in repr_str
         graph.open()
         repr_str = repr(graph)
-        assert 'open' in repr_str
+        assert "open" in repr_str
         graph.initialize()
         repr_str = repr(graph)
-        assert 'initialized' in repr_str
+        assert "initialized" in repr_str
         graph.dispose()
         repr_str = repr(graph)
-        assert 'disposed' in repr_str
+        assert "disposed" in repr_str
 
     def test_au_graph_operations_after_disposal(self):
         """Test that operations on disposed graph raise errors"""
         graph = cm.AUGraph()
         graph.dispose()
-        with pytest.raises(RuntimeError, match='has been disposed'):
+        with pytest.raises(RuntimeError, match="has been disposed"):
             graph.open()
-        with pytest.raises(RuntimeError, match='has been disposed'):
+        with pytest.raises(RuntimeError, match="has been disposed"):
             _ = graph.is_open
-        with pytest.raises(RuntimeError, match='has been disposed'):
+        with pytest.raises(RuntimeError, match="has been disposed"):
             _ = graph.node_count
 
     def test_au_graph_error_handling(self):
@@ -226,8 +237,9 @@ class TestAUGraphIntegration:
         graph = cm.AUGraph()
         try:
             graph.open().initialize()
-            output_desc = cm.AudioComponentDescription(type='auou', subtype
-                ='def ', manufacturer='appl')
+            output_desc = cm.AudioComponentDescription(
+                type="auou", subtype="def ", manufacturer="appl"
+            )
             output_node = graph.add_node(output_desc)
             assert graph.update()
             assert graph.node_count == 1
