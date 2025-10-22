@@ -1,6 +1,4 @@
-# CoreMusic: Complete Python bindings for Apple CoreAudio
-
-A comprehensive Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing both functional and object-oriented Python bindings for professional audio and MIDI development on macOS. This project exposes the complete CoreAudio and CoreMIDI C APIs through Python, enabling advanced audio applications, real-time processing, MIDI routing, and professional audio software development.
+# CoreMusic: Python bindings for Apple CoreAudio
 
 ## Overview
 
@@ -190,6 +188,7 @@ finally:
 
 ```python
 import coremusic.capi as capi
+import coremusic as cm
 
 # Open an audio file
 audio_file = capi.audio_file_open_url("path/to/audio.wav")
@@ -199,6 +198,9 @@ format_data = capi.audio_file_get_property(
     audio_file,
     capi.get_audio_file_property_data_format()
 )
+
+# Parse format data to a python dict
+format_dict = cm.parse_audio_stream_basic_description(format_data)
 
 # Read audio packets
 packet_data, packets_read = capi.audio_file_read_packets(audio_file, 0, 1000)

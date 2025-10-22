@@ -24,3 +24,6 @@ def test_format_data_parsing():
         'bits_per_channel': 16, 
         'reserved': 0
     }
+
+    # Close the file (manual cleanup required with the functional capi)
+    capi.audio_file_close(audio_file)
