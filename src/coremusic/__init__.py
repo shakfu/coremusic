@@ -31,6 +31,14 @@ from . import link
 # Import Link + MIDI integration
 from . import link_midi
 
+# Import AudioUnit hosting
+from .audio_unit_host import (
+    AudioUnitHost,
+    AudioUnitPlugin,
+    AudioUnitParameter,
+    AudioUnitPreset,
+)
+
 
 __all__ = [
     # Base class
@@ -78,6 +86,11 @@ __all__ = [
     # Ableton Link - Tempo Synchronization
     "link",  # link module containing LinkSession, SessionState, Clock
     "link_midi",  # Link + MIDI integration (LinkMIDIClock, LinkMIDISequencer)
+    # AudioUnit Plugin Hosting
+    "AudioUnitHost",
+    "AudioUnitPlugin",
+    "AudioUnitParameter",
+    "AudioUnitPreset",
     # NumPy availability flag
     "NUMPY_AVAILABLE",
 ]

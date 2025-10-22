@@ -71,3 +71,9 @@ cdef extern from "CoreFoundation/CoreFoundation.h":
     cdef CFDataRef CFDataCreate(CFAllocatorRef allocator, const UInt8* bytes, CFIndex length)
     cdef CFIndex CFDataGetLength(CFDataRef theData)
     cdef UInt8* CFDataGetBytePtr(CFDataRef theData)
+
+    # CFArray functions
+    ctypedef struct __CFArray
+    ctypedef __CFArray* CFArrayRef
+    cdef CFIndex CFArrayGetCount(CFArrayRef theArray)
+    cdef void* CFArrayGetValueAtIndex(CFArrayRef theArray, CFIndex idx)

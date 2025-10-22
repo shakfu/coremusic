@@ -1533,6 +1533,435 @@ def audio_output_unit_stop(long audio_unit_id):
     return status
 
 
+# AudioUnit Plugin Discovery and Management Functions
+
+def audio_unit_find_all_components(component_type=None, component_subtype=None, manufacturer=None):
+    """Find all AudioUnit components matching the criteria
+
+    Args:
+        component_type: AudioUnit type (e.g., 'aufx' for effects, 'aumu' for instruments)
+        component_subtype: AudioUnit subtype (specific effect/instrument type)
+        manufacturer: Manufacturer code (e.g., 'appl' for Apple)
+
+    Returns:
+        List of component IDs
+    """
+    cdef at.AudioComponentDescription desc
+    cdef at.AudioComponent component = NULL
+    cdef list components = []
+
+    # Set up description for search
+    desc.componentType = fourchar_to_int(component_type) if component_type else 0
+    desc.componentSubType = fourchar_to_int(component_subtype) if component_subtype else 0
+    desc.componentManufacturer = fourchar_to_int(manufacturer) if manufacturer else 0
+    desc.componentFlags = 0
+    desc.componentFlagsMask = 0
+
+    # Find all matching components
+    while True:
+        component = at.AudioComponentFindNext(component, &desc)
+        if component == NULL:
+            break
+        components.append(<long>component)
+
+    return components
+
+
+def audio_unit_get_component_info(long component_id):
+    """Get detailed information about an AudioUnit component
+
+    Args:
+        component_id: Component ID from audio_unit_find_all_components
+
+    Returns:
+        Dictionary with keys: name, type, subtype, manufacturer, version
+    """
+    cdef at.AudioComponent component = <at.AudioComponent>component_id
+    cdef at.AudioComponentDescription desc
+    cdef cf.CFStringRef name_ref = NULL
+    cdef cf.UInt32 version = 0
+    cdef cf.OSStatus status
+    cdef char buffer[256]
+
+    # Get component description
+    status = at.AudioComponentGetDescription(component, &desc)
+    if status != 0:
+        raise RuntimeError(f"AudioComponentGetDescription failed with status: {status}")
+
+    # Get component name
+    status = at.AudioComponentCopyName(component, &name_ref)
+    if status != 0:
+        raise RuntimeError(f"AudioComponentCopyName failed with status: {status}")
+
+    # Convert CFString to Python string
+    name = ""
+    if name_ref != NULL:
+        if cf.CFStringGetCString(name_ref, buffer, sizeof(buffer), cf.kCFStringEncodingUTF8):
+            name = buffer.decode('utf-8')
+        cf.CFRelease(name_ref)
+
+    # Get component version
+    status = at.AudioComponentGetVersion(component, &version)
+    if status != 0:
+        version = 0  # Non-critical, just set to 0
+
+    return {
+        'name': name,
+        'type': int_to_fourchar(desc.componentType),
+        'subtype': int_to_fourchar(desc.componentSubType),
+        'manufacturer': int_to_fourchar(desc.componentManufacturer),
+        'version': version,
+        'component_id': component_id
+    }
+
+
+def audio_unit_get_parameter_list(long audio_unit_id, scope=0, element=0):
+    """Get list of parameter IDs for an AudioUnit
+
+    Args:
+        audio_unit_id: AudioUnit instance ID
+        scope: Parameter scope (0=global, 1=input, 2=output)
+        element: Element number (usually 0)
+
+    Returns:
+        List of parameter IDs
+    """
+    cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
+    cdef cf.UInt32 data_size = 0
+    cdef cf.Boolean writable = 0
+    cdef cf.OSStatus status
+    cdef at.AudioUnitParameterID* param_list = NULL
+    cdef cf.UInt32 num_params
+    cdef list result = []
+
+    # Get size of parameter list
+    status = at.AudioUnitGetPropertyInfo(
+        unit,
+        at.kAudioUnitProperty_ParameterList,
+        <at.AudioUnitScope>scope,
+        <at.AudioUnitElement>element,
+        &data_size,
+        &writable
+    )
+
+    if status != 0 or data_size == 0:
+        return []  # No parameters
+
+    # Allocate buffer for parameter list
+    num_params = data_size // sizeof(at.AudioUnitParameterID)
+    param_list = <at.AudioUnitParameterID*>malloc(data_size)
+    if param_list == NULL:
+        raise MemoryError("Could not allocate parameter list buffer")
+
+    try:
+        # Get parameter list
+        status = at.AudioUnitGetProperty(
+            unit,
+            at.kAudioUnitProperty_ParameterList,
+            <at.AudioUnitScope>scope,
+            <at.AudioUnitElement>element,
+            param_list,
+            &data_size
+        )
+
+        if status != 0:
+            raise RuntimeError(f"AudioUnitGetProperty failed with status: {status}")
+
+        # Convert to Python list
+        for i in range(num_params):
+            result.append(param_list[i])
+
+        return result
+
+    finally:
+        free(param_list)
+
+
+def audio_unit_get_parameter_info(long audio_unit_id, param_id, scope=0, element=0):
+    """Get detailed information about a parameter
+
+    Args:
+        audio_unit_id: AudioUnit instance ID
+        param_id: Parameter ID
+        scope: Parameter scope (0=global, 1=input, 2=output)
+        element: Element number (usually 0)
+
+    Returns:
+        Dictionary with parameter metadata
+    """
+    cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
+    cdef at.AudioUnitParameterInfo param_info
+    cdef cf.UInt32 data_size = sizeof(at.AudioUnitParameterInfo)
+    cdef cf.OSStatus status
+    cdef char buffer[256]
+
+    # Get parameter info
+    status = at.AudioUnitGetProperty(
+        unit,
+        at.kAudioUnitProperty_ParameterInfo,
+        <at.AudioUnitScope>scope,
+        <at.AudioUnitElement>element,
+        &param_info,
+        &data_size
+    )
+
+    if status != 0:
+        raise RuntimeError(f"AudioUnitGetProperty (ParameterInfo) failed with status: {status}")
+
+    # Extract name (prefer CFString if available)
+    name = ""
+    if param_info.cfNameString != NULL:
+        if cf.CFStringGetCString(param_info.cfNameString, buffer, sizeof(buffer), cf.kCFStringEncodingUTF8):
+            name = buffer.decode('utf-8')
+    else:
+        name = param_info.name[:52].decode('utf-8', errors='ignore').rstrip('\x00')
+
+    # Extract unit name
+    unit_name = ""
+    if param_info.unitName != NULL:
+        if cf.CFStringGetCString(param_info.unitName, buffer, sizeof(buffer), cf.kCFStringEncodingUTF8):
+            unit_name = buffer.decode('utf-8')
+
+    return {
+        'param_id': param_id,
+        'name': name,
+        'unit_name': unit_name,
+        'unit': param_info.unit,
+        'min_value': param_info.minValue,
+        'max_value': param_info.maxValue,
+        'default_value': param_info.defaultValue,
+        'flags': param_info.flags,
+        'clump_id': param_info.clumpID
+    }
+
+
+def audio_unit_get_parameter(long audio_unit_id, param_id, scope=0, element=0):
+    """Get current value of a parameter
+
+    Args:
+        audio_unit_id: AudioUnit instance ID
+        param_id: Parameter ID
+        scope: Parameter scope (0=global, 1=input, 2=output)
+        element: Element number (usually 0)
+
+    Returns:
+        Current parameter value (float)
+    """
+    cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
+    cdef at.AudioUnitParameterValue value = 0.0
+    cdef cf.OSStatus status
+
+    status = at.AudioUnitGetParameter(
+        unit,
+        <at.AudioUnitParameterID>param_id,
+        <at.AudioUnitScope>scope,
+        <at.AudioUnitElement>element,
+        &value
+    )
+
+    if status != 0:
+        raise RuntimeError(f"AudioUnitGetParameter failed with status: {status}")
+
+    return value
+
+
+def audio_unit_set_parameter(long audio_unit_id, param_id, value, scope=0, element=0):
+    """Set value of a parameter
+
+    Args:
+        audio_unit_id: AudioUnit instance ID
+        param_id: Parameter ID
+        value: New parameter value (float)
+        scope: Parameter scope (0=global, 1=input, 2=output)
+        element: Element number (usually 0)
+    """
+    cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
+    cdef cf.OSStatus status
+
+    status = at.AudioUnitSetParameter(
+        unit,
+        <at.AudioUnitParameterID>param_id,
+        <at.AudioUnitScope>scope,
+        <at.AudioUnitElement>element,
+        <at.AudioUnitParameterValue>value,
+        0  # buffer offset in frames
+    )
+
+    if status != 0:
+        raise RuntimeError(f"AudioUnitSetParameter failed with status: {status}")
+
+    return 0
+
+
+def audio_unit_get_factory_presets(long audio_unit_id):
+    """Get list of factory presets for an AudioUnit
+
+    Args:
+        audio_unit_id: AudioUnit instance ID
+
+    Returns:
+        List of dictionaries with keys: number, name
+    """
+    cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
+    cdef cf.UInt32 data_size = 0
+    cdef cf.Boolean writable = 0
+    cdef cf.OSStatus status
+    cdef cf.CFArrayRef presets_array = NULL
+    cdef cf.CFIndex num_presets
+    cdef at.AUPreset* preset
+    cdef list result = []
+    cdef char buffer[256]
+
+    # Get factory presets property
+    status = at.AudioUnitGetPropertyInfo(
+        unit,
+        at.kAudioUnitProperty_FactoryPresets,
+        at.kAudioUnitScope_Global,
+        0,
+        &data_size,
+        &writable
+    )
+
+    if status != 0 or data_size == 0:
+        return []  # No factory presets
+
+    # Get the presets array
+    data_size = sizeof(cf.CFArrayRef)
+    status = at.AudioUnitGetProperty(
+        unit,
+        at.kAudioUnitProperty_FactoryPresets,
+        at.kAudioUnitScope_Global,
+        0,
+        &presets_array,
+        &data_size
+    )
+
+    if status != 0:
+        return []
+
+    if presets_array == NULL:
+        return []
+
+    # Extract presets from CFArray
+    num_presets = cf.CFArrayGetCount(presets_array)
+    for i in range(num_presets):
+        preset = <at.AUPreset*>cf.CFArrayGetValueAtIndex(presets_array, i)
+        if preset != NULL:
+            preset_name = ""
+            if preset.presetName != NULL:
+                if cf.CFStringGetCString(preset.presetName, buffer, sizeof(buffer), cf.kCFStringEncodingUTF8):
+                    preset_name = buffer.decode('utf-8')
+
+            result.append({
+                'number': preset.presetNumber,
+                'name': preset_name
+            })
+
+    return result
+
+
+def audio_unit_set_current_preset(long audio_unit_id, preset_number):
+    """Set the current preset for an AudioUnit
+
+    Args:
+        audio_unit_id: AudioUnit instance ID
+        preset_number: Preset number from factory presets list
+    """
+    cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
+    cdef at.AUPreset preset
+    cdef cf.OSStatus status
+
+    # Note: We can't easily create CFString here, so we just set the number
+    # The AudioUnit will look up the preset by number
+    preset.presetNumber = preset_number
+    preset.presetName = NULL
+
+    status = at.AudioUnitSetProperty(
+        unit,
+        at.kAudioUnitProperty_PresentPreset,
+        at.kAudioUnitScope_Global,
+        0,
+        &preset,
+        sizeof(at.AUPreset)
+    )
+
+    if status != 0:
+        raise RuntimeError(f"AudioUnitSetProperty (PresentPreset) failed with status: {status}")
+
+    return 0
+
+
+def audio_unit_render(long audio_unit_id, input_data, num_frames, sample_rate=44100.0, num_channels=2):
+    """Process audio through an AudioUnit
+
+    Args:
+        audio_unit_id: AudioUnit instance ID
+        input_data: Input audio data as bytes (interleaved float32)
+        num_frames: Number of frames to process
+        sample_rate: Sample rate (default 44100.0)
+        num_channels: Number of channels (default 2)
+
+    Returns:
+        Processed audio data as bytes
+    """
+    cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
+    cdef cf.OSStatus status
+    cdef at.AudioUnitRenderActionFlags flags = 0
+    cdef ca.AudioTimeStamp timestamp
+    cdef ca.AudioBufferList* buffer_list = NULL
+    cdef cf.UInt32 buffer_size = num_frames * num_channels * sizeof(cf.Float32)
+    cdef bytes output_data
+
+    # Allocate AudioBufferList
+    buffer_list = <ca.AudioBufferList*>malloc(
+        sizeof(ca.AudioBufferList) + 0 * sizeof(ca.AudioBuffer)
+    )
+    if buffer_list == NULL:
+        raise MemoryError("Could not allocate AudioBufferList")
+
+    try:
+        # Setup buffer list
+        buffer_list.mNumberBuffers = 1
+        buffer_list.mBuffers[0].mNumberChannels = num_channels
+        buffer_list.mBuffers[0].mDataByteSize = buffer_size
+        buffer_list.mBuffers[0].mData = malloc(buffer_size)
+
+        if buffer_list.mBuffers[0].mData == NULL:
+            raise MemoryError("Could not allocate audio buffer")
+
+        # Copy input data to buffer
+        memcpy(buffer_list.mBuffers[0].mData, <const char*>input_data, min(buffer_size, len(input_data)))
+
+        # Setup timestamp
+        memset(&timestamp, 0, sizeof(ca.AudioTimeStamp))
+        timestamp.mSampleTime = 0
+        timestamp.mFlags = ca.kAudioTimeStampSampleTimeValid
+
+        # Render audio
+        status = at.AudioUnitRender(
+            unit,
+            &flags,
+            &timestamp,
+            0,  # output bus
+            <cf.UInt32>num_frames,
+            buffer_list
+        )
+
+        if status != 0:
+            raise RuntimeError(f"AudioUnitRender failed with status: {status}")
+
+        # Copy output data
+        output_data = (<char*>buffer_list.mBuffers[0].mData)[:buffer_size]
+
+        return output_data
+
+    finally:
+        if buffer_list != NULL:
+            if buffer_list.mBuffers[0].mData != NULL:
+                free(buffer_list.mBuffers[0].mData)
+            free(buffer_list)
+
+
 # AudioUnit constant getter functions
 def get_audio_unit_type_output():
     """Get the output type for an audio unit"""

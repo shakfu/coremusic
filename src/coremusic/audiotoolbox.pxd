@@ -396,6 +396,86 @@ cdef extern from "AudioToolbox/AUComponent.h":
         kAudioUnitProperty_ElementName = 30
         kAudioUnitProperty_SupportedChannelLayoutTags = 32
         kAudioUnitProperty_PresentPreset = 36
+        kAudioUnitProperty_OfflineRender = 37
+        kAudioUnitProperty_ParameterValueName = 38
+        kAudioUnitProperty_ParameterStringFromValue = 39
+        kAudioUnitProperty_ParameterValueFromString = 40
+        kAudioUnitProperty_NickName = 54
+
+    # AudioUnit Parameter Units
+    ctypedef UInt32 AudioUnitParameterUnit
+    ctypedef enum:
+        kAudioUnitParameterUnit_Generic = 0
+        kAudioUnitParameterUnit_Indexed = 1
+        kAudioUnitParameterUnit_Boolean = 2
+        kAudioUnitParameterUnit_Percent = 3
+        kAudioUnitParameterUnit_Seconds = 4
+        kAudioUnitParameterUnit_SampleFrames = 5
+        kAudioUnitParameterUnit_Phase = 6
+        kAudioUnitParameterUnit_Rate = 7
+        kAudioUnitParameterUnit_Hertz = 8
+        kAudioUnitParameterUnit_Cents = 9
+        kAudioUnitParameterUnit_RelativeSemiTones = 10
+        kAudioUnitParameterUnit_MIDINoteNumber = 11
+        kAudioUnitParameterUnit_MIDIController = 12
+        kAudioUnitParameterUnit_Decibels = 13
+        kAudioUnitParameterUnit_LinearGain = 14
+        kAudioUnitParameterUnit_Degrees = 15
+        kAudioUnitParameterUnit_EqualPowerCrossfade = 16
+        kAudioUnitParameterUnit_MixerFaderCurve1 = 17
+        kAudioUnitParameterUnit_Pan = 18
+        kAudioUnitParameterUnit_Meters = 19
+        kAudioUnitParameterUnit_AbsoluteCents = 20
+        kAudioUnitParameterUnit_Octaves = 21
+        kAudioUnitParameterUnit_BPM = 22
+        kAudioUnitParameterUnit_Beats = 23
+        kAudioUnitParameterUnit_Milliseconds = 24
+        kAudioUnitParameterUnit_Ratio = 25
+        kAudioUnitParameterUnit_CustomUnit = 26
+
+    # AudioUnit Parameter Flags
+    ctypedef UInt32 AudioUnitParameterFlags
+    ctypedef enum:
+        kAudioUnitParameterFlag_CFNameRelease = (1 << 4)
+        kAudioUnitParameterFlag_HasClump = (1 << 20)
+        kAudioUnitParameterFlag_HasName = (1 << 21)
+        kAudioUnitParameterFlag_DisplayLogarithmic = (1 << 22)
+        kAudioUnitParameterFlag_DisplaySquareRoot = (1 << 23)
+        kAudioUnitParameterFlag_DisplaySquared = (1 << 24)
+        kAudioUnitParameterFlag_DisplayCubed = (1 << 25)
+        kAudioUnitParameterFlag_DisplayCubeRoot = (1 << 26)
+        kAudioUnitParameterFlag_DisplayExponential = (1 << 27)
+        kAudioUnitParameterFlag_HasCFNameString = (1 << 28)
+        kAudioUnitParameterFlag_IsGlobalMeta = (1 << 29)
+        kAudioUnitParameterFlag_IsElementMeta = (1 << 30)
+        kAudioUnitParameterFlag_IsReadable = (1 << 31)
+        kAudioUnitParameterFlag_IsWritable = (1 << 31) >> 1
+
+    # AudioUnit Parameter Info structure
+    ctypedef struct AudioUnitParameterInfo:
+        char name[52]
+        CFStringRef unitName
+        UInt32 clumpID
+        CFStringRef cfNameString
+        AudioUnitParameterUnit unit
+        AudioUnitParameterValue minValue
+        AudioUnitParameterValue maxValue
+        AudioUnitParameterValue defaultValue
+        UInt32 flags
+
+    # AudioUnit Preset (AUPreset) structure
+    ctypedef struct AUPreset:
+        SInt32 presetNumber
+        CFStringRef presetName
+
+    # AudioUnit Parameter Value translation structure
+    ctypedef struct AudioUnitParameterValueTranslation:
+        AudioUnit inUnit
+        AudioUnitParameterID inParameterID
+        AudioUnitScope inScope
+        AudioUnitElement inElement
+        CFStringRef inString
+        AudioUnitParameterValue outValue
 
     # AudioUnit Scopes
     ctypedef enum:
