@@ -2,6 +2,25 @@
 
 ## Done
 
+### [x] **Packaging and Distribution**
+**Priority: MEDIUM**
+
+**Current state:** Builds from source.
+
+**Improvements:**
+- **PyPI distribution** with pre-built wheels for macOS
+- **Conda package** for conda-forge
+- **ARM64 optimization** for Apple Silicon
+- **Universal2 binaries** (x86_64 + arm64)
+
+**Benefits:**
+- Easier installation (`pip install coremusic`)
+- Broader reach
+- No compilation required for end users
+
+**Implementation Effort:** Medium - CI/CD setup for wheel building
+
+
 ### [x] **CoreAudioClock** (macOS-only)
 **Priority: Medium** - Synchronization and timing services
 
@@ -17,6 +36,76 @@
 
 
 ## Missing/Unwrapped APIs
+
+### [ ] **AudioUnit Host Implementation**
+**Priority: HIGH** - Essential for plugin hosting and advanced audio processing
+
+**What it provides:**
+- Host AudioUnit plugins (VST-like plugins in macOS)
+- Load and instantiate third-party AudioUnits
+- Route audio through plugin chains
+- Automate plugin parameters
+- Save/restore plugin state
+- Build custom DAW-like applications
+
+**Key capabilities:**
+- **Plugin discovery** - Find available AudioUnits by type/subtype/manufacturer
+- **Plugin instantiation** - Load and configure AudioUnit plugins
+- **Audio routing** - Connect plugins in processing chains
+- **Parameter automation** - Control plugin parameters in realtime
+- **Preset management** - Save/load plugin presets
+- **UI integration** - Show plugin UI windows (via Cocoa bridge)
+
+**Current state:** CoreMusic has low-level AudioUnit wrapping (`audio_component_find_next`, `audio_component_instance_new`, etc.) but lacks high-level host infrastructure.
+
+**What's needed:**
+```python
+# High-level AudioUnit host API
+host = cm.AudioUnitHost()
+
+# Discover available plugins
+plugins = host.discover_audio_units(type='effect', subtype='reverb')
+print(f"Found {len(plugins)} reverb plugins")
+
+# Load a plugin
+reverb = host.load_audio_unit(plugins[0])
+reverb.initialize(sample_rate=44100, channels=2)
+
+# Set parameters
+reverb.set_parameter('room_size', 0.8)
+reverb.set_parameter('decay_time', 2.5)
+
+# Process audio
+output = reverb.process(input_audio)
+
+# Save preset
+reverb.save_preset('my_favorite_reverb.aupreset')
+```
+
+**Integration points:**
+- Build on existing AudioComponent/AudioUnit wrappers
+- Add parameter enumeration and control
+- Add preset serialization (CFPropertyList)
+- Add audio buffer routing
+- Add render callback management
+
+**Benefits:**
+- Host third-party audio plugins in Python
+- Build custom DAWs and audio tools
+- Leverage the vast AudioUnit ecosystem
+- Professional audio processing workflows
+- Unique capability in Python ecosystem
+
+**Implementation Effort:** HIGH (2-3 weeks)
+- Plugin discovery and loading: 3-4 days
+- Parameter management: 2-3 days
+- Audio routing infrastructure: 4-5 days
+- Preset management: 2-3 days
+- Testing and documentation: 3-4 days
+
+**Recommendation:** HIGH priority - Enables professional plugin hosting, differentiates CoreMusic from basic audio libraries, provides significant value to music production community.
+
+---
 
 ### [ ] **AudioWorkInterval** (macOS 10.16+, iOS 14.0+)
 **Priority: Medium-Low** - Advanced feature for realtime workgroup management
@@ -69,6 +158,73 @@
 **Relevance:** Very low-level API. Most use cases covered by `AudioConverter` (higher-level) and `ExtendedAudioFile` (even higher-level). Direct codec access needed only for custom codec implementations or highly specialized workflows.
 
 **Recommendation:** Low priority - `AudioConverter` covers 95% of use cases.
+
+---
+
+## Integration Opportunities
+
+### [ ] **Ableton Link Integration**
+**Priority: HIGH** - Tempo synchronization and network music capabilities
+
+**What it provides:**
+- Multi-device tempo synchronization over local network
+- Shared beat grid and phase alignment
+- Transport state synchronization (play/stop)
+- Sub-millisecond precision timing
+- Automatic peer discovery and connection
+
+**Key capabilities:**
+- **Network tempo sync** - Multiple apps stay in perfect tempo sync
+- **Beat quantization** - Start/stop on beat boundaries
+- **DAW integration** - Sync with Ableton Live, Bitwig, etc.
+- **Collaborative jamming** - Multiple musicians playing in sync over network
+- **Professional workflows** - Industry-standard sync protocol
+
+**Current state:** Ableton Link library exists in `thirdparty/link/` but not yet integrated with CoreMusic.
+
+**What's needed:**
+```python
+# Create Link session
+link = cm.Link(bpm=120.0)
+link.enabled = True
+
+# Monitor peers
+print(f"Connected to {link.num_peers} peers")
+
+# Get synchronized beat/phase
+state = link.capture_audio_session_state()
+beat = state.beat_at_time(host_time, quantum=4.0)
+phase = state.phase_at_time(host_time, quantum=4.0)
+
+# Use in audio callback for beat-accurate playback
+player = cm.AudioPlayer(link=link, quantum=4.0)
+player.load_file("loop.wav")
+player.start()  # Automatically quantizes to beat grid
+```
+
+**Integration points:**
+- Cython wrapper for C++ Link API (`link.pyx`)
+- Clock integration with `mach_absolute_time()`
+- AudioUnit render callback integration
+- Output latency compensation
+- Python high-level API with callbacks
+
+**Benefits:**
+- **Unique in Python** - No other Python Link wrapper exists
+- **Professional workflows** - Enables serious music production
+- **Network music** - Multi-device jam sessions
+- **Beat-accurate** - Quantized playback and recording
+- **Cross-platform** - Works with 100+ Link-enabled apps
+
+**Implementation Effort:** MEDIUM-HIGH (7-10 days)
+- Basic C++ wrapper: 2-3 days
+- AudioEngine integration: 2-3 days
+- Python API + callbacks: 1-2 days
+- Testing + documentation: 2 days
+
+**Documentation:** See `docs/dev/ableton_link.md` for complete integration analysis
+
+**Recommendation:** HIGH priority - Positions CoreMusic as complete professional audio framework, provides unique value in Python ecosystem, proven stable technology with minimal risk.
 
 ---
 
@@ -129,40 +285,33 @@ available_plugins = cm.discover_audio_units(type='effect')
 
 ---
 
-### **Packaging and Distribution**
-**Priority: MEDIUM**
-
-**Current state:** Builds from source.
-
-**Improvements:**
-- **PyPI distribution** with pre-built wheels for macOS
-- **Conda package** for conda-forge
-- **ARM64 optimization** for Apple Silicon
-- **Universal2 binaries** (x86_64 + arm64)
-
-**Benefits:**
-- Easier installation (`pip install coremusic`)
-- Broader reach
-- No compilation required for end users
-
-**Implementation Effort:** Medium - CI/CD setup for wheel building
-
 ---
 
 ## Prioritized Roadmap
 
 ### Foundation (Immediate)
-1. [ ] **PyPI Distribution** - Pre-built wheels
+1. [x] **PyPI Distribution** - Pre-built wheels
+2. [x] **CoreAudioClock** - Sync and timecode support
+
+### High-Priority Integrations (0-6 months)
+3. [ ] **Ableton Link Integration** - Network tempo sync and beat quantization (7-10 days)
+   - Enables professional music production workflows
+   - Unique capability in Python ecosystem
+   - See `docs/dev/ableton_link.md` for details
+
+4. [ ] **AudioUnit Host Implementation** - Plugin hosting infrastructure (2-3 weeks)
+   - Load and route third-party AudioUnit plugins
+   - Parameter automation and preset management
+   - Build custom DAWs and effects chains
 
 ### Advanced Features (6-12 months)
-2. [ ] **CoreAudioClock** - Sync and timecode support (if user demand exists)
-3. [ ] **Performance Optimizations** - Memory mapping, zero-copy, parallel processing
-4. [ ] **Plugin System** - Custom AudioUnit registration (advanced users)
+5. [ ] **Performance Optimizations** - Memory mapping, zero-copy, parallel processing
+6. [ ] **Plugin System** - Custom AudioUnit registration (advanced users)
 
 ### Specialized (12+ months, optional)
-5. [ ] **AudioWorkInterval** - For advanced realtime audio developers
-6. [ ] **AudioCodec API** - Direct codec component access (niche)
-7. [ ] **AudioHardwareTapping** - Process tapping (requires ObjC bridge)
+7. [ ] **AudioWorkInterval** - For advanced realtime audio developers
+8. [ ] **AudioCodec API** - Direct codec component access (niche)
+9. [ ] **AudioHardwareTapping** - Process tapping (requires ObjC bridge)
 
 ---
 

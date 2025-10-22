@@ -6,6 +6,16 @@ from . cimport coremidi as cm
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy, memset
+from libc.stdint cimport uintptr_t
+
+# Forward declare Link module classes for integration
+cdef extern from *:
+    """
+    // Forward declarations for Link integration
+    """
+    pass
+
+# We'll use Python imports at runtime for Link integration
 
 def fourchar_to_int(code: str) -> int:
    """Convert fourcc chars to an int
@@ -1572,6 +1582,11 @@ DEF SAMPLE_RATE = 44100.0
 DEF CHANNELS = 2
 DEF BITS_PER_CHANNEL = 32  # Float32
 
+# Note: Link integration placeholder
+# Full Link timing integration in the render callback would require C++ interop
+# For now, AudioPlayer stores Link session reference but timing integration
+# happens at the Python layer before/after audio operations
+
 # Audio player state structure
 cdef struct AudioPlayerData:
     ca.AudioBufferList* buffer_list
@@ -1589,7 +1604,12 @@ cdef cf.OSStatus audio_player_render_callback(
     cf.UInt32 num_frames,
     ca.AudioBufferList* io_data
 ) noexcept nogil:
-    """Render callback that provides audio data to the output unit"""
+    """Render callback that provides audio data to the output unit
+
+    Note: Link timing integration would require C++ interop in this callback.
+    For synchronized playback, Link state can be queried from Python layer
+    before starting playback to align timing.
+    """
     cdef AudioPlayerData* player_data
     cdef cf.UInt32 current_frame
     cdef cf.UInt32 max_frames
@@ -1642,16 +1662,26 @@ cdef cf.OSStatus audio_player_render_callback(
 
 
 cdef class AudioPlayer:
-    """Pure Cython audio player using AudioUnit for playback"""
+    """Pure Cython audio player using AudioUnit for playback
+
+    Supports optional Ableton Link integration for tempo-synchronized playback.
+    Link timing is handled at the Python layer before starting playback.
+    """
     cdef AudioPlayerData player_data
     cdef at.AudioUnit output_unit
     cdef bint initialized
+    cdef object _link_session_ref  # Keep Python reference to prevent GC
 
-    def __init__(self):
-        """Initialize the AudioPlayer"""
+    def __init__(self, link_session=None):
+        """Initialize the AudioPlayer
+
+        Args:
+            link_session: Optional LinkSession instance for tempo synchronization
+        """
         memset(&self.player_data, 0, sizeof(AudioPlayerData))
         self.output_unit = NULL
         self.initialized = False
+        self._link_session_ref = link_session
 
     def load_file(self, str file_path):
         """Load an audio file for playback using ExtAudioFile"""
@@ -1904,6 +1934,35 @@ cdef class AudioPlayer:
         if self.player_data.total_frames == 0:
             return 0.0
         return <float>self.player_data.current_frame / <float>self.player_data.total_frames
+
+    @property
+    def link_session(self):
+        """Get the Link session if one was provided"""
+        return self._link_session_ref
+
+    def get_link_timing(self, quantum=4.0):
+        """Get current Link timing information (if Link session is attached)
+
+        Args:
+            quantum: Beat quantum (default 4.0 for 4/4 time)
+
+        Returns:
+            dict with keys: tempo, beat, phase, is_playing
+            or None if no Link session attached
+        """
+        if self._link_session_ref is None:
+            return None
+
+        # Query Link session from Python layer
+        state = self._link_session_ref.capture_app_session_state()
+        current_time = self._link_session_ref.clock.micros()
+
+        return {
+            'tempo': state.tempo,
+            'beat': state.beat_at_time(current_time, quantum),
+            'phase': state.phase_at_time(current_time, quantum),
+            'is_playing': state.is_playing
+        }
 
     def __dealloc__(self):
         """Clean up resources when the object is destroyed"""

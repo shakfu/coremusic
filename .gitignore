@@ -42,7 +42,7 @@ dist
 *.app
 
 # external
-thirdparty
+# thirdparty
 
 # claude
 .claude
