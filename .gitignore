@@ -8,6 +8,10 @@ docs/_build
 dist
 *.egg-info
 
+# Backup files
+*.bak
+*~
+
 # Prerequisites
 *.d
 
