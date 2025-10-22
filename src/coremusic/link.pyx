@@ -471,6 +471,29 @@ cdef class LinkSession:
         peers = self.num_peers
         return f"LinkSession({status}, {peers} peers)"
 
+    def __enter__(self):
+        """Enter context manager - enables Link networking
+
+        Returns:
+            self: The LinkSession instance
+        """
+        self.enabled = True
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit context manager - disables Link networking
+
+        Args:
+            exc_type: Exception type (if any)
+            exc_val: Exception value (if any)
+            exc_tb: Exception traceback (if any)
+
+        Returns:
+            False: Do not suppress exceptions
+        """
+        self.enabled = False
+        return False
+
     # Internal methods for C++ pointer access (used by AudioPlayer integration)
     def _get_link_ptr_as_int(self) -> int:
         """Get internal C++ Link pointer as integer (for C integration)

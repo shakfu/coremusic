@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""CoreMusic: Complete Python bindings for Apple CoreAudio and CoreMIDI.
+"""CoreMusic: Complete Python bindings for Apple CoreAudio, CoreMIDI, and Ableton Link.
 
 This package provides comprehensive Python bindings for Apple's CoreAudio and
-CoreMIDI ecosystems, exposing the complete CoreAudio and CoreMIDI C APIs
-through Python.
+CoreMIDI ecosystems, plus Ableton Link tempo synchronization, exposing the
+complete APIs through Python.
 
 The primary interface is the object-oriented API with automatic resource
 management and context manager support. The low-level functional C API is
@@ -13,6 +13,7 @@ Usage:
     import coremusic as cm              # Object-oriented API
     import coremusic.capi as capi       # Functional C API
     import coremusic.scipy_utils as spu # SciPy integration (optional)
+    from coremusic import link          # Ableton Link synchronization
 """
 
 # Import object-oriented API (primary interface)
@@ -23,6 +24,12 @@ from .async_io import *
 
 # Import high-level utilities
 from .utilities import *
+
+# Import Ableton Link classes
+from . import link
+
+# Import Link + MIDI integration
+from . import link_midi
 
 
 __all__ = [
@@ -68,6 +75,9 @@ __all__ = [
     "ClockTimeFormat",
     # Audio Player
     "AudioPlayer",
+    # Ableton Link - Tempo Synchronization
+    "link",  # link module containing LinkSession, SessionState, Clock
+    "link_midi",  # Link + MIDI integration (LinkMIDIClock, LinkMIDISequencer)
     # NumPy availability flag
     "NUMPY_AVAILABLE",
 ]

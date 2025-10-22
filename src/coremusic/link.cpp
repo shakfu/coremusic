@@ -1965,6 +1965,22 @@ static CYTHON_INLINE PyObject* __Pyx_PyUnicode_Unicode(PyObject *obj);
 static PyObject* __Pyx_PyUnicode_Join(PyObject** values, Py_ssize_t value_count, Py_ssize_t result_ulength,
                                       Py_UCS4 max_char);
 
+/* PyObjectDelAttr.proto */
+#if CYTHON_COMPILING_IN_LIMITED_API && __PYX_LIMITED_VERSION_HEX < 0x030d0000
+#define __Pyx_PyObject_DelAttr(o, n) PyObject_SetAttr(o, n, NULL)
+#else
+#define __Pyx_PyObject_DelAttr(o, n) PyObject_DelAttr(o, n)
+#endif
+
+/* PyObjectSetAttrStr.proto */
+#if CYTHON_USE_TYPE_SLOTS
+#define __Pyx_PyObject_DelAttrStr(o,n) __Pyx_PyObject_SetAttrStr(o, n, NULL)
+static CYTHON_INLINE int __Pyx_PyObject_SetAttrStr(PyObject* obj, PyObject* attr_name, PyObject* value);
+#else
+#define __Pyx_PyObject_DelAttrStr(o,n)   __Pyx_PyObject_DelAttr(o,n)
+#define __Pyx_PyObject_SetAttrStr(o,n,v) PyObject_SetAttr(o,n,v)
+#endif
+
 /* DefaultPlacementNew.proto */
 #include <new>
 template<typename T>
@@ -2413,6 +2429,7 @@ static const char __pyx_k_int[] = "int";
 static const char __pyx_k_pop[] = "pop";
 static const char __pyx_k_None[] = "None";
 static const char __pyx_k_beat[] = "beat";
+static const char __pyx_k_exit[] = "__exit__";
 static const char __pyx_k_func[] = "__func__";
 static const char __pyx_k_main[] = "__main__";
 static const char __pyx_k_name[] = "__name__";
@@ -2420,11 +2437,14 @@ static const char __pyx_k_q_gQ[] = "\320\004'\240q\360\014\000\t\020\210{\230'\2
 static const char __pyx_k_self[] = "self";
 static const char __pyx_k_test[] = "__test__";
 static const char __pyx_k_Clock[] = "Clock";
+static const char __pyx_k_enter[] = "__enter__";
 static const char __pyx_k_float[] = "float";
 static const char __pyx_k_peers[] = " peers)";
 static const char __pyx_k_state[] = "state";
 static const char __pyx_k_ticks[] = "ticks";
+static const char __pyx_k_A_Kq_q[] = "\200A\360\014\000\t\r\210K\220q\330\010\017\210q";
 static const char __pyx_k_enable[] = "enable";
+static const char __pyx_k_exc_tb[] = "exc_tb";
 static const char __pyx_k_micros[] = "micros";
 static const char __pyx_k_module[] = "__module__";
 static const char __pyx_k_q_G6_q[] = "\320\004\027\220q\360\016\000\016\017\330\014\020\220\004\220G\2306\240\021\330\010\017\210q";
@@ -2434,11 +2454,14 @@ static const char __pyx_k_return[] = "return";
 static const char __pyx_k_WG1_r_q[] = "\320\004\030\230\001\360\016\000\016\017\330\014\021\220\024\220W\230G\2401\330\010\017\210r\220\026\220q";
 static const char __pyx_k_disable[] = "disable";
 static const char __pyx_k_enabled[] = "enabled";
+static const char __pyx_k_exc_val[] = "exc_val";
 static const char __pyx_k_playing[] = "playing";
 static const char __pyx_k_quantum[] = "quantum";
 static const char __pyx_k_time_us[] = "time_us";
+static const char __pyx_k_A_Kq_q_2[] = "\200A\360\026\000\t\r\210K\220q\330\010\017\210q";
 static const char __pyx_k_add_note[] = "add_note";
 static const char __pyx_k_disabled[] = "disabled";
+static const char __pyx_k_exc_type[] = "exc_type";
 static const char __pyx_k_getstate[] = "__getstate__";
 static const char __pyx_k_qualname[] = "__qualname__";
 static const char __pyx_k_set_name[] = "__set_name__";
@@ -2474,12 +2497,14 @@ static const char __pyx_k_ticks_to_micros[] = "ticks_to_micros";
 static const char __pyx_k_A_4t1_aq_L_G4r_5[] = "\200A\360\016\000\t\014\2104\210t\2201\330\014\022\220,\230a\230q\330\010$\240L\260\001\260\021\330\010\014\210G\2204\220r\230\031\240!\2405\250\001";
 static const char __pyx_k_A_4t1_aq_G4r_7q_a[] = "\200A\360\026\000\t\014\2104\210t\2201\330\014\022\220,\230a\230q\330\010\014\210G\2204\220r\320\0317\260q\270\006\270a";
 static const char __pyx_k_A_4t1_aq_L_G4r_ay[] = "\200A\360\016\000\t\014\2104\210t\2201\330\014\022\220,\230a\230q\330\010$\240L\260\001\260\021\330\010\014\210G\2204\220r\230\035\240a\240y\260\001";
+static const char __pyx_k_LinkSession___exit[] = "LinkSession.__exit__";
 static const char __pyx_k_asyncio_coroutines[] = "asyncio.coroutines";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
 static const char __pyx_k_force_beat_at_time[] = "force_beat_at_time";
 static const char __pyx_k_1_4t1_aq_D_t2_q_wfA[] = "\320\004;\2701\360\032\000\t\014\2104\210t\2201\330\014\022\220,\230a\230q\330\010$\240D\250\007\250t\2602\260[\300\001\300\026\300q\330\010\017\210w\220f\230A";
 static const char __pyx_k_1_4wc_aq_xq_j_a_Q_q[] = "\320\004+\2501\360\022\000\t\014\2104\210w\220c\230\021\330\014\022\220,\230a\230q\360\006\000\t$\240<\250x\260q\270\001\330\010\016\210j\230\013\320#>\270a\330\014\020\220\006\320\026-\250Q\340\010\017\210q";
 static const char __pyx_k_A_4t1_aq_L_G4r_1F_1[] = "\200A\360*\000\t\014\2104\210t\2201\330\014\022\220,\230a\230q\330\010$\240L\260\001\260\021\330\010\014\210G\2204\220r\320\031+\2501\250F\260)\2701";
+static const char __pyx_k_LinkSession___enter[] = "LinkSession.__enter__";
 static const char __pyx_k_get_link_ptr_as_int[] = "_get_link_ptr_as_int";
 static const char __pyx_k_time_for_is_playing[] = "time_for_is_playing";
 static const char __pyx_k_A_4t1_aq_L_G4r_9IVST[] = "\200A\360\"\000\t\014\2104\210t\2201\330\014\022\220,\230a\230q\330\010$\240L\260\001\260\021\330\010\014\210G\2204\220r\320\031:\270!\2709\300I\310V\320ST";
@@ -2563,10 +2588,12 @@ static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_6commit_audio_session_s
 static struct __pyx_obj_9coremusic_4link_SessionState *__pyx_pf_9coremusic_4link_11LinkSession_8capture_app_session_state(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_10commit_app_session_state(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self, struct __pyx_obj_9coremusic_4link_SessionState *__pyx_v_state); /* proto */
 static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_12__repr__(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_14_get_link_ptr_as_int(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_16_get_clock_ptr_as_int(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_18__reduce_cython__(CYTHON_UNUSED struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_20__setstate_cython__(CYTHON_UNUSED struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_14__enter__(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_16__exit__(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_exc_type, CYTHON_UNUSED PyObject *__pyx_v_exc_val, CYTHON_UNUSED PyObject *__pyx_v_exc_tb); /* proto */
+static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_18_get_link_ptr_as_int(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_20_get_clock_ptr_as_int(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_22__reduce_cython__(CYTHON_UNUSED struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_24__setstate_cython__(CYTHON_UNUSED struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_tp_new_9coremusic_4link_Clock(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_9coremusic_4link_SessionState(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_9coremusic_4link_LinkSession(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
@@ -2615,8 +2642,8 @@ typedef struct {
   PyTypeObject *__pyx_ptype_9coremusic_4link_SessionState;
   PyTypeObject *__pyx_ptype_9coremusic_4link_LinkSession;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_pop;
-  PyObject *__pyx_codeobj_tab[26];
-  PyObject *__pyx_string_tab[104];
+  PyObject *__pyx_codeobj_tab[28];
+  PyObject *__pyx_string_tab[111];
   PyObject *__pyx_int_0;
 /* #### Code section: module_state_contents ### */
 /* CommonTypesMetaclass.module_state_decls */
@@ -2665,100 +2692,107 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_n_u_Clock_ticks_to_micros __pyx_string_tab[7]
 #define __pyx_kp_u_LinkSession __pyx_string_tab[8]
 #define __pyx_n_u_LinkSession_2 __pyx_string_tab[9]
-#define __pyx_n_u_LinkSession___reduce_cython __pyx_string_tab[10]
-#define __pyx_n_u_LinkSession___setstate_cython __pyx_string_tab[11]
-#define __pyx_n_u_LinkSession__get_clock_ptr_as_in __pyx_string_tab[12]
-#define __pyx_n_u_LinkSession__get_link_ptr_as_int __pyx_string_tab[13]
-#define __pyx_n_u_LinkSession_capture_app_session __pyx_string_tab[14]
-#define __pyx_n_u_LinkSession_capture_audio_sessio __pyx_string_tab[15]
-#define __pyx_n_u_LinkSession_commit_app_session_s __pyx_string_tab[16]
-#define __pyx_n_u_LinkSession_commit_audio_session __pyx_string_tab[17]
-#define __pyx_kp_u_Link_session_is_not_initialized __pyx_string_tab[18]
-#define __pyx_kp_u_None __pyx_string_tab[19]
-#define __pyx_kp_u_Note_that_Cython_is_deliberately __pyx_string_tab[20]
-#define __pyx_n_u_RuntimeError __pyx_string_tab[21]
-#define __pyx_n_u_SessionState __pyx_string_tab[22]
-#define __pyx_n_u_SessionState___reduce_cython __pyx_string_tab[23]
-#define __pyx_n_u_SessionState___setstate_cython __pyx_string_tab[24]
-#define __pyx_n_u_SessionState_beat_at_time __pyx_string_tab[25]
-#define __pyx_n_u_SessionState_force_beat_at_time __pyx_string_tab[26]
-#define __pyx_kp_u_SessionState_is_not_initialized __pyx_string_tab[27]
-#define __pyx_n_u_SessionState_phase_at_time __pyx_string_tab[28]
-#define __pyx_n_u_SessionState_request_beat_at_sta __pyx_string_tab[29]
-#define __pyx_n_u_SessionState_request_beat_at_tim __pyx_string_tab[30]
-#define __pyx_n_u_SessionState_set_is_playing __pyx_string_tab[31]
-#define __pyx_n_u_SessionState_set_is_playing_and __pyx_string_tab[32]
-#define __pyx_n_u_SessionState_set_tempo __pyx_string_tab[33]
-#define __pyx_n_u_SessionState_time_at_beat __pyx_string_tab[34]
-#define __pyx_n_u_SessionState_time_for_is_playing __pyx_string_tab[35]
-#define __pyx_n_u_TypeError __pyx_string_tab[36]
-#define __pyx_kp_u__2 __pyx_string_tab[37]
-#define __pyx_kp_u_add_note __pyx_string_tab[38]
-#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[39]
-#define __pyx_n_u_beat __pyx_string_tab[40]
-#define __pyx_n_u_beat_at_time __pyx_string_tab[41]
-#define __pyx_n_u_bpm __pyx_string_tab[42]
-#define __pyx_n_u_capture_app_session_state __pyx_string_tab[43]
-#define __pyx_n_u_capture_audio_session_state __pyx_string_tab[44]
-#define __pyx_n_u_cline_in_traceback __pyx_string_tab[45]
-#define __pyx_n_u_commit_app_session_state __pyx_string_tab[46]
-#define __pyx_n_u_commit_audio_session_state __pyx_string_tab[47]
-#define __pyx_n_u_coremusic_link __pyx_string_tab[48]
-#define __pyx_kp_u_disable __pyx_string_tab[49]
-#define __pyx_n_u_disabled __pyx_string_tab[50]
-#define __pyx_kp_u_enable __pyx_string_tab[51]
-#define __pyx_n_u_enabled __pyx_string_tab[52]
-#define __pyx_n_u_float __pyx_string_tab[53]
-#define __pyx_n_u_force_beat_at_time __pyx_string_tab[54]
-#define __pyx_n_u_func __pyx_string_tab[55]
-#define __pyx_kp_u_gc __pyx_string_tab[56]
-#define __pyx_n_u_get_clock_ptr_as_int __pyx_string_tab[57]
-#define __pyx_n_u_get_link_ptr_as_int __pyx_string_tab[58]
-#define __pyx_n_u_getstate __pyx_string_tab[59]
-#define __pyx_n_u_int __pyx_string_tab[60]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[61]
-#define __pyx_kp_u_isenabled __pyx_string_tab[62]
-#define __pyx_n_u_main __pyx_string_tab[63]
-#define __pyx_n_u_micros __pyx_string_tab[64]
-#define __pyx_n_u_micros_to_ticks __pyx_string_tab[65]
-#define __pyx_n_u_micros_val __pyx_string_tab[66]
-#define __pyx_n_u_module __pyx_string_tab[67]
-#define __pyx_n_u_name __pyx_string_tab[68]
-#define __pyx_kp_u_no_default___reduce___due_to_non __pyx_string_tab[69]
-#define __pyx_n_u_num_peers __pyx_string_tab[70]
-#define __pyx_kp_u_peers __pyx_string_tab[71]
-#define __pyx_n_u_phase_at_time __pyx_string_tab[72]
-#define __pyx_n_u_playing __pyx_string_tab[73]
-#define __pyx_n_u_pop __pyx_string_tab[74]
-#define __pyx_n_u_pyx_state __pyx_string_tab[75]
-#define __pyx_n_u_qualname __pyx_string_tab[76]
-#define __pyx_n_u_quantum __pyx_string_tab[77]
-#define __pyx_n_u_reduce __pyx_string_tab[78]
-#define __pyx_n_u_reduce_cython __pyx_string_tab[79]
-#define __pyx_n_u_reduce_ex __pyx_string_tab[80]
-#define __pyx_n_u_request_beat_at_start_playing_ti __pyx_string_tab[81]
-#define __pyx_n_u_request_beat_at_time __pyx_string_tab[82]
-#define __pyx_n_u_result __pyx_string_tab[83]
-#define __pyx_n_u_return __pyx_string_tab[84]
-#define __pyx_n_u_self __pyx_string_tab[85]
-#define __pyx_n_u_set_is_playing __pyx_string_tab[86]
-#define __pyx_n_u_set_is_playing_and_request_beat __pyx_string_tab[87]
-#define __pyx_n_u_set_name __pyx_string_tab[88]
-#define __pyx_n_u_set_tempo __pyx_string_tab[89]
-#define __pyx_n_u_setstate __pyx_string_tab[90]
-#define __pyx_n_u_setstate_cython __pyx_string_tab[91]
-#define __pyx_kp_u_src_coremusic_link_pyx __pyx_string_tab[92]
-#define __pyx_n_u_state __pyx_string_tab[93]
-#define __pyx_kp_u_stringsource __pyx_string_tab[94]
-#define __pyx_n_u_t __pyx_string_tab[95]
-#define __pyx_n_u_test __pyx_string_tab[96]
-#define __pyx_n_u_ticks __pyx_string_tab[97]
-#define __pyx_n_u_ticks_to_micros __pyx_string_tab[98]
-#define __pyx_n_u_time_at_beat __pyx_string_tab[99]
-#define __pyx_n_u_time_for_is_playing __pyx_string_tab[100]
-#define __pyx_n_u_time_micros __pyx_string_tab[101]
-#define __pyx_n_u_time_us __pyx_string_tab[102]
-#define __pyx_n_u_us __pyx_string_tab[103]
+#define __pyx_n_u_LinkSession___enter __pyx_string_tab[10]
+#define __pyx_n_u_LinkSession___exit __pyx_string_tab[11]
+#define __pyx_n_u_LinkSession___reduce_cython __pyx_string_tab[12]
+#define __pyx_n_u_LinkSession___setstate_cython __pyx_string_tab[13]
+#define __pyx_n_u_LinkSession__get_clock_ptr_as_in __pyx_string_tab[14]
+#define __pyx_n_u_LinkSession__get_link_ptr_as_int __pyx_string_tab[15]
+#define __pyx_n_u_LinkSession_capture_app_session __pyx_string_tab[16]
+#define __pyx_n_u_LinkSession_capture_audio_sessio __pyx_string_tab[17]
+#define __pyx_n_u_LinkSession_commit_app_session_s __pyx_string_tab[18]
+#define __pyx_n_u_LinkSession_commit_audio_session __pyx_string_tab[19]
+#define __pyx_kp_u_Link_session_is_not_initialized __pyx_string_tab[20]
+#define __pyx_kp_u_None __pyx_string_tab[21]
+#define __pyx_kp_u_Note_that_Cython_is_deliberately __pyx_string_tab[22]
+#define __pyx_n_u_RuntimeError __pyx_string_tab[23]
+#define __pyx_n_u_SessionState __pyx_string_tab[24]
+#define __pyx_n_u_SessionState___reduce_cython __pyx_string_tab[25]
+#define __pyx_n_u_SessionState___setstate_cython __pyx_string_tab[26]
+#define __pyx_n_u_SessionState_beat_at_time __pyx_string_tab[27]
+#define __pyx_n_u_SessionState_force_beat_at_time __pyx_string_tab[28]
+#define __pyx_kp_u_SessionState_is_not_initialized __pyx_string_tab[29]
+#define __pyx_n_u_SessionState_phase_at_time __pyx_string_tab[30]
+#define __pyx_n_u_SessionState_request_beat_at_sta __pyx_string_tab[31]
+#define __pyx_n_u_SessionState_request_beat_at_tim __pyx_string_tab[32]
+#define __pyx_n_u_SessionState_set_is_playing __pyx_string_tab[33]
+#define __pyx_n_u_SessionState_set_is_playing_and __pyx_string_tab[34]
+#define __pyx_n_u_SessionState_set_tempo __pyx_string_tab[35]
+#define __pyx_n_u_SessionState_time_at_beat __pyx_string_tab[36]
+#define __pyx_n_u_SessionState_time_for_is_playing __pyx_string_tab[37]
+#define __pyx_n_u_TypeError __pyx_string_tab[38]
+#define __pyx_kp_u__2 __pyx_string_tab[39]
+#define __pyx_kp_u_add_note __pyx_string_tab[40]
+#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[41]
+#define __pyx_n_u_beat __pyx_string_tab[42]
+#define __pyx_n_u_beat_at_time __pyx_string_tab[43]
+#define __pyx_n_u_bpm __pyx_string_tab[44]
+#define __pyx_n_u_capture_app_session_state __pyx_string_tab[45]
+#define __pyx_n_u_capture_audio_session_state __pyx_string_tab[46]
+#define __pyx_n_u_cline_in_traceback __pyx_string_tab[47]
+#define __pyx_n_u_commit_app_session_state __pyx_string_tab[48]
+#define __pyx_n_u_commit_audio_session_state __pyx_string_tab[49]
+#define __pyx_n_u_coremusic_link __pyx_string_tab[50]
+#define __pyx_kp_u_disable __pyx_string_tab[51]
+#define __pyx_n_u_disabled __pyx_string_tab[52]
+#define __pyx_kp_u_enable __pyx_string_tab[53]
+#define __pyx_n_u_enabled __pyx_string_tab[54]
+#define __pyx_n_u_enter __pyx_string_tab[55]
+#define __pyx_n_u_exc_tb __pyx_string_tab[56]
+#define __pyx_n_u_exc_type __pyx_string_tab[57]
+#define __pyx_n_u_exc_val __pyx_string_tab[58]
+#define __pyx_n_u_exit __pyx_string_tab[59]
+#define __pyx_n_u_float __pyx_string_tab[60]
+#define __pyx_n_u_force_beat_at_time __pyx_string_tab[61]
+#define __pyx_n_u_func __pyx_string_tab[62]
+#define __pyx_kp_u_gc __pyx_string_tab[63]
+#define __pyx_n_u_get_clock_ptr_as_int __pyx_string_tab[64]
+#define __pyx_n_u_get_link_ptr_as_int __pyx_string_tab[65]
+#define __pyx_n_u_getstate __pyx_string_tab[66]
+#define __pyx_n_u_int __pyx_string_tab[67]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[68]
+#define __pyx_kp_u_isenabled __pyx_string_tab[69]
+#define __pyx_n_u_main __pyx_string_tab[70]
+#define __pyx_n_u_micros __pyx_string_tab[71]
+#define __pyx_n_u_micros_to_ticks __pyx_string_tab[72]
+#define __pyx_n_u_micros_val __pyx_string_tab[73]
+#define __pyx_n_u_module __pyx_string_tab[74]
+#define __pyx_n_u_name __pyx_string_tab[75]
+#define __pyx_kp_u_no_default___reduce___due_to_non __pyx_string_tab[76]
+#define __pyx_n_u_num_peers __pyx_string_tab[77]
+#define __pyx_kp_u_peers __pyx_string_tab[78]
+#define __pyx_n_u_phase_at_time __pyx_string_tab[79]
+#define __pyx_n_u_playing __pyx_string_tab[80]
+#define __pyx_n_u_pop __pyx_string_tab[81]
+#define __pyx_n_u_pyx_state __pyx_string_tab[82]
+#define __pyx_n_u_qualname __pyx_string_tab[83]
+#define __pyx_n_u_quantum __pyx_string_tab[84]
+#define __pyx_n_u_reduce __pyx_string_tab[85]
+#define __pyx_n_u_reduce_cython __pyx_string_tab[86]
+#define __pyx_n_u_reduce_ex __pyx_string_tab[87]
+#define __pyx_n_u_request_beat_at_start_playing_ti __pyx_string_tab[88]
+#define __pyx_n_u_request_beat_at_time __pyx_string_tab[89]
+#define __pyx_n_u_result __pyx_string_tab[90]
+#define __pyx_n_u_return __pyx_string_tab[91]
+#define __pyx_n_u_self __pyx_string_tab[92]
+#define __pyx_n_u_set_is_playing __pyx_string_tab[93]
+#define __pyx_n_u_set_is_playing_and_request_beat __pyx_string_tab[94]
+#define __pyx_n_u_set_name __pyx_string_tab[95]
+#define __pyx_n_u_set_tempo __pyx_string_tab[96]
+#define __pyx_n_u_setstate __pyx_string_tab[97]
+#define __pyx_n_u_setstate_cython __pyx_string_tab[98]
+#define __pyx_kp_u_src_coremusic_link_pyx __pyx_string_tab[99]
+#define __pyx_n_u_state __pyx_string_tab[100]
+#define __pyx_kp_u_stringsource __pyx_string_tab[101]
+#define __pyx_n_u_t __pyx_string_tab[102]
+#define __pyx_n_u_test __pyx_string_tab[103]
+#define __pyx_n_u_ticks __pyx_string_tab[104]
+#define __pyx_n_u_ticks_to_micros __pyx_string_tab[105]
+#define __pyx_n_u_time_at_beat __pyx_string_tab[106]
+#define __pyx_n_u_time_for_is_playing __pyx_string_tab[107]
+#define __pyx_n_u_time_micros __pyx_string_tab[108]
+#define __pyx_n_u_time_us __pyx_string_tab[109]
+#define __pyx_n_u_us __pyx_string_tab[110]
 /* #### Code section: module_state_clear ### */
 #if CYTHON_USE_MODULE_STATE
 static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
@@ -2785,8 +2819,8 @@ static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_type_9coremusic_4link_SessionState);
   Py_CLEAR(clear_module_state->__pyx_ptype_9coremusic_4link_LinkSession);
   Py_CLEAR(clear_module_state->__pyx_type_9coremusic_4link_LinkSession);
-  for (int i=0; i<26; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<104; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<28; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
+  for (int i=0; i<111; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
   Py_CLEAR(clear_module_state->__pyx_int_0);
   return 0;
 }
@@ -2814,8 +2848,8 @@ static CYTHON_SMALL_CODE int __pyx_m_traverse(PyObject *m, visitproc visit, void
   Py_VISIT(traverse_module_state->__pyx_type_9coremusic_4link_SessionState);
   Py_VISIT(traverse_module_state->__pyx_ptype_9coremusic_4link_LinkSession);
   Py_VISIT(traverse_module_state->__pyx_type_9coremusic_4link_LinkSession);
-  for (int i=0; i<26; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<104; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<28; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
+  for (int i=0; i<111; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_int_0);
   return 0;
 }
@@ -7954,7 +7988,7 @@ static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_12__repr__(struct __pyx
  *         peers = self.num_peers
  *         return f"LinkSession({status}, {peers} peers)"             # <<<<<<<<<<<<<<
  * 
- *     # Internal methods for C++ pointer access (used by AudioPlayer integration)
+ *     def __enter__(self):
 */
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_1 = __Pyx_PyUnicode_Unicode(__pyx_v_status); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 472, __pyx_L1_error)
@@ -7998,7 +8032,262 @@ static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_12__repr__(struct __pyx
   return __pyx_r;
 }
 
-/* "coremusic/link.pyx":475
+/* "coremusic/link.pyx":474
+ *         return f"LinkSession({status}, {peers} peers)"
+ * 
+ *     def __enter__(self):             # <<<<<<<<<<<<<<
+ *         """Enter context manager - enables Link networking
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_15__enter__(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4link_11LinkSession_14__enter__, "LinkSession.__enter__(self)\n\nEnter context manager - enables Link networking\n\nReturns:\n    self: The LinkSession instance");
+static PyMethodDef __pyx_mdef_9coremusic_4link_11LinkSession_15__enter__ = {"__enter__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_15__enter__, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_14__enter__};
+static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_15__enter__(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__enter__ (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  if (unlikely(__pyx_nargs > 0)) { __Pyx_RaiseArgtupleInvalid("__enter__", 1, 0, 0, __pyx_nargs); return NULL; }
+  const Py_ssize_t __pyx_kwds_len = unlikely(__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+  if (unlikely(__pyx_kwds_len < 0)) return NULL;
+  if (unlikely(__pyx_kwds_len > 0)) {__Pyx_RejectKeywords("__enter__", __pyx_kwds); return NULL;}
+  __pyx_r = __pyx_pf_9coremusic_4link_11LinkSession_14__enter__(((struct __pyx_obj_9coremusic_4link_LinkSession *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_14__enter__(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__enter__", 0);
+
+  /* "coremusic/link.pyx":480
+ *             self: The LinkSession instance
+ *         """
+ *         self.enabled = True             # <<<<<<<<<<<<<<
+ *         return self
+ * 
+*/
+  if (__Pyx_PyObject_SetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_enabled, Py_True) < (0)) __PYX_ERR(0, 480, __pyx_L1_error)
+
+  /* "coremusic/link.pyx":481
+ *         """
+ *         self.enabled = True
+ *         return self             # <<<<<<<<<<<<<<
+ * 
+ *     def __exit__(self, exc_type, exc_val, exc_tb):
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF((PyObject *)__pyx_v_self);
+  __pyx_r = ((PyObject *)__pyx_v_self);
+  goto __pyx_L0;
+
+  /* "coremusic/link.pyx":474
+ *         return f"LinkSession({status}, {peers} peers)"
+ * 
+ *     def __enter__(self):             # <<<<<<<<<<<<<<
+ *         """Enter context manager - enables Link networking
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_AddTraceback("coremusic.link.LinkSession.__enter__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/link.pyx":483
+ *         return self
+ * 
+ *     def __exit__(self, exc_type, exc_val, exc_tb):             # <<<<<<<<<<<<<<
+ *         """Exit context manager - disables Link networking
+ * 
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_17__exit__(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_9coremusic_4link_11LinkSession_16__exit__, "LinkSession.__exit__(self, exc_type, exc_val, exc_tb)\n\nExit context manager - disables Link networking\n\nArgs:\n    exc_type: Exception type (if any)\n    exc_val: Exception value (if any)\n    exc_tb: Exception traceback (if any)\n\nReturns:\n    False: Do not suppress exceptions");
+static PyMethodDef __pyx_mdef_9coremusic_4link_11LinkSession_17__exit__ = {"__exit__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_17__exit__, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_16__exit__};
+static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_17__exit__(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  CYTHON_UNUSED PyObject *__pyx_v_exc_type = 0;
+  CYTHON_UNUSED PyObject *__pyx_v_exc_val = 0;
+  CYTHON_UNUSED PyObject *__pyx_v_exc_tb = 0;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[3] = {0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__exit__ (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_exc_type,&__pyx_mstate_global->__pyx_n_u_exc_val,&__pyx_mstate_global->__pyx_n_u_exc_tb,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 483, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  3:
+        values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 483, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  2:
+        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 483, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 483, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "__exit__", 0) < (0)) __PYX_ERR(0, 483, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 3; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("__exit__", 1, 3, 3, i); __PYX_ERR(0, 483, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 3)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 483, __pyx_L3_error)
+      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 483, __pyx_L3_error)
+      values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 483, __pyx_L3_error)
+    }
+    __pyx_v_exc_type = values[0];
+    __pyx_v_exc_val = values[1];
+    __pyx_v_exc_tb = values[2];
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("__exit__", 1, 3, 3, __pyx_nargs); __PYX_ERR(0, 483, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("coremusic.link.LinkSession.__exit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_9coremusic_4link_11LinkSession_16__exit__(((struct __pyx_obj_9coremusic_4link_LinkSession *)__pyx_v_self), __pyx_v_exc_type, __pyx_v_exc_val, __pyx_v_exc_tb);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_16__exit__(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_exc_type, CYTHON_UNUSED PyObject *__pyx_v_exc_val, CYTHON_UNUSED PyObject *__pyx_v_exc_tb) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__exit__", 0);
+
+  /* "coremusic/link.pyx":494
+ *             False: Do not suppress exceptions
+ *         """
+ *         self.enabled = False             # <<<<<<<<<<<<<<
+ *         return False
+ * 
+*/
+  if (__Pyx_PyObject_SetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_enabled, Py_False) < (0)) __PYX_ERR(0, 494, __pyx_L1_error)
+
+  /* "coremusic/link.pyx":495
+ *         """
+ *         self.enabled = False
+ *         return False             # <<<<<<<<<<<<<<
+ * 
+ *     # Internal methods for C++ pointer access (used by AudioPlayer integration)
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(Py_False);
+  __pyx_r = Py_False;
+  goto __pyx_L0;
+
+  /* "coremusic/link.pyx":483
+ *         return self
+ * 
+ *     def __exit__(self, exc_type, exc_val, exc_tb):             # <<<<<<<<<<<<<<
+ *         """Exit context manager - disables Link networking
+ * 
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_AddTraceback("coremusic.link.LinkSession.__exit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "coremusic/link.pyx":498
  * 
  *     # Internal methods for C++ pointer access (used by AudioPlayer integration)
  *     def _get_link_ptr_as_int(self) -> int:             # <<<<<<<<<<<<<<
@@ -8007,16 +8296,16 @@ static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_12__repr__(struct __pyx
 */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_15_get_link_ptr_as_int(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_19_get_link_ptr_as_int(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_9coremusic_4link_11LinkSession_14_get_link_ptr_as_int, "LinkSession._get_link_ptr_as_int(self) -> int\n\nGet internal C++ Link pointer as integer (for C integration)\n\nWARNING: This is for internal use only by other Cython modules.\nReturns the memory address of the C++ Link object as a Python int.");
-static PyMethodDef __pyx_mdef_9coremusic_4link_11LinkSession_15_get_link_ptr_as_int = {"_get_link_ptr_as_int", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_15_get_link_ptr_as_int, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_14_get_link_ptr_as_int};
-static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_15_get_link_ptr_as_int(PyObject *__pyx_v_self, 
+PyDoc_STRVAR(__pyx_doc_9coremusic_4link_11LinkSession_18_get_link_ptr_as_int, "LinkSession._get_link_ptr_as_int(self) -> int\n\nGet internal C++ Link pointer as integer (for C integration)\n\nWARNING: This is for internal use only by other Cython modules.\nReturns the memory address of the C++ Link object as a Python int.");
+static PyMethodDef __pyx_mdef_9coremusic_4link_11LinkSession_19_get_link_ptr_as_int = {"_get_link_ptr_as_int", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_19_get_link_ptr_as_int, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_18_get_link_ptr_as_int};
+static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_19_get_link_ptr_as_int(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -8042,14 +8331,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   const Py_ssize_t __pyx_kwds_len = unlikely(__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
   if (unlikely(__pyx_kwds_len < 0)) return NULL;
   if (unlikely(__pyx_kwds_len > 0)) {__Pyx_RejectKeywords("_get_link_ptr_as_int", __pyx_kwds); return NULL;}
-  __pyx_r = __pyx_pf_9coremusic_4link_11LinkSession_14_get_link_ptr_as_int(((struct __pyx_obj_9coremusic_4link_LinkSession *)__pyx_v_self));
+  __pyx_r = __pyx_pf_9coremusic_4link_11LinkSession_18_get_link_ptr_as_int(((struct __pyx_obj_9coremusic_4link_LinkSession *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_14_get_link_ptr_as_int(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self) {
+static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_18_get_link_ptr_as_int(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -8058,7 +8347,7 @@ static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_14_get_link_ptr_as_int(
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_get_link_ptr_as_int", 0);
 
-  /* "coremusic/link.pyx":481
+  /* "coremusic/link.pyx":504
  *         Returns the memory address of the C++ Link object as a Python int.
  *         """
  *         return <uintptr_t><void*>self._link             # <<<<<<<<<<<<<<
@@ -8066,14 +8355,14 @@ static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_14_get_link_ptr_as_int(
  *     def _get_clock_ptr_as_int(self) -> int:
 */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyLong_FromSize_t(((uintptr_t)((void *)__pyx_v_self->_link))); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 481, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyLong_FromSize_t(((uintptr_t)((void *)__pyx_v_self->_link))); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 504, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (!(likely(PyLong_CheckExact(__pyx_t_1)) || __Pyx_RaiseUnexpectedTypeError("int", __pyx_t_1))) __PYX_ERR(0, 481, __pyx_L1_error)
+  if (!(likely(PyLong_CheckExact(__pyx_t_1)) || __Pyx_RaiseUnexpectedTypeError("int", __pyx_t_1))) __PYX_ERR(0, 504, __pyx_L1_error)
   __pyx_r = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "coremusic/link.pyx":475
+  /* "coremusic/link.pyx":498
  * 
  *     # Internal methods for C++ pointer access (used by AudioPlayer integration)
  *     def _get_link_ptr_as_int(self) -> int:             # <<<<<<<<<<<<<<
@@ -8092,7 +8381,7 @@ static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_14_get_link_ptr_as_int(
   return __pyx_r;
 }
 
-/* "coremusic/link.pyx":483
+/* "coremusic/link.pyx":506
  *         return <uintptr_t><void*>self._link
  * 
  *     def _get_clock_ptr_as_int(self) -> int:             # <<<<<<<<<<<<<<
@@ -8101,16 +8390,16 @@ static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_14_get_link_ptr_as_int(
 */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_17_get_clock_ptr_as_int(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_21_get_clock_ptr_as_int(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_9coremusic_4link_11LinkSession_16_get_clock_ptr_as_int, "LinkSession._get_clock_ptr_as_int(self) -> int\n\nGet internal C++ Clock pointer as integer (for C integration)\n\nWARNING: This is for internal use only by other Cython modules.\nReturns the memory address of the C++ Clock object as a Python int.");
-static PyMethodDef __pyx_mdef_9coremusic_4link_11LinkSession_17_get_clock_ptr_as_int = {"_get_clock_ptr_as_int", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_17_get_clock_ptr_as_int, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_16_get_clock_ptr_as_int};
-static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_17_get_clock_ptr_as_int(PyObject *__pyx_v_self, 
+PyDoc_STRVAR(__pyx_doc_9coremusic_4link_11LinkSession_20_get_clock_ptr_as_int, "LinkSession._get_clock_ptr_as_int(self) -> int\n\nGet internal C++ Clock pointer as integer (for C integration)\n\nWARNING: This is for internal use only by other Cython modules.\nReturns the memory address of the C++ Clock object as a Python int.");
+static PyMethodDef __pyx_mdef_9coremusic_4link_11LinkSession_21_get_clock_ptr_as_int = {"_get_clock_ptr_as_int", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_21_get_clock_ptr_as_int, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_20_get_clock_ptr_as_int};
+static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_21_get_clock_ptr_as_int(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -8136,14 +8425,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   const Py_ssize_t __pyx_kwds_len = unlikely(__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
   if (unlikely(__pyx_kwds_len < 0)) return NULL;
   if (unlikely(__pyx_kwds_len > 0)) {__Pyx_RejectKeywords("_get_clock_ptr_as_int", __pyx_kwds); return NULL;}
-  __pyx_r = __pyx_pf_9coremusic_4link_11LinkSession_16_get_clock_ptr_as_int(((struct __pyx_obj_9coremusic_4link_LinkSession *)__pyx_v_self));
+  __pyx_r = __pyx_pf_9coremusic_4link_11LinkSession_20_get_clock_ptr_as_int(((struct __pyx_obj_9coremusic_4link_LinkSession *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_16_get_clock_ptr_as_int(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self) {
+static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_20_get_clock_ptr_as_int(struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -8152,20 +8441,20 @@ static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_16_get_clock_ptr_as_int
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_get_clock_ptr_as_int", 0);
 
-  /* "coremusic/link.pyx":489
+  /* "coremusic/link.pyx":512
  *         Returns the memory address of the C++ Clock object as a Python int.
  *         """
  *         return <uintptr_t><void*>&self._clock._clock             # <<<<<<<<<<<<<<
 */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyLong_FromSize_t(((uintptr_t)((void *)(&__pyx_v_self->_clock->_clock)))); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 489, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyLong_FromSize_t(((uintptr_t)((void *)(&__pyx_v_self->_clock->_clock)))); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 512, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (!(likely(PyLong_CheckExact(__pyx_t_1)) || __Pyx_RaiseUnexpectedTypeError("int", __pyx_t_1))) __PYX_ERR(0, 489, __pyx_L1_error)
+  if (!(likely(PyLong_CheckExact(__pyx_t_1)) || __Pyx_RaiseUnexpectedTypeError("int", __pyx_t_1))) __PYX_ERR(0, 512, __pyx_L1_error)
   __pyx_r = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "coremusic/link.pyx":483
+  /* "coremusic/link.pyx":506
  *         return <uintptr_t><void*>self._link
  * 
  *     def _get_clock_ptr_as_int(self) -> int:             # <<<<<<<<<<<<<<
@@ -8191,16 +8480,16 @@ static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_16_get_clock_ptr_as_int
 */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_19__reduce_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_23__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_9coremusic_4link_11LinkSession_18__reduce_cython__, "LinkSession.__reduce_cython__(self)");
-static PyMethodDef __pyx_mdef_9coremusic_4link_11LinkSession_19__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_19__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_18__reduce_cython__};
-static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_19__reduce_cython__(PyObject *__pyx_v_self, 
+PyDoc_STRVAR(__pyx_doc_9coremusic_4link_11LinkSession_22__reduce_cython__, "LinkSession.__reduce_cython__(self)");
+static PyMethodDef __pyx_mdef_9coremusic_4link_11LinkSession_23__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_23__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_22__reduce_cython__};
+static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_23__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -8226,14 +8515,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   const Py_ssize_t __pyx_kwds_len = unlikely(__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
   if (unlikely(__pyx_kwds_len < 0)) return NULL;
   if (unlikely(__pyx_kwds_len > 0)) {__Pyx_RejectKeywords("__reduce_cython__", __pyx_kwds); return NULL;}
-  __pyx_r = __pyx_pf_9coremusic_4link_11LinkSession_18__reduce_cython__(((struct __pyx_obj_9coremusic_4link_LinkSession *)__pyx_v_self));
+  __pyx_r = __pyx_pf_9coremusic_4link_11LinkSession_22__reduce_cython__(((struct __pyx_obj_9coremusic_4link_LinkSession *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_18__reduce_cython__(CYTHON_UNUSED struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self) {
+static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_22__reduce_cython__(CYTHON_UNUSED struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   int __pyx_lineno = 0;
@@ -8273,16 +8562,16 @@ static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_18__reduce_cython__(CYT
 */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_21__setstate_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_25__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_9coremusic_4link_11LinkSession_20__setstate_cython__, "LinkSession.__setstate_cython__(self, __pyx_state)");
-static PyMethodDef __pyx_mdef_9coremusic_4link_11LinkSession_21__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_21__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_20__setstate_cython__};
-static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_21__setstate_cython__(PyObject *__pyx_v_self, 
+PyDoc_STRVAR(__pyx_doc_9coremusic_4link_11LinkSession_24__setstate_cython__, "LinkSession.__setstate_cython__(self, __pyx_state)");
+static PyMethodDef __pyx_mdef_9coremusic_4link_11LinkSession_25__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_25__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_24__setstate_cython__};
+static PyObject *__pyx_pw_9coremusic_4link_11LinkSession_25__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -8348,7 +8637,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_9coremusic_4link_11LinkSession_20__setstate_cython__(((struct __pyx_obj_9coremusic_4link_LinkSession *)__pyx_v_self), __pyx_v___pyx_state);
+  __pyx_r = __pyx_pf_9coremusic_4link_11LinkSession_24__setstate_cython__(((struct __pyx_obj_9coremusic_4link_LinkSession *)__pyx_v_self), __pyx_v___pyx_state);
 
   /* function exit code */
   for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
@@ -8358,7 +8647,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_20__setstate_cython__(CYTHON_UNUSED struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_9coremusic_4link_11LinkSession_24__setstate_cython__(CYTHON_UNUSED struct __pyx_obj_9coremusic_4link_LinkSession *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   int __pyx_lineno = 0;
@@ -8821,10 +9110,12 @@ static PyMethodDef __pyx_methods_9coremusic_4link_LinkSession[] = {
   {"commit_audio_session_state", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_7commit_audio_session_state, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_6commit_audio_session_state},
   {"capture_app_session_state", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_9capture_app_session_state, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_8capture_app_session_state},
   {"commit_app_session_state", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_11commit_app_session_state, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_10commit_app_session_state},
-  {"_get_link_ptr_as_int", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_15_get_link_ptr_as_int, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_14_get_link_ptr_as_int},
-  {"_get_clock_ptr_as_int", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_17_get_clock_ptr_as_int, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_16_get_clock_ptr_as_int},
-  {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_19__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_18__reduce_cython__},
-  {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_21__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_20__setstate_cython__},
+  {"__enter__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_15__enter__, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_14__enter__},
+  {"__exit__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_17__exit__, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_16__exit__},
+  {"_get_link_ptr_as_int", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_19_get_link_ptr_as_int, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_18_get_link_ptr_as_int},
+  {"_get_clock_ptr_as_int", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_21_get_clock_ptr_as_int, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_20_get_clock_ptr_as_int},
+  {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_23__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_22__reduce_cython__},
+  {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9coremusic_4link_11LinkSession_25__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9coremusic_4link_11LinkSession_24__setstate_cython__},
   {0, 0, 0, 0}
 };
 
@@ -9676,38 +9967,62 @@ __Pyx_RefNannySetupContext("PyInit_link", 0);
   if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9coremusic_4link_LinkSession, __pyx_mstate_global->__pyx_n_u_commit_app_session_state, __pyx_t_2) < (0)) __PYX_ERR(0, 451, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "coremusic/link.pyx":475
+  /* "coremusic/link.pyx":474
+ *         return f"LinkSession({status}, {peers} peers)"
+ * 
+ *     def __enter__(self):             # <<<<<<<<<<<<<<
+ *         """Enter context manager - enables Link networking
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4link_11LinkSession_15__enter__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_LinkSession___enter, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_link, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[22])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 474, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9coremusic_4link_LinkSession, __pyx_mstate_global->__pyx_n_u_enter, __pyx_t_2) < (0)) __PYX_ERR(0, 474, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/link.pyx":483
+ *         return self
+ * 
+ *     def __exit__(self, exc_type, exc_val, exc_tb):             # <<<<<<<<<<<<<<
+ *         """Exit context manager - disables Link networking
+ * 
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4link_11LinkSession_17__exit__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_LinkSession___exit, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_link, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[23])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 483, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9coremusic_4link_LinkSession, __pyx_mstate_global->__pyx_n_u_exit, __pyx_t_2) < (0)) __PYX_ERR(0, 483, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "coremusic/link.pyx":498
  * 
  *     # Internal methods for C++ pointer access (used by AudioPlayer integration)
  *     def _get_link_ptr_as_int(self) -> int:             # <<<<<<<<<<<<<<
  *         """Get internal C++ Link pointer as integer (for C integration)
  * 
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 475, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 498, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 475, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4link_11LinkSession_15_get_link_ptr_as_int, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_LinkSession__get_link_ptr_as_int, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_link, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[22])); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 475, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 498, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4link_11LinkSession_19_get_link_ptr_as_int, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_LinkSession__get_link_ptr_as_int, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_link, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[24])); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 498, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9coremusic_4link_LinkSession, __pyx_mstate_global->__pyx_n_u_get_link_ptr_as_int, __pyx_t_3) < (0)) __PYX_ERR(0, 475, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9coremusic_4link_LinkSession, __pyx_mstate_global->__pyx_n_u_get_link_ptr_as_int, __pyx_t_3) < (0)) __PYX_ERR(0, 498, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "coremusic/link.pyx":483
+  /* "coremusic/link.pyx":506
  *         return <uintptr_t><void*>self._link
  * 
  *     def _get_clock_ptr_as_int(self) -> int:             # <<<<<<<<<<<<<<
  *         """Get internal C++ Clock pointer as integer (for C integration)
  * 
 */
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 483, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 506, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 483, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4link_11LinkSession_17_get_clock_ptr_as_int, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_LinkSession__get_clock_ptr_as_in, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_link, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[23])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 483, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 506, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4link_11LinkSession_21_get_clock_ptr_as_int, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_LinkSession__get_clock_ptr_as_in, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_link, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[25])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 506, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9coremusic_4link_LinkSession, __pyx_mstate_global->__pyx_n_u_get_clock_ptr_as_int, __pyx_t_2) < (0)) __PYX_ERR(0, 483, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9coremusic_4link_LinkSession, __pyx_mstate_global->__pyx_n_u_get_clock_ptr_as_int, __pyx_t_2) < (0)) __PYX_ERR(0, 506, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "(tree fragment)":1
@@ -9715,7 +10030,7 @@ __Pyx_RefNannySetupContext("PyInit_link", 0);
  *     raise TypeError, "no default __reduce__ due to non-trivial __cinit__"
  * def __setstate_cython__(self, __pyx_state):
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4link_11LinkSession_19__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_LinkSession___reduce_cython, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_link, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[24])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4link_11LinkSession_23__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_LinkSession___reduce_cython, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_link, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[26])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_reduce_cython, __pyx_t_2) < (0)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -9726,7 +10041,7 @@ __Pyx_RefNannySetupContext("PyInit_link", 0);
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     raise TypeError, "no default __reduce__ due to non-trivial __cinit__"
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4link_11LinkSession_21__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_LinkSession___setstate_cython, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_link, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[25])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 3, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9coremusic_4link_11LinkSession_25__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_LinkSession___setstate_cython, NULL, __pyx_mstate_global->__pyx_n_u_coremusic_link, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[27])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 3, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_setstate_cython, __pyx_t_2) < (0)) __PYX_ERR(1, 3, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -9810,6 +10125,8 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_Clock_ticks_to_micros, sizeof(__pyx_k_Clock_ticks_to_micros), 0, 1, 1}, /* PyObject cname: __pyx_n_u_Clock_ticks_to_micros */
   {__pyx_k_LinkSession, sizeof(__pyx_k_LinkSession), 0, 1, 0}, /* PyObject cname: __pyx_kp_u_LinkSession */
   {__pyx_k_LinkSession_2, sizeof(__pyx_k_LinkSession_2), 0, 1, 1}, /* PyObject cname: __pyx_n_u_LinkSession_2 */
+  {__pyx_k_LinkSession___enter, sizeof(__pyx_k_LinkSession___enter), 0, 1, 1}, /* PyObject cname: __pyx_n_u_LinkSession___enter */
+  {__pyx_k_LinkSession___exit, sizeof(__pyx_k_LinkSession___exit), 0, 1, 1}, /* PyObject cname: __pyx_n_u_LinkSession___exit */
   {__pyx_k_LinkSession___reduce_cython, sizeof(__pyx_k_LinkSession___reduce_cython), 0, 1, 1}, /* PyObject cname: __pyx_n_u_LinkSession___reduce_cython */
   {__pyx_k_LinkSession___setstate_cython, sizeof(__pyx_k_LinkSession___setstate_cython), 0, 1, 1}, /* PyObject cname: __pyx_n_u_LinkSession___setstate_cython */
   {__pyx_k_LinkSession__get_clock_ptr_as_in, sizeof(__pyx_k_LinkSession__get_clock_ptr_as_in), 0, 1, 1}, /* PyObject cname: __pyx_n_u_LinkSession__get_clock_ptr_as_in */
@@ -9853,6 +10170,11 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_disabled, sizeof(__pyx_k_disabled), 0, 1, 1}, /* PyObject cname: __pyx_n_u_disabled */
   {__pyx_k_enable, sizeof(__pyx_k_enable), 0, 1, 0}, /* PyObject cname: __pyx_kp_u_enable */
   {__pyx_k_enabled, sizeof(__pyx_k_enabled), 0, 1, 1}, /* PyObject cname: __pyx_n_u_enabled */
+  {__pyx_k_enter, sizeof(__pyx_k_enter), 0, 1, 1}, /* PyObject cname: __pyx_n_u_enter */
+  {__pyx_k_exc_tb, sizeof(__pyx_k_exc_tb), 0, 1, 1}, /* PyObject cname: __pyx_n_u_exc_tb */
+  {__pyx_k_exc_type, sizeof(__pyx_k_exc_type), 0, 1, 1}, /* PyObject cname: __pyx_n_u_exc_type */
+  {__pyx_k_exc_val, sizeof(__pyx_k_exc_val), 0, 1, 1}, /* PyObject cname: __pyx_n_u_exc_val */
+  {__pyx_k_exit, sizeof(__pyx_k_exit), 0, 1, 1}, /* PyObject cname: __pyx_n_u_exit */
   {__pyx_k_float, sizeof(__pyx_k_float), 0, 1, 1}, /* PyObject cname: __pyx_n_u_float */
   {__pyx_k_force_beat_at_time, sizeof(__pyx_k_force_beat_at_time), 0, 1, 1}, /* PyObject cname: __pyx_n_u_force_beat_at_time */
   {__pyx_k_func, sizeof(__pyx_k_func), 0, 1, 1}, /* PyObject cname: __pyx_n_u_func */
@@ -10076,24 +10398,34 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
     __pyx_mstate_global->__pyx_codeobj_tab[21] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_link_pyx, __pyx_mstate->__pyx_n_u_commit_app_session_state, __pyx_k_A_4wc_aq_4uA_aq_F_gT_1A, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[21])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 475, 18};
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 474, 16};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self};
-    __pyx_mstate_global->__pyx_codeobj_tab[22] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_link_pyx, __pyx_mstate->__pyx_n_u_get_link_ptr_as_int, __pyx_k_a_Q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[22])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[22] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_link_pyx, __pyx_mstate->__pyx_n_u_enter, __pyx_k_A_Kq_q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[22])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 483, 22};
+    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 483, 16};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_exc_type, __pyx_mstate->__pyx_n_u_exc_val, __pyx_mstate->__pyx_n_u_exc_tb};
+    __pyx_mstate_global->__pyx_codeobj_tab[23] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_link_pyx, __pyx_mstate->__pyx_n_u_exit, __pyx_k_A_Kq_q_2, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[23])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 498, 18};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self};
-    __pyx_mstate_global->__pyx_codeobj_tab[23] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_link_pyx, __pyx_mstate->__pyx_n_u_get_clock_ptr_as_int, __pyx_k_q_gQ, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[23])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[24] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_link_pyx, __pyx_mstate->__pyx_n_u_get_link_ptr_as_int, __pyx_k_a_Q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[24])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 506, 22};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self};
+    __pyx_mstate_global->__pyx_codeobj_tab[25] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_coremusic_link_pyx, __pyx_mstate->__pyx_n_u_get_clock_ptr_as_int, __pyx_k_q_gQ, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[25])) goto bad;
   }
   {
     const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 1, 9};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self};
-    __pyx_mstate_global->__pyx_codeobj_tab[24] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_reduce_cython, __pyx_k_Q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[24])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[26] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_reduce_cython, __pyx_k_Q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[26])) goto bad;
   }
   {
     const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 3, 9};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_pyx_state};
-    __pyx_mstate_global->__pyx_codeobj_tab[25] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_setstate_cython, __pyx_k_Q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[25])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[27] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_setstate_cython, __pyx_k_Q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[27])) goto bad;
   }
   Py_DECREF(tuple_dedup_map);
   return 0;
@@ -11614,6 +11946,16 @@ bad:
     return result;
 #endif
 }
+
+/* PyObjectSetAttrStr */
+#if CYTHON_USE_TYPE_SLOTS
+static CYTHON_INLINE int __Pyx_PyObject_SetAttrStr(PyObject* obj, PyObject* attr_name, PyObject* value) {
+    PyTypeObject* tp = Py_TYPE(obj);
+    if (likely(tp->tp_setattro))
+        return tp->tp_setattro(obj, attr_name, value);
+    return PyObject_SetAttr(obj, attr_name, value);
+}
+#endif
 
 /* CallTypeTraverse */
 #if !CYTHON_USE_TYPE_SPECS || (!CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX < 0x03090000)

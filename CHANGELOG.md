@@ -17,6 +17,135 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- **Ableton Link Integration** - Complete tempo synchronization and beat grid support
+  - **Link Cython wrapper** (`src/coremusic/link.pyx` and `link.pxd`)
+    - `Clock` class - Platform-specific clock for Link timing
+      - `micros()` - Get current time in microseconds
+      - `ticks()` - Get current time in system ticks (mach_absolute_time)
+      - `ticks_to_micros()` - Convert system ticks to microseconds
+      - `micros_to_ticks()` - Convert microseconds to system ticks
+    - `SessionState` class - Link timeline and transport state snapshot
+      - Properties: `tempo`, `is_playing`
+      - Beat/phase queries: `beat_at_time()`, `phase_at_time()`, `time_at_beat()`
+      - Beat mapping: `request_beat_at_time()`, `force_beat_at_time()`
+      - Transport control: `set_tempo()`, `set_is_playing()`, `time_for_is_playing()`
+      - Convenience methods: `request_beat_at_start_playing_time()`, `set_is_playing_and_request_beat_at_time()`
+    - `LinkSession` class - Main Link session for tempo synchronization
+      - Properties: `enabled`, `num_peers`, `start_stop_sync_enabled`, `clock`
+      - Session state capture: `capture_audio_session_state()`, `capture_app_session_state()`
+      - Session state commit: `commit_audio_session_state()`, `commit_app_session_state()`
+      - Realtime-safe audio thread operations with `nogil`
+  - **AudioPlayer Link Integration** (`src/coremusic/capi.pyx`)
+    - AudioPlayer now accepts optional `link_session` parameter
+    - `link_session` property to access attached Link session
+    - `get_link_timing(quantum)` method returns timing info dict (tempo, beat, phase, is_playing)
+    - Python-layer timing queries for synchronized playback control
+    - Link session reference kept alive to prevent garbage collection
+  - **C++ Build Integration** (`setup.py`)
+    - Link extension compiled with C++11 support
+    - Include paths for Link library and ASIO standalone
+    - LINK_PLATFORM_MACOSX define for macOS platform
+  - **Comprehensive test coverage**
+    - `test_link.py` - 25 tests covering all Link functionality
+      - Clock operations (time queries, conversions, round-trip)
+      - Session management (enable/disable, peers, transport sync)
+      - State capture and commit (audio/app thread)
+      - Tempo control and beat/phase calculations
+      - Transport state management
+      - Two-session synchronization tests
+    - `test_link_audio_integration.py` - 9 tests for AudioPlayer integration
+      - Player creation with/without Link session
+      - Timing queries and updates
+      - Tempo and transport state visibility
+      - Multiple players sharing Link session
+      - Reference lifecycle management
+    - All 575 tests passing (566 existing + 9 new)
+  - **Demo application** (`tests/demos/link_audio_demo.py`)
+    - Complete Link + AudioPlayer workflow demonstration
+    - Real-time beat/tempo monitoring during playback
+    - Visual beat indicators and progress tracking
+    - Example of synchronized audio playback
+  - **High-Level Python API** (Phase 3 enhancements)
+    - Context manager support for `LinkSession` - automatic enable/disable
+    - `__enter__` and `__exit__` methods for `with` statement support
+    - Exported from main `coremusic` package via `cm.link` module
+    - Fully Pythonic API with properties, named arguments, informative `__repr__`
+    - 19 additional tests for high-level API patterns
+    - High-level demo (`tests/demos/link_high_level_demo.py`) with 6 examples
+    - All 594 tests passing (566 existing + 9 AudioPlayer + 19 high-level API)
+  - **Link + CoreMIDI Integration** (`src/coremusic/link_midi.py`)
+    - `LinkMIDIClock` class - MIDI Clock messages synchronized to Link tempo
+      - Sends 24 clock messages per quarter note per MIDI spec
+      - Automatic tempo tracking when Link tempo changes
+      - Sends MIDI Start/Stop messages
+      - Runs in separate thread for realtime performance
+    - `LinkMIDISequencer` class - Beat-accurate MIDI event scheduling
+      - Schedule MIDI events at specific Link beat positions
+      - `schedule_note()` - Schedule notes with automatic note-off
+      - `schedule_cc()` - Schedule MIDI CC messages
+      - `schedule_event()` - Schedule arbitrary MIDI messages
+      - Events kept sorted by beat position
+      - Thread-safe event scheduling
+    - Time conversion utilities
+      - `link_beat_to_host_time()` - Convert Link beats to mach_absolute_time
+      - `host_time_to_link_beat()` - Convert host time to Link beats
+      - Round-trip conversion with < 0.01 beat accuracy
+    - MIDI constants (MIDI_CLOCK, MIDI_START, MIDI_STOP, MIDI_CLOCKS_PER_QUARTER_NOTE)
+    - 20 comprehensive tests covering all functionality
+    - Interactive demo (`tests/demos/link_midi_demo.py`) with 3 examples
+    - All 614 tests passing (594 existing + 20 Link+MIDI integration)
+
+  **Example Usage:**
+
+  ```python
+  import coremusic as cm
+
+  # Basic Link usage with context manager
+  with cm.link.LinkSession(bpm=120.0) as session:
+      state = session.capture_app_session_state()
+      print(f"Tempo: {state.tempo:.1f} BPM, Peers: {session.num_peers}")
+
+  # AudioPlayer + Link integration
+  with cm.link.LinkSession(bpm=120.0) as session:
+      player = cm.AudioPlayer(link_session=session)
+      player.load_file("audio.wav")
+      player.setup_output()
+
+      # Query Link timing
+      timing = player.get_link_timing(quantum=4.0)
+      print(f"Beat: {timing['beat']:.2f}, Tempo: {timing['tempo']:.1f} BPM")
+
+      player.play()
+      player.start()
+
+  # MIDI Clock synchronized to Link
+  from coremusic import link_midi
+
+  client = cm.capi.midi_client_create("MIDI Clock")
+  port = cm.capi.midi_output_port_create(client, "Clock Out")
+  dest = cm.capi.midi_get_destination(0)
+
+  with cm.link.LinkSession(bpm=120.0) as session:
+      clock = link_midi.LinkMIDIClock(session, port, dest)
+      clock.start()  # Sends MIDI clock messages
+      time.sleep(10)
+      clock.stop()
+
+  # Beat-accurate MIDI sequencer
+  with cm.link.LinkSession(bpm=120.0) as session:
+      seq = link_midi.LinkMIDISequencer(session, port, dest)
+
+      # Schedule notes at Link beat positions
+      seq.schedule_note(beat=0.0, channel=0, note=60, velocity=100, duration=0.9)
+      seq.schedule_note(beat=1.0, channel=0, note=64, velocity=100, duration=0.9)
+
+      seq.start()
+      time.sleep(5)
+      seq.stop()
+  ```
+
 ## [0.1.7]
 
 ### Added
