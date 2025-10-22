@@ -56,7 +56,6 @@ extensions = [
 setup(
     name="coremusic",
     description="coreaudio/coremidi/ableton-link in cython",
-    version="0.2.0",
     ext_modules=cythonize(extensions, 
         compiler_directives={
             'language_level' : '3',

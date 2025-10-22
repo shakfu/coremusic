@@ -38,6 +38,12 @@
 
 - **MIDI Driver APIs**: Access to MIDI driver development and device integration functions
 
+- **Ableton Link Integration**: Network tempo synchronization with sub-millisecond precision
+
+- **Link + CoreAudio Sync**: Beat-accurate audio playback synchronized to Link tempo
+
+- **Link + CoreMIDI Sync**: MIDI clock and sequencing synchronized to Link beat grid
+
 ## Supported Frameworks
 
 ### CoreAudio
@@ -73,6 +79,16 @@
 - Thru Connections: Advanced MIDI routing with filtering, transformation, and channel mapping
 - Message Transformation: Scale, filter, add, and remap MIDI messages with flexible transforms
 - Real-time MIDI: Low-latency MIDI processing with proper timestamp handling
+
+### Ableton Link
+
+- **Network Tempo Sync**: Multi-device tempo synchronization over local network
+- **Beat Quantization**: Start/stop playback on beat boundaries with quantum alignment
+- **Link + CoreAudio**: AudioPlayer integration with beat-accurate playback
+- **Link + CoreMIDI**: MIDI clock synchronization and beat-accurate sequencing
+- **Session Management**: Automatic peer discovery and connection with transport control
+- **High Precision**: Sub-millisecond timing accuracy for professional workflows
+- **Cross-Platform Sync**: Compatible with 100+ Link-enabled applications
 
 ## Installation
 
@@ -415,6 +431,74 @@ print(f"Progress: {player.get_progress():.2f}")
 player.stop()
 ```
 
+### Ableton Link Integration
+
+```python
+import coremusic as cm
+
+# Create Link session with context manager
+with cm.link.LinkSession(bpm=120.0) as session:
+    print(f"Link enabled, {session.num_peers} peers connected")
+
+    # Get synchronized timing information
+    state = session.capture_app_session_state()
+    current_time = session.clock.micros()
+    beat = state.beat_at_time(current_time, quantum=4.0)
+    phase = state.phase_at_time(current_time, quantum=4.0)
+
+    print(f"Beat: {beat:.2f}, Phase: {phase:.2f}, Tempo: {state.tempo:.1f} BPM")
+
+# Link + Audio: Beat-accurate playback
+with cm.link.LinkSession(bpm=120.0) as session:
+    player = cm.AudioPlayer(link_session=session)
+    player.load_file("loop.wav")
+    player.setup_output()
+
+    # Get Link timing in audio callback
+    timing = player.get_link_timing(quantum=4.0)
+    print(f"Audio beat: {timing['beat']:.2f}")
+
+    player.play()
+    player.start()
+
+# Link + MIDI: Clock synchronization
+from coremusic import link_midi
+
+with cm.link.LinkSession(bpm=120.0) as session:
+    # Create MIDI client and port
+    client = cm.capi.midi_client_create("Link MIDI Demo")
+    port = cm.capi.midi_output_port_create(client, "Clock Out")
+    dest = cm.capi.midi_get_destination(0)
+
+    # Send MIDI clock synchronized to Link
+    clock = link_midi.LinkMIDIClock(session, port, dest)
+    clock.start()  # Sends MIDI Start + Clock messages (24 per quarter note)
+
+    # Clock automatically follows Link tempo changes
+    time.sleep(10)
+
+    clock.stop()  # Sends MIDI Stop message
+
+# Link + MIDI: Beat-accurate sequencing
+with cm.link.LinkSession(bpm=120.0) as session:
+    client = cm.capi.midi_client_create("Link Sequencer Demo")
+    port = cm.capi.midi_output_port_create(client, "Seq Out")
+    dest = cm.capi.midi_get_destination(0)
+
+    # Schedule MIDI events on Link beat grid
+    seq = link_midi.LinkMIDISequencer(session, port, dest, quantum=4.0)
+
+    # C major arpeggio (beat-accurate)
+    seq.schedule_note(beat=0.0, channel=0, note=60, velocity=100, duration=0.9)  # C4
+    seq.schedule_note(beat=1.0, channel=0, note=64, velocity=100, duration=0.9)  # E4
+    seq.schedule_note(beat=2.0, channel=0, note=67, velocity=100, duration=0.9)  # G4
+    seq.schedule_note(beat=3.0, channel=0, note=72, velocity=100, duration=0.9)  # C5
+
+    seq.start()  # Events play at precise Link beat positions
+    time.sleep(5)
+    seq.stop()
+```
+
 ### CoreMIDI Basic Usage
 
 ```python
@@ -522,6 +606,16 @@ The CoreMIDI test suite includes:
 - Thru connection routing and transformation
 - Error handling and environment adaptation
 
+### Link Integration Demos
+
+```bash
+# Link high-level API demo
+python3 tests/demos/link_high_level_demo.py
+
+# Link + MIDI integration demo
+python3 tests/demos/link_midi_demo.py
+```
+
 ### Complete Test Suite
 
 ```bash
@@ -530,6 +624,9 @@ make test
 
 # Run specific test categories
 pytest tests/test_coremidi.py tests/test_objects_*.py -v
+
+# Run Link integration tests
+pytest tests/test_link*.py -v
 ```
 
 The complete test suite covers:
@@ -537,6 +634,7 @@ The complete test suite covers:
 - **Functional API**: Audio file I/O, AudioUnit lifecycle, AudioQueue functionality
 - **Object-Oriented API**: Modern Pythonic wrappers with automatic resource management
 - **MIDI Operations**: Message creation, device management, and routing (both APIs)
+- **Link Integration**: Network tempo sync, beat quantization, Link + Audio/MIDI
 - **Integration Testing**: Cross-API compatibility and consistency
 - **Resource Management**: Automatic cleanup and disposal testing
 - **Error handling**: Edge cases and failure scenarios
@@ -560,6 +658,12 @@ The complete test suite covers:
 - **`src/coremusic/objects.pyx`**: Cython extension base class for automatic resource management
 - **`src/coremusic/oo.py`**: Object-oriented wrappers with automatic cleanup and context managers
 - **`src/coremusic/__init__.py`**: Package entry point exposing OO API (functional API via `capi` submodule)
+
+#### Ableton Link Integration
+
+- **`src/coremusic/link.pyx`**: Cython wrapper for Ableton Link C++ API with context manager support
+- **`src/coremusic/link_midi.py`**: Link + CoreMIDI integration (LinkMIDIClock, LinkMIDISequencer)
+- **`thirdparty/link/`**: Ableton Link library (C++ headers and implementation)
 
 #### Build Configuration
 
@@ -588,6 +692,10 @@ The project links against macOS frameworks:
 - AudioToolbox
 - CoreAudio
 - CoreMIDI
+
+Third-party integrations:
+
+- **Ableton Link**: Network tempo synchronization (C++ library, included in `thirdparty/link/`)
 
 Required libraries: m, dl, pthread
 
@@ -706,6 +814,9 @@ coremusic provides near-native performance through both APIs:
 - Multi-channel audio handling
 - MIDI controllers and sequencers
 - Virtual instruments and synthesizers
+- Network-synchronized music applications
+- Beat-accurate audio/MIDI playback
+- Collaborative music production tools
 
 ### MIDI Applications
 
@@ -756,9 +867,26 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Built with Cython for high performance
 - Test audio file (amen.wav) from public domain sources
 
+## Documentation
+
+### Complete Guides
+
+- **[Link Integration Guide](docs/link_integration.md)**: Comprehensive documentation for Ableton Link integration with CoreAudio and CoreMIDI including examples for:
+  - Network tempo synchronization
+  - Beat-accurate audio playback
+  - MIDI clock synchronization
+  - Beat-accurate MIDI sequencing
+  - Combined audio + MIDI synchronized workflows
+
+### API References
+
+- **Functional API**: See `src/coremusic/capi.pyx` for complete C API bindings
+- **Object-Oriented API**: See `src/coremusic/oo.py` for Pythonic wrappers
+- **Link API**: See `src/coremusic/link.pyx` for Link integration
+
 ## Resources
 
-For more information about CoreAudio development:
+For more information about CoreAudio and Link development:
 
 - The [AudioToolbox framework](https://developer.apple.com/documentation/AudioToolbox) provides interfaces for recording, playback, and stream parsing
 
@@ -767,3 +895,7 @@ For more information about CoreAudio development:
 - [AudioUnit App Extension](https://developer.apple.com/library/archive/documentation/General/Conceptual/ExtensibilityPG/AudioUnit.html#//apple_ref/doc/uid/TP40014214-CH22-SW1)
 
 - [AudioUnit Programming Guide](https://developer.apple.com/library/archive/documentation/MusicAudio/Conceptual/AudioUnitProgrammingGuide/Introduction/Introduction.html)
+
+- [Ableton Link](https://www.ableton.com/en/link/) - Official Link website and documentation
+
+- [Link GitHub Repository](https://github.com/Ableton/link) - Link source code and examples
