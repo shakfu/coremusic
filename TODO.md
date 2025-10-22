@@ -59,6 +59,7 @@ See complete details in the "Completed Features" section below.
 - Parameter discovery and control (3 access methods)
 - Factory preset management and loading
 - Audio processing pipeline with render callbacks
+- **MIDI support for instrument plugins** (note on/off, CC, program change, pitch bend)
 - Context manager support for automatic cleanup
 - Dictionary-style parameter access
 - Multiple simultaneous plugin instances
@@ -91,35 +92,50 @@ with host.load_plugin("Bandpass") as filter, \
      host.load_plugin("Reverb") as reverb:
     filtered = filter.process(input_audio)
     output = reverb.process(filtered)
+
+# MIDI instrument control
+with host.load_plugin("DLSMusicDevice", type='instrument') as synth:
+    synth.note_on(channel=0, note=60, velocity=100)  # Middle C
+    time.sleep(1.0)
+    synth.note_off(channel=0, note=60)
 ```
 
 **Implementation components:**
-- ✅ `src/coremusic/audio_unit_host.py` - High-level Pythonic API (471 lines)
+- ✅ `src/coremusic/audio_unit_host.py` - High-level Pythonic API (580+ lines)
   - `AudioUnitHost` - Main host controller
-  - `AudioUnitPlugin` - Plugin wrapper with context managers
+  - `AudioUnitPlugin` - Plugin wrapper with context managers + MIDI methods
   - `AudioUnitParameter` - Parameter wrapper with value clamping
   - `AudioUnitPreset` - Preset representation
-- ✅ `src/coremusic/capi.pyx` - Low-level C API (9 new functions)
+- ✅ `src/coremusic/capi.pyx` - Low-level C API (9 new functions + MIDI functions)
   - Plugin discovery, parameter control, preset management
   - Audio rendering with render callbacks
+  - MIDI event sending (`music_device_midi_event`, `music_device_sysex`)
+  - MIDI helper functions (`midi_note_on`, `midi_note_off`, etc.)
 - ✅ `src/coremusic/audiotoolbox.pxd` - Extended with parameter/preset structures
 - ✅ `src/coremusic/corefoundation.pxd` - CFArray support added
 
 **Testing & Documentation:**
-- ✅ 29 comprehensive tests (all passing)
+- ✅ 48 comprehensive tests (all passing)
   - 11 low-level API tests (`tests/test_audiounit_host.py`)
-  - 18 high-level API tests (`tests/test_audiounit_host_highlevel.py`)
+  - 18 high-level API tests for effects (`tests/test_audiounit_host_highlevel.py`)
+  - 19 MIDI tests for instruments (`tests/test_audiounit_midi.py`)
 - ✅ Interactive demos:
   - `tests/demos/audiounit_browser_demo.py` - Low-level browser
-  - `tests/demos/audiounit_highlevel_demo.py` - 6 comprehensive demos
+  - `tests/demos/audiounit_highlevel_demo.py` - 6 effect plugin demos
+  - `tests/demos/audiounit_instrument_demo.py` - 8 MIDI instrument demos
 - ✅ Complete documentation:
-  - `docs/dev/audiounit_implementation.md` - Full implementation guide
+  - `docs/dev/audiounit_implementation.md` - Full implementation guide with MIDI examples
   - `docs/dev/audiounit_host.md` - Architecture and design
 
 **Test Results:**
-- **643 total tests passing** (100% success rate)
+- **662 total tests passing** (100% success rate)
 - 190 AudioUnit plugins discovered on system
-- All major plugin types working: effects, instruments, generators, mixers
+  - 111 Effects (audio processing)
+  - 62 Instruments (MIDI synthesis)
+  - 7 Output units
+  - 6 Mixers
+  - 4 Generators
+- All major plugin types working with full MIDI support for instruments
 
 **Integration with Link:**
 ```python
@@ -134,15 +150,27 @@ with cm.link.LinkSession(bpm=120.0) as session:
 ```
 
 **Benefits Achieved:**
-- ✅ Host third-party audio plugins in Python
+- ✅ Host third-party audio plugins in Python (111 effects discovered)
+- ✅ MIDI control of instrument plugins (62 instruments discovered)
 - ✅ Build custom DAWs and audio tools
-- ✅ Leverage the vast AudioUnit ecosystem (190 plugins)
+- ✅ Leverage the vast AudioUnit ecosystem (190 plugins total)
 - ✅ Professional audio processing workflows
+- ✅ Multi-channel MIDI synthesis (16 channels)
+- ✅ Sample-accurate MIDI scheduling
 - ✅ Unique capability in Python ecosystem
 - ✅ Clean, Pythonic API with automatic resource management
 - ✅ Works seamlessly with Ableton Link
 
-**Recommendation:** Implementation complete and production-ready. CoreMusic now provides professional plugin hosting capabilities that rival commercial DAW frameworks.
+**MIDI Capabilities:**
+- ✅ Note On/Off messages (all 128 notes, 128 velocity levels)
+- ✅ Control Change (volume, pan, expression, all 128 CCs)
+- ✅ Program Change (all 128 General MIDI instruments)
+- ✅ Pitch Bend (14-bit precision)
+- ✅ All 16 MIDI channels
+- ✅ Sample-accurate scheduling with offset frames
+- ✅ Type-safe (MIDI only for instrument plugins)
+
+**Recommendation:** Implementation complete and production-ready. CoreMusic now provides professional plugin hosting capabilities with full MIDI support, rivaling commercial DAW frameworks.
 
 ---
 

@@ -99,9 +99,20 @@ with host.load_plugin("AUDelay") as delay:
 - Timestamp handling
 - Support for multiple sample rates and channel counts
 
+### ✅ MIDI Support (Instrument Plugins)
+
+- Send MIDI Note On/Off messages
+- MIDI Control Change (volume, pan, expression, etc.)
+- Program Change (instrument selection)
+- Pitch Bend
+- All 16 MIDI channels supported
+- Sample-accurate MIDI scheduling with offset frames
+- Convenience methods: `note_on()`, `note_off()`, `control_change()`, `program_change()`, `pitch_bend()`, `all_notes_off()`
+- Type checking (MIDI only for instrument plugins)
+
 ## Test Results
 
-- **643 total tests passing** (added 28 new AudioUnit hosting tests)
+- **662 total tests passing** (added 47 new AudioUnit hosting tests)
 - **190 AudioUnit plugins discovered** on test system
   - 111 Effects
   - 62 Instruments
@@ -109,7 +120,8 @@ with host.load_plugin("AUDelay") as delay:
   - 6 Mixers
   - 4 Generators
 - **100% test success rate** - zero regressions
-- **18 high-level API tests** - all passing
+- **18 high-level API tests** (effects) - all passing
+- **19 MIDI tests** (instruments) - all passing
 
 ### Test Coverage
 
@@ -130,6 +142,20 @@ with host.load_plugin("AUDelay") as delay:
 - Preset management
 - Multi-plugin workflows
 
+#### MIDI Tests (`tests/test_audiounit_midi.py`)
+- Instrument plugin discovery and loading
+- MIDI Note On/Off messages
+- Multiple simultaneous notes
+- Velocity and note range testing
+- Control Change messages (volume, pan, expression)
+- Program Change (instrument selection)
+- Pitch Bend messages
+- All Notes Off command
+- Multi-channel MIDI (16 channels)
+- Sample-accurate scheduling
+- Type checking (MIDI-only for instruments)
+- Error handling and validation
+
 ## Demo Applications
 
 ### 1. Low-Level C API Demo (`tests/demos/audiounit_browser_demo.py`)
@@ -149,7 +175,7 @@ Interactive plugin browser demonstrating:
 
 ### 2. High-Level Pythonic API Demo (`tests/demos/audiounit_highlevel_demo.py`)
 
-6 interactive demonstrations:
+6 interactive demonstrations (effect plugins):
 1. **Plugin Discovery** - Browse plugins by category
 2. **Plugin Loading** - Context manager usage
 3. **Parameter Control** - Three ways to set parameters
@@ -161,6 +187,24 @@ Interactive plugin browser demonstrating:
 - Clean, intuitive API showcase
 - Complete workflow examples
 - Best practices demonstration
+
+### 3. Instrument Plugin MIDI Demo (`tests/demos/audiounit_instrument_demo.py`)
+
+8 interactive demonstrations (MIDI instruments):
+1. **Discover Instruments** - Browse 62 instrument plugins
+2. **Basic MIDI Control** - Note on/off, chords, scales
+3. **Instrument Selection** - General MIDI program changes
+4. **MIDI Controllers** - Volume/pan automation
+5. **Pitch Bend** - Smooth pitch modulation
+6. **Multi-Channel Performance** - 16-channel orchestration
+7. **Arpeggiator** - Rapid note sequences
+8. **Interactive Keyboard** - Real-time key mapping demo
+
+**Features:**
+- Complete MIDI functionality showcase
+- Multi-channel orchestration examples
+- Sample-accurate timing demonstrations
+- Integration with Apple DLSMusicDevice (General MIDI synth)
 
 ## API Comparison
 
@@ -339,6 +383,102 @@ with cm.AudioUnitPlugin.from_name("AUDelay") as delay:
         elif param.unit_name == 'dB':
             print(f"  → Decibel parameter")
 ```
+
+### MIDI Instrument Control
+
+```python
+import coremusic as cm
+import time
+
+# Load a General MIDI synthesizer
+with cm.AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu') as synth:
+    # Play a note
+    synth.note_on(channel=0, note=60, velocity=100)  # Middle C
+    time.sleep(1.0)
+    synth.note_off(channel=0, note=60)
+
+    # Play a chord
+    notes = [60, 64, 67]  # C major chord (C, E, G)
+    for note in notes:
+        synth.note_on(channel=0, note=note, velocity=90)
+    time.sleep(1.5)
+    synth.all_notes_off(channel=0)  # Stop all notes at once
+
+    # Change instrument (General MIDI)
+    synth.program_change(channel=0, program=0)   # Acoustic Grand Piano
+    synth.program_change(channel=0, program=24)  # Nylon Guitar
+    synth.program_change(channel=0, program=40)  # Violin
+
+    # Control volume with MIDI CC
+    synth.note_on(channel=0, note=60, velocity=100)
+    for vol in range(127, 0, -10):  # Fade out
+        synth.control_change(channel=0, controller=7, value=vol)
+        time.sleep(0.1)
+    synth.note_off(channel=0, note=60)
+
+    # Pitch bend
+    synth.note_on(channel=0, note=60, velocity=100)
+    synth.pitch_bend(channel=0, value=8192)   # Center (no bend)
+    time.sleep(0.2)
+    synth.pitch_bend(channel=0, value=12288)  # Bend up
+    time.sleep(0.2)
+    synth.pitch_bend(channel=0, value=8192)   # Back to center
+    synth.note_off(channel=0, note=60)
+```
+
+### Multi-Channel MIDI Orchestration
+
+```python
+import coremusic as cm
+import time
+
+with cm.AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu') as synth:
+    # Setup different instruments on different channels
+    synth.program_change(channel=0, program=0)   # Channel 0: Piano
+    synth.program_change(channel=1, program=48)  # Channel 1: Strings
+    synth.program_change(channel=2, program=56)  # Channel 2: Trumpet
+    synth.program_change(channel=9, program=0)   # Channel 9: Drums (GM standard)
+
+    # Play multi-channel arrangement
+    # Piano plays melody
+    synth.note_on(channel=0, note=60, velocity=90)
+
+    # Strings play harmony
+    synth.note_on(channel=1, note=64, velocity=70)
+    synth.note_on(channel=1, note=67, velocity=70)
+
+    # Trumpet plays accent
+    time.sleep(0.5)
+    synth.note_on(channel=2, note=72, velocity=100)
+
+    time.sleep(1.0)
+
+    # Clean stop
+    for ch in [0, 1, 2]:
+        synth.all_notes_off(channel=ch)
+```
+
+### Sample-Accurate MIDI Scheduling
+
+```python
+import coremusic as cm
+
+with cm.AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu') as synth:
+    # Schedule notes at precise sample offsets
+    # Useful for creating tight rhythmic patterns
+
+    sample_rate = 44100
+    sixteenth_note = sample_rate // 4  # 1/16 note at 60 BPM
+
+    # Schedule a 16th note pattern
+    notes = [60, 64, 67, 72]  # Ascending arpeggio
+    for i, note in enumerate(notes):
+        offset = i * sixteenth_note
+        synth.note_on(channel=0, note=note, velocity=100, offset_frames=offset)
+
+    # Notes will play with sample-accurate timing
+```
+
 
 ### Factory Presets
 

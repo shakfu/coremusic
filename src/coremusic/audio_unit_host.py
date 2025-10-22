@@ -94,12 +94,21 @@ class AudioUnitPreset:
 class AudioUnitPlugin:
     """High-level AudioUnit plugin wrapper with automatic resource management
 
-    Example:
+    Supports both effect plugins (audio processing) and instrument plugins (MIDI input).
+
+    Example (Effect Plugin):
         # Using context manager (recommended)
         with AudioUnitPlugin.from_name("AUDelay") as plugin:
             print(f"Loaded: {plugin.name}")
             plugin['Delay Time'] = 0.5  # Set parameter by name
             output = plugin.process(input_audio)
+
+    Example (Instrument Plugin):
+        # Load a synthesizer
+        with AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu') as synth:
+            synth.note_on(channel=0, note=60, velocity=100)  # Play middle C
+            time.sleep(1.0)
+            synth.note_off(channel=0, note=60)  # Release note
 
         # Manual lifecycle
         plugin = AudioUnitPlugin.from_name("AUReverb")
@@ -343,6 +352,113 @@ class AudioUnitPlugin:
             sample_rate,
             num_channels
         )
+
+    def send_midi(self, status: int, data1: int, data2: int, offset_frames: int = 0):
+        """Send MIDI message to instrument plugin
+
+        Args:
+            status: MIDI status byte (includes channel and command)
+            data1: First MIDI data byte (0-127)
+            data2: Second MIDI data byte (0-127)
+            offset_frames: Sample offset for scheduling (default 0)
+
+        Raises:
+            RuntimeError: If plugin not initialized or MIDI send fails
+            ValueError: If plugin is not an instrument type
+        """
+        if not self._initialized:
+            raise RuntimeError("Plugin not initialized")
+        if self.type != 'aumu':  # kAudioUnitType_MusicDevice
+            raise ValueError(f"MIDI only supported for instrument plugins (type 'aumu'), not '{self.type}'")
+
+        capi.music_device_midi_event(self._unit_id, status, data1, data2, offset_frames)
+
+    def note_on(self, channel: int, note: int, velocity: int, offset_frames: int = 0):
+        """Send MIDI Note On message
+
+        Args:
+            channel: MIDI channel (0-15)
+            note: MIDI note number (0-127, middle C = 60)
+            velocity: Note velocity (0-127)
+            offset_frames: Sample offset for scheduling (default 0)
+
+        Example:
+            >>> synth.note_on(channel=0, note=60, velocity=100)  # C4 at velocity 100
+        """
+        status, data1, data2 = capi.midi_note_on(channel, note, velocity)
+        self.send_midi(status, data1, data2, offset_frames)
+
+    def note_off(self, channel: int, note: int, velocity: int = 0, offset_frames: int = 0):
+        """Send MIDI Note Off message
+
+        Args:
+            channel: MIDI channel (0-15)
+            note: MIDI note number (0-127)
+            velocity: Release velocity (0-127, default 0)
+            offset_frames: Sample offset for scheduling (default 0)
+
+        Example:
+            >>> synth.note_off(channel=0, note=60)  # Release C4
+        """
+        status, data1, data2 = capi.midi_note_off(channel, note, velocity)
+        self.send_midi(status, data1, data2, offset_frames)
+
+    def control_change(self, channel: int, controller: int, value: int, offset_frames: int = 0):
+        """Send MIDI Control Change message
+
+        Args:
+            channel: MIDI channel (0-15)
+            controller: Controller number (0-127)
+            value: Controller value (0-127)
+            offset_frames: Sample offset for scheduling (default 0)
+
+        Example:
+            >>> synth.control_change(channel=0, controller=7, value=100)  # Volume
+            >>> synth.control_change(channel=0, controller=10, value=64)  # Pan center
+        """
+        status, data1, data2 = capi.midi_control_change(channel, controller, value)
+        self.send_midi(status, data1, data2, offset_frames)
+
+    def program_change(self, channel: int, program: int, offset_frames: int = 0):
+        """Send MIDI Program Change message
+
+        Args:
+            channel: MIDI channel (0-15)
+            program: Program/patch number (0-127)
+            offset_frames: Sample offset for scheduling (default 0)
+
+        Example:
+            >>> synth.program_change(channel=0, program=0)  # Acoustic Grand Piano
+        """
+        status, data1, data2 = capi.midi_program_change(channel, program)
+        self.send_midi(status, data1, data2, offset_frames)
+
+    def pitch_bend(self, channel: int, value: int, offset_frames: int = 0):
+        """Send MIDI Pitch Bend message
+
+        Args:
+            channel: MIDI channel (0-15)
+            value: 14-bit pitch bend value (0-16383, 8192 = center)
+            offset_frames: Sample offset for scheduling (default 0)
+
+        Example:
+            >>> synth.pitch_bend(channel=0, value=8192)  # Center (no bend)
+            >>> synth.pitch_bend(channel=0, value=12288)  # Bend up
+        """
+        status, data1, data2 = capi.midi_pitch_bend(channel, value)
+        self.send_midi(status, data1, data2, offset_frames)
+
+    def all_notes_off(self, channel: int):
+        """Turn off all notes on a channel
+
+        Args:
+            channel: MIDI channel (0-15)
+
+        Example:
+            >>> synth.all_notes_off(channel=0)  # Silence all notes
+        """
+        # MIDI CC 123 = All Notes Off
+        self.control_change(channel, 123, 0)
 
     def __getitem__(self, key: str) -> float:
         """Get parameter value by name"""
