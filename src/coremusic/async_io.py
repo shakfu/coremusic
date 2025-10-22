@@ -29,7 +29,7 @@ Example usage:
 """
 
 import asyncio
-from typing import Optional, Union, AsyncIterator, Any
+from typing import Optional, Union, AsyncIterator, Any, Tuple
 from pathlib import Path
 
 from . import capi
@@ -127,7 +127,7 @@ class AsyncAudioFile:
 
     async def read_packets_async(
         self, start_packet: int, packet_count: int
-    ) -> tuple[bytes, int]:
+    ) -> Tuple[bytes, int]:
         """Read audio packets asynchronously.
 
         Args:
@@ -137,7 +137,7 @@ class AsyncAudioFile:
         Returns:
             Tuple of (audio data as bytes, actual packet count)
         """
-        return await asyncio.to_thread(
+        return await asyncio.to_thread(  # type: ignore[arg-type,call-arg]
             self._audio_file.read_packets, start_packet, packet_count
         )
 
@@ -173,15 +173,15 @@ class AsyncAudioFile:
         # If total_packets not specified, read until we get no data
         while True:
             remaining = chunk_size
-            chunk_data, actual_count = await asyncio.to_thread(
+            chunk_data, actual_count = await asyncio.to_thread(  # type: ignore[call-arg]
                 self._audio_file.read_packets, current_packet, remaining
             )
 
-            if not chunk_data or actual_count == 0:
+            if actual_count == 0 or not chunk_data:  # type: ignore[comparison-overlap]
                 break
 
             yield chunk_data
-            current_packet += actual_count
+            current_packet += int(actual_count)
 
             # Yield control to event loop
             await asyncio.sleep(0)
@@ -207,7 +207,7 @@ class AsyncAudioFile:
             Returns:
                 NumPy array with shape (frames, channels)
             """
-            return await asyncio.to_thread(
+            return await asyncio.to_thread(  # type: ignore[attr-defined]
                 self._audio_file.read_as_numpy, start_packet, packet_count
             )
 
@@ -241,7 +241,7 @@ class AsyncAudioFile:
             while True:
                 remaining = chunk_size
                 try:
-                    chunk = await asyncio.to_thread(
+                    chunk = await asyncio.to_thread(  # type: ignore[attr-defined]
                         self._audio_file.read_as_numpy, current_packet, remaining
                     )
                 except Exception:
@@ -311,7 +311,7 @@ class AsyncAudioQueue:
         Returns:
             AsyncAudioQueue instance
         """
-        queue = await asyncio.to_thread(AudioQueue.new_output, audio_format)
+        queue = await asyncio.to_thread(AudioQueue.new_output, audio_format)  # type: ignore[attr-defined]
         return cls(queue)
 
     async def __aenter__(self) -> "AsyncAudioQueue":
@@ -339,7 +339,7 @@ class AsyncAudioQueue:
         Args:
             buffer: AudioBuffer to enqueue
         """
-        await asyncio.to_thread(self._queue.enqueue_buffer, buffer)
+        await asyncio.to_thread(self._queue.enqueue_buffer, buffer)  # type: ignore[attr-defined]
 
     async def start_async(self) -> None:
         """Start the audio queue asynchronously."""
@@ -359,12 +359,12 @@ class AsyncAudioQueue:
         Args:
             immediate: If True, dispose immediately; if False, wait for buffers to finish
         """
-        await asyncio.to_thread(self._queue.dispose, immediate)
+        await asyncio.to_thread(self._queue.dispose, immediate)  # type: ignore[call-arg]
 
     @property
     def format(self) -> AudioFormat:
         """Get the audio format (synchronous property)."""
-        return self._queue._format
+        return self._queue._format  # type: ignore[no-any-return,attr-defined]
 
     def __repr__(self) -> str:
         return f"AsyncAudioQueue(format={self.format})"

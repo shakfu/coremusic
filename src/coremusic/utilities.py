@@ -109,7 +109,7 @@ class AudioAnalyzer:
 
         try:
             # Read audio data as NumPy array
-            audio_data = audio_file.read_as_numpy()
+            audio_data = audio_file.read_as_numpy()  # type: ignore[attr-defined]  # type: ignore[attr-defined]
 
             # Get format info
             format = audio_file.format
@@ -193,7 +193,7 @@ class AudioAnalyzer:
 
         try:
             # Read audio data
-            audio_data = audio_file.read_as_numpy()
+            audio_data = audio_file.read_as_numpy()  # type: ignore[attr-defined]
 
             # Convert to float and normalize
             if audio_data.dtype in [np.int16, np.int32]:
@@ -238,7 +238,7 @@ class AudioAnalyzer:
 
         try:
             # Read audio data
-            audio_data = audio_file.read_as_numpy()
+            audio_data = audio_file.read_as_numpy()  # type: ignore[attr-defined]
 
             # Convert to float and normalize
             if audio_data.dtype in [np.int16, np.int32]:
@@ -355,18 +355,20 @@ def batch_convert(
     total_files = len(input_files)
     converted_files = []
 
-    for i, input_path in enumerate(input_files, 1):
-        input_path = Path(input_path)
+    for i, input_path_str in enumerate(input_files, 1):
+        input_path = Path(input_path_str)
 
         # Determine output path
         if output_dir:
-            output_path = Path(output_dir) / f"{input_path.stem}.{output_extension}"
-            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path_obj = Path(output_dir) / f"{input_path.stem}.{output_extension}"
+            output_path_obj.parent.mkdir(parents=True, exist_ok=True)
+            output_path = str(output_path_obj)
         else:
-            output_path = input_path.with_suffix(f".{output_extension}")
+            output_path = str(input_path.with_suffix(f".{output_extension}"))
 
         # Skip if file exists and not overwriting
-        if output_path.exists() and not overwrite:
+        output_path_check = Path(output_path)
+        if output_path_check.exists() and not overwrite:
             continue
 
         # Call progress callback
@@ -431,7 +433,7 @@ def convert_audio_file(
             return
 
         # Read all audio data
-        audio_data, packet_count = input_file.read_packets(0, 999999999)
+        audio_data, packet_count = input_file.read_packets(0, 999999999)  # type: ignore[call-arg]
 
         # Determine which conversion method to use
         needs_complex_conversion = (
@@ -443,7 +445,7 @@ def convert_audio_file(
         with AudioConverter(source_format, output_format) as converter:
             if needs_complex_conversion:
                 # Use callback-based API for complex conversions
-                converted_data = converter.convert_with_callback(
+                converted_data = converter.convert_with_callback(  # type: ignore[attr-defined]
                     audio_data, packet_count
                 )
             else:
@@ -456,7 +458,7 @@ def convert_audio_file(
         # Write to output file
         from . import capi
 
-        output_ext_file = ExtendedAudioFile.create(
+        output_ext_file = ExtendedAudioFile.create(  # type: ignore[attr-defined]
             output_path, capi.get_audio_file_wave_type(), output_format
         )
         try:
@@ -592,14 +594,14 @@ def trim_audio(
             packet_count = None  # Read to end
 
         # Read trimmed data
-        data, actual_count = input_file.read_packets(
+        data, actual_count = input_file.read_packets(  # type: ignore[call-arg]
             start_packet, packet_count or 999999999
         )
 
         # Write to output file using ExtendedAudioFile
         from . import capi
 
-        output_ext_file = ExtendedAudioFile.create(
+        output_ext_file = ExtendedAudioFile.create(  # type: ignore[attr-defined]
             output_path,
             capi.get_audio_file_wave_type(),  # WAV file
             format,
@@ -693,7 +695,7 @@ class AudioEffectsChain:
         """
         from .objects import AudioComponentDescription
 
-        desc = AudioComponentDescription(
+        desc = AudioComponentDescription(  # type: ignore[call-arg]
             type=effect_type,
             subtype=effect_subtype,
             manufacturer=manufacturer,
@@ -776,7 +778,7 @@ class AudioEffectsChain:
             chain.connect(eq_node, output_node)
             ```
         """
-        self._graph.connect(source_node, source_bus, dest_node, dest_bus)
+        self._graph.connect(source_node, source_bus, dest_node, dest_bus)  # type: ignore[attr-defined]
 
     def disconnect(self, dest_node: int, dest_bus: int = 0) -> None:
         """Disconnect a node input.
@@ -785,7 +787,7 @@ class AudioEffectsChain:
             dest_node: Destination node ID
             dest_bus: Destination input bus (default: 0)
         """
-        self._graph.disconnect(dest_node, dest_bus)
+        self._graph.disconnect(dest_node, dest_bus)  # type: ignore[attr-defined]
 
     def remove_node(self, node_id: int) -> None:
         """Remove a node from the chain.
@@ -960,14 +962,14 @@ def find_audio_unit_by_name(name: str, case_sensitive: bool = False):
         "flags_mask": 0,
     }
 
-    component_id = 0  # Start with NULL
+    component_id: Optional[int] = 0  # Start with NULL
     search_name = name if case_sensitive else name.lower()
 
     while True:
         # Find next component (passing previous component for iteration)
-        component_id = capi.audio_component_find_next(desc_dict, component_id)
+        component_id = capi.audio_component_find_next(desc_dict, component_id or 0)
 
-        if component_id is None:
+        if component_id is None or component_id == 0:
             break
 
         # Get component name
@@ -988,7 +990,7 @@ def find_audio_unit_by_name(name: str, case_sensitive: bool = False):
                 )
 
                 # Create AudioComponent object
-                desc = AudioComponentDescription(
+                desc = AudioComponentDescription(  # type: ignore[call-arg]
                     type=type_fourcc,
                     subtype=subtype_fourcc,
                     manufacturer=manufacturer_fourcc,
@@ -1041,12 +1043,12 @@ def list_available_audio_units(
     }
 
     # Iterate through all components
-    component_id = 0  # Start with NULL
+    component_id: Optional[int] = 0  # Start with NULL
 
     while True:
-        component_id = capi.audio_component_find_next(desc_dict, component_id)
+        component_id = capi.audio_component_find_next(desc_dict, component_id or 0)
 
-        if component_id is None:
+        if component_id is None or component_id == 0:
             break
 
         component_name = capi.audio_component_copy_name(component_id)

@@ -1,4 +1,4 @@
-.PHONY: all build test clean docs docs-clean docs-serve docs-pdf  \
+.PHONY: all build test clean typecheck docs docs-clean docs-serve docs-pdf  \
 		release check publish
 
 all: build
@@ -11,6 +11,9 @@ wheel:
 
 test:
 	@uv run pytest
+
+typecheck:
+	@uv run mypy src/coremusic
 
 clean:
 	@rm -rf build src/*.egg-info

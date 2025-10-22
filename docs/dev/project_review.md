@@ -596,7 +596,7 @@ available_plugins = cm.discover_audio_units(type='effect')
 1. Documentation and examples
 2. ~~High-level convenience utilities~~ - [x] **COMPLETED**
 3. ~~Modern Python patterns (async, type hints)~~ - [x] **COMPLETED**
-4. Distribution and packaging
+4. ~~Distribution and packaging~~ - [x] **COMPLETED**
 
 The package is **ready for production use** today. With focused effort on documentation and packaging, it could become the definitive Python audio library for macOS.
 
@@ -640,7 +640,7 @@ The package is **ready for production use** today. With focused effort on docume
 - AudioCodec (covered by AudioConverter)
 - CAFFile structures (informational only)
 
-###  Statistics
+### Statistics
 - **Total Functions Wrapped**: 395+
 - **Test Files**: 25
 - **Total Tests**: 440

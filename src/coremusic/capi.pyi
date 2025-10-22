@@ -119,7 +119,7 @@ def audio_queue_dispose(queue_id: int, immediate: bool) -> None:
 # Audio Component & AudioUnit Operations
 # ============================================================================
 
-def audio_component_find_next(description: Dict[str, Any]) -> Optional[int]:
+def audio_component_find_next(description: Dict[str, Any], previous_component_id: int = 0) -> Optional[int]:
     """Find next matching audio component."""
     ...
 
@@ -129,6 +129,14 @@ def audio_component_instance_new(component_id: int) -> int:
 
 def audio_component_instance_dispose(instance_id: int) -> None:
     """Dispose of audio component instance."""
+    ...
+
+def audio_component_copy_name(component_id: int) -> Optional[str]:
+    """Get the name of an audio component."""
+    ...
+
+def audio_component_get_description(component_id: int) -> Dict[str, Any]:
+    """Get the description of an audio component."""
     ...
 
 def audio_unit_initialize(unit_id: int) -> None:
