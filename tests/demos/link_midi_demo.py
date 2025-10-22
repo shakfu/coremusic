@@ -26,7 +26,7 @@ def list_midi_destinations():
     num_destinations = cm.capi.midi_get_number_of_destinations()
 
     if num_destinations == 0:
-        print("  (No MIDI destinations found)")
+        print("(No MIDI destinations found)")
         return []
 
     destinations = []

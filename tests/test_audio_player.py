@@ -66,6 +66,59 @@ def test_audio_playback():
         assert False
 
 
+def test_audio_player_play_method():
+    """Test that play() method works as an alias for start()"""
+    print("\n=== AudioPlayer play() Method Test ===")
+
+    test_file = "tests/amen.wav"
+    assert os.path.exists(test_file)
+
+    try:
+        # Create AudioPlayer instance
+        player = cm.AudioPlayer()
+        print("Created AudioPlayer instance")
+
+        # Load and setup
+        player.load_file(test_file)
+        player.setup_output()
+        print("Loaded file and setup output")
+
+        # Test play() method
+        print("Testing play() method...")
+        result = player.play()
+        print(f"Called play() (result: {result})")
+
+        # Verify playback started
+        time.sleep(0.5)
+        assert player.is_playing(), "Player should be playing after play() call"
+        print("✓ play() method works correctly")
+
+        # Stop playback
+        player.stop()
+        print("Stopped playback")
+
+        # Reset and test start() method for comparison
+        player.reset_playback()
+        print("\nTesting start() method...")
+        result = player.start()
+        print(f"Called start() (result: {result})")
+
+        # Verify playback started
+        time.sleep(0.5)
+        assert player.is_playing(), "Player should be playing after start() call"
+        print("✓ start() method works correctly")
+
+        # Stop playback
+        player.stop()
+
+        print("\n✓ Both play() and start() methods work correctly!")
+        assert True
+
+    except Exception as e:
+        print(f"✗ play() method test failed: {e}")
+        assert False
+
+
 def test_module_test_error():
     error_code = capi.test_error()
     assert error_code

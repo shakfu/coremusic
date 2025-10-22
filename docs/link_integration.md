@@ -175,7 +175,6 @@ with cm.link.LinkSession(bpm=120.0) as session:
 
     # Start playback
     player.play()
-    player.start()
 
     # Monitor playback with Link timing
     for _ in range(20):

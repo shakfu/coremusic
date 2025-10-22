@@ -420,7 +420,7 @@ player.load_file("path/to/audio.wav")
 player.setup_output()
 
 # Start playback
-player.start()
+player.play()
 
 # Control playback
 player.set_looping(True)
@@ -459,7 +459,6 @@ with cm.link.LinkSession(bpm=120.0) as session:
     print(f"Audio beat: {timing['beat']:.2f}")
 
     player.play()
-    player.start()
 
 # Link + MIDI: Clock synchronization
 from coremusic import link_midi

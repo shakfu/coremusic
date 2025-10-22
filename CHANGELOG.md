@@ -19,6 +19,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Added
 
+- **AudioPlayer.play() method** - Added `play()` as an intuitive alias for `start()` method
+  - Both `player.play()` and `player.start()` now work identically
+  - Improves API ergonomics and developer experience
+  - Backward compatible - existing code using `start()` continues to work
+
 - **Ableton Link Integration** - Complete tempo synchronization and beat grid support
   - **Link Cython wrapper** (`src/coremusic/link.pyx` and `link.pxd`)
     - `Clock` class - Platform-specific clock for Link timing

@@ -71,7 +71,6 @@ def main():
     # Start playback
     print("\n6. Starting playback with Link sync...")
     player.play()
-    player.start()
     print("   ✓ Audio playing")
 
     # Monitor playback and show Link timing

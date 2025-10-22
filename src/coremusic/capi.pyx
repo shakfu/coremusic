@@ -1904,6 +1904,10 @@ cdef class AudioPlayer:
 
         return 0  # noErr
 
+    def play(self):
+        """Start audio playback (alias for start())"""
+        return self.start()
+
     def stop(self):
         """Stop audio playback"""
         if not self.initialized:
