@@ -19,6 +19,112 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Added
 
+- **AudioUnit MIDI Support** - Complete MIDI control for AudioUnit instrument plugins
+  - **MIDI Methods in AudioUnitPlugin class** (`src/coremusic/audio_unit_host.py`)
+    - `send_midi()` - Send raw MIDI messages to instrument plugins
+    - `note_on()` - Send MIDI Note On with channel, note, velocity, and optional offset frames
+    - `note_off()` - Send MIDI Note Off with channel, note, and optional velocity/offset
+    - `control_change()` - Send MIDI Control Change (volume, pan, expression, etc.)
+    - `program_change()` - Send MIDI Program Change for instrument selection (General MIDI)
+    - `pitch_bend()` - Send MIDI Pitch Bend with 14-bit precision (0-16383)
+    - `all_notes_off()` - Emergency stop all notes on a channel (MIDI CC 123)
+    - Type checking ensures MIDI methods only work on instrument plugins (`aumu` type)
+    - Sample-accurate MIDI scheduling with `offset_frames` parameter
+  - **Full MIDI Specification Support**
+    - All 128 MIDI notes (0-127)
+    - All 128 velocity levels (0-127)
+    - All 128 MIDI controllers (CC 0-127)
+    - All 128 General MIDI programs (0-127)
+    - 14-bit pitch bend precision (0-16383, center = 8192)
+    - All 16 MIDI channels (0-15)
+    - Sample-accurate timing for tight rhythmic patterns
+  - **Comprehensive test coverage** - 19 new tests in `tests/test_audiounit_midi.py`
+    - Basic MIDI operations (note on/off, chords, scales)
+    - Velocity and note range testing across MIDI spec
+    - Control Change messages (volume, pan, expression)
+    - Program Change for instrument selection
+    - Pitch Bend messages with smooth modulation
+    - All Notes Off command
+    - Multi-channel MIDI (all 16 channels)
+    - Raw MIDI message sending
+    - Sample-accurate scheduling with offset frames
+    - Type checking (MIDI rejected on effect plugins)
+    - Error handling and validation
+    - Rapid note sequences (arpeggiator patterns)
+    - Multi-channel orchestration
+  - **Interactive demo application** - `tests/demos/audiounit_instrument_demo.py`
+    - 8 comprehensive demonstrations of MIDI functionality
+    - Plugin discovery (62 instrument plugins found)
+    - Basic MIDI control (notes, chords, C major scale)
+    - Instrument selection via General MIDI program changes
+    - MIDI controller automation (volume fade, pan sweep)
+    - Pitch bend demonstrations (smooth pitch modulation)
+    - Multi-channel performance (4-channel orchestration example)
+    - Arpeggiator patterns (rapid note sequences)
+    - Interactive keyboard mapping demo
+    - Integration with Apple DLSMusicDevice (built-in General MIDI synth)
+  - **Updated documentation**
+    - `docs/dev/audiounit_implementation.md` updated with MIDI sections and examples
+    - MIDI instrument control examples
+    - Multi-channel MIDI orchestration examples
+    - Sample-accurate MIDI scheduling examples
+    - Updated test coverage and demo information
+  - **All 662 tests passing** (643 existing + 19 new MIDI tests)
+  - **62 instrument plugins** discovered and working with MIDI control
+
+  **Example Usage:**
+
+  ```python
+  import coremusic as cm
+  import time
+
+  # Load a General MIDI synthesizer
+  with cm.AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu') as synth:
+      # Play a note
+      synth.note_on(channel=0, note=60, velocity=100)  # Middle C
+      time.sleep(1.0)
+      synth.note_off(channel=0, note=60)
+
+      # Play a chord
+      notes = [60, 64, 67]  # C major (C, E, G)
+      for note in notes:
+          synth.note_on(channel=0, note=note, velocity=90)
+      time.sleep(1.5)
+      synth.all_notes_off(channel=0)
+
+      # Change instrument (General MIDI)
+      synth.program_change(channel=0, program=0)   # Acoustic Grand Piano
+      synth.program_change(channel=0, program=40)  # Violin
+
+      # Control volume with MIDI CC
+      synth.control_change(channel=0, controller=7, value=100)  # Full volume
+      synth.control_change(channel=0, controller=7, value=50)   # Half volume
+
+      # Pitch bend
+      synth.note_on(channel=0, note=60, velocity=100)
+      synth.pitch_bend(channel=0, value=8192)   # Center (no bend)
+      synth.pitch_bend(channel=0, value=12288)  # Bend up
+      synth.pitch_bend(channel=0, value=8192)   # Back to center
+      synth.note_off(channel=0, note=60)
+
+  # Multi-channel orchestration
+  with cm.AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu') as synth:
+      # Setup different instruments on different channels
+      synth.program_change(channel=0, program=0)   # Piano
+      synth.program_change(channel=1, program=48)  # Strings
+      synth.program_change(channel=2, program=56)  # Trumpet
+
+      # Play multi-channel arrangement
+      synth.note_on(channel=0, note=60, velocity=90)  # Piano
+      synth.note_on(channel=1, note=64, velocity=70)  # Strings
+      synth.note_on(channel=2, note=72, velocity=80)  # Trumpet
+      time.sleep(1.0)
+
+      # Clean stop all channels
+      for ch in range(3):
+          synth.all_notes_off(channel=ch)
+  ```
+
 - **AudioPlayer.play() method** - Added `play()` as an intuitive alias for `start()` method
   - Both `player.play()` and `player.start()` now work identically
   - Improves API ergonomics and developer experience

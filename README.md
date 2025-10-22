@@ -20,6 +20,8 @@
 
 - **AudioUnit Integration**: AudioUnit discovery, instantiation, and lifecycle management
 
+- **AudioUnit MIDI Support**: Full MIDI control for AudioUnit instrument plugins with note on/off, control change, program change, pitch bend, and multi-channel support
+
 - **AudioQueue Support**: High-level audio queue management for streaming and playback
 
 - **Hardware Abstraction**: Direct access to audio hardware and device management
@@ -67,6 +69,13 @@
 - Audio effects and generators
 - Hardware audio output control
 - Render callback infrastructure
+- **MIDI instrument control** - Full MIDI support for instrument plugins
+  - Note On/Off messages (all 128 notes, 128 velocity levels)
+  - Control Change (volume, pan, expression, all 128 CCs)
+  - Program Change (all 128 General MIDI instruments)
+  - Pitch Bend (14-bit precision)
+  - All 16 MIDI channels
+  - Sample-accurate scheduling with offset frames
 
 ### CoreMIDI
 
@@ -431,6 +440,63 @@ print(f"Progress: {player.get_progress():.2f}")
 player.stop()
 ```
 
+### AudioUnit Instrument MIDI Control
+
+```python
+import coremusic as cm
+import time
+
+# Discover available instrument plugins
+host = cm.AudioUnitHost()
+instruments = host.discover_plugins(type='instrument')
+print(f"Found {len(instruments)} instrument plugins")
+
+# Load an instrument (Apple DLSMusicDevice - General MIDI synth)
+with host.load_plugin("DLSMusicDevice", type='instrument') as synth:
+    # Play a note
+    synth.note_on(channel=0, note=60, velocity=100)  # Middle C
+    time.sleep(1.0)
+    synth.note_off(channel=0, note=60)
+
+    # Play a chord
+    notes = [60, 64, 67]  # C major (C, E, G)
+    for note in notes:
+        synth.note_on(channel=0, note=note, velocity=90)
+    time.sleep(1.5)
+    synth.all_notes_off(channel=0)
+
+    # Change instrument (General MIDI program change)
+    synth.program_change(channel=0, program=0)   # Acoustic Grand Piano
+    synth.program_change(channel=0, program=40)  # Violin
+    synth.program_change(channel=0, program=56)  # Trumpet
+
+    # Control volume with MIDI CC
+    synth.control_change(channel=0, controller=7, value=100)  # Full volume
+    synth.control_change(channel=0, controller=7, value=50)   # Half volume
+
+    # Pitch bend
+    synth.note_on(channel=0, note=60, velocity=100)
+    synth.pitch_bend(channel=0, value=8192)   # Center (no bend)
+    synth.pitch_bend(channel=0, value=12288)  # Bend up
+    synth.pitch_bend(channel=0, value=8192)   # Back to center
+    synth.note_off(channel=0, note=60)
+
+    # Multi-channel orchestration
+    synth.program_change(channel=0, program=0)   # Piano
+    synth.program_change(channel=1, program=48)  # Strings
+    synth.program_change(channel=2, program=56)  # Trumpet
+
+    # Play arrangement on different channels
+    synth.note_on(channel=0, note=60, velocity=90)  # Piano: C
+    synth.note_on(channel=1, note=64, velocity=70)  # Strings: E
+    synth.note_on(channel=2, note=67, velocity=80)  # Trumpet: G
+    time.sleep(2.0)
+
+    # Clean stop
+    for ch in range(3):
+        synth.all_notes_off(channel=ch)
+```
+
 ### Ableton Link Integration
 
 ```python
@@ -605,6 +671,23 @@ The CoreMIDI test suite includes:
 - Thru connection routing and transformation
 - Error handling and environment adaptation
 
+### AudioUnit Demos
+
+```bash
+# AudioUnit instrument MIDI control demo
+python3 tests/demos/audiounit_instrument_demo.py
+```
+
+This comprehensive demo includes:
+- Plugin discovery (62 instrument plugins)
+- Basic MIDI control (notes, chords, scales)
+- Program changes (instrument selection via General MIDI)
+- MIDI controllers (volume, pan automation)
+- Pitch bend demonstrations
+- Multi-channel performance (4-channel orchestration)
+- Arpeggiator patterns
+- Interactive keyboard mapping
+
 ### Link Integration Demos
 
 ```bash
@@ -632,6 +715,8 @@ The complete test suite covers:
 
 - **Functional API**: Audio file I/O, AudioUnit lifecycle, AudioQueue functionality
 - **Object-Oriented API**: Modern Pythonic wrappers with automatic resource management
+- **AudioUnit Hosting**: Plugin discovery, loading, processing, and MIDI control (662 total tests)
+- **AudioUnit MIDI**: Note on/off, control change, program change, pitch bend, multi-channel (19 tests)
 - **MIDI Operations**: Message creation, device management, and routing (both APIs)
 - **Link Integration**: Network tempo sync, beat quantization, Link + Audio/MIDI
 - **Integration Testing**: Cross-API compatibility and consistency
@@ -813,6 +898,9 @@ coremusic provides near-native performance through both APIs:
 - Multi-channel audio handling
 - MIDI controllers and sequencers
 - Virtual instruments and synthesizers
+- AudioUnit instrument hosting (software synthesizers, samplers)
+- Python-based MIDI sequencers with AudioUnit playback
+- Interactive music applications with MIDI input/output
 - Network-synchronized music applications
 - Beat-accurate audio/MIDI playback
 - Collaborative music production tools
