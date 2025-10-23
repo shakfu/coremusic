@@ -231,7 +231,7 @@ class TestMusicDeviceErrorHandling:
         with pytest.raises(RuntimeError):
             capi.music_device_start_note(invalid_unit, 0, 999999, 60.0, 100.0)
 
-
+@pytest.mark.slow
 class TestMusicDeviceIntegration:
     """Test MusicDevice integration scenarios"""
 
@@ -306,7 +306,7 @@ class TestMusicDeviceIntegration:
         except RuntimeError as e:
             print(f"MIDI sequence test skipped: {e}")
 
-
+@pytest.mark.slow
 class TestMusicDeviceResourceManagement:
     """Test MusicDevice resource management"""
 

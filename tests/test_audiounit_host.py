@@ -342,6 +342,188 @@ class TestAudioUnitPresets:
 
         print(f"\nSet preset to: {presets[0]['name']}")
 
+    @pytest.mark.slow
+    def test_survey_all_presets(self):
+        """Survey all AudioUnits on the system to find which have factory presets
+
+        Note: This test can be slow and may hang on some third-party plugins.
+        Run with: pytest -v -s -m slow
+        """
+        categories = {
+            'Effects': 'aufx',
+            'Instruments': 'aumu',
+            'Generators': 'augn',
+            'Mixers': 'aumx',
+            'Output': 'auou',
+        }
+
+        print("\n" + "=" * 70)
+        print("AudioUnit Factory Presets Survey")
+        print("=" * 70)
+
+        total_plugins = 0
+        total_with_presets = 0
+        plugins_with_presets = []
+
+        for category_name, category_type in categories.items():
+            print(f"\n{category_name}:")
+            print("-" * 70)
+
+            components = capi.audio_unit_find_all_components(component_type=category_type)
+
+            # Sample first 10 from each category to keep test fast
+            components_to_test = components[:10]
+            if len(components) > 10:
+                print(f"  (Testing first 10 of {len(components)} plugins)")
+
+            for comp_id in components_to_test:
+                total_plugins += 1
+                unit_id = None
+
+                try:
+                    info = capi.audio_unit_get_component_info(comp_id)
+
+                    # Try to instantiate and check for presets
+                    unit_id = capi.audio_component_instance_new(comp_id)
+                    capi.audio_unit_initialize(unit_id)
+
+                    presets = capi.audio_unit_get_factory_presets(unit_id)
+
+                    if len(presets) > 0:
+                        total_with_presets += 1
+                        manufacturer = info['manufacturer']
+                        name = info['name']
+                        count = len(presets)
+
+                        plugins_with_presets.append({
+                            'category': category_name,
+                            'manufacturer': manufacturer,
+                            'name': name,
+                            'preset_count': count,
+                            'sample_presets': presets[:3]
+                        })
+
+                        print(f"  ✓ {name} ({manufacturer}): {count} presets")
+
+                    capi.audio_unit_uninitialize(unit_id)
+                    capi.audio_component_instance_dispose(unit_id)
+
+                except Exception as e:
+                    # Some plugins may fail to instantiate - clean up if needed
+                    if unit_id is not None:
+                        try:
+                            capi.audio_unit_uninitialize(unit_id)
+                            capi.audio_component_instance_dispose(unit_id)
+                        except:
+                            pass
+                    continue
+
+        print("\n" + "=" * 70)
+        print("Summary")
+        print("=" * 70)
+        print(f"Total plugins tested: {total_plugins}")
+        print(f"Plugins with factory presets: {total_with_presets}")
+        if total_plugins > 0:
+            print(f"Percentage: {(total_with_presets/total_plugins*100):.1f}%")
+
+        if plugins_with_presets:
+            print("\n" + "=" * 70)
+            print("Top 10 Plugins by Preset Count")
+            print("=" * 70)
+
+            # Sort by preset count
+            sorted_plugins = sorted(plugins_with_presets,
+                                   key=lambda x: x['preset_count'],
+                                   reverse=True)
+
+            for i, plugin in enumerate(sorted_plugins[:10]):
+                print(f"\n{i+1}. {plugin['name']} ({plugin['manufacturer']})")
+                print(f"   Category: {plugin['category']}")
+                print(f"   Preset count: {plugin['preset_count']}")
+                if plugin['sample_presets']:
+                    print(f"   Sample presets:")
+                    for preset in plugin['sample_presets']:
+                        print(f"     [{preset['number']}] {preset['name']}")
+
+        # Basic assertions
+        assert total_plugins > 0, "Should find at least some AudioUnit plugins"
+        assert isinstance(plugins_with_presets, list)
+
+    @pytest.mark.skip(reason="Some AudioUnits hang during initialization - run manually if needed")
+    def test_survey_apple_presets(self):
+        """Quick survey of Apple AudioUnits for factory presets
+
+        Note: This test may hang on some plugins. Run manually with:
+        pytest -v -s tests/test_audiounit_host.py::TestAudioUnitPresets::test_survey_apple_presets
+        """
+        categories = {
+            'Effects': 'aufx',
+            'Instruments': 'aumu',
+            'Generators': 'augn',
+            'Output': 'auou',
+        }
+
+        print("\n" + "=" * 70)
+        print("Apple AudioUnit Factory Presets Survey")
+        print("=" * 70)
+
+        total_apple_plugins = 0
+        apple_with_presets = 0
+        plugins_with_presets = []
+
+        for category_name, category_type in categories.items():
+            # Only test Apple plugins for speed
+            components = capi.audio_unit_find_all_components(
+                component_type=category_type,
+                manufacturer='appl'
+            )
+
+            if not components:
+                continue
+
+            print(f"\n{category_name}: Testing {len(components)} Apple plugins")
+
+            for comp_id in components:
+                total_apple_plugins += 1
+
+                try:
+                    info = capi.audio_unit_get_component_info(comp_id)
+                    unit_id = capi.audio_component_instance_new(comp_id)
+                    capi.audio_unit_initialize(unit_id)
+
+                    presets = capi.audio_unit_get_factory_presets(unit_id)
+
+                    if len(presets) > 0:
+                        apple_with_presets += 1
+                        plugins_with_presets.append({
+                            'category': category_name,
+                            'name': info['name'],
+                            'preset_count': len(presets),
+                            'sample_presets': presets[:3]
+                        })
+                        print(f"  ✓ {info['name']}: {len(presets)} presets")
+
+                    capi.audio_unit_uninitialize(unit_id)
+                    capi.audio_component_instance_dispose(unit_id)
+
+                except Exception as e:
+                    continue
+
+        print("\n" + "=" * 70)
+        print("Apple Plugins Summary")
+        print("=" * 70)
+        print(f"Total Apple plugins tested: {total_apple_plugins}")
+        print(f"Apple plugins with factory presets: {apple_with_presets}")
+
+        if plugins_with_presets:
+            print("\nApple plugins with presets:")
+            for plugin in plugins_with_presets:
+                print(f"  • {plugin['name']}: {plugin['preset_count']} presets")
+
+        # Assertions
+        assert total_apple_plugins > 0, "Should find Apple AudioUnit plugins"
+        assert isinstance(plugins_with_presets, list)
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s"])

@@ -53,8 +53,9 @@ class TestAudioUnitHost:
         assert len(apple_plugins) > 0
 
 
+@pytest.mark.slow
 class TestAudioUnitPlugin:
-    """Test AudioUnitPlugin high-level API"""
+    """Test AudioUnitPlugin high-level API - marked as slow due to AudioUnit initialization that can hang"""
 
     def test_create_plugin_from_name(self):
         """Test creating plugin by name"""
@@ -165,8 +166,9 @@ class TestAudioUnitPlugin:
                 print(f"\nLoaded preset: {presets[0].name}")
 
 
+@pytest.mark.slow
 class TestAudioUnitHostIntegration:
-    """Test integrated workflows"""
+    """Test integrated workflows - marked as slow due to AudioUnit initialization that can hang"""
 
     def test_browse_and_load_plugin(self):
         """Test complete workflow: browse, load, control"""
@@ -206,6 +208,7 @@ class TestAudioUnitHostIntegration:
                 assert plugin2.is_initialized
 
 
+@pytest.mark.slow
 class TestAudioUnitParameter:
     """Test AudioUnitParameter class"""
 

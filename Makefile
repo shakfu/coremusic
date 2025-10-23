@@ -1,4 +1,4 @@
-.PHONY: all build test clean typecheck docs docs-clean docs-serve docs-pdf  \
+.PHONY: all build test test-all clean typecheck docs docs-clean docs-serve docs-pdf  \
 		release check publish
 
 all: build
@@ -10,6 +10,9 @@ wheel:
 	@uv build --wheel
 
 test:
+	@uv run pytest -m "not slow"
+
+test-all:
 	@uv run pytest
 
 typecheck:

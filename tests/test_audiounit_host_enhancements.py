@@ -381,9 +381,10 @@ class TestPresetManager:
 # AudioUnit Plugin Enhanced Tests
 # ============================================================================
 
+@pytest.mark.slow
 @pytest.mark.skipif(not AUDIOUNIT_AVAILABLE, reason="AudioUnit not available")
 class TestAudioUnitPluginEnhancements:
-    """Test enhanced AudioUnitPlugin functionality"""
+    """Test enhanced AudioUnitPlugin functionality - marked as slow due to AudioUnit initialization that can hang"""
 
     @pytest.fixture
     def plugin(self):
@@ -458,9 +459,10 @@ class TestAudioUnitPluginEnhancements:
 # AudioUnitChain Tests
 # ============================================================================
 
+@pytest.mark.slow
 @pytest.mark.skipif(not AUDIOUNIT_AVAILABLE, reason="AudioUnit not available")
 class TestAudioUnitChain:
-    """Test AudioUnitChain class"""
+    """Test AudioUnitChain class - marked as slow due to AudioUnit initialization that can hang"""
 
     def test_chain_creation(self):
         """Test creating an empty chain"""
