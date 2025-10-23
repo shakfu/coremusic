@@ -83,6 +83,73 @@ ClockTimeFormat
    :undoc-members:
    :show-inheritance:
 
+AudioUnit Plugin Hosting
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+AudioUnitHost Class
+"""""""""""""""""""
+
+.. autoclass:: coremusic.AudioUnitHost
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+AudioUnitPlugin Class
+"""""""""""""""""""""
+
+.. autoclass:: coremusic.AudioUnitPlugin
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+AudioUnitParameter Class
+"""""""""""""""""""""""""
+
+.. autoclass:: coremusic.AudioUnitParameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+AudioUnitPreset Class
+"""""""""""""""""""""
+
+.. autoclass:: coremusic.AudioUnitPreset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+PluginAudioFormat Class
+"""""""""""""""""""""""
+
+.. autoclass:: coremusic.PluginAudioFormat
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+AudioFormatConverter Class
+"""""""""""""""""""""""""""
+
+.. autoclass:: coremusic.AudioFormatConverter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+PresetManager Class
+"""""""""""""""""""
+
+.. autoclass:: coremusic.PresetManager
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+AudioUnitChain Class
+""""""""""""""""""""
+
+.. autoclass:: coremusic.AudioUnitChain
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Functional API
 --------------
 

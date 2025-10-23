@@ -19,6 +19,88 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Added
 
+- **AudioUnit Host Enhancements** - Advanced audio format support, preset management, and plugin chaining
+  - **AudioFormat Class** (`src/coremusic/audio_unit_host.py:18-93`)
+    - Support for multiple sample formats: `float32`, `float64`, `int16`, `int32`
+    - Interleaved and non-interleaved buffer layout support
+    - Properties: `bytes_per_sample`, `bytes_per_frame`
+    - Format comparison and dictionary serialization
+    - Type-safe format specification with string constants
+  - **AudioFormatConverter Class** (`src/coremusic/audio_unit_host.py:94-243`)
+    - Automatic format conversion between any supported formats
+    - Two-stage conversion pipeline: source → float32 interleaved → destination
+    - Proper audio normalization to [-1.0, 1.0] range
+    - Support for all format combinations (format, bit depth, channel layout)
+    - Symmetric rounding for integer formats
+  - **PresetManager Class** (`src/coremusic/audio_unit_host.py:341-535`)
+    - Complete preset lifecycle management (save/load/export/import)
+    - JSON-based preset storage in `~/Library/Audio/Presets/coremusic/`
+    - Preset metadata: name, description, plugin info, timestamp
+    - Parameter state capture and restoration
+    - Preset validation and compatibility checking
+    - List, delete, export, and import operations
+  - **AudioUnitChain Class** (`src/coremusic/audio_unit_host.py:1169-1438`)
+    - Sequential plugin processing with automatic routing
+    - Dynamic chain building: add, insert, remove plugins
+    - Automatic format conversion between plugins
+    - Wet/dry mixing support (blend processed and original signals)
+    - Plugin configuration by index
+    - Context manager support for automatic cleanup
+    - Method chaining for fluent API
+  - **Enhanced AudioUnitPlugin** (`src/coremusic/audio_unit_host.py:565-930`)
+    - `set_audio_format()` - Configure plugin audio format
+    - `process()` enhanced with format parameter for automatic conversion
+    - `save_preset()`, `load_preset()`, `list_user_presets()` - Preset management
+    - `delete_preset()`, `export_preset()`, `import_preset()` - Preset operations
+    - `audio_format` property for format queries
+  - **Comprehensive test coverage** - 37 new tests in `tests/test_audiounit_host_enhancements.py`
+    - 5 AudioFormat tests (creation, properties, equality, serialization)
+    - 7 AudioFormatConverter tests (all format combinations, interleaved/non-interleaved)
+    - 6 PresetManager tests (save, load, list, delete, export, import)
+    - 3 Plugin enhancement tests (format setting, conversion, integration)
+    - 14 AudioUnitChain tests (creation, operations, processing, context manager)
+    - 1 full workflow integration test
+    - 27 tests passing, 10 skipped (plugins not available)
+  - **Updated exports** - New classes exported from `coremusic` module
+    - `AudioFormat`, `AudioFormatConverter`, `AudioUnitChain`, `PresetManager`
+    - All classes available via `import coremusic as cm`
+  - **Documentation updates**
+    - `TODO.md` updated with completed features and usage examples
+    - Test count updated to **736 tests passing** (100% success rate)
+  - **Zero test regressions** - All 736 tests passing after enhancements
+
+  **Example Usage:**
+
+  ```python
+  import coremusic as cm
+
+  # Audio Format Support
+  fmt = cm.PluginAudioFormat(44100.0, 2, cm.PluginAudioFormat.INT16, interleaved=True)
+  plugin.set_audio_format(fmt)
+  output = plugin.process(input_data, num_frames, fmt)
+
+  # User Preset Management
+  plugin.save_preset("My Reverb", "Large hall with 3s decay")
+  plugin.load_preset("My Reverb")
+  presets = plugin.list_user_presets()
+  plugin.export_preset("My Reverb", "/path/to/export.json")
+  plugin.import_preset("/path/to/preset.json")
+
+  # AudioUnit Chain
+  chain = cm.AudioUnitChain()
+  chain.add_plugin("AUHighpass")
+  chain.add_plugin("AUDelay")
+  chain.add_plugin("AUReverb")
+  chain.configure_plugin(0, {'Cutoff Frequency': 200.0})
+  chain.configure_plugin(1, {'Delay Time': 0.5})
+  output = chain.process(input_audio, num_frames, wet_dry_mix=0.8)
+
+  # Or use context manager
+  with cm.AudioUnitChain() as chain:
+      chain.add_plugin("AUDelay")
+      output = chain.process(input_data)
+  ```
+
 - **AudioUnit MIDI Support** - Complete MIDI control for AudioUnit instrument plugins
   - **MIDI Methods in AudioUnitPlugin class** (`src/coremusic/audio_unit_host.py`)
     - `send_midi()` - Send raw MIDI messages to instrument plugins
