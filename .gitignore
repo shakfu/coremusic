@@ -3,6 +3,7 @@ build
 __pycache__
 
 docs/_build
+headers/
 
 .*_cache
 dist

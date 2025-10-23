@@ -98,37 +98,25 @@ class CoreAudioError(Exception):
 class AudioFileError(CoreAudioError):
     """Exception for AudioFile operations"""
 
-    pass
-
 
 class AudioQueueError(CoreAudioError):
     """Exception for AudioQueue operations"""
-
-    pass
 
 
 class AudioUnitError(CoreAudioError):
     """Exception for AudioUnit operations"""
 
-    pass
-
 
 class MIDIError(CoreAudioError):
     """Exception for MIDI operations"""
-
-    pass
 
 
 class MusicPlayerError(CoreAudioError):
     """Exception for MusicPlayer operations"""
 
-    pass
-
 
 class AudioDeviceError(CoreAudioError):
     """Exception for AudioDevice operations"""
-
-    pass
 
 
 # ============================================================================
@@ -556,7 +544,27 @@ class AudioFileStream(capi.CoreAudioObject):
             return False
 
     def parse_bytes(self, data: bytes) -> None:
-        """Parse audio data bytes"""
+        """Parse audio data bytes from a streaming source
+
+        Used for parsing audio file data incrementally, such as when
+        reading from a network stream or progressive download.
+
+        Args:
+            data: Raw audio file data bytes (e.g., WAV, MP3, AAC chunks)
+
+        Raises:
+            AudioFileError: If parsing fails
+
+        Example::
+
+            stream = AudioFileStream()
+            with open("audio.mp3", "rb") as f:
+                while chunk := f.read(4096):
+                    stream.parse_bytes(chunk)
+                    if stream.ready_to_produce_packets:
+                        # Process parsed packets
+                        pass
+        """
         self._ensure_not_disposed()
         if not self._is_open:
             self.open()
@@ -656,13 +664,23 @@ class AudioConverter(capi.CoreAudioObject):
         For complex conversions (sample rate, bit depth), use convert_with_callback().
 
         Args:
-            audio_data: Input audio data in source format
+            audio_data: Input audio data in source format (raw PCM samples)
 
         Returns:
             Converted audio data in destination format
 
         Raises:
             AudioConverterError: If conversion fails
+
+        Example::
+
+            # Convert stereo to mono (simple format conversion)
+            source = AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
+            dest = AudioFormat(44100.0, 'lpcm', channels_per_frame=1, bits_per_channel=16)
+
+            with AudioConverter(source, dest) as converter:
+                stereo_data = b'\\x00\\x00\\xff\\xff' * 1024  # Raw 16-bit stereo samples
+                mono_data = converter.convert(stereo_data)
         """
         self._ensure_not_disposed()
         try:
@@ -758,11 +776,26 @@ class AudioConverter(capi.CoreAudioObject):
         """Set a property on the converter
 
         Args:
-            property_id: Property ID
-            data: Property data as bytes
+            property_id: Property ID (from capi.get_audio_converter_property_*())
+            data: Property data as bytes (use struct.pack for binary encoding)
 
         Raises:
             AudioConverterError: If setting property fails
+
+        Example::
+
+            import struct
+            import coremusic as cm
+
+            converter = AudioConverter(source_fmt, dest_fmt)
+
+            # Set bitrate to 128 kbps (requires UInt32)
+            bitrate_prop = cm.capi.get_audio_converter_property_bit_rate()
+            converter.set_property(bitrate_prop, struct.pack('<I', 128000))
+
+            # Set quality (requires UInt32, 0=lowest, 127=highest)
+            quality_prop = cm.capi.get_audio_converter_property_quality()
+            converter.set_property(quality_prop, struct.pack('<I', 127))
         """
         self._ensure_not_disposed()
         try:
@@ -1025,10 +1058,33 @@ class ExtendedAudioFile(capi.CoreAudioObject):
 
         Args:
             num_frames: Number of frames to write
-            audio_data: Audio data bytes
+            audio_data: Audio data bytes (raw PCM samples)
 
         Raises:
             AudioFileError: If writing fails
+
+        Example::
+
+            import struct
+            import coremusic as cm
+
+            # Create output file for stereo 16-bit PCM
+            file_format = cm.AudioFormat(
+                sample_rate=44100.0,
+                format_id='lpcm',
+                channels_per_frame=2,
+                bits_per_channel=16
+            )
+
+            with cm.ExtendedAudioFile.create("output.wav", 'WAVE', file_format) as out_file:
+                # Generate 1 second of 440Hz sine wave (stereo)
+                samples = []
+                for i in range(44100):
+                    value = int(32767 * 0.5 * (i % 100) / 100)  # Simple sawtooth
+                    samples.extend([value, value])  # Stereo
+
+                audio_data = struct.pack(f'<{len(samples)}h', *samples)
+                out_file.write(num_frames=44100, audio_data=audio_data)
         """
         self._ensure_not_disposed()
         if not self._is_open:
@@ -1668,7 +1724,38 @@ class MIDIOutputPort(MIDIPort):
     """MIDI output port for sending MIDI data"""
 
     def send_data(self, destination, data: bytes, timestamp: int = 0) -> None:
-        """Send MIDI data to a destination"""
+        """Send MIDI data to a destination endpoint
+
+        Args:
+            destination: MIDIEndpoint to send data to
+            data: MIDI message bytes (following MIDI protocol specification)
+            timestamp: MIDI timestamp (0 for immediate, or future timestamp)
+
+        Raises:
+            MIDIError: If sending fails
+
+        Example::
+
+            import coremusic as cm
+
+            client = cm.MIDIClient("MyApp")
+            output_port = client.create_output_port("Output")
+
+            # Get destination (e.g., virtual destination or hardware endpoint)
+            destination = client.create_virtual_destination("Synth")
+
+            # Send Note On (middle C, velocity 100)
+            note_on = bytes([0x90, 0x3C, 0x64])  # Status, note, velocity
+            output_port.send_data(destination, note_on)
+
+            # Send Control Change (CC 7 = volume to 127)
+            cc_volume = bytes([0xB0, 0x07, 0x7F])  # Status, controller, value
+            output_port.send_data(destination, cc_volume)
+
+            # Send Note Off
+            note_off = bytes([0x80, 0x3C, 0x00])
+            output_port.send_data(destination, note_off)
+        """
         self._ensure_not_disposed()
         try:
             capi.midi_send(self.object_id, destination.object_id, data, timestamp)

@@ -1450,7 +1450,7 @@ def audio_unit_uninitialize(long audio_unit_id):
     return status
 
 
-def audio_unit_set_property(long audio_unit_id, int property_id, int scope, int element, data):
+def audio_unit_set_property(long audio_unit_id, int property_id, int scope, int element, bytes data):
     """Set a property on an audio unit"""
     cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
     cdef cf.OSStatus status
