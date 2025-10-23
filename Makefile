@@ -1,4 +1,4 @@
-.PHONY: all build test test-all clean typecheck docs docs-clean docs-serve docs-pdf  \
+.PHONY: all build test test-all coverage coverage-html clean typecheck docs docs-clean docs-serve docs-pdf  \
 		release check publish
 
 all: build
@@ -15,11 +15,19 @@ test:
 test-all:
 	@uv run pytest
 
+coverage:
+	@uv run pytest -m "not slow" --cov=coremusic --cov-report=term-missing
+
+coverage-html:
+	@uv run pytest -m "not slow" --cov=coremusic --cov-report=html
+	@echo "Coverage report generated in htmlcov/index.html"
+	@open htmlcov/index.html 2>/dev/null || echo "Open htmlcov/index.html in your browser"
+
 typecheck:
 	@uv run mypy src/coremusic
 
 clean:
-	@rm -rf build src/*.egg-info
+	@rm -rf build src/*.egg-info htmlcov .coverage
 	@rm -f *.so
 
 release:

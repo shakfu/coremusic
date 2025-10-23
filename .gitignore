@@ -8,6 +8,13 @@ docs/_build
 dist
 *.egg-info
 
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
 # Backup files
 *.bak
 *~
