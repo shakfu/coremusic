@@ -15,6 +15,7 @@ from pathlib import Path
 import struct
 
 from . import capi
+from . import os_status
 
 # Check if NumPy is available
 try:
@@ -93,6 +94,30 @@ class CoreAudioError(Exception):
     def __init__(self, message: str, status_code: int = 0):
         super().__init__(message)
         self.status_code = status_code
+
+    @classmethod
+    def from_os_status(cls, status: int, operation: str = ""):
+        """Create exception from OSStatus code with human-readable error message.
+
+        Args:
+            status: OSStatus error code
+            operation: Description of failed operation (e.g., "open audio file")
+
+        Returns:
+            CoreAudioError with formatted message including error name and suggestion
+        """
+        error_str = os_status.os_status_to_string(status)
+        suggestion = os_status.get_error_suggestion(status)
+
+        if operation:
+            message = f"Failed to {operation}: {error_str}"
+        else:
+            message = error_str
+
+        if suggestion:
+            message += f". {suggestion}"
+
+        return cls(message, status_code=status)
 
 
 class AudioFileError(CoreAudioError):

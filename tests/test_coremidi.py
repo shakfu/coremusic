@@ -725,7 +725,7 @@ class TestCoreMIDISetup:
             except RuntimeError:
                 pass
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
 
     def test_midi_device_new_entity_basic(self):
         """Test creating new entity with protocol support (macOS 11.0+)"""
@@ -744,7 +744,7 @@ class TestCoreMIDISetup:
             except RuntimeError:
                 pass
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
         try:
             entity = capi.midi_device_new_entity(
                 device, "Test MIDI 2.0 Entity", 2, False, 2, 2
@@ -756,7 +756,7 @@ class TestCoreMIDISetup:
             except RuntimeError:
                 pass
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
 
     def test_midi_entity_add_or_remove_endpoints(self):
         """Test adding/removing endpoints from an entity"""
@@ -773,7 +773,7 @@ class TestCoreMIDISetup:
             assert isinstance(result, int)
             assert result == 0
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
 
     def test_midi_setup_device_management(self):
         """Test setup device management functions"""
@@ -782,22 +782,22 @@ class TestCoreMIDISetup:
             capi.midi_setup_add_device(invalid_device)
             assert False, "Expected RuntimeError for invalid device"
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
         try:
             capi.midi_setup_remove_device(invalid_device)
             assert False, "Expected RuntimeError for invalid device"
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
         try:
             capi.midi_setup_add_external_device(invalid_device)
             assert False, "Expected RuntimeError for invalid device"
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
         try:
             capi.midi_setup_remove_external_device(invalid_device)
             assert False, "Expected RuntimeError for invalid device"
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
 
     def test_midi_setup_function_existence(self):
         """Test that all MIDISetup functions exist and are callable"""
@@ -909,7 +909,7 @@ class TestCoreMIDIDriver:
             capi.midi_device_dispose(invalid_device)
             assert False, "Expected RuntimeError for invalid device"
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
 
     def test_midi_endpoint_ref_cons_basic(self):
         """Test setting and getting endpoint reference constants"""
@@ -940,12 +940,12 @@ class TestCoreMIDIDriver:
             capi.midi_endpoint_set_ref_cons(invalid_endpoint, 123, 456)
             assert False, "Expected RuntimeError for invalid endpoint"
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
         try:
             capi.midi_endpoint_get_ref_cons(invalid_endpoint)
             assert False, "Expected RuntimeError for invalid endpoint"
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
 
     def test_midi_get_driver_io_runloop(self):
         """Test getting the driver I/O run loop"""
@@ -972,12 +972,12 @@ class TestCoreMIDIDriver:
             capi.midi_driver_enable_monitoring(invalid_driver, True)
             assert False, "Expected RuntimeError for invalid driver"
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
         try:
             capi.midi_driver_enable_monitoring(invalid_driver, False)
             assert False, "Expected RuntimeError for invalid driver"
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
 
     def test_midi_device_list_operations_basic(self):
         """Test basic device list operations (if we can create devices)"""
@@ -997,12 +997,12 @@ class TestCoreMIDIDriver:
             capi.midi_device_list_add_device(invalid_dev_list, 123456)
             assert False, "Expected RuntimeError for invalid device list"
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
         try:
             capi.midi_device_list_dispose(invalid_dev_list)
             assert False, "Expected RuntimeError for invalid device list"
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
 
     def test_midi_driver_function_existence(self):
         """Test that all MIDIDriver functions exist and are callable"""
@@ -1166,7 +1166,7 @@ class TestCoreMIDIThruConnection:
             capi.midi_thru_connection_get_params(invalid_connection)
             assert False, "Expected RuntimeError for invalid connection"
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
 
     def test_midi_thru_connection_set_params_invalid(self):
         """Test setting parameters on invalid connection"""
@@ -1176,7 +1176,7 @@ class TestCoreMIDIThruConnection:
             capi.midi_thru_connection_set_params(invalid_connection, params)
             assert False, "Expected RuntimeError for invalid connection"
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
 
     def test_midi_thru_connection_dispose_invalid(self):
         """Test disposing invalid connection"""
@@ -1185,7 +1185,7 @@ class TestCoreMIDIThruConnection:
             capi.midi_thru_connection_dispose(invalid_connection)
             assert False, "Expected RuntimeError for invalid connection"
         except RuntimeError as e:
-            assert "failed with status" in str(e)
+            assert "failed" in str(e)
 
     def test_midi_thru_connection_find_empty(self):
         """Test finding connections with non-existent owner"""

@@ -136,7 +136,9 @@ class TestMusicDeviceBasicOperations:
         try:
             unit = capi.audio_component_instance_new(component)
         except RuntimeError as e:
-            if "-128" in str(e) or "-10863" in str(e):
+            # Check for userCanceledErr (-128) or kAudioUnitErr_InvalidFile (-10863)
+            error_str = str(e)
+            if "userCanceledErr" in error_str or "security restriction" in error_str.lower() or "-10863" in error_str or "InvalidFile" in error_str:
                 pytest.skip(
                     f"Music device component cannot be instantiated: {e}"
                 )

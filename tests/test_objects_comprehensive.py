@@ -100,7 +100,8 @@ class TestObjectOrientedAPIFunctionality:
                 queue.dispose()
                 assert queue.is_disposed
         except cm.AudioQueueError as e:
-            if "status: -50" in str(e):
+            # Check for paramErr (-50) which indicates no audio hardware
+            if e.status_code == -50 or "paramErr" in str(e):
                 pytest.skip("AudioQueue creation failed - no audio hardware available")
             else:
                 raise

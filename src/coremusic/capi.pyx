@@ -8,6 +8,13 @@ from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy, memset
 from libc.stdint cimport uintptr_t
 
+# Import os_status for error translation
+from . import os_status
+
+# Import logging for structured error logging
+from . import log
+logger = log.config(__name__)
+
 # Forward declare Link module classes for integration
 cdef extern from *:
     """
@@ -16,6 +23,33 @@ cdef extern from *:
     pass
 
 # We'll use Python imports at runtime for Link integration
+
+
+# Helper function to format OSStatus errors
+cdef str format_osstatus_error(cf.OSStatus status, str operation):
+    """Format OSStatus error with human-readable translation, suggestion, and logging"""
+    error_str = os_status.os_status_to_string(status)
+    suggestion = os_status.get_error_suggestion(status)
+
+    if operation:
+        message = f"{operation} failed: {error_str}"
+    else:
+        message = f"Operation failed: {error_str}"
+
+    if suggestion:
+        message += f". {suggestion}"
+
+    # Log the error with structured information
+    logger.error(
+        f"OSStatus error in {operation}: {error_str}",
+        extra={
+            'status_code': status,
+            'operation': operation,
+            'suggestion': suggestion
+        }
+    )
+
+    return message
 
 def fourchar_to_int(code: str) -> int:
    """Convert fourcc chars to an int
@@ -74,7 +108,7 @@ def audio_object_get_property_data(int object_id, int property_selector, int sco
     # Get the data size
     status = ca.AudioObjectGetPropertyDataSize(object_id, &address, 0, <void*>0, &data_size)
     if status != 0:
-        raise RuntimeError(f"AudioObjectGetPropertyDataSize failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioObjectGetPropertyDataSize"))
 
     if data_size == 0:
         return b''
@@ -87,7 +121,7 @@ def audio_object_get_property_data(int object_id, int property_selector, int sco
     try:
         status = ca.AudioObjectGetPropertyData(object_id, &address, 0, <void*>0, &data_size, buffer)
         if status != 0:
-            raise RuntimeError(f"AudioObjectGetPropertyData failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "AudioObjectGetPropertyData"))
 
         # Copy to Python bytes object
         result = buffer[:data_size]
@@ -119,7 +153,7 @@ def audio_object_get_property_string(int object_id, int property_selector, int s
     # Get the CFStringRef
     status = ca.AudioObjectGetPropertyData(object_id, &address, 0, <void*>0, &data_size, &string_ref)
     if status != 0:
-        raise RuntimeError(f"AudioObjectGetPropertyData failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioObjectGetPropertyData"))
 
     if string_ref == <cf.CFStringRef>0:
         return b''
@@ -248,7 +282,7 @@ def audio_file_open_url(str file_path, int permissions=1, int file_type_hint=0):
     cf.CFRelease(url_ref)
 
     if status != 0:
-        raise RuntimeError(f"AudioFileOpenURL failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioFileOpenURL"))
 
     return <long>audio_file
 
@@ -258,7 +292,7 @@ def audio_file_close(long audio_file_id):
     cdef at.AudioFileID audio_file = <at.AudioFileID>audio_file_id
     cdef cf.OSStatus status = at.AudioFileClose(audio_file)
     if status != 0:
-        raise RuntimeError(f"AudioFileClose failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioFileClose"))
     return status
 
 
@@ -277,7 +311,7 @@ def audio_file_get_property(long audio_file_id, int property_id):
     )
 
     if status != 0:
-        raise RuntimeError(f"AudioFileGetPropertyInfo failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioFileGetPropertyInfo"))
 
     # Allocate buffer and get the property data
     cdef char* buffer = <char*>malloc(data_size)
@@ -293,7 +327,7 @@ def audio_file_get_property(long audio_file_id, int property_id):
         )
 
         if status != 0:
-            raise RuntimeError(f"AudioFileGetProperty failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "AudioFileGetProperty"))
 
         # Return the data as bytes
         return buffer[:data_size]
@@ -341,7 +375,7 @@ def audio_file_read_packets(long audio_file_id, long start_packet, int num_packe
         )
 
         if status != 0:
-            raise RuntimeError(f"AudioFileReadPackets failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "AudioFileReadPackets"))
 
         return buffer[:num_bytes], packet_count
 
@@ -376,7 +410,7 @@ def audio_file_stream_open(file_type_hint=0):
     )
 
     if status != 0:
-        raise RuntimeError(f"AudioFileStreamOpen failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioFileStreamOpen"))
 
     return <long>stream_id
 
@@ -386,7 +420,7 @@ def audio_file_stream_close(long stream_id):
     cdef at.AudioFileStreamID stream = <at.AudioFileStreamID>stream_id
     cdef cf.OSStatus status = at.AudioFileStreamClose(stream)
     if status != 0:
-        raise RuntimeError(f"AudioFileStreamClose failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioFileStreamClose"))
     return status
 
 
@@ -404,7 +438,7 @@ def audio_file_stream_parse_bytes(long stream_id, bytes data, int flags=0):
     )
 
     if status != 0:
-        raise RuntimeError(f"AudioFileStreamParseBytes failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioFileStreamParseBytes"))
 
     return status
 
@@ -424,7 +458,7 @@ def audio_file_stream_get_property(long stream_id, int property_id):
     )
 
     if status != 0:
-        raise RuntimeError(f"AudioFileStreamGetPropertyInfo failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioFileStreamGetPropertyInfo"))
 
     # Allocate buffer and get the property data
     cdef char* buffer = <char*>malloc(data_size)
@@ -442,7 +476,7 @@ def audio_file_stream_get_property(long stream_id, int property_id):
         )
 
         if status != 0:
-            raise RuntimeError(f"AudioFileStreamGetProperty failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "AudioFileStreamGetProperty"))
 
         # Handle different property types
         if property_id == at.kAudioFileStreamProperty_DataFormat:
@@ -496,7 +530,7 @@ def audio_file_stream_seek(long stream_id, long packet_offset):
     )
 
     if status != 0:
-        raise RuntimeError(f"AudioFileStreamSeek failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioFileStreamSeek"))
 
     return {
         'byte_offset': byte_offset,
@@ -549,7 +583,7 @@ def audio_converter_new(source_format: dict, dest_format: dict) -> int:
 
     cdef cf.OSStatus status = at.AudioConverterNew(&src_format, &dst_format, &converter)
     if status != 0:
-        raise RuntimeError(f"AudioConverterNew failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioConverterNew"))
 
     return <long>converter
 
@@ -559,7 +593,7 @@ def audio_converter_dispose(long converter_id):
     cdef at.AudioConverterRef converter = <at.AudioConverterRef>converter_id
     cdef cf.OSStatus status = at.AudioConverterDispose(converter)
     if status != 0:
-        raise RuntimeError(f"AudioConverterDispose failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioConverterDispose"))
 
 
 def audio_converter_convert_buffer(long converter_id, bytes input_data) -> bytes:
@@ -592,7 +626,7 @@ def audio_converter_convert_buffer(long converter_id, bytes input_data) -> bytes
         )
 
         if status != 0:
-            raise RuntimeError(f"AudioConverterConvertBuffer failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "AudioConverterConvertBuffer"))
 
         result = output_buffer[:output_data_size]
         return result
@@ -617,7 +651,7 @@ def audio_converter_get_property(long converter_id, int property_id) -> bytes:
     # Get property size
     status = at.AudioConverterGetPropertyInfo(converter, property_id, &data_size, NULL)
     if status != 0:
-        raise RuntimeError(f"AudioConverterGetPropertyInfo failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioConverterGetPropertyInfo"))
 
     if data_size == 0:
         return b''
@@ -629,7 +663,7 @@ def audio_converter_get_property(long converter_id, int property_id) -> bytes:
     try:
         status = at.AudioConverterGetProperty(converter, property_id, &data_size, buffer)
         if status != 0:
-            raise RuntimeError(f"AudioConverterGetProperty failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "AudioConverterGetProperty"))
 
         result = buffer[:data_size]
         return result
@@ -651,7 +685,7 @@ def audio_converter_set_property(long converter_id, int property_id, bytes data)
 
     cdef cf.OSStatus status = at.AudioConverterSetProperty(converter, property_id, data_size, buffer)
     if status != 0:
-        raise RuntimeError(f"AudioConverterSetProperty failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioConverterSetProperty"))
 
 
 def audio_converter_reset(long converter_id):
@@ -659,7 +693,7 @@ def audio_converter_reset(long converter_id):
     cdef at.AudioConverterRef converter = <at.AudioConverterRef>converter_id
     cdef cf.OSStatus status = at.AudioConverterReset(converter)
     if status != 0:
-        raise RuntimeError(f"AudioConverterReset failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioConverterReset"))
 
 
 # ============================================================================
@@ -825,7 +859,7 @@ def audio_converter_fill_complex_buffer(
         )
 
         if status != 0:
-            raise RuntimeError(f"AudioConverterFillComplexBuffer failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "AudioConverterFillComplexBuffer"))
 
         # Extract result
         actual_bytes = output_buffer_list.mBuffers[0].mDataByteSize
@@ -911,7 +945,7 @@ def extended_audio_file_open_url(str file_path) -> int:
     cf.CFRelease(cf_path)
 
     if status != 0:
-        raise RuntimeError(f"ExtAudioFileOpenURL failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "ExtAudioFileOpenURL"))
 
     return <long>ext_file
 
@@ -963,7 +997,7 @@ def extended_audio_file_create_with_url(str file_path, int file_type, source_for
     cf.CFRelease(cf_path)
 
     if status != 0:
-        raise RuntimeError(f"ExtAudioFileCreateWithURL failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "ExtAudioFileCreateWithURL"))
 
     return <long>ext_file
 
@@ -973,7 +1007,7 @@ def extended_audio_file_dispose(long ext_file_id):
     cdef at.ExtAudioFileRef ext_file = <at.ExtAudioFileRef>ext_file_id
     cdef cf.OSStatus status = at.ExtAudioFileDispose(ext_file)
     if status != 0:
-        raise RuntimeError(f"ExtAudioFileDispose failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "ExtAudioFileDispose"))
 
 
 def extended_audio_file_read(long ext_file_id, int num_frames) -> tuple:
@@ -1004,7 +1038,7 @@ def extended_audio_file_read(long ext_file_id, int num_frames) -> tuple:
 
         status = at.ExtAudioFileRead(ext_file, &frames_to_read, &buffer_list)
         if status != 0:
-            raise RuntimeError(f"ExtAudioFileRead failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "ExtAudioFileRead"))
 
         actual_size = buffer_list.mBuffers[0].mDataByteSize
         result = buffer[:actual_size]
@@ -1034,7 +1068,7 @@ def extended_audio_file_write(long ext_file_id, int num_frames, bytes audio_data
 
     cdef cf.OSStatus status = at.ExtAudioFileWrite(ext_file, frames, &buffer_list)
     if status != 0:
-        raise RuntimeError(f"ExtAudioFileWrite failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "ExtAudioFileWrite"))
 
 
 def extended_audio_file_get_property(long ext_file_id, int property_id) -> bytes:
@@ -1058,7 +1092,7 @@ def extended_audio_file_get_property(long ext_file_id, int property_id) -> bytes
     try:
         status = at.ExtAudioFileGetProperty(ext_file, property_id, &data_size, buffer)
         if status != 0:
-            raise RuntimeError(f"ExtAudioFileGetProperty failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "ExtAudioFileGetProperty"))
 
         result = buffer[:data_size]
         return result
@@ -1080,7 +1114,7 @@ def extended_audio_file_set_property(long ext_file_id, int property_id, bytes da
 
     cdef cf.OSStatus status = at.ExtAudioFileSetProperty(ext_file, property_id, data_size, buffer)
     if status != 0:
-        raise RuntimeError(f"ExtAudioFileSetProperty failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "ExtAudioFileSetProperty"))
 
 
 # ExtendedAudioFile property getters
@@ -1149,7 +1183,7 @@ def audio_queue_new_output(audio_format):
     )
 
     if status != 0:
-        raise RuntimeError(f"AudioQueueNewOutput failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioQueueNewOutput"))
 
     return <long>queue
 
@@ -1166,7 +1200,7 @@ def audio_queue_allocate_buffer(long queue_id, int buffer_size):
     )
 
     if status != 0:
-        raise RuntimeError(f"AudioQueueAllocateBuffer failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioQueueAllocateBuffer"))
 
     return <long>buffer
 
@@ -1179,7 +1213,7 @@ def audio_queue_enqueue_buffer(long queue_id, long buffer_id):
     cdef cf.OSStatus status = at.AudioQueueEnqueueBuffer(queue, buffer, 0, NULL)
 
     if status != 0:
-        raise RuntimeError(f"AudioQueueEnqueueBuffer failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioQueueEnqueueBuffer"))
 
     return status
 
@@ -1191,7 +1225,7 @@ def audio_queue_start(long queue_id):
     cdef cf.OSStatus status = at.AudioQueueStart(queue, NULL)
 
     if status != 0:
-        raise RuntimeError(f"AudioQueueStart failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioQueueStart"))
 
     return status
 
@@ -1203,7 +1237,7 @@ def audio_queue_stop(long queue_id, bint immediate=True):
     cdef cf.OSStatus status = at.AudioQueueStop(queue, immediate)
 
     if status != 0:
-        raise RuntimeError(f"AudioQueueStop failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioQueueStop"))
 
     return status
 
@@ -1215,7 +1249,7 @@ def audio_queue_dispose(long queue_id, bint immediate=True):
     cdef cf.OSStatus status = at.AudioQueueDispose(queue, immediate)
 
     if status != 0:
-        raise RuntimeError(f"AudioQueueDispose failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioQueueDispose"))
 
     return status
 
@@ -1358,7 +1392,7 @@ def audio_component_instance_new(long component_id):
 
     cdef cf.OSStatus status = at.AudioComponentInstanceNew(component, &instance)
     if status != 0:
-        raise RuntimeError(f"AudioComponentInstanceNew failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioComponentInstanceNew"))
 
     return <long>instance
 
@@ -1369,7 +1403,7 @@ def audio_component_instance_dispose(long instance_id):
 
     cdef cf.OSStatus status = at.AudioComponentInstanceDispose(instance)
     if status != 0:
-        raise RuntimeError(f"AudioComponentInstanceDispose failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioComponentInstanceDispose"))
 
     return status
 
@@ -1416,7 +1450,7 @@ def audio_component_get_description(long component_id):
 
     cdef cf.OSStatus status = at.AudioComponentGetDescription(component, &desc)
     if status != 0:
-        raise RuntimeError(f"AudioComponentGetDescription failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioComponentGetDescription"))
 
     return {
         'type': desc.componentType,
@@ -1434,7 +1468,7 @@ def audio_unit_initialize(long audio_unit_id):
 
     cdef cf.OSStatus status = at.AudioUnitInitialize(unit)
     if status != 0:
-        raise RuntimeError(f"AudioUnitInitialize failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioUnitInitialize"))
 
     return status
 
@@ -1445,7 +1479,7 @@ def audio_unit_uninitialize(long audio_unit_id):
 
     cdef cf.OSStatus status = at.AudioUnitUninitialize(unit)
     if status != 0:
-        raise RuntimeError(f"AudioUnitUninitialize failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioUnitUninitialize"))
 
     return status
 
@@ -1467,7 +1501,7 @@ def audio_unit_set_property(long audio_unit_id, int property_id, int scope, int 
         raise ValueError("data must be bytes")
 
     if status != 0:
-        raise RuntimeError(f"AudioUnitSetProperty failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioUnitSetProperty"))
 
     return status
 
@@ -1487,7 +1521,7 @@ def audio_unit_get_property(long audio_unit_id, int property_id, int scope, int 
                                          &data_size,
                                          &writable)
     if status != 0:
-        raise RuntimeError(f"AudioUnitGetPropertyInfo failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioUnitGetPropertyInfo"))
 
     # Allocate buffer and get the property
     cdef char* buffer = <char*>malloc(data_size)
@@ -1503,7 +1537,7 @@ def audio_unit_get_property(long audio_unit_id, int property_id, int scope, int 
                                          &data_size)
 
         if status != 0:
-            raise RuntimeError(f"AudioUnitGetProperty failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "AudioUnitGetProperty"))
 
         return buffer[:data_size]
 
@@ -1517,7 +1551,7 @@ def audio_output_unit_start(long audio_unit_id):
 
     cdef cf.OSStatus status = at.AudioOutputUnitStart(unit)
     if status != 0:
-        raise RuntimeError(f"AudioOutputUnitStart failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioOutputUnitStart"))
 
     return status
 
@@ -1528,7 +1562,7 @@ def audio_output_unit_stop(long audio_unit_id):
 
     cdef cf.OSStatus status = at.AudioOutputUnitStop(unit)
     if status != 0:
-        raise RuntimeError(f"AudioOutputUnitStop failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioOutputUnitStop"))
 
     return status
 
@@ -1586,12 +1620,12 @@ def audio_unit_get_component_info(long component_id):
     # Get component description
     status = at.AudioComponentGetDescription(component, &desc)
     if status != 0:
-        raise RuntimeError(f"AudioComponentGetDescription failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioComponentGetDescription"))
 
     # Get component name
     status = at.AudioComponentCopyName(component, &name_ref)
     if status != 0:
-        raise RuntimeError(f"AudioComponentCopyName failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioComponentCopyName"))
 
     # Convert CFString to Python string
     name = ""
@@ -1665,7 +1699,7 @@ def audio_unit_get_parameter_list(long audio_unit_id, scope=0, element=0):
         )
 
         if status != 0:
-            raise RuntimeError(f"AudioUnitGetProperty failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "AudioUnitGetProperty"))
 
         # Convert to Python list
         for i in range(num_params):
@@ -1766,7 +1800,7 @@ def audio_unit_get_parameter(long audio_unit_id, param_id, scope=0, element=0):
     )
 
     if status != 0:
-        raise RuntimeError(f"AudioUnitGetParameter failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioUnitGetParameter"))
 
     return value
 
@@ -1794,7 +1828,7 @@ def audio_unit_set_parameter(long audio_unit_id, param_id, value, scope=0, eleme
     )
 
     if status != 0:
-        raise RuntimeError(f"AudioUnitSetParameter failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioUnitSetParameter"))
 
     return 0
 
@@ -1975,7 +2009,7 @@ def audio_unit_render(long audio_unit_id, input_data, num_frames, sample_rate=44
         )
 
         if status != 0:
-            raise RuntimeError(f"AudioUnitRender failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "AudioUnitRender"))
 
         # Copy output data
         output_data = (<char*>buffer_list.mBuffers[0].mData)[:buffer_size]
@@ -2607,7 +2641,7 @@ def audio_services_create_system_sound_id(str file_path):
     cf.CFRelease(url_ref)
 
     if status != 0:
-        raise RuntimeError(f"AudioServicesCreateSystemSoundID failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioServicesCreateSystemSoundID"))
 
     return <long>sound_id
 
@@ -2618,7 +2652,7 @@ def audio_services_dispose_system_sound_id(long sound_id):
     cdef cf.OSStatus status = at.AudioServicesDisposeSystemSoundID(system_sound_id)
 
     if status != 0:
-        raise RuntimeError(f"AudioServicesDisposeSystemSoundID failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioServicesDisposeSystemSoundID"))
 
     return status
 
@@ -2652,7 +2686,7 @@ def audio_services_get_property(int property_id, long specifier_value=0):
     )
 
     if status != 0:
-        raise RuntimeError(f"AudioServicesGetPropertyInfo failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioServicesGetPropertyInfo"))
 
     # Allocate buffer and get property data
     cdef char* buffer = <char*>malloc(data_size)
@@ -2670,7 +2704,7 @@ def audio_services_get_property(int property_id, long specifier_value=0):
         )
 
         if status != 0:
-            raise RuntimeError(f"AudioServicesGetProperty failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "AudioServicesGetProperty"))
 
         # Return property value based on size
         if data_size == 4:
@@ -2712,7 +2746,7 @@ def audio_services_set_property(int property_id, data, long specifier_value=0):
     )
 
     if status != 0:
-        raise RuntimeError(f"AudioServicesSetProperty failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AudioServicesSetProperty"))
 
     return status
 
@@ -2827,7 +2861,7 @@ def music_device_sysex(long unit, bytes data):
         length)
 
     if status != 0:
-        raise RuntimeError(f"MusicDeviceSysEx failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicDeviceSysEx"))
     return status
 
 def music_device_start_note(long unit, int instrument_id, int group_id, float pitch, float velocity, int offset_sample_frame=0, list controls=None):
@@ -2884,7 +2918,7 @@ def music_device_start_note(long unit, int instrument_id, int group_id, float pi
             params)
 
         if status != 0:
-            raise RuntimeError(f"MusicDeviceStartNote failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MusicDeviceStartNote"))
 
         return <long>note_instance_id
 
@@ -2913,7 +2947,7 @@ def music_device_stop_note(long unit, int group_id, long note_instance_id, int o
         <cf.UInt32>offset_sample_frame)
 
     if status != 0:
-        raise RuntimeError(f"MusicDeviceStopNote failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicDeviceStopNote"))
     return status
 
 # Convenience functions for creating standard note parameters
@@ -3076,7 +3110,7 @@ def new_music_player():
     cdef cf.OSStatus status = at.NewMusicPlayer(&player)
 
     if status != 0:
-        raise RuntimeError(f"NewMusicPlayer failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "NewMusicPlayer"))
     return <long>player
 
 def dispose_music_player(long player):
@@ -3094,7 +3128,7 @@ def dispose_music_player(long player):
     cdef cf.OSStatus status = at.DisposeMusicPlayer(<at.MusicPlayer>player)
 
     if status != 0:
-        raise RuntimeError(f"DisposeMusicPlayer failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "DisposeMusicPlayer"))
     return status
 
 def music_player_set_sequence(long player, long sequence):
@@ -3114,7 +3148,7 @@ def music_player_set_sequence(long player, long sequence):
     cdef cf.OSStatus status = at.MusicPlayerSetSequence(<at.MusicPlayer>player, seq)
 
     if status != 0:
-        raise RuntimeError(f"MusicPlayerSetSequence failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicPlayerSetSequence"))
     return status
 
 def music_player_get_sequence(long player):
@@ -3133,7 +3167,7 @@ def music_player_get_sequence(long player):
     cdef cf.OSStatus status = at.MusicPlayerGetSequence(<at.MusicPlayer>player, &sequence)
 
     if status != 0:
-        raise RuntimeError(f"MusicPlayerGetSequence failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicPlayerGetSequence"))
     return <long>sequence
 
 def music_player_set_time(long player, double time):
@@ -3152,7 +3186,7 @@ def music_player_set_time(long player, double time):
     cdef cf.OSStatus status = at.MusicPlayerSetTime(<at.MusicPlayer>player, <at.MusicTimeStamp>time)
 
     if status != 0:
-        raise RuntimeError(f"MusicPlayerSetTime failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicPlayerSetTime"))
     return status
 
 def music_player_get_time(long player):
@@ -3171,7 +3205,7 @@ def music_player_get_time(long player):
     cdef cf.OSStatus status = at.MusicPlayerGetTime(<at.MusicPlayer>player, &time)
 
     if status != 0:
-        raise RuntimeError(f"MusicPlayerGetTime failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicPlayerGetTime"))
     return <double>time
 
 def music_player_preroll(long player):
@@ -3189,7 +3223,7 @@ def music_player_preroll(long player):
     cdef cf.OSStatus status = at.MusicPlayerPreroll(<at.MusicPlayer>player)
 
     if status != 0:
-        raise RuntimeError(f"MusicPlayerPreroll failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicPlayerPreroll"))
     return status
 
 def music_player_start(long player):
@@ -3207,7 +3241,7 @@ def music_player_start(long player):
     cdef cf.OSStatus status = at.MusicPlayerStart(<at.MusicPlayer>player)
 
     if status != 0:
-        raise RuntimeError(f"MusicPlayerStart failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicPlayerStart"))
     return status
 
 def music_player_stop(long player):
@@ -3225,7 +3259,7 @@ def music_player_stop(long player):
     cdef cf.OSStatus status = at.MusicPlayerStop(<at.MusicPlayer>player)
 
     if status != 0:
-        raise RuntimeError(f"MusicPlayerStop failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicPlayerStop"))
     return status
 
 def music_player_is_playing(long player):
@@ -3244,7 +3278,7 @@ def music_player_is_playing(long player):
     cdef cf.OSStatus status = at.MusicPlayerIsPlaying(<at.MusicPlayer>player, &is_playing)
 
     if status != 0:
-        raise RuntimeError(f"MusicPlayerIsPlaying failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicPlayerIsPlaying"))
     return bool(is_playing)
 
 def music_player_set_play_rate_scalar(long player, double scale_rate):
@@ -3266,7 +3300,7 @@ def music_player_set_play_rate_scalar(long player, double scale_rate):
     cdef cf.OSStatus status = at.MusicPlayerSetPlayRateScalar(<at.MusicPlayer>player, <ca.Float64>scale_rate)
 
     if status != 0:
-        raise RuntimeError(f"MusicPlayerSetPlayRateScalar failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicPlayerSetPlayRateScalar"))
     return status
 
 def music_player_get_play_rate_scalar(long player):
@@ -3285,7 +3319,7 @@ def music_player_get_play_rate_scalar(long player):
     cdef cf.OSStatus status = at.MusicPlayerGetPlayRateScalar(<at.MusicPlayer>player, &scale_rate)
 
     if status != 0:
-        raise RuntimeError(f"MusicPlayerGetPlayRateScalar failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicPlayerGetPlayRateScalar"))
     return <double>scale_rate
 
 # MusicSequence functions
@@ -3303,7 +3337,7 @@ def new_music_sequence():
     cdef cf.OSStatus status = at.NewMusicSequence(&sequence)
 
     if status != 0:
-        raise RuntimeError(f"NewMusicSequence failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "NewMusicSequence"))
     return <long>sequence
 
 def dispose_music_sequence(long sequence):
@@ -3321,7 +3355,7 @@ def dispose_music_sequence(long sequence):
     cdef cf.OSStatus status = at.DisposeMusicSequence(<at.MusicSequence>sequence)
 
     if status != 0:
-        raise RuntimeError(f"DisposeMusicSequence failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "DisposeMusicSequence"))
     return status
 
 def music_sequence_new_track(long sequence):
@@ -3340,7 +3374,7 @@ def music_sequence_new_track(long sequence):
     cdef cf.OSStatus status = at.MusicSequenceNewTrack(<at.MusicSequence>sequence, &track)
 
     if status != 0:
-        raise RuntimeError(f"MusicSequenceNewTrack failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicSequenceNewTrack"))
     return <long>track
 
 def music_sequence_dispose_track(long sequence, long track):
@@ -3359,7 +3393,7 @@ def music_sequence_dispose_track(long sequence, long track):
     cdef cf.OSStatus status = at.MusicSequenceDisposeTrack(<at.MusicSequence>sequence, <at.MusicTrack>track)
 
     if status != 0:
-        raise RuntimeError(f"MusicSequenceDisposeTrack failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicSequenceDisposeTrack"))
     return status
 
 def music_sequence_get_track_count(long sequence):
@@ -3378,7 +3412,7 @@ def music_sequence_get_track_count(long sequence):
     cdef cf.OSStatus status = at.MusicSequenceGetTrackCount(<at.MusicSequence>sequence, &track_count)
 
     if status != 0:
-        raise RuntimeError(f"MusicSequenceGetTrackCount failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicSequenceGetTrackCount"))
     return track_count
 
 def music_sequence_get_ind_track(long sequence, int track_index):
@@ -3398,7 +3432,7 @@ def music_sequence_get_ind_track(long sequence, int track_index):
     cdef cf.OSStatus status = at.MusicSequenceGetIndTrack(<at.MusicSequence>sequence, <cf.UInt32>track_index, &track)
 
     if status != 0:
-        raise RuntimeError(f"MusicSequenceGetIndTrack failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicSequenceGetIndTrack"))
     return <long>track
 
 def music_sequence_get_tempo_track(long sequence):
@@ -3417,7 +3451,7 @@ def music_sequence_get_tempo_track(long sequence):
     cdef cf.OSStatus status = at.MusicSequenceGetTempoTrack(<at.MusicSequence>sequence, &track)
 
     if status != 0:
-        raise RuntimeError(f"MusicSequenceGetTempoTrack failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicSequenceGetTempoTrack"))
     return <long>track
 
 def music_sequence_set_sequence_type(long sequence, int sequence_type):
@@ -3436,7 +3470,7 @@ def music_sequence_set_sequence_type(long sequence, int sequence_type):
     cdef cf.OSStatus status = at.MusicSequenceSetSequenceType(<at.MusicSequence>sequence, <cf.UInt32>sequence_type)
 
     if status != 0:
-        raise RuntimeError(f"MusicSequenceSetSequenceType failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicSequenceSetSequenceType"))
     return status
 
 def music_sequence_get_sequence_type(long sequence):
@@ -3455,7 +3489,7 @@ def music_sequence_get_sequence_type(long sequence):
     cdef cf.OSStatus status = at.MusicSequenceGetSequenceType(<at.MusicSequence>sequence, &sequence_type)
 
     if status != 0:
-        raise RuntimeError(f"MusicSequenceGetSequenceType failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicSequenceGetSequenceType"))
     return sequence_type
 
 def music_sequence_file_load(long sequence, str file_path, int file_type_hint=0, int flags=0):
@@ -3494,7 +3528,7 @@ def music_sequence_file_load(long sequence, str file_path, int file_type_hint=0,
         )
 
         if status != 0:
-            raise RuntimeError(f"MusicSequenceFileLoad failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MusicSequenceFileLoad"))
         return status
 
     finally:
@@ -3534,7 +3568,7 @@ def music_track_new_midi_note_event(long track, double timestamp, int channel, i
     )
 
     if status != 0:
-        raise RuntimeError(f"MusicTrackNewMIDINoteEvent failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicTrackNewMIDINoteEvent"))
     return status
 
 def music_track_new_midi_channel_event(long track, double timestamp, int status, int data1, int data2):
@@ -3593,7 +3627,7 @@ def music_track_new_extended_tempo_event(long track, double timestamp, double bp
     )
 
     if status != 0:
-        raise RuntimeError(f"MusicTrackNewExtendedTempoEvent failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MusicTrackNewExtendedTempoEvent"))
     return status
 
 # MusicPlayer constants
@@ -3759,7 +3793,7 @@ def midi_client_create(str name):
     try:
         status = cm.MIDIClientCreate(cf_name, NULL, NULL, &client)
         if status != 0:
-            raise RuntimeError(f"MIDIClientCreate failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIClientCreate"))
         return <long>client
     finally:
         cf.CFRelease(cf_name)
@@ -3778,7 +3812,7 @@ def midi_client_dispose(long client):
     """
     cdef cf.OSStatus status = cm.MIDIClientDispose(<cm.MIDIClientRef>client)
     if status != 0:
-        raise RuntimeError(f"MIDIClientDispose failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIClientDispose"))
     return status
 
 # Port functions
@@ -3809,7 +3843,7 @@ def midi_input_port_create(long client, str port_name):
         status = cm.MIDIInputPortCreate(
             <cm.MIDIClientRef>client, cf_name, NULL, NULL, &port)
         if status != 0:
-            raise RuntimeError(f"MIDIInputPortCreate failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIInputPortCreate"))
         return <long>port
     finally:
         cf.CFRelease(cf_name)
@@ -3840,7 +3874,7 @@ def midi_output_port_create(long client, str port_name):
         status = cm.MIDIOutputPortCreate(
             <cm.MIDIClientRef>client, cf_name, &port)
         if status != 0:
-            raise RuntimeError(f"MIDIOutputPortCreate failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIOutputPortCreate"))
         return <long>port
     finally:
         cf.CFRelease(cf_name)
@@ -3859,7 +3893,7 @@ def midi_port_dispose(long port):
     """
     cdef cf.OSStatus status = cm.MIDIPortDispose(<cm.MIDIPortRef>port)
     if status != 0:
-        raise RuntimeError(f"MIDIPortDispose failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIPortDispose"))
     return status
 
 def midi_port_connect_source(long port, long source):
@@ -3878,7 +3912,7 @@ def midi_port_connect_source(long port, long source):
     cdef cf.OSStatus status = cm.MIDIPortConnectSource(
         <cm.MIDIPortRef>port, <cm.MIDIEndpointRef>source, NULL)
     if status != 0:
-        raise RuntimeError(f"MIDIPortConnectSource failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIPortConnectSource"))
     return status
 
 def midi_port_disconnect_source(long port, long source):
@@ -3897,7 +3931,7 @@ def midi_port_disconnect_source(long port, long source):
     cdef cf.OSStatus status = cm.MIDIPortDisconnectSource(
         <cm.MIDIPortRef>port, <cm.MIDIEndpointRef>source)
     if status != 0:
-        raise RuntimeError(f"MIDIPortDisconnectSource failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIPortDisconnectSource"))
     return status
 
 # Device and endpoint discovery
@@ -4106,7 +4140,7 @@ def midi_source_create(long client, str name):
     try:
         status = cm.MIDISourceCreate(<cm.MIDIClientRef>client, cf_name, &source)
         if status != 0:
-            raise RuntimeError(f"MIDISourceCreate failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDISourceCreate"))
         return <long>source
     finally:
         cf.CFRelease(cf_name)
@@ -4137,7 +4171,7 @@ def midi_destination_create(long client, str name):
         status = cm.MIDIDestinationCreate(
             <cm.MIDIClientRef>client, cf_name, NULL, NULL, &dest)
         if status != 0:
-            raise RuntimeError(f"MIDIDestinationCreate failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIDestinationCreate"))
         return <long>dest
     finally:
         cf.CFRelease(cf_name)
@@ -4156,7 +4190,7 @@ def midi_endpoint_dispose(long endpoint):
     """
     cdef cf.OSStatus status = cm.MIDIEndpointDispose(<cm.MIDIEndpointRef>endpoint)
     if status != 0:
-        raise RuntimeError(f"MIDIEndpointDispose failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIEndpointDispose"))
     return status
 
 # Property functions
@@ -4193,7 +4227,7 @@ def midi_object_get_string_property(long obj, str property_name):
         status = cm.MIDIObjectGetStringProperty(
             <cm.MIDIObjectRef>obj, cf_prop_name, &cf_value)
         if status != 0:
-            raise RuntimeError(f"MIDIObjectGetStringProperty failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIObjectGetStringProperty"))
 
         # Convert CFString to Python string
         c_str = <char*>cf.CFStringGetCStringPtr(cf_value, cf.kCFStringEncodingUTF8)
@@ -4248,7 +4282,7 @@ def midi_object_get_integer_property(long obj, str property_name):
         status = cm.MIDIObjectGetIntegerProperty(
             <cm.MIDIObjectRef>obj, cf_prop_name, &value)
         if status != 0:
-            raise RuntimeError(f"MIDIObjectGetIntegerProperty failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIObjectGetIntegerProperty"))
         return value
     finally:
         cf.CFRelease(cf_prop_name)
@@ -4286,7 +4320,7 @@ def midi_object_set_string_property(long obj, str property_name, str value):
         status = cm.MIDIObjectSetStringProperty(
             <cm.MIDIObjectRef>obj, cf_prop_name, cf_value)
         if status != 0:
-            raise RuntimeError(f"MIDIObjectSetStringProperty failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIObjectSetStringProperty"))
         return status
     finally:
         cf.CFRelease(cf_prop_name)
@@ -4319,7 +4353,7 @@ def midi_object_set_integer_property(long obj, str property_name, int value):
         status = cm.MIDIObjectSetIntegerProperty(
             <cm.MIDIObjectRef>obj, cf_prop_name, <ca.SInt32>value)
         if status != 0:
-            raise RuntimeError(f"MIDIObjectSetIntegerProperty failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIObjectSetIntegerProperty"))
         return status
     finally:
         cf.CFRelease(cf_prop_name)
@@ -4348,7 +4382,7 @@ def midi_object_get_name(long obj):
     status = cm.MIDIObjectGetStringProperty(
         <cm.MIDIObjectRef>obj, cm.kMIDIPropertyName, &cf_value)
     if status != 0:
-        raise RuntimeError(f"MIDIObjectGetStringProperty failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIObjectGetStringProperty"))
 
     try:
         # Convert CFString to Python string
@@ -4438,7 +4472,7 @@ def midi_object_get_manufacturer(long obj):
     status = cm.MIDIObjectGetStringProperty(
         <cm.MIDIObjectRef>obj, cm.kMIDIPropertyManufacturer, &cf_value)
     if status != 0:
-        raise RuntimeError(f"MIDIObjectGetStringProperty failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIObjectGetStringProperty"))
 
     try:
         # Convert CFString to Python string
@@ -4486,7 +4520,7 @@ def midi_object_get_model(long obj):
     status = cm.MIDIObjectGetStringProperty(
         <cm.MIDIObjectRef>obj, cm.kMIDIPropertyModel, &cf_value)
     if status != 0:
-        raise RuntimeError(f"MIDIObjectGetStringProperty failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIObjectGetStringProperty"))
 
     try:
         # Convert CFString to Python string
@@ -4565,7 +4599,7 @@ def midi_send_data(long port, long destination, bytes data, int timestamp=0):
             pktlist)
 
         if status != 0:
-            raise RuntimeError(f"MIDISend failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDISend"))
         return status
 
     finally:
@@ -5053,7 +5087,7 @@ def midi_device_new_entity(long device, str name, int protocol, bint embedded, i
         )
 
         if status != 0:
-            raise RuntimeError(f"MIDIDeviceNewEntity failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIDeviceNewEntity"))
 
         return entity
 
@@ -5099,7 +5133,7 @@ def midi_device_add_entity(long device, str name, bint embedded, int num_source_
         )
 
         if status != 0:
-            raise RuntimeError(f"MIDIDeviceAddEntity failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIDeviceAddEntity"))
 
         return entity
 
@@ -5126,7 +5160,7 @@ def midi_device_remove_entity(long device, long entity):
     )
 
     if status != 0:
-        raise RuntimeError(f"MIDIDeviceRemoveEntity failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIDeviceRemoveEntity"))
 
     return status
 
@@ -5151,7 +5185,7 @@ def midi_entity_add_or_remove_endpoints(long entity, int num_source_endpoints, i
     )
 
     if status != 0:
-        raise RuntimeError(f"MIDIEntityAddOrRemoveEndpoints failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIEntityAddOrRemoveEndpoints"))
 
     return status
 
@@ -5170,7 +5204,7 @@ def midi_setup_add_device(long device):
     cdef cf.OSStatus status = cm.MIDISetupAddDevice(<cm.MIDIDeviceRef>device)
 
     if status != 0:
-        raise RuntimeError(f"MIDISetupAddDevice failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDISetupAddDevice"))
 
     return status
 
@@ -5189,7 +5223,7 @@ def midi_setup_remove_device(long device):
     cdef cf.OSStatus status = cm.MIDISetupRemoveDevice(<cm.MIDIDeviceRef>device)
 
     if status != 0:
-        raise RuntimeError(f"MIDISetupRemoveDevice failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDISetupRemoveDevice"))
 
     return status
 
@@ -5208,7 +5242,7 @@ def midi_setup_add_external_device(long device):
     cdef cf.OSStatus status = cm.MIDISetupAddExternalDevice(<cm.MIDIDeviceRef>device)
 
     if status != 0:
-        raise RuntimeError(f"MIDISetupAddExternalDevice failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDISetupAddExternalDevice"))
 
     return status
 
@@ -5227,7 +5261,7 @@ def midi_setup_remove_external_device(long device):
     cdef cf.OSStatus status = cm.MIDISetupRemoveExternalDevice(<cm.MIDIDeviceRef>device)
 
     if status != 0:
-        raise RuntimeError(f"MIDISetupRemoveExternalDevice failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDISetupRemoveExternalDevice"))
 
     return status
 
@@ -5268,7 +5302,7 @@ def midi_external_device_create(str name, str manufacturer, str model):
         )
 
         if status != 0:
-            raise RuntimeError(f"MIDIExternalDeviceCreate failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIExternalDeviceCreate"))
 
         return device
 
@@ -5322,7 +5356,7 @@ def midi_device_create(str name, str manufacturer, str model):
         )
 
         if status != 0:
-            raise RuntimeError(f"MIDIDeviceCreate failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIDeviceCreate"))
 
         return device
 
@@ -5349,7 +5383,7 @@ def midi_device_dispose(long device):
     cdef cf.OSStatus status = cm.MIDIDeviceDispose(<cm.MIDIDeviceRef>device)
 
     if status != 0:
-        raise RuntimeError(f"MIDIDeviceDispose failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIDeviceDispose"))
 
     return status
 
@@ -5409,7 +5443,7 @@ def midi_device_list_add_device(long dev_list, long device):
     )
 
     if status != 0:
-        raise RuntimeError(f"MIDIDeviceListAddDevice failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIDeviceListAddDevice"))
 
     return status
 
@@ -5428,7 +5462,7 @@ def midi_device_list_dispose(long dev_list):
     cdef cf.OSStatus status = cm.MIDIDeviceListDispose(<cm.MIDIDeviceListRef>dev_list)
 
     if status != 0:
-        raise RuntimeError(f"MIDIDeviceListDispose failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIDeviceListDispose"))
 
     return status
 
@@ -5453,7 +5487,7 @@ def midi_endpoint_set_ref_cons(long endpoint, long ref1=0, long ref2=0):
     )
 
     if status != 0:
-        raise RuntimeError(f"MIDIEndpointSetRefCons failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIEndpointSetRefCons"))
 
     return status
 
@@ -5476,7 +5510,7 @@ def midi_endpoint_get_ref_cons(long endpoint):
     )
 
     if status != 0:
-        raise RuntimeError(f"MIDIEndpointGetRefCons failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIEndpointGetRefCons"))
 
     return (<long>ref1, <long>ref2)
 
@@ -5530,7 +5564,7 @@ def midi_driver_enable_monitoring(long driver, bint enabled):
     )
 
     if status != 0:
-        raise RuntimeError(f"MIDIDriverEnableMonitoring failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIDriverEnableMonitoring"))
 
     return status
 
@@ -5674,7 +5708,7 @@ def midi_thru_connection_create(str persistent_owner_id=None, dict connection_pa
         status = cm.MIDIThruConnectionCreate(cf_owner_id, cf_params, &connection)
 
         if status != 0:
-            raise RuntimeError(f"MIDIThruConnectionCreate failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIThruConnectionCreate"))
 
         return connection
 
@@ -5699,7 +5733,7 @@ def midi_thru_connection_dispose(long connection):
     cdef cf.OSStatus status = cm.MIDIThruConnectionDispose(<cm.MIDIThruConnectionRef>connection)
 
     if status != 0:
-        raise RuntimeError(f"MIDIThruConnectionDispose failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIThruConnectionDispose"))
 
     return status
 
@@ -5721,7 +5755,7 @@ def midi_thru_connection_get_params(long connection):
     )
 
     if status != 0:
-        raise RuntimeError(f"MIDIThruConnectionGetParams failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "MIDIThruConnectionGetParams"))
 
     cdef cf.CFIndex data_length
     cdef cf.UInt8* data_ptr
@@ -5840,7 +5874,7 @@ def midi_thru_connection_set_params(long connection, dict connection_params):
         )
 
         if status != 0:
-            raise RuntimeError(f"MIDIThruConnectionSetParams failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIThruConnectionSetParams"))
 
         return status
 
@@ -5876,7 +5910,7 @@ def midi_thru_connection_find(str persistent_owner_id):
         status = cm.MIDIThruConnectionFind(cf_owner_id, &cf_connection_list)
 
         if status != 0:
-            raise RuntimeError(f"MIDIThruConnectionFind failed with status: {status}")
+            raise RuntimeError(format_osstatus_error(status, "MIDIThruConnectionFind"))
 
         # Extract the connection list
         data_length = ca.CFDataGetLength(cf_connection_list)
@@ -6037,7 +6071,7 @@ def au_graph_new() -> int:
 
     status = at.NewAUGraph(&graph)
     if status != 0:
-        raise RuntimeError(f"NewAUGraph failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "NewAUGraph"))
 
     return <long>graph
 
@@ -6053,7 +6087,7 @@ def au_graph_dispose(long graph_id):
     """
     cdef cf.OSStatus status = at.DisposeAUGraph(<at.AUGraph>graph_id)
     if status != 0:
-        raise RuntimeError(f"DisposeAUGraph failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "DisposeAUGraph"))
 
 
 def au_graph_open(long graph_id):
@@ -6067,7 +6101,7 @@ def au_graph_open(long graph_id):
     """
     cdef cf.OSStatus status = at.AUGraphOpen(<at.AUGraph>graph_id)
     if status != 0:
-        raise RuntimeError(f"AUGraphOpen failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphOpen"))
 
 
 def au_graph_close(long graph_id):
@@ -6081,7 +6115,7 @@ def au_graph_close(long graph_id):
     """
     cdef cf.OSStatus status = at.AUGraphClose(<at.AUGraph>graph_id)
     if status != 0:
-        raise RuntimeError(f"AUGraphClose failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphClose"))
 
 
 def au_graph_initialize(long graph_id):
@@ -6095,7 +6129,7 @@ def au_graph_initialize(long graph_id):
     """
     cdef cf.OSStatus status = at.AUGraphInitialize(<at.AUGraph>graph_id)
     if status != 0:
-        raise RuntimeError(f"AUGraphInitialize failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphInitialize"))
 
 
 def au_graph_uninitialize(long graph_id):
@@ -6109,7 +6143,7 @@ def au_graph_uninitialize(long graph_id):
     """
     cdef cf.OSStatus status = at.AUGraphUninitialize(<at.AUGraph>graph_id)
     if status != 0:
-        raise RuntimeError(f"AUGraphUninitialize failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphUninitialize"))
 
 
 def au_graph_start(long graph_id):
@@ -6123,7 +6157,7 @@ def au_graph_start(long graph_id):
     """
     cdef cf.OSStatus status = at.AUGraphStart(<at.AUGraph>graph_id)
     if status != 0:
-        raise RuntimeError(f"AUGraphStart failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphStart"))
 
 
 def au_graph_stop(long graph_id):
@@ -6137,7 +6171,7 @@ def au_graph_stop(long graph_id):
     """
     cdef cf.OSStatus status = at.AUGraphStop(<at.AUGraph>graph_id)
     if status != 0:
-        raise RuntimeError(f"AUGraphStop failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphStop"))
 
 
 def au_graph_is_open(long graph_id) -> bool:
@@ -6155,7 +6189,7 @@ def au_graph_is_open(long graph_id) -> bool:
     cdef cf.Boolean is_open
     cdef cf.OSStatus status = at.AUGraphIsOpen(<at.AUGraph>graph_id, &is_open)
     if status != 0:
-        raise RuntimeError(f"AUGraphIsOpen failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphIsOpen"))
     return bool(is_open)
 
 
@@ -6174,7 +6208,7 @@ def au_graph_is_initialized(long graph_id) -> bool:
     cdef cf.Boolean is_initialized
     cdef cf.OSStatus status = at.AUGraphIsInitialized(<at.AUGraph>graph_id, &is_initialized)
     if status != 0:
-        raise RuntimeError(f"AUGraphIsInitialized failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphIsInitialized"))
     return bool(is_initialized)
 
 
@@ -6193,7 +6227,7 @@ def au_graph_is_running(long graph_id) -> bool:
     cdef cf.Boolean is_running
     cdef cf.OSStatus status = at.AUGraphIsRunning(<at.AUGraph>graph_id, &is_running)
     if status != 0:
-        raise RuntimeError(f"AUGraphIsRunning failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphIsRunning"))
     return bool(is_running)
 
 
@@ -6224,7 +6258,7 @@ def au_graph_add_node(long graph_id, dict description) -> int:
 
     status = at.AUGraphAddNode(<at.AUGraph>graph_id, &desc, &node)
     if status != 0:
-        raise RuntimeError(f"AUGraphAddNode failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphAddNode"))
 
     return node
 
@@ -6241,7 +6275,7 @@ def au_graph_remove_node(long graph_id, int node_id):
     """
     cdef cf.OSStatus status = at.AUGraphRemoveNode(<at.AUGraph>graph_id, <at.AUNode>node_id)
     if status != 0:
-        raise RuntimeError(f"AUGraphRemoveNode failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphRemoveNode"))
 
 
 def au_graph_get_node_count(long graph_id) -> int:
@@ -6259,7 +6293,7 @@ def au_graph_get_node_count(long graph_id) -> int:
     cdef cf.UInt32 count
     cdef cf.OSStatus status = at.AUGraphGetNodeCount(<at.AUGraph>graph_id, &count)
     if status != 0:
-        raise RuntimeError(f"AUGraphGetNodeCount failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphGetNodeCount"))
     return count
 
 
@@ -6279,7 +6313,7 @@ def au_graph_get_ind_node(long graph_id, int index) -> int:
     cdef at.AUNode node
     cdef cf.OSStatus status = at.AUGraphGetIndNode(<at.AUGraph>graph_id, index, &node)
     if status != 0:
-        raise RuntimeError(f"AUGraphGetIndNode failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphGetIndNode"))
     return node
 
 
@@ -6302,7 +6336,7 @@ def au_graph_node_info(long graph_id, int node_id) -> tuple:
 
     status = at.AUGraphNodeInfo(<at.AUGraph>graph_id, <at.AUNode>node_id, &desc, &audio_unit)
     if status != 0:
-        raise RuntimeError(f"AUGraphNodeInfo failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphNodeInfo"))
 
     desc_dict = {
         'type': desc.componentType,
@@ -6339,7 +6373,7 @@ def au_graph_connect_node_input(long graph_id, int source_node, int source_outpu
         dest_input
     )
     if status != 0:
-        raise RuntimeError(f"AUGraphConnectNodeInput failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphConnectNodeInput"))
 
 
 def au_graph_disconnect_node_input(long graph_id, int dest_node, int dest_input):
@@ -6361,7 +6395,7 @@ def au_graph_disconnect_node_input(long graph_id, int dest_node, int dest_input)
         dest_input
     )
     if status != 0:
-        raise RuntimeError(f"AUGraphDisconnectNodeInput failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphDisconnectNodeInput"))
 
 
 def au_graph_clear_connections(long graph_id):
@@ -6375,7 +6409,7 @@ def au_graph_clear_connections(long graph_id):
     """
     cdef cf.OSStatus status = at.AUGraphClearConnections(<at.AUGraph>graph_id)
     if status != 0:
-        raise RuntimeError(f"AUGraphClearConnections failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphClearConnections"))
 
 
 def au_graph_update(long graph_id) -> bool:
@@ -6393,7 +6427,7 @@ def au_graph_update(long graph_id) -> bool:
     cdef cf.Boolean is_updated
     cdef cf.OSStatus status = at.AUGraphUpdate(<at.AUGraph>graph_id, &is_updated)
     if status != 0:
-        raise RuntimeError(f"AUGraphUpdate failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphUpdate"))
     return bool(is_updated)
 
 
@@ -6412,7 +6446,7 @@ def au_graph_get_cpu_load(long graph_id) -> float:
     cdef cf.Float32 cpu_load
     cdef cf.OSStatus status = at.AUGraphGetCPULoad(<at.AUGraph>graph_id, &cpu_load)
     if status != 0:
-        raise RuntimeError(f"AUGraphGetCPULoad failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphGetCPULoad"))
     return cpu_load
 
 
@@ -6431,7 +6465,7 @@ def au_graph_get_max_cpu_load(long graph_id) -> float:
     cdef cf.Float32 max_load
     cdef cf.OSStatus status = at.AUGraphGetMaxCPULoad(<at.AUGraph>graph_id, &max_load)
     if status != 0:
-        raise RuntimeError(f"AUGraphGetMaxCPULoad failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "AUGraphGetMaxCPULoad"))
     return max_load
 
 
@@ -6473,7 +6507,7 @@ def ca_clock_new() -> int:
     cdef at.CAClockRef clock_ref
     cdef cf.OSStatus status = at.CAClockNew(0, &clock_ref)
     if status != 0:
-        raise RuntimeError(f"CAClockNew failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "CAClockNew"))
     return <long>clock_ref
 
 
@@ -6488,7 +6522,7 @@ def ca_clock_dispose(long clock_id):
     """
     cdef cf.OSStatus status = at.CAClockDispose(<at.CAClockRef>clock_id)
     if status != 0:
-        raise RuntimeError(f"CAClockDispose failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "CAClockDispose"))
 
 
 def ca_clock_get_current_time(long clock_id, int time_format) -> dict:
@@ -6511,7 +6545,7 @@ def ca_clock_get_current_time(long clock_id, int time_format) -> dict:
         &clock_time
     )
     if status != 0:
-        raise RuntimeError(f"CAClockGetCurrentTime failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "CAClockGetCurrentTime"))
 
     result = {"format": clock_time.format}
 
@@ -6552,7 +6586,7 @@ def ca_clock_start(long clock_id):
     """
     cdef cf.OSStatus status = at.CAClockStart(<at.CAClockRef>clock_id)
     if status != 0:
-        raise RuntimeError(f"CAClockStart failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "CAClockStart"))
 
 
 def ca_clock_stop(long clock_id):
@@ -6566,7 +6600,7 @@ def ca_clock_stop(long clock_id):
     """
     cdef cf.OSStatus status = at.CAClockStop(<at.CAClockRef>clock_id)
     if status != 0:
-        raise RuntimeError(f"CAClockStop failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "CAClockStop"))
 
 
 def ca_clock_set_play_rate(long clock_id, double rate):
@@ -6581,7 +6615,7 @@ def ca_clock_set_play_rate(long clock_id, double rate):
     """
     cdef cf.OSStatus status = at.CAClockSetPlayRate(<at.CAClockRef>clock_id, rate)
     if status != 0:
-        raise RuntimeError(f"CAClockSetPlayRate failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "CAClockSetPlayRate"))
 
 
 def ca_clock_get_play_rate(long clock_id) -> float:
@@ -6599,7 +6633,7 @@ def ca_clock_get_play_rate(long clock_id) -> float:
     cdef double rate
     cdef cf.OSStatus status = at.CAClockGetPlayRate(<at.CAClockRef>clock_id, &rate)
     if status != 0:
-        raise RuntimeError(f"CAClockGetPlayRate failed with status: {status}")
+        raise RuntimeError(format_osstatus_error(status, "CAClockGetPlayRate"))
     return rate
 
 

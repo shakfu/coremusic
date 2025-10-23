@@ -20,7 +20,8 @@ def skip_if_no_audio_hardware():
             queue = cm.AudioQueue.new_output(format)
             queue.dispose()
         except cm.AudioQueueError as e:
-            if "status: -50" in str(e):
+            # Check for paramErr (-50) which indicates no audio hardware
+            if e.status_code == -50 or "paramErr" in str(e):
                 pytest.skip("Audio hardware not available")
             raise
     return _skip_check

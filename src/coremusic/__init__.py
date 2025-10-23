@@ -24,6 +24,9 @@ from .async_io import *
 # Import high-level utilities
 from .utilities import *
 
+# Import OSStatus error translation utilities
+from . import os_status
+
 # Import Ableton Link classes
 from . import link
 
