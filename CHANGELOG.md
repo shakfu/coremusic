@@ -17,6 +17,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Changed
+
+- **Improved test coverage for AudioQueue OO API** - Selective skipping instead of blanket test exclusion
+  - **Issue**: All 16 tests in `test_objects_audio_queue.py` were skipped due to module-level `pytestmark`
+  - **Root Cause**: Overly conservative assumption that all AudioQueue tests require audio hardware
+  - **Fix**: Removed blanket skip marker and implemented selective skipping using fixture-based hardware detection
+  - **Result**: 4 tests now passing (25% → 100% execution for non-hardware tests), 12 tests properly skip when hardware unavailable
+  - **Tests now running without hardware**:
+    - `test_audio_buffer_creation` - Pure Python object creation
+    - `test_audio_buffer_properties` - Property access testing
+    - `test_audio_queue_creation_with_format` - Object initialization
+    - `test_audio_queue_error_handling` - Error handling for invalid formats
+  - **Hardware-dependent tests** gracefully skip with clear message: "Audio hardware not available"
+  - **Impact**: Better CI/headless environment coverage while preserving hardware functionality tests
+  - **Verification**: All 681 tests passing, 32 skipped (no regressions)
+
+- **Enhanced documentation for bytes parameters** - Added comprehensive usage examples to method docstrings
+  - **Analysis**: Identified 6 methods accepting `bytes` parameters representing binary audio/MIDI data
+  - **Confirmed**: All `bytes` parameters are correctly typed (binary data, not text):
+    - `AudioFileStream.parse_bytes()` - Raw audio file format data (WAV/MP3/AAC headers)
+    - `AudioConverter.convert()` - Raw PCM audio samples
+    - `AudioConverter.convert_with_callback()` - Raw audio samples (already had example)
+    - `AudioConverter.set_property()` - Binary property data (structs, ints)
+    - `ExtendedAudioFile.write()` - Raw audio frame data
+    - `MIDIOutputPort.send_data()` - MIDI protocol messages
+  - **Documentation improvements**:
+    - Added practical usage examples to 5 methods (1 already had examples)
+    - Clarified binary nature of data with inline comments
+    - Showed proper `struct.pack()` usage for creating binary data
+    - Demonstrated MIDI protocol byte construction
+    - Included context managers and realistic workflows
+  - **Consistency**: All examples follow existing pattern from `convert_with_callback()`
+  - **Verification**: All 681 tests passing (documentation-only changes, no functional impact)
+
 ### Fixed
 
 - **AudioUnit factory presets crash** - Fixed critical bug in `audio_unit_get_factory_presets()` (src/coremusic/capi.pyx:1802)
