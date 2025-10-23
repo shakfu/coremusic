@@ -10,7 +10,7 @@ import coremusic.capi as capi
 
 def test_audio_playback():
     """Test audio playback using the AudioPlayer class"""
-    print("\n=== AudioPlayer Test ===")
+    print("=== AudioPlayer Test ===")
 
     # Check if test file exists
     test_file = "tests/amen.wav"
@@ -42,7 +42,7 @@ def test_audio_playback():
         print(f"Started playback (result: {result})")
 
         # Monitor playback for a few seconds
-        print("\nPlayback status:")
+        print("Playback status:")
         for i in range(10):
             is_playing = player.is_playing()
             progress = player.get_progress()
@@ -50,7 +50,7 @@ def test_audio_playback():
             time.sleep(1.0)
 
         # Stop playback
-        print("\nStopping playback...")
+        print("Stopping playback...")
         result = player.stop()
         print(f"Stopped playback (result: {result})")
 
@@ -68,7 +68,7 @@ def test_audio_playback():
 
 def test_audio_player_play_method():
     """Test that play() method works as an alias for start()"""
-    print("\n=== AudioPlayer play() Method Test ===")
+    print("=== AudioPlayer play() Method Test ===")
 
     test_file = "tests/amen.wav"
     assert os.path.exists(test_file)
@@ -99,7 +99,7 @@ def test_audio_player_play_method():
 
         # Reset and test start() method for comparison
         player.reset_playback()
-        print("\nTesting start() method...")
+        print("Testing start() method...")
         result = player.start()
         print(f"Called start() (result: {result})")
 
@@ -111,7 +111,7 @@ def test_audio_player_play_method():
         # Stop playback
         player.stop()
 
-        print("\n✓ Both play() and start() methods work correctly!")
+        print("✓ Both play() and start() methods work correctly!")
         assert True
 
     except Exception as e:

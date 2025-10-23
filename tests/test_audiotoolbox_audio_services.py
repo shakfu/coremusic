@@ -13,28 +13,29 @@ class TestAudioServicesConstants:
     def test_audio_services_error_constants(self):
         """Test AudioServices error constants"""
         assert capi.get_audio_services_no_error() == 0
-        assert capi.get_audio_services_unsupported_property_error() is not None
-        assert capi.get_audio_services_bad_property_size_error() is not None
-        assert capi.get_audio_services_bad_specifier_size_error() is not None
-        assert capi.get_audio_services_system_sound_unspecified_error() is not None
-        assert capi.get_audio_services_system_sound_client_timed_out_error() is not None
+        assert capi.get_audio_services_unsupported_property_error() == 1886681407
+        assert capi.get_audio_services_bad_property_size_error() == 561211770
+        assert capi.get_audio_services_bad_specifier_size_error() == 561213539
+        assert capi.get_audio_services_system_sound_unspecified_error() == -1500
+        assert capi.get_audio_services_system_sound_client_timed_out_error() == -1501
         assert (
             capi.get_audio_services_system_sound_exceeded_maximum_duration_error()
-            is not None
+            == -1502
         )
 
     def test_system_sound_id_constants(self):
         """Test SystemSoundID constants"""
-        assert capi.get_system_sound_id_user_preferred_alert() is not None
-        assert capi.get_system_sound_id_flash_screen() is not None
-        assert capi.get_system_sound_id_vibrate() is not None
-        assert capi.get_user_preferred_alert() is not None
+        assert capi.get_system_sound_id_user_preferred_alert() == 4096
+        assert capi.get_system_sound_id_flash_screen() == 4094
+        assert capi.get_system_sound_id_vibrate() == 4095
+        assert capi.get_user_preferred_alert() == 4096
 
     def test_audio_services_property_constants(self):
         """Test AudioServices property constants"""
-        assert capi.get_audio_services_property_is_ui_sound() is not None
+        assert capi.get_audio_services_property_is_ui_sound() == 1769174377
         assert (
-            capi.get_audio_services_property_complete_playback_if_app_dies() is not None
+            capi.get_audio_services_property_complete_playback_if_app_dies()
+            == 1768318057
         )
 
 

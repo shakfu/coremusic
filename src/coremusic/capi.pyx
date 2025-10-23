@@ -1677,14 +1677,13 @@ def audio_unit_get_parameter_list(long audio_unit_id, scope=0, element=0):
         free(param_list)
 
 
-def audio_unit_get_parameter_info(long audio_unit_id, param_id, scope=0, element=0):
+def audio_unit_get_parameter_info(long audio_unit_id, param_id, scope=0):
     """Get detailed information about a parameter
 
     Args:
         audio_unit_id: AudioUnit instance ID
         param_id: Parameter ID
         scope: Parameter scope (0=global, 1=input, 2=output)
-        element: Element number (usually 0)
 
     Returns:
         Dictionary with parameter metadata
@@ -1696,11 +1695,12 @@ def audio_unit_get_parameter_info(long audio_unit_id, param_id, scope=0, element
     cdef char buffer[256]
 
     # Get parameter info
+    # NOTE: For kAudioUnitProperty_ParameterInfo, the element argument should be the parameter ID
     status = at.AudioUnitGetProperty(
         unit,
         at.kAudioUnitProperty_ParameterInfo,
         <at.AudioUnitScope>scope,
-        <at.AudioUnitElement>element,
+        <at.AudioUnitElement>param_id,  # Use param_id as element
         &param_info,
         &data_size
     )
@@ -1711,16 +1711,22 @@ def audio_unit_get_parameter_info(long audio_unit_id, param_id, scope=0, element
     # Extract name (prefer CFString if available)
     name = ""
     if param_info.cfNameString != NULL:
-        if cf.CFStringGetCString(param_info.cfNameString, buffer, sizeof(buffer), cf.kCFStringEncodingUTF8):
-            name = buffer.decode('utf-8')
-    else:
+        # Verify it's actually a CFString before trying to use it
+        if cf.CFGetTypeID(<cf.CFTypeRef>param_info.cfNameString) == cf.CFStringGetTypeID():
+            if cf.CFStringGetCString(param_info.cfNameString, buffer, sizeof(buffer), cf.kCFStringEncodingUTF8):
+                name = buffer.decode('utf-8')
+
+    # If we still don't have a name, use the C string name
+    if not name:
         name = param_info.name[:52].decode('utf-8', errors='ignore').rstrip('\x00')
 
     # Extract unit name
     unit_name = ""
     if param_info.unitName != NULL:
-        if cf.CFStringGetCString(param_info.unitName, buffer, sizeof(buffer), cf.kCFStringEncodingUTF8):
-            unit_name = buffer.decode('utf-8')
+        # Verify it's actually a CFString
+        if cf.CFGetTypeID(<cf.CFTypeRef>param_info.unitName) == cf.CFStringGetTypeID():
+            if cf.CFStringGetCString(param_info.unitName, buffer, sizeof(buffer), cf.kCFStringEncodingUTF8):
+                unit_name = buffer.decode('utf-8')
 
     return {
         'param_id': param_id,
@@ -1843,19 +1849,49 @@ def audio_unit_get_factory_presets(long audio_unit_id):
         return []
 
     # Extract presets from CFArray
+    # NOTE: kAudioUnitProperty_FactoryPresets returns a CFArray of CFDictionaries,
+    # not an array of AUPreset structs. Each dictionary contains:
+    #   "preset-number" (kAUPresetNumberKey) -> CFNumber (preset number)
+    #   "name" (kAUPresetNameKey) -> CFString (preset name)
     num_presets = cf.CFArrayGetCount(presets_array)
-    for i in range(num_presets):
-        preset = <at.AUPreset*>cf.CFArrayGetValueAtIndex(presets_array, i)
-        if preset != NULL:
-            preset_name = ""
-            if preset.presetName != NULL:
-                if cf.CFStringGetCString(preset.presetName, buffer, sizeof(buffer), cf.kCFStringEncodingUTF8):
-                    preset_name = buffer.decode('utf-8')
+    cdef cf.CFDictionaryRef preset_dict
+    cdef cf.CFNumberRef preset_num_ref
+    cdef cf.CFStringRef preset_name_ref
+    cdef cf.CFStringRef number_key
+    cdef cf.CFStringRef name_key
+    cdef cf.SInt32 preset_number
 
-            result.append({
-                'number': preset.presetNumber,
-                'name': preset_name
-            })
+    # Create CFString keys for dictionary lookups
+    number_key = cf.CFStringCreateWithCString(cf.kCFAllocatorDefault, b"preset-number", cf.kCFStringEncodingUTF8)
+    name_key = cf.CFStringCreateWithCString(cf.kCFAllocatorDefault, b"name", cf.kCFStringEncodingUTF8)
+
+    try:
+        for i in range(num_presets):
+            preset_dict = <cf.CFDictionaryRef>cf.CFArrayGetValueAtIndex(presets_array, i)
+            if preset_dict != NULL:
+                # Get preset number
+                preset_number = -1
+                preset_num_ref = <cf.CFNumberRef>cf.CFDictionaryGetValue(preset_dict, <const void*>number_key)
+                if preset_num_ref != NULL:
+                    cf.CFNumberGetValue(preset_num_ref, cf.kCFNumberSInt32Type, &preset_number)
+
+                # Get preset name
+                preset_name = ""
+                preset_name_ref = <cf.CFStringRef>cf.CFDictionaryGetValue(preset_dict, <const void*>name_key)
+                if preset_name_ref != NULL:
+                    if cf.CFStringGetCString(preset_name_ref, buffer, sizeof(buffer), cf.kCFStringEncodingUTF8):
+                        preset_name = buffer.decode('utf-8')
+
+                result.append({
+                    'number': preset_number,
+                    'name': preset_name
+                })
+    finally:
+        # Release CFString keys
+        if number_key != NULL:
+            cf.CFRelease(<cf.CFTypeRef>number_key)
+        if name_key != NULL:
+            cf.CFRelease(<cf.CFTypeRef>name_key)
 
     return result
 

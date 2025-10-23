@@ -468,6 +468,11 @@ cdef extern from "AudioToolbox/AUComponent.h":
         SInt32 presetNumber
         CFStringRef presetName
 
+    # AudioUnit Preset dictionary keys (for kAudioUnitProperty_FactoryPresets)
+    # These are #define macros, not CFStringRef constants
+    # #define kAUPresetNumberKey "preset-number"
+    # #define kAUPresetNameKey "name"
+
     # AudioUnit Parameter Value translation structure
     ctypedef struct AudioUnitParameterValueTranslation:
         AudioUnit inUnit

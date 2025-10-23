@@ -16,8 +16,8 @@ class TestAudioQueueOperations:
         return {
             "sample_rate": 44100.0,
             "format_id": capi.get_audio_format_linear_pcm(),
-            "format_flags": capi.get_linear_pcm_format_flag_is_signed_integer()
-            | capi.get_linear_pcm_format_flag_is_packed(),
+            "format_flags": capi.get_linear_pcm_format_flag_is_signed_integer() 
+                          | capi.get_linear_pcm_format_flag_is_packed(),
             "bytes_per_packet": 4,
             "frames_per_packet": 1,
             "bytes_per_frame": 4,

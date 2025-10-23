@@ -201,6 +201,95 @@ class TestAudioUnitParameterDiscovery:
             except Exception as e:
                 print(f"\nParameter {param_id}: Error - {e}")
 
+    def test_parameter_info_with_all_parameter_ids(self, audio_unit):
+        """Test that parameter info works for ALL parameter IDs, including non-sequential ones"""
+        params = capi.audio_unit_get_parameter_list(audio_unit)
+
+        if len(params) == 0:
+            pytest.skip("AudioUnit has no parameters")
+
+        print(f"\nTesting all {len(params)} parameters:")
+        failed_params = []
+
+        for param_id in params:
+            try:
+                info = capi.audio_unit_get_parameter_info(audio_unit, param_id)
+                # Verify the returned info matches the param_id we requested
+                assert info['param_id'] == param_id, f"Mismatched param_id: expected {param_id}, got {info['param_id']}"
+                print(f"  ✓ Parameter {param_id}: {info['name']}")
+            except Exception as e:
+                failed_params.append((param_id, str(e)))
+                print(f"  ✗ Parameter {param_id}: {e}")
+
+        # All parameters should be retrievable
+        assert len(failed_params) == 0, f"Failed to get info for {len(failed_params)} parameters: {failed_params}"
+
+    def test_third_party_plugin_parameters(self):
+        """Test parameter info with third-party plugins that use non-sequential parameter IDs"""
+        # Find non-Apple plugins
+        components = capi.audio_unit_find_all_components(component_type='aufx')
+
+        third_party_tested = False
+        for comp_id in components[:20]:  # Check first 20 plugins
+            info = capi.audio_unit_get_component_info(comp_id)
+
+            # Skip Apple plugins (they use sequential IDs)
+            if info['manufacturer'] == 'appl':
+                continue
+
+            print(f"\nTesting third-party plugin: {info['name']}")
+
+            try:
+                # Create and initialize
+                unit_id = capi.audio_component_instance_new(comp_id)
+                capi.audio_unit_initialize(unit_id)
+
+                # Get parameters
+                params = capi.audio_unit_get_parameter_list(unit_id)
+
+                if len(params) == 0:
+                    capi.audio_unit_uninitialize(unit_id)
+                    capi.audio_component_instance_dispose(unit_id)
+                    continue
+
+                print(f"  Found {len(params)} parameters")
+                print(f"  Parameter IDs (first 5): {params[:5]}")
+
+                # Check if this plugin uses non-sequential IDs (large numbers)
+                if max(params[:min(5, len(params))]) > 100:
+                    print(f"  → Plugin uses non-sequential parameter IDs (FourCC-encoded)")
+
+                    # Test ALL parameters
+                    failed = []
+                    for param_id in params:
+                        try:
+                            param_info = capi.audio_unit_get_parameter_info(unit_id, param_id)
+                            assert param_info['param_id'] == param_id
+                        except Exception as e:
+                            failed.append((param_id, str(e)))
+
+                    if failed:
+                        capi.audio_unit_uninitialize(unit_id)
+                        capi.audio_component_instance_dispose(unit_id)
+                        pytest.fail(f"Failed to get info for {len(failed)} parameters: {failed[:3]}")
+
+                    print(f"  ✓ Successfully retrieved info for all {len(params)} parameters")
+                    third_party_tested = True
+
+                # Cleanup
+                capi.audio_unit_uninitialize(unit_id)
+                capi.audio_component_instance_dispose(unit_id)
+
+                if third_party_tested:
+                    break
+
+            except Exception as e:
+                print(f"  Error: {e}")
+                continue
+
+        if not third_party_tested:
+            pytest.skip("No third-party plugins with non-sequential parameter IDs found")
+
 
 class TestAudioUnitPresets:
     """Test AudioUnit preset functionality"""

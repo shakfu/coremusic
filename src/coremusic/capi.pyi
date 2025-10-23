@@ -186,7 +186,7 @@ def audio_unit_get_parameter_list(
     ...
 
 def audio_unit_get_parameter_info(
-    audio_unit_id: int, param_id: int, scope: int = 0, element: int = 0
+    audio_unit_id: int, param_id: int, scope: int = 0
 ) -> Dict[str, Any]:
     """Get parameter info dict with metadata."""
     ...
