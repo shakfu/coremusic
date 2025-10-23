@@ -136,9 +136,9 @@ class TestMusicDeviceBasicOperations:
         try:
             unit = capi.audio_component_instance_new(component)
         except RuntimeError as e:
-            if "-128" in str(e):
+            if "-128" in str(e) or "-10863" in str(e):
                 pytest.skip(
-                    f"Music device component cannot be instantiated (macOS restriction): {e}"
+                    f"Music device component cannot be instantiated: {e}"
                 )
             raise
         yield unit

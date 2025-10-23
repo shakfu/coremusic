@@ -1808,6 +1808,7 @@ def audio_unit_get_factory_presets(long audio_unit_id):
     Returns:
         List of dictionaries with keys: number, name
     """
+    # Declare C variables
     cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
     cdef cf.UInt32 data_size = 0
     cdef cf.Boolean writable = 0
@@ -1815,8 +1816,10 @@ def audio_unit_get_factory_presets(long audio_unit_id):
     cdef cf.CFArrayRef presets_array = NULL
     cdef cf.CFIndex num_presets
     cdef at.AUPreset* preset
-    cdef list result = []
     cdef char buffer[256]
+    cdef cf.SInt32 preset_number
+    cdef str preset_name
+    cdef list result = []
 
     # Get factory presets property
     status = at.AudioUnitGetPropertyInfo(
@@ -1848,38 +1851,28 @@ def audio_unit_get_factory_presets(long audio_unit_id):
     if presets_array == NULL:
         return []
 
-    # Extract presets from CFArray
-    # NOTE: kAudioUnitProperty_FactoryPresets returns a CFArray of CFDictionaries,
-    # not an array of AUPreset structs. Each dictionary contains:
-    #   "preset-number" (kAUPresetNumberKey) -> CFNumber (preset number)
-    #   "name" (kAUPresetNameKey) -> CFString (preset name)
+    # Get preset count
     num_presets = cf.CFArrayGetCount(presets_array)
-    cdef cf.CFDictionaryRef preset_dict
-    cdef cf.CFNumberRef preset_num_ref
-    cdef cf.CFStringRef preset_name_ref
-    cdef cf.CFStringRef number_key
-    cdef cf.CFStringRef name_key
-    cdef cf.SInt32 preset_number
 
-    # Create CFString keys for dictionary lookups
-    number_key = cf.CFStringCreateWithCString(cf.kCFAllocatorDefault, b"preset-number", cf.kCFStringEncodingUTF8)
-    name_key = cf.CFStringCreateWithCString(cf.kCFAllocatorDefault, b"name", cf.kCFStringEncodingUTF8)
+    # If no presets, clean up and return empty list
+    if num_presets == 0:
+        cf.CFRelease(<cf.CFTypeRef>presets_array)
+        return []
 
+    # Extract presets from CFArray
+    # NOTE: According to Apple TechNote TN2157, kAudioUnitProperty_FactoryPresets
+    # returns a CFArray of AUPreset structs (not CFDictionaries!)
     try:
         for i in range(num_presets):
-            preset_dict = <cf.CFDictionaryRef>cf.CFArrayGetValueAtIndex(presets_array, i)
-            if preset_dict != NULL:
-                # Get preset number
-                preset_number = -1
-                preset_num_ref = <cf.CFNumberRef>cf.CFDictionaryGetValue(preset_dict, <const void*>number_key)
-                if preset_num_ref != NULL:
-                    cf.CFNumberGetValue(preset_num_ref, cf.kCFNumberSInt32Type, &preset_number)
-
-                # Get preset name
+            # Get pointer to AUPreset struct from the array
+            preset = <at.AUPreset*>cf.CFArrayGetValueAtIndex(presets_array, i)
+            if preset != NULL:
+                preset_number = preset.presetNumber
                 preset_name = ""
-                preset_name_ref = <cf.CFStringRef>cf.CFDictionaryGetValue(preset_dict, <const void*>name_key)
-                if preset_name_ref != NULL:
-                    if cf.CFStringGetCString(preset_name_ref, buffer, sizeof(buffer), cf.kCFStringEncodingUTF8):
+
+                # Get preset name from the CFStringRef in the struct
+                if preset.presetName != NULL:
+                    if cf.CFStringGetCString(preset.presetName, buffer, sizeof(buffer), 0x08000100):
                         preset_name = buffer.decode('utf-8')
 
                 result.append({
@@ -1887,11 +1880,9 @@ def audio_unit_get_factory_presets(long audio_unit_id):
                     'name': preset_name
                 })
     finally:
-        # Release CFString keys
-        if number_key != NULL:
-            cf.CFRelease(<cf.CFTypeRef>number_key)
-        if name_key != NULL:
-            cf.CFRelease(<cf.CFTypeRef>name_key)
+        # Release the presets array
+        if presets_array != NULL:
+            cf.CFRelease(<cf.CFTypeRef>presets_array)
 
     return result
 
