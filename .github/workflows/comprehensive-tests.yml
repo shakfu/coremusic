@@ -1,0 +1,82 @@
+name: Comprehensive Tests
+
+on: [workflow_dispatch]
+# on:
+#   schedule:
+#     # Run weekly on Sundays at 3 AM UTC
+#     - cron: '0 3 * * 0'
+#   workflow_dispatch:
+
+jobs:
+  comprehensive-test:
+    name: Run All Tests (Including Slow)
+    runs-on: macos-latest
+    timeout-minutes: 120  # 2 hours max
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        uv sync
+
+    - name: Build extension
+      run: |
+        uv sync --reinstall-package coremusic
+
+    - name: Run ALL tests (including slow tests)
+      run: |
+        uv run pytest --tb=short --maxfail=10
+      timeout-minutes: 90
+      continue-on-error: true
+
+    - name: Run coverage on all tests
+      run: |
+        uv run pytest \
+          --cov=coremusic \
+          --cov-report=xml \
+          --cov-report=term-missing \
+          --maxfail=10
+      timeout-minutes: 90
+      continue-on-error: true
+
+    - name: Upload comprehensive coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: comprehensive-coverage-${{ github.sha }}
+        path: |
+          coverage.xml
+          htmlcov/
+        retention-days: 30
+
+    - name: Create issue if tests fail
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: 'Comprehensive test suite failed',
+            body: `The weekly comprehensive test run (including slow tests) has failed.
+
+            **Run details:**
+            - Workflow: ${context.workflow}
+            - Run ID: ${context.runId}
+            - Commit: ${context.sha}
+
+            Please investigate the failures.`,
+            labels: ['bug', 'tests', 'automated']
+          })
+      continue-on-error: true

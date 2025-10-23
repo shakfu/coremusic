@@ -1,0 +1,41 @@
+# # Dependabot configuration for automated dependency updates
+# version: 2
+# updates:
+#   # GitHub Actions updates
+#   - package-ecosystem: "github-actions"
+#     directory: "/"
+#     schedule:
+#       interval: "weekly"
+#       day: "monday"
+#     open-pull-requests-limit: 5
+#     labels:
+#       - "dependencies"
+#       - "github-actions"
+
+#   # Python dependencies updates
+#   - package-ecosystem: "pip"
+#     directory: "/"
+#     schedule:
+#       interval: "weekly"
+#       day: "monday"
+#     open-pull-requests-limit: 10
+#     labels:
+#       - "dependencies"
+#       - "python"
+#     groups:
+#       dev-dependencies:
+#         patterns:
+#           - "pytest*"
+#           - "mypy"
+#           - "sphinx"
+#           - "twine"
+#         update-types:
+#           - "minor"
+#           - "patch"
+#       numpy-scipy:
+#         patterns:
+#           - "numpy"
+#           - "scipy"
+#         update-types:
+#           - "minor"
+#           - "patch"

@@ -1,0 +1,64 @@
+name: Documentation
+
+on: [workflow_dispatch]
+
+  # push:
+  #   branches: [ main ]
+  #   paths:
+  #     - 'docs/**'
+  #     - 'src/coremusic/**'
+  #     - '.github/workflows/docs.yml'
+  # pull_request:
+  #   branches: [ main ]
+  #   paths:
+  #     - 'docs/**'
+  #     - 'src/coremusic/**'
+  #
+
+jobs:
+  build-docs:
+    name: Build Documentation
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        uv sync
+
+    - name: Build documentation
+      run: |
+        make docs
+
+    - name: Check for broken links
+      run: |
+        make docs-linkcheck
+      continue-on-error: true
+
+    - name: Upload documentation
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation-${{ github.sha }}
+        path: docs/_build/html/
+        retention-days: 30
+
+    - name: Deploy to GitHub Pages
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs/_build/html
+        force_orphan: true
+      continue-on-error: true

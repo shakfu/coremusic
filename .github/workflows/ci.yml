@@ -1,0 +1,154 @@
+name: CI
+
+on: [workflow_dispatch]
+# on:
+#   push:
+#     branches: [ main, develop ]
+#   pull_request:
+#     branches: [ main, develop ]
+#   workflow_dispatch:
+
+jobs:
+  test:
+    name: Test Python ${{ matrix.python-version }} on macOS
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        uv sync
+
+    - name: Build extension
+      run: |
+        uv sync --reinstall-package coremusic
+
+    - name: Run tests (excluding slow tests)
+      run: |
+        uv run pytest -m "not slow" --tb=short
+
+    - name: Run type checking
+      run: |
+        uv run mypy src/coremusic
+      continue-on-error: true
+
+  lint:
+    name: Lint and Format Check
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        uv sync
+
+    - name: Check code formatting (if ruff configured)
+      run: |
+        if command -v ruff &> /dev/null; then
+          uv run ruff check src/coremusic || true
+        else
+          echo "Ruff not configured, skipping"
+        fi
+      continue-on-error: true
+
+  build:
+    name: Build Distribution
+    runs-on: macos-latest
+    needs: [test, lint]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install build dependencies
+      run: |
+        uv sync
+
+    - name: Build source distribution
+      run: |
+        uv build --sdist
+
+    - name: Build wheel
+      run: |
+        uv build --wheel
+
+    - name: Check distribution
+      run: |
+        uv run twine check dist/*
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist-${{ github.sha }}
+        path: dist/
+        retention-days: 7
+
+  test-install:
+    name: Test Installation
+    runs-on: macos-latest
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: dist-${{ github.sha }}
+        path: dist/
+
+    - name: Install from wheel
+      run: |
+        pip install dist/*.whl
+
+    - name: Test import
+      run: |
+        python -c "import coremusic; print(f'Successfully imported coremusic version {coremusic.__version__ if hasattr(coremusic, \"__version__\") else \"unknown\"}')"
+
+    - name: Run basic smoke tests
+      run: |
+        python -c "import coremusic as cm; assert hasattr(cm, 'audio_file_open_url'); print('Smoke tests passed')"

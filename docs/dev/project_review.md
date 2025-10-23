@@ -187,7 +187,7 @@ with cm.AudioFile("audio.wav") as audio:
 - [x] Clear migration path between APIs
 - [x] No forced abstractions - raw access available when needed
 
-### 2.3 Error Handling & Robustness [+][+][+][+] (4/5)
+### 2.3 Error Handling & Robustness (4/5)
 
 **Exception Hierarchy:**
 ```python
@@ -321,7 +321,7 @@ strict_equality = true
 - [x] NumPy types conditionally imported
 - [x] No type: ignore suppressions needed
 
-### 3.3 Continuous Integration [+][!] (1/5)
+### 3.3 Continuous Integration (1/5)
 
 **Current State:**
 - [X] **No CI/CD pipeline found** (no `.github/workflows/`)
@@ -397,7 +397,7 @@ jobs:
 
 ## 4. Documentation
 
-### 4.1 Documentation Coverage [+][+][+][+] (4/5)
+### 4.1 Documentation Coverage (4/5)
 
 **Documentation Assets:**
 - **README.md:** Comprehensive (949 lines)
@@ -481,7 +481,7 @@ autodoc_default_options = {
 }
 ```
 
-### 4.2 Code Documentation [+][+][+][+] (4/5)
+### 4.2 Code Documentation (4/5)
 
 **Inline Documentation Quality:**
 
@@ -603,7 +603,7 @@ dev = [
 - **Ableton Link**: Bundled in `thirdparty/link/`
 - **License:** Proper GPL-v2 licensing (see `thirdparty/link/GNU-GPL-v2.0.md`)
 
-### 5.3 Distribution [+][+][+][+] (4/5)
+### 5.3 Distribution (4/5)
 
 **MANIFEST.in:**
 ```
@@ -650,7 +650,7 @@ include src/coremusic/py.typed
 
 ## 6. Security & Best Practices
 
-### 6.1 Security Posture [+][+][+] (3/5)
+### 6.1 Security Posture (3/5)
 
 **Strengths:**
 - [x] **Memory safety**: Proper malloc/free with try-finally
@@ -707,7 +707,7 @@ include src/coremusic/py.typed
        bandit -r src/
    ```
 
-### 6.2 Code Quality Practices [+][+][+][+] (4/5)
+### 6.2 Code Quality Practices (4/5)
 
 **Strengths:**
 - [x] **Consistent style**: Snake_case, clear naming
@@ -761,7 +761,7 @@ include src/coremusic/py.typed
            additional_dependencies: [types-all]
    ```
 
-### 6.3 Project Governance [+][+][+] (3/5)
+### 6.3 Project Governance (3/5)
 
 **Strengths:**
 - [x] **MIT License**: Clear, permissive license
@@ -893,41 +893,41 @@ with cm.AudioFile("audio.wav") as f:
    - **Action:** Implement GitHub Actions workflow
    - **Files:** `.github/workflows/ci.yml`
 
-2. **Code Coverage Reporting** [+][+][+][+]
+2. **Code Coverage Reporting**
    - **Impact:** High - no visibility into coverage gaps
    - **Effort:** 1 day
    - **Action:** Add pytest-cov + Codecov integration
    - **Command:** `pytest --cov=coremusic --cov-report=html`
 
-3. **Security Policy** [+][+][+][+]
+3. **Security Policy**
    - **Impact:** High - no responsible disclosure process
    - **Effort:** 2 hours
    - **Action:** Create SECURITY.md
    - **Content:** Vulnerability reporting process
 
-### 8.2 High-Priority Gaps 🟠
+### 8.2 High-Priority Gaps
 
 **Priority: NEXT RELEASE**
 
-4. **Contribution Guidelines** [+][+][+]
+4. **Contribution Guidelines**
    - **Impact:** Medium - hinders community contributions
    - **Effort:** 4 hours
    - **Action:** Create CONTRIBUTING.md
    - **Content:** Setup, code style, PR process
 
-5. **Documentation Hosting** [+][+][+]
+5. **Documentation Hosting**
    - **Impact:** Medium - docs not easily accessible
    - **Effort:** 1 day
    - **Action:** Deploy Sphinx docs to ReadTheDocs
    - **URL:** `https://coremusic.readthedocs.io`
 
-6. **Pre-commit Hooks** [+][+][+]
+6. **Pre-commit Hooks**
    - **Impact:** Medium - inconsistent code quality
    - **Effort:** 2 hours
    - **Action:** Add .pre-commit-config.yaml
    - **Tools:** ruff, mypy, black
 
-7. **Error Message Improvement** [+][+][+]
+7. **Error Message Improvement**
    - **Impact:** Medium - poor developer experience
    - **Effort:** 1 week
    - **Action:** Add OSStatus translation and suggestions
@@ -1042,14 +1042,14 @@ with cm.AudioFile("audio.wav") as f:
 
 | Aspect | CoreMusic | pyaudio | sounddevice | python-rtmidi |
 |--------|-----------|---------|-------------|---------------|
-| Framework Coverage | Full | [+][+][+] PortAudio | [+][+][+] PortAudio | [+][+][+] RtMidi |
-| API Design | Dual | [+][+][+] Functional | [+][+][+][+] Mixed | [+][+][+] Functional |
-| Type Safety | Full | [+][+] Partial | [+][+][+] Partial | [+][+] Minimal |
-| Test Coverage | 678 tests | [+][+] Basic | [+][+][+] Good | [+][+][+] Good |
-| Documentation | [+][+][+][+] Excellent | [+][+][+] Good | [+][+][+][+] Excellent | [+][+][+] Good |
-| CI/CD | [+] None | [+][+][+][+] Good | [+][+][+][+] Good | [+][+][+][+] Good |
+| Framework Coverage | Full | PortAudio | PortAudio | RtMidi |
+| API Design | Dual | Functional | Mixed | Functional |
+| Type Safety | Full | [+][+] Partial | Partial | [+][+] Minimal |
+| Test Coverage | 678 tests | [+][+] Basic | Good | Good |
+| Documentation | Excellent | Good | Excellent | Good |
+| CI/CD | [+] None | Good | Good | Good |
 | Platform | macOS only | Cross-platform | Cross-platform | Cross-platform |
-| Performance | Native | [+][+][+][+] Good | [+][+][+][+] Good | [+][+][+][+] Good |
+| Performance | Native | Good | Good | Good |
 
 **CoreMusic Unique Advantages:**
 - [x] Native macOS framework access (no abstraction layers)
@@ -1129,8 +1129,8 @@ with cm.AudioFile("audio.wav") as f:
 
 2. **Code Coverage Reporting** (Priority: [red] CRITICAL)
 3. **Security Policy** (Priority: [red] CRITICAL)
-4. **Contribution Guidelines** (Priority: 🟠 HIGH)
-5. **Documentation Hosting** (Priority: 🟠 HIGH)
+4. **Contribution Guidelines** (Priority: [orange] HIGH)
+5. **Documentation Hosting** (Priority: [orange] HIGH)
 
 ### 11.4 Final Recommendation
 

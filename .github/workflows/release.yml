@@ -1,0 +1,122 @@
+name: Release
+
+on: [workflow_dispatch]
+# on:
+#   release:
+#     types: [published]
+#   workflow_dispatch:
+#     inputs:
+#       version:
+#         description: 'Version to release (e.g., 0.1.9)'
+#         required: true
+#         type: string
+
+jobs:
+  build-and-publish:
+    name: Build and Publish to PyPI
+    runs-on: macos-latest
+    environment: release
+    permissions:
+      id-token: write  # Required for trusted publishing to PyPI
+      contents: write  # Required for creating releases
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Get all tags for version detection
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        uv sync
+
+    - name: Update version if manually triggered
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        VERSION="${{ github.event.inputs.version }}"
+        echo "Updating version to $VERSION"
+        # Update version in pyproject.toml
+        sed -i '' "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git add pyproject.toml
+        git commit -m "Bump version to $VERSION" || true
+
+    - name: Build distributions
+      run: |
+        rm -rf dist/
+        make release
+
+    - name: Check distributions
+      run: |
+        uv run twine check dist/*
+
+    - name: Publish to Test PyPI
+      if: github.event_name == 'workflow_dispatch'
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+      run: |
+        uv run twine upload --repository testpypi dist/* --skip-existing || true
+      continue-on-error: true
+
+    - name: Publish to PyPI (trusted publishing)
+      if: github.event_name == 'release'
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: dist/
+        skip-existing: true
+        verbose: true
+
+    - name: Upload release artifacts
+      if: github.event_name == 'release'
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-dist-${{ github.event.release.tag_name }}
+        path: dist/
+        retention-days: 90
+
+    - name: Create GitHub Release Assets
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/*
+        tag_name: ${{ github.event.release.tag_name }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test-pypi-install:
+    name: Test PyPI Installation
+    needs: build-and-publish
+    runs-on: macos-latest
+    if: github.event_name == 'release'
+
+    steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Wait for PyPI package availability
+      run: |
+        echo "Waiting 60 seconds for PyPI to process the package..."
+        sleep 60
+
+    - name: Install from PyPI
+      run: |
+        pip install --upgrade pip
+        pip install coremusic
+
+    - name: Test installation
+      run: |
+        python -c "import coremusic; print('✓ Package installed successfully from PyPI')"
