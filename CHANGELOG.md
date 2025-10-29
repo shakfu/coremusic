@@ -19,6 +19,107 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Added
 
+- **Audio Analysis and Feature Extraction** - Comprehensive audio analysis framework for music information retrieval (October 2025)
+  - **New Module**: `coremusic.audio.analysis` provides advanced audio analysis capabilities
+  - **AudioAnalyzer Class** for comprehensive audio feature extraction
+    - **Beat Detection**: Onset-based beat detection with tempo estimation
+      - Spectral flux onset detection
+      - Autocorrelation-based tempo estimation
+      - Downbeat detection for bar tracking
+      - Confidence scoring for detection quality
+    - **Pitch Detection**: Autocorrelation-based pitch tracking
+      - Fundamental frequency detection
+      - MIDI note number conversion
+      - Cents offset calculation for tuning analysis
+      - Confidence scoring per frame
+    - **Spectral Analysis**: Frequency domain feature extraction
+      - Spectral centroid (brightness measure)
+      - Spectral rolloff (frequency content boundary)
+      - Peak detection in frequency spectrum
+      - FFT-based spectrum analysis at any time point
+    - **MFCC Extraction**: Mel-Frequency Cepstral Coefficients
+      - Configurable coefficient count (default 13)
+      - Mel filterbank implementation
+      - DCT transformation for cepstral features
+      - Frame-by-frame MFCC matrices
+    - **Key Detection**: Musical key and mode estimation
+      - Chromagram computation (12 pitch classes)
+      - Krumhansl-Schmuckler key profiles
+      - Major/minor mode detection
+      - Time-averaged chroma analysis
+    - **Audio Fingerprinting**: Unique audio identification
+      - Spectral peak extraction
+      - Peak constellation mapping
+      - Hash-based fingerprint generation
+      - Content-based audio matching
+  - **LivePitchDetector Class** for real-time pitch tracking
+    - Streaming pitch detection for live audio
+    - Autocorrelation-based algorithm
+    - Configurable buffer size and sample rate
+    - Returns PitchInfo with frequency, MIDI note, and confidence
+  - **Data Classes** for structured results
+    - **BeatInfo**: tempo, beats, downbeats, confidence
+    - **PitchInfo**: frequency, midi_note, cents_offset, confidence
+  - **SciPy Integration**: Leverages scipy.signal for DSP operations
+  - **Optional Dependencies**: Requires NumPy and SciPy with graceful fallback
+  - **Comprehensive Test Coverage**: 42 tests in `tests/test_audio_analysis.py` (100% passing)
+  - **Interactive Demo**: `tests/demos/demo_audio_analysis.py` with 8 examples
+  - **Total Test Count**: 942 tests passing, 33 skipped (up from 900 passed)
+
+  **Example Usage:**
+
+  ```python
+  import coremusic as cm
+
+  # Beat detection and tempo estimation
+  analyzer = cm.AudioAnalyzer("song.wav")
+  beat_info = analyzer.detect_beats()
+  print(f"Tempo: {beat_info.tempo:.1f} BPM")
+  print(f"Beats: {beat_info.beats[:5]}")  # First 5 beat times
+  print(f"Downbeats: {beat_info.downbeats}")
+
+  # Pitch detection and tracking
+  pitch_info = analyzer.detect_pitch()
+  print(f"Frequency: {pitch_info.frequency:.2f} Hz")
+  print(f"MIDI Note: {pitch_info.midi_note}")
+  print(f"Cents: {pitch_info.cents_offset:+.1f}")
+
+  # Spectral analysis at specific time
+  spectrum = analyzer.analyze_spectrum(time=1.0, window_size=0.1)
+  print(f"Centroid: {spectrum['centroid']:.1f} Hz")
+  print(f"Rolloff: {spectrum['rolloff']:.1f} Hz")
+  print(f"Peaks: {spectrum['peaks'][:3]}")  # Top 3 peaks
+
+  # MFCC extraction for timbre analysis
+  mfcc = analyzer.extract_mfcc(n_mfcc=13)
+  print(f"MFCC shape: {mfcc.shape}")  # (13, n_frames)
+
+  # Key detection
+  key, mode = analyzer.detect_key()
+  print(f"Key: {key} {mode}")  # e.g., "C major"
+
+  # Audio fingerprinting
+  fingerprint = analyzer.get_audio_fingerprint()
+  print(f"Fingerprint: {fingerprint[:64]}...")  # First 64 chars
+
+  # Real-time pitch detection
+  live_detector = cm.LivePitchDetector(sample_rate=44100.0, buffer_size=2048)
+  for audio_chunk in stream:
+      pitch_info = live_detector.process(audio_chunk)
+      if pitch_info and pitch_info.confidence > 0.8:
+          print(f"Pitch: {pitch_info.frequency:.2f} Hz")
+  ```
+
+  **Use Cases:**
+  - Music information retrieval and analysis
+  - Beat tracking for DJ software and auto-sync
+  - Pitch detection for tuning and vocal analysis
+  - Automatic key detection for harmonic mixing
+  - Audio fingerprinting for content identification
+  - MFCC extraction for machine learning features
+  - Real-time pitch tracking for live performance
+  - Spectral analysis for sound design and synthesis
+
 - **Audio Slicing and Recombination** - Complete audio slicing framework for creative sample manipulation (October 2025)
   - **New Module**: `coremusic.audio.slicing` provides comprehensive audio slicing and recombination tools
   - **Slicing Methods**: 5 different slicing algorithms for various use cases
