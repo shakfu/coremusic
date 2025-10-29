@@ -73,39 +73,36 @@ class TestAudioInputStream:
         stream.remove_callback(my_callback)
         assert len(stream._callbacks) == 0
 
-    def test_start_stop(self):
-        """Test start/stop functionality."""
+    def test_start_not_implemented(self):
+        """Test that start raises error (requires Cython callbacks)."""
         stream = AudioInputStream()
 
         assert not stream.is_active
 
-        # Start should mark as active (actual AudioUnit not implemented yet)
-        stream.start()
-        assert stream.is_active
-
-        # Stop should mark as inactive
-        stream.stop()
-        assert not stream.is_active
+        # Start requires Cython-level callback implementation
+        with pytest.raises(RuntimeError, match="Cython-level callback"):
+            stream.start()
 
     def test_start_already_active_raises_error(self):
         """Test that starting already active stream raises error."""
         stream = AudioInputStream()
-        stream.start()
+
+        # Manually set active to test the check
+        stream._is_active = True
 
         with pytest.raises(RuntimeError, match="already active"):
             stream.start()
 
-        stream.stop()
+        stream._is_active = False
 
-    def test_context_manager(self):
-        """Test using stream as context manager."""
+    def test_stop_safe_when_not_active(self):
+        """Test that stop is safe when not active."""
         stream = AudioInputStream()
 
         assert not stream.is_active
 
-        with stream as s:
-            assert s is stream
-            assert stream.is_active
+        # Should not raise
+        stream.stop()
 
         assert not stream.is_active
 
@@ -150,8 +147,8 @@ class TestAudioOutputStream:
         with pytest.raises(RuntimeError, match="No generator"):
             stream.start()
 
-    def test_start_stop_with_generator(self):
-        """Test start/stop with generator."""
+    def test_start_not_implemented_with_generator(self):
+        """Test that start raises RuntimeError even with generator."""
         stream = AudioOutputStream()
 
         def generator(frame_count):
@@ -164,29 +161,16 @@ class TestAudioOutputStream:
 
         stream.set_generator(generator)
 
-        stream.start()
-        assert stream.is_active
+        # Start requires Cython-level callback implementation
+        with pytest.raises(RuntimeError, match="Cython-level callback"):
+            stream.start()
 
+    def test_stop_safe_when_not_active(self):
+        """Test that stop is safe when not active."""
+        stream = AudioOutputStream()
+
+        # Should not raise
         stream.stop()
-        assert not stream.is_active
-
-    def test_context_manager(self):
-        """Test using stream as context manager."""
-        stream = AudioOutputStream()
-
-        def generator(frame_count):
-            try:
-                import numpy as np
-
-                return np.zeros((frame_count, 2), dtype=np.float32)
-            except ImportError:
-                return b"\x00" * (frame_count * 2 * 4)
-
-        stream.set_generator(generator)
-
-        with stream as s:
-            assert s is stream
-            assert stream.is_active
 
         assert not stream.is_active
 
@@ -284,35 +268,28 @@ class TestAudioProcessor:
         # Should return silence (zeros or zero bytes)
         assert output is not None
 
-    def test_processor_start_stop(self):
-        """Test processor start/stop."""
+    def test_processor_start_not_implemented(self):
+        """Test processor start raises RuntimeError."""
 
         def process_func(audio_in):
             return audio_in
 
         processor = AudioProcessor(process_func)
 
-        processor.start()
-        assert processor.input_stream.is_active
-        assert processor.output_stream.is_active
-        assert processor.is_active
+        # Start requires Cython-level callback implementation
+        with pytest.raises(RuntimeError, match="Cython-level callback"):
+            processor.start()
 
+    def test_processor_stop_safe(self):
+        """Test processor stop is safe."""
+
+        def process_func(audio_in):
+            return audio_in
+
+        processor = AudioProcessor(process_func)
+
+        # Should not raise
         processor.stop()
-        assert not processor.input_stream.is_active
-        assert not processor.output_stream.is_active
-        assert not processor.is_active
-
-    def test_processor_context_manager(self):
-        """Test using processor as context manager."""
-
-        def process_func(audio_in):
-            return audio_in
-
-        processor = AudioProcessor(process_func)
-
-        with processor as p:
-            assert p is processor
-            assert processor.is_active
 
         assert not processor.is_active
 
@@ -479,28 +456,27 @@ class TestStreamGraph:
         with pytest.raises(ValueError, match="empty graph"):
             graph.start()
 
+    def test_start_not_implemented(self):
+        """Test that starting graph raises RuntimeError."""
+        graph = StreamGraph()
+        graph.add_node("test", lambda x: x)
+
+        # Start requires Cython-level callback implementation
+        with pytest.raises(RuntimeError, match="Cython-level callback"):
+            graph.start()
+
     def test_start_already_active_raises_error(self):
         """Test that starting already active graph raises error."""
         graph = StreamGraph()
         graph.add_node("test", lambda x: x)
 
-        graph.start()
+        # Manually set active to test the check
+        graph._is_active = True
 
         with pytest.raises(RuntimeError, match="already active"):
             graph.start()
 
-        graph.stop()
-
-    def test_graph_context_manager(self):
-        """Test using graph as context manager."""
-        graph = StreamGraph()
-        graph.add_node("test", lambda x: x)
-
-        with graph as g:
-            assert g is graph
-            assert graph.is_active
-
-        assert not graph.is_active
+        graph._is_active = False
 
 
 # ============================================================================

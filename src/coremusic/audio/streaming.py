@@ -138,23 +138,61 @@ class AudioInputStream:
 
         Raises:
             RuntimeError: If stream is already active or setup fails
+
+        Note:
+            Full implementation requires Cython-level render callback support.
+            This method provides the structure and will work once the render
+            callback infrastructure is added to capi.pyx.
         """
         if self._is_active:
             raise RuntimeError("Stream is already active")
 
-        # TODO: Implement AudioUnit setup for input capture
-        # This would involve:
-        # 1. Creating an AudioUnit with type kAudioUnitType_Output, subtype kAudioUnitSubType_HALOutput
-        # 2. Setting the device property
-        # 3. Enabling input on element 1
-        # 4. Setting the stream format
-        # 5. Installing render callback
-        # 6. Initializing and starting the AudioUnit
+        try:
+            self._setup_audio_unit()
+            self._is_active = True
+            logger.info(
+                f"Started audio input stream: {self.channels} channels, "
+                f"{self.sample_rate} Hz, {self.buffer_size} frames"
+            )
+        except Exception as e:
+            logger.error(f"Failed to start input stream: {e}")
+            raise RuntimeError(f"Failed to start input stream: {e}")
 
-        self._is_active = True
-        logger.info(
-            f"Started audio input stream: {self.channels} channels, "
-            f"{self.sample_rate} Hz, {self.buffer_size} frames"
+    def _setup_audio_unit(self) -> None:
+        """Set up AudioUnit for input capture.
+
+        This method demonstrates the required setup structure. Full functionality
+        requires adding input capture callback support to capi.pyx:
+
+        1. Create callback function in Cython:
+           cdef OSStatus input_capture_callback(
+               void* user_data,
+               AudioUnitRenderActionFlags* flags,
+               const AudioTimeStamp* timestamp,
+               UInt32 bus_number,
+               UInt32 num_frames,
+               AudioBufferList* io_data
+           ):
+               # Pull audio from input
+               # Call Python callbacks with audio data
+               return noErr
+
+        2. Set up AudioUnit for input (HAL I/O unit):
+           - component_desc.type = 'auou' (kAudioUnitType_Output)
+           - component_desc.subtype = 'ahal' (kAudioUnitSubType_HALOutput)
+           - Enable input on element 1
+           - Set format on input scope, element 1
+           - Install input callback via kAudioOutputUnitProperty_SetInputCallback
+
+        For now, this raises NotImplementedError to indicate Cython work is needed.
+        """
+        raise NotImplementedError(
+            "Audio input capture requires Cython-level callback implementation. "
+            "To implement:\n"
+            "1. Add input_capture_callback() to capi.pyx\n"
+            "2. Add audio_input_stream_create() wrapper function\n"
+            "3. Expose via Python API\n"
+            "See audio_player_render_callback() in capi.pyx as reference."
         )
 
     def stop(self) -> None:
@@ -162,9 +200,31 @@ class AudioInputStream:
         if not self._is_active:
             return
 
-        # TODO: Stop and dispose AudioUnit
-        self._is_active = False
-        logger.info("Stopped audio input stream")
+        try:
+            self._teardown_audio_unit()
+            self._is_active = False
+            logger.info("Stopped audio input stream")
+        except Exception as e:
+            logger.warning(f"Error stopping input stream: {e}")
+            self._is_active = False
+
+    def _teardown_audio_unit(self) -> None:
+        """Tear down AudioUnit.
+
+        Stops and disposes the AudioUnit if it was created.
+        """
+        if self._audio_unit_id is not None:
+            try:
+                # Stop the audio unit
+                capi.audio_output_unit_stop(self._audio_unit_id)
+                # Uninitialize
+                capi.audio_unit_uninitialize(self._audio_unit_id)
+                # Dispose
+                capi.audio_component_instance_dispose(self._audio_unit_id)
+            except Exception as e:
+                logger.warning(f"Error during AudioUnit teardown: {e}")
+            finally:
+                self._audio_unit_id = None
 
     @property
     def is_active(self) -> bool:
@@ -258,6 +318,11 @@ class AudioOutputStream:
 
         Raises:
             RuntimeError: If stream is already active, no generator set, or setup fails
+
+        Note:
+            Full implementation requires Cython-level render callback support.
+            This method provides the structure and will work once the render
+            callback infrastructure is extended in capi.pyx.
         """
         if self._is_active:
             raise RuntimeError("Stream is already active")
@@ -265,18 +330,52 @@ class AudioOutputStream:
         if self._generator is None:
             raise RuntimeError("No generator function set")
 
-        # TODO: Implement AudioUnit setup for output playback
-        # This would involve:
-        # 1. Creating an AudioUnit with type kAudioUnitType_Output, subtype kAudioUnitSubType_DefaultOutput
-        # 2. Setting the device property (if not default)
-        # 3. Setting the stream format
-        # 4. Installing render callback
-        # 5. Initializing and starting the AudioUnit
+        try:
+            self._setup_audio_unit()
+            self._is_active = True
+            logger.info(
+                f"Started audio output stream: {self.channels} channels, "
+                f"{self.sample_rate} Hz, {self.buffer_size} frames"
+            )
+        except Exception as e:
+            logger.error(f"Failed to start output stream: {e}")
+            raise RuntimeError(f"Failed to start output stream: {e}")
 
-        self._is_active = True
-        logger.info(
-            f"Started audio output stream: {self.channels} channels, "
-            f"{self.sample_rate} Hz, {self.buffer_size} frames"
+    def _setup_audio_unit(self) -> None:
+        """Set up AudioUnit for output playback.
+
+        This method demonstrates the required setup structure. Full functionality
+        requires extending the render callback support in capi.pyx:
+
+        1. Extend existing audio_player_render_callback() or create new callback:
+           cdef OSStatus output_stream_callback(
+               void* user_data,
+               AudioUnitRenderActionFlags* flags,
+               const AudioTimeStamp* timestamp,
+               UInt32 bus_number,
+               UInt32 num_frames,
+               AudioBufferList* io_data
+           ):
+               # Call Python generator function
+               # Fill io_data buffers with generated audio
+               return noErr
+
+        2. Set up AudioUnit for output (Default Output unit):
+           - component_desc.type = 'auou' (kAudioUnitType_Output)
+           - component_desc.subtype = 'def ' (kAudioUnitSubType_DefaultOutput)
+           - Set format on output scope, element 0
+           - Install render callback via kAudioUnitProperty_SetRenderCallback
+
+        For now, this raises NotImplementedError to indicate Cython work is needed.
+        """
+        raise NotImplementedError(
+            "Audio output playback requires Cython-level callback implementation. "
+            "To implement:\n"
+            "1. Extend or create output_stream_callback() in capi.pyx\n"
+            "2. Add audio_output_stream_create() wrapper function\n"
+            "3. Expose via Python API\n"
+            "See audio_player_render_callback() in capi.pyx as reference.\n"
+            "The existing audio player infrastructure provides a working example."
         )
 
     def stop(self) -> None:
@@ -284,9 +383,31 @@ class AudioOutputStream:
         if not self._is_active:
             return
 
-        # TODO: Stop and dispose AudioUnit
-        self._is_active = False
-        logger.info("Stopped audio output stream")
+        try:
+            self._teardown_audio_unit()
+            self._is_active = False
+            logger.info("Stopped audio output stream")
+        except Exception as e:
+            logger.warning(f"Error stopping output stream: {e}")
+            self._is_active = False
+
+    def _teardown_audio_unit(self) -> None:
+        """Tear down AudioUnit.
+
+        Stops and disposes the AudioUnit if it was created.
+        """
+        if self._audio_unit_id is not None:
+            try:
+                # Stop the audio unit
+                capi.audio_output_unit_stop(self._audio_unit_id)
+                # Uninitialize
+                capi.audio_unit_uninitialize(self._audio_unit_id)
+                # Dispose
+                capi.audio_component_instance_dispose(self._audio_unit_id)
+            except Exception as e:
+                logger.warning(f"Error during AudioUnit teardown: {e}")
+            finally:
+                self._audio_unit_id = None
 
     @property
     def is_active(self) -> bool:

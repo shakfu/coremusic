@@ -71,14 +71,18 @@ def demo_input_stream():
     stream.add_callback(measure_level)
 
     print("\nStarting capture (would capture for 3 seconds with real hardware)...")
-    stream.start()
-
-    # Note: With real hardware, this would capture audio
-    # For now, just demonstrate the API
-    print("  Stream is active:", stream.is_active)
-
-    stream.stop()
-    print("Stopped capture")
+    try:
+        stream.start()
+        # Note: With real hardware, this would capture audio
+        # For now, just demonstrate the API
+        print("  Stream is active:", stream.is_active)
+        stream.stop()
+        print("Stopped capture")
+    except RuntimeError as e:
+        if "Cython-level callback" in str(e):
+            print("  [Not implemented - requires Cython callback support]")
+        else:
+            raise
 
 
 def demo_output_stream():
@@ -122,12 +126,16 @@ def demo_output_stream():
     print(f"  Latency: {stream.latency * 1000:.2f} ms")
 
     print("\nStarting playback (would play tone with real hardware)...")
-    stream.start()
-
-    print("  Stream is active:", stream.is_active)
-
-    stream.stop()
-    print("Stopped playback")
+    try:
+        stream.start()
+        print("  Stream is active:", stream.is_active)
+        stream.stop()
+        print("Stopped playback")
+    except RuntimeError as e:
+        if "Cython-level callback" in str(e):
+            print("  [Not implemented - requires Cython callback support]")
+        else:
+            raise
 
 
 def demo_loopback():
@@ -151,12 +159,16 @@ def demo_loopback():
     print(f"    (Input + Processing + Output)")
 
     print("\nStarting loopback (would pass audio through with real hardware)...")
-    loopback.start()
-
-    print("  Processor is active:", loopback.is_active)
-
-    loopback.stop()
-    print("Stopped loopback")
+    try:
+        loopback.start()
+        print("  Processor is active:", loopback.is_active)
+        loopback.stop()
+        print("Stopped loopback")
+    except RuntimeError as e:
+        if "Cython-level callback" in str(e):
+            print("  [Not implemented - requires Cython callback support]")
+        else:
+            raise
 
 
 def demo_audio_processor():
@@ -198,20 +210,26 @@ def demo_audio_processor():
     print(f"  Latency: {processor.latency * 1000:.2f} ms")
 
     print("\nStarting processor...")
-    processor.start()
+    try:
+        processor.start()
+        print("  Processor is active:", processor.is_active)
+        processor.stop()
+        print("Stopped processor")
+    except RuntimeError as e:
+        if "Cython-level callback" in str(e):
+            print("  [Not implemented - requires Cython callback support]")
 
-    # Simulate some audio processing
-    print("\nSimulating audio processing...")
-    test_audio = np.random.randn(128, 2).astype(np.float32) * 0.1
-    processor._input_buffer = test_audio
+            # Still demonstrate the processing logic
+            print("\nDemonstrating processing logic without AudioUnit...")
+            test_audio = np.random.randn(128, 2).astype(np.float32) * 0.1
+            processor._input_buffer = test_audio
 
-    # Process through effect
-    output = processor._generate_output(128)
-    print(f"  Input RMS: {np.sqrt(np.mean(test_audio**2)):.4f}")
-    print(f"  Output RMS: {np.sqrt(np.mean(output**2)):.4f}")
-
-    processor.stop()
-    print("Stopped processor")
+            # Process through effect
+            output = processor._generate_output(128)
+            print(f"  Input RMS: {np.sqrt(np.mean(test_audio**2)):.4f}")
+            print(f"  Output RMS: {np.sqrt(np.mean(output**2)):.4f}")
+        else:
+            raise
 
 
 def demo_stream_graph():
@@ -289,11 +307,16 @@ def demo_stream_graph():
     print(f"  Output RMS: {np.sqrt(np.mean(output**2)):.4f}")
 
     print("\nStarting graph...")
-    graph.start()
-    print("  Graph is active:", graph.is_active)
-
-    graph.stop()
-    print("Stopped graph")
+    try:
+        graph.start()
+        print("  Graph is active:", graph.is_active)
+        graph.stop()
+        print("Stopped graph")
+    except RuntimeError as e:
+        if "Cython-level callback" in str(e):
+            print("  [Not implemented - requires Cython callback support]")
+        else:
+            raise
 
 
 def demo_branching_graph():
@@ -348,25 +371,43 @@ def demo_context_managers():
 
     # Input stream with context manager
     print("\n1. AudioInputStream:")
-    with AudioInputStream(buffer_size=512) as stream:
-        print(f"   Stream is active inside context: {stream.is_active}")
-    print(f"   Stream is active after context: {stream.is_active}")
+    try:
+        with AudioInputStream(buffer_size=512) as stream:
+            print(f"   Stream is active inside context: {stream.is_active}")
+        print(f"   Stream is active after context: {stream.is_active}")
+    except RuntimeError as e:
+        if "Cython-level callback" in str(e):
+            print("   [Not implemented - requires Cython callback support]")
+        else:
+            raise
 
     # Processor with context manager
     print("\n2. AudioProcessor:")
-    with create_loopback(buffer_size=256) as processor:
-        print(f"   Processor is active inside context: {processor.is_active}")
-        print(f"   Latency: {processor.latency * 1000:.2f} ms")
-    print(f"   Processor is active after context: {processor.is_active}")
+    try:
+        with create_loopback(buffer_size=256) as processor:
+            print(f"   Processor is active inside context: {processor.is_active}")
+            print(f"   Latency: {processor.latency * 1000:.2f} ms")
+        print(f"   Processor is active after context: {processor.is_active}")
+    except RuntimeError as e:
+        if "Cython-level callback" in str(e):
+            print("   [Not implemented - requires Cython callback support]")
+        else:
+            raise
 
     # Stream graph with context manager
     print("\n3. StreamGraph:")
     graph = StreamGraph()
     graph.add_node("passthrough", lambda x: x)
 
-    with graph as g:
-        print(f"   Graph is active inside context: {g.is_active}")
-    print(f"   Graph is active after context: {graph.is_active}")
+    try:
+        with graph as g:
+            print(f"   Graph is active inside context: {g.is_active}")
+        print(f"   Graph is active after context: {graph.is_active}")
+    except RuntimeError as e:
+        if "Cython-level callback" in str(e):
+            print("   [Not implemented - requires Cython callback support]")
+        else:
+            raise
 
 
 def demo_latency_comparison():
