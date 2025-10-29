@@ -5,6 +5,7 @@ This package contains audio-related modules:
 - async_io: Asynchronous I/O classes for audio operations
 - streaming: Real-time audio streaming and processing
 - analysis: Audio analysis and feature extraction
+- slicing: Audio slicing and recombination
 """
 
 # Import async I/O classes
@@ -15,6 +16,9 @@ from .streaming import *
 
 # Import analysis classes
 from .analysis import *
+
+# Import slicing classes
+from .slicing import *
 
 __all__ = [
     # Async I/O
@@ -32,4 +36,11 @@ __all__ = [
     "LivePitchDetector",
     "BeatInfo",
     "PitchInfo",
+    # Slicing
+    "Slice",
+    "AudioSlicer",
+    "SliceCollection",
+    "SliceRecombinator",
+    "SliceMethod",
+    "RecombineMethod",
 ]
