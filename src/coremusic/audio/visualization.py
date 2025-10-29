@@ -35,7 +35,7 @@ try:
 
     NUMPY_AVAILABLE = True
 except ImportError:
-    np = None  # type: ignore
+    np = None  # type: ignore[assignment]
     NUMPY_AVAILABLE = False
 
 try:
@@ -46,10 +46,10 @@ try:
 
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
-    plt = None  # type: ignore
-    animation = None  # type: ignore
-    Figure = Any  # type: ignore
-    Axes = Any  # type: ignore
+    plt = None  # type: ignore[assignment]
+    animation = None  # type: ignore[assignment]
+    Figure = Any  # type: ignore[misc,assignment]
+    Axes = Any  # type: ignore[misc,assignment]
     MATPLOTLIB_AVAILABLE = False
 
 # Import coremusic for audio file operations
@@ -110,7 +110,9 @@ class WaveformPlotter:
                 self._audio_data = af.read_as_numpy()  # type: ignore[attr-defined]
                 self._sample_rate = af.format.sample_rate
 
-        return self._audio_data, self._sample_rate  # type: ignore[return-value]
+        assert self._audio_data is not None
+        assert self._sample_rate is not None
+        return self._audio_data, self._sample_rate
 
     def plot(
         self,
@@ -155,42 +157,42 @@ class WaveformPlotter:
         time = np.arange(len(data)) / sr + time_offset
 
         # Create plot
-        fig, ax = plt.subplots(figsize=figsize)  # type: ignore
-        ax.plot(time, data, linewidth=0.5, alpha=0.7, label="Waveform")  # type: ignore
+        fig, ax = plt.subplots(figsize=figsize)
+        ax.plot(time, data, linewidth=0.5, alpha=0.7, label="Waveform")
 
         if show_rms:
             # Calculate RMS envelope
             window_samples = int(rms_window * sr)
             rms = self._calculate_rms_envelope(data, window_samples)
-            ax.plot(time, rms, "r-", linewidth=1.5, label="RMS Envelope")  # type: ignore
-            ax.plot(time, -rms, "r-", linewidth=1.5)  # type: ignore
+            ax.plot(time, rms, "r-", linewidth=1.5, label="RMS Envelope")
+            ax.plot(time, -rms, "r-", linewidth=1.5)
 
         if show_peaks:
             # Calculate peak envelope
             window_samples = int(peak_window * sr)
             peak_pos, peak_neg = self._calculate_peak_envelope(data, window_samples)
-            ax.plot(  # type: ignore
+            ax.plot(
                 time, peak_pos, "g--", linewidth=1, alpha=0.7, label="Peak Envelope"
             )
-            ax.plot(time, peak_neg, "g--", linewidth=1, alpha=0.7)  # type: ignore
+            ax.plot(time, peak_neg, "g--", linewidth=1, alpha=0.7)
 
         # Formatting
-        ax.set_xlabel("Time (seconds)")  # type: ignore
-        ax.set_ylabel("Amplitude")  # type: ignore
+        ax.set_xlabel("Time (seconds)")
+        ax.set_ylabel("Amplitude")
 
         if title:
-            ax.set_title(title)  # type: ignore
+            ax.set_title(title)
         else:
-            ax.set_title(f"Waveform: {self.audio_file.name}")  # type: ignore
+            ax.set_title(f"Waveform: {self.audio_file.name}")
 
-        ax.grid(True, alpha=0.3)  # type: ignore
-        ax.set_ylim(-1.1, 1.1)  # type: ignore
+        ax.grid(True, alpha=0.3)
+        ax.set_ylim(-1.1, 1.1)
 
         if show_rms or show_peaks:
-            ax.legend(loc="upper right")  # type: ignore
+            ax.legend(loc="upper right")
 
-        plt.tight_layout()  # type: ignore
-        return fig, ax  # type: ignore[return-value]
+        plt.tight_layout()
+        return fig, ax
 
     def save(
         self,
@@ -214,8 +216,8 @@ class WaveformPlotter:
         fig, _ = self.plot(
             time_range=time_range, show_rms=show_rms, show_peaks=show_peaks, **kwargs
         )
-        fig.savefig(output_path, dpi=dpi, bbox_inches="tight")  # type: ignore
-        plt.close(fig)  # type: ignore
+        fig.savefig(output_path, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
         logger.info(f"Saved waveform plot to {output_path}")
 
     def _calculate_rms_envelope(
@@ -233,7 +235,7 @@ class WaveformPlotter:
         squared = data**2
         window = np.ones(window_size) / window_size
         rms = np.sqrt(np.convolve(squared, window, mode="same"))
-        return rms  # type: ignore[return-value]
+        return rms
 
     def _calculate_peak_envelope(
         self, data: "NDArray", window_size: int
@@ -248,7 +250,7 @@ class WaveformPlotter:
             Tuple of (positive_peaks, negative_peaks)
         """
         # Use maximum filter for positive peaks
-        peak_pos = np.maximum.accumulate(  # type: ignore[attr-defined]
+        peak_pos = np.maximum.accumulate(
             data[: window_size // 2]
         )
         for i in range(window_size // 2, len(data) - window_size // 2):
@@ -257,11 +259,11 @@ class WaveformPlotter:
 
         peak_pos = np.append(
             peak_pos,
-            np.maximum.accumulate(data[-(window_size // 2) :]),  # type: ignore[attr-defined]
+            np.maximum.accumulate(data[-(window_size // 2) :]),
         )
 
         # Use minimum filter for negative peaks
-        peak_neg = np.minimum.accumulate(  # type: ignore[attr-defined]
+        peak_neg = np.minimum.accumulate(
             data[: window_size // 2]
         )
         for i in range(window_size // 2, len(data) - window_size // 2):
@@ -270,10 +272,10 @@ class WaveformPlotter:
 
         peak_neg = np.append(
             peak_neg,
-            np.minimum.accumulate(data[-(window_size // 2) :]),  # type: ignore[attr-defined]
+            np.minimum.accumulate(data[-(window_size // 2) :]),
         )
 
-        return peak_pos, peak_neg  # type: ignore[return-value]
+        return peak_pos, peak_neg
 
 
 # ============================================================================
@@ -326,7 +328,9 @@ class SpectrogramPlotter:
                 self._audio_data = af.read_as_numpy()  # type: ignore[attr-defined]
                 self._sample_rate = af.format.sample_rate
 
-        return self._audio_data, self._sample_rate  # type: ignore[return-value]
+        assert self._audio_data is not None
+        assert self._sample_rate is not None
+        return self._audio_data, self._sample_rate
 
     def plot(
         self,
@@ -373,22 +377,22 @@ class SpectrogramPlotter:
             Sxx_db = np.minimum(Sxx_db, max_db)
 
         # Create plot
-        fig, ax = plt.subplots(figsize=figsize)  # type: ignore
-        im = ax.pcolormesh(t, f, Sxx_db, cmap=cmap, shading="gouraud")  # type: ignore
+        fig, ax = plt.subplots(figsize=figsize)
+        im = ax.pcolormesh(t, f, Sxx_db, cmap=cmap, shading="gouraud")
 
         # Formatting
-        ax.set_ylabel("Frequency (Hz)")  # type: ignore
-        ax.set_xlabel("Time (seconds)")  # type: ignore
+        ax.set_ylabel("Frequency (Hz)")
+        ax.set_xlabel("Time (seconds)")
 
         if title:
-            ax.set_title(title)  # type: ignore
+            ax.set_title(title)
         else:
-            ax.set_title(f"Spectrogram: {self.audio_file.name}")  # type: ignore
+            ax.set_title(f"Spectrogram: {self.audio_file.name}")
 
-        cbar = fig.colorbar(im, ax=ax, label="Power (dB)")  # type: ignore
-        plt.tight_layout()  # type: ignore
+        cbar = fig.colorbar(im, ax=ax, label="Power (dB)")
+        plt.tight_layout()
 
-        return fig, ax  # type: ignore[return-value]
+        return fig, ax
 
     def save(
         self,
@@ -408,8 +412,8 @@ class SpectrogramPlotter:
             **kwargs: Additional arguments passed to plot()
         """
         fig, _ = self.plot(window_size=window_size, hop_size=hop_size, **kwargs)
-        fig.savefig(output_path, dpi=dpi, bbox_inches="tight")  # type: ignore
-        plt.close(fig)  # type: ignore
+        fig.savefig(output_path, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
         logger.info(f"Saved spectrogram plot to {output_path}")
 
     def _compute_spectrogram(
@@ -459,7 +463,7 @@ class SpectrogramPlotter:
         frequencies = np.fft.rfftfreq(window_size, 1 / sr)
         times = np.arange(num_frames) * hop_size / sr
 
-        return frequencies, times, spectrogram  # type: ignore[return-value]
+        return frequencies, times, spectrogram
 
 
 # ============================================================================
@@ -513,7 +517,9 @@ class FrequencySpectrumPlotter:
                 self._audio_data = af.read_as_numpy()  # type: ignore[attr-defined]
                 self._sample_rate = af.format.sample_rate
 
-        return self._audio_data, self._sample_rate  # type: ignore[return-value]
+        assert self._audio_data is not None
+        assert self._sample_rate is not None
+        return self._audio_data, self._sample_rate
 
     def plot(
         self,
@@ -589,25 +595,25 @@ class FrequencySpectrumPlotter:
         magnitude_db = magnitude_db[freq_mask]
 
         # Create plot
-        fig, ax = plt.subplots(figsize=figsize)  # type: ignore
-        ax.plot(frequencies, magnitude_db, linewidth=1)  # type: ignore
+        fig, ax = plt.subplots(figsize=figsize)
+        ax.plot(frequencies, magnitude_db, linewidth=1)
 
         # Formatting
-        ax.set_xlabel("Frequency (Hz)")  # type: ignore
-        ax.set_ylabel("Magnitude (dB)")  # type: ignore
+        ax.set_xlabel("Frequency (Hz)")
+        ax.set_ylabel("Magnitude (dB)")
 
         if title:
-            ax.set_title(title)  # type: ignore
+            ax.set_title(title)
         else:
-            ax.set_title(  # type: ignore
+            ax.set_title(
                 f"Frequency Spectrum: {self.audio_file.name} @ {time:.2f}s"
             )
 
-        ax.grid(True, alpha=0.3)  # type: ignore
-        ax.set_xscale("log")  # type: ignore
-        plt.tight_layout()  # type: ignore
+        ax.grid(True, alpha=0.3)
+        ax.set_xscale("log")
+        plt.tight_layout()
 
-        return fig, ax  # type: ignore[return-value]
+        return fig, ax
 
     def plot_average(
         self,
@@ -679,31 +685,31 @@ class FrequencySpectrumPlotter:
         magnitude_db = magnitude_db[freq_mask]
 
         # Create plot
-        fig, ax = plt.subplots(figsize=figsize)  # type: ignore
-        ax.plot(frequencies, magnitude_db, linewidth=1)  # type: ignore
+        fig, ax = plt.subplots(figsize=figsize)
+        ax.plot(frequencies, magnitude_db, linewidth=1)
 
         # Formatting
-        ax.set_xlabel("Frequency (Hz)")  # type: ignore
-        ax.set_ylabel("Magnitude (dB)")  # type: ignore
+        ax.set_xlabel("Frequency (Hz)")
+        ax.set_ylabel("Magnitude (dB)")
 
         if title:
-            ax.set_title(title)  # type: ignore
+            ax.set_title(title)
         else:
             if time_range:
-                ax.set_title(  # type: ignore
+                ax.set_title(
                     f"Average Spectrum: {self.audio_file.name} "
                     f"({time_range[0]:.2f}s - {time_range[1]:.2f}s)"
                 )
             else:
-                ax.set_title(  # type: ignore
+                ax.set_title(
                     f"Average Spectrum: {self.audio_file.name}"
                 )
 
-        ax.grid(True, alpha=0.3)  # type: ignore
-        ax.set_xscale("log")  # type: ignore
-        plt.tight_layout()  # type: ignore
+        ax.grid(True, alpha=0.3)
+        ax.set_xscale("log")
+        plt.tight_layout()
 
-        return fig, ax  # type: ignore[return-value]
+        return fig, ax
 
     def save(
         self,
@@ -723,8 +729,8 @@ class FrequencySpectrumPlotter:
             **kwargs: Additional arguments passed to plot()
         """
         fig, _ = self.plot(time=time, window_size=window_size, **kwargs)
-        fig.savefig(output_path, dpi=dpi, bbox_inches="tight")  # type: ignore
-        plt.close(fig)  # type: ignore
+        fig.savefig(output_path, dpi=dpi, bbox_inches="tight")
+        plt.close(fig)
         logger.info(f"Saved frequency spectrum plot to {output_path}")
 
 

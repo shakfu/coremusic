@@ -401,7 +401,7 @@ class MIDISequence:
         sorted_events = sorted(track.events, key=lambda e: e.time)
 
         # Write events
-        last_time = 0.0
+        last_time = 0
         for event in sorted_events:
             # Convert time to ticks
             ticks = int(event.time * self.ppq * (self.tempo / 60.0))
@@ -518,7 +518,7 @@ class MIDISequence:
             # Parse MThd header
             chunk_type = f.read(4)
             if chunk_type != b'MThd':
-                raise ValueError(f"Invalid MIDI file: expected MThd, got {chunk_type}")
+                raise ValueError(f"Invalid MIDI file: expected MThd, got {chunk_type!r}")
 
             header_length = struct.unpack('>I', f.read(4))[0]
             if header_length != 6:
@@ -539,7 +539,7 @@ class MIDISequence:
             for track_num in range(num_tracks):
                 chunk_type = f.read(4)
                 if chunk_type != b'MTrk':
-                    logger.warning(f"Expected MTrk, got {chunk_type}, skipping")
+                    logger.warning(f"Expected MTrk, got {chunk_type!r}, skipping")
                     continue
 
                 track_length = struct.unpack('>I', f.read(4))[0]
