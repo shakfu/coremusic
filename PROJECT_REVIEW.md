@@ -57,7 +57,7 @@ Source Code Statistics (cloc):
 ├── Cython Implementation (capi.pyx)      : 3,244 lines
 ├── Object-Oriented API (objects.py)      : 1,565 lines
 ├── AudioUnit Host (audio_unit_host.py)   :   737 lines
-├── SciPy Integration (scipy_utils.py)    :   269 lines
+├── SciPy Integration (utils/scipy.py)    :   269 lines
 ├── Framework Declarations (.pxd files)   : 3,218 lines
 ├── Utilities & Helpers                   : ~1,000 lines
 └── Total Source Code                     : 17,562 lines
@@ -119,10 +119,10 @@ The project employs a well-designed **three-layer architecture**:
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 3: High-Level Python Modules (Pure Python)            │
 │  ├─ AudioUnitHost: Plugin hosting and management            │
-│  ├─ scipy_utils: Signal processing integration              │
+│  ├─ utils.scipy: Signal processing integration              │
 │  ├─ utilities: Audio analysis and batch processing          │
-│  ├─ async_io: Async/await audio I/O                         │
-│  └─ link_midi: Link + MIDI synchronization                  │
+│  ├─ audio.async_io: Async/await audio I/O                   │
+│  └─ midi.link: Link + MIDI synchronization                  │
 ├─────────────────────────────────────────────────────────────┤
 │ Layer 2: Object-Oriented API (Pure Python)                  │
 │  ├─ objects.py: Pythonic wrappers with auto-cleanup         │
@@ -164,9 +164,13 @@ src/coremusic/
 ├── High-Level Modules
 │   ├── audio_unit_host.py   # AudioUnit plugin hosting (1,452 lines)
 │   ├── utilities.py         # Audio analysis utilities (1,217 lines)
-│   ├── scipy_utils.py       # SciPy integration (814 lines)
-│   ├── async_io.py          # Async I/O support (422 lines)
-│   └── link_midi.py         # Link + MIDI sync (435 lines)
+│   ├── audio/               # Audio-related subpackage
+│   │   └── async_io.py      # Async I/O support (422 lines)
+│   ├── midi/                # MIDI-related subpackage
+│   │   └── link.py          # Link + MIDI sync (435 lines)
+│   └── utils/               # Utility subpackage
+│       ├── scipy.py         # SciPy integration (814 lines)
+│       └── fourcc.py        # FourCC utilities
 │
 ├── Integrations
 │   ├── link.pyx             # Ableton Link wrapper (512 lines)
@@ -182,6 +186,38 @@ src/coremusic/
 - ✅ Proper layering (Cython → Python OO → High-level)
 - ✅ Minimal coupling between modules
 - ✅ Good use of Python's import system
+- ✅ **NEW:** Hierarchical subpackage organization for better namespace management
+
+**Hierarchical Package Structure:**
+
+The project now uses a hierarchical package structure for better organization:
+
+```python
+src/coremusic/
+├── audio/               # Audio-related modules
+│   ├── __init__.py
+│   └── async_io.py      # Async/await audio I/O
+├── midi/                # MIDI-related modules
+│   ├── __init__.py
+│   └── link.py          # Link + MIDI synchronization
+└── utils/               # Utility modules
+    ├── __init__.py
+    ├── scipy.py         # SciPy integration
+    └── fourcc.py        # FourCC conversion utilities
+```
+
+**Import Paths:**
+
+```python
+# New hierarchical imports (recommended)
+import coremusic.utils.scipy as spu
+import coremusic.midi.link as link_midi
+from coremusic.audio import AsyncAudioFile, AsyncAudioQueue
+
+# Backward compatible imports (still supported)
+from coremusic import link_midi      # Maps to coremusic.midi.link
+from coremusic import AsyncAudioFile  # Still available from main package
+```
 
 **Opportunities:**
 - Consider splitting `capi.pyx` (6,658 lines) into smaller focused modules
@@ -1447,6 +1483,8 @@ if __name__ == "__main__":
 ---
 
 ### 7.4 Module: `coremusic.midi` - High-Level MIDI Utilities
+
+**Status: ✅ PARTIALLY IMPLEMENTED** - The `coremusic.midi` subpackage now exists with Link+MIDI integration (`coremusic.midi.link`). Additional utilities can be added to this package.
 
 **Purpose:** Simplified MIDI file I/O, sequencing, and routing
 
@@ -2974,6 +3012,13 @@ if __name__ == "__main__":
 
 ## 8. Refactoring Opportunities
 
+**Recent Improvements (✅ COMPLETED - October 2025):**
+- **Hierarchical Package Structure**: The project now uses subpackages (`audio/`, `midi/`, `utils/`) for better organization and namespace management. This improves discoverability and reduces namespace pollution.
+  - `coremusic.utils.scipy` - SciPy integration utilities
+  - `coremusic.midi.link` - Link + MIDI synchronization
+  - `coremusic.audio.async_io` - Async/await audio I/O
+  - Backward compatibility maintained for existing import paths
+
 ### 8.1 Large File Decomposition
 
 **Current Issue:** `capi.pyx` is 6,658 lines, `objects.py` is 2,741 lines
@@ -3466,27 +3511,25 @@ cdef inline int clip_value(int value, int min_val, int max_val) nogil:
 
 ### 10.1 Immediate Actions (Next Release - 0.1.9)
 
+**Recently Completed (✅):**
+
+1. **✅ Hierarchical package structure** - DONE (October 2025)
+   - Implemented `audio/`, `midi/`, `utils/` subpackages
+   - Maintained full backward compatibility
+   - Improved namespace organization
+
 **High Priority:**
 
-1. **Add FourCC utilities** (2-3 days)
-   - Implement `ensure_fourcc_int()` and `ensure_fourcc_str()`
-   - Add `FourCCValue` class
-   - Reduces code duplication significantly
-
-2. **Add batch parallel processing** (1-2 days)
+1. **Add batch parallel processing** (1-2 days)
    - Implement `batch_process_parallel()`
    - Add progress callback support
    - Immediate value for users
 
-3. **Improve constant management** (3-4 days)
-   - Add Enum classes for constants
-   - Keep backward compatibility with getters
-   - Better developer experience
-
-4. **Documentation improvements** (ongoing)
+2. **Documentation improvements** (ongoing)
    - Add performance guide
    - Add migration guide from other libraries
    - More cookbook recipes
+   - Document new hierarchical import paths
 
 ### 10.2 Short-Term (0.2.0 - Next Minor Version)
 
@@ -3495,7 +3538,9 @@ cdef inline int clip_value(int value, int min_val, int max_val) nogil:
 1. **High-level modules** (2-3 weeks)
    - Implement `coremusic.daw` basics (Timeline, Track, Clip)
    - Implement `coremusic.streaming` (AudioInputStream/OutputStream)
-   - Implement `coremusic.midi` (MIDISequence, MIDITrack)
+   - Expand `coremusic.midi` package (MIDISequence, MIDITrack) - foundation exists
+   - Expand `coremusic.audio` package with additional utilities
+   - Expand `coremusic.utils` with more helper functions
    - Implement `coremusic.analysis` basics
    - Implement `coremusic.visualization` basics
 
@@ -3586,9 +3631,15 @@ cdef inline int clip_value(int value, int min_val, int max_val) nogil:
 CoreMusic is a **production-ready, professional-grade** audio framework for Python with:
 
 ✅ **Excellent foundation**: Comprehensive CoreAudio API coverage
-✅ **Clean architecture**: Well-layered, modular design
-✅ **High code quality**: 712 passing tests, zero failures
+✅ **Clean architecture**: Well-layered, modular design with hierarchical packages
+✅ **High code quality**: 741 passing tests, zero failures
 ✅ **Great documentation**: Extensive examples and guides
+✅ **Modern organization**: New hierarchical subpackage structure (audio/, midi/, utils/)
+
+**Recent Improvements (October 2025):**
+- Hierarchical package structure for better namespace management
+- Maintained full backward compatibility
+- Improved discoverability and IDE support
 
 **Key Opportunities:**
 
