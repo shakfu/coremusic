@@ -44,6 +44,9 @@ check:
 publish:
 	@uv run twine upload dist/*
 
+snap:
+	@git add --all . && git commit -m 'snap' && git push
+
 # Documentation targets
 docs:
 	@echo "Building HTML documentation..."
