@@ -364,6 +364,56 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Changed
 
+- **Unified AudioAnalyzer class** - Merged basic utility methods into comprehensive analysis class (October 2025)
+  - **Issue**: Two separate `AudioAnalyzer` classes existed with naming conflict
+    - `coremusic.audio.analysis.AudioAnalyzer` - Advanced music analysis (beat/pitch detection, MFCC, key detection)
+    - `coremusic.audio.utilities.AudioAnalyzer` - Basic metrics (silence detection, peak, RMS)
+  - **Solution**: Merged utility methods into analysis class as static methods
+  - **New unified API**:
+    - **Instance Methods** (advanced analysis, requires SciPy):
+      - `detect_beats()` - Beat detection and tempo estimation
+      - `detect_pitch()` - Pitch tracking over time
+      - `analyze_spectrum()` - Spectral analysis
+      - `extract_mfcc()` - MFCC extraction
+      - `detect_key()` - Musical key detection
+      - `get_audio_fingerprint()` - Audio fingerprinting
+    - **Static Methods** (basic metrics, NumPy only):
+      - `detect_silence()` - Find quiet regions in audio
+      - `get_peak_amplitude()` - Maximum amplitude
+      - `calculate_rms()` - RMS level calculation
+      - `get_file_info()` - Comprehensive file metadata
+  - **Benefits**:
+    - Single import for all audio analysis: `from coremusic.audio.analysis import AudioAnalyzer`
+    - Naming conflict resolved - one AudioAnalyzer class
+    - Flexible API - choose static or instance methods based on needs
+    - No breaking changes - existing code continues to work
+  - **Example Usage**:
+    ```python
+    # Static API (no initialization, lightweight)
+    silence = AudioAnalyzer.detect_silence("audio.wav", threshold_db=-40)
+    peak = AudioAnalyzer.get_peak_amplitude("audio.wav")
+
+    # Instance API (advanced analysis)
+    analyzer = AudioAnalyzer("song.wav")
+    beat_info = analyzer.detect_beats()
+    key, mode = analyzer.detect_key()
+    ```
+  - **Migration**: Tests updated to import from `coremusic.audio.analysis`
+  - **Verification**: All 1022 tests passing, type checking successful
+
+- **Reorganized utilities module** - Moved `coremusic.utilities` to `coremusic.audio.utilities` (October 2025)
+  - **Change**: Relocated utilities module for better package organization
+    - From: `coremusic.utilities`
+    - To: `coremusic.audio.utilities`
+  - **Reason**: Utilities are audio-specific and belong in audio subpackage
+  - **Updated imports**:
+    - Main package: `from .audio.utilities import *` in `coremusic/__init__.py`
+    - Audio package: Added utilities exports to `coremusic.audio.__init__.py`
+    - Fixed all relative imports within utilities.py (`.` → `..`)
+  - **Exports remain accessible**: All utilities still available via `import coremusic as cm`
+  - **No breaking changes**: Existing user code continues to work
+  - **Verification**: All 1022 tests passing, type checking successful
+
 - **Improved test coverage for AudioQueue OO API** - Selective skipping instead of blanket test exclusion (October 2025)
   - **Issue**: All 16 tests in `test_objects_audio_queue.py` were skipped due to module-level `pytestmark`
   - **Root Cause**: Overly conservative assumption that all AudioQueue tests require audio hardware
