@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 import coremusic as cm
 import coremusic.capi as capi
-from coremusic.audio.utilities import AudioAnalyzer
+from coremusic.audio.analysis import AudioAnalyzer
 
 
 class TestAudioAnalyzer:

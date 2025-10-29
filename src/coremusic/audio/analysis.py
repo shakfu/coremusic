@@ -19,7 +19,7 @@ Example:
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING, Union
 import logging
 
 # Type checking imports
@@ -101,12 +101,31 @@ class AudioAnalyzer:
     Provides various audio analysis methods including beat detection,
     pitch tracking, spectral analysis, and key detection.
 
-    Example:
+    **Instance Methods** (require initialization):
+        - detect_beats() - Beat detection and tempo estimation
+        - detect_pitch() - Pitch tracking over time
+        - analyze_spectrum() - Spectral analysis at specific time
+        - extract_mfcc() - Mel-frequency cepstral coefficients
+        - detect_key() - Musical key detection
+        - get_audio_fingerprint() - Audio fingerprinting
+
+    **Static Methods** (no initialization required):
+        - detect_silence() - Find quiet regions in audio
+        - get_peak_amplitude() - Maximum amplitude
+        - calculate_rms() - RMS level
+        - get_file_info() - File metadata
+
+    Example (Instance API):
         >>> analyzer = AudioAnalyzer("song.wav")
         >>> beat_info = analyzer.detect_beats()
         >>> print(f"Tempo: {beat_info.tempo:.1f} BPM")
         >>> pitch_track = analyzer.detect_pitch()
         >>> spectrum = analyzer.analyze_spectrum(time=1.0)
+
+    Example (Static API):
+        >>> silence = AudioAnalyzer.detect_silence("audio.wav", threshold_db=-40)
+        >>> peak = AudioAnalyzer.get_peak_amplitude("audio.wav")
+        >>> info = AudioAnalyzer.get_file_info("audio.wav")
     """
 
     def __init__(self, audio_file: str):
@@ -736,6 +755,233 @@ class AudioAnalyzer:
         """
         data, sr = self._load_audio()
         return self._generate_fingerprint(data, sr)
+
+    # ========================================================================
+    # Static Utility Methods (Basic Audio Metrics)
+    # ========================================================================
+
+    @staticmethod
+    def detect_silence(
+        audio_file: Any,
+        threshold_db: float = -40.0,
+        min_duration: float = 0.5,
+    ) -> List[Tuple[float, float]]:
+        """Detect silence regions in an audio file.
+
+        Args:
+            audio_file: Path to audio file or AudioFile instance
+            threshold_db: Silence threshold in dB (default: -40)
+            min_duration: Minimum silence duration in seconds (default: 0.5)
+
+        Returns:
+            List of (start_time, end_time) tuples for silence regions
+
+        Example:
+            >>> silence = AudioAnalyzer.detect_silence("audio.wav", threshold_db=-40, min_duration=0.5)
+            >>> for start, end in silence:
+            ...     print(f"Silence from {start:.2f}s to {end:.2f}s")
+        """
+        if not NUMPY_AVAILABLE:
+            raise ImportError(
+                "NumPy is required for silence detection. Install with: pip install numpy"
+            )
+
+        import coremusic as cm
+
+        # Open file if path provided
+        should_close = False
+        if isinstance(audio_file, (str, Path)):
+            audio_file = cm.AudioFile(str(audio_file))
+            audio_file.open()
+            should_close = True
+
+        try:
+            # Read audio data as NumPy array
+            audio_data = audio_file.read_as_numpy()
+
+            # Get format info
+            format = audio_file.format
+            sample_rate = format.sample_rate
+
+            # Convert to mono if stereo by taking mean across channels
+            if audio_data.ndim == 2:
+                audio_data = np.mean(audio_data, axis=1)
+
+            # Convert to float and normalize
+            if audio_data.dtype in [np.int16, np.int32]:
+                max_val = np.iinfo(audio_data.dtype).max
+                audio_data = audio_data.astype(np.float32) / max_val
+
+            # Convert threshold from dB to linear
+            threshold_linear = 10 ** (threshold_db / 20)
+
+            # Find samples below threshold
+            is_silent = np.abs(audio_data) < threshold_linear
+
+            # Find silence regions
+            silence_regions = []
+            in_silence = False
+            silence_start = 0
+
+            for i, silent in enumerate(is_silent):
+                if silent and not in_silence:
+                    # Start of silence region
+                    in_silence = True
+                    silence_start = i
+                elif not silent and in_silence:
+                    # End of silence region
+                    in_silence = False
+                    duration = (i - silence_start) / sample_rate
+                    if duration >= min_duration:
+                        start_time = silence_start / sample_rate
+                        end_time = i / sample_rate
+                        silence_regions.append((start_time, end_time))
+
+            # Handle case where file ends in silence
+            if in_silence:
+                duration = (len(is_silent) - silence_start) / sample_rate
+                if duration >= min_duration:
+                    start_time = silence_start / sample_rate
+                    end_time = len(is_silent) / sample_rate
+                    silence_regions.append((start_time, end_time))
+
+            return silence_regions
+
+        finally:
+            if should_close:
+                audio_file.close()
+
+    @staticmethod
+    def get_peak_amplitude(audio_file: Any) -> float:
+        """Get the peak amplitude of an audio file.
+
+        Args:
+            audio_file: Path to audio file or AudioFile instance
+
+        Returns:
+            Peak amplitude as a float (0.0 to 1.0 for normalized audio)
+
+        Example:
+            >>> peak = AudioAnalyzer.get_peak_amplitude("audio.wav")
+            >>> print(f"Peak amplitude: {peak:.4f}")
+        """
+        if not NUMPY_AVAILABLE:
+            raise ImportError(
+                "NumPy is required for peak detection. Install with: pip install numpy"
+            )
+
+        import coremusic as cm
+
+        # Open file if path provided
+        should_close = False
+        if isinstance(audio_file, (str, Path)):
+            audio_file = cm.AudioFile(str(audio_file))
+            audio_file.open()
+            should_close = True
+
+        try:
+            # Read audio data
+            audio_data = audio_file.read_as_numpy()
+
+            # Convert to float and normalize
+            if audio_data.dtype in [np.int16, np.int32]:
+                max_val = np.iinfo(audio_data.dtype).max
+                audio_data = audio_data.astype(np.float32) / max_val
+
+            # Get peak
+            return float(np.max(np.abs(audio_data)))
+
+        finally:
+            if should_close:
+                audio_file.close()
+
+    @staticmethod
+    def calculate_rms(audio_file: Any) -> float:
+        """Calculate RMS (Root Mean Square) amplitude.
+
+        Args:
+            audio_file: Path to audio file or AudioFile instance
+
+        Returns:
+            RMS amplitude as a float
+
+        Example:
+            >>> rms = AudioAnalyzer.calculate_rms("audio.wav")
+            >>> rms_db = 20 * np.log10(rms)  # Convert to dB
+            >>> print(f"RMS: {rms:.4f} ({rms_db:.2f} dB)")
+        """
+        if not NUMPY_AVAILABLE:
+            raise ImportError(
+                "NumPy is required for RMS calculation. Install with: pip install numpy"
+            )
+
+        import coremusic as cm
+
+        # Open file if path provided
+        should_close = False
+        if isinstance(audio_file, (str, Path)):
+            audio_file = cm.AudioFile(str(audio_file))
+            audio_file.open()
+            should_close = True
+
+        try:
+            # Read audio data
+            audio_data = audio_file.read_as_numpy()
+
+            # Convert to float and normalize
+            if audio_data.dtype in [np.int16, np.int32]:
+                max_val = np.iinfo(audio_data.dtype).max
+                audio_data = audio_data.astype(np.float32) / max_val
+
+            # Calculate RMS
+            return float(np.sqrt(np.mean(audio_data**2)))
+
+        finally:
+            if should_close:
+                audio_file.close()
+
+    @staticmethod
+    def get_file_info(audio_file: Union[str, Path]) -> Dict[str, Any]:
+        """Get comprehensive information about an audio file.
+
+        Args:
+            audio_file: Path to audio file
+
+        Returns:
+            Dictionary with file information (format, duration, sample_rate, etc.)
+
+        Example:
+            >>> info = AudioAnalyzer.get_file_info("audio.wav")
+            >>> print(f"Duration: {info['duration']:.2f}s")
+            >>> print(f"Format: {info['format_id']}")
+            >>> print(f"Sample Rate: {info['sample_rate']} Hz")
+        """
+        import coremusic as cm
+
+        with cm.AudioFile(str(audio_file)) as af:
+            format = af.format
+
+            info = {
+                "path": str(audio_file),
+                "duration": af.duration,
+                "sample_rate": format.sample_rate,
+                "format_id": format.format_id,
+                "channels": format.channels_per_frame,
+                "bits_per_channel": format.bits_per_channel,
+                "is_pcm": format.is_pcm,
+                "is_stereo": format.is_stereo,
+                "is_mono": format.is_mono,
+            }
+
+            # Add peak and RMS if NumPy available
+            if NUMPY_AVAILABLE:
+                try:
+                    info["peak_amplitude"] = AudioAnalyzer.get_peak_amplitude(af)
+                    info["rms"] = AudioAnalyzer.calculate_rms(af)
+                except Exception:
+                    pass  # Skip if reading fails
+
+            return info
 
 
 # ============================================================================
