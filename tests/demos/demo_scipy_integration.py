@@ -17,7 +17,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 import coremusic as cm
-import coremusic.scipy_utils as spu
+import coremusic.utils.scipy as spu
 
 
 def check_dependencies():

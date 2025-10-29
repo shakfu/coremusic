@@ -9,17 +9,19 @@ management and context manager support. This is itself built=up from The low-lev
 functional C API which is available via the `capi` submodule for advanced use cases.
 
 Usage:
-    import coremusic as cm              # Object-oriented API
-    import coremusic.capi as capi       # Functional C API
-    import coremusic.scipy_utils as spu # SciPy integration (optional)
-    from coremusic import link          # Ableton Link synchronization
+    import coremusic as cm                # Object-oriented API
+    import coremusic.capi as capi         # Functional C API
+    import coremusic.utils.scipy as spu   # SciPy integration (optional)
+    from coremusic import link            # Ableton Link synchronization
+    from coremusic.midi import link       # Link + MIDI integration
+    from coremusic.audio import async_io  # Async audio I/O
 """
 
 # Import object-oriented API (primary interface)
 from .objects import *
 
-# Import async I/O classes
-from .async_io import *
+# Import async I/O classes from new location
+from .audio.async_io import *
 
 # Import high-level utilities
 from .utilities import *
@@ -30,8 +32,13 @@ from . import os_status
 # Import Ableton Link classes
 from . import link
 
-# Import Link + MIDI integration
-from . import link_midi
+# Import Link + MIDI integration from new location
+from .midi import link as link_midi
+
+# Import subpackages
+from . import audio
+from . import midi
+from . import utils
 
 # Import AudioUnit hosting
 from .audio_unit_host import (

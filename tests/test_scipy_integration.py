@@ -4,7 +4,7 @@
 import os
 import pytest
 import coremusic as cm
-import coremusic.scipy_utils as spu
+import coremusic.utils.scipy as spu
 
 if not (cm.NUMPY_AVAILABLE and spu.SCIPY_AVAILABLE):
     pytest.skip("NumPy and SciPy are not available", allow_module_level=True)

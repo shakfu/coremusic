@@ -27,7 +27,7 @@ import threading
 from typing import Optional, Callable, List, Tuple, Any, TYPE_CHECKING
 from dataclasses import dataclass
 
-from . import capi
+from .. import capi
 
 if TYPE_CHECKING:
     from . import link as link_module  # type: ignore[attr-defined]
