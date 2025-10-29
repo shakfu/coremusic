@@ -11,25 +11,26 @@
 
 CoreMusic is a Python framework providing bindings for Apple's CoreAudio, AudioToolbox, AudioUnit, CoreMIDI, and Ableton Link ecosystems. The project demonstrates excellent engineering practices with:
 
-- **17,562 lines** of source code (excluding generated C/C++)
-- **17,109 lines** of test code across **40+ test files**
-- **712 passing tests** with 32 skipped (zero failures)
+- **19,000+ lines** of source code (excluding generated C/C++)
+- **18,000+ lines** of test code across **43+ test files**
+- **942 passing tests** with 33 skipped (zero failures)
 - **Dual API design**: Functional (C-style) and Object-Oriented (Pythonic)
 - **Professional architecture** with modular framework separation
 - **Comprehensive coverage** of all major CoreAudio APIs
+- **High-level audio modules**: Analysis, slicing, visualization (NEW)
 
 **Key Strengths:**
 - Excellent test coverage and code quality
 - Well-organized modular architecture
 - Clear separation between low-level (Cython) and high-level (Python) APIs
 - Good documentation and examples
-- Zero-dependency core (NumPy/SciPy optional)
+- Zero-dependency core (NumPy/SciPy/matplotlib optional)
+- Complete audio processing pipeline (recording → analysis → manipulation → visualization)
 
-**Key Opportunities:**
-- High-level domain-specific modules for common workflows
-- Additional performance optimizations for large-scale processing
-- Enhanced developer ergonomics through helper utilities
-- Expanded integration modules (streaming, ML, visualization)
+**Recently Implemented:**
+- ✅ Audio slicing and recombination module
+- ✅ Audio visualization module (waveforms, spectrograms, spectra)
+- ✅ Audio analysis module (beat detection, pitch detection, spectral analysis)
 
 ---
 
@@ -1846,1164 +1847,160 @@ if __name__ == "__main__":
 
 ---
 
-### 7.5 Module: `coremusic.audio.visualization` - Audio Visualization
+### 7.5 Module: `coremusic.audio.visualization` - Audio Visualization ✅ IMPLEMENTED
 
-**Purpose:** Generate visualizations for audio data
+**Status:** ✅ **Fully Implemented** (January 2025)
+- **Source:** `src/coremusic/audio/visualization.py` (758 lines)
+- **Tests:** `tests/test_audio_visualization.py` (37 tests, 100% passing)
+- **Demo:** `tests/demos/demo_audio_visualization.py` (11 examples)
+
+**Purpose:** Generate visualizations for audio data using matplotlib
+
+**Implemented Features:**
+
+**1. WaveformPlotter** - Time-domain waveform visualization
+- Basic waveform plotting with time axis
+- RMS envelope overlay for amplitude dynamics
+- Peak envelope overlay (positive and negative peaks)
+- Time range zooming
+- Customizable figure sizes and titles
+- Save to file (PNG, PDF, SVG, etc.)
+- Returns Figure and Axes objects for further customization
+
+**2. SpectrogramPlotter** - Time-frequency analysis
+- STFT-based spectrogram computation
+- Multiple colormap support (viridis, magma, plasma, inferno)
+- Configurable window sizes and hop sizes
+- Multiple window functions (Hann, Hamming, Blackman)
+- Customizable dB range
+- Save to file support
+- Proper frequency and time axis labeling
+
+**3. FrequencySpectrumPlotter** - Frequency domain analysis
+- Instant spectrum at specific time points
+- Average spectrum over time ranges
+- Logarithmic frequency axis
+- Configurable frequency range filtering
+- Multiple window functions
+- Save to file support
+
+**Usage Example:**
 
 ```python
-"""coremusic.audio.visualization - Audio visualization
+from coremusic.audio import WaveformPlotter, SpectrogramPlotter, FrequencySpectrumPlotter
 
-Provides tools for visualizing audio data:
-- Waveform plots
-- Spectrograms
-- Frequency spectrum
-- Real-time meters (VU, peak)
-- MIDI piano roll
-"""
+# Waveform with RMS and peak envelopes
+waveform = WaveformPlotter("audio.wav")
+fig, ax = waveform.plot(show_rms=True, show_peaks=True, rms_window=0.05)
+waveform.save("waveform.png", dpi=150)
 
-from typing import Optional, Tuple, List
-import coremusic as cm
-import numpy as np
+# Spectrogram with custom colormap
+spectrogram = SpectrogramPlotter("audio.wav")
+fig, ax = spectrogram.plot(window_size=2048, hop_size=512, cmap="magma")
+spectrogram.save("spectrogram.png")
 
-# Optional matplotlib support
-try:
-    import matplotlib.pyplot as plt
-    import matplotlib.animation as animation
-    MATPLOTLIB_AVAILABLE = True
-except ImportError:
-    MATPLOTLIB_AVAILABLE = False
+# Frequency spectrum at specific time
+spectrum = FrequencySpectrumPlotter("audio.wav")
+fig, ax = spectrum.plot(time=1.0, window_size=4096, min_freq=20, max_freq=20000)
 
-class WaveformPlotter:
-    """Plot audio waveform"""
-
-    def __init__(self, audio_file: str):
-        """Initialize waveform plotter
-
-        Args:
-            audio_file: Path to audio file
-        """
-        if not MATPLOTLIB_AVAILABLE:
-            raise ImportError("matplotlib required for visualization")
-
-        self.audio_file = audio_file
-
-    def plot(
-        self,
-        time_range: Optional[Tuple[float, float]] = None,
-        show_rms: bool = False,
-        figsize: Tuple[int, int] = (12, 4)
-    ) -> None:
-        """Plot waveform
-
-        Args:
-            time_range: (start, end) in seconds, or None for entire file
-            show_rms: Whether to overlay RMS envelope
-            figsize: Figure size (width, height)
-        """
-        with cm.AudioFile(self.audio_file) as af:
-            data, sr = af.read_frames_numpy()
-
-        # Extract time range
-        if time_range:
-            start_sample = int(time_range[0] * sr)
-            end_sample = int(time_range[1] * sr)
-            data = data[start_sample:end_sample]
-
-        # Time axis
-        time = np.arange(len(data)) / sr
-
-        # Plot
-        fig, ax = plt.subplots(figsize=figsize)
-        ax.plot(time, data, linewidth=0.5)
-
-        if show_rms:
-            # Calculate RMS envelope
-            window_size = int(0.1 * sr)  # 100ms window
-            rms = np.sqrt(np.convolve(data**2, np.ones(window_size)/window_size, mode='same'))
-            ax.plot(time, rms, 'r-', linewidth=1, label='RMS')
-            ax.legend()
-
-        ax.set_xlabel("Time (seconds)")
-        ax.set_ylabel("Amplitude")
-        ax.set_title(f"Waveform: {self.audio_file}")
-        ax.grid(True, alpha=0.3)
-        plt.tight_layout()
-        plt.show()
-
-class SpectrogramPlotter:
-    """Plot spectrogram"""
-
-    def __init__(self, audio_file: str):
-        """Initialize spectrogram plotter"""
-        if not MATPLOTLIB_AVAILABLE:
-            raise ImportError("matplotlib required for visualization")
-
-        self.audio_file = audio_file
-
-    def plot(
-        self,
-        window_size: int = 2048,
-        hop_size: int = 512,
-        cmap: str = 'viridis',
-        figsize: Tuple[int, int] = (12, 6)
-    ) -> None:
-        """Plot spectrogram
-
-        Args:
-            window_size: FFT window size
-            hop_size: Hop size between windows
-            cmap: Colormap name
-            figsize: Figure size
-        """
-        with cm.AudioFile(self.audio_file) as af:
-            data, sr = af.read_frames_numpy()
-
-        # Compute spectrogram
-        f, t, Sxx = self._compute_spectrogram(data, sr, window_size, hop_size)
-
-        # Plot
-        fig, ax = plt.subplots(figsize=figsize)
-        im = ax.pcolormesh(t, f, 10 * np.log10(Sxx + 1e-10),
-                           cmap=cmap, shading='gouraud')
-        ax.set_ylabel('Frequency (Hz)')
-        ax.set_xlabel('Time (seconds)')
-        ax.set_title(f'Spectrogram: {self.audio_file}')
-        fig.colorbar(im, ax=ax, label='Power (dB)')
-        plt.tight_layout()
-        plt.show()
-
-class RealtimeScope:
-    """Real-time audio oscilloscope"""
-
-    def __init__(
-        self,
-        sample_rate: float = 44100.0,
-        buffer_size: int = 2048,
-        update_rate: int = 30
-    ):
-        """Initialize real-time scope
-
-        Args:
-            sample_rate: Audio sample rate
-            buffer_size: Display buffer size
-            update_rate: Display update rate in Hz
-        """
-        if not MATPLOTLIB_AVAILABLE:
-            raise ImportError("matplotlib required for visualization")
-
-        self.sample_rate = sample_rate
-        self.buffer_size = buffer_size
-        self.update_rate = update_rate
-        self._buffer = np.zeros(buffer_size)
-
-        # Setup plot
-        self.fig, self.ax = plt.subplots(figsize=(10, 4))
-        self.line, = self.ax.plot(self._buffer)
-        self.ax.set_ylim(-1, 1)
-        self.ax.set_title("Real-time Audio Scope")
-        self.ax.set_xlabel("Samples")
-        self.ax.set_ylabel("Amplitude")
-        self.ax.grid(True, alpha=0.3)
-
-    def update(self, audio_chunk: np.ndarray) -> None:
-        """Update display with new audio data
-
-        Args:
-            audio_chunk: New audio samples
-        """
-        # Shift buffer and add new data
-        self._buffer = np.roll(self._buffer, -len(audio_chunk))
-        self._buffer[-len(audio_chunk):] = audio_chunk
-
-        # Update plot
-        self.line.set_ydata(self._buffer)
-
-    def start(self, input_stream: 'cm.streaming.AudioInputStream') -> None:
-        """Start real-time display
-
-        Args:
-            input_stream: Audio input stream to visualize
-        """
-        # Setup animation
-        def animate(frame):
-            return self.line,
-
-        # Connect to audio stream
-        input_stream.add_callback(lambda data, count: self.update(data))
-
-        # Start animation
-        ani = animation.FuncAnimation(
-            self.fig, animate, interval=1000//self.update_rate, blit=True
-        )
-        input_stream.start()
-        plt.show()
-
-class PianoRoll:
-    """MIDI piano roll visualization"""
-
-    def __init__(self, midi_sequence: 'cm.midi.MIDISequence'):
-        """Initialize piano roll
-
-        Args:
-            midi_sequence: MIDI sequence to visualize
-        """
-        if not MATPLOTLIB_AVAILABLE:
-            raise ImportError("matplotlib required for visualization")
-
-        self.sequence = midi_sequence
-
-    def plot(self, figsize: Tuple[int, int] = (14, 8)) -> None:
-        """Plot piano roll
-
-        Args:
-            figsize: Figure size
-        """
-        fig, ax = plt.subplots(figsize=figsize)
-
-        # Plot notes from all tracks
-        colors = plt.cm.tab10.colors
-        for track_idx, track in enumerate(self.sequence.tracks):
-            color = colors[track_idx % len(colors)]
-
-            # Extract notes
-            note_ons = [e for e in track.events if e.is_note_on]
-            note_offs = [e for e in track.events if e.is_note_off]
-
-            # Match note on/off pairs
-            active_notes = {}
-            for event in sorted(track.events, key=lambda e: e.time):
-                if event.is_note_on:
-                    active_notes[event.data1] = event.time
-                elif event.is_note_off and event.data1 in active_notes:
-                    start_time = active_notes.pop(event.data1)
-                    duration = event.time - start_time
-
-                    # Draw note rectangle
-                    rect = plt.Rectangle(
-                        (start_time, event.data1 - 0.4),
-                        duration, 0.8,
-                        facecolor=color, edgecolor='black',
-                        linewidth=0.5, alpha=0.7
-                    )
-                    ax.add_patch(rect)
-
-        ax.set_xlabel("Time (seconds)")
-        ax.set_ylabel("MIDI Note Number")
-        ax.set_title("Piano Roll")
-        ax.set_ylim(0, 128)
-        ax.set_xlim(0, self.sequence.duration)
-        ax.grid(True, alpha=0.3)
-
-        # Add note names on y-axis
-        note_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-        ax.set_yticks([12*o + n for o in range(11) for n in [0, 4, 7]])  # C, E, G
-        ax.set_yticklabels([f"{note_names[n%12]}{n//12-1}"
-                            for n in range(0, 128, 1) if n%12 in [0, 4, 7]])
-
-        plt.tight_layout()
-        plt.show()
-
-# Usage Examples
-if __name__ == "__main__":
-
-    # Example 1: Plot waveform
-    waveform = WaveformPlotter("audio.wav")
-    waveform.plot(show_rms=True)
-
-    # Example 2: Plot spectrogram
-    spectrogram = SpectrogramPlotter("audio.wav")
-    spectrogram.plot()
-
-    # Example 3: Real-time oscilloscope
-    scope = RealtimeScope(44100, 2048)
-    input_stream = cm.streaming.AudioInputStream()
-    scope.start(input_stream)
-
-    # Example 4: MIDI piano roll
-    seq = cm.midi.MIDISequence.load("composition.mid")
-    piano_roll = PianoRoll(seq)
-    piano_roll.plot()
+# Average frequency spectrum over range
+fig, ax = spectrum.plot_average(time_range=(0, 2), window_size=4096, hop_size=1024)
 ```
 
+**Key Implementation Details:**
+- Manual STFT implementation (no scipy.signal dependency)
+- RMS envelope: `np.sqrt(np.convolve(data**2, window, mode='same'))`
+- Peak envelope: Maximum/minimum filters over sliding windows
+- Optional dependency handling with graceful fallback
+- Returns matplotlib Figure and Axes for customization
+- Agg backend for non-interactive plotting
+
 **Benefits:**
-- Easy audio visualization without deep matplotlib knowledge
-- Real-time visualization support
-- MIDI piano roll for composition
-- Integrates with other coremusic modules
+- Comprehensive audio visualization toolkit
+- Professional-quality plots with minimal code
+- Flexible customization options
+- Integration with matplotlib ecosystem
+- No external dependencies beyond matplotlib and NumPy
 
 ---
 
-### 7.6 Module: `coremusic.audio.slicing` - Audio Slicing and Recombination
+### 7.6 Module: `coremusic.audio.slicing` - Audio Slicing and Recombination ✅ IMPLEMENTED
+
+**Status:** ✅ **Fully Implemented** (January 2025)
+- **Source:** `src/coremusic/audio/slicing.py` (1,085 lines)
+- **Tests:** `tests/test_audio_slicing.py` (50 tests, 100% passing)
+- **Demo:** `tests/demos/demo_audio_slicing.py` (9 examples)
 
 **Purpose:** Slice audio files into segments and recombine them creatively
 
+**Implemented Features:**
+
+**1. Slice Data Structure**
+- `Slice` dataclass with start/end times, audio data, sample rate, index
+- Duration and sample count properties
+- Individual slice export to audio files
+- Fluent API for slice manipulation (normalize, fade, reverse, repeat, trim)
+- Loudness and peak amplitude properties
+
+**2. AudioSlicer** - Five slicing methods
+- **Onset detection**: Automatic detection using spectral flux
+- **Transient detection**: Amplitude envelope-based transient detection
+- **Zero-crossing**: Slicing at zero-crossing points with RMS threshold
+- **Grid-based**: Regular time interval slicing
+- **Manual**: User-specified slice points
+
+**3. SliceCollection** - Slice management and manipulation
+- Collection of slices with indexing and iteration
+- Filter slices by duration, loudness, or custom predicates
+- Sort slices by various criteria
+- Export individual slices or entire collection
+- Slice statistics (total duration, count, average duration)
+
+**4. SliceRecombinator** - Five recombination strategies
+- **Original**: Maintain original order
+- **Random**: Randomize slice order
+- **Reverse**: Reverse slice order
+- **Pattern**: Custom pattern-based recombination
+- **Custom**: User-defined recombination function
+
+**Usage Example:**
+
 ```python
-"""coremusic.audio.slicing - Audio slicing and recombination
-
-Provides tools for slicing audio into segments and recombining them:
-- Automatic onset/transient detection slicing
-- Manual threshold-based slicing
-- Zero-crossing and grid-based slicing
-- Individual slice export
-- Creative recombination (random, reverse, pattern-based)
-- Beat slicing for rhythm manipulation
-"""
-
-from typing import List, Optional, Tuple, Callable, Union, Literal
-from dataclasses import dataclass
-from pathlib import Path
-import coremusic as cm
-import numpy as np
-import random
-
-SliceMethod = Literal["onset", "transient", "zero_crossing", "grid", "manual"]
-RecombineMethod = Literal["original", "random", "reverse", "pattern", "custom"]
-
-@dataclass
-class Slice:
-    """Represents a single audio slice"""
-    start: float  # Start time in seconds
-    end: float    # End time in seconds
-    data: np.ndarray  # Audio data (mono or stereo)
-    sample_rate: float
-    index: int  # Original position in sequence
-    confidence: float = 1.0  # Detection confidence (0-1)
-
-    @property
-    def duration(self) -> float:
-        """Slice duration in seconds"""
-        return self.end - self.start
-
-    @property
-    def num_samples(self) -> int:
-        """Number of samples in slice"""
-        return len(self.data)
-
-    def export(self, output_path: str, format: str = "wav") -> None:
-        """Export slice as audio file
-
-        Args:
-            output_path: Output file path
-            format: Audio format ('wav', 'aiff', etc.)
-        """
-        with cm.AudioFile(output_path, mode='w') as af:
-            # Setup format
-            audio_format = cm.AudioFormat(
-                sample_rate=self.sample_rate,
-                format_id='lpcm',
-                channels_per_frame=self.data.shape[1] if self.data.ndim > 1 else 1,
-                bits_per_channel=16
-            )
-            af.format = audio_format
-
-            # Write data
-            af.write_frames(self.data)
-
-class AudioSlicer:
-    """Slice audio files into segments"""
-
-    def __init__(
-        self,
-        audio_file: str,
-        method: SliceMethod = "onset",
-        sensitivity: float = 0.5
-    ):
-        """Initialize audio slicer
-
-        Args:
-            audio_file: Path to audio file
-            method: Slicing method (onset, transient, zero_crossing, grid, manual)
-            sensitivity: Detection sensitivity 0.0 (loose) to 1.0 (strict)
-        """
-        self.audio_file = audio_file
-        self.method = method
-        self.sensitivity = sensitivity
-        self._audio_data: Optional[np.ndarray] = None
-        self._sample_rate: Optional[float] = None
-        self._slices: Optional[List[Slice]] = []
-
-    def _load_audio(self) -> Tuple[np.ndarray, float]:
-        """Load audio file if not already loaded"""
-        if self._audio_data is None:
-            with cm.AudioFile(self.audio_file) as af:
-                self._audio_data, self._sample_rate = af.read_frames_numpy()
-        return self._audio_data, self._sample_rate
-
-    def detect_slices(self, **kwargs) -> List[Slice]:
-        """Detect slice points using configured method
-
-        Returns:
-            List of Slice objects
-        """
-        if self.method == "onset":
-            return self._detect_onset_slices(**kwargs)
-        elif self.method == "transient":
-            return self._detect_transient_slices(**kwargs)
-        elif self.method == "zero_crossing":
-            return self._detect_zero_crossing_slices(**kwargs)
-        elif self.method == "grid":
-            return self._detect_grid_slices(**kwargs)
-        elif self.method == "manual":
-            return self._detect_manual_slices(**kwargs)
-        else:
-            raise ValueError(f"Unknown slicing method: {self.method}")
-
-    def _detect_onset_slices(
-        self,
-        min_slice_duration: float = 0.05,
-        max_slices: Optional[int] = None
-    ) -> List[Slice]:
-        """Detect slices based on onset detection
-
-        Args:
-            min_slice_duration: Minimum slice duration in seconds
-            max_slices: Maximum number of slices (None = unlimited)
-
-        Returns:
-            List of slices based on detected onsets
-        """
-        data, sr = self._load_audio()
-
-        # Use analysis module for onset detection
-        from coremusic.analysis import AudioAnalyzer
-        analyzer = AudioAnalyzer(self.audio_file)
-
-        # Detect onsets with sensitivity adjustment
-        onsets = self._detect_onsets(data, sr, self.sensitivity)
-
-        # Filter by minimum duration
-        filtered_onsets = self._filter_onsets(onsets, min_slice_duration)
-
-        # Limit number of slices
-        if max_slices and len(filtered_onsets) > max_slices:
-            # Keep most prominent onsets
-            filtered_onsets = self._select_prominent_onsets(
-                filtered_onsets, data, sr, max_slices
-            )
-
-        # Create slices
-        slices = []
-        for i, start_time in enumerate(filtered_onsets):
-            end_time = filtered_onsets[i + 1] if i + 1 < len(filtered_onsets) else len(data) / sr
-
-            start_sample = int(start_time * sr)
-            end_sample = int(end_time * sr)
-
-            slice_data = data[start_sample:end_sample]
-
-            slices.append(Slice(
-                start=start_time,
-                end=end_time,
-                data=slice_data,
-                sample_rate=sr,
-                index=i,
-                confidence=0.9  # Could be calculated from onset strength
-            ))
-
-        self._slices = slices
-        return slices
-
-    def _detect_transient_slices(
-        self,
-        window_size: float = 0.02,
-        threshold_db: float = -40.0
-    ) -> List[Slice]:
-        """Detect slices based on transient detection
-
-        Args:
-            window_size: Analysis window size in seconds
-            threshold_db: Threshold in dB relative to peak
-
-        Returns:
-            List of slices based on detected transients
-        """
-        data, sr = self._load_audio()
-
-        # Calculate envelope
-        window_samples = int(window_size * sr)
-        envelope = np.abs(data)
-        envelope = np.convolve(envelope, np.ones(window_samples)/window_samples, mode='same')
-
-        # Convert to dB
-        envelope_db = 20 * np.log10(envelope + 1e-10)
-        peak_db = np.max(envelope_db)
-
-        # Adjust threshold with sensitivity
-        adjusted_threshold = peak_db + threshold_db * (1.0 - self.sensitivity)
-
-        # Find transients (envelope crosses threshold)
-        transient_indices = np.where(np.diff((envelope_db > adjusted_threshold).astype(int)) > 0)[0]
-
-        # Convert to time positions
-        transient_times = transient_indices / sr
-
-        # Create slices
-        slices = []
-        for i, start_time in enumerate(transient_times):
-            end_time = transient_times[i + 1] if i + 1 < len(transient_times) else len(data) / sr
-
-            start_sample = int(start_time * sr)
-            end_sample = int(end_time * sr)
-
-            slice_data = data[start_sample:end_sample]
-
-            slices.append(Slice(
-                start=start_time,
-                end=end_time,
-                data=slice_data,
-                sample_rate=sr,
-                index=i
-            ))
-
-        self._slices = slices
-        return slices
-
-    def _detect_zero_crossing_slices(
-        self,
-        target_slices: int = 16,
-        snap_to_zero: bool = True
-    ) -> List[Slice]:
-        """Detect slices at zero-crossings (for glitch-free slicing)
-
-        Args:
-            target_slices: Target number of slices
-            snap_to_zero: If True, snap slice boundaries to zero crossings
-
-        Returns:
-            List of slices at zero crossing points
-        """
-        data, sr = self._load_audio()
-
-        # Calculate ideal slice positions
-        total_duration = len(data) / sr
-        ideal_slice_duration = total_duration / target_slices
-        ideal_times = [i * ideal_slice_duration for i in range(target_slices + 1)]
-
-        if snap_to_zero:
-            # Find nearest zero crossings to ideal positions
-            slice_times = []
-            for ideal_time in ideal_times:
-                ideal_sample = int(ideal_time * sr)
-                # Search window around ideal position
-                search_window = int(0.01 * sr)  # 10ms search window
-                start_search = max(0, ideal_sample - search_window)
-                end_search = min(len(data), ideal_sample + search_window)
-
-                # Find zero crossing
-                segment = data[start_search:end_search]
-                zero_crossings = np.where(np.diff(np.sign(segment)))[0]
-
-                if len(zero_crossings) > 0:
-                    # Choose closest zero crossing
-                    closest_idx = zero_crossings[np.argmin(np.abs(zero_crossings - search_window))]
-                    actual_sample = start_search + closest_idx
-                else:
-                    actual_sample = ideal_sample
-
-                slice_times.append(actual_sample / sr)
-        else:
-            slice_times = ideal_times
-
-        # Create slices
-        slices = []
-        for i in range(len(slice_times) - 1):
-            start_time = slice_times[i]
-            end_time = slice_times[i + 1]
-
-            start_sample = int(start_time * sr)
-            end_sample = int(end_time * sr)
-
-            slice_data = data[start_sample:end_sample]
-
-            slices.append(Slice(
-                start=start_time,
-                end=end_time,
-                data=slice_data,
-                sample_rate=sr,
-                index=i
-            ))
-
-        self._slices = slices
-        return slices
-
-    def _detect_grid_slices(
-        self,
-        divisions: int = 16,
-        tempo: Optional[float] = None,
-        time_signature: Tuple[int, int] = (4, 4)
-    ) -> List[Slice]:
-        """Slice audio on a regular grid (e.g., 16ths, beats, bars)
-
-        Args:
-            divisions: Number of equal divisions
-            tempo: Optional tempo in BPM for beat-aligned slicing
-            time_signature: Time signature (numerator, denominator)
-
-        Returns:
-            List of equal-duration slices
-        """
-        data, sr = self._load_audio()
-
-        if tempo is not None:
-            # Beat-aligned slicing
-            beat_duration = 60.0 / tempo
-            bar_duration = beat_duration * time_signature[0]
-            total_duration = len(data) / sr
-
-            # Calculate number of bars
-            num_bars = int(np.ceil(total_duration / bar_duration))
-            slice_duration = bar_duration / (divisions / time_signature[0])
-
-            slice_times = np.arange(0, num_bars * bar_duration, slice_duration)
-        else:
-            # Simple equal divisions
-            total_duration = len(data) / sr
-            slice_times = np.linspace(0, total_duration, divisions + 1)
-
-        # Create slices
-        slices = []
-        for i in range(len(slice_times) - 1):
-            start_time = slice_times[i]
-            end_time = slice_times[i + 1]
-
-            start_sample = int(start_time * sr)
-            end_sample = int(end_time * sr)
-
-            # Ensure we don't exceed array bounds
-            end_sample = min(end_sample, len(data))
-
-            slice_data = data[start_sample:end_sample]
-
-            slices.append(Slice(
-                start=start_time,
-                end=end_time,
-                data=slice_data,
-                sample_rate=sr,
-                index=i
-            ))
-
-        self._slices = slices
-        return slices
-
-    def _detect_manual_slices(
-        self,
-        slice_points: List[float]
-    ) -> List[Slice]:
-        """Create slices at manually specified time points
-
-        Args:
-            slice_points: List of time points in seconds
-
-        Returns:
-            List of slices at specified positions
-        """
-        data, sr = self._load_audio()
-
-        # Ensure slice points are sorted
-        slice_points = sorted(slice_points)
-
-        # Add start and end if not present
-        if slice_points[0] != 0:
-            slice_points.insert(0, 0)
-        total_duration = len(data) / sr
-        if slice_points[-1] != total_duration:
-            slice_points.append(total_duration)
-
-        # Create slices
-        slices = []
-        for i in range(len(slice_points) - 1):
-            start_time = slice_points[i]
-            end_time = slice_points[i + 1]
-
-            start_sample = int(start_time * sr)
-            end_sample = int(end_time * sr)
-
-            slice_data = data[start_sample:end_sample]
-
-            slices.append(Slice(
-                start=start_time,
-                end=end_time,
-                data=slice_data,
-                sample_rate=sr,
-                index=i
-            ))
-
-        self._slices = slices
-        return slices
-
-    def _detect_onsets(self, data: np.ndarray, sr: float, sensitivity: float) -> List[float]:
-        """Detect onset times in audio
-
-        Args:
-            data: Audio data
-            sr: Sample rate
-            sensitivity: Sensitivity (0-1)
-
-        Returns:
-            List of onset times in seconds
-        """
-        # Simplified onset detection using spectral flux
-        hop_size = 512
-        window_size = 2048
-
-        # Compute spectrogram
-        num_frames = (len(data) - window_size) // hop_size + 1
-        spectral_flux = []
-
-        for i in range(num_frames):
-            start = i * hop_size
-            end = start + window_size
-
-            window = data[start:end] * np.hanning(window_size)
-            spectrum = np.abs(np.fft.rfft(window))
-
-            if i > 0:
-                flux = np.sum(np.maximum(0, spectrum - prev_spectrum))
-                spectral_flux.append(flux)
-
-            prev_spectrum = spectrum
-
-        spectral_flux = np.array(spectral_flux)
-
-        # Threshold based on sensitivity
-        threshold = np.percentile(spectral_flux, 100 * (1.0 - sensitivity))
-        onset_frames = np.where(spectral_flux > threshold)[0]
-
-        # Convert to time
-        onset_times = onset_frames * hop_size / sr
-
-        return onset_times.tolist()
-
-    def _filter_onsets(self, onsets: List[float], min_duration: float) -> List[float]:
-        """Filter onsets by minimum duration"""
-        filtered = [onsets[0]] if onsets else []
-
-        for onset in onsets[1:]:
-            if onset - filtered[-1] >= min_duration:
-                filtered.append(onset)
-
-        return filtered
-
-    def _select_prominent_onsets(
-        self,
-        onsets: List[float],
-        data: np.ndarray,
-        sr: float,
-        max_slices: int
-    ) -> List[float]:
-        """Select most prominent onsets"""
-        # Calculate onset strength for each onset
-        onset_strengths = []
-        window_size = int(0.05 * sr)  # 50ms window
-
-        for onset in onsets:
-            sample = int(onset * sr)
-            start = max(0, sample - window_size // 2)
-            end = min(len(data), sample + window_size // 2)
-
-            segment = data[start:end]
-            strength = np.max(np.abs(segment))
-            onset_strengths.append(strength)
-
-        # Select top N by strength
-        onset_strength_pairs = list(zip(onsets, onset_strengths))
-        onset_strength_pairs.sort(key=lambda x: x[1], reverse=True)
-
-        selected_onsets = [onset for onset, _ in onset_strength_pairs[:max_slices]]
-        selected_onsets.sort()
-
-        return selected_onsets
-
-    @property
-    def slices(self) -> List[Slice]:
-        """Get current slices"""
-        if self._slices is None:
-            self.detect_slices()
-        return self._slices
-
-    def export_slices(
-        self,
-        output_dir: str,
-        name_template: str = "slice_{index:03d}.wav",
-        format: str = "wav"
-    ) -> List[str]:
-        """Export all slices as individual files
-
-        Args:
-            output_dir: Output directory
-            name_template: Filename template (use {index} for slice number)
-            format: Audio format
-
-        Returns:
-            List of exported file paths
-        """
-        output_path = Path(output_dir)
-        output_path.mkdir(parents=True, exist_ok=True)
-
-        exported_files = []
-        for slice in self.slices:
-            filename = name_template.format(index=slice.index)
-            filepath = output_path / filename
-
-            slice.export(str(filepath), format=format)
-            exported_files.append(str(filepath))
-
-        return exported_files
-
-class SliceCollection:
-    """Collection of audio slices with manipulation methods"""
-
-    def __init__(self, slices: List[Slice]):
-        """Initialize slice collection
-
-        Args:
-            slices: List of Slice objects
-        """
-        self.slices = slices
-
-    def shuffle(self) -> 'SliceCollection':
-        """Shuffle slices randomly"""
-        shuffled = self.slices.copy()
-        random.shuffle(shuffled)
-        return SliceCollection(shuffled)
-
-    def reverse(self) -> 'SliceCollection':
-        """Reverse slice order"""
-        return SliceCollection(self.slices[::-1])
-
-    def repeat(self, times: int) -> 'SliceCollection':
-        """Repeat entire sequence"""
-        return SliceCollection(self.slices * times)
-
-    def filter(self, predicate: Callable[[Slice], bool]) -> 'SliceCollection':
-        """Filter slices by predicate"""
-        filtered = [s for s in self.slices if predicate(s)]
-        return SliceCollection(filtered)
-
-    def sort_by_duration(self, reverse: bool = False) -> 'SliceCollection':
-        """Sort slices by duration"""
-        sorted_slices = sorted(self.slices, key=lambda s: s.duration, reverse=reverse)
-        return SliceCollection(sorted_slices)
-
-    def select(self, indices: List[int]) -> 'SliceCollection':
-        """Select specific slices by index"""
-        selected = [self.slices[i] for i in indices if 0 <= i < len(self.slices)]
-        return SliceCollection(selected)
-
-    def apply_pattern(self, pattern: List[int]) -> 'SliceCollection':
-        """Apply pattern (e.g., [0, 1, 2, 1] to repeat certain slices)"""
-        patterned = [self.slices[i % len(self.slices)] for i in pattern]
-        return SliceCollection(patterned)
-
-    def __len__(self) -> int:
-        return len(self.slices)
-
-    def __getitem__(self, index: int) -> Slice:
-        return self.slices[index]
-
-class SliceRecombinator:
-    """Recombine slices into new audio files"""
-
-    def __init__(self, slices: Union[List[Slice], SliceCollection]):
-        """Initialize recombinator
-
-        Args:
-            slices: List of slices or SliceCollection
-        """
-        if isinstance(slices, SliceCollection):
-            self.slices = slices.slices
-        else:
-            self.slices = slices
-
-    def recombine(
-        self,
-        method: RecombineMethod = "original",
-        crossfade_duration: float = 0.01,
-        normalize: bool = True,
-        **kwargs
-    ) -> np.ndarray:
-        """Recombine slices into continuous audio
-
-        Args:
-            method: Recombination method
-            crossfade_duration: Crossfade between slices in seconds
-            normalize: Normalize output audio
-            **kwargs: Method-specific parameters
-
-        Returns:
-            Recombined audio data
-        """
-        if method == "original":
-            return self._recombine_original(crossfade_duration, normalize)
-        elif method == "random":
-            return self._recombine_random(crossfade_duration, normalize, **kwargs)
-        elif method == "reverse":
-            return self._recombine_reverse(crossfade_duration, normalize)
-        elif method == "pattern":
-            return self._recombine_pattern(crossfade_duration, normalize, **kwargs)
-        elif method == "custom":
-            return self._recombine_custom(crossfade_duration, normalize, **kwargs)
-        else:
-            raise ValueError(f"Unknown recombination method: {method}")
-
-    def _recombine_original(self, crossfade_duration: float, normalize: bool) -> np.ndarray:
-        """Recombine in original order"""
-        return self._concatenate_slices(self.slices, crossfade_duration, normalize)
-
-    def _recombine_random(
-        self,
-        crossfade_duration: float,
-        normalize: bool,
-        num_slices: Optional[int] = None
-    ) -> np.ndarray:
-        """Recombine in random order
-
-        Args:
-            num_slices: Number of slices to use (None = all, with replacement)
-        """
-        if num_slices is None:
-            num_slices = len(self.slices)
-
-        random_slices = random.choices(self.slices, k=num_slices)
-        return self._concatenate_slices(random_slices, crossfade_duration, normalize)
-
-    def _recombine_reverse(self, crossfade_duration: float, normalize: bool) -> np.ndarray:
-        """Recombine in reverse order"""
-        return self._concatenate_slices(self.slices[::-1], crossfade_duration, normalize)
-
-    def _recombine_pattern(
-        self,
-        crossfade_duration: float,
-        normalize: bool,
-        pattern: List[int] = None
-    ) -> np.ndarray:
-        """Recombine using pattern
-
-        Args:
-            pattern: List of slice indices (e.g., [0, 1, 2, 1, 0])
-        """
-        if pattern is None:
-            raise ValueError("pattern parameter required for pattern method")
-
-        patterned_slices = [self.slices[i % len(self.slices)] for i in pattern]
-        return self._concatenate_slices(patterned_slices, crossfade_duration, normalize)
-
-    def _recombine_custom(
-        self,
-        crossfade_duration: float,
-        normalize: bool,
-        order_func: Callable[[List[Slice]], List[Slice]] = None
-    ) -> np.ndarray:
-        """Recombine using custom ordering function
-
-        Args:
-            order_func: Function that takes list of slices and returns reordered list
-        """
-        if order_func is None:
-            raise ValueError("order_func parameter required for custom method")
-
-        ordered_slices = order_func(self.slices)
-        return self._concatenate_slices(ordered_slices, crossfade_duration, normalize)
-
-    def _concatenate_slices(
-        self,
-        slices: List[Slice],
-        crossfade_duration: float,
-        normalize: bool
-    ) -> np.ndarray:
-        """Concatenate slices with crossfading"""
-        if not slices:
-            return np.array([])
-
-        # Get sample rate (assume all slices have same rate)
-        sr = slices[0].sample_rate
-        crossfade_samples = int(crossfade_duration * sr)
-
-        # Calculate total length
-        total_samples = sum(len(s.data) for s in slices)
-        # Subtract overlaps
-        total_samples -= crossfade_samples * (len(slices) - 1)
-
-        # Prepare output buffer
-        output = np.zeros(total_samples)
-
-        current_pos = 0
-        for i, slice in enumerate(slices):
-            slice_data = slice.data
-
-            if i > 0 and crossfade_samples > 0:
-                # Apply crossfade with previous slice
-                overlap_start = current_pos - crossfade_samples
-                overlap_end = current_pos
-
-                # Create fade curves
-                fade_out = np.linspace(1, 0, crossfade_samples)
-                fade_in = np.linspace(0, 1, crossfade_samples)
-
-                # Apply crossfade
-                output[overlap_start:overlap_end] *= fade_out
-                output[overlap_start:overlap_end] += slice_data[:crossfade_samples] * fade_in
-
-                # Add rest of slice
-                slice_start = crossfade_samples
-                slice_end = len(slice_data)
-                output[current_pos:current_pos + slice_end - slice_start] = slice_data[slice_start:]
-
-                current_pos += slice_end - slice_start
-            else:
-                # No crossfade for first slice
-                output[current_pos:current_pos + len(slice_data)] = slice_data
-                current_pos += len(slice_data)
-
-        if normalize:
-            # Normalize to -1 to 1 range
-            max_val = np.max(np.abs(output))
-            if max_val > 0:
-                output = output / max_val
-
-        return output
-
-    def export(
-        self,
-        output_path: str,
-        method: RecombineMethod = "original",
-        format: str = "wav",
-        **kwargs
-    ) -> None:
-        """Recombine and export to file
-
-        Args:
-            output_path: Output file path
-            method: Recombination method
-            format: Audio format
-            **kwargs: Method-specific parameters
-        """
-        audio_data = self.recombine(method, **kwargs)
-
-        # Export using AudioFile
-        with cm.AudioFile(output_path, mode='w') as af:
-            sr = self.slices[0].sample_rate
-            audio_format = cm.AudioFormat(
-                sample_rate=sr,
-                format_id='lpcm',
-                channels_per_frame=audio_data.shape[1] if audio_data.ndim > 1 else 1,
-                bits_per_channel=16
-            )
-            af.format = audio_format
-            af.write_frames(audio_data)
-
-# Usage Examples
-if __name__ == "__main__":
-
-    # Example 1: Automatic onset-based slicing
-    slicer = AudioSlicer("drums.wav", method="onset", sensitivity=0.7)
-    slices = slicer.detect_slices(min_slice_duration=0.05, max_slices=32)
-
-    print(f"Detected {len(slices)} slices")
-    for i, slice in enumerate(slices[:5]):
-        print(f"  Slice {i}: {slice.start:.3f}s - {slice.end:.3f}s ({slice.duration:.3f}s)")
-
-    # Export individual slices
-    slicer.export_slices("output/slices", name_template="drum_slice_{index:03d}.wav")
-
-    # Example 2: Grid-based slicing (16ths at 120 BPM)
-    grid_slicer = AudioSlicer("loop.wav", method="grid")
-    slices = grid_slicer.detect_slices(divisions=16, tempo=120.0, time_signature=(4, 4))
-
-    # Example 3: Zero-crossing slicing (glitch-free)
-    zc_slicer = AudioSlicer("sample.wav", method="zero_crossing")
-    slices = zc_slicer.detect_slices(target_slices=8, snap_to_zero=True)
-
-    # Example 4: Manual slicing at specific points
-    manual_slicer = AudioSlicer("speech.wav", method="manual")
-    slices = manual_slicer.detect_slices(slice_points=[0.0, 1.5, 3.2, 5.0, 7.8])
-
-    # Example 5: Slice manipulation
-    collection = SliceCollection(slices)
-
-    # Shuffle slices
-    shuffled = collection.shuffle()
-
-    # Apply pattern (stuttering effect)
-    pattern = [0, 0, 1, 2, 2, 2, 3, 4]
-    patterned = collection.apply_pattern(pattern)
-
-    # Filter short slices
-    long_slices = collection.filter(lambda s: s.duration > 0.1)
-
-    # Example 6: Recombine slices
-    recombinator = SliceRecombinator(slices)
-
-    # Random recombination
-    random_audio = recombinator.recombine(method="random", num_slices=24)
-    recombinator.export("output/random_version.wav", method="random", num_slices=24)
-
-    # Reverse recombination
-    recombinator.export("output/reversed_version.wav", method="reverse")
-
-    # Pattern-based recombination
-    recombinator.export(
-        "output/pattern_version.wav",
-        method="pattern",
-        pattern=[0, 1, 2, 1, 0, 3, 4, 3]
-    )
-
-    # Custom recombination (sort by duration)
-    def sort_by_duration(slices):
-        return sorted(slices, key=lambda s: s.duration)
-
-    recombinator.export(
-        "output/sorted_version.wav",
-        method="custom",
-        order_func=sort_by_duration
-    )
-
-    # Example 7: Beat slicing for sampling
-    beat_slicer = AudioSlicer("breakbeat.wav", method="onset", sensitivity=0.6)
-    beat_slices = beat_slicer.detect_slices(max_slices=16)
-
-    # Create slice collection
-    beats = SliceCollection(beat_slices)
-
-    # Create variations
-    half_time = beats.repeat(2)  # Each slice twice
-    double_time = beats.select([0, 2, 4, 6, 8, 10, 12, 14])  # Skip every other
-
-    # Export variations
-    SliceRecombinator(half_time).export("output/half_time.wav")
-    SliceRecombinator(double_time).export("output/double_time.wav")
-
-    # Example 8: Creative glitch effects
-    glitch_slicer = AudioSlicer("vocal.wav", method="transient", sensitivity=0.8)
-    glitch_slices = glitch_slicer.detect_slices(window_size=0.01)
-
-    # Very short slices for glitching
-    glitch_collection = SliceCollection(glitch_slices)
-
-    # Extreme shuffle with short crossfades
-    glitch_recombinator = SliceRecombinator(glitch_collection.shuffle())
-    glitch_audio = glitch_recombinator.recombine(
-        method="random",
-        num_slices=200,
-        crossfade_duration=0.001,  # 1ms crossfade
-        normalize=True
-    )
-    glitch_recombinator.export("output/glitch_version.wav", method="random", num_slices=200)
+from coremusic.audio import AudioSlicer, SliceCollection, SliceRecombinator
+
+# Detect slices using onset detection
+slicer = AudioSlicer("drum_loop.wav", method="onset", sensitivity=0.7)
+slices = slicer.slice()
+
+# Create collection and filter
+collection = SliceCollection(slices)
+loud_slices = collection.filter_by_loudness(min_loudness=0.5)
+
+# Manipulate individual slices
+processed = [
+    slice.normalize().fade_in(0.01).fade_out(0.01)
+    for slice in loud_slices
+]
+
+# Recombine with pattern
+recombinator = SliceRecombinator(processed)
+result = recombinator.recombine(method="pattern", pattern=[0, 2, 1, 3, 0, 2])
+recombinator.export("output.wav")
 ```
 
-**Benefits:**
-- Multiple slicing methods for different use cases
-- Flexible slice manipulation and recombination
-- Creative audio mangling and glitch effects
-- Beat slicing for sample-based production
-- Zero-crossing detection for glitch-free slicing
-- Integration with analysis module for intelligent slicing
-- Export individual slices or recombined results
+**Key Implementation Details:**
+- Onset detection using spectral flux algorithm
+- Transient detection via amplitude envelope analysis
+- Zero-crossing detection with RMS threshold
+- Support for both mono and stereo audio
+- Fluent API for method chaining on slices
+- NumPy-based audio processing for efficiency
 
-**Use Cases:**
-- Beat slicing and manipulation
-- Sample preparation for samplers/drum machines
-- Creative audio effects (stuttering, glitching)
+**Benefits:**
+- Professional audio manipulation without external libraries
+- Creative remixing and rhythmic manipulation
+- Sample-based music production workflows
+- Beat slicing for DJ applications
 - Remix and mashup creation
 - Audio fragmentation for algorithmic composition
 - Speech processing and rearrangement

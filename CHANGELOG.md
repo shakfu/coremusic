@@ -19,6 +19,145 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Added
 
+- **Audio Slicing and Recombination** - Complete audio slicing framework for creative sample manipulation (October 2025)
+  - **New Module**: `coremusic.audio.slicing` provides comprehensive audio slicing and recombination tools
+  - **Slicing Methods**: 5 different slicing algorithms for various use cases
+    - **Onset Detection**: Spectral flux-based onset detection for rhythmic material
+    - **Transient Detection**: Envelope analysis with dB thresholding for dynamic changes
+    - **Zero-Crossing Detection**: Glitch-free slicing at zero crossings
+    - **Grid-Based Slicing**: Regular equal-duration divisions with optional beat alignment
+    - **Manual Slicing**: User-specified time points for precise control
+  - **Slice Dataclass** with properties for duration and sample count
+  - **AudioSlicer Class** for detecting and extracting audio slices
+    - Configurable sensitivity parameter (0.0-1.0)
+    - Optional maximum slice count limiting
+    - Minimum slice duration filtering
+    - Export slices as individual audio files
+  - **SliceCollection Class** with fluent API for slice manipulation
+    - `shuffle()` - Randomize slice order
+    - `reverse()` - Reverse slice sequence
+    - `repeat(times)` - Duplicate slices
+    - `filter(predicate)` - Filter slices by condition
+    - `sort_by_duration()` - Sort by slice length
+    - `select(indices)` - Select specific slices
+    - `apply_pattern(pattern)` - Apply custom patterns
+    - Method chaining support for complex operations
+  - **SliceRecombinator Class** with 5 recombination strategies
+    - **Original**: Maintain original order with crossfading
+    - **Random**: Random selection and ordering
+    - **Reverse**: Reversed order
+    - **Pattern**: Custom index-based patterns
+    - **Custom**: User-defined ordering functions
+    - Crossfading algorithm for smooth transitions (configurable duration)
+    - Optional normalization of output audio
+  - **Comprehensive Test Coverage**: 50 tests in `tests/test_audio_slicing.py` (100% passing)
+  - **Interactive Demo**: `tests/demos/demo_audio_slicing.py` with 9 examples
+  - **Total Test Count**: 942 tests passing, 33 skipped (up from 905 passed)
+
+  **Example Usage:**
+
+  ```python
+  import coremusic as cm
+
+  # Slice using onset detection
+  slicer = cm.AudioSlicer("drums.wav", method="onset", sensitivity=0.6)
+  slices = slicer.detect_slices(min_slice_duration=0.05, max_slices=16)
+
+  # Manipulate slices with fluent API
+  collection = cm.SliceCollection(slices)
+  shuffled = collection.filter(lambda s: s.duration > 0.1).shuffle().repeat(2)
+
+  # Recombine with crossfading
+  recombinator = cm.SliceRecombinator(shuffled)
+  output = recombinator.recombine(method="random", crossfade_duration=0.01)
+  recombinator.export("output.wav", method="pattern", pattern=[0, 2, 1, 3])
+
+  # Grid slicing with beat alignment
+  grid_slicer = cm.AudioSlicer("audio.wav", method="grid")
+  slices = grid_slicer.detect_slices(divisions=16, tempo=120.0)
+
+  # Zero-crossing for glitch-free slicing
+  zc_slicer = cm.AudioSlicer("audio.wav", method="zero_crossing")
+  slices = zc_slicer.detect_slices(target_slices=8, snap_to_zero=True)
+  ```
+
+  **Use Cases:**
+  - Beat slicing for drum loops and rhythm manipulation
+  - Creative sample recombination and glitch effects
+  - Automatic audio segmentation for music analysis
+  - Live performance sample triggering
+  - Audio collage and mashup creation
+
+- **Audio Visualization** - Comprehensive visualization tools for audio analysis (October 2025)
+  - **New Module**: `coremusic.audio.visualization` provides matplotlib-based audio visualization
+  - **WaveformPlotter Class** for waveform visualization
+    - Basic waveform plotting with time axis
+    - Optional RMS envelope overlay (configurable window size)
+    - Optional peak envelope overlay
+    - Time range zooming (plot specific sections)
+    - Custom figure sizes and titles
+    - Save to file (PNG, PDF, etc.) with configurable DPI
+  - **SpectrogramPlotter Class** for time-frequency analysis
+    - STFT-based spectrogram generation
+    - Configurable window size and hop size
+    - Multiple colormap support (viridis, magma, plasma, inferno)
+    - Window function selection (hann, hamming, blackman)
+    - dB scale with configurable min/max values
+    - Save spectrograms with high quality
+  - **FrequencySpectrumPlotter Class** for spectral analysis
+    - Instant spectrum at specific time points
+    - Average spectrum over time ranges
+    - Logarithmic frequency scale
+    - Configurable FFT window sizes (2048, 4096, 8192)
+    - Frequency range filtering (min/max Hz)
+    - Multiple window function support
+  - **matplotlib Integration**: High-quality publication-ready plots
+  - **Optional Dependency**: Gracefully handles missing matplotlib
+  - **Comprehensive Test Coverage**: 37 tests in `tests/test_audio_visualization.py` (100% passing)
+  - **Interactive Demo**: `tests/demos/demo_audio_visualization.py` with 11 examples
+  - **Total Test Count**: 942 tests passing, 33 skipped (up from 905 passed)
+
+  **Example Usage:**
+
+  ```python
+  import coremusic as cm
+
+  # Plot waveform with envelopes
+  plotter = cm.WaveformPlotter("audio.wav")
+  fig, ax = plotter.plot(show_rms=True, show_peaks=True)
+  plotter.save("waveform.png", dpi=150)
+
+  # Generate spectrogram
+  spec = cm.SpectrogramPlotter("audio.wav")
+  fig, ax = spec.plot(window_size=2048, cmap="magma", min_db=-80)
+  spec.save("spectrogram.png")
+
+  # Frequency spectrum analysis
+  spectrum = cm.FrequencySpectrumPlotter("audio.wav")
+
+  # At specific time
+  fig, ax = spectrum.plot(time=1.0, window_size=4096)
+
+  # Averaged over time range
+  fig, ax = spectrum.plot_average(time_range=(0, 5), hop_size=1024)
+  spectrum.save("spectrum.png")
+
+  # Complete workflow
+  waveform = cm.WaveformPlotter("audio.wav")
+  waveform.plot(time_range=(0.5, 1.5), show_rms=True)  # Zoom to specific range
+
+  spec = cm.SpectrogramPlotter("audio.wav")
+  spec.plot(window_size=1024, hop_size=256, cmap="plasma")
+  ```
+
+  **Use Cases:**
+  - Audio analysis and debugging
+  - Music production visualization
+  - Scientific audio research
+  - Educational demonstrations
+  - Publication-quality figures
+  - Real-time audio monitoring (with matplotlib animation)
+
 - **OSStatus Error Translation** - Human-readable error messages with recovery suggestions (October 2025)
   - **New Module**: `coremusic.os_status` provides comprehensive OSStatus error code translation
   - **Error Code Coverage**: 100+ error codes from all CoreAudio frameworks
