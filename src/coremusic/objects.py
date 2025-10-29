@@ -1531,15 +1531,44 @@ class AudioUnit(capi.CoreAudioObject):
 
     @sample_rate.setter
     def sample_rate(self, rate: float) -> None:
-        """Set the sample rate (kAudioUnitProperty_SampleRate on global scope)"""
+        """Set the sample rate (kAudioUnitProperty_SampleRate)"""
         self._ensure_not_disposed()
-        try:
-            import struct
+        import struct
 
-            data = struct.pack("<d", rate)
+        data = struct.pack("<d", rate)
+
+        # Try input scope first (for output units, input scope is configurable before init)
+        try:
+            self.set_property(
+                2, capi.get_audio_unit_scope_input(), 0, data
+            )  # kAudioUnitProperty_SampleRate = 2
+            return
+        except Exception:
+            pass
+
+        # Try output scope (may work after initialization)
+        try:
+            self.set_property(
+                2, capi.get_audio_unit_scope_output(), 0, data
+            )
+            return
+        except Exception:
+            pass
+
+        # Try global scope as fallback
+        try:
             self.set_property(
                 2, capi.get_audio_unit_scope_global(), 0, data
-            )  # kAudioUnitProperty_SampleRate = 2
+            )
+            return
+        except Exception:
+            pass
+
+        # Last resort: try to set via stream format on input scope
+        try:
+            format_data = self.get_stream_format("input", 0)
+            format_data.sample_rate = rate
+            self.set_stream_format(format_data, "input", 0)
         except Exception as e:
             raise AudioUnitError(f"Failed to set sample rate: {e}")
 
