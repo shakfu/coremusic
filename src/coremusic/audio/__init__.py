@@ -6,6 +6,7 @@ This package contains audio-related modules:
 - streaming: Real-time audio streaming and processing
 - analysis: Audio analysis and feature extraction
 - slicing: Audio slicing and recombination
+- visualization: Audio visualization and plotting
 """
 
 # Import async I/O classes
@@ -19,6 +20,9 @@ from .analysis import *
 
 # Import slicing classes
 from .slicing import *
+
+# Import visualization classes
+from .visualization import *
 
 __all__ = [
     # Async I/O
@@ -43,4 +47,10 @@ __all__ = [
     "SliceRecombinator",
     "SliceMethod",
     "RecombineMethod",
+    # Visualization
+    "WaveformPlotter",
+    "SpectrogramPlotter",
+    "FrequencySpectrumPlotter",
+    "MATPLOTLIB_AVAILABLE",
+    "NUMPY_AVAILABLE",
 ]
