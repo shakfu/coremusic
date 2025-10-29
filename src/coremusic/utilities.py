@@ -46,7 +46,13 @@ __all__ = [
     "list_available_audio_units",
     "parse_audio_stream_basic_description",
     "trim_audio",
+    # Re-export batch processing utilities for convenience
+    "batch_process_parallel",
+    "batch_process_files",
 ]
+
+# Import batch processing utilities for convenience
+from .utils.batch import batch_process_parallel, batch_process_files
 
 # ============================================================================
 # AudioStreamBasicDescription Parsing
