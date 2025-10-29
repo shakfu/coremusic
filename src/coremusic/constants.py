@@ -82,21 +82,21 @@ class AudioFileProperty(IntEnum):
     FILE_FORMAT = 1717988724  # 'ffmt'
     MAXIMUM_PACKET_SIZE = 1886616165  # 'psze'
     AUDIO_DATA_PACKET_COUNT = 1885564532  # 'pcnt'
-    AUDIO_DATA_BYTE_COUNT = 1650680675  # 'bcnt'
+    AUDIO_DATA_BYTE_COUNT = 1650683508  # 'bcnt'
     ESTIMATED_DURATION = 1701082482  # 'edur'
     BIT_RATE = 1651663220  # 'brat'
     INFO_DICTIONARY = 1768842863  # 'info'
-    CHANNEL_LAYOUT = 1668116588  # 'cmap'
+    CHANNEL_LAYOUT = 1668112752  # 'cmap'
     FORMAT_LIST = 1718383476  # 'flst'
-    PACKET_SIZE_UPPER_BOUND = 1886616695  # 'pkub'
-    RESERVE_DURATION = 1920168310  # 'rsrv'
+    PACKET_SIZE_UPPER_BOUND = 1886090594  # 'pkub'
+    RESERVE_DURATION = 1920168566  # 'rsrv'
     PACKET_TABLE_INFO = 1886283375  # 'pnfo'
-    MARKER_LIST = 1835296868  # 'mkls'
-    REGION_LIST = 1919380596  # 'rgls'
+    MARKER_LIST = 1835756659  # 'mkls'
+    REGION_LIST = 1919380595  # 'rgls'
     CHUNK_IDS = 1667787108  # 'chid'
-    DATA_OFFSET = 1685283686  # 'doff'
-    DATA_SIZE = 1684632435  # 'dsiz'
-    DATA_IS_BIG_ENDIAN = 1684222838  # 'dfbe'
+    DATA_OFFSET = 1685022310  # 'doff'
+    DATA_SIZE = 1685285242  # 'dsiz'
+    DATA_IS_BIG_ENDIAN = 1684431461  # 'dfbe'
 
 
 class AudioFileType(IntEnum):
@@ -197,12 +197,12 @@ class LinearPCMFormatFlag(IntEnum):
 
 class AudioConverterProperty(IntEnum):
     """Audio converter property IDs (AudioConverterPropertyID)"""
-    MIN_INPUT_BUFFER_SIZE = 1481656677  # 'xmib'
+    MIN_INPUT_BUFFER_SIZE = 2020436322  # 'xmib'
     MIN_OUTPUT_BUFFER_SIZE = 1481655666  # 'xmob'
     MAX_INPUT_PACKET_SIZE = 1481656691  # 'xmip'
     MAX_OUTPUT_PACKET_SIZE = 1481656688  # 'xmop'
     SAMPLE_RATE_CONVERTER_QUALITY = 1936876401  # 'srcq'
-    CODEC_QUALITY = 1667460977  # 'cdqu'
+    CODEC_QUALITY = 1667527029  # 'cdqu'
     CURRENT_INPUT_STREAM_DESCRIPTION = 1633906541  # 'aisd'
     CURRENT_OUTPUT_STREAM_DESCRIPTION = 1633905012  # 'aosd'
     PROPERTY_SETTINGS = 1633903476  # 'acps'
@@ -232,11 +232,11 @@ class AudioConverterQuality(IntEnum):
 class ExtendedAudioFileProperty(IntEnum):
     """Extended audio file property IDs (ExtAudioFilePropertyID)"""
     FILE_DATA_FORMAT = 1717988724  # 'ffmt'
-    CLIENT_DATA_FORMAT = 1667655782  # 'cfmt'
-    FILE_CHANNEL_LAYOUT = 1717856108  # 'fclo'
+    CLIENT_DATA_FORMAT = 1667657076  # 'cfmt'
+    FILE_CHANNEL_LAYOUT = 1717791855  # 'fclo'
     CLIENT_CHANNEL_LAYOUT = 1667788144  # 'cclo'
     CODEC_MANUFACTURER = 1668446576  # 'cman'
-    AUDIO_FILE = 1633771110  # 'afil'
+    AUDIO_FILE = 1634101612  # 'afil'
     FILE_LENGTH_FRAMES = 1718509674  # 'flgf'
     AUDIO_CONVERTER = 1633907830  # 'acnv'
     CLIENT_MAX_PACKET_SIZE = 1668048243  # 'cmps'
@@ -461,9 +461,9 @@ class MIDIControlChange(IntEnum):
 class MIDIObjectProperty(IntEnum):
     """MIDI object property IDs"""
     NAME = 1851878757  # 'name'
-    MANUFACTURER = 1835101550  # 'manu'
-    MODEL = 1836082031  # 'modl'
-    UNIQUE_ID = 1970631004  # 'unid'
+    MANUFACTURER = 1835101813  # 'manu'
+    MODEL = 1836016748  # 'modl'
+    UNIQUE_ID = 1970170212  # 'unid'
     DEVICE_ID = 1684632436  # 'devd'
     RECEIVE_CHANNELS = 1919247470  # 'rch#'
     TRANSMIT_CHANNELS = 1919894126  # 'tch#'
