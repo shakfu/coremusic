@@ -39,6 +39,17 @@ from .midi import link as link_midi
 from . import audio
 from . import midi
 from . import utils
+from . import daw
+
+# Import DAW classes for convenience
+from .daw import (
+    Timeline,
+    Track,
+    Clip,
+    TimelineMarker,
+    TimeRange,
+    AutomationLane,
+)
 
 # Import AudioUnit hosting
 from .audio.audiounit_host import (
@@ -110,4 +121,12 @@ __all__ = [
     "PresetManager",
     # NumPy availability flag
     "NUMPY_AVAILABLE",
+    # DAW Essentials
+    "daw",  # daw module
+    "Timeline",
+    "Track",
+    "Clip",
+    "TimelineMarker",
+    "TimeRange",
+    "AutomationLane",
 ]

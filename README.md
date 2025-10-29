@@ -53,6 +53,13 @@
 
 - **Link + CoreMIDI Sync**: MIDI clock and sequencing synchronized to Link beat grid
 
+- **DAW Essentials**: High-level Digital Audio Workstation building blocks
+  - Multi-track audio and MIDI timeline with transport control
+  - Clip management with trimming, fades, and automation
+  - Marker and loop region support
+  - AudioUnit plugin integration per track
+  - Parameter automation with multiple interpolation modes
+
 ## Supported Frameworks
 
 ### CoreAudio
@@ -571,6 +578,58 @@ with cm.link.LinkSession(bpm=120.0) as session:
     seq.stop()
 ```
 
+### DAW Timeline and Multi-Track Operations
+
+```python
+import coremusic as cm
+
+# Create DAW timeline
+timeline = cm.Timeline(sample_rate=48000, tempo=128.0)
+
+# Add tracks
+drums = timeline.add_track("Drums", "audio")
+vocals = timeline.add_track("Vocals", "audio")
+
+# Add clips with trimming and fades
+drums.add_clip(cm.Clip("drums.wav"), start_time=0.0)
+vocals.add_clip(
+    cm.Clip("vocals.wav").trim(2.0, 26.0).set_fades(0.5, 1.0),
+    start_time=8.0
+)
+
+# Add automation
+volume_auto = vocals.automate("volume")
+volume_auto.add_point(8.0, 0.0)   # Fade in
+volume_auto.add_point(10.0, 1.0)  # Full volume
+volume_auto.add_point(30.0, 1.0)
+volume_auto.add_point(32.0, 0.0)  # Fade out
+
+# Add markers and loop region
+timeline.add_marker(0.0, "Intro")
+timeline.add_marker(16.0, "Chorus", color="#FF0000")
+timeline.set_loop_region(16.0, 32.0)
+
+# Transport control
+timeline.play()              # Start from current playhead
+timeline.play(from_time=8.0) # Start from specific time
+timeline.pause()             # Pause (keep playhead)
+timeline.stop()              # Stop (reset playhead)
+
+# Recording
+vocals.record_enable(True)
+timeline.record()  # Record on armed tracks
+
+# Enable Link synchronization
+timeline.enable_link(True)
+
+# Query timeline state
+print(f"Duration: {timeline.get_duration():.2f}s")
+print(f"Playhead: {timeline.playhead:.2f}s")
+print(f"Playing: {timeline.is_playing}")
+print(f"Tracks: {len(timeline.tracks)}")
+print(f"Markers: {len(timeline.markers)}")
+```
+
 ### CoreMIDI Basic Usage
 
 ```python
@@ -705,6 +764,24 @@ python3 tests/demos/link_high_level_demo.py
 python3 tests/demos/link_midi_demo.py
 ```
 
+### DAW Demos
+
+```bash
+# DAW essentials demo (10 examples)
+python3 tests/demos/demo_daw.py
+```
+
+This comprehensive demo includes:
+- Basic timeline creation and track management
+- Clip management with trimming and fades
+- Automation lanes with multiple interpolation modes (linear, step, cubic)
+- Markers and loop regions
+- Transport control (play, pause, stop, record)
+- Recording setup with track arming
+- Complete DAW workflow examples
+- Advanced track operations with clip queries
+- Time range operations
+
 ### Complete Test Suite
 
 ```bash
@@ -726,6 +803,7 @@ The complete test suite covers:
 - **AudioUnit MIDI**: Note on/off, control change, program change, pitch bend, multi-channel (19 tests)
 - **MIDI Operations**: Message creation, device management, and routing (both APIs)
 - **Link Integration**: Network tempo sync, beat quantization, Link + Audio/MIDI
+- **DAW Essentials**: Timeline, tracks, clips, automation, markers, transport control (52 tests)
 - **Integration Testing**: Cross-API compatibility and consistency
 - **Resource Management**: Automatic cleanup and disposal testing
 - **Error handling**: Edge cases and failure scenarios
@@ -899,7 +977,14 @@ coremusic provides near-native performance through both APIs:
 
 ### Professional Audio Applications
 
-- Digital Audio Workstations (DAWs)
+- **Digital Audio Workstations (DAWs)**
+  - Multi-track audio and MIDI recording
+  - Timeline-based editing with markers
+  - Clip-based arrangement workflows
+  - Parameter automation with curves
+  - Transport control and loop regions
+  - AudioUnit plugin hosting per track
+  - Link-synchronized collaboration
 - Audio effects and processors
 - Real-time audio synthesis
 - Multi-channel audio handling

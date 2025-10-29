@@ -17,7 +17,110 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.1.8]
+
 ### Added
+
+- **DAW (Digital Audio Workstation) Essentials Module** - Complete DAW building blocks for multi-track applications (January 2025)
+  - **New Module**: `coremusic.daw` provides high-level DAW abstractions
+  - **Timeline Class** - Multi-track timeline with transport control
+    - Sample rate and tempo configuration
+    - Multi-track audio and MIDI support
+    - Transport control: play, pause, stop, record
+    - Playhead position management
+    - Timeline duration calculation
+    - Ableton Link synchronization support
+    - Session state tracking (playing, recording)
+  - **Track Class** - Individual audio or MIDI track
+    - Audio and MIDI track types
+    - Clip management (add, remove, query by time)
+    - Volume, pan, mute, solo controls
+    - Recording arm state
+    - AudioUnit plugin chain integration
+    - Parameter automation lanes
+    - Automatic clip organization
+  - **Clip Class** - Audio/MIDI clip representation
+    - Audio file or MIDI sequence source
+    - Trim functionality with offset and duration
+    - Fade in/out support
+    - Gain control (linear multiplier)
+    - Method chaining for fluent API
+    - Automatic duration detection from audio files
+    - Timeline positioning (start time, end time)
+  - **AutomationLane Class** - Parameter automation
+    - Time-based automation points
+    - Three interpolation modes:
+      - Linear interpolation (smooth transitions)
+      - Step interpolation (instant changes)
+      - Cubic interpolation (smooth curves)
+    - Automatic point sorting by time
+    - Value interpolation at any time point
+    - Point management (add, remove, clear)
+  - **TimelineMarker Class** - Markers and cue points
+    - Position-based markers (seconds)
+    - Named markers with optional colors
+    - Automatic sorting by position
+    - Range-based marker queries
+  - **TimeRange Class** - Time range representation
+    - Start/end time with duration calculation
+    - Containment checking
+    - Loop region support
+  - **Integration Features**:
+    - AudioUnit plugin loading and configuration
+    - Ableton Link tempo synchronization
+    - Automatic clip duration from AudioFile
+    - Transport control with state management
+  - **Comprehensive Test Coverage**: 52 tests in `tests/test_daw.py` (100% passing)
+  - **Interactive Demo**: `tests/demos/demo_daw.py` with 10 examples
+  - **Total Test Count**: 1074 tests passing, 46 skipped (up from 1022 passed)
+
+  **Example Usage:**
+
+  ```python
+  import coremusic as cm
+
+  # Create DAW session
+  timeline = cm.Timeline(sample_rate=48000, tempo=128.0)
+
+  # Add tracks
+  drums = timeline.add_track("Drums", "audio")
+  vocals = timeline.add_track("Vocals", "audio")
+
+  # Add clips with trimming and fades
+  drums.add_clip(cm.Clip("drums.wav"), start_time=0.0)
+  vocals.add_clip(
+      cm.Clip("vocals.wav").trim(2.0, 26.0).set_fades(0.5, 1.0),
+      start_time=8.0
+  )
+
+  # Add automation
+  volume_auto = vocals.automate("volume")
+  volume_auto.add_point(8.0, 0.0)   # Fade in
+  volume_auto.add_point(10.0, 1.0)  # Full volume
+
+  # Add markers and loop region
+  timeline.add_marker(0.0, "Intro")
+  timeline.add_marker(16.0, "Chorus")
+  timeline.set_loop_region(16.0, 32.0)
+
+  # Transport control
+  timeline.play()
+  timeline.pause()
+  timeline.stop()
+
+  # Recording
+  vocals.record_enable(True)
+  timeline.record()
+  ```
+
+  **Use Cases:**
+  - Multi-track audio/MIDI recording applications
+  - DAW-like timeline interfaces
+  - Music production software
+  - Live performance tools with transport control
+  - Automated mixing and mastering workflows
+  - Educational DAW implementations
+  - Audio post-production tools
 
 - **Audio Analysis and Feature Extraction** - Comprehensive audio analysis framework for music information retrieval (October 2025)
   - **New Module**: `coremusic.audio.analysis` provides advanced audio analysis capabilities
@@ -479,26 +582,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ### Added
 
 - **AudioUnit Host Enhancements** - Advanced audio format support, preset management, and plugin chaining
-  - **AudioFormat Class** (`src/coremusic/audio_unit_host.py:18-93`)
+  - **AudioFormat Class** (`src/coremusic/audiounit_host.py:18-93`)
     - Support for multiple sample formats: `float32`, `float64`, `int16`, `int32`
     - Interleaved and non-interleaved buffer layout support
     - Properties: `bytes_per_sample`, `bytes_per_frame`
     - Format comparison and dictionary serialization
     - Type-safe format specification with string constants
-  - **AudioFormatConverter Class** (`src/coremusic/audio_unit_host.py:94-243`)
+  - **AudioFormatConverter Class** (`src/coremusic/audiounit_host.py:94-243`)
     - Automatic format conversion between any supported formats
     - Two-stage conversion pipeline: source → float32 interleaved → destination
     - Proper audio normalization to [-1.0, 1.0] range
     - Support for all format combinations (format, bit depth, channel layout)
     - Symmetric rounding for integer formats
-  - **PresetManager Class** (`src/coremusic/audio_unit_host.py:341-535`)
+  - **PresetManager Class** (`src/coremusic/audiounit_host.py:341-535`)
     - Complete preset lifecycle management (save/load/export/import)
     - JSON-based preset storage in `~/Library/Audio/Presets/coremusic/`
     - Preset metadata: name, description, plugin info, timestamp
     - Parameter state capture and restoration
     - Preset validation and compatibility checking
     - List, delete, export, and import operations
-  - **AudioUnitChain Class** (`src/coremusic/audio_unit_host.py:1169-1438`)
+  - **AudioUnitChain Class** (`src/coremusic/audiounit_host.py:1169-1438`)
     - Sequential plugin processing with automatic routing
     - Dynamic chain building: add, insert, remove plugins
     - Automatic format conversion between plugins
@@ -506,7 +609,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
     - Plugin configuration by index
     - Context manager support for automatic cleanup
     - Method chaining for fluent API
-  - **Enhanced AudioUnitPlugin** (`src/coremusic/audio_unit_host.py:565-930`)
+  - **Enhanced AudioUnitPlugin** (`src/coremusic/audiounit_host.py:565-930`)
     - `set_audio_format()` - Configure plugin audio format
     - `process()` enhanced with format parameter for automatic conversion
     - `save_preset()`, `load_preset()`, `list_user_presets()` - Preset management
@@ -561,7 +664,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   ```
 
 - **AudioUnit MIDI Support** - Complete MIDI control for AudioUnit instrument plugins
-  - **MIDI Methods in AudioUnitPlugin class** (`src/coremusic/audio_unit_host.py`)
+  - **MIDI Methods in AudioUnitPlugin class** (`src/coremusic/audiounit_host.py`)
     - `send_midi()` - Send raw MIDI messages to instrument plugins
     - `note_on()` - Send MIDI Note On with channel, note, velocity, and optional offset frames
     - `note_off()` - Send MIDI Note Off with channel, note, and optional velocity/offset
