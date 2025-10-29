@@ -237,7 +237,7 @@ class BatchResult(Generic[T, R]):
         return self.successful / self.total * 100.0
 
     @property
-    def successful_results(self) -> List[R]:
+    def successful_results(self) -> List[Optional[R]]:
         """List of successful results only (includes None values)."""
         return [r.result for r in self.results if r.success]
 

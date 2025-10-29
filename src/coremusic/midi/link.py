@@ -30,11 +30,11 @@ from dataclasses import dataclass
 from .. import capi
 
 if TYPE_CHECKING:
-    from . import link as link_module  # type: ignore[attr-defined]
+    from .. import link as link_module  # type: ignore[attr-defined]
 else:
     # Import at runtime (may fail during type checking)
     try:
-        from . import link as link_module  # type: ignore[attr-defined]
+        from .. import link as link_module
     except ImportError:
         link_module = None  # type: ignore[assignment]
 

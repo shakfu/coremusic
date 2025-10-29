@@ -137,8 +137,10 @@ class AsyncAudioFile:
         Returns:
             Tuple of (audio data as bytes, actual packet count)
         """
-        return await asyncio.to_thread(  # type: ignore[arg-type,call-arg]
-            self._audio_file.read_packets, start_packet, packet_count
+        return await asyncio.to_thread(  # type: ignore[call-arg]
+            self._audio_file.read_packets,  # type: ignore[arg-type]
+            start_packet,
+            packet_count,
         )
 
     async def read_chunks_async(
@@ -207,8 +209,10 @@ class AsyncAudioFile:
             Returns:
                 NumPy array with shape (frames, channels)
             """
-            return await asyncio.to_thread(  # type: ignore[attr-defined]
-                self._audio_file.read_as_numpy, start_packet, packet_count
+            return await asyncio.to_thread(
+                self._audio_file.read_as_numpy,  # type: ignore[attr-defined]
+                start_packet,
+                packet_count,
             )
 
         async def read_chunks_numpy_async(
@@ -241,8 +245,10 @@ class AsyncAudioFile:
             while True:
                 remaining = chunk_size
                 try:
-                    chunk = await asyncio.to_thread(  # type: ignore[attr-defined]
-                        self._audio_file.read_as_numpy, current_packet, remaining
+                    chunk = await asyncio.to_thread(
+                        self._audio_file.read_as_numpy,  # type: ignore[attr-defined]
+                        current_packet,
+                        remaining,
                     )
                 except Exception:
                     break
