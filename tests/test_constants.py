@@ -19,16 +19,16 @@ class TestConstantEnums:
 
     def test_audio_file_property_enum(self):
         """Test AudioFileProperty enum"""
-        assert constants.AudioFileProperty.DATA_FORMAT == 1684104552
+        assert constants.AudioFileProperty.DATA_FORMAT == 1684434292  # 'dfmt'
         assert constants.AudioFileProperty.FILE_FORMAT == 1717988724
         assert constants.AudioFileProperty.MAXIMUM_PACKET_SIZE == 1886616165
 
         # Can convert to int
         prop = constants.AudioFileProperty.DATA_FORMAT
-        assert int(prop) == 1684104552
+        assert int(prop) == 1684434292
 
         # Can compare with int
-        assert prop == 1684104552
+        assert prop == 1684434292
 
     def test_audio_format_id_enum(self):
         """Test AudioFormatID enum"""
@@ -95,7 +95,7 @@ class TestConstantEnums:
         assert prop != constants.AudioFileProperty.FILE_FORMAT
 
         # Compare with int
-        assert prop == 1684104552
+        assert prop == 1684434292
         assert prop != 1717988724
 
     def test_enum_can_be_used_in_sets_and_dicts(self):
@@ -149,10 +149,10 @@ class TestConstantEnums:
         """Test enum member name access"""
         prop = constants.AudioFileProperty.DATA_FORMAT
         assert prop.name == 'DATA_FORMAT'
-        assert prop.value == 1684104552
+        assert prop.value == 1684434292
 
     def test_enum_value_lookup(self):
         """Test looking up enum by value"""
-        prop = constants.AudioFileProperty(1684104552)
+        prop = constants.AudioFileProperty(1684434292)
         assert prop == constants.AudioFileProperty.DATA_FORMAT
         assert prop.name == 'DATA_FORMAT'
