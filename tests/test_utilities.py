@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 import coremusic as cm
 import coremusic.capi as capi
+from coremusic.audio.utilities import AudioAnalyzer
 
 
 class TestAudioAnalyzer:
@@ -22,7 +23,7 @@ class TestAudioAnalyzer:
     @pytest.mark.skipif(not cm.NUMPY_AVAILABLE, reason="NumPy not available")
     def test_detect_silence(self, amen_wav_path):
         """Test silence detection"""
-        silence_regions = cm.AudioAnalyzer.detect_silence(
+        silence_regions = AudioAnalyzer.detect_silence(
             amen_wav_path, threshold_db=-50, min_duration=0.1
         )
         assert isinstance(silence_regions, list)
@@ -36,7 +37,7 @@ class TestAudioAnalyzer:
     def test_detect_silence_with_audio_file_object(self, amen_wav_path):
         """Test silence detection with AudioFile object"""
         with cm.AudioFile(amen_wav_path) as audio:
-            silence_regions = cm.AudioAnalyzer.detect_silence(
+            silence_regions = AudioAnalyzer.detect_silence(
                 audio, threshold_db=-50, min_duration=0.1
             )
             assert isinstance(silence_regions, list)
@@ -44,7 +45,7 @@ class TestAudioAnalyzer:
     @pytest.mark.skipif(not cm.NUMPY_AVAILABLE, reason="NumPy not available")
     def test_get_peak_amplitude(self, amen_wav_path):
         """Test peak amplitude detection"""
-        peak = cm.AudioAnalyzer.get_peak_amplitude(amen_wav_path)
+        peak = AudioAnalyzer.get_peak_amplitude(amen_wav_path)
         assert isinstance(peak, float)
         assert 0 <= peak <= 1.5
 
@@ -52,30 +53,30 @@ class TestAudioAnalyzer:
     def test_get_peak_amplitude_with_audio_file_object(self, amen_wav_path):
         """Test peak amplitude with AudioFile object"""
         with cm.AudioFile(amen_wav_path) as audio:
-            peak = cm.AudioAnalyzer.get_peak_amplitude(audio)
+            peak = AudioAnalyzer.get_peak_amplitude(audio)
             assert isinstance(peak, float)
             assert peak > 0
 
     @pytest.mark.skipif(not cm.NUMPY_AVAILABLE, reason="NumPy not available")
     def test_calculate_rms(self, amen_wav_path):
         """Test RMS calculation"""
-        rms = cm.AudioAnalyzer.calculate_rms(amen_wav_path)
+        rms = AudioAnalyzer.calculate_rms(amen_wav_path)
         assert isinstance(rms, float)
         assert 0 < rms < 1.0
-        peak = cm.AudioAnalyzer.get_peak_amplitude(amen_wav_path)
+        peak = AudioAnalyzer.get_peak_amplitude(amen_wav_path)
         assert rms <= peak
 
     @pytest.mark.skipif(not cm.NUMPY_AVAILABLE, reason="NumPy not available")
     def test_calculate_rms_with_audio_file_object(self, amen_wav_path):
         """Test RMS with AudioFile object"""
         with cm.AudioFile(amen_wav_path) as audio:
-            rms = cm.AudioAnalyzer.calculate_rms(audio)
+            rms = AudioAnalyzer.calculate_rms(audio)
             assert isinstance(rms, float)
             assert rms > 0
 
     def test_get_file_info(self, amen_wav_path):
         """Test file info extraction"""
-        info = cm.AudioAnalyzer.get_file_info(amen_wav_path)
+        info = AudioAnalyzer.get_file_info(amen_wav_path)
         assert "path" in info
         assert "duration" in info
         assert "sample_rate" in info
@@ -320,13 +321,13 @@ class TestUtilitiesIntegration:
     @pytest.mark.skipif(not cm.NUMPY_AVAILABLE, reason="NumPy not available")
     def test_workflow_analyze_and_convert(self, amen_wav_path, temp_dir):
         """Test complete workflow: analyze then convert"""
-        info = cm.AudioAnalyzer.get_file_info(amen_wav_path)
+        info = AudioAnalyzer.get_file_info(amen_wav_path)
         assert info["sample_rate"] == 44100.0
         output_path = os.path.join(temp_dir, "mono.wav")
         cm.convert_audio_file(
             amen_wav_path, output_path, cm.AudioFormatPresets.wav_44100_mono()
         )
-        mono_info = cm.AudioAnalyzer.get_file_info(output_path)
+        mono_info = AudioAnalyzer.get_file_info(output_path)
         assert mono_info["channels"] == 1
         assert mono_info["is_mono"] is True
         original_peak = info["peak_amplitude"]
@@ -342,7 +343,7 @@ class TestUtilitiesIntegration:
         cm.convert_audio_file(
             trimmed_path, final_path, cm.AudioFormatPresets.wav_48000_stereo()
         )
-        info = cm.AudioAnalyzer.get_file_info(final_path)
+        info = AudioAnalyzer.get_file_info(final_path)
         assert 0.9 < info["duration"] < 1.1
         assert info["sample_rate"] == 48000.0
 

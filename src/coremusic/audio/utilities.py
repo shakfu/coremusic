@@ -18,7 +18,7 @@ import glob
 import struct
 
 
-from .objects import (
+from ..objects import (
     AudioFile,
     AudioConverter,
     AudioFormat,
@@ -35,7 +35,8 @@ if NUMPY_AVAILABLE:
 # ============================================================================
 
 __all__ = [
-    "AudioAnalyzer",
+    # NOTE: AudioAnalyzer is intentionally not exported to avoid conflict with
+    # coremusic.audio.analysis.AudioAnalyzer. Access via coremusic.audio.utilities.AudioAnalyzer
     "AudioEffectsChain",
     "AudioFormatPresets",
     "batch_convert",
@@ -52,7 +53,7 @@ __all__ = [
 ]
 
 # Import batch processing utilities for convenience
-from .utils.batch import batch_process_parallel, batch_process_files
+from ..utils.batch import batch_process_parallel, batch_process_files
 
 # ============================================================================
 # AudioStreamBasicDescription Parsing
@@ -572,7 +573,7 @@ def convert_audio_file(
         num_frames = len(converted_data) // output_format.bytes_per_frame
 
         # Write to output file
-        from . import capi
+        from .. import capi
 
         output_ext_file = ExtendedAudioFile.create(  # type: ignore[attr-defined]
             output_path, capi.get_audio_file_wave_type(), output_format
@@ -715,7 +716,7 @@ def trim_audio(
         )
 
         # Write to output file using ExtendedAudioFile
-        from . import capi
+        from .. import capi
 
         output_ext_file = ExtendedAudioFile.create(  # type: ignore[attr-defined]
             output_path,
@@ -769,7 +770,7 @@ class AudioEffectsChain:
 
     def __init__(self):
         """Create a new audio effects chain"""
-        from .objects import AUGraph
+        from ..objects import AUGraph
 
         self._graph = AUGraph()
         self._nodes = {}  # Map of node_id -> description
@@ -809,7 +810,7 @@ class AudioEffectsChain:
             dynamics = chain.add_effect('aufx', 'dcmp', 'appl')
             ```
         """
-        from .objects import AudioComponentDescription
+        from ..objects import AudioComponentDescription
 
         desc = AudioComponentDescription(  # type: ignore[call-arg]
             type=effect_type,
@@ -1066,8 +1067,8 @@ def find_audio_unit_by_name(name: str, case_sensitive: bool = False):
             print(f"Type: {desc.type}, Subtype: {desc.subtype}")
         ```
     """
-    from . import capi
-    from .objects import AudioComponent, AudioComponentDescription
+    from .. import capi
+    from ..objects import AudioComponent, AudioComponentDescription
 
     # Wildcard description to iterate through all components
     desc_dict = {
@@ -1145,7 +1146,7 @@ def list_available_audio_units(
         effects = cm.list_available_audio_units(filter_type='aumu')
         ```
     """
-    from . import capi
+    from .. import capi
 
     results = []
     type_int = capi.fourchar_to_int(filter_type) if filter_type else 0

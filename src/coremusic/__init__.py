@@ -24,7 +24,7 @@ from .objects import *
 from .audio.async_io import *
 
 # Import high-level utilities
-from .utilities import *
+from .audio.utilities import *
 
 # Import OSStatus error translation utilities
 from . import os_status
