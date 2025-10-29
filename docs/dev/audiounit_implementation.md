@@ -35,7 +35,7 @@ capi.audio_unit_set_current_preset(unit_id, preset_number)
 output = capi.audio_unit_render(unit_id, input_data, num_frames)
 ```
 
-### 2. High-Level Pythonic API (`src/coremusic/audio_unit_host.py`)
+### 2. High-Level Pythonic API (`src/coremusic/audiounit_host.py`)
 
 Clean, intuitive object-oriented wrapper:
 
@@ -586,7 +586,7 @@ All functions include:
 - CFString handling
 - Buffer management
 
-### High-Level Classes (`src/coremusic/audio_unit_host.py`)
+### High-Level Classes (`src/coremusic/audiounit_host.py`)
 
 #### AudioUnitHost
 

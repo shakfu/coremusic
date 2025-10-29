@@ -41,7 +41,7 @@ from . import midi
 from . import utils
 
 # Import AudioUnit hosting
-from .audio_unit_host import (
+from .audio.audiounit_host import (
     AudioUnitHost,
     AudioUnitPlugin,
     AudioUnitParameter,

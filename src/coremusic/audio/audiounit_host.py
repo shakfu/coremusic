@@ -8,7 +8,7 @@ import struct
 import json
 import os
 from pathlib import Path
-from . import capi
+from .. import capi
 
 
 # ============================================================================

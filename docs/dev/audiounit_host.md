@@ -98,7 +98,7 @@ AudioUnitHost (Python high-level API)
 **Goal**: Manage plugin instances with proper lifecycle
 
 **Tasks**:
-1. Create `AudioUnitPlugin` class in `audio_unit_host.py`
+1. Create `AudioUnitPlugin` class in `audiounit_host.py`
 2. Implement instantiation from component description
 3. Implement initialization/uninitialization
 4. Add stream format configuration
@@ -504,7 +504,7 @@ typedef struct HostCallbackInfo {
 
 ### Phase 8: Audio Format Support ✅
 
-**Implementation**: `src/coremusic/audio_unit_host.py:18-243`
+**Implementation**: `src/coremusic/audiounit_host.py:18-243`
 
 #### AudioFormat Class
 Comprehensive audio format specification supporting multiple sample formats and buffer layouts.
@@ -581,7 +581,7 @@ This two-stage approach ensures all conversions work correctly and simplifies th
 
 ### Phase 9: User Preset Management ✅
 
-**Implementation**: `src/coremusic/audio_unit_host.py:341-535`
+**Implementation**: `src/coremusic/audiounit_host.py:341-535`
 
 #### PresetManager Class
 Complete preset lifecycle management with JSON storage.
@@ -656,7 +656,7 @@ with cm.AudioUnitPlugin.from_name("AUDelay") as plugin:
 
 ### Phase 10: AudioUnitChain Class ✅
 
-**Implementation**: `src/coremusic/audio_unit_host.py:1169-1438`
+**Implementation**: `src/coremusic/audiounit_host.py:1169-1438`
 
 #### AudioUnitChain Class
 Sequential plugin processing with automatic routing and format conversion.
@@ -774,7 +774,7 @@ name = plugin.import_preset("/path/to/file.json")
 ### Implementation Statistics
 
 **Code Added**:
-- 1,270 lines of production code in `audio_unit_host.py`
+- 1,270 lines of production code in `audiounit_host.py`
 - 551 lines of test code in `test_audiounit_host_enhancements.py`
 
 **Test Results**:

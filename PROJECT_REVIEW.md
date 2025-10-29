@@ -57,7 +57,7 @@ CoreMusic is a Python framework providing bindings for Apple's CoreAudio, AudioT
 Source Code Statistics (cloc):
 ├── Cython Implementation (capi.pyx)      : 3,244 lines
 ├── Object-Oriented API (objects.py)      : 1,565 lines
-├── AudioUnit Host (audio_unit_host.py)   :   737 lines
+├── AudioUnit Host (audiounit_host.py)   :   737 lines
 ├── SciPy Integration (utils/scipy.py)    :   269 lines
 ├── Framework Declarations (.pxd files)   : 3,218 lines
 ├── Utilities & Helpers                   : ~1,000 lines
@@ -163,7 +163,7 @@ src/coremusic/
 │   └── objects.py           # Pythonic wrappers (2,741 lines)
 │
 ├── High-Level Modules
-│   ├── audio_unit_host.py   # AudioUnit plugin hosting (1,452 lines)
+│   ├── audiounit_host.py   # AudioUnit plugin hosting (1,452 lines)
 │   ├── utilities.py         # Audio analysis utilities (1,217 lines)
 │   ├── audio/               # Audio-related subpackage
 │   │   └── async_io.py      # Async I/O support (422 lines)
@@ -491,7 +491,7 @@ Test Organization:
 │   └── test_objects_comprehensive.py  : 13 tests
 │
 ├── High-Level Module Tests
-│   ├── test_audio_unit_host*.py       : ~50 tests
+│   ├── test_audiounit_host*.py       : ~50 tests
 │   ├── test_utilities.py              : ~40 tests
 │   ├── test_scipy_integration.py      : ~35 tests
 │   └── test_async_io.py               : 22 tests

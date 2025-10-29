@@ -15,7 +15,7 @@ import tempfile
 import json
 
 try:
-    from coremusic.audio_unit_host import (
+    from coremusic.audio.audiounit_host import (
         PluginAudioFormat,
         AudioFormatConverter,
         AudioUnitPlugin,
