@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Demo: Render MIDI File through Serum 2 AudioUnit Instrument
+"""Demo: Render MIDI File through an AudioUnit Instrument
 
-This demo loads tests/demo.mid and renders it through Serum 2 (or other available
-AudioUnit instruments as fallback). It demonstrates:
+This demo loads tests/demo.mid and renders it through an available
+AudioUnit instrument. It demonstrates:
 
 1. Loading a Standard MIDI File
-2. Finding and initializing Serum 2 AudioUnit instrument
+2. Finding and initializing an AudioUnit instrument
 3. Rendering MIDI events with proper timing through the instrument
 4. Saving the rendered audio to a WAV file
 
 Requirements:
-- Serum 2 AudioUnit plugin installed (or will use DLSMusicDevice as fallback)
+- An AudioUnit plugin installed (or will use DLSMusicDevice as fallback)
 - NumPy for audio buffer management
 """
 
@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 import coremusic as cm
 from coremusic.midi import MIDISequence
 from coremusic.daw import AudioUnitPlugin
+from coremusic.utils.fourcc import fourcc_to_str
 from coremusic.capi import (
     fourchar_to_int,
     extended_audio_file_create_with_url,
@@ -35,6 +36,7 @@ from coremusic.capi import (
     audio_component_find_next,
     audio_component_copy_name,
 )
+
 
 try:
     import numpy as np
@@ -100,19 +102,6 @@ def find_audiounit_by_name(name_substring):
     return None
 
 
-def int_to_fourcc(value):
-    """Convert integer to four-character code string."""
-    if isinstance(value, str) and len(value) == 4:
-        return value
-    chars = [
-        chr((value >> 24) & 0xFF),
-        chr((value >> 16) & 0xFF),
-        chr((value >> 8) & 0xFF),
-        chr(value & 0xFF)
-    ]
-    return ''.join(chars)
-
-
 def render_midi_through_audiounit(midi_file, plugin_name, output_file, sample_rate=48000):
     """Render a MIDI file through an AudioUnit instrument.
 
@@ -144,14 +133,14 @@ def render_midi_through_audiounit(midi_file, plugin_name, output_file, sample_ra
     if plugin_info:
         subtype, manufacturer, full_name = plugin_info
         print(f"   Using: {full_name}")
-        print(f"   Subtype: {int_to_fourcc(subtype)}")
-        print(f"   Manufacturer: {int_to_fourcc(manufacturer)}")
+        print(f"   Subtype: {fourcc_to_str(subtype)}")
+        print(f"   Manufacturer: {fourcc_to_str(manufacturer)}")
 
-        plugin_code = int_to_fourcc(subtype)
-        manufacturer_code = int_to_fourcc(manufacturer)
+        plugin_code = fourcc_to_str(subtype)
+        manufacturer_code = fourcc_to_str(manufacturer)
     else:
         print(f"   '{plugin_name}' not found, using DLSMusicDevice as fallback")
-        plugin_code = "dls "
+        plugin_code = "DLSMusicDevice "
         manufacturer_code = "appl"
         full_name = "DLSMusicDevice"
 
@@ -384,7 +373,7 @@ def synthesize_midi_fallback(seq, sample_rate, duration):
 def main():
     """Main demo function."""
     print("\n" + "=" * 70)
-    print("Demo: Render MIDI File through Serum 2 AudioUnit")
+    print("Demo: Render MIDI File through an AudioUnit")
     print("=" * 70)
     print(f"\nMIDI File: {MIDI_FILE}")
     print(f"Output: {OUTPUT_FILE}")
@@ -395,8 +384,8 @@ def main():
         return
 
     try:
-        # Try to render with Serum 2 first, then fallback to other instruments
-        for plugin_name in ["DLSMusicDevice", "dls"]:
+        # Try to render with an AudioUnit Instrument first, then fallback to other instruments
+        for plugin_name in ["DLSMusicDevice"]:
             try:
                 output_file = render_midi_through_audiounit(
                     MIDI_FILE,
@@ -417,7 +406,7 @@ def main():
 
             except Exception as e:
                 print(f"\nError with {plugin_name}: {e}")
-                if plugin_name != "dls":
+                if plugin_name != "DLSMusicDevice":
                     print(f"Trying next plugin...")
                     continue
                 else:

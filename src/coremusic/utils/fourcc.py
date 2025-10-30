@@ -80,6 +80,29 @@ def ensure_fourcc_str(value: FourCC) -> str:
         raise TypeError(f"FourCC must be str or int, not {type(value).__name__}")
 
 
+# def int_to_fourcc(value: int) -> str:
+#     """Convert integer to four-character code string.
+#     Args:
+#         value: 32-bit integer
+
+#     Returns:
+#         4-character string representation
+
+#     Examples:
+#         >>> int_to_fourcc(1819304813)
+#         'lpcm'
+#     """
+#     if isinstance(value, str) and len(value) == 4:
+#         return value
+#     chars = [
+#         chr((value >> 24) & 0xFF),
+#         chr((value >> 16) & 0xFF),
+#         chr((value >> 8) & 0xFF),
+#         chr(value & 0xFF)
+#     ]
+#     return ''.join(chars)
+
+
 def fourcc_to_int(fourcc_str: str) -> int:
     """Convert FourCC string to integer.
 
