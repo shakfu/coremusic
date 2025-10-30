@@ -8,6 +8,8 @@ Ready-to-use recipes for common audio and MIDI processing tasks.
    :caption: Recipes
 
    file_operations
+   audio_processing
+   real_time_audio
    audiounit_hosting
    link_integration
    midi_processing
@@ -22,6 +24,24 @@ File Operations
 - **Batch Processing**: Process multiple files efficiently
 - **Format Detection**: Detect and validate audio formats
 - **Format Conversion**: Convert between audio formats
+
+Audio Processing
+^^^^^^^^^^^^^^^^
+
+- **Volume Control**: Normalize audio, adjust levels
+- **Fades**: Apply fade in/out effects
+- **Resampling**: Change sample rates with automatic conversion
+- **Mixing**: Mix multiple audio tracks
+- **Slicing**: Split audio into chunks
+- **Concatenation**: Merge multiple audio files
+
+Real-Time Audio
+^^^^^^^^^^^^^^^
+
+- **Recording**: Capture audio from input devices
+- **Low-Latency Playback**: Minimal latency audio output
+- **Level Monitoring**: Real-time audio level metering
+- **Effects Processing**: Apply real-time audio effects
 
 AudioUnit Plugin Hosting
 ^^^^^^^^^^^^^^^^^^^^^^^^^

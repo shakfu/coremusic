@@ -116,6 +116,7 @@ Documentation Contents
    :caption: User Guide
 
    getting_started
+   guides/index
    tutorials/index
    cookbook/index
    examples/index
