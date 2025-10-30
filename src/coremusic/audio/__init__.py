@@ -8,6 +8,8 @@ This package contains audio-related modules:
 - slicing: Audio slicing and recombination
 - visualization: Audio visualization and plotting
 - utilities: High-level audio processing utilities
+- mmap_file: Memory-mapped file access for performance
+- buffer_pool: Buffer pooling for efficient memory management
 """
 
 # Import async I/O classes
@@ -27,6 +29,16 @@ from .visualization import *
 
 # Import utilities
 from .utilities import *
+
+# Import performance modules
+from .mmap_file import MMapAudioFile
+from .buffer_pool import (
+    BufferPool,
+    PooledBuffer,
+    BufferPoolStats,
+    get_global_pool,
+    reset_global_pool,
+)
 
 __all__ = [
     # Async I/O
@@ -70,4 +82,11 @@ __all__ = [
     "list_available_audio_units",
     "parse_audio_stream_basic_description",
     "trim_audio",
+    # Performance
+    "MMapAudioFile",
+    "BufferPool",
+    "PooledBuffer",
+    "BufferPoolStats",
+    "get_global_pool",
+    "reset_global_pool",
 ]
