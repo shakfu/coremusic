@@ -28,6 +28,23 @@ from .audio.utilities import *
 
 # Import OSStatus error translation utilities
 from . import os_status
+from .os_status import (
+    check_os_status,
+    check_return_status,
+    raises_on_error,
+    handle_exceptions,
+    format_os_status_error,
+)
+
+# Import buffer management utilities
+from . import buffer_utils
+from .buffer_utils import (
+    AudioStreamBasicDescription,
+    pack_audio_buffer,
+    unpack_audio_buffer,
+    calculate_buffer_size,
+    optimal_buffer_size,
+)
 
 # Import Ableton Link classes
 from . import link
@@ -133,4 +150,17 @@ __all__ = [
     "TimelineMarker",
     "TimeRange",
     "AutomationLane",
+    # Error handling decorators
+    "check_os_status",
+    "check_return_status",
+    "raises_on_error",
+    "handle_exceptions",
+    "format_os_status_error",
+    # Buffer management
+    "buffer_utils",  # buffer_utils module
+    "AudioStreamBasicDescription",
+    "pack_audio_buffer",
+    "unpack_audio_buffer",
+    "calculate_buffer_size",
+    "optimal_buffer_size",
 ]

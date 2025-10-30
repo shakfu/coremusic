@@ -4,7 +4,9 @@ This module provides human-readable translations of CoreAudio OSStatus error cod
 and helpful recovery suggestions for common error scenarios.
 """
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Callable, TypeVar, Any
+from functools import wraps
+import inspect
 
 
 # CoreAudio error code mappings
@@ -315,3 +317,234 @@ def get_error_info(status: int) -> Tuple[str, str, Optional[str]]:
     # Unknown error
     error_str = os_status_to_string(status)
     return ("UnknownError", error_str, None)
+
+
+# Type variable for decorator return types
+F = TypeVar('F', bound=Callable[..., Any])
+
+
+def check_os_status(
+    operation: str = "",
+    exception_class: type = Exception
+) -> Callable[[F], F]:
+    """Decorator to check OSStatus return values and raise appropriate exceptions.
+
+    This decorator automatically checks if a function returns an OSStatus error code
+    (non-zero integer) and raises an exception with detailed error information.
+
+    Args:
+        operation: Description of the operation being performed (e.g., "open audio file")
+        exception_class: Exception class to raise (default: Exception)
+
+    Returns:
+        Decorated function that raises exception on error
+
+    Example::
+
+        from coremusic.os_status import check_os_status
+        from coremusic import AudioFileError
+
+        @check_os_status("open audio file", AudioFileError)
+        def open_file(path):
+            # Returns OSStatus code
+            return capi.audio_file_open_url(path)
+
+        # Usage:
+        file_id = open_file("test.wav")  # Raises AudioFileError if status != 0
+
+    Notes:
+        - The decorated function must return an integer OSStatus code
+        - If the status is 0, the original return value is passed through
+        - If the status is non-zero, an exception is raised with detailed error info
+    """
+    def decorator(func: F) -> F:
+        @wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            result = func(*args, **kwargs)
+
+            # Check if result is an OSStatus error code
+            if isinstance(result, int) and result != 0:
+                error_msg = format_os_status_error(result, operation)
+                raise exception_class(error_msg)
+
+            return result
+
+        return wrapper  # type: ignore
+
+    return decorator
+
+
+def check_return_status(
+    operation: str = "",
+    exception_class: type = Exception,
+    status_index: int = 0
+) -> Callable[[F], F]:
+    """Decorator for functions that return (result, status) tuples.
+
+    This decorator checks the OSStatus code from functions that return both
+    a result value and a status code, raising an exception on error.
+
+    Args:
+        operation: Description of the operation being performed
+        exception_class: Exception class to raise (default: Exception)
+        status_index: Index of the status code in the return tuple (default: 0)
+                      Use 0 for (status, result), 1 for (result, status)
+
+    Returns:
+        Decorated function that returns only the result on success, raises on error
+
+    Example::
+
+        from coremusic.os_status import check_return_status
+        from coremusic import AudioFileError
+
+        @check_return_status("read audio data", AudioFileError, status_index=1)
+        def read_packets(file_id, num_packets):
+            # Returns (data, status)
+            data, status = capi.audio_file_read_packets(file_id, num_packets)
+            return (data, status)
+
+        # Usage:
+        data = read_packets(file_id, 1024)  # Returns data, raises on error
+
+    Notes:
+        - The decorated function must return a tuple with status code
+        - On success (status == 0), returns the non-status values
+        - On error (status != 0), raises exception with detailed error info
+    """
+    def decorator(func: F) -> F:
+        @wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            result = func(*args, **kwargs)
+
+            # Extract status from tuple
+            if not isinstance(result, tuple):
+                raise TypeError(
+                    f"Function {func.__name__} must return a tuple, got {type(result)}"
+                )
+
+            status = result[status_index]
+
+            # Check for error
+            if isinstance(status, int) and status != 0:
+                error_msg = format_os_status_error(status, operation)
+                raise exception_class(error_msg)
+
+            # Return non-status values
+            if len(result) == 2:
+                # Return the other value
+                return result[1 - status_index]
+            else:
+                # Return tuple without status
+                return tuple(v for i, v in enumerate(result) if i != status_index)
+
+        return wrapper  # type: ignore
+
+    return decorator
+
+
+def raises_on_error(
+    operation: str = "",
+    exception_class: type = Exception
+) -> Callable[[F], F]:
+    """Decorator that converts None/empty returns into exceptions.
+
+    This decorator is useful for functions that signal errors by returning None
+    or empty values, converting them into proper exceptions with context.
+
+    Args:
+        operation: Description of the operation being performed
+        exception_class: Exception class to raise (default: Exception)
+
+    Returns:
+        Decorated function that raises exception on None/empty return
+
+    Example::
+
+        from coremusic.os_status import raises_on_error
+        from coremusic import AudioFileError
+
+        @raises_on_error("find audio component", AudioFileError)
+        def find_component(description):
+            # Returns component ID or None
+            return capi.audio_component_find_next(None, description)
+
+        # Usage:
+        component = find_component(desc)  # Raises AudioFileError if not found
+
+    Notes:
+        - Raises exception if return value is None, 0, empty string, or empty container
+        - Otherwise passes through the return value unchanged
+    """
+    def decorator(func: F) -> F:
+        @wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            result = func(*args, **kwargs)
+
+            # Check for error conditions
+            if result is None or result == 0 or result == "" or result == []:
+                error_msg = f"Failed to {operation}" if operation else f"{func.__name__} failed"
+                raise exception_class(error_msg)
+
+            return result
+
+        return wrapper  # type: ignore
+
+    return decorator
+
+
+def handle_exceptions(
+    operation: str = "",
+    reraise_as: Optional[type] = None
+) -> Callable[[F], F]:
+    """Decorator that provides better error messages for caught exceptions.
+
+    This decorator catches exceptions and re-raises them with additional context
+    about what operation was being performed.
+
+    Args:
+        operation: Description of the operation being performed
+        reraise_as: Optional exception class to convert to (default: keep original)
+
+    Returns:
+        Decorated function with enhanced error messages
+
+    Example::
+
+        from coremusic.os_status import handle_exceptions
+        from coremusic import AudioFileError
+
+        @handle_exceptions("process audio buffer", reraise_as=AudioFileError)
+        def process_buffer(data):
+            # May raise various exceptions
+            return some_risky_operation(data)
+
+        # Usage:
+        result = process_buffer(data)  # Any exception becomes AudioFileError
+
+    Notes:
+        - Preserves the original exception message and adds operation context
+        - Can optionally convert exception types
+        - Useful for converting low-level exceptions to domain-specific ones
+    """
+    def decorator(func: F) -> F:
+        @wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                if operation:
+                    error_msg = f"Failed to {operation}: {e}"
+                else:
+                    error_msg = f"{func.__name__} failed: {e}"
+
+                if reraise_as:
+                    raise reraise_as(error_msg) from e
+                else:
+                    # Re-raise with enhanced message
+                    e.args = (error_msg,) + e.args[1:]
+                    raise
+
+        return wrapper  # type: ignore
+
+    return decorator
