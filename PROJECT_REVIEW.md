@@ -715,14 +715,35 @@ This section proposes **new high-level Python modules** that extend coremusic wi
 
 ### 7.1 Module: `coremusic.daw` - DAW Essentials ✅ IMPLEMENTED
 
-**Status:** ✅ **Fully Implemented** (January 2025)
-- **Source:** `src/coremusic/daw.py` (624 lines)
+**Status:** ✅ **Fully Implemented with MIDI and Plugin Support** (October 2025)
+- **Source:** `src/coremusic/daw.py` (enhanced with MIDI and AudioUnit support)
 - **Tests:** `tests/test_daw.py` (52 tests, 100% passing)
-- **Demo:** `tests/demos/demo_daw.py` (10 examples)
+- **Demo:** `tests/demos/demo_daw.py` (13 examples with 13 audio files generated)
 
-**Purpose:** Provide DAW (Digital Audio Workstation) building blocks for multi-track audio/MIDI applications
+**Purpose:** Provide complete DAW (Digital Audio Workstation) building blocks for multi-track audio/MIDI applications with virtual instruments and effects
 
 **Implemented Features:**
+
+**0. MIDI Support** - Complete MIDI sequencing infrastructure (NEW)
+- **MIDINote dataclass**: Individual MIDI notes with pitch, velocity, timing, duration, channel
+- **MIDIClip class**: MIDI note container with automatic sorting and time-range queries
+- **Enhanced Clip class**: Unified API for both audio and MIDI clips (`clip_type`, `is_midi` property)
+- MIDI note management: `add_note()`, `get_notes_in_range()`
+- Support for MIDIClip as source data in Timeline tracks
+
+**0B. AudioUnit Plugin Support** - Virtual instruments and effects (NEW)
+- **AudioUnitPlugin class**: Complete wrapper for AudioUnit instruments and effects
+  - Automatic initialization with sample rate configuration
+  - `send_midi()` method for MIDI events to instruments
+  - `process_audio()` method for audio effects processing
+  - Support for 4-character codes and full plugin names
+  - Proper resource management with `dispose()` and `__del__()`
+  - Works with instrument (`aumu`) and effect (`aufx`) plugins
+- **Enhanced Track class**: Plugin integration
+  - Updated `add_plugin()` creates AudioUnitPlugin instances
+  - New `set_instrument()` method for MIDI track instruments
+  - Plugin chain management (instruments first, then effects)
+  - Support for audio processing and MIDI-driven instruments
 
 **1. Timeline Class** - Multi-track timeline with transport control
 - Sample rate and tempo configuration
@@ -784,36 +805,61 @@ This section proposes **new high-level Python modules** that extend coremusic wi
 - Transport control with state management
 - Logging for debugging and monitoring
 
-**Usage Example:**
+**Usage Examples:**
 
 ```python
 import coremusic as cm
+from coremusic.daw import MIDIClip, Clip, Timeline
 
-# Create DAW session
+# Example 1: Audio tracks with effects
 timeline = cm.Timeline(sample_rate=48000, tempo=128.0)
 
-# Add tracks
+# Add audio tracks
 drums = timeline.add_track("Drums", "audio")
-vocals = timeline.add_track("Vocals", "audio")
+guitar = timeline.add_track("Guitar", "audio")
 
-# Add clips with trimming and fades
+# Add audio clips
 drums.add_clip(cm.Clip("drums.wav"), start_time=0.0)
-vocals.add_clip(
-    cm.Clip("vocals.wav").trim(2.0, 26.0).set_fades(0.5, 1.0),
+guitar.add_clip(
+    cm.Clip("guitar.wav").trim(2.0, 26.0).set_fades(0.5, 1.0),
     start_time=8.0
 )
 
-# Add automation
-volume_auto = vocals.automate("volume")
-volume_auto.add_point(8.0, 0.0)   # Fade in
-volume_auto.add_point(10.0, 1.0)  # Full volume
-volume_auto.add_point(30.0, 1.0)
-volume_auto.add_point(32.0, 0.0)  # Fade out
+# Add AudioUnit effects
+drums.add_plugin("AUReverb", plugin_type="effect")
+guitar.add_plugin("AUDelay", plugin_type="effect")
+guitar.add_plugin("AUReverb", plugin_type="effect")
+
+# Example 2: MIDI track with virtual instrument
+piano_track = timeline.add_track("Piano", "midi")
+piano_track.set_instrument("dls ")  # DLSMusicDevice (Apple GM synth)
+
+# Create MIDI clip with notes
+midi_clip = MIDIClip()
+midi_clip.add_note(note=60, velocity=100, start_time=0.0, duration=0.5)  # C4
+midi_clip.add_note(note=64, velocity=90, start_time=0.5, duration=0.5)   # E4
+midi_clip.add_note(note=67, velocity=95, start_time=1.0, duration=0.5)   # G4
+
+# Add MIDI clip to track
+clip = Clip(midi_clip, clip_type="midi")
+clip.duration = 2.0
+piano_track.add_clip(clip, start_time=0.0)
+
+# Add effects to MIDI track output
+piano_track.add_plugin("AUDelay", plugin_type="effect")
+
+# Example 3: Automation and transport control
+volume_auto = piano_track.automate("volume")
+volume_auto.add_point(0.0, 0.0)   # Fade in
+volume_auto.add_point(1.0, 1.0)   # Full volume
+volume_auto.add_point(15.0, 1.0)
+volume_auto.add_point(16.0, 0.0)  # Fade out
 
 # Add markers and loop region
 timeline.add_marker(0.0, "Intro")
+timeline.add_marker(8.0, "Verse", color="#00FF00")
 timeline.add_marker(16.0, "Chorus", color="#FF0000")
-timeline.set_loop_region(16.0, 32.0)
+timeline.set_loop_region(8.0, 16.0)
 
 # Transport control
 timeline.play()              # Start from current playhead
@@ -822,14 +868,22 @@ timeline.pause()             # Pause (keep playhead)
 timeline.stop()              # Stop (reset playhead)
 
 # Recording
-vocals.record_enable(True)
+piano_track.record_enable(True)
 timeline.record()  # Record on armed tracks
 ```
 
+**Demo Outputs (13 Audio Files):**
+- **MIDI Demos**: `midi_piano_melody.wav`, `midi_chords_piano/synth/bass.wav`
+- **Effects Demos**: `effects_original.wav`, `effects_with_delay/reverb.wav`, `effects_delay_reverb.wav`
+- **DAW Workflow**: `complete_workflow_mix.wav`, `stem_drums/bass/synth/vocals.wav`
+
 **Benefits:**
-- Dramatically simplifies DAW-like application development
+- Complete DAW functionality: audio + MIDI + virtual instruments + effects
+- Dramatically simplifies music production application development
 - Integrates AudioUnits, automation, and Link seamlessly
 - Familiar concepts for music production developers
+- Full MIDI sequencing with virtual instrument playback
+- Professional audio effects processing chains
 
 ---
 

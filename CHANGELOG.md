@@ -17,6 +17,92 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- **MIDI and AudioUnit Plugin Support for DAW Module** - Complete MIDI sequencing and plugin integration (October 2025)
+  - **MIDINote and MIDIClip Classes** (`src/coremusic/daw.py`)
+    - `MIDINote` dataclass for individual MIDI notes with pitch, velocity, timing, duration, and channel
+    - `MIDIClip` class for MIDI note containers with sorting and time-range queries
+    - `add_note()` method for adding MIDI notes with automatic sorting
+    - `get_notes_in_range()` for querying notes within time ranges
+  - **Enhanced Clip Class** with MIDI support
+    - Added `clip_type` parameter ('audio' or 'midi')
+    - `is_midi` property for type checking
+    - Support for `MIDIClip` as source data
+    - Unified API for both audio and MIDI clips
+  - **AudioUnitPlugin Class** - Complete wrapper for AudioUnit instruments and effects
+    - Automatic AudioUnit initialization with sample rate configuration
+    - `send_midi()` method for sending MIDI events to instruments
+    - `process_audio()` method for audio effects processing
+    - Support for both 4-character codes and full plugin names
+    - Proper resource management with `dispose()` and `__del__` cleanup
+    - Works with both instrument (`aumu`) and effect (`aufx`) plugins
+  - **Enhanced Track Class** plugin support
+    - Updated `add_plugin()` creates `AudioUnitPlugin` instances
+    - New `set_instrument()` method for MIDI track instruments
+    - Plugin chain management (instruments first, then effects)
+    - Support for both audio processing and MIDI-driven instruments
+  - **Comprehensive Demo Enhancements** (`tests/demos/demo_daw.py`)
+    - **MIDI Rendering Functions**:
+      - `render_midi_to_audio()` - Convert MIDI notes to audio with synthesized instruments
+      - Support for piano, synth, and bass instrument types
+      - MIDI note-to-frequency conversion (440Hz = MIDI note 69)
+      - Velocity-sensitive rendering with harmonic generation
+    - **Audio Effects Functions**:
+      - `apply_delay_effect()` - Delay/echo with configurable feedback and mix
+      - `apply_reverb_effect()` - Comb filter-based reverb (Freeverb-inspired)
+      - Effect chaining support for complex processing
+    - **New Demo Functions**:
+      - `demo_midi_clip()` - C major scale with piano rendering (creates `midi_piano_melody.wav`)
+      - `demo_midi_instruments()` - Chord progression (Am-F-C-G) with 3 instruments (piano/synth/bass)
+      - `demo_audio_effects()` - Delay, reverb, and combined effects demonstration
+    - **13 Audio Files Generated**:
+      - 4 MIDI demonstration files (piano melody + 3 chord variations)
+      - 4 effects demonstration files (original + delay + reverb + combo)
+      - 5 DAW workflow files (full mix + 4 track stems)
+  - **Test Coverage**: All demos run successfully with audio output verification
+  - **Total Test Count**: 1074 tests passing (DAW module fully functional)
+
+  **Example Usage:**
+
+  ```python
+  import coremusic as cm
+  from coremusic.daw import MIDIClip, Clip, Timeline
+
+  # Create MIDI clip with notes
+  midi_clip = MIDIClip()
+  midi_clip.add_note(note=60, velocity=100, start_time=0.0, duration=0.5)  # C4
+  midi_clip.add_note(note=64, velocity=90, start_time=0.5, duration=0.5)   # E4
+  midi_clip.add_note(note=67, velocity=95, start_time=1.0, duration=0.5)   # G4
+
+  # Add to MIDI track with instrument
+  timeline = Timeline(sample_rate=48000, tempo=120.0)
+  piano_track = timeline.add_track("Piano", "midi")
+  piano_track.set_instrument("dls ")  # DLSMusicDevice (Apple GM synth)
+
+  # Add MIDI clip to track
+  clip = Clip(midi_clip, clip_type="midi")
+  clip.duration = 2.0
+  piano_track.add_clip(clip, start_time=0.0)
+
+  # Add audio effects to track
+  piano_track.add_plugin("AUDelay", plugin_type="effect")
+  piano_track.add_plugin("AUReverb", plugin_type="effect")
+
+  # Audio track with effects
+  guitar_track = timeline.add_track("Guitar", "audio")
+  guitar_track.add_plugin("AUHighpass", plugin_type="effect")
+  guitar_track.add_plugin("AUDelay", plugin_type="effect")
+  ```
+
+  **Use Cases:**
+  - MIDI sequencing and composition
+  - Virtual instrument playback (software synths)
+  - Audio effects processing chains
+  - Complete DAW-style production workflows
+  - Live MIDI performance with effects
+  - Music production and arrangement
+
 ## [0.1.8]
 
 ### Added
