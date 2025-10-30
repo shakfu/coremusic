@@ -21,6 +21,9 @@ from coremusic.daw import (
     Timeline,
     Track,
     Clip,
+    MIDIClip,
+    MIDINote,
+    AudioUnitPlugin,
     TimelineMarker,
     TimeRange,
     AutomationLane,
@@ -186,6 +189,145 @@ def generate_vocal_melody(duration, sample_rate=48000, tempo=128.0):
     return audio
 
 
+def render_midi_to_audio(midi_clip, duration, sample_rate=48000, instrument_type="piano"):
+    """Render MIDI clip to audio using synthesized instrument.
+
+    Args:
+        midi_clip: MIDIClip with notes
+        duration: Total duration in seconds
+        sample_rate: Sample rate
+        instrument_type: 'piano', 'synth', 'bass', etc.
+
+    Returns:
+        Audio data as numpy array
+    """
+    if not NUMPY_AVAILABLE:
+        return None
+
+    num_samples = int(duration * sample_rate)
+    audio = np.zeros(num_samples, dtype=np.float32)
+
+    # Render each note
+    for note in midi_clip.notes:
+        start_sample = int(note.start_time * sample_rate)
+        duration_samples = int(note.duration * sample_rate)
+        end_sample = min(start_sample + duration_samples, num_samples)
+
+        if start_sample >= num_samples:
+            continue
+
+        note_samples = end_sample - start_sample
+        t = np.arange(note_samples) / sample_rate
+
+        # Convert MIDI note to frequency (A4 = 440Hz is MIDI note 69)
+        freq = 440.0 * (2.0 ** ((note.note - 69) / 12.0))
+
+        # Velocity scaling
+        vel_scale = note.velocity / 127.0
+
+        # Generate different sounds based on instrument type
+        if instrument_type == "piano":
+            # Piano-like sound with multiple harmonics and decay
+            fundamental = np.sin(2 * np.pi * freq * t)
+            harmonic2 = 0.3 * np.sin(2 * np.pi * freq * 2 * t)
+            harmonic3 = 0.15 * np.sin(2 * np.pi * freq * 3 * t)
+            envelope = np.exp(-t * 3.0)  # Fast decay
+            note_audio = (fundamental + harmonic2 + harmonic3) * envelope * vel_scale * 0.5
+
+        elif instrument_type == "synth":
+            # Synth pad with slower envelope
+            fundamental = np.sin(2 * np.pi * freq * t)
+            harmonic2 = 0.5 * np.sin(2 * np.pi * freq * 2 * t)
+            envelope = np.exp(-t * 1.0)  # Slower decay
+            note_audio = (fundamental + harmonic2) * envelope * vel_scale * 0.4
+
+        elif instrument_type == "bass":
+            # Bass with emphasis on low frequencies
+            fundamental = np.sin(2 * np.pi * freq * t)
+            subharmonic = 0.4 * np.sin(2 * np.pi * freq * 0.5 * t)
+            envelope = np.exp(-t * 2.0)
+            note_audio = (fundamental + subharmonic) * envelope * vel_scale * 0.6
+
+        else:
+            # Default: simple sine wave
+            envelope = np.exp(-t * 2.0)
+            note_audio = np.sin(2 * np.pi * freq * t) * envelope * vel_scale * 0.5
+
+        # Add to output
+        audio[start_sample:end_sample] += note_audio
+
+    return audio
+
+
+def apply_delay_effect(audio, sample_rate, delay_time=0.25, feedback=0.4, mix=0.3):
+    """Apply a simple delay effect to audio.
+
+    Args:
+        audio: Input audio data
+        sample_rate: Sample rate
+        delay_time: Delay time in seconds
+        feedback: Feedback amount (0-1)
+        mix: Dry/wet mix (0=dry, 1=wet)
+
+    Returns:
+        Audio with delay effect applied
+    """
+    if not NUMPY_AVAILABLE or audio is None:
+        return audio
+
+    delay_samples = int(delay_time * sample_rate)
+    output = audio.copy()
+
+    # Simple delay with feedback
+    for i in range(delay_samples, len(audio)):
+        output[i] += feedback * output[i - delay_samples]
+
+    # Mix dry and wet
+    return (1 - mix) * audio + mix * output
+
+
+def apply_reverb_effect(audio, sample_rate, room_size=0.5, damping=0.5, mix=0.3):
+    """Apply a simple reverb effect using comb filters.
+
+    Args:
+        audio: Input audio data
+        sample_rate: Sample rate
+        room_size: Room size (0-1)
+        damping: High frequency damping (0-1)
+        mix: Dry/wet mix
+
+    Returns:
+        Audio with reverb applied
+    """
+    if not NUMPY_AVAILABLE or audio is None:
+        return audio
+
+    # Simple comb filter delays (Freeverb-inspired)
+    delay_times = [0.0297, 0.0371, 0.0411, 0.0437]
+
+    output = np.zeros_like(audio)
+
+    for delay_time in delay_times:
+        scaled_delay = delay_time * room_size
+        delay_samples = int(scaled_delay * sample_rate)
+
+        if delay_samples < len(audio):
+            delayed = np.zeros_like(audio)
+            delayed[delay_samples:] = audio[:-delay_samples]
+
+            # Apply simple lowpass (damping)
+            if damping > 0:
+                for i in range(1, len(delayed)):
+                    delayed[i] = delayed[i] * (1 - damping) + delayed[i-1] * damping
+
+            output += delayed
+
+    output = output / len(delay_times)
+
+    # Mix dry and wet
+    return (1 - mix) * audio + mix * output
+
+
 def write_audio_file(audio_data, sample_rate, file_path, num_channels=2):
     """Write audio data to a WAV file"""
     if audio_data is None:
@@ -315,6 +457,168 @@ def render_timeline_to_audio(timeline, sample_rate=48000):
 # ============================================================================
 # Demo Functions
 # ============================================================================
+
+def demo_midi_clip():
+    """Demo 0a: MIDI clip with piano rendering"""
+    print("\n" + "=" * 60)
+    print("Demo 0a: MIDI Clip with Piano Rendering")
+    print("=" * 60)
+
+    if not NUMPY_AVAILABLE:
+        print("Skipping - NumPy required for audio generation")
+        return
+
+    # Create MIDI clip with a melody
+    midi_clip = MIDIClip()
+
+    # C major scale melody
+    melody = [
+        (60, 0.0, 0.4, 100),   # C4
+        (62, 0.5, 0.4, 90),    # D4
+        (64, 1.0, 0.4, 95),    # E4
+        (65, 1.5, 0.4, 85),    # F4
+        (67, 2.0, 0.4, 100),   # G4
+        (69, 2.5, 0.4, 90),    # A4
+        (71, 3.0, 0.4, 95),    # B4
+        (72, 3.5, 0.8, 100),   # C5
+    ]
+
+    for note, start, dur, vel in melody:
+        midi_clip.add_note(note, vel, start, dur)
+
+    print(f"Created MIDI clip with {len(midi_clip.notes)} notes (C major scale)")
+    print(f"  Duration: 4.3 seconds")
+    print(f"  First 4 notes:")
+    for i, note in enumerate(midi_clip.notes[:4], 1):
+        note_name = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'][note.note % 12]
+        octave = note.note // 12 - 1
+        print(f"    {i}. {note_name}{octave} (MIDI {note.note}), "
+              f"t={note.start_time:.1f}s, vel={note.velocity}")
+
+    # Render to audio with piano sound
+    print(f"\n  Rendering MIDI to audio with piano instrument...")
+    audio = render_midi_to_audio(midi_clip, duration=4.5, instrument_type="piano")
+
+    if audio is not None:
+        output_path = OUTPUT_DIR / "midi_piano_melody.wav"
+        write_audio_file(audio, 48000, output_path)
+        print(f"  Saved: {output_path.name}")
+        print(f"  File size: {output_path.stat().st_size / 1024:.1f} KB")
+
+
+def demo_midi_instruments():
+    """Demo 0b: MIDI with different instrument types"""
+    print("\n" + "=" * 60)
+    print("Demo 0b: MIDI with Different Instruments")
+    print("=" * 60)
+
+    if not NUMPY_AVAILABLE:
+        print("Skipping - NumPy required for audio generation")
+        return
+
+    # Create a chord progression
+    midi_clip = MIDIClip()
+
+    # Am chord (A, C, E)
+    for note in [57, 60, 64]:  # A3, C4, E4
+        midi_clip.add_note(note, 80, 0.0, 1.5)
+
+    # F chord (F, A, C)
+    for note in [53, 57, 60]:  # F3, A3, C4
+        midi_clip.add_note(note, 75, 1.5, 1.5)
+
+    # C chord (C, E, G)
+    for note in [48, 52, 55]:  # C3, E3, G3
+        midi_clip.add_note(note, 85, 3.0, 1.5)
+
+    # G chord (G, B, D)
+    for note in [43, 47, 50]:  # G2, B2, D3
+        midi_clip.add_note(note, 80, 4.5, 2.0)
+
+    print(f"Created chord progression with {len(midi_clip.notes)} notes")
+    print(f"  Progression: Am - F - C - G")
+
+    # Render with different instruments
+    instruments = [
+        ("piano", "Piano"),
+        ("synth", "Synthesizer"),
+        ("bass", "Bass"),
+    ]
+
+    for inst_type, inst_name in instruments:
+        print(f"\n  Rendering with {inst_name}...")
+        audio = render_midi_to_audio(midi_clip, duration=6.5, instrument_type=inst_type)
+
+        if audio is not None:
+            output_path = OUTPUT_DIR / f"midi_chords_{inst_type}.wav"
+            write_audio_file(audio, 48000, output_path)
+            print(f"    Saved: {output_path.name}")
+
+
+def demo_audio_effects():
+    """Demo 0c: Audio effects processing (delay and reverb)"""
+    print("\n" + "=" * 60)
+    print("Demo 0c: Audio Effects Processing")
+    print("=" * 60)
+
+    if not NUMPY_AVAILABLE:
+        print("Skipping - NumPy required for audio generation")
+        return
+
+    # Generate a simple melodic pattern
+    sample_rate = 48000
+    duration = 4.0
+    t = np.arange(int(duration * sample_rate)) / sample_rate
+
+    # Create a simple melody
+    notes = [
+        (440, 0.0, 0.5),   # A4
+        (494, 0.5, 0.5),   # B4
+        (523, 1.0, 0.5),   # C5
+        (587, 1.5, 0.5),   # D5
+        (659, 2.0, 1.0),   # E5
+    ]
+
+    audio = np.zeros(len(t), dtype=np.float32)
+    for freq, start_time, note_dur in notes:
+        start_sample = int(start_time * sample_rate)
+        dur_samples = int(note_dur * sample_rate)
+        end_sample = min(start_sample + dur_samples, len(audio))
+
+        note_t = np.arange(end_sample - start_sample) / sample_rate
+        envelope = np.exp(-note_t * 3.0)
+        note_audio = np.sin(2 * np.pi * freq * note_t) * envelope * 0.4
+        audio[start_sample:end_sample] += note_audio
+
+    print(f"Generated test melody ({duration}s)")
+
+    # Save original
+    output_path = OUTPUT_DIR / "effects_original.wav"
+    write_audio_file(audio, sample_rate, output_path)
+    print(f"  Saved original: {output_path.name}")
+
+    # Apply delay effect
+    print(f"\n  Applying delay effect (250ms, 40% feedback)...")
+    delay_audio = apply_delay_effect(audio, sample_rate, delay_time=0.25, feedback=0.4, mix=0.4)
+    output_path = OUTPUT_DIR / "effects_with_delay.wav"
+    write_audio_file(delay_audio, sample_rate, output_path)
+    print(f"    Saved: {output_path.name}")
+
+    # Apply reverb effect
+    print(f"\n  Applying reverb effect (medium room)...")
+    reverb_audio = apply_reverb_effect(audio, sample_rate, room_size=0.6, damping=0.4, mix=0.4)
+    output_path = OUTPUT_DIR / "effects_with_reverb.wav"
+    write_audio_file(reverb_audio, sample_rate, output_path)
+    print(f"    Saved: {output_path.name}")
+
+    # Apply both effects
+    print(f"\n  Applying delay + reverb...")
+    combo_audio = apply_delay_effect(audio, sample_rate, delay_time=0.25, feedback=0.3, mix=0.3)
+    combo_audio = apply_reverb_effect(combo_audio, sample_rate, room_size=0.5, damping=0.5, mix=0.3)
+    output_path = OUTPUT_DIR / "effects_delay_reverb.wav"
+    write_audio_file(combo_audio, sample_rate, output_path)
+    print(f"    Saved: {output_path.name}")
+
 
 def demo_basic_timeline():
     """Demo 1: Basic timeline creation and track management"""
@@ -702,6 +1006,9 @@ def main():
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     demos = [
+        demo_midi_clip,
+        demo_midi_instruments,
+        demo_audio_effects,
         demo_basic_timeline,
         demo_clip_management,
         demo_automation,

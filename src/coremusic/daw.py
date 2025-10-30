@@ -25,6 +25,198 @@ import logging
 logger = logging.getLogger(__name__)
 
 # ============================================================================
+# AudioUnit Plugin Wrapper
+# ============================================================================
+
+
+class AudioUnitPlugin:
+    """Wrapper for an AudioUnit plugin (instrument or effect).
+
+    Example:
+        >>> plugin = AudioUnitPlugin("DLSMusicDevice", plugin_type="instrument")
+        >>> plugin.send_midi(60, 100)  # Play middle C
+        >>> plugin.process_audio(audio_buffer, sample_rate)
+    """
+
+    def __init__(self, name: str, plugin_type: str = "effect",
+                 manufacturer: str = "appl"):
+        """Initialize AudioUnit plugin.
+
+        Args:
+            name: Plugin name or subtype (e.g., "DLSMusicDevice", "AUDelay")
+            plugin_type: 'instrument' or 'effect'
+            manufacturer: Manufacturer code (default 'appl' for Apple)
+        """
+        self.name = name
+        self.plugin_type = plugin_type
+        self.manufacturer = manufacturer
+        self.unit_id: Optional[int] = None
+        self._initialized = False
+        self._sample_rate = 44100.0
+
+    def initialize(self, sample_rate: float = 44100.0) -> None:
+        """Initialize the AudioUnit."""
+        if self._initialized:
+            return
+
+        try:
+            from coremusic.capi import (
+                fourchar_to_int,
+                audio_component_find_next,
+                audio_component_instance_new,
+                audio_unit_initialize,
+                audio_unit_set_property,
+                get_audio_unit_property_stream_format,
+                get_audio_unit_scope_output,
+                get_audio_unit_scope_input,
+                get_linear_pcm_format_flag_is_signed_integer,
+                get_linear_pcm_format_flag_is_packed,
+            )
+            import struct
+
+            # Determine component type
+            if self.plugin_type == "instrument":
+                comp_type = fourchar_to_int('aumu')  # kAudioUnitType_MusicDevice
+            else:
+                comp_type = fourchar_to_int('aufx')  # kAudioUnitType_Effect
+
+            # Find component
+            desc = {
+                'type': comp_type,
+                'subtype': fourchar_to_int(self.name) if len(self.name) == 4 else 0,
+                'manufacturer': fourchar_to_int(self.manufacturer),
+                'flags': 0,
+                'flags_mask': 0
+            }
+
+            component_id = audio_component_find_next(desc)
+            if component_id is None:
+                raise RuntimeError(f"AudioUnit '{self.name}' not found")
+
+            # Create instance
+            self.unit_id = audio_component_instance_new(component_id)
+
+            # Set up stream format
+            self._sample_rate = sample_rate
+            asbd_data = struct.pack(
+                '<dIIIIIII',
+                sample_rate,  # mSampleRate
+                fourchar_to_int('lpcm'),  # mFormatID
+                get_linear_pcm_format_flag_is_signed_integer() | get_linear_pcm_format_flag_is_packed(),
+                4,  # mBytesPerPacket (stereo 16-bit)
+                1,  # mFramesPerPacket
+                4,  # mBytesPerFrame
+                2,  # mChannelsPerFrame
+                16  # mBitsPerChannel
+            )
+
+            # Set format on input and output
+            audio_unit_set_property(
+                self.unit_id,
+                get_audio_unit_property_stream_format(),
+                get_audio_unit_scope_output(),
+                0,
+                asbd_data
+            )
+
+            audio_unit_set_property(
+                self.unit_id,
+                get_audio_unit_property_stream_format(),
+                get_audio_unit_scope_input(),
+                0,
+                asbd_data
+            )
+
+            # Initialize unit
+            audio_unit_initialize(self.unit_id)
+            self._initialized = True
+
+        except Exception as e:
+            logger.error(f"Failed to initialize AudioUnit '{self.name}': {e}")
+            raise
+
+    def send_midi(self, note: int, velocity: int, note_on: bool = True,
+                  channel: int = 0) -> None:
+        """Send MIDI note to instrument plugin.
+
+        Args:
+            note: MIDI note number (0-127)
+            velocity: Velocity (0-127)
+            note_on: True for note on, False for note off
+            channel: MIDI channel (0-15)
+        """
+        if not self._initialized or self.unit_id is None:
+            return
+
+        try:
+            from coremusic.capi import audio_unit_set_property
+            import struct
+
+            # Create MIDI packet (status, note, velocity)
+            status = (0x90 if note_on else 0x80) | (channel & 0x0F)
+            midi_data = struct.pack('BBB', status, note & 0x7F, velocity & 0x7F)
+
+            # Send via kAudioUnitProperty_MIDIEvent (property ID 0x1012)
+            audio_unit_set_property(
+                self.unit_id,
+                0x1012,  # kAudioUnitProperty_MIDIEvent
+                0,  # global scope
+                0,
+                midi_data
+            )
+        except Exception as e:
+            logger.warning(f"Failed to send MIDI: {e}")
+
+    def process_audio(self, audio_data: bytes, num_frames: int) -> bytes:
+        """Process audio through the plugin.
+
+        Args:
+            audio_data: Input audio data
+            num_frames: Number of frames to process
+
+        Returns:
+            Processed audio data
+        """
+        if not self._initialized or self.unit_id is None:
+            return audio_data
+
+        try:
+            from coremusic.capi import audio_unit_render
+
+            output = audio_unit_render(
+                self.unit_id,
+                audio_data,
+                num_frames,
+                self._sample_rate,
+                2  # stereo
+            )
+            return output
+        except Exception as e:
+            logger.warning(f"Audio processing failed: {e}")
+            return audio_data
+
+    def dispose(self) -> None:
+        """Clean up the AudioUnit."""
+        if self._initialized and self.unit_id is not None:
+            try:
+                from coremusic.capi import (
+                    audio_unit_uninitialize,
+                    audio_component_instance_dispose
+                )
+                audio_unit_uninitialize(self.unit_id)
+                audio_component_instance_dispose(self.unit_id)
+            except Exception as e:
+                logger.warning(f"Failed to dispose AudioUnit: {e}")
+            finally:
+                self._initialized = False
+                self.unit_id = None
+
+    def __del__(self):
+        """Cleanup on deletion."""
+        self.dispose()
+
+
+# ============================================================================
 # Data Classes
 # ============================================================================
 
@@ -78,23 +270,68 @@ class TimeRange:
 # ============================================================================
 
 
+@dataclass
+class MIDINote:
+    """Represents a single MIDI note.
+
+    Attributes:
+        note: MIDI note number (0-127)
+        velocity: Note velocity (0-127)
+        start_time: Note start time in seconds
+        duration: Note duration in seconds
+        channel: MIDI channel (0-15)
+    """
+    note: int
+    velocity: int
+    start_time: float
+    duration: float
+    channel: int = 0
+
+
+class MIDIClip:
+    """Container for MIDI notes.
+
+    Example:
+        >>> midi_clip = MIDIClip()
+        >>> midi_clip.add_note(60, 100, 0.0, 0.5)  # Middle C
+        >>> midi_clip.add_note(64, 90, 0.5, 0.5)   # E
+    """
+
+    def __init__(self):
+        """Initialize MIDI clip."""
+        self.notes: List[MIDINote] = []
+
+    def add_note(self, note: int, velocity: int, start_time: float,
+                 duration: float, channel: int = 0) -> None:
+        """Add a MIDI note to the clip."""
+        self.notes.append(MIDINote(note, velocity, start_time, duration, channel))
+        self.notes.sort(key=lambda n: n.start_time)
+
+    def get_notes_in_range(self, start: float, end: float) -> List[MIDINote]:
+        """Get all notes that occur within a time range."""
+        return [n for n in self.notes
+                if n.start_time < end and (n.start_time + n.duration) > start]
+
+
 class Clip:
     """Represents an audio or MIDI clip on timeline.
 
     Example:
-        >>> clip = Clip("drums.wav")
-        >>> clip.trim(1.0, 5.0)  # Use 4 seconds from offset 1.0
-        >>> clip.fade_in = 0.5
-        >>> clip.fade_out = 0.5
+        >>> clip = Clip("drums.wav")  # Audio clip
+        >>> clip.trim(1.0, 5.0)
+        >>>
+        >>> midi_clip = Clip(MIDIClip(), clip_type="midi")  # MIDI clip
     """
 
-    def __init__(self, source: Union[str, Path, Any]):
+    def __init__(self, source: Union[str, Path, MIDIClip, Any], clip_type: str = "audio"):
         """Initialize clip.
 
         Args:
-            source: Audio file path or MIDISequence for MIDI clips
+            source: Audio file path or MIDIClip for MIDI clips
+            clip_type: 'audio' or 'midi'
         """
         self.source = source
+        self.clip_type = clip_type
         self.start_time = 0.0
         self.offset = 0.0  # Trim from start of source
         self.duration: Optional[float] = None  # None = full file
@@ -102,6 +339,11 @@ class Clip:
         self.fade_out = 0.0
         self.gain = 1.0  # Linear gain multiplier
         self._cached_duration: Optional[float] = None
+
+    @property
+    def is_midi(self) -> bool:
+        """Check if this is a MIDI clip."""
+        return self.clip_type == "midi" or isinstance(self.source, MIDIClip)
 
     def trim(self, start: float, end: float) -> "Clip":
         """Trim clip to specific range.
@@ -312,37 +554,48 @@ class Track:
         """Enable/disable recording on this track."""
         self.armed = enabled
 
-    def add_plugin(self, plugin_name: str, **config: Any) -> Any:
+    def add_plugin(self, plugin_name: str, plugin_type: str = "effect",
+                   manufacturer: str = "appl", **config: Any) -> AudioUnitPlugin:
         """Add AudioUnit plugin to track's effect chain.
 
         Args:
-            plugin_name: Name of AudioUnit plugin
+            plugin_name: Name of AudioUnit plugin (4-char code or name)
+            plugin_type: 'effect' or 'instrument'
+            manufacturer: Manufacturer code (default 'appl' for Apple)
             **config: Plugin configuration parameters
 
         Returns:
             AudioUnitPlugin instance
 
         Example:
-            >>> track.add_plugin("AUDelay", time=0.25, feedback=0.3)
+            >>> track.add_plugin("AUDelay", plugin_type="effect")
+            >>> track.add_plugin("DLSMusicDevice", plugin_type="instrument")
         """
         try:
-            import coremusic as cm
-
-            host = cm.AudioUnitHost()  # type: ignore[attr-defined]
-            plugin = host.load_plugin(plugin_name)
-
-            # Configure plugin
-            for param, value in config.items():
-                try:
-                    plugin.set_parameter(param, value)
-                except Exception as e:
-                    logger.warning(f"Could not set parameter {param}: {e}")
-
+            plugin = AudioUnitPlugin(plugin_name, plugin_type, manufacturer)
             self.plugins.append(plugin)
             return plugin
         except Exception as e:
-            logger.error(f"Could not load plugin {plugin_name}: {e}")
+            logger.error(f"Could not add plugin {plugin_name}: {e}")
             raise
+
+    def set_instrument(self, instrument_name: str, manufacturer: str = "appl") -> AudioUnitPlugin:
+        """Set the instrument plugin for this MIDI track.
+
+        Args:
+            instrument_name: Instrument AudioUnit name (e.g., "DLSMusicDevice")
+            manufacturer: Manufacturer code (default 'appl')
+
+        Returns:
+            AudioUnitPlugin instance
+        """
+        # Clear existing instrument plugins
+        self.plugins = [p for p in self.plugins if p.plugin_type != "instrument"]
+
+        # Add new instrument
+        plugin = AudioUnitPlugin(instrument_name, "instrument", manufacturer)
+        self.plugins.insert(0, plugin)  # Instrument goes first
+        return plugin
 
     def automate(self, parameter: str) -> AutomationLane:
         """Get or create automation lane for parameter.
@@ -620,6 +873,9 @@ class Timeline:
 # ============================================================================
 
 __all__ = [
+    "AudioUnitPlugin",
+    "MIDINote",
+    "MIDIClip",
     "TimelineMarker",
     "TimeRange",
     "Clip",
