@@ -3,7 +3,12 @@
 import pytest
 import numpy as np
 
-from coremusic.audio import cython_ops, CYTHON_OPS_AVAILABLE
+# Import from capi directly
+try:
+    from coremusic import capi as cython_ops
+    CYTHON_OPS_AVAILABLE = True
+except (ImportError, AttributeError):
+    CYTHON_OPS_AVAILABLE = False
 
 
 # Skip all tests if Cython ops not available

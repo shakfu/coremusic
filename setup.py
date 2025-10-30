@@ -50,14 +50,6 @@ extensions = [
         language="c++",
         extra_compile_args=["-std=c++11"],
     ),
-    Extension(
-        "coremusic.audio.cython_ops",
-        sources=[
-            "src/coremusic/audio/cython_ops.pyx",
-        ],
-        define_macros=DEFINE_MACROS,
-        py_limited_api=LIMITED_API,
-    ),
 ]
 
 

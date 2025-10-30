@@ -40,9 +40,9 @@ from .buffer_pool import (
     reset_global_pool,
 )
 
-# Import Cython-optimized operations
+# Import Cython-optimized operations from capi
 try:
-    from .cython_ops import (
+    from ..capi import (
         normalize_audio,
         apply_gain,
         calculate_rms,
