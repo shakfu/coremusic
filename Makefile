@@ -1,7 +1,10 @@
-.PHONY: all build test test-all coverage coverage-html clean typecheck docs docs-clean docs-serve docs-pdf  \
+.PHONY: all sync build test test-all coverage coverage-html clean typecheck docs docs-clean docs-serve docs-pdf  \
 		release check publish
 
 all: build
+
+sync:
+	@uv sync
 
 build:
 	@uv sync --reinstall-package coremusic
