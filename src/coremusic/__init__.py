@@ -97,6 +97,10 @@ __all__ = [
     "MIDIPort",
     "MIDIInputPort",
     "MIDIOutputPort",
+    # MusicPlayer Framework
+    "MusicPlayer",
+    "MusicSequence",
+    "MusicTrack",
     # Audio Device & Hardware
     "AudioDevice",
     "AudioDeviceManager",

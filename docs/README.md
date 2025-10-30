@@ -1,6 +1,17 @@
 # coremusic Documentation
 
-This directory contains the Sphinx documentation for coremusic.
+This directory contains the comprehensive documentation for coremusic, including both Sphinx-generated API documentation and practical guides.
+
+## 📚 New Documentation (October 2025)
+
+**Ready-to-read guides** (no build required):
+
+- **[IMPORT_GUIDE.md](IMPORT_GUIDE.md)** - Complete import patterns and package structure
+- **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - Migrate from pydub, soundfile, mido, CoreAudio C, etc.
+- **[COOKBOOK.md](COOKBOOK.md)** - 25+ practical recipes for common audio tasks
+- **[PERFORMANCE_GUIDE.md](PERFORMANCE_GUIDE.md)** - Performance optimization and benchmarks
+
+These guides complement the Sphinx documentation below.
 
 ## Building Documentation
 
