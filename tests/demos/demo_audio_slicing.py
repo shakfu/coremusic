@@ -12,15 +12,29 @@ Demonstrates the audio slicing and recombination capabilities of CoreMusic:
 - Real-world workflows
 
 Requires NumPy and SciPy.
+
+OUTPUT: Creates audible audio files in tests/demos/slicing_output/
 """
 
 import sys
 from pathlib import Path
 
 # Add src to path for demo purposes
+BUILD_DIR = Path.cwd() / "build"
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 import coremusic as cm
+from coremusic.capi import (
+    fourchar_to_int,
+    extended_audio_file_create_with_url,
+    extended_audio_file_write,
+    extended_audio_file_dispose,
+    get_linear_pcm_format_flag_is_signed_integer,
+    get_linear_pcm_format_flag_is_packed,
+)
+
+# Output directory for audio files
+OUTPUT_DIR = BUILD_DIR / "slicing_output"
 
 try:
     import numpy as np
@@ -44,6 +58,69 @@ if NUMPY_AVAILABLE and SCIPY_AVAILABLE:
         SliceCollection,
         SliceRecombinator,
     )
+
+
+def write_audio_file(audio_data, sample_rate, file_path, num_channels=2):
+    """Write audio data to a WAV file.
+
+    Args:
+        audio_data: NumPy array of audio samples (stereo interleaved if 2 channels)
+        sample_rate: Sample rate in Hz
+        file_path: Path to output WAV file
+        num_channels: Number of channels (1 or 2)
+    """
+    file_path = Path(file_path)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Ensure audio_data is 1D for mono, handle stereo appropriately
+    if audio_data.ndim == 1:
+        # Mono - expand to stereo by duplicating
+        if num_channels == 2:
+            audio_data = np.repeat(audio_data, 2)
+
+    # Normalize to int16 range
+    audio_data = np.clip(audio_data, -1.0, 1.0)
+    audio_int16 = (audio_data * 32767).astype(np.int16)
+
+    # Create Extended Audio File for writing
+    # Set up format - 16-bit PCM stereo
+    asbd = {
+        'sample_rate': float(sample_rate),
+        'format_id': fourchar_to_int('lpcm'),
+        'format_flags': (
+            get_linear_pcm_format_flag_is_signed_integer() |
+            get_linear_pcm_format_flag_is_packed()
+        ),
+        'bytes_per_packet': num_channels * 2,
+        'frames_per_packet': 1,
+        'bytes_per_frame': num_channels * 2,
+        'channels_per_frame': num_channels,
+        'bits_per_channel': 16
+    }
+
+    # Create output file
+    file_type = fourchar_to_int('WAVE')
+    ext_audio_file_id = extended_audio_file_create_with_url(
+        str(file_path), file_type, asbd
+    )
+
+    try:
+        # Write audio data
+        num_frames = len(audio_int16) // num_channels
+        extended_audio_file_write(ext_audio_file_id, num_frames, audio_int16.tobytes())
+    finally:
+        extended_audio_file_dispose(ext_audio_file_id)
+
+
+def save_slice_to_file(slice_obj, output_path):
+    """Save a single slice as a WAV file.
+
+    Args:
+        slice_obj: Slice object to save (contains data and sample_rate)
+        output_path: Path to output WAV file
+    """
+    # Slice object already contains the audio data
+    write_audio_file(slice_obj.data, slice_obj.sample_rate, output_path, num_channels=2)
 
 
 def demo_onset_slicing():
@@ -72,6 +149,14 @@ def demo_onset_slicing():
         print(f"    Shortest: {min(durations):.3f}s")
         print(f"    Longest: {max(durations):.3f}s")
         print(f"    Average: {np.mean(durations):.3f}s")
+
+        # Save individual slices
+        print(f"\n  Saving slices to disk...")
+        onset_dir = OUTPUT_DIR / "01_onset_slices"
+        for i, s in enumerate(slices, 1):
+            output_path = onset_dir / f"onset_slice_{i:02d}.wav"
+            save_slice_to_file(s, output_path)
+        print(f"    Saved {len(slices)} slices to {onset_dir}")
 
 
 def demo_transient_slicing():
@@ -244,28 +329,39 @@ def demo_recombination():
 
     print(f"\nCreated {len(slices)} grid slices")
 
+    recombine_dir = OUTPUT_DIR / "07_recombinations"
+
+    # Get sample rate from first slice
+    sample_rate = slices[0].sample_rate
+
     # Original order
     recombinator = SliceRecombinator(collection)
     original = recombinator.recombine(method="original", crossfade_duration=0.005)
     print(f"\n1. Original Order:")
-    print(f"  Duration: {len(original) / 44100:.3f}s")
+    print(f"  Duration: {len(original) / sample_rate:.3f}s")
     print(f"  Method: original sequence with 5ms crossfade")
+    write_audio_file(original, sample_rate, recombine_dir / "01_original.wav", num_channels=2)
+    print(f"  Saved: {recombine_dir / '01_original.wav'}")
 
     # Random recombination
     random_audio = recombinator.recombine(
         method="random", crossfade_duration=0.01, num_slices=8
     )
     print(f"\n2. Random Recombination:")
-    print(f"  Duration: {len(random_audio) / 44100:.3f}s")
+    print(f"  Duration: {len(random_audio) / sample_rate:.3f}s")
     print(f"  Method: random selection of 8 slices with 10ms crossfade")
+    write_audio_file(random_audio, sample_rate, recombine_dir / "02_random.wav", num_channels=2)
+    print(f"  Saved: {recombine_dir / '02_random.wav'}")
 
     # Reverse
     reversed_audio = recombinator.recombine(
         method="reverse", crossfade_duration=0.005, normalize=True
     )
     print(f"\n3. Reverse:")
-    print(f"  Duration: {len(reversed_audio) / 44100:.3f}s")
+    print(f"  Duration: {len(reversed_audio) / sample_rate:.3f}s")
     print(f"  Method: reversed order, normalized")
+    write_audio_file(reversed_audio, sample_rate, recombine_dir / "03_reverse.wav", num_channels=2)
+    print(f"  Saved: {recombine_dir / '03_reverse.wav'}")
 
     # Pattern-based
     pattern = [0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14]
@@ -273,8 +369,10 @@ def demo_recombination():
         method="pattern", crossfade_duration=0.003, pattern=pattern
     )
     print(f"\n4. Pattern-Based:")
-    print(f"  Duration: {len(patterned_audio) / 44100:.3f}s")
+    print(f"  Duration: {len(patterned_audio) / sample_rate:.3f}s")
     print(f"  Method: custom pattern with 3ms crossfade")
+    write_audio_file(patterned_audio, sample_rate, recombine_dir / "04_pattern.wav", num_channels=2)
+    print(f"  Saved: {recombine_dir / '04_pattern.wav'}")
 
     # Custom ordering
     def by_duration_desc(slices_list):
@@ -284,8 +382,10 @@ def demo_recombination():
         method="custom", crossfade_duration=0.01, order_func=by_duration_desc
     )
     print(f"\n5. Custom Ordering:")
-    print(f"  Duration: {len(custom_audio) / 44100:.3f}s")
+    print(f"  Duration: {len(custom_audio) / sample_rate:.3f}s")
     print(f"  Method: sorted by duration (longest first)")
+    write_audio_file(custom_audio, sample_rate, recombine_dir / "05_custom_order.wav", num_channels=2)
+    print(f"  Saved: {recombine_dir / '05_custom_order.wav'}")
 
 
 def demo_creative_workflow():
@@ -322,7 +422,12 @@ def demo_creative_workflow():
     )
     print(f"    Final audio: {len(result) / 44100:.3f}s, normalized")
 
-    print("\n  Workflow complete! Created rhythmic variation.")
+    # Save the creative result
+    workflow_dir = OUTPUT_DIR / "08_creative_workflow"
+    sample_rate = slices[0].sample_rate
+    write_audio_file(result, sample_rate, workflow_dir / "stuttering_breakbeat.wav", num_channels=2)
+    print(f"\n  Workflow complete! Created rhythmic variation.")
+    print(f"  Saved: {workflow_dir / 'stuttering_breakbeat.wav'}")
 
 
 def demo_comparison():
@@ -403,6 +508,12 @@ def main():
         print("Install with: pip install scipy")
         return
 
+    # Clean output directory
+    import shutil
+    if OUTPUT_DIR.exists():
+        shutil.rmtree(OUTPUT_DIR)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
     try:
         demo_onset_slicing()
         demo_transient_slicing()
@@ -427,6 +538,25 @@ def main():
         print("- SliceCollection enables fluent manipulation")
         print("- SliceRecombinator supports creative workflows")
         print("- Multiple recombination strategies available")
+
+        # Show created files
+        print("\n" + "=" * 70)
+        print("CREATED AUDIO FILES")
+        print("=" * 70)
+        print(f"\nAll audio files saved to: {OUTPUT_DIR.absolute()}")
+        print("\nDirectory structure:")
+
+        for subdir in sorted(OUTPUT_DIR.iterdir()):
+            if subdir.is_dir():
+                wav_files = sorted(subdir.glob("*.wav"))
+                print(f"\n  {subdir.name}/")
+                for wav_file in wav_files:
+                    size_kb = wav_file.stat().st_size / 1024
+                    print(f"    - {wav_file.name} ({size_kb:.1f} KB)")
+
+        total_files = sum(1 for _ in OUTPUT_DIR.rglob("*.wav"))
+        print(f"\nTotal audio files created: {total_files}")
+        print("\nYou can now listen to these files to hear the slicing results!")
 
     except KeyboardInterrupt:
         print("\n\nDemo interrupted by user")
