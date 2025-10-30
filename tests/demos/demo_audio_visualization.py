@@ -14,7 +14,8 @@ Requires NumPy and matplotlib.
 import sys
 from pathlib import Path
 
-# Add src to path for demo purposes
+BUILD_DIR = Path.cwd() / "build"
+OUTPUT_DIR = BUILD_DIR / "visualization_outputs"
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 try:
@@ -206,7 +207,7 @@ def demo_compare_time_points():
     print("\nAll time points analyzed successfully")
 
 
-def demo_save_visualizations(tmp_dir="/tmp/coremusic_vis_demo"):
+def demo_save_visualizations(tmp_dir=OUTPUT_DIR):
     """Demo 9: Saving visualizations to files."""
     print("\n" + "=" * 70)
     print("DEMO 9: Saving Visualizations to Files")
