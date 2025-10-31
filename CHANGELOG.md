@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.1.9]
+
 ### Added
 
 - **Performance Optimizations Suite** - Complete infrastructure for high-performance audio processing (January 2025)

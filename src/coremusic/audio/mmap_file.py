@@ -7,8 +7,17 @@ significant performance improvements for large file operations.
 import mmap
 import struct
 from pathlib import Path
-from typing import Optional, Union, Tuple
-import numpy as np
+from typing import Optional, Union, Tuple, TYPE_CHECKING
+
+# Conditional numpy import
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+    np = None  # type: ignore
+    if TYPE_CHECKING:
+        import numpy as np
 
 from ..buffer_utils import AudioStreamBasicDescription
 
@@ -304,7 +313,7 @@ class MMapAudioFile:
         self,
         start_frame: int = 0,
         num_frames: Optional[int] = None
-    ) -> np.ndarray:
+    ) -> "np.ndarray":
         """Read audio data as NumPy array.
 
         Args:
@@ -315,12 +324,21 @@ class MMapAudioFile:
             NumPy array with shape (frames, channels) for stereo,
             or (frames,) for mono
 
+        Raises:
+            ImportError: If NumPy is not installed
+
         Example::
 
             # Read first second as NumPy array
             data = audio.read_as_numpy(0, 44100)
             print(data.shape, data.dtype)  # (44100, 2), dtype('int16')
         """
+        if not NUMPY_AVAILABLE:
+            raise ImportError(
+                "NumPy is required for read_as_numpy(). "
+                "Install with: pip install numpy"
+            )
+
         if not self._is_open:
             self.open()
 
@@ -356,7 +374,7 @@ class MMapAudioFile:
 
         return samples
 
-    def __getitem__(self, key: Union[int, slice]) -> np.ndarray:
+    def __getitem__(self, key: Union[int, slice]) -> "np.ndarray":
         """Array-like access with slicing support.
 
         Args:
@@ -364,6 +382,9 @@ class MMapAudioFile:
 
         Returns:
             NumPy array of audio data
+
+        Raises:
+            ImportError: If NumPy is not installed
 
         Example::
 
@@ -376,6 +397,12 @@ class MMapAudioFile:
             # Get every 10th frame
             frames = audio[::10]
         """
+        if not NUMPY_AVAILABLE:
+            raise ImportError(
+                "NumPy is required for array-like access. "
+                "Install with: pip install numpy"
+            )
+
         if isinstance(key, int):
             # Single frame
             if key < 0:

@@ -502,7 +502,7 @@ typedef struct HostCallbackInfo {
 
 ## Completed Enhancements (Phase 8-10)
 
-### Phase 8: Audio Format Support ✅
+### Phase 8: Audio Format Support [x]
 
 **Implementation**: `src/coremusic/audiounit_host.py:18-243`
 
@@ -579,7 +579,7 @@ This two-stage approach ensures all conversions work correctly and simplifies th
 - Float32 ↔ Float64 conversion
 - Interleaved ↔ Non-interleaved conversion
 
-### Phase 9: User Preset Management ✅
+### Phase 9: User Preset Management [x]
 
 **Implementation**: `src/coremusic/audiounit_host.py:341-535`
 
@@ -654,7 +654,7 @@ with cm.AudioUnitPlugin.from_name("AUDelay") as plugin:
 - Export preset
 - Import preset
 
-### Phase 10: AudioUnitChain Class ✅
+### Phase 10: AudioUnitChain Class [x]
 
 **Implementation**: `src/coremusic/audiounit_host.py:1169-1438`
 
