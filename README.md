@@ -903,6 +903,23 @@ To build a wheel:
 make wheel
 ```
 
+### Testing
+
+Run the complete test suite:
+
+```sh
+make test           # Run fast tests (skip slow ones)
+make test-all       # Run all tests including slow ones
+```
+
+Test clean installation without optional dependencies:
+
+```sh
+make test-clean-install
+```
+
+This creates a fresh virtual environment in `/tmp`, installs coremusic without numpy/scipy/matplotlib, and verifies all core functionality imports correctly. Useful for CI/CD and verifying optional dependency handling.
+
 ## API Migration and Best Practices
 
 ### Choosing Between APIs

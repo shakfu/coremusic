@@ -1,4 +1,4 @@
-.PHONY: all sync build test test-all coverage coverage-html clean typecheck docs docs-clean docs-serve docs-pdf  \
+.PHONY: all sync build test test-all test-clean-install coverage coverage-html clean typecheck docs docs-clean docs-serve docs-pdf  \
 		release check publish
 
 all: build
@@ -17,6 +17,10 @@ test:
 
 test-all:
 	@uv run pytest
+
+test-clean-install:
+	@echo "Testing clean installation without optional dependencies..."
+	@./scripts/test_clean_install.sh
 
 coverage:
 	@uv run pytest -m "not slow" --cov=coremusic --cov-report=term-missing
