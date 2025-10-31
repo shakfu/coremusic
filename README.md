@@ -1,7 +1,6 @@
 # CoreMusic: Python bindings for Apple CoreAudio
 
 [![PyPI version](https://badge.fury.io/py/coremusic.svg)](https://badge.fury.io/py/coremusic)
-[![Python versions](https://img.shields.io/pypi/pyversions/coremusic.svg)](https://pypi.org/project/coremusic/)
 [![License](https://img.shields.io/github/license/shakfu/coremusic.svg)](https://github.com/shakfu/coremusic/blob/main/LICENSE)
 
 ## Overview
