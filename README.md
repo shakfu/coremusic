@@ -1,8 +1,5 @@
 # CoreMusic: Python bindings for Apple CoreAudio
 
-[![CI](https://github.com/shakfu/coremusic/actions/workflows/ci.yml/badge.svg)](https://github.com/shakfu/coremusic/actions/workflows/ci.yml)
-[![Coverage](https://github.com/shakfu/coremusic/actions/workflows/coverage.yml/badge.svg)](https://github.com/shakfu/coremusic/actions/workflows/coverage.yml)
-[![Documentation](https://github.com/shakfu/coremusic/actions/workflows/docs.yml/badge.svg)](https://github.com/shakfu/coremusic/actions/workflows/docs.yml)
 [![PyPI version](https://badge.fury.io/py/coremusic.svg)](https://badge.fury.io/py/coremusic)
 [![Python versions](https://img.shields.io/pypi/pyversions/coremusic.svg)](https://pypi.org/project/coremusic/)
 [![License](https://img.shields.io/github/license/shakfu/coremusic.svg)](https://github.com/shakfu/coremusic/blob/main/LICENSE)
