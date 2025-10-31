@@ -10,8 +10,8 @@
 
 Successfully implemented complete Object-Oriented (OO) Python API for Apple's MusicPlayer/MusicSequence framework, addressing the partially implemented items from PROJECT_REVIEW.md:
 
-- 🟨 → [x] **Extended Audio File**: Confirmed fully implemented with all features
-- 🟨 → [x] **Music Player**: Complete OO API with comprehensive functionality
+- [yellow] → [x] **Extended Audio File**: Confirmed fully implemented with all features
+- [yellow] → [x] **Music Player**: Complete OO API with comprehensive functionality
 
 ---
 
@@ -431,8 +431,8 @@ def add_midi_note(
 **Before:**
 ```markdown
 **Partially Implemented:**
-- 🟨 Extended Audio File: Basic operations (advanced features available)
-- 🟨 Music Player: Core functionality (some advanced features pending)
+- [yellow] Extended Audio File: Basic operations (advanced features available)
+- [yellow] Music Player: Core functionality (some advanced features pending)
 ```
 
 **After:**
