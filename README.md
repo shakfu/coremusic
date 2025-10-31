@@ -9,7 +9,7 @@
 
 ## Overview
 
-`coremusic` is a Python extension that provides direct access to Apple's CoreAudio frameworks. Built with Cython, it offers near-native performance while maintaining the ease of use of Python. The wrapper covers the complete CoreAudio ecosystem, from low-level hardware control to high-level audio processing units, with both traditional functional APIs and modern object-oriented interfaces.
+`coremusic` is a Python extension that provides direct access to Apple's CoreAudio frameworks. Built with Cython, it offers near-native performance while maintaining the ease of use of Python. The wrapper tries to cover as much as possible of the c-accessible CoreAudio ecosystem, from low-level hardware control to high-level audio processing units, with both traditional functional APIs and modern object-oriented interfaces.
 
 ### Key Features
 
@@ -18,6 +18,9 @@
 - **CoreAudio Framework Coverage**: Full access to CoreAudio, AudioToolbox, and AudioUnit APIs
 
 - **High Performance**: Cython-based implementation with near-native C performance
+  - Optimized audio buffer operations (mixing, gain, pan, fade)
+  - Zero-copy buffer pool with configurable memory limits
+  - Memory-mapped file I/O for efficient large file handling
 
 - **Automatic Resource Management**: Object-oriented APIs with context managers and automatic cleanup
 
@@ -36,6 +39,13 @@
 - **Format Detection**: Automatic audio format detection and conversion
 
 - **Real-time Processing**: Low-latency audio processing capabilities
+
+- **Advanced Audio Utilities**:
+  - Audio analysis (peak detection, RMS, spectral analysis)
+  - Async I/O for non-blocking audio operations
+  - Audio slicing and time-stretching
+  - Streaming audio processing
+  - Audio visualization helpers
 
 - **CoreMIDI Framework Coverage**: Full access to MIDI services, device management, and advanced routing
 
@@ -59,6 +69,12 @@
   - Marker and loop region support
   - AudioUnit plugin integration per track
   - Parameter automation with multiple interpolation modes
+
+- **Performance Optimizations**: Cython-optimized audio buffer operations integrated into main `capi.pyx`
+
+- **Memory Management**: Zero-copy buffer pool with configurable limits and automatic cleanup
+
+- **Memory-Mapped File I/O**: Efficient large file handling with automatic mapping/unmapping
 
 ## Supported Frameworks
 
@@ -94,23 +110,37 @@
 ### CoreMIDI
 
 - MIDI Services:  CoreMIDI framework integration with device and endpoint management
+
 - Universal MIDI Packets: MIDI 1.0 and 2.0 message creation and handling in UMP format
+
 - Message Creation: Channel voice, system, and meta message construction with type safety
+
 - Device Management: MIDI device and entity discovery, creation, and property management
+
 - MIDI Setup: External device handling, device list management, and system configuration
+
 - Driver Support: Access to MIDI driver APIs for device creation and endpoint management
+
 - Thru Connections: Advanced MIDI routing with filtering, transformation, and channel mapping
+
 - Message Transformation: Scale, filter, add, and remap MIDI messages with flexible transforms
+
 - Real-time MIDI: Low-latency MIDI processing with proper timestamp handling
 
 ### Ableton Link
 
 - **Network Tempo Sync**: Multi-device tempo synchronization over local network
+
 - **Beat Quantization**: Start/stop playback on beat boundaries with quantum alignment
+
 - **Link + CoreAudio**: AudioPlayer integration with beat-accurate playback
+
 - **Link + CoreMIDI**: MIDI clock synchronization and beat-accurate sequencing
+
 - **Session Management**: Automatic peer discovery and connection with transport control
+
 - **High Precision**: Sub-millisecond timing accuracy for professional workflows
+
 - **Cross-Platform Sync**: Compatible with 100+ Link-enabled applications
 
 ## Installation
@@ -578,6 +608,72 @@ with cm.link.LinkSession(bpm=120.0) as session:
     seq.stop()
 ```
 
+### Performance Features
+
+#### Zero-Copy Buffer Pool
+
+```python
+import coremusic as cm
+from coremusic.audio.buffer_pool import AudioBufferPool
+
+# Create buffer pool with memory limit (100 MB)
+pool = AudioBufferPool(max_memory_mb=100)
+
+# Get buffer from pool (zero-copy reuse)
+buffer = pool.get_buffer(size=4096, channels=2)
+
+# Use buffer for audio processing
+# ... process audio ...
+
+# Return buffer to pool (automatic cleanup)
+pool.return_buffer(buffer)
+
+# Pool automatically manages memory limits
+print(f"Pool size: {pool.current_size_mb:.2f} MB")
+print(f"Active buffers: {pool.num_active}")
+```
+
+#### Memory-Mapped File I/O
+
+```python
+from coremusic.audio.mmap_file import MMapAudioFile
+
+# Open large audio file with memory mapping
+with MMapAudioFile("large_audio.wav") as mmap_file:
+    # Get file info
+    print(f"Duration: {mmap_file.duration:.2f}s")
+    print(f"Sample rate: {mmap_file.sample_rate}Hz")
+
+    # Efficient random access (no full file load)
+    chunk = mmap_file.read_frames(start=100000, count=4096)
+
+    # Process in chunks with zero-copy
+    for chunk in mmap_file.iter_chunks(chunk_size=8192):
+        # Process audio chunk
+        process_audio(chunk)
+```
+
+#### Optimized Audio Operations
+
+```python
+import coremusic.capi as capi
+import numpy as np
+
+# Optimized buffer operations (Cython-accelerated)
+left = np.array([0.5, 0.3, 0.8], dtype=np.float32)
+right = np.array([0.4, 0.6, 0.7], dtype=np.float32)
+
+# Fast stereo mixing with pan
+result = capi.mix_stereo_buffers(left, right, pan=0.5)
+
+# Fast gain application
+capi.apply_gain(left, gain=0.8)
+
+# Fast fade operations
+capi.apply_fade_in(left, fade_samples=1000)
+capi.apply_fade_out(right, fade_samples=1000)
+```
+
 ### DAW Timeline and Multi-Track Operations
 
 ```python
@@ -688,126 +784,9 @@ except RuntimeError as e:
     print(f"Thru connection failed: {e}")
 ```
 
-## Examples and Demos
+## Tests, Examples and Demos
 
-The project includes comprehensive demonstration scripts and test suites:
-
-### Object-Oriented API Tests
-
-```bash
-# Test object-oriented audio file operations
-pytest tests/test_objects_audio_file.py -v
-
-# Test object-oriented AudioUnit operations
-pytest tests/test_objects_audio_unit.py -v
-
-# Test object-oriented MIDI operations
-pytest tests/test_objects_midi.py -v
-
-# Test complete object-oriented API
-pytest tests/test_objects_comprehensive.py -v
-```
-
-### Unified Audio Demo
-
-```bash
-python3 tests/demos/unified_audio_demo.py
-```
-
-This comprehensive demo showcases:
-
-- CoreAudio constants and utilities
-- Audio file operations and format detection (both APIs)
-- AudioUnit infrastructure testing (both APIs)
-- AudioQueue operations (both APIs)
-- Real audio playback using AudioPlayer
-- Advanced CoreAudio features
-
-### CoreMIDI Test Suite
-
-```bash
-pytest tests/test_coremidi.py -v
-```
-
-The CoreMIDI test suite includes:
-
-- Universal MIDI Packet creation and validation
-- MIDI device and entity management
-- MIDI driver API functionality
-- Thru connection routing and transformation
-- Error handling and environment adaptation
-
-### AudioUnit Demos
-
-```bash
-# AudioUnit instrument MIDI control demo
-python3 tests/demos/audiounit_instrument_demo.py
-```
-
-This comprehensive demo includes:
-- Plugin discovery (62 instrument plugins)
-- Basic MIDI control (notes, chords, scales)
-- Program changes (instrument selection via General MIDI)
-- MIDI controllers (volume, pan automation)
-- Pitch bend demonstrations
-- Multi-channel performance (4-channel orchestration)
-- Arpeggiator patterns
-- Interactive keyboard mapping
-
-### Link Integration Demos
-
-```bash
-# Link high-level API demo
-python3 tests/demos/link_high_level_demo.py
-
-# Link + MIDI integration demo
-python3 tests/demos/link_midi_demo.py
-```
-
-### DAW Demos
-
-```bash
-# DAW essentials demo (10 examples)
-python3 tests/demos/demo_daw.py
-```
-
-This comprehensive demo includes:
-- Basic timeline creation and track management
-- Clip management with trimming and fades
-- Automation lanes with multiple interpolation modes (linear, step, cubic)
-- Markers and loop regions
-- Transport control (play, pause, stop, record)
-- Recording setup with track arming
-- Complete DAW workflow examples
-- Advanced track operations with clip queries
-- Time range operations
-
-### Complete Test Suite
-
-```bash
-# Run all tests
-make test
-
-# Run specific test categories
-pytest tests/test_coremidi.py tests/test_objects_*.py -v
-
-# Run Link integration tests
-pytest tests/test_link*.py -v
-```
-
-The complete test suite covers:
-
-- **Functional API**: Audio file I/O, AudioUnit lifecycle, AudioQueue functionality
-- **Object-Oriented API**: Modern Pythonic wrappers with automatic resource management
-- **AudioUnit Hosting**: Plugin discovery, loading, processing, and MIDI control (662 total tests)
-- **AudioUnit MIDI**: Note on/off, control change, program change, pitch bend, multi-channel (19 tests)
-- **MIDI Operations**: Message creation, device management, and routing (both APIs)
-- **Link Integration**: Network tempo sync, beat quantization, Link + Audio/MIDI
-- **DAW Essentials**: Timeline, tracks, clips, automation, markers, transport control (52 tests)
-- **Integration Testing**: Cross-API compatibility and consistency
-- **Resource Management**: Automatic cleanup and disposal testing
-- **Error handling**: Edge cases and failure scenarios
-- **Performance characteristics**: Real-time audio processing validation
+The project includes a large test suite, as well as examples and demos. 
 
 ## Architecture
 
@@ -816,23 +795,57 @@ The complete test suite covers:
 #### Functional API Layer
 
 - **`src/coremusic/capi.pyx`**: Main Cython implementation with Python wrapper functions and audio player with render callbacks
+
 - **`src/coremusic/capi.pxd`**: Main Cython header importing all framework declarations
+
 - **`src/coremusic/coremidi.pxd`**: CoreMIDI framework declarations and structures
+
 - **`src/coremusic/corefoundation.pxd`**: CoreFoundation framework declarations
+
 - **`src/coremusic/audiotoolbox.pxd`**: AudioToolbox framework declarations
+
 - **`src/coremusic/coreaudiotypes.pxd`**: CoreAudio types and structures
 
 #### Object-Oriented API Layer
 
-- **`src/coremusic/objects.pyx`**: Cython extension base class for automatic resource management
-- **`src/coremusic/oo.py`**: Object-oriented wrappers with automatic cleanup and context managers
+- **`src/coremusic/objects.py`**: Object-oriented wrappers with automatic cleanup and context managers
+
 - **`src/coremusic/__init__.py`**: Package entry point exposing OO API (functional API via `capi` submodule)
+
+- **`src/coremusic/audio/`**: High-level audio abstractions:
+  - `analysis.py`: Audio analysis tools (peak, RMS, spectral)
+  - `async_io.py`: Asynchronous audio I/O operations
+  - `audiounit_host.py`: AudioUnit plugin hosting infrastructure
+  - `buffer_pool.py`: Zero-copy buffer pool with memory limits
+  - `mmap_file.py`: Memory-mapped file I/O for large audio files
+  - `slicing.py`: Audio slicing and time-stretching utilities
+  - `streaming.py`: Streaming audio processing
+  - `utilities.py`: Common audio processing utilities
+  - `visualization.py`: Audio visualization helpers
+
+- **`src/coremusic/midi/`**: High-level MIDI abstractions:
+  - `link.py`: Ableton Link + MIDI integration
+  - `utilities.py`: MIDI processing and utility functions
 
 #### Ableton Link Integration
 
 - **`src/coremusic/link.pyx`**: Cython wrapper for Ableton Link C++ API with context manager support
-- **`src/coremusic/link_midi.py`**: Link + CoreMIDI integration (LinkMIDIClock, LinkMIDISequencer)
+
 - **`thirdparty/link/`**: Ableton Link library (C++ headers and implementation)
+
+#### High-Level Features
+
+- **`src/coremusic/daw.py`**: DAW essentials (Timeline, Track, Clip, Automation)
+
+- **`src/coremusic/buffer_utils.py`**: Audio buffer utilities and conversion helpers
+
+- **`src/coremusic/os_status.py`**: OSStatus error code mappings and handling
+
+- **`src/coremusic/constants.py`**: CoreAudio constant definitions
+
+- **`src/coremusic/log.py`**: Logging utilities for audio operations
+
+- **`src/coremusic/utils/`**: Utility modules (FourCC conversion, type helpers, etc.)
 
 #### Build Configuration
 
@@ -843,7 +856,9 @@ The complete test suite covers:
 The project uses a layered architecture:
 
 1. **C Framework Layer**: Direct access to Apple's CoreAudio and CoreMIDI frameworks
+
 2. **Functional API Layer**: Cython wrappers providing direct C function access with Python calling conventions
+
 3. **Object-Oriented API Layer**: Pure Python classes built on the functional layer, providing:
    - Automatic resource management via `__dealloc__` in Cython base class
    - Context manager support (`with` statements)
@@ -879,7 +894,9 @@ make
 The extension is built using Cython with the following process:
 
 1. Cython compiles `.pyx` files to C (including render callbacks and audio player)
+
 2. C compiler links against CoreAudio frameworks
+
 3. Python extension module is created
 
 All audio playback functionality, including real-time render callbacks, is implemented purely in Cython without requiring separate C source files
@@ -910,49 +927,19 @@ make wheel
 - Working within existing functional codebases
 - Building low-level audio processing components
 
-### Migration Guide
-
-**Migrating to new namespace (functional API users):**
-
-```python
-# Before (old pattern - deprecated)
-import coremusic as cm
-audio_file = cm.audio_file_open_url("file.wav")  # No longer works
-
-# After (new pattern - functional API)
-import coremusic.capi as capi
-audio_file = capi.audio_file_open_url("file.wav")  # Correct
-```
-
-**Migrating to object-oriented API (recommended):**
-
-```python
-# Before (Functional API)
-import coremusic.capi as capi
-audio_file = capi.audio_file_open_url("file.wav")
-try:
-    format_data = capi.audio_file_get_property(audio_file, property_id)
-    data, count = capi.audio_file_read_packets(audio_file, 0, 1000)
-finally:
-    capi.audio_file_close(audio_file)
-
-# After (Object-Oriented API)
-import coremusic as cm
-with cm.AudioFile("file.wav") as audio_file:
-    format_info = audio_file.format
-    data, count = audio_file.read_packets(0, 1000)
-```
-
 ### Best Practices
 
 - **Resource Management**: Always use context managers (`with` statements) when possible
+
 - **Error Handling**: Both APIs provide consistent exception types (`AudioFileError`, `AudioUnitError`, etc.)
+
 - **Performance**: Object-oriented layer adds minimal overhead - choose based on development needs
+
 - **Mixing APIs**: Both APIs can be used together - OO objects expose their underlying IDs when needed
 
 ## Performance
 
-coremusic provides near-native performance through both APIs:
+coremusic provides near-native performance through both APIs with recent optimizations:
 
 **Functional API:**
 
@@ -966,61 +953,25 @@ coremusic provides near-native performance through both APIs:
 - Automatic resource management without performance penalty
 - Efficient Cython-based cleanup via `__dealloc__`
 
+**Recent Performance Enhancements (October 2025):**
+
+- **Cython-Optimized Operations**: Core audio buffer operations (mixing, gain, pan, fade) now implemented in optimized Cython integrated into `capi.pyx`
+
+- **Zero-Copy Buffer Pool**: Efficient buffer reuse with configurable memory limits, reducing allocation overhead
+
+- **Memory-Mapped I/O**: Large file handling without loading entire files into memory
+
+- **Reduced Allocations**: Buffer pool prevents repeated allocation/deallocation cycles
+
+- **Benchmarking Suite**: Comprehensive performance benchmarks in `benchmarks/` for measuring optimization impact
+
 **Common Performance Features:**
 
 - Optimized audio processing pipelines
 - Real-time audio callback support
 - Efficient memory management
 - Direct framework integration
-
-## Use Cases
-
-### Professional Audio Applications
-
-- **Digital Audio Workstations (DAWs)**
-  - Multi-track audio and MIDI recording
-  - Timeline-based editing with markers
-  - Clip-based arrangement workflows
-  - Parameter automation with curves
-  - Transport control and loop regions
-  - AudioUnit plugin hosting per track
-  - Link-synchronized collaboration
-- Audio effects and processors
-- Real-time audio synthesis
-- Multi-channel audio handling
-- MIDI controllers and sequencers
-- Virtual instruments and synthesizers
-- AudioUnit instrument hosting (software synthesizers, samplers)
-- Python-based MIDI sequencers with AudioUnit playback
-- Interactive music applications with MIDI input/output
-- Network-synchronized music applications
-- Beat-accurate audio/MIDI playback
-- Collaborative music production tools
-
-### MIDI Applications
-
-- MIDI routing and transformation systems
-- Virtual MIDI devices and drivers
-- MIDI processing and filtering
-- Advanced MIDI routing matrices
-- MIDI learning and mapping systems
-- Real-time MIDI effects and processors
-
-### Audio Analysis and Processing
-
-- Audio format conversion
-- Spectral analysis
-- Audio file manipulation
-- Batch audio processing
-
-### Educational and Research
-
-- Audio algorithm development
-- CoreAudio API exploration
-- Audio programming education
-- Prototype audio applications
-- MIDI protocol research and development
-- Music technology experimentation
+- Low-latency audio processing (< 10ms typical)
 
 ## Contributing
 
@@ -1057,11 +1008,23 @@ This project is licensed under the MIT License - see the LICENSE file for detail
   - Beat-accurate MIDI sequencing
   - Combined audio + MIDI synchronized workflows
 
+- **[Error Handling Guide](docs/ERROR_DECORATOR.md)**: Comprehensive error handling system documentation covering:
+  - OSStatus error code mappings
+  - Error decorator patterns
+  - Exception hierarchy
+  - Best practices for error handling
+
 ### API References
 
 - **Functional API**: See `src/coremusic/capi.pyx` for complete C API bindings
-- **Object-Oriented API**: See `src/coremusic/oo.py` for Pythonic wrappers
+
+- **Object-Oriented API**: See `src/coremusic/objects.py` for Pythonic wrappers
+
 - **Link API**: See `src/coremusic/link.pyx` for Link integration
+
+- **Audio Utilities**: See `src/coremusic/audio/` for high-level audio processing modules
+
+- **MIDI Utilities**: See `src/coremusic/midi/` for MIDI processing utilities
 
 ## Resources
 
