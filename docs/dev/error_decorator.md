@@ -339,10 +339,10 @@ Based on grep analysis, the following files have error handling that could benef
 ## Migration Strategy
 
 ### Phase 1: New Code (Complete)
-- ✅ Implement decorators in `os_status.py`
-- ✅ Implement buffer utilities in `buffer_utils.py`
-- ✅ Add comprehensive tests (64/64 passing)
-- ✅ Export from main `__init__.py`
+- [x] Implement decorators in `os_status.py`
+- [x] Implement buffer utilities in `buffer_utils.py`
+- [x] Add comprehensive tests (64/64 passing)
+- [x] Export from main `__init__.py`
 
 ### Phase 2: Gradual Refactoring (Deferred)
 1. Start with AudioFile class (most used)
