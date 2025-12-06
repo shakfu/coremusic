@@ -8,17 +8,77 @@ The primary interface is the object-oriented API with automatic resource
 management and context manager support. This is itself built-up from the low-level
 functional C API which is available via the `capi` submodule for advanced use cases.
 
-Usage:
-    import coremusic as cm                # Object-oriented API
-    import coremusic.capi as capi         # Functional C API
-    import coremusic.utils.scipy as spu   # SciPy integration (optional)
-    from coremusic import link            # Ableton Link synchronization
-    from coremusic.midi import link       # Link + MIDI integration
-    from coremusic.audio import async_io  # Async audio I/O
+Basic Usage
+-----------
+::
 
-    # Constants (preferred over capi getter functions):
-    from coremusic.constants import AudioFileProperty, AudioFormatID
-    format_id = AudioFileProperty.DATA_FORMAT
+    import coremusic as cm
+
+    # Read an audio file
+    with cm.AudioFile("audio.wav") as audio:
+        print(f"Duration: {audio.duration:.2f}s")
+        print(f"Sample rate: {audio.format.sample_rate}Hz")
+        data, count = audio.read_packets(0, 1024)
+
+    # Use constants (preferred over capi getter functions)
+    cm.AudioFileProperty.DATA_FORMAT
+    cm.AudioFormatID.LINEAR_PCM
+
+Async/Await Support
+-------------------
+CoreMusic provides async versions of audio classes for non-blocking I/O::
+
+    import asyncio
+    import coremusic as cm
+
+    async def process_audio():
+        # Async file reading with chunk streaming
+        async with cm.AsyncAudioFile("large_file.wav") as audio:
+            print(f"Duration: {audio.duration:.2f}s")
+            async for chunk in audio.read_chunks_async(chunk_size=4096):
+                await process_chunk(chunk)
+
+        # Async AudioQueue playback
+        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2)
+        queue = await cm.AsyncAudioQueue.new_output_async(format)
+        await queue.start_async()
+        await asyncio.sleep(1.0)
+        await queue.stop_async()
+
+    asyncio.run(process_audio())
+
+NumPy Integration (Optional)
+----------------------------
+NumPy is an optional dependency. When installed, additional functionality is available::
+
+    import coremusic as cm
+
+    # Check if NumPy is available
+    if cm.NUMPY_AVAILABLE:
+        import numpy as np
+
+        # AudioFormat can convert to NumPy dtype
+        with cm.AudioFile("audio.wav") as audio:
+            dtype = audio.format.to_numpy_dtype()
+
+        # Memory-mapped files support zero-copy NumPy arrays
+        with cm.MMapAudioFile("large.wav") as mmap:
+            audio_np = mmap.read_as_numpy(start_frame=0, num_frames=44100)
+
+To install with NumPy support, NumPy must be installed separately::
+
+    pip install numpy
+
+Module Organization
+-------------------
+- ``coremusic`` - Object-oriented API (primary interface)
+- ``coremusic.capi`` - Low-level functional C API
+- ``coremusic.constants`` - Enum classes for CoreAudio constants
+- ``coremusic.audio`` - Audio processing utilities (async_io, streaming, analysis)
+- ``coremusic.midi`` - MIDI utilities and Link integration
+- ``coremusic.daw`` - DAW framework (Timeline, Track, Clip)
+- ``coremusic.link`` - Ableton Link tempo synchronization
+- ``coremusic.utils.scipy`` - SciPy integration (optional)
 """
 
 # Import object-oriented API (primary interface)
@@ -165,6 +225,11 @@ __all__ = [
     "ClockTimeFormat",
     # Audio Player
     "AudioPlayer",
+    # Async I/O Support
+    "AsyncAudioFile",
+    "AsyncAudioQueue",
+    "open_audio_file_async",
+    "create_output_queue_async",
     # Ableton Link - Tempo Synchronization
     "link",  # link module containing LinkSession, SessionState, Clock
     "link_midi",  # Link + MIDI integration (LinkMIDIClock, LinkMIDISequencer)

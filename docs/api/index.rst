@@ -6,6 +6,12 @@ Complete API reference for coremusic. The package provides both functional and o
 .. note::
    The object-oriented API is recommended for new applications due to automatic resource management and Pythonic interfaces.
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Quick Start
+
+   quickstart
+
 Core Modules
 ------------
 

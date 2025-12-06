@@ -7,6 +7,7 @@ Ready-to-use recipes for common audio and MIDI processing tasks.
    :maxdepth: 2
    :caption: Recipes
 
+   common_patterns
    file_operations
    audio_processing
    real_time_audio

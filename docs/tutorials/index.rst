@@ -8,6 +8,7 @@ Step-by-step tutorials for common audio and MIDI tasks with coremusic.
    :caption: Audio Basics
 
    audio_file_basics
+   async_audio
 
 Tutorial Overview
 -----------------

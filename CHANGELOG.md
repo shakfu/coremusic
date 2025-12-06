@@ -17,6 +17,67 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Changed
+
+- **Constants Export** - All constant enum classes from `coremusic.constants` are now exported directly from the main `coremusic` package for convenience:
+  ```python
+  # Now you can do:
+  import coremusic as cm
+  cm.AudioFileProperty.DATA_FORMAT
+  cm.AudioFormatID.LINEAR_PCM
+
+  # Instead of:
+  from coremusic.constants import AudioFileProperty
+  ```
+
+### Deprecated
+
+- **Legacy Constant Getter Functions** - The `get_*` functions in `coremusic.capi` (e.g., `get_audio_format_linear_pcm()`) are now deprecated in favor of the enum classes in `coremusic.constants`. The getter functions remain for backward compatibility but new code should use the enum classes:
+  ```python
+  # Deprecated:
+  capi.get_audio_file_property_data_format()
+
+  # Preferred:
+  from coremusic import AudioFileProperty
+  AudioFileProperty.DATA_FORMAT
+  ```
+
+### Fixed
+
+- **Docstring Typos** - Fixed 38 instances of malformed docstrings in `capi.pyx` where `"Returns:\n      f OSStatus result code"` has been corrected to `"Returns:\n        OSStatus result code (0 on success)"`.
+
+### Added
+
+- **CODE_REVIEW.md** - Comprehensive code review report covering architecture, API design, test coverage, and recommendations.
+
+### Documentation
+
+- **Enhanced Module Docstring** - The main `coremusic/__init__.py` now includes comprehensive documentation:
+  - Basic usage examples with `AudioFile` context manager
+  - Async/await support with `AsyncAudioFile` and `AsyncAudioQueue` examples
+  - NumPy integration guide with `NUMPY_AVAILABLE` flag and usage patterns
+  - Module organization overview
+- **Async Classes Exported** - `AsyncAudioFile`, `AsyncAudioQueue`, `open_audio_file_async`, and `create_output_queue_async` are now included in `__all__` for better discoverability.
+- **Async Audio Tutorial** (`docs/tutorials/async_audio.rst`) - Complete guide covering:
+  - Async file operations with `AsyncAudioFile`
+  - Streaming audio chunks asynchronously
+  - Concurrent file processing with `asyncio.gather()`
+  - Producer-consumer patterns for streaming
+  - Integration with web frameworks (FastAPI example)
+- **API Quickstart Guide** (`docs/api/quickstart.rst`) - Rapid introduction covering:
+  - Import patterns for OO and functional APIs
+  - Audio file, AudioUnit, and MIDI operations
+  - Constants usage with enum classes
+  - Async operations and error handling
+  - NumPy integration and quick reference table
+- **Common Patterns Cookbook** (`docs/cookbook/common_patterns.rst`) - Essential patterns including:
+  - Resource management (context managers, multiple resources)
+  - Error handling (graceful recovery, retry patterns)
+  - Format handling (detection, validation, conversion pipelines)
+  - Streaming patterns (generators, progress tracking)
+  - Caching patterns (LRU cache, file hash cache)
+  - Batch processing (parallel and sequential)
+
 ## [0.1.9]
 
 ### Added
