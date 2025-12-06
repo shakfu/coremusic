@@ -9,12 +9,9 @@ This script demonstrates the coremusic.daw module capabilities:
 - Transport control
 """
 
-import sys
 from pathlib import Path
 
-# Add parent directory to path for imports
 BUILD_DIR = Path.cwd() / "build"
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 import coremusic as cm
 from coremusic.daw import (
@@ -53,138 +50,257 @@ OUTPUT_DIR = BUILD_DIR / "daw_output"
 # ============================================================================
 
 def generate_drum_pattern(duration, sample_rate=48000, tempo=128.0):
-    """Generate a simple drum pattern (kick + snare)"""
+    """Generate a punchy electronic drum pattern"""
     if not NUMPY_AVAILABLE:
         return None
 
     num_samples = int(duration * sample_rate)
     audio = np.zeros(num_samples, dtype=np.float32)
 
-    # Calculate beat interval in samples
     beat_interval = int((60.0 / tempo) * sample_rate)
+    sixteenth = beat_interval // 4
 
-    # Kick drum on beats 1 and 3
-    for beat in [0, 2]:
-        pos = beat * beat_interval
-        if pos < num_samples:
-            # Simple kick: low frequency sine burst
-            t = np.arange(min(1000, num_samples - pos)) / sample_rate
-            kick = np.sin(2 * np.pi * 60 * t) * np.exp(-t * 20)
-            audio[pos:pos + len(kick)] += kick * 0.8
+    # Number of bars to fill
+    num_beats = int(duration * tempo / 60)
 
-    # Snare on beats 2 and 4
-    for beat in [1, 3]:
+    for beat in range(num_beats):
         pos = beat * beat_interval
-        if pos < num_samples:
-            # Simple snare: noise burst
-            snare_len = min(500, num_samples - pos)
-            t = np.arange(snare_len) / sample_rate
-            snare = np.random.randn(snare_len) * np.exp(-t * 40)
-            audio[pos:pos + snare_len] += snare * 0.4
+
+        # Kick on 1 and 3 (with pitch sweep for punch)
+        if beat % 4 in [0, 2]:
+            if pos < num_samples:
+                kick_len = min(int(0.15 * sample_rate), num_samples - pos)
+                t = np.arange(kick_len) / sample_rate
+                # Pitch drops from 150Hz to 50Hz for punch
+                freq = 150 * np.exp(-t * 30) + 50
+                phase = np.cumsum(2 * np.pi * freq / sample_rate)
+                kick = np.sin(phase) * np.exp(-t * 15) * 0.9
+                audio[pos:pos + kick_len] += kick
+
+        # Snare on 2 and 4 (layered noise + tone)
+        if beat % 4 in [1, 3]:
+            if pos < num_samples:
+                snare_len = min(int(0.12 * sample_rate), num_samples - pos)
+                t = np.arange(snare_len) / sample_rate
+                # Body tone
+                body = np.sin(2 * np.pi * 180 * t) * np.exp(-t * 25)
+                # Noise snap
+                noise = np.random.randn(snare_len) * np.exp(-t * 35)
+                snare = (body * 0.4 + noise * 0.3) * 0.7
+                audio[pos:pos + snare_len] += snare
+
+        # Hi-hat on every eighth note
+        for eighth in [0, 2]:
+            hat_pos = pos + eighth * (beat_interval // 2)
+            if hat_pos < num_samples:
+                hat_len = min(int(0.04 * sample_rate), num_samples - hat_pos)
+                t = np.arange(hat_len) / sample_rate
+                # Filtered noise for hi-hat
+                noise = np.random.randn(hat_len)
+                hat = noise * np.exp(-t * 80) * 0.25
+                audio[hat_pos:hat_pos + hat_len] += hat
 
     return audio
 
 
 def generate_bass_line(duration, sample_rate=48000, tempo=128.0):
-    """Generate a simple bass line"""
+    """Generate a melodic bass line in A minor"""
     if not NUMPY_AVAILABLE:
         return None
 
     num_samples = int(duration * sample_rate)
-    t = np.arange(num_samples) / sample_rate
-
-    # Simple repeating bass pattern
-    beat_duration = 60.0 / tempo
-    pattern_duration = beat_duration * 4
-
-    # Bass notes (frequencies)
-    notes = [55, 55, 73.42, 55]  # A1, A1, D2, A1
     audio = np.zeros(num_samples, dtype=np.float32)
 
-    for i, freq in enumerate(notes):
-        note_start = i * beat_duration
-        note_end = note_start + beat_duration * 0.8
+    beat_duration = 60.0 / tempo
 
-        start_sample = int(note_start * sample_rate)
-        end_sample = int(note_end * sample_rate)
+    # A minor bass pattern (A-E-F-G progression, musically pleasing)
+    # MIDI notes: A1=33, E2=40, F2=41, G2=43
+    pattern = [
+        (33, 0.0, 0.9),   # A1 - root
+        (33, 1.0, 0.4),   # A1 - octave hit
+        (40, 1.5, 0.9),   # E2 - fifth
+        (41, 2.5, 0.9),   # F2 - minor sixth
+        (43, 3.5, 0.4),   # G2 - minor seventh
+    ]
 
-        if start_sample >= num_samples:
-            break
+    # Repeat pattern for duration
+    pattern_length = 4 * beat_duration
+    num_repeats = int(duration / pattern_length) + 1
 
-        end_sample = min(end_sample, num_samples)
-        note_t = np.arange(end_sample - start_sample) / sample_rate
+    for repeat in range(num_repeats):
+        for midi_note, beat_offset, note_dur in pattern:
+            note_start = repeat * pattern_length + beat_offset * beat_duration
+            if note_start >= duration:
+                break
 
-        # Simple bass tone with envelope
-        envelope = np.exp(-note_t * 2)
-        bass_note = np.sin(2 * np.pi * freq * note_t) * envelope * 0.6
-        audio[start_sample:end_sample] += bass_note
+            freq = 440.0 * (2.0 ** ((midi_note - 69) / 12.0))
+            start_sample = int(note_start * sample_rate)
+            dur_samples = int(note_dur * beat_duration * sample_rate)
+            end_sample = min(start_sample + dur_samples, num_samples)
+
+            if start_sample >= num_samples:
+                break
+
+            note_t = np.arange(end_sample - start_sample) / sample_rate
+
+            # Warm bass with sub and slight harmonics
+            fundamental = np.sin(2 * np.pi * freq * note_t)
+            sub = np.sin(2 * np.pi * freq * 0.5 * note_t) * 0.5
+            harmonic = np.sin(2 * np.pi * freq * 2 * note_t) * 0.15
+
+            # Punchy envelope with quick attack
+            envelope = (1 - np.exp(-note_t * 50)) * np.exp(-note_t * 4)
+            bass_note = (fundamental + sub + harmonic) * envelope * 0.5
+            audio[start_sample:end_sample] += bass_note
 
     return audio
 
 
 def generate_synth_pad(duration, sample_rate=48000):
-    """Generate a simple synth pad"""
+    """Generate a lush ambient pad with chord progression"""
     if not NUMPY_AVAILABLE:
         return None
 
     num_samples = int(duration * sample_rate)
+    audio = np.zeros(num_samples, dtype=np.float32)
     t = np.arange(num_samples) / sample_rate
 
-    # Layered sine waves for pad sound
-    freqs = [220, 220 * 1.5, 220 * 2, 220 * 3]  # A3 chord
-    audio = np.zeros(num_samples, dtype=np.float32)
+    # A minor chord progression: Am - F - C - G (each 2 beats at ~60 BPM for ambient)
+    # Using longer, overlapping chords for pad feel
+    chord_duration = duration / 4
 
-    for i, freq in enumerate(freqs):
-        audio += np.sin(2 * np.pi * freq * t) * (0.15 / len(freqs))
+    chords = [
+        [57, 60, 64],      # Am (A3, C4, E4)
+        [53, 57, 60],      # F (F3, A3, C4)
+        [48, 52, 55, 60],  # C (C3, E3, G3, C4)
+        [55, 59, 62],      # G (G3, B3, D4)
+    ]
 
-    # Slow fade in/out
-    fade_samples = int(2.0 * sample_rate)
-    fade_in = np.linspace(0, 1, min(fade_samples, num_samples))
-    fade_out = np.linspace(1, 0, min(fade_samples, num_samples))
+    for chord_idx, chord_notes in enumerate(chords):
+        chord_start = chord_idx * chord_duration
+        chord_end = min(chord_start + chord_duration * 1.2, duration)  # Slight overlap
 
-    audio[:len(fade_in)] *= fade_in
-    audio[-len(fade_out):] *= fade_out
+        start_sample = int(chord_start * sample_rate)
+        end_sample = int(chord_end * sample_rate)
+        if start_sample >= num_samples:
+            break
+        end_sample = min(end_sample, num_samples)
+
+        chord_t = np.arange(end_sample - start_sample) / sample_rate
+        chord_audio = np.zeros(len(chord_t), dtype=np.float32)
+
+        for midi_note in chord_notes:
+            freq = 440.0 * (2.0 ** ((midi_note - 69) / 12.0))
+
+            # Detuned oscillators for richness
+            for detune in [-0.02, 0, 0.02]:
+                detuned_freq = freq * (1 + detune)
+                # Slow LFO for movement
+                lfo = 1 + 0.003 * np.sin(2 * np.pi * 0.3 * chord_t)
+                osc = np.sin(2 * np.pi * detuned_freq * lfo * chord_t)
+                chord_audio += osc * 0.08
+
+        # Soft envelope with slow attack and release
+        attack = 0.8
+        release = 0.5
+        env = np.ones(len(chord_t))
+        attack_samples = int(attack * sample_rate)
+        release_samples = int(release * sample_rate)
+
+        if attack_samples < len(env):
+            env[:attack_samples] = np.linspace(0, 1, attack_samples) ** 0.5
+        if release_samples < len(env):
+            env[-release_samples:] *= np.linspace(1, 0, release_samples) ** 0.5
+
+        audio[start_sample:end_sample] += chord_audio * env
+
+    # Overall fade in/out
+    fade_samples = int(1.5 * sample_rate)
+    if fade_samples < num_samples:
+        audio[:fade_samples] *= np.linspace(0, 1, fade_samples)
+        audio[-fade_samples:] *= np.linspace(1, 0, fade_samples)
 
     return audio
 
 
 def generate_vocal_melody(duration, sample_rate=48000, tempo=128.0):
-    """Generate a simple melodic line (simulating vocals)"""
+    """Generate a beautiful lead melody in A minor"""
     if not NUMPY_AVAILABLE:
         return None
 
     num_samples = int(duration * sample_rate)
+    audio = np.zeros(num_samples, dtype=np.float32)
     beat_duration = 60.0 / tempo
 
-    # Melody notes (frequencies in Hz)
+    # Melodic phrase in A minor - singable, memorable melody
+    # (MIDI note, beat start, beat duration)
     melody = [
-        (440, beat_duration * 2),      # A4
-        (493.88, beat_duration),       # B4
-        (523.25, beat_duration * 2),   # C5
-        (493.88, beat_duration),       # B4
-        (440, beat_duration * 2),      # A4
+        # Phrase 1: Rising
+        (64, 0.0, 1.0),    # E4
+        (67, 1.0, 0.5),    # G4
+        (69, 1.5, 1.5),    # A4
+        (72, 3.0, 1.0),    # C5
+        # Phrase 2: Falling resolution
+        (71, 4.0, 0.5),    # B4
+        (69, 4.5, 0.5),    # A4
+        (67, 5.0, 1.0),    # G4
+        (64, 6.0, 2.0),    # E4 (held)
+        # Phrase 3: Variation
+        (69, 8.0, 0.75),   # A4
+        (71, 8.75, 0.25),  # B4
+        (72, 9.0, 1.0),    # C5
+        (74, 10.0, 0.5),   # D5
+        (72, 10.5, 0.5),   # C5
+        (69, 11.0, 1.0),   # A4
+        # Phrase 4: Resolution
+        (67, 12.0, 1.0),   # G4
+        (69, 13.0, 3.0),   # A4 (final, held)
     ]
 
-    audio = np.zeros(num_samples, dtype=np.float32)
-    current_pos = 0
+    pattern_beats = 16
+    pattern_duration = pattern_beats * beat_duration
+    num_repeats = int(duration / pattern_duration) + 1
 
-    for freq, note_duration in melody:
-        start_sample = int(current_pos * sample_rate)
-        end_sample = int((current_pos + note_duration) * sample_rate)
+    for repeat in range(num_repeats):
+        for midi_note, beat_start, beat_dur in melody:
+            note_start = repeat * pattern_duration + beat_start * beat_duration
+            if note_start >= duration:
+                break
 
-        if start_sample >= num_samples:
-            break
+            freq = 440.0 * (2.0 ** ((midi_note - 69) / 12.0))
+            start_sample = int(note_start * sample_rate)
+            dur_samples = int(beat_dur * beat_duration * sample_rate)
+            end_sample = min(start_sample + dur_samples, num_samples)
 
-        end_sample = min(end_sample, num_samples)
-        note_t = np.arange(end_sample - start_sample) / sample_rate
+            if start_sample >= num_samples:
+                break
 
-        # Sine with vibrato and envelope
-        vibrato = 1 + 0.02 * np.sin(2 * np.pi * 5 * note_t)
-        envelope = np.exp(-note_t * 1.5)
-        note = np.sin(2 * np.pi * freq * vibrato * note_t) * envelope * 0.5
+            note_t = np.arange(end_sample - start_sample) / sample_rate
 
-        audio[start_sample:end_sample] += note
-        current_pos += note_duration
+            # Expressive vibrato that develops over time
+            vibrato_depth = 0.012 * (1 - np.exp(-note_t * 3))  # Delayed vibrato
+            vibrato = 1 + vibrato_depth * np.sin(2 * np.pi * 5.5 * note_t)
+
+            # Rich tone with harmonics
+            fundamental = np.sin(2 * np.pi * freq * vibrato * note_t)
+            harmonic2 = 0.3 * np.sin(2 * np.pi * freq * 2 * vibrato * note_t)
+            harmonic3 = 0.1 * np.sin(2 * np.pi * freq * 3 * vibrato * note_t)
+
+            # Natural envelope with attack, sustain, release
+            attack_time = 0.02
+            release_time = 0.15
+            note_len = len(note_t)
+            attack_samples = int(attack_time * sample_rate)
+            release_samples = int(release_time * sample_rate)
+
+            env = np.ones(note_len)
+            if attack_samples < note_len:
+                env[:attack_samples] = np.linspace(0, 1, attack_samples) ** 0.7
+            if release_samples < note_len:
+                env[-release_samples:] *= np.linspace(1, 0, release_samples) ** 0.5
+
+            note_audio = (fundamental + harmonic2 + harmonic3) * env * 0.4
+            audio[start_sample:end_sample] += note_audio
 
     return audio
 
@@ -468,36 +584,45 @@ def demo_midi_clip():
         print("Skipping - NumPy required for audio generation")
         return
 
-    # Create MIDI clip with a melody
+    # Create MIDI clip with a beautiful melody (Clair de Lune inspired)
     midi_clip = MIDIClip()
 
-    # C major scale melody
+    # Expressive melody in Db major - gentle, flowing
     melody = [
-        (60, 0.0, 0.4, 100),   # C4
-        (62, 0.5, 0.4, 90),    # D4
-        (64, 1.0, 0.4, 95),    # E4
-        (65, 1.5, 0.4, 85),    # F4
-        (67, 2.0, 0.4, 100),   # G4
-        (69, 2.5, 0.4, 90),    # A4
-        (71, 3.0, 0.4, 95),    # B4
-        (72, 3.5, 0.8, 100),   # C5
+        # Opening phrase
+        (61, 0.0, 0.8, 70),    # Db4
+        (63, 0.8, 0.4, 65),    # Eb4
+        (65, 1.2, 0.6, 75),    # F4
+        (68, 1.8, 1.0, 80),    # Ab4
+        (66, 2.8, 0.6, 70),    # Gb4
+        (65, 3.4, 0.8, 65),    # F4
+        # Second phrase - rising
+        (63, 4.2, 0.4, 60),    # Eb4
+        (65, 4.6, 0.4, 70),    # F4
+        (68, 5.0, 0.8, 85),    # Ab4
+        (70, 5.8, 1.2, 90),    # Bb4
+        (68, 7.0, 0.6, 75),    # Ab4
+        # Resolution
+        (66, 7.6, 0.8, 70),    # Gb4
+        (65, 8.4, 1.6, 65),    # F4 (held)
     ]
 
     for note, start, dur, vel in melody:
         midi_clip.add_note(note, vel, start, dur)
 
-    print(f"Created MIDI clip with {len(midi_clip.notes)} notes (C major scale)")
-    print(f"  Duration: 4.3 seconds")
+    print(f"Created MIDI clip with {len(midi_clip.notes)} notes (expressive melody)")
+    print(f"  Duration: 10 seconds")
+    print(f"  Key: Db major")
     print(f"  First 4 notes:")
     for i, note in enumerate(midi_clip.notes[:4], 1):
-        note_name = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'][note.note % 12]
+        note_name = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'][note.note % 12]
         octave = note.note // 12 - 1
         print(f"    {i}. {note_name}{octave} (MIDI {note.note}), "
               f"t={note.start_time:.1f}s, vel={note.velocity}")
 
     # Render to audio with piano sound
     print(f"\n  Rendering MIDI to audio with piano instrument...")
-    audio = render_midi_to_audio(midi_clip, duration=4.5, instrument_type="piano")
+    audio = render_midi_to_audio(midi_clip, duration=10.5, instrument_type="piano")
 
     if audio is not None:
         output_path = OUTPUT_DIR / "midi_piano_melody.wav"
@@ -516,27 +641,27 @@ def demo_midi_instruments():
         print("Skipping - NumPy required for audio generation")
         return
 
-    # Create a chord progression
+    # Create a beautiful chord progression with voice leading
     midi_clip = MIDIClip()
 
-    # Am chord (A, C, E)
-    for note in [57, 60, 64]:  # A3, C4, E4
-        midi_clip.add_note(note, 80, 0.0, 1.5)
+    # Dm9 chord (D, F, A, C, E) - rich voicing
+    for note in [50, 53, 57, 60, 64]:  # D3, F3, A3, C4, E4
+        midi_clip.add_note(note, 75, 0.0, 2.0)
 
-    # F chord (F, A, C)
-    for note in [53, 57, 60]:  # F3, A3, C4
-        midi_clip.add_note(note, 75, 1.5, 1.5)
+    # G7 chord (G, B, D, F) - dominant
+    for note in [43, 47, 50, 53]:  # G2, B2, D3, F3
+        midi_clip.add_note(note, 80, 2.0, 2.0)
 
-    # C chord (C, E, G)
-    for note in [48, 52, 55]:  # C3, E3, G3
-        midi_clip.add_note(note, 85, 3.0, 1.5)
+    # Cmaj7 chord (C, E, G, B) - resolution
+    for note in [48, 52, 55, 59]:  # C3, E3, G3, B3
+        midi_clip.add_note(note, 85, 4.0, 2.0)
 
-    # G chord (G, B, D)
-    for note in [43, 47, 50]:  # G2, B2, D3
-        midi_clip.add_note(note, 80, 4.5, 2.0)
+    # Am7 chord (A, C, E, G) - minor color
+    for note in [45, 48, 52, 55]:  # A2, C3, E3, G3
+        midi_clip.add_note(note, 70, 6.0, 2.5)
 
-    print(f"Created chord progression with {len(midi_clip.notes)} notes")
-    print(f"  Progression: Am - F - C - G")
+    print(f"Created jazz chord progression with {len(midi_clip.notes)} notes")
+    print(f"  Progression: Dm9 - G7 - Cmaj7 - Am7 (ii-V-I-vi)")
 
     # Render with different instruments
     instruments = [
@@ -547,7 +672,7 @@ def demo_midi_instruments():
 
     for inst_type, inst_name in instruments:
         print(f"\n  Rendering with {inst_name}...")
-        audio = render_midi_to_audio(midi_clip, duration=6.5, instrument_type=inst_type)
+        audio = render_midi_to_audio(midi_clip, duration=9.0, instrument_type=inst_type)
 
         if audio is not None:
             output_path = OUTPUT_DIR / f"midi_chords_{inst_type}.wav"
@@ -565,32 +690,53 @@ def demo_audio_effects():
         print("Skipping - NumPy required for audio generation")
         return
 
-    # Generate a simple melodic pattern
+    # Generate a melodic arpeggio pattern perfect for effects
     sample_rate = 48000
-    duration = 4.0
-    t = np.arange(int(duration * sample_rate)) / sample_rate
+    duration = 6.0
 
-    # Create a simple melody
+    # E minor arpeggio pattern (great for delay/reverb demos)
+    # MIDI notes with timing for rhythmic interest
     notes = [
-        (440, 0.0, 0.5),   # A4
-        (494, 0.5, 0.5),   # B4
-        (523, 1.0, 0.5),   # C5
-        (587, 1.5, 0.5),   # D5
-        (659, 2.0, 1.0),   # E5
+        (64, 0.0, 0.3),    # E4
+        (67, 0.25, 0.3),   # G4
+        (71, 0.5, 0.3),    # B4
+        (76, 0.75, 0.5),   # E5
+
+        (64, 1.5, 0.3),    # E4
+        (69, 1.75, 0.3),   # A4
+        (72, 2.0, 0.3),    # C5
+        (76, 2.25, 0.5),   # E5
+
+        (62, 3.0, 0.3),    # D4
+        (67, 3.25, 0.3),   # G4
+        (71, 3.5, 0.3),    # B4
+        (74, 3.75, 0.5),   # D5
+
+        (64, 4.5, 0.3),    # E4
+        (67, 4.75, 0.3),   # G4
+        (71, 5.0, 0.8),    # B4 (held)
     ]
 
-    audio = np.zeros(len(t), dtype=np.float32)
-    for freq, start_time, note_dur in notes:
+    audio = np.zeros(int(duration * sample_rate), dtype=np.float32)
+
+    for midi_note, start_time, note_dur in notes:
+        freq = 440.0 * (2.0 ** ((midi_note - 69) / 12.0))
         start_sample = int(start_time * sample_rate)
         dur_samples = int(note_dur * sample_rate)
         end_sample = min(start_sample + dur_samples, len(audio))
 
         note_t = np.arange(end_sample - start_sample) / sample_rate
-        envelope = np.exp(-note_t * 3.0)
-        note_audio = np.sin(2 * np.pi * freq * note_t) * envelope * 0.4
+
+        # Bell-like tone with harmonics
+        fundamental = np.sin(2 * np.pi * freq * note_t)
+        harmonic2 = 0.4 * np.sin(2 * np.pi * freq * 2 * note_t)
+        harmonic3 = 0.2 * np.sin(2 * np.pi * freq * 3 * note_t)
+
+        envelope = np.exp(-note_t * 4.0)
+        note_audio = (fundamental + harmonic2 + harmonic3) * envelope * 0.35
         audio[start_sample:end_sample] += note_audio
 
-    print(f"Generated test melody ({duration}s)")
+    print(f"Generated arpeggio melody ({duration}s) in E minor")
 
     # Save original
     output_path = OUTPUT_DIR / "effects_original.wav"

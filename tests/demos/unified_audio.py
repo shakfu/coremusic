@@ -21,9 +21,7 @@ import time
 import wave
 import struct
 import threading
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 import coremusic as cm
 import coremusic.capi as capi
 

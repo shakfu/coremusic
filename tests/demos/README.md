@@ -1,75 +1,103 @@
 # CoreMusic Demos
 
-This directory contains demonstrations of the coremusic wrapper functionality.
+Focused, single-purpose examples demonstrating coremusic functionality.
 
-## Demo Files
+## Directory Structure
 
-Files are organized by prefix for easy discovery:
-
-### Audio Processing
+### `analysis/` - Audio Analysis
 | File | Description |
 |------|-------------|
-| `audio_analysis.py` | Beat detection, pitch tracking, spectral analysis, MFCCs |
-| `audio_slicing.py` | Audio slicing, time-stretching, segment extraction |
-| `audio_visualization.py` | Waveform and spectral visualization |
+| `file_info.py` | Extract audio file information |
+| `peak_rms.py` | Calculate peak and RMS levels |
+| `silence_detection.py` | Detect silence regions |
 
-### AudioUnit
+### `audiounit/` - AudioUnit Plugins
 | File | Description |
 |------|-------------|
-| `audiounit_advanced.py` | Advanced AudioUnit features and techniques |
-| `audiounit_browser.py` | Discover and list available AudioUnit plugins |
-| `audiounit_highlevel.py` | High-level AudioUnit API usage |
-| `audiounit_instrument.py` | Software instrument plugins (DLSMusicDevice, etc.) |
+| `list_plugins.py` | List plugins by category |
+| `plugin_info.py` | Show detailed plugin info |
+| `parameter_control.py` | Control plugin parameters |
+| `factory_presets.py` | List factory presets |
+| `discover_plugins.py` | Discover plugins (high-level API) |
+| `stream_format.py` | Show stream format configuration |
 
-### Link (Ableton Link)
+### `conversion/` - Format Conversion
 | File | Description |
 |------|-------------|
-| `link_audio.py` | Synchronize audio playback with Link |
-| `link_highlevel.py` | High-level Link session management |
-| `link_midi.py` | Synchronize MIDI clock with Link tempo |
+| `stereo_to_mono.py` | Convert stereo to mono |
+| `format_presets.py` | Show available format presets |
 
-### MIDI
+### `devices/` - Audio Device Management
 | File | Description |
 |------|-------------|
-| `midi_render.py` | Render MIDI to audio using software instruments |
-| `midi_to_audiounit.py` | Control AudioUnit instruments with MIDI |
-| `midi_utilities.py` | MIDI utilities, device listing, message parsing |
+| `list_devices.py` | List all audio devices |
+| `default_devices.py` | Show default input/output |
+| `find_device.py` | Find device by name or UID |
 
-### Core/Utilities
+### `effects/` - Audio Effects
 | File | Description |
 |------|-------------|
-| `async_io.py` | Async/await patterns for non-blocking I/O |
-| `batch_processing.py` | Process multiple audio files efficiently |
-| `daw.py` | DAW framework: timeline, tracks, clips, automation |
-| `oo_api.py` | Object-oriented API with AudioDevice discovery |
-| `os_status_errors.py` | OSStatus error handling and translation |
-| `scipy_integration.py` | Signal processing with SciPy (FFT, filters) |
-| `streaming.py` | Stream processing with chunked I/O |
-| `unified_audio.py` | Comprehensive demo combining all functionality |
-| `utilities.py` | Audio utilities and helper functions |
+| `create_chain.py` | Create effects chain with AUGraph |
+| `find_by_name.py` | Find AudioUnits by name |
+| `fourcc_reference.py` | FourCC codes reference |
 
-## Main Demo
+### `link/` - Ableton Link
+| File | Description |
+|------|-------------|
+| `session.py` | Create a Link session |
+| `beat_tracking.py` | Track beats using Link |
 
-**`unified_audio.py`** - The comprehensive demonstration that combines all functionality:
+### `midi/` - MIDI
+| File | Description |
+|------|-------------|
+| `create_sequence.py` | Create a MIDI sequence |
+| `multi_track.py` | Multi-track composition |
+| `routing.py` | MIDI routing with transforms |
 
-- CoreAudio constants and utilities
-- Audio file loading and format detection
-- AudioUnit infrastructure testing
-- AudioQueue infrastructure testing
-- **Actual audio playback using `coremusic.AudioPlayer`**
-- Advanced CoreAudio features
-- Comprehensive error handling and user feedback
+### `numpy/` - NumPy Integration
+| File | Description |
+|------|-------------|
+| `read_audio.py` | Read audio as NumPy array |
+| `channel_analysis.py` | Analyze individual channels |
+| `format_dtypes.py` | AudioFormat to NumPy dtype |
+
+### `slicing/` - Audio Slicing
+| File | Description |
+|------|-------------|
+| `onset_slicing.py` | Slice using onset detection |
+| `grid_slicing.py` | Slice into equal divisions |
+| `recombine.py` | Recombine slices |
+
+### `streaming/` - Real-Time Streaming
+| File | Description |
+|------|-------------|
+| `input_stream.py` | Audio input stream |
+| `output_stream.py` | Audio output stream |
+| `latency_comparison.py` | Compare buffer latencies |
+
+### `visualization/` - Audio Visualization
+| File | Description |
+|------|-------------|
+| `waveform.py` | Plot waveform |
+| `spectrogram.py` | Plot spectrogram |
+| `spectrum.py` | Plot frequency spectrum |
+
+### Root Directory
+| File | Description |
+|------|-------------|
+| `unified_audio.py` | Comprehensive demo |
+| `daw.py` | DAW framework demo |
 
 ## Usage
 
 ```bash
-# From the project root directory
-python3 tests/demos/unified_audio.py
+# Run any focused example
+uv run python tests/demos/devices/list_devices.py
+uv run python tests/demos/analysis/file_info.py tests/amen.wav
+uv run python tests/demos/audiounit/list_plugins.py
 
-# Run specific demos
-python3 tests/demos/audiounit_browser.py
-python3 tests/demos/audio_analysis.py
-python3 tests/demos/link_highlevel.py
+# Run comprehensive demo
+uv run python tests/demos/unified_audio.py
 ```
 
 ## Requirements
@@ -77,20 +105,8 @@ python3 tests/demos/link_highlevel.py
 - macOS (CoreAudio framework)
 - Python 3.11+
 - Built coremusic module (`make`)
-- `tests/amen.wav` audio file (for demos that use it)
 
-Some demos have additional requirements:
-- **NumPy**: `audio_analysis.py`, `audio_visualization.py`, `scipy_integration.py`
-- **SciPy**: `audio_analysis.py`, `scipy_integration.py`
-
-## What the Demos Show
-
-1. **Complete CoreAudio API Access** - All major CoreAudio frameworks accessible from Python
-2. **Audio File Operations** - Loading, format detection, and data extraction
-3. **AudioUnit Infrastructure** - Component discovery, instantiation, and lifecycle management
-4. **AudioQueue System** - Buffer management and audio output infrastructure
-5. **Real Audio Playback** - Using the `coremusic.AudioPlayer` class for actual sound output
-6. **Hardware Control** - Direct access to audio hardware and system objects
-7. **MIDI Processing** - Device discovery, message handling, software synthesis
-8. **Ableton Link** - Tempo synchronization across applications
-9. **DAW Framework** - Timeline, tracks, clips, and automation
+Optional dependencies:
+- **NumPy**: analysis/, numpy/, slicing/, visualization/
+- **SciPy**: slicing/
+- **matplotlib**: visualization/
