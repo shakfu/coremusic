@@ -19,6 +19,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Changed
 
+- **Demo Files Reorganization** - Restructured `tests/demos/` for better organization and usability
+  - **Split monolithic demos into focused single-purpose files** organized by category:
+    - `analysis/` - Audio analysis (file_info, peak_rms, silence_detection)
+    - `audiounit/` - AudioUnit plugins (list_plugins, plugin_info, parameter_control, factory_presets, discover_plugins, stream_format)
+    - `conversion/` - Format conversion (stereo_to_mono, format_presets)
+    - `devices/` - Audio device management (list_devices, default_devices, find_device)
+    - `effects/` - Audio effects (create_chain, find_by_name, fourcc_reference)
+    - `link/` - Ableton Link (session, beat_tracking)
+    - `midi/` - MIDI (create_sequence, multi_track, routing)
+    - `numpy/` - NumPy integration (read_audio, channel_analysis, format_dtypes)
+    - `slicing/` - Audio slicing (onset_slicing, grid_slicing, recombine)
+    - `streaming/` - Real-time streaming (input_stream, output_stream, latency_comparison)
+    - `visualization/` - Audio visualization (waveform, spectrogram, spectrum)
+  - **Reduced print() noise** - Demos now only print results, not verbose logging
+  - **Removed sys.path.insert** - All demos now run cleanly with `uv run python`
+  - **Updated README.md** - Usage examples now use `uv run python` commands
+  - **Improved daw.py audio quality** - Synthesized sounds now sound musical:
+    - Punchy electronic drums with pitch-swept kick, layered snare, crisp hi-hats
+    - A minor bass line with warm sub-harmonic tones
+    - Lush ambient pad with Am-F-C-G chord progression and detuned oscillators
+    - Expressive vocal lead melody with vibrato in A minor
+    - Clair de Lune-inspired piano melody in Db major
+    - Jazz chord progression (Dm9-G7-Cmaj7-Am7) for MIDI instruments
+    - E minor arpeggio pattern with bell-like tones for effects demo
+
 - **Constants Export** - All constant enum classes from `coremusic.constants` are now exported directly from the main `coremusic` package for convenience:
   ```python
   # Now you can do:
