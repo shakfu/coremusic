@@ -1256,9 +1256,39 @@ def audio_queue_dispose(long queue_id, bint immediate=True):
     return status
 
 
-# Constant getter functions
+# ============================================================================
+# Constant Getter Functions (Legacy - prefer coremusic.constants enums)
+# ============================================================================
+#
+# These getter functions are retained for backward compatibility.
+# For new code, prefer the enum classes in coremusic.constants:
+#
+#   # Instead of:
+#   capi.get_audio_file_property_data_format()
+#
+#   # Use:
+#   from coremusic.constants import AudioFileProperty
+#   AudioFileProperty.DATA_FORMAT  # or int(AudioFileProperty.DATA_FORMAT)
+#
+# The constants module provides:
+#   - AudioFileProperty, AudioFileType, AudioFilePermission
+#   - AudioFormatID, LinearPCMFormatFlag
+#   - AudioConverterProperty, AudioConverterQuality
+#   - ExtendedAudioFileProperty
+#   - AudioUnitProperty, AudioUnitScope, AudioUnitElement
+#   - AudioUnitRenderActionFlags, AudioUnitParameterUnit
+#   - AudioQueueProperty, AudioQueueParameter
+#   - AudioObjectProperty, AudioDeviceProperty
+#   - MIDIStatus, MIDIControlChange, MIDIObjectProperty
+#
+# ============================================================================
+
 def get_audio_format_linear_pcm():
-    """Get the linear PCM format for an audio format"""
+    """Get the linear PCM format for an audio format.
+
+    .. deprecated::
+        Use ``coremusic.constants.AudioFormatID.LINEAR_PCM`` instead.
+    """
     return ca.kAudioFormatLinearPCM
 
 def get_linear_pcm_format_flag_is_signed_integer():
@@ -2825,7 +2855,7 @@ def music_device_midi_event(long unit, int status, int data1, int data2, int off
         offset_sample_frame: Sample offset for scheduling (default 0)
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If the MIDI event fails
@@ -2849,7 +2879,7 @@ def music_device_sysex(long unit, bytes data):
         data: Complete MIDI SysEx message including F0 and F7 bytes
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If the SysEx message fails
@@ -2937,7 +2967,7 @@ def music_device_stop_note(long unit, int group_id, long note_instance_id, int o
         offset_sample_frame: Sample offset for scheduling (default 0)
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If stopping the note fails
@@ -3122,7 +3152,7 @@ def dispose_music_player(long player):
         player: The MusicPlayer handle to dispose
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If disposal fails
@@ -3141,7 +3171,7 @@ def music_player_set_sequence(long player, long sequence):
         sequence: The MusicSequence handle (or 0 for NULL)
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If setting sequence fails
@@ -3180,7 +3210,7 @@ def music_player_set_time(long player, double time):
         time: The new time value in beats
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If setting time fails
@@ -3217,7 +3247,7 @@ def music_player_preroll(long player):
         player: The MusicPlayer handle
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If preroll fails
@@ -3235,7 +3265,7 @@ def music_player_start(long player):
         player: The MusicPlayer handle
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If start fails
@@ -3253,7 +3283,7 @@ def music_player_stop(long player):
         player: The MusicPlayer handle
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If stop fails
@@ -3291,7 +3321,7 @@ def music_player_set_play_rate_scalar(long player, double scale_rate):
         scale_rate: Playback rate scalar (e.g., 2.0 = double speed, 0.5 = half speed)
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If setting rate fails
@@ -3349,7 +3379,7 @@ def dispose_music_sequence(long sequence):
         sequence: The MusicSequence handle to dispose
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If disposal fails
@@ -3387,7 +3417,7 @@ def music_sequence_dispose_track(long sequence, long track):
         track: The MusicTrack handle to remove
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If track disposal fails
@@ -3464,7 +3494,7 @@ def music_sequence_set_sequence_type(long sequence, int sequence_type):
         sequence_type: The sequence type (beats, seconds, or samples)
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If setting sequence type fails
@@ -3504,7 +3534,7 @@ def music_sequence_file_load(long sequence, str file_path, int file_type_hint=0,
         flags: Load flags (default 0)
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If file loading fails
@@ -3551,7 +3581,7 @@ def music_track_new_midi_note_event(long track, double timestamp, int channel, i
         duration: Note duration in beats
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If adding event fails
@@ -3584,7 +3614,7 @@ def music_track_new_midi_channel_event(long track, double timestamp, int status,
         data2: Second data byte
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If adding event fails
@@ -3614,7 +3644,7 @@ def music_track_new_extended_tempo_event(long track, double timestamp, double bp
         bpm: Beats per minute
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If adding event fails
@@ -3807,7 +3837,7 @@ def midi_client_dispose(long client):
         client: The MIDIClientRef to dispose
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If disposal fails
@@ -3888,7 +3918,7 @@ def midi_port_dispose(long port):
         port: The MIDIPortRef to dispose
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If disposal fails
@@ -3906,7 +3936,7 @@ def midi_port_connect_source(long port, long source):
         source: The MIDIEndpointRef (source endpoint)
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If connection fails
@@ -3925,7 +3955,7 @@ def midi_port_disconnect_source(long port, long source):
         source: The MIDIEndpointRef (source endpoint)
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If disconnection fails
@@ -4185,7 +4215,7 @@ def midi_endpoint_dispose(long endpoint):
         endpoint: The MIDIEndpointRef to dispose
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If disposal fails
@@ -4298,7 +4328,7 @@ def midi_object_set_string_property(long obj, str property_name, str value):
         value: String value to set
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If setting property fails
@@ -4337,7 +4367,7 @@ def midi_object_set_integer_property(long obj, str property_name, int value):
         value: Integer value to set
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If setting property fails
@@ -4560,7 +4590,7 @@ def midi_send_data(long port, long destination, bytes data, int timestamp=0):
         timestamp: MIDI timestamp (default 0 for immediate)
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If sending fails
@@ -5151,7 +5181,7 @@ def midi_device_remove_entity(long device, long entity):
         entity: The MIDIEntityRef to remove
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If entity removal fails
@@ -5175,7 +5205,7 @@ def midi_entity_add_or_remove_endpoints(long entity, int num_source_endpoints, i
         num_destination_endpoints: Desired number of destination endpoints
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If endpoint modification fails
@@ -5198,7 +5228,7 @@ def midi_setup_add_device(long device):
         device: The MIDIDeviceRef to add
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If device addition fails
@@ -5217,7 +5247,7 @@ def midi_setup_remove_device(long device):
         device: The MIDIDeviceRef to remove
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If device removal fails
@@ -5236,7 +5266,7 @@ def midi_setup_add_external_device(long device):
         device: The MIDIDeviceRef to add
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If external device addition fails
@@ -5255,7 +5285,7 @@ def midi_setup_remove_external_device(long device):
         device: The MIDIDeviceRef to remove
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If external device removal fails
@@ -5377,7 +5407,7 @@ def midi_device_dispose(long device):
         device: The MIDIDeviceRef to dispose
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If device disposal fails
@@ -5435,7 +5465,7 @@ def midi_device_list_add_device(long dev_list, long device):
         device: The MIDIDeviceRef to add
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If adding device fails
@@ -5456,7 +5486,7 @@ def midi_device_list_dispose(long dev_list):
         dev_list: The MIDIDeviceListRef to dispose
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If disposal fails
@@ -5477,7 +5507,7 @@ def midi_endpoint_set_ref_cons(long endpoint, long ref1=0, long ref2=0):
         ref2: Second reference constant (optional)
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If setting refCons fails
@@ -5552,7 +5582,7 @@ def midi_driver_enable_monitoring(long driver, bint enabled):
         enabled: True to enable monitoring, False to disable
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If enabling/disabling monitoring fails
@@ -5727,7 +5757,7 @@ def midi_thru_connection_dispose(long connection):
         connection: The MIDIThruConnectionRef to dispose
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If disposal fails
@@ -5828,7 +5858,7 @@ def midi_thru_connection_set_params(long connection, dict connection_params):
         connection_params: Dictionary with new connection parameters
 
     Returns:
-      f OSStatus result code
+        OSStatus result code (0 on success)
 
     Raises:
         RuntimeError: If setting parameters fails
