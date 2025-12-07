@@ -44,12 +44,12 @@ class TestSliceDataclass:
 
     def test_slice_creation(self):
         """Test creating a Slice."""
-        data = np.random.randn(4410)  # 0.1 seconds at 44100 Hz
+        data = np.random.randn(4800)  # 0.1 seconds at 48000 Hz
         slice_obj = Slice(
             start=0.0,
             end=0.1,
             data=data,
-            sample_rate=44100.0,
+            sample_rate=48000.0,
             index=0,
             confidence=0.95,
         )
@@ -57,15 +57,15 @@ class TestSliceDataclass:
         assert slice_obj.start == 0.0
         assert slice_obj.end == 0.1
         assert np.array_equal(slice_obj.data, data)
-        assert slice_obj.sample_rate == 44100.0
+        assert slice_obj.sample_rate == 48000.0
         assert slice_obj.index == 0
         assert slice_obj.confidence == 0.95
 
     def test_slice_duration_property(self):
         """Test duration property calculation."""
-        data = np.random.randn(8820)  # 0.2 seconds at 44100 Hz
+        data = np.random.randn(8820)  # 0.2 seconds at 48000 Hz
         slice_obj = Slice(
-            start=1.0, end=1.2, data=data, sample_rate=44100.0, index=1
+            start=1.0, end=1.2, data=data, sample_rate=48000.0, index=1
         )
 
         assert abs(slice_obj.duration - 0.2) < 0.001
@@ -74,7 +74,7 @@ class TestSliceDataclass:
         """Test num_samples property."""
         data = np.random.randn(2048)
         slice_obj = Slice(
-            start=0.0, end=0.046, data=data, sample_rate=44100.0, index=0
+            start=0.0, end=0.046, data=data, sample_rate=48000.0, index=0
         )
 
         assert slice_obj.num_samples == 2048
@@ -82,14 +82,14 @@ class TestSliceDataclass:
     def test_slice_default_confidence(self):
         """Test default confidence value."""
         data = np.random.randn(1000)
-        slice_obj = Slice(start=0.0, end=0.1, data=data, sample_rate=44100.0, index=0)
+        slice_obj = Slice(start=0.0, end=0.1, data=data, sample_rate=48000.0, index=0)
 
         assert slice_obj.confidence == 1.0
 
     def test_slice_export_placeholder(self):
         """Test export method (placeholder)."""
         data = np.random.randn(1000)
-        slice_obj = Slice(start=0.0, end=0.1, data=data, sample_rate=44100.0, index=0)
+        slice_obj = Slice(start=0.0, end=0.1, data=data, sample_rate=48000.0, index=0)
 
         # Should not raise an error
         result = slice_obj.export("output.wav")
@@ -259,8 +259,8 @@ class TestSliceCollection:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410),
-                sample_rate=44100.0,
+                data=np.random.randn(4800),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(5)
@@ -276,8 +276,8 @@ class TestSliceCollection:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410),
-                sample_rate=44100.0,
+                data=np.random.randn(4800),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(3)
@@ -292,8 +292,8 @@ class TestSliceCollection:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410),
-                sample_rate=44100.0,
+                data=np.random.randn(4800),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(4)
@@ -310,8 +310,8 @@ class TestSliceCollection:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410),
-                sample_rate=44100.0,
+                data=np.random.randn(4800),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(3)
@@ -327,8 +327,8 @@ class TestSliceCollection:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.full(4410, i, dtype=np.float32),
-                sample_rate=44100.0,
+                data=np.full(4800, i, dtype=np.float32),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(10)
@@ -348,8 +348,8 @@ class TestSliceCollection:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.full(4410, i, dtype=np.float32),
-                sample_rate=44100.0,
+                data=np.full(4800, i, dtype=np.float32),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(5)
@@ -369,8 +369,8 @@ class TestSliceCollection:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410),
-                sample_rate=44100.0,
+                data=np.random.randn(4800),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(3)
@@ -391,8 +391,8 @@ class TestSliceCollection:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410),
-                sample_rate=44100.0,
+                data=np.random.randn(4800),
+                sample_rate=48000.0,
                 index=i,
                 confidence=0.5 + i * 0.1,
             )
@@ -412,8 +412,8 @@ class TestSliceCollection:
             Slice(
                 start=0.0,
                 end=duration,
-                data=np.random.randn(int(44100 * duration)),
-                sample_rate=44100.0,
+                data=np.random.randn(int(48000 * duration)),
+                sample_rate=48000.0,
                 index=i,
             )
             for i, duration in enumerate([0.2, 0.1, 0.3, 0.15])
@@ -431,8 +431,8 @@ class TestSliceCollection:
             Slice(
                 start=0.0,
                 end=duration,
-                data=np.random.randn(int(44100 * duration)),
-                sample_rate=44100.0,
+                data=np.random.randn(int(48000 * duration)),
+                sample_rate=48000.0,
                 index=i,
             )
             for i, duration in enumerate([0.2, 0.1, 0.3, 0.15])
@@ -450,8 +450,8 @@ class TestSliceCollection:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410),
-                sample_rate=44100.0,
+                data=np.random.randn(4800),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(10)
@@ -473,8 +473,8 @@ class TestSliceCollection:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.full(4410, i, dtype=np.float32),
-                sample_rate=44100.0,
+                data=np.full(4800, i, dtype=np.float32),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(4)
@@ -498,8 +498,8 @@ class TestSliceCollection:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410),
-                sample_rate=44100.0,
+                data=np.random.randn(4800),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(10)
@@ -522,8 +522,8 @@ class TestSliceRecombinator:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410),
-                sample_rate=44100.0,
+                data=np.random.randn(4800),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(5)
@@ -540,8 +540,8 @@ class TestSliceRecombinator:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.full(4410, i, dtype=np.float32),
-                sample_rate=44100.0,
+                data=np.full(4800, i, dtype=np.float32),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(5)
@@ -562,8 +562,8 @@ class TestSliceRecombinator:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410),
-                sample_rate=44100.0,
+                data=np.random.randn(4800),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(3)
@@ -582,8 +582,8 @@ class TestSliceRecombinator:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.full(4410, i, dtype=np.float32),
-                sample_rate=44100.0,
+                data=np.full(4800, i, dtype=np.float32),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(5)
@@ -602,8 +602,8 @@ class TestSliceRecombinator:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410),
-                sample_rate=44100.0,
+                data=np.random.randn(4800),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(10)
@@ -617,7 +617,7 @@ class TestSliceRecombinator:
 
         assert isinstance(result, np.ndarray)
         # Should use approximately 3 slices
-        expected_samples = 3 * 4410
+        expected_samples = 3 * 4800
         assert abs(len(result) - expected_samples) < 5000
 
     def test_recombine_reverse(self):
@@ -626,8 +626,8 @@ class TestSliceRecombinator:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.full(4410, i, dtype=np.float32),
-                sample_rate=44100.0,
+                data=np.full(4800, i, dtype=np.float32),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(4)
@@ -646,8 +646,8 @@ class TestSliceRecombinator:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.full(4410, i, dtype=np.float32),
-                sample_rate=44100.0,
+                data=np.full(4800, i, dtype=np.float32),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(4)
@@ -661,7 +661,7 @@ class TestSliceRecombinator:
 
         assert isinstance(result, np.ndarray)
         # Should use 5 slices based on pattern
-        expected_samples = 5 * 4410
+        expected_samples = 5 * 4800
         assert abs(len(result) - expected_samples) < 1000
 
     def test_recombine_custom(self):
@@ -670,8 +670,8 @@ class TestSliceRecombinator:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410),
-                sample_rate=44100.0,
+                data=np.random.randn(4800),
+                sample_rate=48000.0,
                 index=i,
                 confidence=0.5 + i * 0.1,
             )
@@ -697,8 +697,8 @@ class TestSliceRecombinator:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410) * 2.0,  # Louder data
-                sample_rate=44100.0,
+                data=np.random.randn(4800) * 2.0,  # Louder data
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(3)
@@ -721,8 +721,8 @@ class TestSliceRecombinator:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410) * 0.1,  # Quieter data
-                sample_rate=44100.0,
+                data=np.random.randn(4800) * 0.1,  # Quieter data
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(3)
@@ -743,8 +743,8 @@ class TestSliceRecombinator:
             Slice(
                 start=i * 0.1,
                 end=(i + 1) * 0.1,
-                data=np.random.randn(4410),
-                sample_rate=44100.0,
+                data=np.random.randn(4800),
+                sample_rate=48000.0,
                 index=i,
             )
             for i in range(3)
