@@ -1390,6 +1390,466 @@ class PolyrhythmGenerator(Generator):
 
 
 # ============================================================================
+# Bit Shift Register Generator
+# ============================================================================
+
+
+@dataclass
+class BitShiftRegisterConfig(GeneratorConfig):
+    """Bit shift register generator configuration.
+
+    Attributes:
+        step_duration: Duration of each step in beats
+        gate: Gate time as fraction (0.0-1.0)
+        velocity_mode: How to determine velocity - 'fixed', 'random', 'pattern'
+        velocity_min: Minimum velocity for random mode
+        velocity_max: Maximum velocity for random mode
+        velocity_pattern: List of velocities to cycle through in pattern mode
+        duration_mode: How to determine note duration - 'fixed', 'random', 'pattern'
+        duration_min: Minimum duration multiplier for random mode
+        duration_max: Maximum duration multiplier for random mode
+        duration_pattern: List of duration multipliers for pattern mode
+    """
+    step_duration: float = 0.25  # 16th notes
+    gate: float = 0.8
+    velocity_mode: str = 'fixed'
+    velocity_min: int = 64
+    velocity_max: int = 127
+    velocity_pattern: Optional[List[int]] = None
+    duration_mode: str = 'fixed'
+    duration_min: float = 0.5
+    duration_max: float = 1.0
+    duration_pattern: Optional[List[float]] = None
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.velocity_mode not in ('fixed', 'random', 'pattern'):
+            raise ValueError(f"velocity_mode must be 'fixed', 'random', or 'pattern', got {self.velocity_mode}")
+        if self.duration_mode not in ('fixed', 'random', 'pattern'):
+            raise ValueError(f"duration_mode must be 'fixed', 'random', or 'pattern', got {self.duration_mode}")
+        if not 0 <= self.velocity_min <= 127:
+            raise ValueError(f"velocity_min must be 0-127, got {self.velocity_min}")
+        if not 0 <= self.velocity_max <= 127:
+            raise ValueError(f"velocity_max must be 0-127, got {self.velocity_max}")
+
+
+class BitShiftRegister:
+    """Core bit shift register logic.
+
+    A shift register that stores binary gate states. On each clock pulse,
+    bits shift right, the input bit enters from the left, and the rightmost
+    bit is output (shifted out).
+
+    This is the fundamental building block used by BitShiftRegisterGenerator
+    for creating rhythmic patterns with MIDI output.
+
+    Example:
+        >>> sr = BitShiftRegister(size=4)
+        >>> sr.clock(1)  # Input 1, output 0 (initial state)
+        0
+        >>> sr.clock(0)  # Input 0, output 0
+        0
+        >>> sr.clock(1)  # Input 1, output 0
+        0
+        >>> sr.clock(1)  # Input 1, output 1 (first 1 finally exits)
+        1
+        >>> print(sr)  # Current state: [1, 1, 0, 1]
+        1101
+    """
+
+    def __init__(self, size: int, initial_state: Optional[List[int]] = None):
+        """Initialize bit shift register.
+
+        Args:
+            size: Number of bits in the register
+            initial_state: Optional initial bit pattern (list of 0s and 1s)
+        """
+        if size < 1:
+            raise ValueError(f"Size must be at least 1, got {size}")
+
+        self.size = size
+
+        if initial_state is not None:
+            if len(initial_state) != size:
+                raise ValueError(f"Initial state length {len(initial_state)} != size {size}")
+            self.bits = [1 if b else 0 for b in initial_state]
+        else:
+            self.bits = [0] * size
+
+    def clock(self, input_bit: int) -> int:
+        """Clock the shift register.
+
+        Shifts all bits right by one position:
+        - New input_bit enters at index 0 (left)
+        - Rightmost bit (index -1) is shifted out and returned
+
+        Args:
+            input_bit: Bit to shift in (0 or 1, truthy values become 1)
+
+        Returns:
+            The bit that was shifted out (gate output for this step)
+        """
+        input_bit = 1 if input_bit else 0
+        shifted_out = self.bits[-1]
+        self.bits = [input_bit] + self.bits[:-1]
+        return shifted_out
+
+    def peek(self, index: int = -1) -> int:
+        """Peek at a bit without clocking.
+
+        Args:
+            index: Bit index (negative indices supported, -1 = output bit)
+
+        Returns:
+            Bit value at index
+        """
+        return self.bits[index]
+
+    def reset(self, pattern: Optional[List[int]] = None) -> None:
+        """Reset the register.
+
+        Args:
+            pattern: Optional new pattern (all zeros if None)
+        """
+        if pattern is not None:
+            if len(pattern) != self.size:
+                raise ValueError(f"Pattern length {len(pattern)} != size {self.size}")
+            self.bits = [1 if b else 0 for b in pattern]
+        else:
+            self.bits = [0] * self.size
+
+    def get_state(self) -> List[int]:
+        """Get current register state.
+
+        Returns:
+            Copy of current bit pattern
+        """
+        return self.bits.copy()
+
+    def set_state(self, state: List[int]) -> None:
+        """Set register state directly.
+
+        Args:
+            state: New bit pattern
+        """
+        if len(state) != self.size:
+            raise ValueError(f"State length {len(state)} != size {self.size}")
+        self.bits = [1 if b else 0 for b in state]
+
+    def __len__(self) -> int:
+        return self.size
+
+    def __repr__(self) -> str:
+        return "".join(str(b) for b in self.bits)
+
+    def __str__(self) -> str:
+        return "".join(str(b) for b in self.bits)
+
+
+class BitShiftRegisterGenerator(Generator):
+    """MIDI note generator using bit shift register logic.
+
+    Creates rhythmic patterns by feeding a gate input sequence through a
+    shift register. The output bit determines whether a note plays (1) or
+    rests (0). Notes cycle through a configurable pitch sequence.
+
+    The shift register introduces a delay equal to its size, creating
+    interesting rhythmic variations and canonic effects when combined
+    with other generators.
+
+    Features:
+    - Variable velocity (fixed, random, or pattern-based)
+    - Variable duration (fixed, random, or pattern-based)
+    - Configurable register size for different delay amounts
+    - Support for custom gate input patterns or live input
+    - Swing and humanization support
+
+    Example:
+        >>> # Create a 4-bit shift register with C major triad notes
+        >>> sr_gen = BitShiftRegisterGenerator(
+        ...     size=4,
+        ...     pitches=[60, 64, 67],  # C, E, G
+        ... )
+        >>>
+        >>> # Generate with a gate pattern
+        >>> gate_pattern = [1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0]
+        >>> events = sr_gen.generate(gate_inputs=gate_pattern)
+        >>>
+        >>> # With variable velocity and duration
+        >>> config = BitShiftRegisterConfig(
+        ...     tempo=120,
+        ...     velocity_mode='random',
+        ...     velocity_min=80,
+        ...     velocity_max=120,
+        ...     duration_mode='pattern',
+        ...     duration_pattern=[1.0, 0.5, 0.75, 0.5],
+        ... )
+        >>> sr_gen = BitShiftRegisterGenerator(
+        ...     size=4,
+        ...     pitches=[36, 38, 42, 46],  # Drum sounds
+        ...     config=config,
+        ... )
+    """
+
+    def __init__(
+        self,
+        size: int = 4,
+        pitches: Optional[List[Union[int, Note]]] = None,
+        initial_state: Optional[List[int]] = None,
+        config: Optional[BitShiftRegisterConfig] = None,
+    ):
+        """Initialize bit shift register generator.
+
+        Args:
+            size: Number of bits in the shift register
+            pitches: List of MIDI pitches to cycle through (default: C4, D4, E4, G4)
+            initial_state: Optional initial register state
+            config: Generator configuration
+        """
+        super().__init__(config or BitShiftRegisterConfig())
+        self._register = BitShiftRegister(size, initial_state)
+
+        # Convert Notes to MIDI numbers
+        if pitches is None:
+            self._pitches = [60, 62, 64, 67]  # C4, D4, E4, G4
+        else:
+            self._pitches = [
+                p.midi if isinstance(p, Note) else p
+                for p in pitches
+            ]
+
+        if not self._pitches:
+            raise ValueError("Must provide at least one pitch")
+
+        self._step_counter = 0
+
+    @property
+    def config(self) -> BitShiftRegisterConfig:
+        return self._config
+
+    @config.setter
+    def config(self, value: BitShiftRegisterConfig):
+        self._config = value
+
+    @property
+    def register(self) -> BitShiftRegister:
+        """Access the underlying shift register."""
+        return self._register
+
+    @property
+    def pitches(self) -> List[int]:
+        """Get current pitch sequence."""
+        return self._pitches.copy()
+
+    def set_pitches(self, pitches: List[Union[int, Note]]) -> None:
+        """Set new pitch sequence.
+
+        Args:
+            pitches: List of MIDI pitches or Notes
+        """
+        self._pitches = [
+            p.midi if isinstance(p, Note) else p
+            for p in pitches
+        ]
+        if not self._pitches:
+            raise ValueError("Must provide at least one pitch")
+
+    def reset(self, pattern: Optional[List[int]] = None) -> None:
+        """Reset the shift register and step counter.
+
+        Args:
+            pattern: Optional new register pattern
+        """
+        self._register.reset(pattern)
+        self._step_counter = 0
+
+    def _get_velocity(self, step: int) -> int:
+        """Get velocity for a step based on configuration."""
+        mode = self.config.velocity_mode
+
+        if mode == 'fixed':
+            return self.config.velocity
+
+        elif mode == 'random':
+            return self._rng.randint(
+                self.config.velocity_min,
+                self.config.velocity_max
+            )
+
+        elif mode == 'pattern':
+            if self.config.velocity_pattern:
+                idx = step % len(self.config.velocity_pattern)
+                return self.config.velocity_pattern[idx]
+            return self.config.velocity
+
+        return self.config.velocity
+
+    def _get_duration_multiplier(self, step: int) -> float:
+        """Get duration multiplier for a step based on configuration."""
+        mode = self.config.duration_mode
+
+        if mode == 'fixed':
+            return 1.0
+
+        elif mode == 'random':
+            return self._rng.uniform(
+                self.config.duration_min,
+                self.config.duration_max
+            )
+
+        elif mode == 'pattern':
+            if self.config.duration_pattern:
+                idx = step % len(self.config.duration_pattern)
+                return self.config.duration_pattern[idx]
+            return 1.0
+
+        return 1.0
+
+    def clock_step(
+        self,
+        input_bit: int,
+        current_time: float,
+    ) -> Tuple[Optional[List[MIDIEvent]], int]:
+        """Process a single clock step.
+
+        Useful for real-time/live processing where you feed bits one at a time.
+
+        Args:
+            input_bit: Gate input (0 or 1)
+            current_time: Current time in seconds
+
+        Returns:
+            Tuple of (events or None if rest, output gate value)
+        """
+        output_gate = self._register.clock(input_bit)
+
+        events = None
+        if output_gate == 1:
+            # Determine pitch from step counter
+            pitch_idx = self._step_counter % len(self._pitches)
+            pitch = self._pitches[pitch_idx]
+
+            # Get velocity and duration
+            velocity = self._get_velocity(self._step_counter)
+            duration_mult = self._get_duration_multiplier(self._step_counter)
+
+            beat_duration = 60.0 / self.config.tempo
+            base_duration = self.config.step_duration * beat_duration * self.config.gate
+            note_duration = base_duration * duration_mult
+
+            # Apply swing and humanization
+            time = self._apply_swing(current_time, self._step_counter)
+            time, velocity = self._apply_humanize(time, velocity)
+
+            events = self._create_note_events(time, pitch, velocity, note_duration)
+
+        self._step_counter += 1
+        return events, output_gate
+
+    def generate(
+        self,
+        gate_inputs: Optional[List[int]] = None,
+        num_steps: Optional[int] = None,
+        start_time: float = 0.0,
+        gate_probability: float = 0.5,
+    ) -> List[MIDIEvent]:
+        """Generate MIDI events from gate input sequence.
+
+        Args:
+            gate_inputs: List of gate values (0 or 1). If None, random gates
+                        are generated based on gate_probability.
+            num_steps: Number of steps to generate (required if gate_inputs is None)
+            start_time: Start time in seconds
+            gate_probability: Probability of gate=1 when generating random gates
+
+        Returns:
+            List of MIDIEvent objects
+        """
+        # Determine gate sequence
+        if gate_inputs is not None:
+            gates = gate_inputs
+        elif num_steps is not None:
+            gates = [
+                1 if self._rng.random() < gate_probability else 0
+                for _ in range(num_steps)
+            ]
+        else:
+            raise ValueError("Must provide either gate_inputs or num_steps")
+
+        events = []
+        beat_duration = 60.0 / self.config.tempo
+        step_duration = self.config.step_duration * beat_duration
+        current_time = start_time
+
+        for gate_in in gates:
+            step_events, _ = self.clock_step(gate_in, current_time)
+            if step_events:
+                events.extend(step_events)
+            current_time += step_duration
+
+        return sorted(events, key=lambda e: e.time)
+
+    def generate_with_trace(
+        self,
+        gate_inputs: List[int],
+        start_time: float = 0.0,
+    ) -> Tuple[List[MIDIEvent], List[Dict[str, Any]]]:
+        """Generate events with detailed step-by-step trace.
+
+        Useful for debugging, visualization, or educational purposes.
+
+        Args:
+            gate_inputs: List of gate values (0 or 1)
+            start_time: Start time in seconds
+
+        Returns:
+            Tuple of (events, trace) where trace is a list of dicts with:
+                - step: Step number
+                - input_gate: Input gate value
+                - register_state: Register state after clock
+                - output_gate: Output gate value
+                - pitch: Pitch played (or None for rest)
+                - velocity: Velocity (or None for rest)
+                - action: 'play' or 'rest'
+        """
+        events = []
+        trace = []
+        beat_duration = 60.0 / self.config.tempo
+        step_duration = self.config.step_duration * beat_duration
+        current_time = start_time
+
+        for step, gate_in in enumerate(gate_inputs):
+            step_events, output_gate = self.clock_step(gate_in, current_time)
+
+            trace_entry = {
+                'step': step,
+                'input_gate': gate_in,
+                'register_state': str(self._register),
+                'output_gate': output_gate,
+                'pitch': None,
+                'velocity': None,
+                'action': 'rest',
+            }
+
+            if step_events:
+                events.extend(step_events)
+                # Extract pitch and velocity from note on event
+                note_on = next((e for e in step_events if e.is_note_on), None)
+                if note_on:
+                    trace_entry['pitch'] = note_on.data1
+                    trace_entry['velocity'] = note_on.data2
+                    trace_entry['action'] = 'play'
+
+            trace.append(trace_entry)
+            current_time += step_duration
+
+        return sorted(events, key=lambda e: e.time), trace
+
+    def __repr__(self) -> str:
+        return f"BitShiftRegisterGenerator(size={self._register.size}, pitches={len(self._pitches)})"
+
+
+# ============================================================================
 # Utility Functions
 # ============================================================================
 

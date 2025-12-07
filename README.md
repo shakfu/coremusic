@@ -70,8 +70,16 @@
   - Music theory primitives (Note, Interval, Scale, Chord, ChordProgression)
   - 25+ scale types (major, minor, modes, pentatonic, blues, jazz, world, exotic)
   - 35+ chord types (triads, 7ths, extended, altered, added tone)
-  - 7 generative algorithms (Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm)
+  - 8 generative algorithms (Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm, BitShiftRegister)
   - MIDI event generation compatible with MIDITrack/MIDISequence
+
+- **Markov Chain MIDI Analysis**: Advanced MIDI analysis and variant generation
+  - Analyze MIDI files to create Markov chains
+  - Configurable order (1st, 2nd, higher-order)
+  - Three modeling modes: pitch-only, pitch+duration, pitch+duration+velocity
+  - Node-edge editing for granular control
+  - Chain-scope adjustments (temperature, gravity, clamping)
+  - JSON serialization for model persistence
 
 - **MIDI Transformation Pipeline**: Chainable transformers for MIDI processing
   - Pitch: Transpose, Invert, Harmonize
@@ -784,12 +792,97 @@ poly.add_layer(divisions=3, note=Note.from_name("C4"), velocity=100)
 poly.add_layer(divisions=4, note=Note.from_name("E4"), velocity=80)
 events = poly.generate(num_cycles=4)
 
+# Bit Shift Register (gate-based sequencing)
+from coremusic.music.generative import BitShiftRegister, BitShiftRegisterGenerator, BitShiftRegisterConfig
+
+# Create shift register with seed pattern
+register = BitShiftRegister(seed=0b10110101, taps=[0, 2, 5])
+for _ in range(8):
+    gate = register.clock()  # Returns True/False based on LSB
+    print(f"Gate: {gate}, Register: {register.value:08b}")
+
+# Full generator with variable velocity and duration
+config = BitShiftRegisterConfig(
+    seed=0b11001010,
+    note=60,  # C4
+    velocity_mode='pattern',
+    velocity_pattern=[100, 80, 60, 80],
+    duration_mode='random',
+    duration_min=0.1,
+    duration_max=0.3
+)
+bsr_gen = BitShiftRegisterGenerator(config)
+events = bsr_gen.generate(num_steps=16)
+
 # Export to MIDI file
 from coremusic.midi.utilities import MIDISequence
 sequence = MIDISequence()
 track = sequence.create_track("Arpeggio")
 # Add events to track and save
 sequence.save("composition.mid")
+```
+
+### Markov Chain MIDI Analysis
+
+```python
+from coremusic.music.markov import (
+    MarkovChain, ChainConfig, ModelingMode, RhythmMode,
+    MIDIMarkovAnalyzer, MIDIMarkovGenerator,
+    analyze_and_generate, merge_chains, chain_statistics
+)
+
+# Create and train a Markov chain
+config = ChainConfig(
+    order=2,  # 2nd-order Markov chain
+    modeling_mode=ModelingMode.PITCH_ONLY,
+    temperature=1.0
+)
+chain = MarkovChain(config)
+chain.train([60, 62, 64, 65, 67, 65, 64, 62, 60])  # C major scale fragment
+
+# Sample from the chain
+next_note = chain.sample(history=[64, 65])  # Given E, F, what comes next?
+
+# Analyze an existing MIDI file
+analyzer = MIDIMarkovAnalyzer(config)
+chain = analyzer.analyze_file("original.mid", track_index=1)
+
+# Node-edge editing - adjust individual transitions
+chain.set_transition_probability((60,), 64, 0.8)  # Make C -> E more likely
+chain.remove_transition((60,), 67)  # Remove C -> G transition
+
+# Chain-scope adjustments
+chain.set_temperature(0.5)  # Less random (more likely to pick high-probability)
+chain.set_note_range(48, 72)  # Constrain to 2 octaves
+chain.set_gravity(60, 0.3)  # Bias toward C (root note)
+chain.sparsify(threshold=0.05)  # Remove transitions with < 5% probability
+
+# Generate a variant
+generator = MIDIMarkovGenerator(chain, tempo=120)
+variant_sequence = generator.generate(num_notes=32, start_pitch=60)
+variant_sequence.save("variant.mid")
+
+# Save/load chains for reuse
+chain.save("my_chain.json")
+loaded_chain = MarkovChain.load("my_chain.json")
+
+# Merge chains from multiple songs
+chains = [analyzer.analyze_file(f) for f in ["song1.mid", "song2.mid"]]
+merged = merge_chains(chains, weights=[0.7, 0.3])
+
+# Get chain statistics
+stats = chain_statistics(chain)
+print(f"States: {stats['num_states']}, Transitions: {stats['num_transitions']}")
+print(f"Entropy: {stats['entropy']:.2f} bits")
+
+# One-step convenience function
+variant = analyze_and_generate(
+    "input.mid",
+    num_notes=64,
+    order=2,
+    temperature=0.8
+)
+variant.save("output.mid")
 ```
 
 ### MIDI Transformation Pipeline
@@ -935,7 +1028,8 @@ The project includes a large test suite, as well as examples and demos.
 
 - **`src/coremusic/music/`**: Music theory and generative algorithms:
   - `theory.py`: Note, Interval, Scale (25+ types), Chord (35+ types), ChordProgression
-  - `generative.py`: Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm generators
+  - `generative.py`: Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm, BitShiftRegister generators
+  - `markov.py`: Markov chain MIDI analysis (MarkovChain, MIDIMarkovAnalyzer, MIDIMarkovGenerator)
 
 #### Ableton Link Integration
 

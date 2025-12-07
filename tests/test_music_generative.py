@@ -30,6 +30,9 @@ from coremusic.music.generative import (
     PolyrhythmGenerator,
     PolyrhythmConfig,
     RhythmLayer,
+    BitShiftRegister,
+    BitShiftRegisterGenerator,
+    BitShiftRegisterConfig,
     create_arp_from_progression,
     combine_generators,
 )
@@ -1308,4 +1311,721 @@ class TestMIDIFileGeneration:
 
         assert output_path.exists()
         # Verify file has reasonable size
+        assert output_path.stat().st_size > 500
+
+
+# ============================================================================
+# Bit Shift Register Tests
+# ============================================================================
+
+
+class TestBitShiftRegister:
+    """Tests for BitShiftRegister class."""
+
+    def test_create_register(self):
+        """Test creating a shift register."""
+        sr = BitShiftRegister(size=4)
+
+        assert sr.size == 4
+        assert len(sr) == 4
+        assert sr.bits == [0, 0, 0, 0]
+
+    def test_create_with_initial_state(self):
+        """Test creating with initial state."""
+        sr = BitShiftRegister(size=4, initial_state=[1, 0, 1, 0])
+
+        assert sr.bits == [1, 0, 1, 0]
+
+    def test_initial_state_wrong_size_raises(self):
+        """Test that wrong-size initial state raises error."""
+        with pytest.raises(ValueError, match="Initial state length"):
+            BitShiftRegister(size=4, initial_state=[1, 0, 1])
+
+    def test_size_must_be_positive(self):
+        """Test that size must be at least 1."""
+        with pytest.raises(ValueError, match="Size must be at least 1"):
+            BitShiftRegister(size=0)
+
+    def test_clock_basic(self):
+        """Test basic clock operation."""
+        sr = BitShiftRegister(size=4)
+
+        # All zeros initially, output should be 0
+        out1 = sr.clock(1)
+        assert out1 == 0
+        assert sr.bits == [1, 0, 0, 0]
+
+        out2 = sr.clock(0)
+        assert out2 == 0
+        assert sr.bits == [0, 1, 0, 0]
+
+        out3 = sr.clock(1)
+        assert out3 == 0
+        assert sr.bits == [1, 0, 1, 0]
+
+        out4 = sr.clock(1)
+        assert out4 == 0
+        assert sr.bits == [1, 1, 0, 1]
+
+        # Now the first 1 exits
+        out5 = sr.clock(0)
+        assert out5 == 1
+        assert sr.bits == [0, 1, 1, 0]
+
+    def test_clock_truthy_values(self):
+        """Test that truthy values become 1."""
+        sr = BitShiftRegister(size=2)
+
+        sr.clock(True)
+        assert sr.bits[0] == 1
+
+        sr.clock(42)  # Truthy
+        assert sr.bits[0] == 1
+
+        sr.clock(None)  # Falsy
+        assert sr.bits[0] == 0
+
+    def test_peek(self):
+        """Test peeking at bits."""
+        sr = BitShiftRegister(size=4, initial_state=[1, 0, 1, 1])
+
+        assert sr.peek(0) == 1
+        assert sr.peek(1) == 0
+        assert sr.peek(-1) == 1  # Last bit
+        assert sr.peek(-2) == 1
+
+    def test_reset(self):
+        """Test reset to all zeros."""
+        sr = BitShiftRegister(size=4, initial_state=[1, 1, 1, 1])
+        sr.reset()
+
+        assert sr.bits == [0, 0, 0, 0]
+
+    def test_reset_with_pattern(self):
+        """Test reset with new pattern."""
+        sr = BitShiftRegister(size=4)
+        sr.reset([1, 0, 1, 0])
+
+        assert sr.bits == [1, 0, 1, 0]
+
+    def test_reset_wrong_pattern_size_raises(self):
+        """Test reset with wrong pattern size raises error."""
+        sr = BitShiftRegister(size=4)
+
+        with pytest.raises(ValueError, match="Pattern length"):
+            sr.reset([1, 0, 1])
+
+    def test_get_state(self):
+        """Test getting state copy."""
+        sr = BitShiftRegister(size=4, initial_state=[1, 0, 1, 0])
+        state = sr.get_state()
+
+        assert state == [1, 0, 1, 0]
+        # Modifying returned state shouldn't affect register
+        state[0] = 0
+        assert sr.bits[0] == 1
+
+    def test_set_state(self):
+        """Test setting state directly."""
+        sr = BitShiftRegister(size=4)
+        sr.set_state([1, 1, 0, 0])
+
+        assert sr.bits == [1, 1, 0, 0]
+
+    def test_set_state_wrong_size_raises(self):
+        """Test set_state with wrong size raises error."""
+        sr = BitShiftRegister(size=4)
+
+        with pytest.raises(ValueError, match="State length"):
+            sr.set_state([1, 0])
+
+    def test_repr_and_str(self):
+        """Test string representations."""
+        sr = BitShiftRegister(size=4, initial_state=[1, 0, 1, 1])
+
+        assert repr(sr) == "1011"
+        assert str(sr) == "1011"
+
+    def test_example_from_spec(self):
+        """Test the example from the original specification."""
+        notes = [60, 62, 64, 67]
+        gate_inputs = [1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0]
+
+        sr = BitShiftRegister(size=4)
+        results = []
+
+        for step, gate_in in enumerate(gate_inputs):
+            out_gate = sr.clock(gate_in)
+            note_index = step % len(notes)
+            note = notes[note_index]
+
+            if out_gate == 1:
+                results.append((step + 1, note, 'play'))
+            else:
+                results.append((step + 1, note, 'rest'))
+
+        # First 4 steps should all be rests (register filling up)
+        assert all(r[2] == 'rest' for r in results[:4])
+
+        # After step 4, some plays should occur
+        plays = [r for r in results[4:] if r[2] == 'play']
+        assert len(plays) > 0
+
+
+class TestBitShiftRegisterConfig:
+    """Tests for BitShiftRegisterConfig class."""
+
+    def test_default_config(self):
+        """Test default configuration values."""
+        config = BitShiftRegisterConfig()
+
+        assert config.step_duration == 0.25
+        assert config.gate == 0.8
+        assert config.velocity_mode == 'fixed'
+        assert config.velocity == 100
+        assert config.velocity_min == 64
+        assert config.velocity_max == 127
+        assert config.duration_mode == 'fixed'
+
+    def test_velocity_mode_validation(self):
+        """Test velocity_mode validation."""
+        with pytest.raises(ValueError, match="velocity_mode"):
+            BitShiftRegisterConfig(velocity_mode='invalid')
+
+    def test_duration_mode_validation(self):
+        """Test duration_mode validation."""
+        with pytest.raises(ValueError, match="duration_mode"):
+            BitShiftRegisterConfig(duration_mode='invalid')
+
+    def test_velocity_range_validation(self):
+        """Test velocity range validation."""
+        with pytest.raises(ValueError, match="velocity_min"):
+            BitShiftRegisterConfig(velocity_min=-1)
+
+        with pytest.raises(ValueError, match="velocity_max"):
+            BitShiftRegisterConfig(velocity_max=200)
+
+
+class TestBitShiftRegisterGenerator:
+    """Tests for BitShiftRegisterGenerator class."""
+
+    def test_create_generator(self):
+        """Test creating a generator."""
+        gen = BitShiftRegisterGenerator(size=4)
+
+        assert gen.register.size == 4
+        assert gen.pitches == [60, 62, 64, 67]  # Default pitches
+
+    def test_create_with_custom_pitches(self):
+        """Test creating with custom pitches."""
+        gen = BitShiftRegisterGenerator(size=4, pitches=[36, 38, 42, 46])
+
+        assert gen.pitches == [36, 38, 42, 46]
+
+    def test_create_with_note_objects(self):
+        """Test creating with Note objects."""
+        gen = BitShiftRegisterGenerator(
+            size=4,
+            pitches=[Note('C', 4), Note('E', 4), Note('G', 4)]
+        )
+
+        assert gen.pitches == [60, 64, 67]
+
+    def test_create_with_initial_state(self):
+        """Test creating with initial register state."""
+        gen = BitShiftRegisterGenerator(size=4, initial_state=[1, 0, 1, 0])
+
+        assert gen.register.get_state() == [1, 0, 1, 0]
+
+    def test_empty_pitches_raises(self):
+        """Test that empty pitches raises error."""
+        with pytest.raises(ValueError, match="Must provide at least one pitch"):
+            BitShiftRegisterGenerator(size=4, pitches=[])
+
+    def test_set_pitches(self):
+        """Test setting new pitches."""
+        gen = BitShiftRegisterGenerator(size=4)
+        gen.set_pitches([48, 50, 52])
+
+        assert gen.pitches == [48, 50, 52]
+
+    def test_set_pitches_empty_raises(self):
+        """Test setting empty pitches raises error."""
+        gen = BitShiftRegisterGenerator(size=4)
+
+        with pytest.raises(ValueError, match="Must provide at least one pitch"):
+            gen.set_pitches([])
+
+    def test_reset(self):
+        """Test reset method."""
+        gen = BitShiftRegisterGenerator(size=4)
+
+        # Clock a few times
+        gen.clock_step(1, 0.0)
+        gen.clock_step(1, 0.1)
+
+        # Reset
+        gen.reset()
+
+        assert gen.register.get_state() == [0, 0, 0, 0]
+        assert gen._step_counter == 0
+
+    def test_reset_with_pattern(self):
+        """Test reset with custom pattern."""
+        gen = BitShiftRegisterGenerator(size=4)
+        gen.reset([1, 1, 0, 0])
+
+        assert gen.register.get_state() == [1, 1, 0, 0]
+
+    def test_generate_with_gate_inputs(self):
+        """Test generating with explicit gate inputs."""
+        gen = BitShiftRegisterGenerator(size=4, pitches=[60, 62, 64, 67])
+        gate_inputs = [1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0]
+
+        events = gen.generate(gate_inputs=gate_inputs)
+
+        note_ons = [e for e in events if e.status == MIDIStatus.NOTE_ON]
+
+        # Should have some notes after register fills up
+        assert len(note_ons) > 0
+
+        # All notes should be from our pitch set
+        for event in note_ons:
+            assert event.data1 in [60, 62, 64, 67]
+
+    def test_generate_with_num_steps(self):
+        """Test generating with random gates."""
+        config = BitShiftRegisterConfig(seed=42)
+        gen = BitShiftRegisterGenerator(size=4, config=config)
+
+        events = gen.generate(num_steps=20, gate_probability=0.5)
+
+        note_ons = [e for e in events if e.status == MIDIStatus.NOTE_ON]
+
+        # With random gates, should have some notes
+        assert len(note_ons) > 0
+
+    def test_generate_requires_gates_or_steps(self):
+        """Test that generate requires either gate_inputs or num_steps."""
+        gen = BitShiftRegisterGenerator(size=4)
+
+        with pytest.raises(ValueError, match="Must provide either"):
+            gen.generate()
+
+    def test_clock_step(self):
+        """Test single clock step processing."""
+        gen = BitShiftRegisterGenerator(size=4, pitches=[60])
+        gen.reset([0, 0, 0, 1])  # Put a 1 at the output position
+
+        events, out_gate = gen.clock_step(0, 0.0)
+
+        assert out_gate == 1
+        assert events is not None
+        assert len(events) == 2  # Note on and note off
+        assert events[0].data1 == 60  # Pitch
+
+    def test_clock_step_rest(self):
+        """Test clock step that produces rest."""
+        gen = BitShiftRegisterGenerator(size=4)
+        gen.reset([0, 0, 0, 0])  # All zeros
+
+        events, out_gate = gen.clock_step(1, 0.0)
+
+        assert out_gate == 0
+        assert events is None
+
+    def test_velocity_mode_fixed(self):
+        """Test fixed velocity mode."""
+        config = BitShiftRegisterConfig(velocity=100, velocity_mode='fixed')
+        gen = BitShiftRegisterGenerator(size=1, pitches=[60], config=config)
+
+        gen.reset([1])  # Immediate output
+        events, _ = gen.clock_step(0, 0.0)
+
+        note_on = [e for e in events if e.is_note_on][0]
+        assert note_on.data2 == 100
+
+    def test_velocity_mode_random(self):
+        """Test random velocity mode."""
+        config = BitShiftRegisterConfig(
+            velocity_mode='random',
+            velocity_min=80,
+            velocity_max=120,
+            seed=42
+        )
+        gen = BitShiftRegisterGenerator(
+            size=1,
+            pitches=[60],
+            initial_state=[1],
+            config=config
+        )
+
+        velocities = []
+        for i in range(10):
+            gen.reset([1])
+            events, _ = gen.clock_step(0, 0.0)
+            note_on = [e for e in events if e.is_note_on][0]
+            velocities.append(note_on.data2)
+
+        # Check all velocities are in range
+        for v in velocities:
+            assert 80 <= v <= 120
+
+    def test_velocity_mode_pattern(self):
+        """Test pattern velocity mode."""
+        config = BitShiftRegisterConfig(
+            velocity_mode='pattern',
+            velocity_pattern=[100, 80, 60, 120]
+        )
+        gen = BitShiftRegisterGenerator(
+            size=1,
+            pitches=[60],
+            initial_state=[1],
+            config=config
+        )
+
+        velocities = []
+        for i in range(8):
+            gen.register.set_state([1])
+            events, _ = gen.clock_step(0, 0.0)
+            note_on = [e for e in events if e.is_note_on][0]
+            velocities.append(note_on.data2)
+
+        # Should cycle through pattern
+        assert velocities == [100, 80, 60, 120, 100, 80, 60, 120]
+
+    def test_duration_mode_pattern(self):
+        """Test pattern duration mode."""
+        config = BitShiftRegisterConfig(
+            duration_mode='pattern',
+            duration_pattern=[1.0, 0.5, 0.25],
+            step_duration=0.5,
+            gate=1.0,  # Full gate for easier testing
+            tempo=120.0
+        )
+        gen = BitShiftRegisterGenerator(
+            size=1,
+            pitches=[60],
+            initial_state=[1],
+            config=config
+        )
+
+        # Generate three notes
+        durations = []
+        beat_duration = 60.0 / 120.0  # 0.5 seconds per beat
+        base_duration = 0.5 * beat_duration * 1.0  # step_duration * beat_duration * gate
+
+        for i in range(3):
+            gen.register.set_state([1])
+            events, _ = gen.clock_step(0, 0.0)
+            note_on = [e for e in events if e.is_note_on][0]
+            note_off = [e for e in events if e.is_note_off][0]
+            durations.append(note_off.time - note_on.time)
+
+        # First should be full duration, second half, third quarter
+        assert durations[0] == pytest.approx(base_duration * 1.0)
+        assert durations[1] == pytest.approx(base_duration * 0.5)
+        assert durations[2] == pytest.approx(base_duration * 0.25)
+
+    def test_generate_with_trace(self):
+        """Test generate_with_trace method."""
+        gen = BitShiftRegisterGenerator(size=4, pitches=[60, 62, 64, 67])
+        gate_inputs = [1, 0, 1, 1, 0, 1, 0, 0]
+
+        events, trace = gen.generate_with_trace(gate_inputs)
+
+        assert len(trace) == 8
+
+        # Check trace structure
+        for entry in trace:
+            assert 'step' in entry
+            assert 'input_gate' in entry
+            assert 'register_state' in entry
+            assert 'output_gate' in entry
+            assert 'pitch' in entry
+            assert 'velocity' in entry
+            assert 'action' in entry
+
+        # First 4 steps should be rests (register filling up)
+        assert all(t['action'] == 'rest' for t in trace[:4])
+
+    def test_pitches_cycle(self):
+        """Test that pitches cycle through the sequence."""
+        gen = BitShiftRegisterGenerator(
+            size=1,
+            pitches=[60, 62, 64],
+            initial_state=[1]
+        )
+
+        pitches_played = []
+        for i in range(6):
+            gen.register.set_state([1])
+            events, _ = gen.clock_step(0, 0.0)
+            note_on = [e for e in events if e.is_note_on][0]
+            pitches_played.append(note_on.data1)
+
+        assert pitches_played == [60, 62, 64, 60, 62, 64]
+
+    def test_repr(self):
+        """Test string representation."""
+        gen = BitShiftRegisterGenerator(size=4, pitches=[60, 62, 64])
+
+        assert "size=4" in repr(gen)
+        assert "pitches=3" in repr(gen)
+
+    def test_swing_applied(self):
+        """Test that swing is applied."""
+        config = BitShiftRegisterConfig(
+            tempo=120.0,
+            swing=0.5,
+            step_duration=0.5
+        )
+        gen = BitShiftRegisterGenerator(
+            size=1,
+            pitches=[60],
+            initial_state=[1],
+            config=config
+        )
+
+        # Collect times for a few steps
+        times = []
+        beat_duration = 60.0 / 120.0
+        step_duration = 0.5 * beat_duration
+
+        for i in range(4):
+            gen.register.set_state([1])
+            events, _ = gen.clock_step(0, i * step_duration)
+            note_on = [e for e in events if e.is_note_on][0]
+            times.append(note_on.time)
+
+        # With swing, odd steps (index 1, 3) should be delayed
+        # Step 1 should be later than expected
+        expected_step1 = step_duration
+        assert times[1] > expected_step1
+
+    def test_reproducibility(self):
+        """Test reproducibility with seed."""
+        config = BitShiftRegisterConfig(seed=42)
+
+        gen1 = BitShiftRegisterGenerator(size=4, config=config)
+        events1 = gen1.generate(num_steps=20, gate_probability=0.5)
+        pitches1 = [e.data1 for e in events1 if e.is_note_on]
+
+        gen2 = BitShiftRegisterGenerator(size=4, config=BitShiftRegisterConfig(seed=42))
+        events2 = gen2.generate(num_steps=20, gate_probability=0.5)
+        pitches2 = [e.data1 for e in events2 if e.is_note_on]
+
+        assert pitches1 == pitches2
+
+
+class TestBitShiftRegisterMIDIFileGeneration:
+    """Tests that generate MIDI files demonstrating bit shift register patterns."""
+
+    @pytest.fixture(autouse=True)
+    def setup_output_dir(self):
+        """Create output directory for MIDI files."""
+        self.output_dir = Path(__file__).parent.parent / "build" / "midi_files"
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def _events_to_track(self, events, track):
+        """Helper to convert generator events to MIDITrack."""
+        note_ons = {}
+        for event in sorted(events, key=lambda e: e.time):
+            if event.status == MIDIStatus.NOTE_ON and event.data2 > 0:
+                key = (event.data1, event.channel)
+                note_ons[key] = event
+            elif event.status == MIDIStatus.NOTE_OFF or (event.status == MIDIStatus.NOTE_ON and event.data2 == 0):
+                key = (event.data1, event.channel)
+                if key in note_ons:
+                    on_event = note_ons.pop(key)
+                    duration = event.time - on_event.time
+                    track.add_note(on_event.time, on_event.data1, on_event.data2,
+                                   duration, on_event.channel)
+
+    def test_generate_shift_register_basic(self):
+        """Generate MIDI file with basic shift register pattern."""
+        from coremusic.midi.utilities import MIDISequence
+
+        seq = MIDISequence(tempo=120.0)
+        track = seq.add_track("Shift Register Basic")
+
+        config = BitShiftRegisterConfig(tempo=120.0, step_duration=0.25)
+        gen = BitShiftRegisterGenerator(
+            size=4,
+            pitches=[60, 62, 64, 67],  # C, D, E, G
+            config=config
+        )
+
+        # Use a repeating gate pattern
+        gate_pattern = [1, 0, 1, 1, 0, 1, 0, 0] * 8  # 64 steps
+        events = gen.generate(gate_inputs=gate_pattern)
+
+        self._events_to_track(events, track)
+
+        output_path = self.output_dir / "shift_register_basic.mid"
+        seq.save(str(output_path))
+
+        assert output_path.exists()
+
+    def test_generate_shift_register_variable_velocity(self):
+        """Generate MIDI file with variable velocity."""
+        from coremusic.midi.utilities import MIDISequence
+
+        seq = MIDISequence(tempo=100.0)
+        track = seq.add_track("Shift Register Variable Velocity")
+
+        config = BitShiftRegisterConfig(
+            tempo=100.0,
+            step_duration=0.25,
+            velocity_mode='pattern',
+            velocity_pattern=[120, 80, 100, 60, 110, 70, 90, 50]
+        )
+        gen = BitShiftRegisterGenerator(
+            size=4,
+            pitches=[48, 52, 55, 60],  # C3, E3, G3, C4
+            config=config
+        )
+
+        gate_pattern = [1, 1, 0, 1, 0, 1, 1, 0] * 8
+        events = gen.generate(gate_inputs=gate_pattern)
+
+        self._events_to_track(events, track)
+
+        output_path = self.output_dir / "shift_register_velocity.mid"
+        seq.save(str(output_path))
+
+        assert output_path.exists()
+
+    def test_generate_shift_register_variable_duration(self):
+        """Generate MIDI file with variable note duration."""
+        from coremusic.midi.utilities import MIDISequence
+
+        seq = MIDISequence(tempo=110.0)
+        track = seq.add_track("Shift Register Variable Duration")
+
+        config = BitShiftRegisterConfig(
+            tempo=110.0,
+            step_duration=0.25,
+            duration_mode='pattern',
+            duration_pattern=[1.0, 0.5, 0.75, 0.25, 1.0, 0.5]
+        )
+        gen = BitShiftRegisterGenerator(
+            size=6,
+            pitches=[36, 38, 42, 46, 49, 51],  # Drum-like pattern
+            config=config
+        )
+
+        gate_pattern = [1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1] * 6
+        events = gen.generate(gate_inputs=gate_pattern)
+
+        self._events_to_track(events, track)
+
+        output_path = self.output_dir / "shift_register_duration.mid"
+        seq.save(str(output_path))
+
+        assert output_path.exists()
+
+    def test_generate_shift_register_random_gates(self):
+        """Generate MIDI file with random gates."""
+        from coremusic.midi.utilities import MIDISequence
+
+        seq = MIDISequence(tempo=130.0)
+        track = seq.add_track("Shift Register Random Gates")
+
+        config = BitShiftRegisterConfig(
+            tempo=130.0,
+            step_duration=0.125,
+            velocity_mode='random',
+            velocity_min=70,
+            velocity_max=127,
+            seed=42
+        )
+        gen = BitShiftRegisterGenerator(
+            size=8,
+            pitches=[60, 63, 67, 70, 72, 75, 79, 82],  # Cm7 extended
+            config=config
+        )
+
+        events = gen.generate(num_steps=128, gate_probability=0.6)
+
+        self._events_to_track(events, track)
+
+        output_path = self.output_dir / "shift_register_random.mid"
+        seq.save(str(output_path))
+
+        assert output_path.exists()
+
+    def test_generate_shift_register_with_swing(self):
+        """Generate MIDI file with swing."""
+        from coremusic.midi.utilities import MIDISequence
+
+        seq = MIDISequence(tempo=95.0)
+        track = seq.add_track("Shift Register Swing")
+
+        config = BitShiftRegisterConfig(
+            tempo=95.0,
+            step_duration=0.25,
+            swing=0.4,
+            velocity_mode='pattern',
+            velocity_pattern=[110, 70, 90, 60]
+        )
+        gen = BitShiftRegisterGenerator(
+            size=4,
+            pitches=[60, 64, 67, 72],  # C major arpeggio
+            config=config
+        )
+
+        gate_pattern = [1, 1, 1, 1, 0, 1, 0, 1] * 8
+        events = gen.generate(gate_inputs=gate_pattern)
+
+        self._events_to_track(events, track)
+
+        output_path = self.output_dir / "shift_register_swing.mid"
+        seq.save(str(output_path))
+
+        assert output_path.exists()
+
+    def test_generate_shift_register_composition(self):
+        """Generate MIDI file combining shift register with other generators."""
+        from coremusic.midi.utilities import MIDISequence
+
+        seq = MIDISequence(tempo=120.0)
+
+        # Bass track - Euclidean pattern
+        bass_track = seq.add_track("Bass")
+        bass_config = EuclideanConfig(tempo=120.0, note_duration=0.3, channel=1)
+        bass = EuclideanGenerator(pulses=5, steps=16, pitch=36, config=bass_config)
+        bass_events = bass.generate(cycles=8)
+        self._events_to_track(bass_events, bass_track)
+
+        # Lead track - Shift Register
+        lead_track = seq.add_track("Lead")
+        lead_config = BitShiftRegisterConfig(
+            tempo=120.0,
+            step_duration=0.125,
+            velocity_mode='pattern',
+            velocity_pattern=[100, 80, 90, 70, 110, 75, 95, 65],
+            channel=0
+        )
+        lead = BitShiftRegisterGenerator(
+            size=8,
+            pitches=[60, 62, 64, 65, 67, 69, 71, 72],  # C major scale
+            config=lead_config
+        )
+        gate_pattern = [1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0] * 8
+        lead_events = lead.generate(gate_inputs=gate_pattern)
+        self._events_to_track(lead_events, lead_track)
+
+        # Arp track
+        arp_track = seq.add_track("Arp")
+        arp_config = ArpConfig(tempo=120.0, rate=0.25, channel=2)
+        chord = Chord(Note('C', 4), ChordType.MAJOR_7)
+        arp = Arpeggiator(chord, ArpPattern.UP_DOWN, arp_config)
+        arp_events = arp.generate(num_cycles=16)
+        self._events_to_track(arp_events, arp_track)
+
+        output_path = self.output_dir / "shift_register_composition.mid"
+        seq.save(str(output_path))
+
+        assert output_path.exists()
         assert output_path.stat().st_size > 500

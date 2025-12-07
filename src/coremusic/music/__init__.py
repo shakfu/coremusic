@@ -26,6 +26,7 @@ Example:
 
 from . import theory
 from . import generative
+from . import markov
 
 # Re-export commonly used classes
 from .theory import (
@@ -69,6 +70,27 @@ from .generative import (
     # Polyrhythm
     PolyrhythmGenerator,
     PolyrhythmConfig,
+    # Bit Shift Register
+    BitShiftRegister,
+    BitShiftRegisterGenerator,
+    BitShiftRegisterConfig,
+)
+
+from .markov import (
+    # Markov Chain Analysis
+    MarkovChain,
+    ChainConfig,
+    ModelingMode,
+    RhythmMode,
+    NoteData,
+    TransitionEdge,
+    # MIDI Analysis and Generation
+    MIDIMarkovAnalyzer,
+    MIDIMarkovGenerator,
+    # Utility Functions
+    analyze_and_generate,
+    merge_chains,
+    chain_statistics,
 )
 
 __all__ = [
@@ -113,4 +135,21 @@ __all__ = [
     # Polyrhythm
     "PolyrhythmGenerator",
     "PolyrhythmConfig",
+    # Bit Shift Register
+    "BitShiftRegister",
+    "BitShiftRegisterGenerator",
+    "BitShiftRegisterConfig",
+    # Markov Chain Analysis
+    "markov",
+    "MarkovChain",
+    "ChainConfig",
+    "ModelingMode",
+    "RhythmMode",
+    "NoteData",
+    "TransitionEdge",
+    "MIDIMarkovAnalyzer",
+    "MIDIMarkovGenerator",
+    "analyze_and_generate",
+    "merge_chains",
+    "chain_statistics",
 ]

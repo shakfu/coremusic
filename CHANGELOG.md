@@ -19,6 +19,59 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Added
 
+- **Bit Shift Register Generator** - Gate-based sequencing with variable velocity and duration (`coremusic.music.generative`)
+  - `BitShiftRegister` - Core 8-bit shift register with configurable feedback taps
+    - Left/right shift operations with XOR feedback
+    - Rotate operations preserving bit state
+    - Clock-based operation with gate output
+    - Seed configuration for reproducible sequences
+  - `BitShiftRegisterConfig` - Configuration for the generator
+    - Variable velocity modes: fixed, random, pattern-based
+    - Variable duration modes: fixed, random, pattern-based
+    - Configurable note, channel, and base parameters
+  - `BitShiftRegisterGenerator` - Full MIDI event generator
+    - Step-based generation with clock advancement
+    - MIDI file output integration
+    - Humanization and swing support
+  - 47 tests covering all functionality
+
+- **Markov Chain MIDI Analysis** - Advanced MIDI file analysis and generation using Markov chains (`coremusic.music.markov`)
+  - `MarkovChain` - Core Markov chain implementation
+    - Configurable order (1st, 2nd, higher-order chains)
+    - Training from note sequences
+    - Probability matrix with transition sampling
+    - JSON serialization for saving/loading models
+  - `ChainConfig` - Comprehensive configuration dataclass
+    - Modeling modes: pitch-only, pitch+duration, pitch+duration+velocity
+    - Rhythm modes: constant, Markov-based, external generator
+    - Temperature control for sampling randomness
+    - Note range clamping (min/max MIDI notes)
+    - Gravity weights for biasing toward specific notes
+    - Probability smoothing (Laplace smoothing)
+  - **Node-Edge Editing** - Granular transition manipulation
+    - `set_transition_probability()` - Set specific transition weights
+    - `remove_transition()` - Remove specific transitions
+    - `get_transition_probability()` - Query transition weights
+    - `get_transitions_from()` - Get all transitions from a state
+  - **Chain-Scope Adjustments** - Global chain modifications
+    - `set_temperature()` - Control sampling randomness
+    - `set_note_range()` - Clamp output to MIDI range
+    - `set_gravity()` - Bias toward specific notes
+    - `sparsify()` - Remove low-probability transitions
+  - `MIDIMarkovAnalyzer` - MIDI file analysis
+    - `analyze_file()` - Create chain from MIDI file
+    - `analyze_track()` - Analyze specific track
+    - `analyze_all_tracks()` - Create chains for all tracks
+  - `MIDIMarkovGenerator` - MIDI generation from chains
+    - `generate()` - Generate new MIDI sequence
+    - `generate_to_track()` - Add generated notes to existing track
+    - Start pitch control for deterministic beginnings
+  - **Utility Functions**
+    - `analyze_and_generate()` - One-step analysis and generation
+    - `merge_chains()` - Combine multiple chains
+    - `chain_statistics()` - Get chain metrics (states, transitions, entropy)
+  - 64 comprehensive tests covering all functionality
+
 - **Music Theory and Generative Module** - Complete music theory foundations and MIDI-enabled generative algorithms (`coremusic.music`)
   - **Music Theory Primitives** (`src/coremusic/music/theory.py`)
     - `Note` class with MIDI number conversion, transposition, frequency calculation (A4=440Hz)
