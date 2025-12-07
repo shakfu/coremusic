@@ -874,8 +874,12 @@ class TestAudioFileGeneration:
     @pytest.fixture
     def source_audio(self):
         """Load source audio file."""
+        import warnings
         from scipy.io import wavfile
-        sample_rate, data = wavfile.read("tests/amen.wav")
+        from scipy.io.wavfile import WavFileWarning
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", WavFileWarning)
+            sample_rate, data = wavfile.read("tests/amen.wav")
         # Convert to float32 normalized
         if data.dtype == np.int16:
             data = data.astype(np.float32) / 32768.0

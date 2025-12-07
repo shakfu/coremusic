@@ -35,6 +35,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
     - Humanization and swing support
   - 47 tests covering all functionality
 
+- **Bayesian Network MIDI Analysis** - Probabilistic modeling of note dependencies (`coremusic.music.bayes`)
+  - `BayesianNetwork` - Core Bayesian network implementation
+    - Configurable network structure (fixed, learned, or manual)
+    - Directed acyclic graph with cycle detection
+    - Conditional probability tables (CPT) with Laplace smoothing
+    - Topological sampling (ancestral sampling)
+  - `NetworkConfig` - Comprehensive configuration dataclass
+    - Network modes: pitch-only, pitch+duration, pitch+duration+velocity, full (with IOI)
+    - Structure modes: fixed, learned, manual
+    - Configurable temporal order (1st, 2nd, higher)
+    - Discretization bins for each variable
+  - **Network Structure**
+    - `add_variable()`, `add_edge()` - Build custom network structures
+    - `remove_variable()`, `remove_edge()` - Modify structures
+    - Automatic cycle detection
+  - **Conditional Probability Tables**
+    - `CPT` class for storing P(variable | parents)
+    - Laplace smoothing for unseen observations
+    - Sampling and entropy calculation
+  - `MIDIBayesAnalyzer` - MIDI file analysis
+    - `analyze_file()` - Create network from MIDI file
+    - `analyze_track()` - Analyze specific track
+    - `analyze_all_tracks()` - Create networks for all tracks
+  - `MIDIBayesGenerator` - MIDI generation from networks
+    - `generate()` - Generate new MIDI sequence
+    - `generate_to_track()` - Add generated notes to existing track
+    - Start pitch control for deterministic beginnings
+  - **Utility Functions**
+    - `analyze_and_generate()` - One-step analysis and generation
+    - `merge_networks()` - Combine multiple networks
+    - `network_statistics()` - Get network metrics
+  - 66 comprehensive tests covering all functionality
+
 - **Markov Chain MIDI Analysis** - Advanced MIDI file analysis and generation using Markov chains (`coremusic.music.markov`)
   - `MarkovChain` - Core Markov chain implementation
     - Configurable order (1st, 2nd, higher-order chains)

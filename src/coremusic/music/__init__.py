@@ -27,6 +27,7 @@ Example:
 from . import theory
 from . import generative
 from . import markov
+from . import bayes
 
 # Re-export commonly used classes
 from .theory import (
@@ -93,6 +94,23 @@ from .markov import (
     chain_statistics,
 )
 
+from .bayes import (
+    # Bayesian Network Analysis
+    NetworkMode,
+    StructureMode,
+    NoteObservation,
+    NetworkConfig,
+    CPT,
+    BayesianNetwork,
+    # MIDI Analysis and Generation
+    MIDIBayesAnalyzer,
+    MIDIBayesGenerator,
+    # Utility Functions
+    analyze_and_generate as bayes_analyze_and_generate,
+    merge_networks,
+    network_statistics,
+)
+
 __all__ = [
     # Submodules
     "theory",
@@ -152,4 +170,17 @@ __all__ = [
     "analyze_and_generate",
     "merge_chains",
     "chain_statistics",
+    # Bayesian Network Analysis
+    "bayes",
+    "NetworkMode",
+    "StructureMode",
+    "NoteObservation",
+    "NetworkConfig",
+    "CPT",
+    "BayesianNetwork",
+    "MIDIBayesAnalyzer",
+    "MIDIBayesGenerator",
+    "bayes_analyze_and_generate",
+    "merge_networks",
+    "network_statistics",
 ]

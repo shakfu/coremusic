@@ -81,6 +81,14 @@
   - Chain-scope adjustments (temperature, gravity, clamping)
   - JSON serialization for model persistence
 
+- **Bayesian Network MIDI Analysis**: Probabilistic modeling of note dependencies
+  - Analyze MIDI files to build Bayesian networks
+  - Configurable network structure (fixed, learned, or manual)
+  - Model dependencies: pitch, duration, velocity, rhythm (IOI)
+  - Conditional probability tables with Laplace smoothing
+  - Temporal context support (configurable order)
+  - JSON serialization for model persistence
+
 - **MIDI Transformation Pipeline**: Chainable transformers for MIDI processing
   - Pitch: Transpose, Invert, Harmonize
   - Time: Quantize (with swing), TimeStretch, Reverse
@@ -885,6 +893,61 @@ variant = analyze_and_generate(
 variant.save("output.mid")
 ```
 
+### Bayesian Network MIDI Analysis
+
+```python
+from coremusic.music.bayes import (
+    BayesianNetwork, NetworkConfig, NetworkMode, StructureMode,
+    MIDIBayesAnalyzer, MIDIBayesGenerator,
+    analyze_and_generate, merge_networks, network_statistics
+)
+
+# Create and configure a Bayesian network
+config = NetworkConfig(
+    mode=NetworkMode.PITCH_DURATION_VELOCITY,  # Model pitch, duration, and velocity
+    structure_mode=StructureMode.FIXED,  # Use predefined structure
+    temporal_order=2,  # Consider 2 previous notes
+    smoothing_alpha=1.0  # Laplace smoothing
+)
+
+# Analyze a MIDI file
+analyzer = MIDIBayesAnalyzer(config=config)
+network = analyzer.analyze_file("original.mid", track_index=1)
+
+# Manual structure editing (for MANUAL mode)
+# network.add_edge("prev_pitch", "pitch")
+# network.add_edge("pitch", "duration")
+# network.add_edge("pitch", "velocity")
+
+# Generate a variation
+generator = MIDIBayesGenerator(network)
+variant_sequence = generator.generate(num_notes=32, tempo=120.0, start_pitch=60)
+variant_sequence.save("variant.mid")
+
+# Save/load networks for reuse
+network.save("my_network.json")
+loaded_network = BayesianNetwork.load("my_network.json")
+
+# Merge networks from multiple songs
+networks = [analyzer.analyze_file(f, track_index=1) for f in ["song1.mid", "song2.mid"]]
+merged = merge_networks(networks, weights=[0.7, 0.3])
+
+# Get network statistics
+stats = network_statistics(network)
+print(f"Variables: {stats['num_variables']}, Edges: {stats['num_edges']}")
+print(f"Observations: {stats['num_observations']}")
+print(f"Average entropy: {stats['average_entropy']:.2f} bits")
+
+# One-step convenience function
+variant = analyze_and_generate(
+    "input.mid",
+    "output.mid",
+    num_notes=64,
+    mode=NetworkMode.FULL,  # Include rhythm (IOI)
+    temporal_order=2
+)
+```
+
 ### MIDI Transformation Pipeline
 
 ```python
@@ -1041,6 +1104,7 @@ The project includes a large test suite, as well as examples and demos.
   - `theory.py`: Note, Interval, Scale (25+ types), Chord (35+ types), ChordProgression
   - `generative.py`: Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm, BitShiftRegister generators
   - `markov.py`: Markov chain MIDI analysis (MarkovChain, MIDIMarkovAnalyzer, MIDIMarkovGenerator)
+  - `bayes.py`: Bayesian network MIDI analysis (BayesianNetwork, MIDIBayesAnalyzer, MIDIBayesGenerator)
 
 #### Ableton Link Integration
 
