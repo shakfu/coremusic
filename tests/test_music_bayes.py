@@ -833,16 +833,15 @@ class TestIntegration:
 
 
 class TestMIDIFileGeneration:
-    """Tests that generate actual MIDI files."""
+    """Tests that generate actual MIDI files for audition."""
 
-    @pytest.fixture
-    def output_dir(self, tmp_path):
+    @pytest.fixture(autouse=True)
+    def setup_output_dir(self):
         """Create output directory."""
-        output = tmp_path / "bayes_test_output"
-        output.mkdir(parents=True, exist_ok=True)
-        return output
+        self.output_dir = Path(__file__).parent.parent / "build" / "midi_files" / "bayes"
+        self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def test_generate_variation_basic(self, test_midi_file, output_dir):
+    def test_generate_variation_basic(self, test_midi_file):
         """Generate basic variation."""
         analyzer = MIDIBayesAnalyzer()
         network = analyzer.analyze_file(test_midi_file, track_index=1)
@@ -850,11 +849,11 @@ class TestMIDIFileGeneration:
 
         sequence = generator.generate(num_notes=32, tempo=120.0)
 
-        output_file = output_dir / "variation_basic.mid"
+        output_file = self.output_dir / "bayes_variation_basic.mid"
         sequence.save(str(output_file))
         assert output_file.exists()
 
-    def test_generate_variation_full_mode(self, test_midi_file, output_dir):
+    def test_generate_variation_full_mode(self, test_midi_file):
         """Generate with full modeling."""
         config = NetworkConfig(mode=NetworkMode.FULL, temporal_order=1)
         analyzer = MIDIBayesAnalyzer(config=config)
@@ -863,11 +862,11 @@ class TestMIDIFileGeneration:
 
         sequence = generator.generate(num_notes=32, tempo=120.0)
 
-        output_file = output_dir / "variation_full.mid"
+        output_file = self.output_dir / "bayes_variation_full.mid"
         sequence.save(str(output_file))
         assert output_file.exists()
 
-    def test_generate_variation_second_order(self, test_midi_file, output_dir):
+    def test_generate_variation_second_order(self, test_midi_file):
         """Generate with second-order network."""
         config = NetworkConfig(mode=NetworkMode.PITCH_DURATION, temporal_order=2)
         analyzer = MIDIBayesAnalyzer(config=config)
@@ -876,7 +875,7 @@ class TestMIDIFileGeneration:
 
         sequence = generator.generate(num_notes=32, tempo=120.0)
 
-        output_file = output_dir / "variation_order2.mid"
+        output_file = self.output_dir / "bayes_variation_order2.mid"
         sequence.save(str(output_file))
         assert output_file.exists()
 
