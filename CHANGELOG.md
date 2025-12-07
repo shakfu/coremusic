@@ -123,6 +123,58 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 - **matplotlib as dev dependency** - Enables audio visualization tests (`tests/test_audio_visualization.py`)
 
+- **MIDI Transformation Pipeline** - Composable pipeline for analyzing and transforming MIDI files (`coremusic.midi.transform`)
+  - **Base Classes**
+    - `MIDITransformer` - Abstract base class for all transformers
+    - `Pipeline` - Chain of transformers applied in sequence with fluent API
+  - **Pitch Transformers**
+    - `Transpose` - Shift notes by semitones (with clamping to 0-127)
+    - `Invert` - Mirror melody around a pivot note (retrograde inversion)
+    - `Harmonize` - Add parallel intervals (thirds, fifths, triads, etc.)
+  - **Time Transformers**
+    - `Quantize` - Snap timing to grid with configurable strength and swing
+    - `TimeStretch` - Speed up or slow down (tempo change)
+    - `TimeShift` - Move events forward/backward in time
+    - `Reverse` - Retrograde (reverse note order preserving durations)
+  - **Velocity Transformers**
+    - `VelocityScale` - Scale by factor or compress to min/max range
+    - `VelocityCurve` - Apply curves (linear, log, exp, soft, hard, custom)
+    - `Humanize` - Add human-like timing and velocity variation
+  - **Filter Transformers**
+    - `NoteFilter` - Filter by pitch range, velocity, channel (with invert option)
+    - `EventTypeFilter` - Keep or remove specific MIDI event types
+  - **Track Transformers**
+    - `ChannelRemap` - Remap MIDI channels
+    - `TrackMerge` - Merge all tracks into a single track
+    - `Arpeggiate` - Convert chords to arpeggios (up, down, up_down, random patterns)
+  - **Convenience Functions**
+    - `transpose()`, `quantize()`, `humanize()`, `reverse()`, `scale_velocity()`
+  - **Test Coverage**
+    - 68 tests in `tests/test_midi_transform.py`
+    - Integration tests generating actual MIDI files in `build/midi_files/transform_tests/`
+
+  **Example Usage:**
+
+  ```python
+  from coremusic.midi.utilities import MIDISequence
+  from coremusic.midi.transform import Pipeline, Transpose, Quantize, Humanize, VelocityScale
+
+  # Load MIDI file
+  seq = MIDISequence.load("input.mid")
+
+  # Create transformation pipeline
+  pipeline = Pipeline([
+      Transpose(semitones=5),              # Up a perfect fourth
+      Quantize(grid=0.125, strength=0.8),  # Quantize to 16th notes
+      VelocityScale(min_vel=40, max_vel=100),  # Compress velocity range
+      Humanize(timing=0.02, velocity=10),  # Add human feel
+  ])
+
+  # Apply transformations and save
+  transformed = pipeline.apply(seq)
+  transformed.save("output.mid")
+  ```
+
 ### Changed
 
 - **Demo Files Reorganization** - Restructured `tests/demos/` for better organization and usability

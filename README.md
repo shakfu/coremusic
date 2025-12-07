@@ -73,6 +73,13 @@
   - 7 generative algorithms (Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm)
   - MIDI event generation compatible with MIDITrack/MIDISequence
 
+- **MIDI Transformation Pipeline**: Chainable transformers for MIDI processing
+  - Pitch: Transpose, Invert, Harmonize
+  - Time: Quantize (with swing), TimeStretch, Reverse
+  - Velocity: Scale, Curve, Humanize
+  - Filters: NoteFilter, EventTypeFilter, ChannelRemap
+  - Composable Pipeline with fluent API
+
 - **Performance Optimizations**: Cython-optimized audio buffer operations integrated into main `capi.pyx`
 
 - **Memory Management**: Zero-copy buffer pool with configurable limits and automatic cleanup
@@ -785,6 +792,45 @@ track = sequence.create_track("Arpeggio")
 sequence.save("composition.mid")
 ```
 
+### MIDI Transformation Pipeline
+
+```python
+from coremusic.midi.utilities import MIDISequence
+from coremusic.midi.transform import (
+    Pipeline, Transpose, Quantize, Humanize, VelocityScale,
+    Harmonize, Reverse, NoteFilter, Arpeggiate
+)
+
+# Load existing MIDI file
+seq = MIDISequence.load("input.mid")
+
+# Create transformation pipeline
+pipeline = Pipeline([
+    Transpose(semitones=5),              # Up a perfect fourth
+    Quantize(grid=0.125, strength=0.8),  # Quantize to 16th notes (with 80% strength)
+    VelocityScale(min_vel=40, max_vel=100),  # Compress velocity range
+    Humanize(timing=0.02, velocity=10),  # Add human feel
+])
+
+# Apply and save
+transformed = pipeline.apply(seq)
+transformed.save("output.mid")
+
+# Individual transformers can also be used directly
+reversed_seq = Reverse().transform(seq)
+harmonized = Harmonize([4, 7]).transform(seq)  # Add thirds and fifths
+
+# Filter notes by range
+bass_only = NoteFilter(min_note=24, max_note=48).transform(seq)
+
+# Convert chords to arpeggios
+arpeggiated = Arpeggiate(pattern='up_down', note_duration=0.1).transform(seq)
+
+# Convenience functions for common operations
+from coremusic.midi.transform import transpose, quantize, humanize
+result = humanize(quantize(transpose(seq, 12), 0.25), timing=0.01)
+```
+
 ### CoreMIDI Basic Usage
 
 ```python
@@ -884,7 +930,8 @@ The project includes a large test suite, as well as examples and demos.
 
 - **`src/coremusic/midi/`**: High-level MIDI abstractions:
   - `link.py`: Ableton Link + MIDI integration
-  - `utilities.py`: MIDI processing and utility functions
+  - `utilities.py`: MIDI file I/O, sequencing, and routing
+  - `transform.py`: MIDI transformation pipeline (Transpose, Quantize, Humanize, etc.)
 
 - **`src/coremusic/music/`**: Music theory and generative algorithms:
   - `theory.py`: Note, Interval, Scale (25+ types), Chord (35+ types), ChordProgression

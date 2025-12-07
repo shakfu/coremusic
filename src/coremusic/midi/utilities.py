@@ -444,10 +444,15 @@ class MIDISequence:
 
         with open(path, 'wb') as f:
             # Write MThd header
+            # For format 1, we add a tempo track, so total is len(tracks) + 1
+            num_tracks = len(self.tracks)
+            if format == MIDIFileFormat.MULTI_TRACK and self.tracks:
+                num_tracks += 1  # Account for tempo track
+
             f.write(b'MThd')
             f.write(struct.pack('>I', 6))  # Header length
             f.write(struct.pack('>H', int(format)))  # Format
-            f.write(struct.pack('>H', len(self.tracks)))  # Number of tracks
+            f.write(struct.pack('>H', num_tracks))  # Number of tracks
             f.write(struct.pack('>H', self.ppq))  # Ticks per quarter note
 
             # Write tempo track (track 0 for format 1)
@@ -594,8 +599,13 @@ class MIDISequence:
             else:
                 status_byte = running_status
 
-            status = status_byte & 0xF0
-            channel = status_byte & 0x0F
+            # Check for meta events (0xFF) before masking
+            if status_byte == 0xFF:
+                status = 0xFF
+                channel = 0
+            else:
+                status = status_byte & 0xF0
+                channel = status_byte & 0x0F
 
             # Convert ticks to seconds
             time_seconds = current_ticks / (self.ppq * (self.tempo / 60.0))

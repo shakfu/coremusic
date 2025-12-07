@@ -2,7 +2,7 @@
 
 ## Summary
 
-**CoreMusic Status:** Production-ready professional audio framework for Python with **1,329+ tests passing** (100% success rate)
+**CoreMusic Status:** Production-ready professional audio framework for Python with **1,457+ tests passing** (100% success rate)
 
 **Current Capabilities:**
 - Complete AudioUnit Host (190 plugins: 111 effects, 62 instruments)
@@ -14,6 +14,7 @@
 - DAW essentials (Timeline, tracks, clips, automation)
 - Music theory primitives (Note, Interval, Scale, Chord, ChordProgression)
 - Generative algorithms (Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm)
+- MIDI transformation pipeline (Transpose, Quantize, Humanize, Harmonize, Reverse, etc.)
 
 See [CHANGELOG.md](CHANGELOG.md) for completed features.
 
@@ -88,52 +89,18 @@ See [CHANGELOG.md](CHANGELOG.md) for completed features.
 - Pattern morphing and transitions
 - Live recording of generated sequences
 
-#### MIDI File Transformation Pipeline
+#### MIDI File Transformation Pipeline - COMPLETED
 
-**Priority: MEDIUM** - Analyze and transform MIDI files
+**Status: IMPLEMENTED** - See `coremusic.midi.transform`
 
-**Current state:** MIDI file read/write supported via `MIDISequence`, but no transformation pipeline
+Implemented transformers:
+- **Pitch**: Transpose, Invert, Harmonize
+- **Time**: Quantize (with swing), TimeStretch, TimeShift, Reverse
+- **Velocity**: VelocityScale, VelocityCurve, Humanize
+- **Filters**: NoteFilter, EventTypeFilter
+- **Track**: ChannelRemap, TrackMerge, Arpeggiate
 
-**Planned features:**
-- Load and analyze existing MIDI files (extract notes, timing, structure)
-- Chain of MIDI transformers for processing:
-  - Transpose (shift pitch by semitones or interval)
-  - Quantize (snap to grid, swing)
-  - Velocity scaling/compression
-  - Time stretch/compress
-  - Note filtering (by pitch range, velocity, channel)
-  - Humanize (add timing/velocity variation)
-  - Harmonize (add parallel intervals)
-  - Arpeggiate chords
-  - Reverse/retrograde
-  - Invert melody
-- Composable pipeline with fluent API
-- Export transformed MIDI to new file
-
-**Example API:**
-```python
-from coremusic.midi.utilities import MIDISequence
-from coremusic.midi.transform import (
-    Transpose, Quantize, VelocityScale, Humanize, Pipeline
-)
-
-# Load MIDI file
-seq = MIDISequence.load("input.mid")
-
-# Create transformation pipeline
-pipeline = Pipeline([
-    Transpose(semitones=5),           # Up a perfect fourth
-    Quantize(grid=1/16, strength=0.8),  # Quantize to 16th notes
-    VelocityScale(min_vel=40, max_vel=100),  # Compress velocity
-    Humanize(timing=0.02, velocity=10),  # Add human feel
-])
-
-# Apply transformations
-transformed = pipeline.apply(seq)
-
-# Save result
-transformed.save("output.mid")
-```
+68 tests in `tests/test_midi_transform.py`
 
 ---
 
@@ -238,11 +205,14 @@ available_plugins = cm.discover_audio_units(type='effect')
 
 ## Prioritized Roadmap
 
+### Recently Completed
+- [x] **MIDI Transformation Pipeline** - Chainable MIDI transformers (transpose, quantize, humanize, etc.)
+
 ### Near-term (Next 3-6 months)
-- [ ] **MIDI Transformation Pipeline** - Chainable MIDI transformers (transpose, quantize, humanize, etc.)
 - [ ] **Plugin UI Integration** - Cocoa view integration for plugin UIs
 - [ ] **Link-Aware Plugins** - Tempo callback integration for tempo-synced effects
 - [ ] **Advanced MIDI** - MIDI file playback, live CoreMIDI routing, MIDI learn
+- [ ] **Live Generative Performance** - Link-synchronized generators, real-time parameter modulation
 - [ ] **Documentation** - Comprehensive API documentation with examples
 
 ### Future Enhancements (6-12 months)

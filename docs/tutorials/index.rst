@@ -10,6 +10,7 @@ Step-by-step tutorials for common audio and MIDI tasks with coremusic.
    audio_file_basics
    async_audio
    music_theory
+   midi_transform
 
 Tutorial Overview
 -----------------
@@ -43,7 +44,7 @@ MIDI
 
 - **MIDI Basics**: Send and receive MIDI messages
 - **MIDI Routing**: Route MIDI between devices
-- **MIDI Transformation**: Transform MIDI data in real-time
+- **MIDI Transformation Pipeline**: Composable transformers for MIDI processing (transpose, quantize, humanize, harmonize, etc.)
 - **Virtual MIDI Devices**: Create virtual MIDI endpoints
 
 Music Theory and Generative
