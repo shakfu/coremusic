@@ -195,15 +195,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
     - `Humanize` - Add human-like timing and velocity variation
   - **Filter Transformers**
     - `NoteFilter` - Filter by pitch range, velocity, channel (with invert option)
+    - `ScaleFilter` - Filter notes to only allow those in a given musical scale (scale mask)
     - `EventTypeFilter` - Keep or remove specific MIDI event types
   - **Track Transformers**
     - `ChannelRemap` - Remap MIDI channels
     - `TrackMerge` - Merge all tracks into a single track
     - `Arpeggiate` - Convert chords to arpeggios (up, down, up_down, random patterns)
   - **Convenience Functions**
-    - `transpose()`, `quantize()`, `humanize()`, `reverse()`, `scale_velocity()`
+    - `transpose()`, `quantize()`, `humanize()`, `reverse()`, `scale_velocity()`, `filter_to_scale()`
   - **Test Coverage**
-    - 68 tests in `tests/test_midi_transform.py`
+    - 79 tests in `tests/test_midi_transform.py`
     - Integration tests generating MIDI files in `build/midi_files/transform_tests/`
   - **Generated MIDI Files** (`build/midi_files/transform_tests/`)
     - Pre/post pairs for each transformation: `<name>_pre.mid` and `<name>_post.mid`

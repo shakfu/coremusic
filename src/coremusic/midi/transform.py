@@ -788,6 +788,80 @@ class NoteFilter(MIDITransformer):
         return f"NoteFilter({', '.join(parts)})"
 
 
+class ScaleFilter(MIDITransformer):
+    """Filter notes to only allow those in a given scale.
+
+    Notes that are not in the scale are removed from the sequence.
+    This acts as a "scale mask" that only lets through notes belonging
+    to the specified scale.
+
+    Example:
+        >>> from coremusic.music.theory import Note, Scale, ScaleType
+        >>> # Only keep notes in C major
+        >>> c_major = Scale(Note.from_name("C4"), ScaleType.MAJOR)
+        >>> filtered = ScaleFilter(c_major).transform(sequence)
+        >>>
+        >>> # Only keep notes in A minor pentatonic
+        >>> a_pent = Scale(Note.from_name("A3"), ScaleType.MINOR_PENTATONIC)
+        >>> filtered = ScaleFilter(a_pent).transform(sequence)
+    """
+
+    def __init__(self, scale: "Scale"):
+        """Initialize scale filter.
+
+        Args:
+            scale: Scale object defining which notes to allow through.
+                   Notes are matched by pitch class (octave-independent).
+        """
+        # Import here to avoid circular imports at module level
+        from ..music.theory import Scale as ScaleClass
+        if not isinstance(scale, ScaleClass):
+            raise TypeError(f"Expected Scale, got {type(scale).__name__}")
+        self.scale = scale
+        # Pre-compute allowed pitch classes for efficiency
+        root_pc = scale.root.pitch_class
+        self._allowed_pitch_classes: Set[int] = {
+            (root_pc + interval) % 12 for interval in scale.intervals
+        }
+
+    def _note_in_scale(self, midi_note: int) -> bool:
+        """Check if a MIDI note number is in the scale."""
+        pitch_class = midi_note % 12
+        return pitch_class in self._allowed_pitch_classes
+
+    def transform(self, sequence: MIDISequence) -> MIDISequence:
+        result = self._copy_sequence(sequence)
+
+        for track in result.tracks:
+            # Track which notes to keep (those in scale)
+            notes_to_keep: Set[Tuple[int, int]] = set()
+
+            # First pass: determine which notes are in scale
+            for event in track.events:
+                if event.is_note_on:
+                    key = (event.data1, event.channel)
+                    if self._note_in_scale(event.data1):
+                        notes_to_keep.add(key)
+
+            # Second pass: filter events
+            filtered_events = []
+            for event in track.events:
+                if event.status in (MIDIStatus.NOTE_ON, MIDIStatus.NOTE_OFF):
+                    key = (event.data1, event.channel)
+                    if key in notes_to_keep:
+                        filtered_events.append(event)
+                else:
+                    # Keep non-note events
+                    filtered_events.append(event)
+
+            track.events = filtered_events
+
+        return result
+
+    def __repr__(self) -> str:
+        return f"ScaleFilter(scale={self.scale})"
+
+
 class EventTypeFilter(MIDITransformer):
     """Filter events by MIDI message type.
 
@@ -1069,3 +1143,16 @@ def scale_velocity(
 ) -> MIDISequence:
     """Convenience function to scale velocity."""
     return VelocityScale(min_vel, max_vel, factor).transform(sequence)
+
+
+def filter_to_scale(sequence: MIDISequence, scale: "Scale") -> MIDISequence:
+    """Convenience function to filter notes to a scale.
+
+    Args:
+        sequence: Input MIDI sequence
+        scale: Scale object defining which notes to allow
+
+    Returns:
+        Sequence with only notes from the scale
+    """
+    return ScaleFilter(scale).transform(sequence)

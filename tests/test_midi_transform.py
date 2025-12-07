@@ -30,6 +30,7 @@ from coremusic.midi.transform import (
     Humanize,
     # Filter transformers
     NoteFilter,
+    ScaleFilter,
     EventTypeFilter,
     # Track transformers
     ChannelRemap,
@@ -42,7 +43,9 @@ from coremusic.midi.transform import (
     humanize,
     reverse,
     scale_velocity,
+    filter_to_scale,
 )
+from coremusic.music.theory import Note, Scale, ScaleType
 
 
 # ============================================================================
@@ -559,6 +562,179 @@ class TestNoteFilter:
         # Should only have C4 (C5 matched and was removed)
         assert len(note_ons) == 1
         assert note_ons[0].data1 == 60
+
+
+class TestScaleFilter:
+    """Tests for ScaleFilter transformer."""
+
+    def test_filter_to_c_major(self):
+        """Filter notes to C major scale."""
+        seq = MIDISequence()
+        track = seq.add_track("Test")
+        # C major scale notes: C, D, E, F, G, A, B (0, 2, 4, 5, 7, 9, 11)
+        # Non-scale notes: C#, D#, F#, G#, A# (1, 3, 6, 8, 10)
+        track.add_note(0.0, 60, 100, 0.5)  # C4 - in scale
+        track.add_note(0.5, 61, 100, 0.5)  # C#4 - NOT in scale
+        track.add_note(1.0, 62, 100, 0.5)  # D4 - in scale
+        track.add_note(1.5, 63, 100, 0.5)  # D#4 - NOT in scale
+        track.add_note(2.0, 64, 100, 0.5)  # E4 - in scale
+
+        c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+        result = ScaleFilter(c_major).transform(seq)
+
+        note_ons = [e for e in result.tracks[0].events if e.is_note_on]
+        assert len(note_ons) == 3
+        assert [n.data1 for n in note_ons] == [60, 62, 64]
+
+    def test_filter_to_a_minor_pentatonic(self):
+        """Filter notes to A minor pentatonic scale."""
+        seq = MIDISequence()
+        track = seq.add_track("Test")
+        # A minor pentatonic: A, C, D, E, G (9, 0, 2, 4, 7)
+        track.add_note(0.0, 57, 100, 0.5)  # A3 - in scale
+        track.add_note(0.5, 59, 100, 0.5)  # B3 - NOT in scale
+        track.add_note(1.0, 60, 100, 0.5)  # C4 - in scale
+        track.add_note(1.5, 61, 100, 0.5)  # C#4 - NOT in scale
+        track.add_note(2.0, 62, 100, 0.5)  # D4 - in scale
+
+        a_pent = Scale(Note('A', 3), ScaleType.MINOR_PENTATONIC)
+        result = ScaleFilter(a_pent).transform(seq)
+
+        note_ons = [e for e in result.tracks[0].events if e.is_note_on]
+        assert len(note_ons) == 3
+        assert [n.data1 for n in note_ons] == [57, 60, 62]
+
+    def test_filter_preserves_note_offs(self):
+        """Ensure note-offs are kept for filtered notes."""
+        seq = MIDISequence()
+        track = seq.add_track("Test")
+        track.add_note(0.0, 60, 100, 0.5)  # C4 - in scale
+        track.add_note(0.5, 61, 100, 0.5)  # C#4 - NOT in scale
+
+        c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+        result = ScaleFilter(c_major).transform(seq)
+
+        # Should have note on and note off for C4 only
+        events = result.tracks[0].events
+        note_ons = [e for e in events if e.is_note_on]
+        note_offs = [e for e in events if e.is_note_off]
+
+        assert len(note_ons) == 1
+        assert len(note_offs) == 1
+        assert note_ons[0].data1 == 60
+        assert note_offs[0].data1 == 60
+
+    def test_filter_preserves_non_note_events(self):
+        """Control changes and other events are preserved."""
+        seq = MIDISequence()
+        track = seq.add_track("Test")
+        track.add_note(0.0, 60, 100, 0.5)  # C4 - in scale
+        track.add_note(0.5, 61, 100, 0.5)  # C#4 - NOT in scale
+        track.add_control_change(0.25, 7, 100)  # Volume CC
+
+        c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+        result = ScaleFilter(c_major).transform(seq)
+
+        cc_events = [e for e in result.tracks[0].events
+                     if e.status == MIDIStatus.CONTROL_CHANGE]
+        assert len(cc_events) == 1
+
+    def test_filter_across_octaves(self):
+        """Scale filtering works across multiple octaves."""
+        seq = MIDISequence()
+        track = seq.add_track("Test")
+        # C notes in different octaves
+        track.add_note(0.0, 36, 100, 0.5)  # C2 - in scale
+        track.add_note(0.5, 48, 100, 0.5)  # C3 - in scale
+        track.add_note(1.0, 60, 100, 0.5)  # C4 - in scale
+        track.add_note(1.5, 61, 100, 0.5)  # C#4 - NOT in scale
+        track.add_note(2.0, 72, 100, 0.5)  # C5 - in scale
+
+        c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+        result = ScaleFilter(c_major).transform(seq)
+
+        note_ons = [e for e in result.tracks[0].events if e.is_note_on]
+        assert len(note_ons) == 4
+        assert [n.data1 for n in note_ons] == [36, 48, 60, 72]
+
+    def test_filter_chromatic_scale_keeps_all(self):
+        """Chromatic scale filter keeps all notes."""
+        seq = MIDISequence()
+        track = seq.add_track("Test")
+        for note in range(60, 72):  # All 12 notes
+            track.add_note(note - 60, note, 100, 0.5)
+
+        chromatic = Scale(Note('C', 4), ScaleType.CHROMATIC)
+        result = ScaleFilter(chromatic).transform(seq)
+
+        note_ons = [e for e in result.tracks[0].events if e.is_note_on]
+        assert len(note_ons) == 12
+
+    def test_filter_blues_scale(self):
+        """Filter to blues scale."""
+        seq = MIDISequence()
+        track = seq.add_track("Test")
+        # Blues scale: C, Eb, F, F#, G, Bb (0, 3, 5, 6, 7, 10)
+        track.add_note(0.0, 60, 100, 0.5)  # C - in scale
+        track.add_note(0.5, 62, 100, 0.5)  # D - NOT in scale
+        track.add_note(1.0, 63, 100, 0.5)  # Eb - in scale
+        track.add_note(1.5, 64, 100, 0.5)  # E - NOT in scale
+        track.add_note(2.0, 65, 100, 0.5)  # F - in scale
+
+        blues = Scale(Note('C', 4), ScaleType.BLUES)
+        result = ScaleFilter(blues).transform(seq)
+
+        note_ons = [e for e in result.tracks[0].events if e.is_note_on]
+        assert len(note_ons) == 3
+        assert [n.data1 for n in note_ons] == [60, 63, 65]
+
+    def test_filter_invalid_scale_type(self):
+        """Raise error for non-Scale input."""
+        with pytest.raises(TypeError):
+            ScaleFilter("not a scale")
+
+    def test_filter_convenience_function(self):
+        """Test filter_to_scale convenience function."""
+        seq = MIDISequence()
+        track = seq.add_track("Test")
+        track.add_note(0.0, 60, 100, 0.5)  # C4 - in scale
+        track.add_note(0.5, 61, 100, 0.5)  # C#4 - NOT in scale
+
+        c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+        result = filter_to_scale(seq, c_major)
+
+        note_ons = [e for e in result.tracks[0].events if e.is_note_on]
+        assert len(note_ons) == 1
+        assert note_ons[0].data1 == 60
+
+    def test_filter_repr(self):
+        """Test string representation."""
+        c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+        filt = ScaleFilter(c_major)
+        assert "ScaleFilter" in repr(filt)
+
+    def test_filter_multi_track(self):
+        """Filter works across multiple tracks."""
+        seq = MIDISequence()
+        track1 = seq.add_track("Track1")
+        track2 = seq.add_track("Track2")
+
+        track1.add_note(0.0, 60, 100, 0.5)  # C4 - in scale
+        track1.add_note(0.5, 61, 100, 0.5)  # C#4 - NOT in scale
+
+        track2.add_note(0.0, 62, 100, 0.5)  # D4 - in scale
+        track2.add_note(0.5, 63, 100, 0.5)  # D#4 - NOT in scale
+
+        c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+        result = ScaleFilter(c_major).transform(seq)
+
+        track1_notes = [e for e in result.tracks[0].events if e.is_note_on]
+        track2_notes = [e for e in result.tracks[1].events if e.is_note_on]
+
+        assert len(track1_notes) == 1
+        assert track1_notes[0].data1 == 60
+        assert len(track2_notes) == 1
+        assert track2_notes[0].data1 == 62
 
 
 class TestEventTypeFilter:

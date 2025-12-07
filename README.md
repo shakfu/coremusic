@@ -85,7 +85,7 @@
   - Pitch: Transpose, Invert, Harmonize
   - Time: Quantize (with swing), TimeStretch, Reverse
   - Velocity: Scale, Curve, Humanize
-  - Filters: NoteFilter, EventTypeFilter, ChannelRemap
+  - Filters: NoteFilter, ScaleFilter (scale mask), EventTypeFilter, ChannelRemap
   - Composable Pipeline with fluent API
 
 - **Performance Optimizations**: Cython-optimized audio buffer operations integrated into main `capi.pyx`
@@ -915,6 +915,17 @@ harmonized = Harmonize([4, 7]).transform(seq)  # Add thirds and fifths
 
 # Filter notes by range
 bass_only = NoteFilter(min_note=24, max_note=48).transform(seq)
+
+# Filter to only notes in a scale (scale mask)
+from coremusic.music.theory import Note, Scale, ScaleType
+from coremusic.midi.transform import ScaleFilter, filter_to_scale
+
+c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+in_scale = ScaleFilter(c_major).transform(seq)  # Only C, D, E, F, G, A, B notes pass through
+
+# Or use the convenience function
+a_pent = Scale(Note('A', 3), ScaleType.MINOR_PENTATONIC)
+pentatonic_only = filter_to_scale(seq, a_pent)
 
 # Convert chords to arpeggios
 arpeggiated = Arpeggiate(pattern='up_down', note_duration=0.1).transform(seq)
