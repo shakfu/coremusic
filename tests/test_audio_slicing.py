@@ -850,3 +850,228 @@ class TestIntegrationWorkflows:
 
         assert isinstance(result, np.ndarray)
         assert len(result) > 0
+
+
+# ============================================================================
+# Audio File Generation Tests
+# ============================================================================
+
+
+class TestAudioFileGeneration:
+    """Integration tests that generate audio files to build/audio_files/.
+
+    Each test saves both pre-transformed and post-transformed audio files
+    for comparison. Files are named with the transformation applied.
+    """
+
+    @pytest.fixture
+    def output_dir(self):
+        """Create output directory for audio files."""
+        path = Path("build/audio_files/slicing_tests")
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    @pytest.fixture
+    def source_audio(self):
+        """Load source audio file."""
+        from scipy.io import wavfile
+        sample_rate, data = wavfile.read("tests/amen.wav")
+        # Convert to float32 normalized
+        if data.dtype == np.int16:
+            data = data.astype(np.float32) / 32768.0
+        elif data.dtype == np.int32:
+            data = data.astype(np.float32) / 2147483648.0
+        return sample_rate, data
+
+    def _save_audio(self, path: Path, sample_rate: int, data: np.ndarray) -> None:
+        """Save audio data to WAV file."""
+        from scipy.io import wavfile
+        # Convert back to int16 for saving
+        if data.dtype == np.float32 or data.dtype == np.float64:
+            data_int16 = np.clip(data * 32767, -32768, 32767).astype(np.int16)
+        else:
+            data_int16 = data.astype(np.int16)
+        wavfile.write(str(path), sample_rate, data_int16)
+
+    def test_generate_shuffled(self, output_dir, source_audio):
+        """Generate shuffled audio - slices reordered randomly."""
+        sample_rate, data = source_audio
+
+        # Save pre-transformed
+        pre_path = output_dir / "shuffled_pre.wav"
+        self._save_audio(pre_path, sample_rate, data)
+
+        # Slice and shuffle
+        slicer = AudioSlicer("tests/amen.wav", method="onset", sensitivity=0.5)
+        slices = slicer.detect_slices(min_slice_duration=0.05)
+        collection = SliceCollection(slices)
+        shuffled = collection.shuffle()  # Shuffle slices
+
+        # Recombine
+        recombinator = SliceRecombinator(shuffled)
+        result = recombinator.recombine(crossfade_duration=0.005)
+
+        # Save post-transformed
+        post_path = output_dir / "shuffled_post.wav"
+        self._save_audio(post_path, sample_rate, result)
+
+        assert pre_path.exists()
+        assert post_path.exists()
+
+    def test_generate_reversed(self, output_dir, source_audio):
+        """Generate reversed audio - slices in reverse order."""
+        sample_rate, data = source_audio
+
+        # Save pre-transformed
+        pre_path = output_dir / "reversed_pre.wav"
+        self._save_audio(pre_path, sample_rate, data)
+
+        # Slice and reverse
+        slicer = AudioSlicer("tests/amen.wav", method="grid")
+        slices = slicer.detect_slices(divisions=8)
+        collection = SliceCollection(slices)
+        reversed_coll = collection.reverse()
+
+        # Recombine
+        recombinator = SliceRecombinator(reversed_coll)
+        result = recombinator.recombine(crossfade_duration=0.005)
+
+        # Save post-transformed
+        post_path = output_dir / "reversed_post.wav"
+        self._save_audio(post_path, sample_rate, result)
+
+        assert pre_path.exists()
+        assert post_path.exists()
+
+    def test_generate_pattern(self, output_dir, source_audio):
+        """Generate patterned audio - slices reordered by pattern."""
+        sample_rate, data = source_audio
+
+        # Save pre-transformed
+        pre_path = output_dir / "pattern_pre.wav"
+        self._save_audio(pre_path, sample_rate, data)
+
+        # Slice and apply pattern
+        slicer = AudioSlicer("tests/amen.wav", method="grid")
+        slices = slicer.detect_slices(divisions=16)
+        collection = SliceCollection(slices)
+        # Classic breakbeat pattern: kick-snare rearrangement
+        pattern = [0, 0, 4, 4, 8, 8, 12, 12, 2, 2, 6, 6, 10, 10, 14, 14]
+        patterned = collection.apply_pattern(pattern)
+
+        # Recombine
+        recombinator = SliceRecombinator(patterned)
+        result = recombinator.recombine(crossfade_duration=0.003)
+
+        # Save post-transformed
+        post_path = output_dir / "pattern_post.wav"
+        self._save_audio(post_path, sample_rate, result)
+
+        assert pre_path.exists()
+        assert post_path.exists()
+
+    def test_generate_repeated(self, output_dir, source_audio):
+        """Generate repeated audio - selected slices repeated."""
+        sample_rate, data = source_audio
+
+        # Save pre-transformed
+        pre_path = output_dir / "repeated_pre.wav"
+        self._save_audio(pre_path, sample_rate, data)
+
+        # Slice, select, and repeat
+        slicer = AudioSlicer("tests/amen.wav", method="transient", sensitivity=0.6)
+        slices = slicer.detect_slices()
+        collection = SliceCollection(slices)
+        # Select first 4 slices and repeat 4 times
+        selected = collection.select([0, 1, 2, 3])
+        repeated = selected.repeat(4)
+
+        # Recombine
+        recombinator = SliceRecombinator(repeated)
+        result = recombinator.recombine(crossfade_duration=0.005)
+
+        # Save post-transformed
+        post_path = output_dir / "repeated_post.wav"
+        self._save_audio(post_path, sample_rate, result)
+
+        assert pre_path.exists()
+        assert post_path.exists()
+
+    def test_generate_filtered(self, output_dir, source_audio):
+        """Generate filtered audio - only slices matching criteria."""
+        sample_rate, data = source_audio
+
+        # Save pre-transformed
+        pre_path = output_dir / "filtered_pre.wav"
+        self._save_audio(pre_path, sample_rate, data)
+
+        # Slice and filter
+        slicer = AudioSlicer("tests/amen.wav", method="onset", sensitivity=0.5)
+        slices = slicer.detect_slices()
+        collection = SliceCollection(slices)
+        # Keep only slices longer than 0.1 seconds
+        filtered = collection.filter(lambda s: s.duration > 0.1)
+
+        # Recombine
+        recombinator = SliceRecombinator(filtered)
+        result = recombinator.recombine(crossfade_duration=0.01)
+
+        # Save post-transformed
+        post_path = output_dir / "filtered_post.wav"
+        self._save_audio(post_path, sample_rate, result)
+
+        assert pre_path.exists()
+        assert post_path.exists()
+
+    def test_generate_sorted_by_duration(self, output_dir, source_audio):
+        """Generate audio with slices sorted by duration."""
+        sample_rate, data = source_audio
+
+        # Save pre-transformed
+        pre_path = output_dir / "sorted_duration_pre.wav"
+        self._save_audio(pre_path, sample_rate, data)
+
+        # Slice and sort by duration
+        slicer = AudioSlicer("tests/amen.wav", method="zero_crossing")
+        slices = slicer.detect_slices(target_slices=12)
+        collection = SliceCollection(slices)
+
+        # Custom sort by duration
+        recombinator = SliceRecombinator(collection)
+        result = recombinator.recombine(
+            method="custom",
+            order_func=lambda slices: sorted(slices, key=lambda s: s.duration),
+            crossfade_duration=0.005,
+        )
+
+        # Save post-transformed
+        post_path = output_dir / "sorted_duration_post.wav"
+        self._save_audio(post_path, sample_rate, result)
+
+        assert pre_path.exists()
+        assert post_path.exists()
+
+    def test_generate_normalized(self, output_dir, source_audio):
+        """Generate normalized audio - peak normalized to 1.0."""
+        sample_rate, data = source_audio
+
+        # Save pre-transformed
+        pre_path = output_dir / "normalized_pre.wav"
+        self._save_audio(pre_path, sample_rate, data)
+
+        # Slice and recombine with normalization
+        slicer = AudioSlicer("tests/amen.wav", method="grid")
+        slices = slicer.detect_slices(divisions=8)
+        collection = SliceCollection(slices)
+
+        recombinator = SliceRecombinator(collection)
+        result = recombinator.recombine(normalize=True)
+
+        # Save post-transformed
+        post_path = output_dir / "normalized_post.wav"
+        self._save_audio(post_path, sample_rate, result)
+
+        assert pre_path.exists()
+        assert post_path.exists()
+        # Verify normalization
+        assert np.max(np.abs(result)) <= 1.0

@@ -741,12 +741,12 @@ class TestMIDIFileGeneration:
         seq = make_simple_sequence()
 
         # Save pre-transformed
-        pre_path = output_dir / "pre_transposed_fifth.mid"
+        pre_path = output_dir / "transposed_fifth_pre.mid"
         self._save_with_track_name(seq, pre_path)
 
         # Transform and save post-transformed
         result = Transpose(7).transform(seq)  # Perfect fifth
-        post_path = output_dir / "post_transposed_fifth.mid"
+        post_path = output_dir / "transposed_fifth_post.mid"
         self._save_with_track_name(result, post_path)
 
         assert pre_path.exists()
@@ -761,12 +761,12 @@ class TestMIDIFileGeneration:
             track.add_note(i * 0.5 + (i % 2) * 0.08, 60 + i, 100, 0.4)
 
         # Save pre-transformed
-        pre_path = output_dir / "pre_quantized.mid"
+        pre_path = output_dir / "quantized_pre.mid"
         self._save_with_track_name(seq, pre_path)
 
         # Transform and save post-transformed
         result = Quantize(grid=0.5, strength=1.0).transform(seq)
-        post_path = output_dir / "post_quantized.mid"
+        post_path = output_dir / "quantized_post.mid"
         self._save_with_track_name(result, post_path)
 
         assert pre_path.exists()
@@ -777,12 +777,12 @@ class TestMIDIFileGeneration:
         seq = make_simple_sequence()
 
         # Save pre-transformed
-        pre_path = output_dir / "pre_humanized.mid"
+        pre_path = output_dir / "humanized_pre.mid"
         self._save_with_track_name(seq, pre_path)
 
         # Transform and save post-transformed
         result = Humanize(timing=0.02, velocity=15, seed=42).transform(seq)
-        post_path = output_dir / "post_humanized.mid"
+        post_path = output_dir / "humanized_post.mid"
         self._save_with_track_name(result, post_path)
 
         assert pre_path.exists()
@@ -793,12 +793,12 @@ class TestMIDIFileGeneration:
         seq = make_simple_sequence()
 
         # Save pre-transformed
-        pre_path = output_dir / "pre_harmonized_triads.mid"
+        pre_path = output_dir / "harmonized_triads_pre.mid"
         self._save_with_track_name(seq, pre_path)
 
         # Transform and save post-transformed
         result = Harmonize([4, 7], velocity_scale=0.7).transform(seq)
-        post_path = output_dir / "post_harmonized_triads.mid"
+        post_path = output_dir / "harmonized_triads_post.mid"
         self._save_with_track_name(result, post_path)
 
         assert pre_path.exists()
@@ -809,12 +809,12 @@ class TestMIDIFileGeneration:
         seq = make_chord_sequence()
 
         # Save pre-transformed
-        pre_path = output_dir / "pre_arpeggiated.mid"
+        pre_path = output_dir / "arpeggiated_pre.mid"
         self._save_with_track_name(seq, pre_path)
 
         # Transform and save post-transformed
         result = Arpeggiate(pattern='up_down', note_duration=0.1).transform(seq)
-        post_path = output_dir / "post_arpeggiated.mid"
+        post_path = output_dir / "arpeggiated_post.mid"
         self._save_with_track_name(result, post_path)
 
         assert pre_path.exists()
@@ -825,7 +825,7 @@ class TestMIDIFileGeneration:
         seq = make_simple_sequence()
 
         # Save pre-transformed
-        pre_path = output_dir / "pre_pipeline_full.mid"
+        pre_path = output_dir / "pipeline_full_pre.mid"
         self._save_with_track_name(seq, pre_path)
 
         # Transform and save post-transformed
@@ -836,7 +836,7 @@ class TestMIDIFileGeneration:
             Humanize(timing=0.01, velocity=5, seed=42),
         ])
         result = pipeline.apply(seq)
-        post_path = output_dir / "post_pipeline_full.mid"
+        post_path = output_dir / "pipeline_full_post.mid"
         self._save_with_track_name(result, post_path)
 
         assert pre_path.exists()
@@ -847,12 +847,12 @@ class TestMIDIFileGeneration:
         seq = make_simple_sequence()
 
         # Save pre-transformed
-        pre_path = output_dir / "pre_reversed.mid"
+        pre_path = output_dir / "reversed_pre.mid"
         self._save_with_track_name(seq, pre_path)
 
         # Transform and save post-transformed
         result = Reverse().transform(seq)
-        post_path = output_dir / "post_reversed.mid"
+        post_path = output_dir / "reversed_post.mid"
         self._save_with_track_name(result, post_path)
 
         assert pre_path.exists()
@@ -863,12 +863,12 @@ class TestMIDIFileGeneration:
         seq = make_simple_sequence()
 
         # Save pre-transformed
-        pre_path = output_dir / "pre_inverted.mid"
+        pre_path = output_dir / "inverted_pre.mid"
         self._save_with_track_name(seq, pre_path)
 
         # Transform and save post-transformed
         result = Invert(60).transform(seq)
-        post_path = output_dir / "post_inverted.mid"
+        post_path = output_dir / "inverted_post.mid"
         self._save_with_track_name(result, post_path)
 
         assert pre_path.exists()
@@ -879,12 +879,12 @@ class TestMIDIFileGeneration:
         seq = make_simple_sequence()
 
         # Save pre-transformed
-        pre_path = output_dir / "pre_velocity_soft.mid"
+        pre_path = output_dir / "velocity_soft_pre.mid"
         self._save_with_track_name(seq, pre_path)
 
         # Transform and save post-transformed
         result = VelocityCurve(curve='soft').transform(seq)
-        post_path = output_dir / "post_velocity_soft.mid"
+        post_path = output_dir / "velocity_soft_post.mid"
         self._save_with_track_name(result, post_path)
 
         assert pre_path.exists()
@@ -895,12 +895,12 @@ class TestMIDIFileGeneration:
         seq = make_simple_sequence()
 
         # Save pre-transformed
-        pre_path = output_dir / "pre_double_tempo.mid"
+        pre_path = output_dir / "double_tempo_pre.mid"
         self._save_with_track_name(seq, pre_path)
 
         # Transform and save post-transformed
         result = TimeStretch(0.5).transform(seq)  # Double tempo
-        post_path = output_dir / "post_double_tempo.mid"
+        post_path = output_dir / "double_tempo_post.mid"
         self._save_with_track_name(result, post_path)
 
         assert pre_path.exists()
@@ -930,7 +930,7 @@ class TestLoadAndTransform:
         seq = make_simple_sequence()
 
         # Save pre-transformed (original)
-        pre_path = output_dir / "pre_loaded_transformed.mid"
+        pre_path = output_dir / "loaded_transformed_pre.mid"
         self._save_with_track_name(seq, pre_path)
 
         # Load, transform, save post-transformed
@@ -939,7 +939,7 @@ class TestLoadAndTransform:
             Transpose(12),
             VelocityScale(factor=0.8),
         ]).apply(loaded)
-        post_path = output_dir / "post_loaded_transformed.mid"
+        post_path = output_dir / "loaded_transformed_post.mid"
         self._save_with_track_name(transformed, post_path)
 
         assert pre_path.exists()

@@ -151,7 +151,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
     - `transpose()`, `quantize()`, `humanize()`, `reverse()`, `scale_velocity()`
   - **Test Coverage**
     - 68 tests in `tests/test_midi_transform.py`
-    - Integration tests generating actual MIDI files in `build/midi_files/transform_tests/`
+    - Integration tests generating MIDI files in `build/midi_files/transform_tests/`
+  - **Generated MIDI Files** (`build/midi_files/transform_tests/`)
+    - Pre/post pairs for each transformation: `<name>_pre.mid` and `<name>_post.mid`
+    - Transformations: transposed, quantized, humanized, harmonized, arpeggiated, reversed, inverted, velocity curved, time stretched, pipeline (combined)
+
+- **Audio Slicing File Generation Tests** - Integration tests demonstrating audio transformations (`tests/test_audio_slicing.py`)
+  - **Generated Audio Files** (`build/audio_files/slicing_tests/`)
+    - Pre/post pairs for each transformation: `<name>_pre.wav` and `<name>_post.wav`
+    - Transformations: shuffled, reversed, pattern, repeated, filtered, sorted by duration, normalized
+  - Uses `scipy.io.wavfile` for WAV file output
 
   **Example Usage:**
 
@@ -226,6 +235,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   ```
 
 ### Fixed
+
+- **MIDI File Save/Load Bug** - Fixed two critical bugs in MIDI file I/O (`coremusic.midi.utilities`):
+  - **Track count mismatch**: Format 1 MIDI files now correctly report track count (including tempo track)
+  - **Meta event parsing**: Track names and other meta events (0xFF) are now correctly parsed during load
+  - Track names set via `track.name` are now properly preserved through save/load cycles
 
 - **Docstring Typos** - Fixed 38 instances of malformed docstrings in `capi.pyx` where `"Returns:\n      f OSStatus result code"` has been corrected to `"Returns:\n        OSStatus result code (0 on success)"`.
 
