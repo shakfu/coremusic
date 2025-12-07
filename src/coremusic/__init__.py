@@ -122,6 +122,7 @@ from . import midi
 from . import utils
 from . import daw
 from . import constants
+from . import music
 
 # Import commonly-used constants for convenience
 from .constants import (
@@ -287,4 +288,6 @@ __all__ = [
     "MIDIStatus",
     "MIDIControlChange",
     "MIDIObjectProperty",
+    # Music theory and generative
+    "music",  # music module with theory and generative submodules
 ]

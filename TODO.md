@@ -2,7 +2,7 @@
 
 ## Summary
 
-**CoreMusic Status:** Production-ready professional audio framework for Python with **1,170 tests passing** (100% success rate)
+**CoreMusic Status:** Production-ready professional audio framework for Python with **1,329+ tests passing** (100% success rate)
 
 **Current Capabilities:**
 - Complete AudioUnit Host (190 plugins: 111 effects, 62 instruments)
@@ -12,6 +12,8 @@
 - Performance-optimized with Cython operations, buffer pooling, and memory-mapped I/O
 - Proper optional dependency handling (numpy, scipy, matplotlib)
 - DAW essentials (Timeline, tracks, clips, automation)
+- Music theory primitives (Note, Interval, Scale, Chord, ChordProgression)
+- Generative algorithms (Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm)
 
 See [CHANGELOG.md](CHANGELOG.md) for completed features.
 
@@ -22,6 +24,7 @@ See [CHANGELOG.md](CHANGELOG.md) for completed features.
 ### AudioUnit Host - Future Enhancements
 
 #### Plugin UI Integration
+
 **Priority: MEDIUM-LOW** - Display plugin user interfaces
 
 **Current state:** Headless operation only (no GUI)
@@ -32,10 +35,10 @@ See [CHANGELOG.md](CHANGELOG.md) for completed features.
 - UI update synchronization
 - Generic UI fallback for plugins without custom UI
 
-**Implementation effort:** 2-3 weeks
 **Note:** Requires Objective-C bridge or PyObjC integration
 
 #### Link Integration for Tempo-Synced Plugins
+
 **Priority: MEDIUM** - Tempo-aware plugin parameters
 
 **Current state:** Manual tempo calculation required
@@ -46,9 +49,8 @@ See [CHANGELOG.md](CHANGELOG.md) for completed features.
 - Beat/bar position for tempo-synced effects
 - Transport state synchronization
 
-**Implementation effort:** 3-5 days
-
 #### Advanced MIDI Features
+
 **Priority: LOW** - Extended MIDI capabilities
 
 **Current state:** Basic MIDI fully implemented (note on/off, CC, program change, pitch bend)
@@ -59,13 +61,86 @@ See [CHANGELOG.md](CHANGELOG.md) for completed features.
 - MIDI learn for parameter automation
 - MIDI clock sync with Link
 
-**Implementation effort:** 1-2 weeks
+---
+
+### Music Module - Future Enhancements
+
+#### Additional Generative Algorithms
+
+**Priority: LOW** - Expand generative capabilities
+
+**Current state:** 7 generators (Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm)
+
+**Potential additions:**
+- L-system based melody generation
+- Cellular automata rhythms
+- Genetic algorithm composition
+- Neural network integration (optional dependency)
+- Stochastic grammar-based generation
+
+#### Live Performance Integration
+
+**Priority: MEDIUM** - Real-time generative performance
+
+**Planned features:**
+- Link-synchronized generators (tempo-aware)
+- Real-time parameter modulation
+- Pattern morphing and transitions
+- Live recording of generated sequences
+
+#### MIDI File Transformation Pipeline
+
+**Priority: MEDIUM** - Analyze and transform MIDI files
+
+**Current state:** MIDI file read/write supported via `MIDISequence`, but no transformation pipeline
+
+**Planned features:**
+- Load and analyze existing MIDI files (extract notes, timing, structure)
+- Chain of MIDI transformers for processing:
+  - Transpose (shift pitch by semitones or interval)
+  - Quantize (snap to grid, swing)
+  - Velocity scaling/compression
+  - Time stretch/compress
+  - Note filtering (by pitch range, velocity, channel)
+  - Humanize (add timing/velocity variation)
+  - Harmonize (add parallel intervals)
+  - Arpeggiate chords
+  - Reverse/retrograde
+  - Invert melody
+- Composable pipeline with fluent API
+- Export transformed MIDI to new file
+
+**Example API:**
+```python
+from coremusic.midi.utilities import MIDISequence
+from coremusic.midi.transform import (
+    Transpose, Quantize, VelocityScale, Humanize, Pipeline
+)
+
+# Load MIDI file
+seq = MIDISequence.load("input.mid")
+
+# Create transformation pipeline
+pipeline = Pipeline([
+    Transpose(semitones=5),           # Up a perfect fourth
+    Quantize(grid=1/16, strength=0.8),  # Quantize to 16th notes
+    VelocityScale(min_vel=40, max_vel=100),  # Compress velocity
+    Humanize(timing=0.02, velocity=10),  # Add human feel
+])
+
+# Apply transformations
+transformed = pipeline.apply(seq)
+
+# Save result
+transformed.save("output.mid")
+```
 
 ---
 
 ## Missing/Unwrapped CoreAudio APIs
 
 ### AudioWorkInterval (macOS 10.16+, iOS 14.0+)
+
 **Priority: Medium-Low** - Advanced realtime workgroup management
 
 **What it provides:**
@@ -75,11 +150,12 @@ See [CHANGELOG.md](CHANGELOG.md) for completed features.
 
 **Relevance:** Highly specialized - needed only for advanced audio apps creating custom realtime threads. Most apps use device-owned workgroups automatically.
 
-**Recommendation:** Low priority - niche use case for professional audio developers.
+**Priority: Low priority**  - niche use case for professional audio developers.
 
 ---
 
 ### AudioHardwareTapping (macOS 14.2+)
+
 **Priority: Low** - Recent addition, Objective-C only
 
 **What it provides:**
@@ -88,11 +164,12 @@ See [CHANGELOG.md](CHANGELOG.md) for completed features.
 
 **Relevance:** Very specialized - audio monitoring/routing utilities, system-wide audio capture.
 
-**Recommendation:** Low priority - requires Objective-C bridge, limited applicability.
+**Priority: Low priority** - requires Objective-C bridge, limited applicability.
 
 ---
 
 ### CAFFile Data Structures
+
 **Priority: Low** - Informational only
 
 **What it provides:**
@@ -101,11 +178,12 @@ See [CHANGELOG.md](CHANGELOG.md) for completed features.
 
 **Relevance:** Informational header - actual CAF file I/O is already handled by `AudioFile` API. Adding these structures would only help developers parsing CAF files manually (rare).
 
-**Recommendation:** Very low priority - no functional gap.
+**Priority: Very Low priority** - no functional gap.
 
 ---
 
 ### AudioCodec Component API
+
 **Priority: Low-Medium** - Low-level codec interface
 
 **What it provides:**
@@ -115,7 +193,7 @@ See [CHANGELOG.md](CHANGELOG.md) for completed features.
 
 **Relevance:** Very low-level API. Most use cases covered by `AudioConverter` (higher-level) and `ExtendedAudioFile` (even higher-level). Direct codec access needed only for custom codec implementations or highly specialized workflows.
 
-**Recommendation:** Low priority - `AudioConverter` covers 95% of use cases.
+**Priority: Low priority** - `AudioConverter` covers 95% of use cases.
 
 ---
 
@@ -142,12 +220,11 @@ available_plugins = cm.discover_audio_units(type='effect')
 - Community-contributed effects
 - Integration with third-party AudioUnits
 
-**Implementation Effort:** High - requires custom AudioUnit host implementation
+**Priority: High priority** - requires custom AudioUnit host implementation
 
 ---
 
 ### Documentation Improvements
-**Priority: MEDIUM**
 
 **Needed:**
 - Comprehensive API documentation with examples
@@ -155,13 +232,14 @@ available_plugins = cm.discover_audio_units(type='effect')
 - Video demonstrations of key features
 - Migration guides for users coming from other audio libraries
 
-**Implementation Effort:** Medium - ongoing documentation work
+**Priority: MEDIUM**- ongoing documentation work
 
 ---
 
 ## Prioritized Roadmap
 
 ### Near-term (Next 3-6 months)
+- [ ] **MIDI Transformation Pipeline** - Chainable MIDI transformers (transpose, quantize, humanize, etc.)
 - [ ] **Plugin UI Integration** - Cocoa view integration for plugin UIs
 - [ ] **Link-Aware Plugins** - Tempo callback integration for tempo-synced effects
 - [ ] **Advanced MIDI** - MIDI file playback, live CoreMIDI routing, MIDI learn
@@ -169,6 +247,7 @@ available_plugins = cm.discover_audio_units(type='effect')
 
 ### Future Enhancements (6-12 months)
 - [ ] **Plugin System** - Custom AudioUnit registration (advanced users)
+- [ ] **Additional Generative Algorithms** - L-systems, cellular automata, genetic algorithms
 - [ ] **Additional Examples** - More comprehensive demo applications
 - [ ] **Performance Profiling Tools** - Built-in profiling for audio pipelines
 
@@ -183,5 +262,3 @@ available_plugins = cm.discover_audio_units(type='effect')
 
 For completed features and historical changes, see:
 - **CHANGELOG.md** - Detailed version history and completed features
-- **DEPENDENCY_AUDIT.md** - Optional dependencies audit results
-- **docs/ERROR_DECORATOR.md** - Error handling implementation details

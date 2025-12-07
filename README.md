@@ -5,7 +5,7 @@
 
 ## Overview
 
-`coremusic` is a Python extension that provides direct access to Apple's CoreAudio frameworks. Built with Cython, it offers near-native performance while maintaining the ease of use of Python. The wrapper tries to cover as much as possible of the c-accessible CoreAudio ecosystem, from low-level hardware control to high-level audio processing units, with both traditional functional APIs and modern object-oriented interfaces.
+`coremusic` is a zero-dependency Python extension that provides direct access to Apple's CoreAudio and CoreMIDI frameworks. Built with Cython, it offers near-native performance while maintaining the ease of use of Python. The wrapper tries to cover as much as possible of the c-accessible CoreAudio / CoreMIDI ecosystem, from low-level hardware control to high-level audio processing units, with both traditional functional APIs and modern object-oriented interfaces.
 
 ### Key Features
 
@@ -65,6 +65,13 @@
   - Marker and loop region support
   - AudioUnit plugin integration per track
   - Parameter automation with multiple interpolation modes
+
+- **Music Theory and Generative Algorithms**: Complete music composition toolkit
+  - Music theory primitives (Note, Interval, Scale, Chord, ChordProgression)
+  - 25+ scale types (major, minor, modes, pentatonic, blues, jazz, world, exotic)
+  - 35+ chord types (triads, 7ths, extended, altered, added tone)
+  - 7 generative algorithms (Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm)
+  - MIDI event generation compatible with MIDITrack/MIDISequence
 
 - **Performance Optimizations**: Cython-optimized audio buffer operations integrated into main `capi.pyx`
 
@@ -157,7 +164,7 @@ pip install coremusic
 
 - macOS (CoreAudio frameworks are macOS-specific)
 - Python 3.11 or higher
-- Cython
+- [uv](https://docs.astral.sh/uv/) (recommended) or pip
 - Xcode command line tools
 
 ### Building from Source
@@ -169,28 +176,22 @@ pip install coremusic
     cd coremusic
     ```
 
-2. Install dependencies:
-
-    ```bash
-    pip install cython
-    ```
-
-3. Build the extension:
+2. Install dependencies and build (using uv):
 
     ```bash
     make
-    # or manually:
-    python3 setup.py build_ext --inplace
+    # or manually
+    uv sync --reinstall-package coremusic
     ```
 
-4. Run tests to verify installation:
+3. Run tests to verify installation:
 
     ```bash
     make test
     # or manually:
-    pytest
+    uv run pytest
     # or run tests individually
-    pytest -v tests/test_coremidi.py
+    uv run pytest -v tests/test_coremidi.py
     ```
 
 ## API Overview
@@ -722,6 +723,68 @@ print(f"Tracks: {len(timeline.tracks)}")
 print(f"Markers: {len(timeline.markers)}")
 ```
 
+### Music Theory and Generative Algorithms
+
+```python
+from coremusic.music.theory import Note, Scale, ScaleType, Chord, ChordType, ChordProgression
+from coremusic.music.generative import (
+    Arpeggiator, ArpPattern, EuclideanGenerator,
+    MarkovGenerator, MelodyGenerator, PolyrhythmGenerator
+)
+
+# Music Theory Basics
+c4 = Note.from_name("C4")
+print(f"MIDI: {c4.midi}, Frequency: {c4.frequency:.2f} Hz")
+
+# Scales (25+ types available)
+c_major = Scale(Note.from_name("C4"), ScaleType.MAJOR)
+d_dorian = Scale(Note.from_name("D4"), ScaleType.DORIAN)
+a_blues = Scale(Note.from_name("A3"), ScaleType.BLUES_MINOR)
+
+# Chords (35+ types available)
+cmaj7 = Chord(Note.from_name("C4"), ChordType.MAJOR_7)
+dm7 = Chord(Note.from_name("D4"), ChordType.MINOR_7)
+g7 = Chord(Note.from_name("G4"), ChordType.DOMINANT_7)
+
+# Chord Progressions with Roman Numerals
+progression = ChordProgression.from_roman("C", ["I", "vi", "IV", "V"])
+for chord in progression.chords:
+    print(f"{chord.root}: {[str(n) for n in chord.notes]}")
+
+# Arpeggiator (10 patterns: UP, DOWN, UP_DOWN, RANDOM, etc.)
+chord = Chord(Note.from_name("C4"), ChordType.MAJOR)
+arp = Arpeggiator(chord.notes, pattern=ArpPattern.UP_DOWN, note_duration=0.25)
+events = arp.generate(num_notes=16)
+
+# Euclidean Rhythms (Bjorklund's algorithm)
+# Classic patterns: tresillo (3,8), cinquillo (5,8), rumba (7,12)
+euclidean = EuclideanGenerator(
+    pulses=5, steps=8,  # Cinquillo pattern
+    note=Note.from_name("C4"),
+    step_duration=0.125
+)
+events = euclidean.generate(num_cycles=4)
+
+# Markov Chain Melody Generation
+markov = MarkovGenerator(order=2)
+markov.train([60, 62, 64, 65, 67, 65, 64, 62])  # Train on note sequence
+markov.set_scale_constraint(Scale(Note.from_name("C4"), ScaleType.MAJOR))
+events = markov.generate(num_notes=16, start_note=Note.from_name("C4"))
+
+# Polyrhythm Generator (e.g., 3 against 4)
+poly = PolyrhythmGenerator(cycle_duration=1.0)
+poly.add_layer(divisions=3, note=Note.from_name("C4"), velocity=100)
+poly.add_layer(divisions=4, note=Note.from_name("E4"), velocity=80)
+events = poly.generate(num_cycles=4)
+
+# Export to MIDI file
+from coremusic.midi.utilities import MIDISequence
+sequence = MIDISequence()
+track = sequence.create_track("Arpeggio")
+# Add events to track and save
+sequence.save("composition.mid")
+```
+
 ### CoreMIDI Basic Usage
 
 ```python
@@ -822,6 +885,10 @@ The project includes a large test suite, as well as examples and demos.
 - **`src/coremusic/midi/`**: High-level MIDI abstractions:
   - `link.py`: Ableton Link + MIDI integration
   - `utilities.py`: MIDI processing and utility functions
+
+- **`src/coremusic/music/`**: Music theory and generative algorithms:
+  - `theory.py`: Note, Interval, Scale (25+ types), Chord (35+ types), ChordProgression
+  - `generative.py`: Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm generators
 
 #### Ableton Link Integration
 

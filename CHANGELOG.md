@@ -17,6 +17,112 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- **Music Theory and Generative Module** - Complete music theory foundations and MIDI-enabled generative algorithms (`coremusic.music`)
+  - **Music Theory Primitives** (`src/coremusic/music/theory.py`)
+    - `Note` class with MIDI number conversion, transposition, frequency calculation (A4=440Hz)
+    - `Interval` class with standard intervals (unison through compound intervals)
+    - `Scale` class with 25+ scale types:
+      - Diatonic: major, natural/harmonic/melodic minor
+      - Modes: dorian, phrygian, lydian, mixolydian, locrian
+      - Pentatonic: major, minor, blues major/minor
+      - Jazz: bebop major/dominant/minor, whole tone, diminished
+      - World: harmonic major, double harmonic, hungarian minor, neapolitan
+      - Exotic: hirajoshi, in-sen, iwato, pelog
+    - `Chord` class with 35+ chord types:
+      - Triads: major, minor, diminished, augmented, sus2, sus4
+      - 7ths: dominant7, major7, minor7, diminished7, half-diminished7, minorMajor7
+      - Extended: 9th, 11th, 13th variants
+      - Altered: 7b5, 7#5, 7b9, 7#9, 7#11
+      - Added tone: add9, add11, 6, minor6
+    - `ChordProgression` class with Roman numeral parsing (I, ii, IV, V7, etc.)
+    - Enharmonic note handling (flats normalized to sharps internally)
+  - **Generative Algorithms** (`src/coremusic/music/generative.py`)
+    - `Arpeggiator` with 10 pattern modes:
+      - UP, DOWN, UP_DOWN, DOWN_UP, RANDOM, RANDOM_WALK
+      - OUTSIDE_IN, INSIDE_OUT, CHORD, AS_PLAYED
+    - `EuclideanGenerator` using Bjorklund's algorithm for mathematical rhythm patterns
+      - Classic patterns: tresillo (3,8), cinquillo (5,8), rumba (7,12)
+    - `MarkovGenerator` for probabilistic note sequences
+      - Training from note sequences
+      - Scale constraint for harmonic coherence
+    - `ProbabilisticGenerator` for weighted random note selection
+      - Custom note weights for biased selection
+      - Rest probability for rhythmic variety
+    - `SequenceGenerator` (step sequencer)
+      - Per-step note, velocity, gate length
+      - Step probability for variation
+    - `MelodyGenerator` for rule-based melodic phrases
+      - Scale-constrained motion with configurable step size
+      - Rest insertion and phrase structure
+    - `PolyrhythmGenerator` for layered polyrhythmic patterns
+      - Multiple independent rhythmic layers
+      - Cross-rhythm pattern generation
+    - Common features across generators:
+      - Swing timing (0.0-1.0)
+      - Humanization for timing and velocity
+      - Reproducible results via seed parameter
+  - **MIDI Integration**
+    - All generators output `MIDIEvent` objects compatible with `coremusic.midi.utilities`
+    - Direct integration with `MIDITrack` and `MIDISequence` for file export
+    - Utility functions: `create_arp_from_progression()`, `combine_generators()`
+  - **Test Coverage**
+    - 80 tests in `tests/test_music_theory.py` (Note, Interval, Scale, Chord, ChordProgression)
+    - 79 tests in `tests/test_music_generative.py` (all generators + MIDI file generation)
+    - 19 MIDI file generation tests creating actual `.mid` files in `build/midi_files/`
+  - **Generated MIDI Files** (`build/midi_files/`)
+    - Arpeggiator demos: up, up-down, random patterns
+    - Euclidean rhythms: tresillo (3,8), cinquillo (5,8), 7/12
+    - Markov melodies: trained and pentatonic-constrained
+    - Probabilistic: Dorian scale, weighted selection
+    - Sequences: drum patterns, melodic sequences
+    - Melodies: major scale, blues scale
+    - Polyrhythms: 3:4, 5:4:3
+    - Combined: arp+drums, chord progression, full composition
+
+  **Example Usage:**
+
+  ```python
+  import coremusic as cm
+  from coremusic.music.theory import Note, Scale, ScaleType, Chord, ChordType
+  from coremusic.music.generative import Arpeggiator, ArpPattern, EuclideanGenerator
+
+  # Music Theory
+  c4 = Note.from_name("C4")
+  print(f"MIDI: {c4.midi}, Frequency: {c4.frequency:.2f} Hz")
+
+  c_major = Scale(Note.from_name("C4"), ScaleType.MAJOR)
+  print(f"C Major: {[str(n) for n in c_major.notes]}")
+
+  cm_chord = Chord(Note.from_name("C4"), ChordType.MAJOR_7)
+  print(f"Cmaj7: {[str(n) for n in cm_chord.notes]}")
+
+  # Arpeggiator
+  chord = Chord(Note.from_name("C4"), ChordType.MAJOR)
+  arp = Arpeggiator(chord.notes, pattern=ArpPattern.UP_DOWN, note_duration=0.25)
+  events = arp.generate(num_notes=8)
+
+  # Euclidean Rhythms
+  euclidean = EuclideanGenerator(
+      pulses=5, steps=8,  # Cinquillo pattern
+      note=Note.from_name("C4"),
+      step_duration=0.125
+  )
+  events = euclidean.generate(num_cycles=2)
+
+  # Export to MIDI file
+  from coremusic.midi.utilities import MIDISequence, MIDITrack
+  sequence = MIDISequence()
+  track = sequence.create_track("Arpeggio")
+  for event in events:
+      if event.status == MIDIStatus.NOTE_ON:
+          track.add_note(event.time, event.data1, event.data2, 0.2)
+  sequence.save("arpeggio.mid")
+  ```
+
+- **matplotlib as dev dependency** - Enables audio visualization tests (`tests/test_audio_visualization.py`)
+
 ### Changed
 
 - **Demo Files Reorganization** - Restructured `tests/demos/` for better organization and usability

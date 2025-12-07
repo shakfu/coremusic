@@ -9,6 +9,7 @@ Step-by-step tutorials for common audio and MIDI tasks with coremusic.
 
    audio_file_basics
    async_audio
+   music_theory
 
 Tutorial Overview
 -----------------
@@ -44,6 +45,13 @@ MIDI
 - **MIDI Routing**: Route MIDI between devices
 - **MIDI Transformation**: Transform MIDI data in real-time
 - **Virtual MIDI Devices**: Create virtual MIDI endpoints
+
+Music Theory and Generative
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- **Music Theory**: Notes, intervals, scales, chords, progressions
+- **Generative Algorithms**: Arpeggiator, Euclidean, Markov, and more
+- **MIDI Export**: Generate MIDI files from algorithmic compositions
 
 Advanced Topics
 ^^^^^^^^^^^^^^^

@@ -21,6 +21,7 @@ Key Features
 - **Professional Audio Support**: Real-time processing, multi-channel audio, hardware control
 - **Comprehensive MIDI**: MIDI 1.0/2.0 support, device management, advanced routing
 - **Precise Timing & Sync**: CoreAudioClock for audio/MIDI synchronization and tempo control
+- **Music Theory & Generative**: Notes, scales, chords, arpeggiators, Euclidean rhythms, Markov chains
 
 Quick Start
 -----------
@@ -107,6 +108,34 @@ Audio/MIDI Synchronization
        clock.play_rate = 0.5  # Half speed
 
        clock.stop()
+
+Music Theory and Generative
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+   from coremusic.music.theory import Note, Scale, ScaleType, Chord, ChordType
+   from coremusic.music.generative import Arpeggiator, ArpPattern, EuclideanGenerator
+
+   # Create notes, scales, and chords
+   c4 = Note.from_name("C4")
+   c_major = Scale(c4, ScaleType.MAJOR)
+   cmaj7 = Chord(c4, ChordType.MAJOR_7)
+
+   # Generate arpeggios
+   arp = Arpeggiator(cmaj7.notes, pattern=ArpPattern.UP_DOWN, note_duration=0.25)
+   events = arp.generate(num_notes=16)
+
+   # Create Euclidean rhythms (Cinquillo pattern)
+   euclidean = EuclideanGenerator(pulses=5, steps=8, note=c4, step_duration=0.125)
+   rhythm_events = euclidean.generate(num_cycles=4)
+
+   # Export to MIDI
+   from coremusic.midi.utilities import MIDISequence
+   sequence = MIDISequence()
+   track = sequence.create_track("Arpeggio")
+   # ... add events and save
+   sequence.save("composition.mid")
 
 Documentation Contents
 ----------------------
