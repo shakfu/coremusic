@@ -7,8 +7,7 @@ This module provides utilities for working with audio buffers, including:
 """
 
 from dataclasses import dataclass
-from typing import Optional, Tuple, Union
-import struct
+from typing import Tuple, Union
 
 
 @dataclass
@@ -115,12 +114,16 @@ class AudioStreamBasicDescription:
         """Check if format is big endian."""
         return bool(self.format_flags & 0x02)  # kAudioFormatFlagIsBigEndian
 
-    @property
-    def duration_for_frames(self) -> float:
-        """Calculate duration in seconds for a given number of frames."""
-        def calculate(num_frames: int) -> float:
-            return num_frames / self.sample_rate
-        return calculate
+    def duration_for_frames(self, num_frames: int) -> float:
+        """Calculate duration in seconds for a given number of frames.
+
+        Args:
+            num_frames: Number of audio frames
+
+        Returns:
+            Duration in seconds
+        """
+        return num_frames / self.sample_rate
 
     def bytes_for_frames(self, num_frames: int) -> int:
         """Calculate number of bytes needed for given number of frames.

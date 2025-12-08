@@ -12,23 +12,66 @@ This package contains audio-related modules:
 - buffer_pool: Buffer pooling for efficient memory management
 """
 
-# Import async I/O classes
-from .async_io import *
+# Import async I/O classes (re-exported)
+from .async_io import (
+    AsyncAudioFile as AsyncAudioFile,
+    AsyncAudioQueue as AsyncAudioQueue,
+    open_audio_file_async as open_audio_file_async,
+    create_output_queue_async as create_output_queue_async,
+)
 
 # Import streaming classes
-from .streaming import *
+from .streaming import (
+    AudioInputStream,
+    AudioOutputStream,
+    AudioProcessor,
+    StreamGraph,
+    StreamNode,
+    create_loopback,
+)
 
 # Import analysis classes
-from .analysis import *
+from .analysis import (
+    AudioAnalyzer,
+    LivePitchDetector,
+    BeatInfo,
+    PitchInfo,
+)
 
 # Import slicing classes
-from .slicing import *
+from .slicing import (
+    Slice,
+    AudioSlicer,
+    SliceCollection,
+    SliceRecombinator,
+    SliceMethod,
+    RecombineMethod,
+)
 
 # Import visualization classes
-from .visualization import *
+from .visualization import (
+    WaveformPlotter,
+    SpectrogramPlotter,
+    FrequencySpectrumPlotter,
+    MATPLOTLIB_AVAILABLE,
+    NUMPY_AVAILABLE,
+)
 
 # Import utilities
-from .utilities import *
+from .utilities import (
+    AudioEffectsChain,
+    AudioFormatPresets,
+    batch_convert,
+    convert_audio_file,
+    create_simple_effect_chain,
+    find_audio_unit_by_name,
+    get_audiounit_names,
+    list_available_audio_units,
+    parse_audio_stream_basic_description,
+    trim_audio,
+    batch_process_parallel,
+    batch_process_files,
+)
 
 # Import performance modules
 from .mmap_file import MMapAudioFile
@@ -40,24 +83,24 @@ from .buffer_pool import (
     reset_global_pool,
 )
 
-# Import Cython-optimized operations from capi
+# Import Cython-optimized operations from capi (re-exported when available)
 try:
-    from ..capi import (
-        normalize_audio,
-        apply_gain,
-        calculate_rms,
-        calculate_peak,
-        normalize_audio_float32,
-        apply_gain_float32,
-        mix_audio_float32,
-        convert_float32_to_int16,
-        convert_int16_to_float32,
-        stereo_to_mono_float32,
-        mono_to_stereo_float32,
-        apply_fade_in_float32,
-        apply_fade_out_float32,
-        calculate_rms_float32,
-        calculate_peak_float32,
+    from ..capi import (  # type: ignore[attr-defined]
+        normalize_audio as normalize_audio,
+        apply_gain as apply_gain,
+        calculate_rms as calculate_rms,
+        calculate_peak as calculate_peak,
+        normalize_audio_float32 as normalize_audio_float32,
+        apply_gain_float32 as apply_gain_float32,
+        mix_audio_float32 as mix_audio_float32,
+        convert_float32_to_int16 as convert_float32_to_int16,
+        convert_int16_to_float32 as convert_int16_to_float32,
+        stereo_to_mono_float32 as stereo_to_mono_float32,
+        mono_to_stereo_float32 as mono_to_stereo_float32,
+        apply_fade_in_float32 as apply_fade_in_float32,
+        apply_fade_out_float32 as apply_fade_out_float32,
+        calculate_rms_float32 as calculate_rms_float32,
+        calculate_peak_float32 as calculate_peak_float32,
     )
     CYTHON_OPS_AVAILABLE = True
 except ImportError:

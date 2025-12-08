@@ -389,7 +389,7 @@ class SpectrogramPlotter:
         else:
             ax.set_title(f"Spectrogram: {self.audio_file.name}")
 
-        cbar = fig.colorbar(im, ax=ax, label="Power (dB)")
+        _ = fig.colorbar(im, ax=ax, label="Power (dB)")  # colorbar for visual
         plt.tight_layout()
 
         return fig, ax

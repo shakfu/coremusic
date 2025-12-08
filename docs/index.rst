@@ -22,6 +22,7 @@ Key Features
 - **Comprehensive MIDI**: MIDI 1.0/2.0 support, device management, advanced routing
 - **Precise Timing & Sync**: CoreAudioClock for audio/MIDI synchronization and tempo control
 - **Music Theory & Generative**: Notes, scales, chords, arpeggiators, Euclidean rhythms, Markov chains
+- **Command Line Interface**: CLI for audio analysis, conversion, MIDI, and generative music
 
 Quick Start
 -----------
@@ -136,6 +137,30 @@ Music Theory and Generative
    track = sequence.create_track("Arpeggio")
    # ... add events and save
    sequence.save("composition.mid")
+
+Command Line Interface
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: bash
+
+   # Get audio file information
+   coremusic audio info song.wav
+
+   # Analyze audio levels and tempo
+   coremusic analyze levels song.wav
+   coremusic analyze tempo song.wav
+
+   # Convert audio format
+   coremusic convert file input.wav output.aac --quality high
+
+   # List audio devices and plugins
+   coremusic devices list
+   coremusic plugins list --type effect
+
+   # Generate arpeggio pattern to MIDI
+   coremusic generate arpeggio output.mid --root C4 --chord maj7
+
+See :doc:`guides/cli` for complete CLI documentation.
 
 Documentation Contents
 ----------------------

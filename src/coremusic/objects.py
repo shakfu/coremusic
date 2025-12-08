@@ -521,7 +521,7 @@ class AudioFile(capi.CoreAudioObject):
             if self._is_open:
                 try:
                     capi.audio_file_close(self.object_id)
-                except:
+                except Exception:
                     pass  # Best effort cleanup
                 finally:
                     self._is_open = False
@@ -628,7 +628,7 @@ class AudioFileStream(capi.CoreAudioObject):
             if self._is_open:
                 try:
                     capi.audio_file_stream_close(self.object_id)
-                except:
+                except Exception:
                     pass  # Best effort cleanup
                 finally:
                     self._is_open = False
@@ -845,7 +845,7 @@ class AudioConverter(capi.CoreAudioObject):
         if not self.is_disposed:
             try:
                 capi.audio_converter_dispose(self.object_id)
-            except:
+            except Exception:
                 pass  # Best effort cleanup
             finally:
                 super().dispose()
@@ -1134,7 +1134,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
             if self._is_open:
                 try:
                     capi.extended_audio_file_dispose(self.object_id)
-                except:
+                except Exception:
                     pass  # Best effort cleanup
                 finally:
                     self._is_open = False
@@ -1709,7 +1709,7 @@ class AudioUnit(capi.CoreAudioObject):
             if self._is_initialized:
                 try:
                     capi.audio_unit_uninitialize(self.object_id)
-                except:
+                except Exception:
                     pass  # Best effort cleanup
                 finally:
                     self._is_initialized = False
@@ -1717,7 +1717,7 @@ class AudioUnit(capi.CoreAudioObject):
             if self.object_id != 0:
                 try:
                     capi.audio_component_instance_dispose(self.object_id)
-                except:
+                except Exception:
                     pass  # Best effort cleanup
 
             super().dispose()
@@ -1874,7 +1874,7 @@ class MIDIClient(capi.CoreAudioObject):
                 if not port.is_disposed:
                     try:
                         port.dispose()
-                    except:
+                    except Exception:
                         pass  # Best effort cleanup
 
             try:
@@ -2465,7 +2465,7 @@ class AUGraph(capi.CoreAudioObject):
         if not self.is_disposed:
             try:
                 capi.au_graph_dispose(self.object_id)
-            except:
+            except Exception:
                 pass  # Best effort cleanup
             finally:
                 super().dispose()
@@ -2488,7 +2488,7 @@ class AUGraph(capi.CoreAudioObject):
                     status.append("initialized")
                 if self.is_running:
                     status.append("running")
-            except:
+            except Exception:
                 pass
         else:
             status.append("disposed")
@@ -2710,7 +2710,7 @@ class AudioClock(capi.CoreAudioObject):
                 if self._is_running:
                     self.stop()
                 capi.ca_clock_dispose(self.object_id)
-            except:
+            except Exception:
                 pass  # Best effort cleanup
             finally:
                 self._is_created = False
@@ -2736,7 +2736,7 @@ class AudioClock(capi.CoreAudioObject):
                 try:
                     rate = self.play_rate
                     status.append(f"rate={rate:.2f}")
-                except:
+                except Exception:
                     pass
         else:
             status.append("disposed")
@@ -3059,16 +3059,16 @@ class MusicSequence(capi.CoreAudioObject):
                 for track in self._tracks:
                     try:
                         track.dispose()
-                    except:
+                    except Exception:
                         pass
                 if self._tempo_track is not None:
                     try:
                         self._tempo_track.dispose()
-                    except:
+                    except Exception:
                         pass
 
                 capi.dispose_music_sequence(self.object_id)
-            except:
+            except Exception:
                 pass  # Best effort cleanup
             finally:
                 self._tracks = []
@@ -3081,7 +3081,7 @@ class MusicSequence(capi.CoreAudioObject):
         try:
             count = self.track_count
             return f"MusicSequence(tracks={count})"
-        except:
+        except Exception:
             return "MusicSequence()"
 
 
@@ -3275,11 +3275,11 @@ class MusicPlayer(capi.CoreAudioObject):
                 if self._sequence is not None:
                     try:
                         capi.music_player_set_sequence(self.object_id, 0)
-                    except:
+                    except Exception:
                         pass
 
                 capi.dispose_music_player(self.object_id)
-            except:
+            except Exception:
                 pass  # Best effort cleanup
             finally:
                 self._sequence = None
@@ -3301,5 +3301,5 @@ class MusicPlayer(capi.CoreAudioObject):
             time = self.time
             rate = self.play_rate
             return f"MusicPlayer({status}, time={time:.2f}, rate={rate:.2f})"
-        except:
+        except Exception:
             return "MusicPlayer()"

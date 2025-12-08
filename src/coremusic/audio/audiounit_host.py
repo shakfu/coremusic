@@ -6,7 +6,6 @@ Provides Pythonic object-oriented wrapper for AudioUnit plugin hosting.
 from typing import List, Dict, Optional, Any, Tuple
 import struct
 import json
-import os
 from pathlib import Path
 from .. import capi
 

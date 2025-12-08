@@ -32,7 +32,6 @@ import asyncio
 from typing import Optional, Union, AsyncIterator, Any, Tuple
 from pathlib import Path
 
-from .. import capi
 from ..objects import (
     AudioFormat,
     AudioFile,
@@ -42,7 +41,6 @@ from ..objects import (
 )
 
 if NUMPY_AVAILABLE:
-    import numpy as np
     from numpy.typing import NDArray
 
 

@@ -32,7 +32,6 @@ Example:
 """
 
 from typing import Optional, Tuple, Union, Literal, Any
-import warnings
 
 # Check for NumPy availability
 try:

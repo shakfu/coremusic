@@ -41,23 +41,21 @@ from __future__ import annotations
 import json
 import math
 import random
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
 from typing import (
     Any,
-    Callable,
     Dict,
-    Iterator,
     List,
     Optional,
+    Sequence,
     Set,
     Tuple,
     Union,
 )
 
-from ..midi.utilities import MIDISequence, MIDITrack, MIDIEvent, MIDIStatus
+from ..midi.utilities import MIDISequence, MIDITrack, MIDIEvent
 
 
 # ============================================================================
@@ -308,11 +306,11 @@ class MarkovChain:
     # Training
     # -------------------------------------------------------------------------
 
-    def train(self, notes: List[Union[int, NoteData]]) -> None:
+    def train(self, notes: Sequence[Union[int, NoteData]]) -> None:
         """Train the chain from a sequence of notes.
 
         Args:
-            notes: List of MIDI pitches or NoteData objects
+            notes: Sequence of MIDI pitches or NoteData objects
         """
         if len(notes) <= self.config.order:
             return
@@ -636,7 +634,6 @@ class MarkovChain:
 
         # Set probability and renormalize others
         edges = self._transitions[from_state]
-        old_prob = edges[to_note].probability
         edges[to_note].probability = probability
 
         # Scale other probabilities to maintain sum = 1

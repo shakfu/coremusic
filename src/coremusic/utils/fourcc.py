@@ -281,9 +281,9 @@ def convert_fourcc(value: FourCC, to_type: type) -> Union[str, int]:
         >>> convert_fourcc(1819304813, str)
         'lpcm'
     """
-    if to_type == str:
+    if to_type is str:
         return ensure_fourcc_str(value)
-    elif to_type == int:
+    elif to_type is int:
         return ensure_fourcc_int(value)
     else:
         raise TypeError(f"Target type must be str or int, not {to_type.__name__}")

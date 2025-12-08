@@ -6,8 +6,9 @@ significant performance improvements for large file operations.
 
 import mmap
 import struct
+from io import BufferedReader
 from pathlib import Path
-from typing import Optional, Union, Tuple, TYPE_CHECKING
+from typing import Optional, Union, TYPE_CHECKING, Any
 
 # Conditional numpy import
 try:
@@ -61,8 +62,8 @@ class MMapAudioFile:
             path: Path to audio file
         """
         self.path = Path(path)
-        self._file = None
-        self._mmap = None
+        self._file: Optional[BufferedReader] = None
+        self._mmap: Optional[mmap.mmap] = None
         self._format: Optional[AudioStreamBasicDescription] = None
         self._data_offset = 0
         self._data_size = 0
@@ -133,10 +134,11 @@ class MMapAudioFile:
         elif header[:4] == b'FORM' and header[8:12] == b'AIFF':
             self._parse_aiff_format()
         else:
-            raise ValueError(f"Unsupported format: {header[:4]}")
+            raise ValueError(f"Unsupported format: {header[:4]!r}")
 
     def _parse_wav_format(self) -> None:
         """Parse WAV file format."""
+        assert self._mmap is not None
         # Skip RIFF header (12 bytes)
         pos = 12
 
@@ -151,7 +153,7 @@ class MMapAudioFile:
                 audio_format = struct.unpack('<H', fmt_data[0:2])[0]
                 channels = struct.unpack('<H', fmt_data[2:4])[0]
                 sample_rate = struct.unpack('<I', fmt_data[4:8])[0]
-                byte_rate = struct.unpack('<I', fmt_data[8:12])[0]
+                _ = struct.unpack('<I', fmt_data[8:12])[0]  # byte_rate - not used
                 block_align = struct.unpack('<H', fmt_data[12:14])[0]
                 bits_per_sample = struct.unpack('<H', fmt_data[14:16])[0]
 
@@ -190,6 +192,7 @@ class MMapAudioFile:
 
     def _parse_aiff_format(self) -> None:
         """Parse AIFF file format."""
+        assert self._mmap is not None
         # Skip FORM header (12 bytes)
         pos = 12
 
@@ -202,7 +205,7 @@ class MMapAudioFile:
                 # Parse common chunk
                 comm_data = self._mmap[pos+8:pos+8+chunk_size]
                 channels = struct.unpack('>H', comm_data[0:2])[0]
-                num_frames = struct.unpack('>I', comm_data[2:6])[0]
+                _ = struct.unpack('>I', comm_data[2:6])[0]  # num_frames - not used
                 bits_per_sample = struct.unpack('>H', comm_data[6:8])[0]
                 # Extended 80-bit float for sample rate
                 sample_rate = self._parse_extended_float(comm_data[8:18])
@@ -253,10 +256,10 @@ class MMapAudioFile:
 
         # Generic conversion
         sign = 1 if exponent & 0x8000 == 0 else -1
-        exponent = (exponent & 0x7FFF) - 16383
-        mantissa = mantissa / (2 ** 63)
+        exp_value = (exponent & 0x7FFF) - 16383
+        mantissa_value = mantissa / (2 ** 63)
 
-        return sign * mantissa * (2 ** exponent)
+        return float(sign * mantissa_value * (2 ** exp_value))
 
     @property
     def format(self) -> AudioStreamBasicDescription:
@@ -300,6 +303,7 @@ class MMapAudioFile:
         if start_frame < 0 or start_frame >= self.frame_count:
             raise ValueError(f"Invalid start_frame: {start_frame}")
 
+        assert self._mmap is not None
         # Calculate byte offsets
         bytes_per_frame = self.format.bytes_per_frame
         start_offset = self._data_offset + (start_frame * bytes_per_frame)
@@ -349,6 +353,7 @@ class MMapAudioFile:
         data = self.read_frames(start_frame, num_frames)
 
         # Determine dtype from format
+        dtype: Any
         if self.format.is_float:
             if self.format.bits_per_channel == 32:
                 dtype = np.float32
@@ -407,7 +412,8 @@ class MMapAudioFile:
             # Single frame
             if key < 0:
                 key = self.frame_count + key
-            return self.read_as_numpy(key, 1)[0]
+            result: np.ndarray = self.read_as_numpy(key, 1)[0]
+            return result
 
         elif isinstance(key, slice):
             # Frame range

@@ -28,13 +28,12 @@ Example:
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List, Optional, Tuple, Dict, Callable, Iterator, Union, Any
+from typing import List, Optional, Tuple, Dict, Union, Any
 import random
-import math
 
-from .theory import Note, Chord, ChordType, Scale, ScaleType, Interval
+from .theory import Note, Chord, Scale
 from ..midi.utilities import MIDIEvent, MIDIStatus
 
 
@@ -152,8 +151,10 @@ class Generator(ABC):
         ]
 
     @abstractmethod
-    def generate(self, **kwargs) -> List[MIDIEvent]:
+    def generate(self, **kwargs: Any) -> List[MIDIEvent]:
         """Generate MIDI events.
+
+        Subclasses override this with specific signatures.
 
         Returns:
             List of MIDIEvent objects
@@ -261,7 +262,7 @@ class Arpeggiator(Generator):
         self._current_notes: List[int] = []
         self._pattern_index = 0
 
-    @property
+    @property  # type: ignore[override]
     def config(self) -> ArpConfig:
         return self._config
 
@@ -361,9 +362,9 @@ class Arpeggiator(Generator):
                     result.append(sorted_notes[idx])
             return result
 
-        return all_notes
+        return all_notes  # type: ignore[unreachable]
 
-    def generate(
+    def generate(  # type: ignore[override]
         self,
         num_cycles: int = 1,
         start_time: float = 0.0,
@@ -506,7 +507,7 @@ class EuclideanGenerator(Generator):
         self.pitch = pitch.midi if isinstance(pitch, Note) else pitch
         self._pattern = self._compute_pattern()
 
-    @property
+    @property  # type: ignore[override]
     def config(self) -> EuclideanConfig:
         return self._config
 
@@ -573,7 +574,7 @@ class EuclideanGenerator(Generator):
         self.steps = steps
         self._pattern = self._compute_pattern()
 
-    def generate(
+    def generate(  # type: ignore[override]
         self,
         cycles: int = 1,
         start_time: float = 0.0,
@@ -671,7 +672,7 @@ class MarkovGenerator(Generator):
         self.scale = scale
         self._history: List[int] = []
 
-    @property
+    @property  # type: ignore[override]
     def config(self) -> MarkovConfig:
         return self._config
 
@@ -714,7 +715,7 @@ class MarkovGenerator(Generator):
             total = sum(next_counts.values())
             # For first-order, use single int key
             key = state[0] if order == 1 else state
-            self.transitions[key] = {note: count / total for note, count in next_counts.items()}
+            self.transitions[key] = {note: count / total for note, count in next_counts.items()}  # type: ignore[index]
 
     def set_transitions(self, transitions: Dict[int, Dict[int, float]]) -> None:
         """Set transition probabilities manually.
@@ -753,7 +754,7 @@ class MarkovGenerator(Generator):
 
         return next_note
 
-    def generate(
+    def generate(  # type: ignore[override]
         self,
         num_notes: int = 16,
         start_note: Optional[Union[int, Note]] = None,
@@ -777,6 +778,7 @@ class MarkovGenerator(Generator):
         note_duration = self.config.note_duration * beat_duration * self.config.gate
 
         # Determine start note
+        current: Optional[int]
         if start_note is None:
             current = self._rng.choice(list(self.transitions.keys()))
         else:
@@ -856,7 +858,7 @@ class ProbabilisticGenerator(Generator):
         self._probabilities: List[float] = []
         self._update_distributions()
 
-    @property
+    @property  # type: ignore[override]
     def config(self) -> ProbabilisticConfig:
         return self._config
 
@@ -896,7 +898,7 @@ class ProbabilisticGenerator(Generator):
         self._weights = weights
         self._update_distributions()
 
-    def generate(
+    def generate(  # type: ignore[override]
         self,
         num_notes: int = 16,
         start_time: float = 0.0,
@@ -1004,7 +1006,7 @@ class SequenceGenerator(Generator):
         self.num_steps = steps
         self._steps: List[Optional[Step]] = [None] * steps
 
-    @property
+    @property  # type: ignore[override]
     def config(self) -> SequenceConfig:
         return self._config
 
@@ -1044,7 +1046,7 @@ class SequenceGenerator(Generator):
             else:
                 self._steps[i] = None
 
-    def generate(
+    def generate(  # type: ignore[override]
         self,
         cycles: int = 1,
         start_time: float = 0.0,
@@ -1146,7 +1148,7 @@ class MelodyGenerator(Generator):
         self._scale_notes: List[int] = []
         self._update_scale()
 
-    @property
+    @property  # type: ignore[override]
     def config(self) -> MelodyConfig:
         return self._config
 
@@ -1206,7 +1208,7 @@ class MelodyGenerator(Generator):
         chosen_idx = self._rng.choices(candidates, candidate_weights)[0]
         return self._scale_notes[chosen_idx]
 
-    def generate(
+    def generate(  # type: ignore[override]
         self,
         num_notes: int = 16,
         start_note: Optional[Union[int, Note]] = None,
@@ -1325,7 +1327,7 @@ class PolyrhythmGenerator(Generator):
         self.cycle_beats = cycle_beats
         self.layers: List[RhythmLayer] = []
 
-    @property
+    @property  # type: ignore[override]
     def config(self) -> PolyrhythmConfig:
         return self._config
 
@@ -1345,7 +1347,7 @@ class PolyrhythmGenerator(Generator):
         """Clear all layers."""
         self.layers.clear()
 
-    def generate(
+    def generate(  # type: ignore[override]
         self,
         cycles: int = 1,
         start_time: float = 0.0,
@@ -1372,7 +1374,7 @@ class PolyrhythmGenerator(Generator):
 
                 for pulse in range(layer.pulses):
                     time = cycle_start + layer.offset * beat_duration + pulse * pulse_interval
-                    step = cycle * max(l.pulses for l in self.layers) + pulse
+                    step = cycle * max(lyr.pulses for lyr in self.layers) + pulse
 
                     time = self._apply_swing(time, step)
                     velocity = layer.velocity
@@ -1385,7 +1387,7 @@ class PolyrhythmGenerator(Generator):
         return sorted(events, key=lambda e: e.time)
 
     def __repr__(self) -> str:
-        pulses = [l.pulses for l in self.layers]
+        pulses = [lyr.pulses for lyr in self.layers]
         return f"PolyrhythmGenerator({':'.join(map(str, pulses))})"
 
 
@@ -1623,7 +1625,7 @@ class BitShiftRegisterGenerator(Generator):
 
         self._step_counter = 0
 
-    @property
+    @property  # type: ignore[override]
     def config(self) -> BitShiftRegisterConfig:
         return self._config
 
@@ -1746,7 +1748,7 @@ class BitShiftRegisterGenerator(Generator):
         self._step_counter += 1
         return events, output_gate
 
-    def generate(
+    def generate(  # type: ignore[override]
         self,
         gate_inputs: Optional[List[int]] = None,
         num_steps: Optional[int] = None,

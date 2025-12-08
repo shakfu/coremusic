@@ -24,7 +24,7 @@ Example:
 
 import time
 import threading
-from typing import Optional, Callable, List, Tuple, Any, TYPE_CHECKING
+from typing import Optional, List, TYPE_CHECKING
 from dataclasses import dataclass
 
 from .. import capi

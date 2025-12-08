@@ -25,11 +25,13 @@ Example:
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Callable, Dict, List, Optional, Set, Tuple, Union, TYPE_CHECKING
 import random
 
-from .utilities import MIDIEvent, MIDISequence, MIDITrack, MIDIStatus
+from .utilities import MIDIEvent, MIDISequence, MIDIStatus
+
+if TYPE_CHECKING:
+    from ..music.theory import Scale
 
 
 # ============================================================================
@@ -1017,7 +1019,7 @@ class Arpeggiate(MIDITransformer):
         self.note_duration = note_duration
         self.seed = seed
 
-    def _get_pattern_order(self, notes: List[int], rng: random.Random) -> List[int]:
+    def _get_pattern_order(self, notes: list, rng: random.Random) -> List[int]:
         """Get indices for pattern."""
         n = len(notes)
         if self.pattern == 'up':

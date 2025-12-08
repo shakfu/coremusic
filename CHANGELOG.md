@@ -17,7 +17,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Changed
+
+- **Improved Code Quality** - Comprehensive lint and type checking fixes
+  - Fixed all ruff/flake8 lint errors without using noqa suppressions
+  - Converted star imports (`from x import *`) to explicit imports in `__init__.py` files
+  - Fixed E741 ambiguous variable names (`l` -> `lyr`)
+  - Fixed E721 type comparisons (use `is` instead of `==` for type checks)
+  - Fixed F841 unused variable assignments
+  - All modules now pass `make lint` and `make typecheck`
+
+### Removed
+
+- **Test Suite Cleanup** - Removed 4 low-quality/redundant test files (20 tests)
+  - `test_fourcharcode.py` - Tested Python builtins, not coremusic functionality
+  - `test_coverage_improvements.py` - Overly broad exception tests with no specific assertions
+  - `test_audiotoolbox_audio_queue.py` - Trivial assertions (only checked `is not None`)
+  - `test_audiounit.py` - No behavior verification, just type checks
+  - Test count: 1699 -> 1679 (all remaining tests pass)
+
 ### Added
+
+- **Command Line Interface** - Comprehensive CLI for audio and MIDI operations (`coremusic.cli`)
+  - `coremusic audio` - Audio file operations (info, duration, metadata)
+  - `coremusic devices` - Audio device management (list, default, info)
+  - `coremusic plugins` - AudioUnit plugin discovery (list, find, info, params)
+  - `coremusic analyze` - Audio analysis (peak, rms, silence, tempo, spectrum, key, mfcc)
+  - `coremusic convert` - Format conversion (file, batch)
+  - `coremusic midi` - MIDI device discovery (devices, inputs, outputs, send, file)
+  - `coremusic generate` - Generative algorithms (arpeggio, euclidean, melody)
+  - `coremusic sequence` - MIDI sequence operations (info, play, tracks)
+  - JSON output support (`--json`) for scripting integration
 
 - **Bit Shift Register Generator** - Gate-based sequencing with variable velocity and duration (`coremusic.music.generative`)
   - `BitShiftRegister` - Core 8-bit shift register with configurable feedback taps

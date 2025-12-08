@@ -82,13 +82,66 @@ Module Organization
 """
 
 # Import object-oriented API (primary interface)
-from .objects import *
+from .objects import (
+    CoreAudioObject,
+    CoreAudioError,
+    AudioFileError,
+    AudioQueueError,
+    AudioUnitError,
+    AudioConverterError,
+    MIDIError,
+    MusicPlayerError,
+    AudioDeviceError,
+    AUGraphError,
+    AudioFormat,
+    AudioFile,
+    AudioFileStream,
+    ExtendedAudioFile,
+    AudioConverter,
+    AudioBuffer,
+    AudioQueue,
+    AudioComponentDescription,
+    AudioComponent,
+    AudioUnit,
+    MIDIClient,
+    MIDIPort,
+    MIDIInputPort,
+    MIDIOutputPort,
+    MusicPlayer,
+    MusicSequence,
+    MusicTrack,
+    AudioDevice,
+    AudioDeviceManager,
+    AUGraph,
+    AudioClock,
+    ClockTimeFormat,
+    AudioPlayer,
+    NUMPY_AVAILABLE,
+)
 
 # Import async I/O classes from new location
-from .audio.async_io import *
+from .audio.async_io import (
+    AsyncAudioFile,
+    AsyncAudioQueue,
+    open_audio_file_async,
+    create_output_queue_async,
+)
 
-# Import high-level utilities
-from .audio.utilities import *
+# Import high-level utilities (re-exported)
+from .audio.utilities import (
+    AudioEffectsChain as AudioEffectsChain,
+    AudioFormatPresets as AudioFormatPresets,
+    batch_convert as batch_convert,
+    convert_audio_file as convert_audio_file,
+    create_simple_effect_chain as create_simple_effect_chain,
+    find_audio_unit_by_name as find_audio_unit_by_name,
+    get_audiounit_names as get_audiounit_names,
+    list_available_audio_units as list_available_audio_units,
+    parse_audio_stream_basic_description as parse_audio_stream_basic_description,
+    trim_audio as trim_audio,
+    batch_process_parallel as batch_process_parallel,
+    batch_process_files as batch_process_files,
+)
 
 # Import OSStatus error translation utilities
 from . import os_status
@@ -290,4 +343,9 @@ __all__ = [
     "MIDIObjectProperty",
     # Music theory and generative
     "music",  # music module with theory and generative submodules
+    # Submodules (also exported for attribute access)
+    "audio",  # audio subpackage
+    "midi",  # midi subpackage
+    "utils",  # utils subpackage
+    "os_status",  # os_status module
 ]

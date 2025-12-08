@@ -6,7 +6,6 @@ and helpful recovery suggestions for common error scenarios.
 
 from typing import Optional, Tuple, Callable, TypeVar, Any
 from functools import wraps
-import inspect
 
 
 # CoreAudio error code mappings
@@ -236,7 +235,7 @@ def os_status_to_string(status: int) -> str:
                 status & 0xFF
             ]).decode('ascii', errors='ignore')
             return f"Unknown error '{fourcc}' (0x{status:08X})"
-        except:
+        except Exception:
             pass
 
     return f"Unknown error code {status}"

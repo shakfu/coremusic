@@ -12,7 +12,7 @@ Features:
 - AudioStreamBasicDescription parsing
 """
 
-from typing import Optional, Union, List, Tuple, Dict, Any, Callable
+from typing import Optional, List, Tuple, Dict, Any, Callable
 from pathlib import Path
 import glob
 import struct
@@ -27,8 +27,7 @@ from ..objects import (
 )
 
 if NUMPY_AVAILABLE:
-    import numpy as np
-    from numpy.typing import NDArray
+    pass
 
 # ============================================================================
 # Exports
@@ -330,7 +329,7 @@ def convert_audio_file(
         # Write to output file
         from .. import capi
 
-        output_ext_file = ExtendedAudioFile.create(  # type: ignore[attr-defined]
+        output_ext_file = ExtendedAudioFile.create(
             output_path, capi.get_audio_file_wave_type(), output_format
         )
         try:
@@ -473,13 +472,13 @@ def trim_audio(
         # Write to output file using ExtendedAudioFile
         from .. import capi
 
-        output_ext_file = ExtendedAudioFile.create(  # type: ignore[attr-defined]
+        output_ext_file = ExtendedAudioFile.create(
             output_path,
             capi.get_audio_file_wave_type(),  # WAV file
             format,
         )
         try:
-            output_ext_file.write(actual_count, data)
+            output_ext_file.write(actual_count, data)  # type: ignore[arg-type]
         finally:
             output_ext_file.close()
 
@@ -702,7 +701,7 @@ class AudioEffectsChain:
         try:
             if self._graph.is_running:
                 self.stop()
-        except:
+        except Exception:
             pass
         self._graph.dispose()
 

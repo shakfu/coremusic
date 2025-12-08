@@ -7,12 +7,32 @@ Comprehensive guides for using CoreMusic effectively.
    :maxdepth: 2
    :caption: Available Guides
 
+   cli
    imports
    performance
    migration
 
 Guide Overview
 --------------
+
+Command Line Interface
+^^^^^^^^^^^^^^^^^^^^^^
+
+Complete reference for the CoreMusic CLI tool.
+
+**Topics covered:**
+
+- All available commands and subcommands
+- Audio file operations and analysis
+- Device and plugin discovery
+- Format conversion
+- MIDI operations
+- Generative music algorithms
+- JSON output and scripting
+
+**Target audience:** Users who prefer command-line tools or need scripting capabilities
+
+:doc:`Read the CLI Guide -> <cli>`
 
 Import Guide
 ^^^^^^^^^^^^
@@ -88,6 +108,10 @@ The :doc:`migration` provides side-by-side comparisons with other libraries.
 **Looking for practical examples?**
 
 See the :doc:`/cookbook/index` for ready-to-use recipes.
+
+**Prefer command-line tools?**
+
+The :doc:`cli` covers all CLI commands for audio, MIDI, and generative music.
 
 **Need API reference?**
 

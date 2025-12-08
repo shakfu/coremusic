@@ -4,9 +4,8 @@ This module provides buffer pooling to reduce memory allocation overhead
 in audio processing applications.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Union
 from threading import Lock
-import weakref
 
 
 class BufferPool:
@@ -174,11 +173,11 @@ class BufferPool:
             return self._cache_hits / total
 
     @property
-    def stats(self) -> Dict[str, int]:
+    def stats(self) -> Dict[str, Union[int, float]]:
         """Get pool statistics.
 
         Returns:
-            Dictionary with statistics
+            Dictionary with statistics (int or float values)
 
         Example::
 

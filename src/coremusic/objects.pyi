@@ -347,6 +347,12 @@ class ExtendedAudioFile(capi.CoreAudioObject):
         file_type: Optional[str] = None,
         format: Optional[AudioFormat] = None,
     ) -> None: ...
+    @classmethod
+    def create(
+        cls, path: Union[str, Path], file_type: int, format: AudioFormat
+    ) -> ExtendedAudioFile:
+        """Create a new audio file for writing"""
+        ...
     def __enter__(self) -> ExtendedAudioFile: ...
     def __exit__(
         self,
@@ -376,11 +382,15 @@ class ExtendedAudioFile(capi.CoreAudioObject):
         """Total number of frames"""
         ...
 
-    def read_frames(self, num_frames: int) -> bytes:
-        """Read audio frames with automatic conversion"""
+    def read(self, num_frames: int) -> Tuple[bytes, int]:
+        """Read audio frames with automatic conversion.
+
+        Returns:
+            Tuple of (audio_data_bytes, frames_read)
+        """
         ...
 
-    def write_frames(self, audio_data: bytes, num_frames: int) -> None:
+    def write(self, num_frames: int, audio_data: bytes) -> None:
         """Write audio frames with automatic conversion"""
         ...
 

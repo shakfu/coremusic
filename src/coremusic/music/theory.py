@@ -23,9 +23,9 @@ Example:
     >>> chord.get_midi_notes()  # [60, 64, 67, 71]
 """
 
-from dataclasses import dataclass, field
-from enum import Enum, IntEnum, auto
-from typing import List, Optional, Tuple, Dict, Iterator, Union
+from dataclasses import dataclass
+from enum import Enum
+from typing import ClassVar, List, Optional, Tuple, Dict, Iterator, Union
 import re
 
 
@@ -201,6 +201,30 @@ class Interval:
     number: int
     name: str
 
+    # Class-level interval constants (assigned below class definition)
+    UNISON: ClassVar["Interval"]
+    MINOR_SECOND: ClassVar["Interval"]
+    MAJOR_SECOND: ClassVar["Interval"]
+    MINOR_THIRD: ClassVar["Interval"]
+    MAJOR_THIRD: ClassVar["Interval"]
+    PERFECT_FOURTH: ClassVar["Interval"]
+    TRITONE: ClassVar["Interval"]
+    PERFECT_FIFTH: ClassVar["Interval"]
+    MINOR_SIXTH: ClassVar["Interval"]
+    MAJOR_SIXTH: ClassVar["Interval"]
+    MINOR_SEVENTH: ClassVar["Interval"]
+    MAJOR_SEVENTH: ClassVar["Interval"]
+    OCTAVE: ClassVar["Interval"]
+    MINOR_NINTH: ClassVar["Interval"]
+    MAJOR_NINTH: ClassVar["Interval"]
+    MINOR_TENTH: ClassVar["Interval"]
+    MAJOR_TENTH: ClassVar["Interval"]
+    PERFECT_ELEVENTH: ClassVar["Interval"]
+    AUGMENTED_ELEVENTH: ClassVar["Interval"]
+    PERFECT_TWELFTH: ClassVar["Interval"]
+    MINOR_THIRTEENTH: ClassVar["Interval"]
+    MAJOR_THIRTEENTH: ClassVar["Interval"]
+
     def __repr__(self) -> str:
         return f"Interval({self.semitones}, {self.name!r})"
 
@@ -326,7 +350,7 @@ class Note:
     @property
     def frequency(self) -> float:
         """Frequency in Hz (A4 = 440 Hz standard tuning)."""
-        return 440.0 * (2.0 ** ((self.midi - 69) / 12.0))
+        return float(440.0 * (2.0 ** ((self.midi - 69) / 12.0)))
 
     @classmethod
     def from_midi(cls, midi: int, velocity: int = 100, use_flats: bool = False) -> 'Note':
@@ -481,7 +505,8 @@ class Scale:
     @property
     def intervals(self) -> Tuple[int, ...]:
         """Semitone intervals from root."""
-        return self.scale_type.value
+        result: Tuple[int, ...] = self.scale_type.value
+        return result
 
     def get_notes(self, octaves: Optional[int] = None) -> List[Note]:
         """Get all notes in the scale.
@@ -745,7 +770,8 @@ class Chord:
     @property
     def intervals(self) -> Tuple[int, ...]:
         """Semitone intervals from root."""
-        return self.chord_type.value
+        result: Tuple[int, ...] = self.chord_type.value
+        return result
 
     def get_notes(self) -> List[Note]:
         """Get all notes in the chord.

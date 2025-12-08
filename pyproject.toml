@@ -46,6 +46,7 @@ dev = [
     "twine>=6.2.0",
     "mypy>=1.13.0",
     "matplotlib>=3.10.7",
+    "ruff>=0.14.8",
 ]
 
 [build-system]

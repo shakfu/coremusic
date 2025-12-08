@@ -25,22 +25,17 @@ Example:
     processor.stop()
 """
 
-import time
 import threading
-import queue
 from typing import Callable, Optional, List, Tuple, Dict, Any, TYPE_CHECKING
 from dataclasses import dataclass, field
 import logging
 
 from .. import capi
 from ..objects import AudioDevice, AudioDeviceManager
-from ..constants import AudioUnitScope, AudioUnitElement, AudioUnitProperty
 
 if TYPE_CHECKING:
-    from typing import Union
 
     try:
-        import numpy as np
         from numpy.typing import NDArray as NDArray_
     except ImportError:
         NDArray_ = Any  # type: ignore[misc,assignment]

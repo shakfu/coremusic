@@ -37,14 +37,12 @@ import json
 import math
 import random
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 from typing import (
     Any,
     Dict,
-    FrozenSet,
-    Iterator,
     List,
     Optional,
     Set,
@@ -52,7 +50,7 @@ from typing import (
     Union,
 )
 
-from ..midi.utilities import MIDISequence, MIDITrack, MIDIEvent, MIDIStatus
+from ..midi.utilities import MIDISequence, MIDITrack, MIDIEvent
 
 
 # ============================================================================
@@ -537,7 +535,6 @@ class BayesianNetwork:
     def _update_cpt_parents(self, variable: str) -> None:
         """Update CPT after parent structure changes."""
         parents = tuple(sorted(self._parents.get(variable, set())))
-        old_cpt = self._cpts.get(variable)
 
         # Create new CPT with updated parents
         self._cpts[variable] = CPT(

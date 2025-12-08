@@ -16,7 +16,6 @@ def getenv(key: str, default: bool = False) -> bool:
 # constants
 
 PY_VER_MINOR = sys.version_info.minor
-DEBUG = getenv("DEBUG", default=True)
 COLOR = getenv("COLOR", default=True)
 
 # ----------------------------------------------------------------------------
@@ -69,12 +68,14 @@ class CustomFormatter(logging.Formatter):
 
 
 def config(name: str) -> logging.Logger:
+    # Read DEBUG at config time, not import time, to allow CLI to set it first
+    debug = getenv("DEBUG", default=False)
     strm_handler = logging.StreamHandler()
     strm_handler.setFormatter(CustomFormatter())
     # file_handler = logging.FileHandler("log.txt", mode='w')
     # file_handler.setFormatter(CustomFormatter(use_color=False))
     logging.basicConfig(
-        level=logging.DEBUG if DEBUG else logging.INFO,
+        level=logging.DEBUG if debug else logging.INFO,
         handlers=[strm_handler],
         # handlers=[strm_handler, file_handler],
     )

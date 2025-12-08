@@ -243,6 +243,61 @@ The object-oriented API provides Pythonic wrappers with automatic resource manag
 
 Both APIs can be used together - the object-oriented layer is built on top of the functional API and maintains full compatibility.
 
+## Command Line Interface
+
+CoreMusic includes a comprehensive CLI for common audio and MIDI operations:
+
+```bash
+coremusic <command> [options]
+```
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `audio` | Audio file operations (info, duration, metadata) |
+| `devices` | Audio device management (list, default, info) |
+| `plugins` | AudioUnit plugin discovery (list, find, info, params) |
+| `analyze` | Audio analysis (peak, rms, silence, tempo, spectrum, key, mfcc) |
+| `convert` | Convert audio files between formats (file, batch) |
+| `midi` | MIDI device discovery (devices, inputs, outputs, send, file) |
+| `generate` | Generative music algorithms (arpeggio, euclidean, melody) |
+| `sequence` | MIDI sequence operations (info, play, tracks) |
+
+### CLI Examples
+
+```bash
+# Get audio file information
+coremusic audio info song.wav
+
+# List audio devices
+coremusic devices list
+
+# Find AudioUnit plugins
+coremusic plugins find "reverb"
+
+# Analyze audio levels
+coremusic analyze levels song.wav
+
+# Detect tempo
+coremusic analyze tempo song.wav
+
+# Convert audio format
+coremusic convert file input.wav output.mp3 --format mp3
+
+# List MIDI devices
+coremusic midi devices
+
+# Show MIDI file info
+coremusic sequence info song.mid
+
+# Generate Euclidean rhythm
+coremusic generate euclidean --pulses 5 --steps 8 --output rhythm.mid
+
+# JSON output for scripting
+coremusic --json devices list
+```
+
 ## Quick Start
 
 ### Audio File Operations
@@ -1058,7 +1113,7 @@ except RuntimeError as e:
 
 ## Tests, Examples and Demos
 
-The project includes a large test suite, as well as examples and demos. 
+The project includes a comprehensive test suite with 1600+ tests covering all major functionality, as well as examples and demos in the `tests/demos/` directory. 
 
 ## Architecture
 
