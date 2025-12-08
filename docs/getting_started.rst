@@ -9,7 +9,7 @@ Prerequisites
 Before installing coremusic, ensure you have:
 
 - **macOS**: CoreAudio and CoreMIDI frameworks are macOS-specific
-- **Python 3.6+**: Python 3.6 or higher is required
+- **Python 3.11+**: Python 3.11 or higher is required
 - **Xcode Command Line Tools**: Required for framework headers
 
 Install Xcode Command Line Tools:
@@ -21,6 +21,19 @@ Install Xcode Command Line Tools:
 Installation
 ------------
 
+From PyPI (Recommended)
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: bash
+
+   pip install coremusic
+
+Or with uv:
+
+.. code-block:: bash
+
+   uv add coremusic
+
 From Source
 ^^^^^^^^^^^
 
@@ -28,22 +41,20 @@ From Source
 
    .. code-block:: bash
 
-      git clone https://github.com/yourusername/coremusic.git
+      git clone https://github.com/shakfu/coremusic.git
       cd coremusic
 
-2. Install dependencies:
+2. Install with uv (recommended):
 
    .. code-block:: bash
 
-      pip install cython
+      uv sync
 
 3. Build the extension:
 
    .. code-block:: bash
 
       make
-      # or manually:
-      python3 setup.py build_ext --inplace
 
 4. Verify installation:
 
@@ -407,18 +418,18 @@ If you encounter build errors:
 
       xcode-select --install
 
-2. Verify Cython is installed:
-
-   .. code-block:: bash
-
-      pip install --upgrade cython
-
-3. Clean and rebuild:
+2. Clean and rebuild:
 
    .. code-block:: bash
 
       make clean
       make
+
+3. If using uv, ensure dependencies are synced:
+
+   .. code-block:: bash
+
+      uv sync --reinstall-package coremusic
 
 Runtime Errors
 ^^^^^^^^^^^^^^

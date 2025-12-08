@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-VERSION = "0.1.9"
+VERSION = "0.1.10"
 
 
 def main(argv: list[str] | None = None) -> int:

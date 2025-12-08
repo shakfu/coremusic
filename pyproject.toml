@@ -1,6 +1,6 @@
 [project]
 name = "coremusic"
-version = "0.1.9"
+version = "0.1.10"
 authors = [
   { name="Shakeeb Alireza", email="author@example.com" },
 ]
@@ -34,6 +34,9 @@ dependencies = []
 [project.urls]
 Homepage = "https://github.com/shakfu/coremusic"
 Issues = "https://github.com/shakfu/coremusic/issues"
+
+[project.scripts]
+coremusic = "coremusic.cli:main"
 
 [dependency-groups]
 dev = [

@@ -5,169 +5,39 @@
 
 ## Overview
 
-`coremusic` is a zero-dependency Python extension that provides direct access to Apple's CoreAudio and CoreMIDI frameworks. Built with Cython, it offers near-native performance while maintaining the ease of use of Python. The wrapper tries to cover as much as possible of the c-accessible CoreAudio / CoreMIDI ecosystem, from low-level hardware control to high-level audio processing units, with both traditional functional APIs and modern object-oriented interfaces.
+`coremusic` is a zero-dependency Cython extension providing direct Python access to Apple's CoreAudio and CoreMIDI frameworks with near-native performance. It offers both functional (C-style) and object-oriented (Pythonic) APIs with automatic resource management.
 
-### Key Features
+### Frameworks
 
-- **Dual API Design**: Both functional (C-style) and object-oriented (Pythonic) APIs available
+| Framework | Capabilities |
+|-----------|-------------|
+| **CoreAudio** | Hardware abstraction, device management, format handling |
+| **AudioToolbox** | AudioFile I/O, AudioQueue streaming, AudioComponent discovery |
+| **AudioUnit** | Plugin hosting, real-time processing, render callbacks, MIDI instrument control |
+| **CoreMIDI** | Device/endpoint management, UMP (MIDI 1.0/2.0), thru connections, message transforms |
+| **Ableton Link** | Network tempo sync, beat-accurate playback/sequencing, sub-ms precision |
 
-- **CoreAudio Framework Coverage**: Full access to CoreAudio, AudioToolbox, and AudioUnit APIs
+### Features
 
-- **High Performance**: Cython-based implementation with near-native C performance
-  - Optimized audio buffer operations (mixing, gain, pan, fade)
-  - Zero-copy buffer pool with configurable memory limits
-  - Memory-mapped file I/O for efficient large file handling
+**Audio**
+- File I/O (WAV, AIFF, MP3, etc.) with format detection/conversion
+- Real-time processing with low-latency callbacks
+- Analysis: peak, RMS, spectral, tempo, key detection
+- Buffer pool, memory-mapped I/O, async operations
 
-- **Automatic Resource Management**: Object-oriented APIs with context managers and automatic cleanup
+**MIDI**
+- Device discovery, virtual devices, routing
+- Transformation pipeline: transpose, quantize, humanize, filter, harmonize
+- AudioUnit instrument control: notes, CC, program change, pitch bend (16 channels)
 
-- **Professional Audio Support**: Real-time audio processing, multi-channel audio, and hardware control
+**Composition**
+- Music theory: 25+ scales, 35+ chords, progressions
+- 8 generative algorithms: Arpeggiator, Euclidean, Markov, Melody, Polyrhythm, etc.
+- Markov/Bayesian MIDI analysis with variant generation
 
-- **Audio File I/O**: Support for WAV, AIFF, MP3, and other audio formats through CoreAudio
-
-- **AudioUnit Integration**: AudioUnit discovery, instantiation, and lifecycle management
-
-- **AudioUnit MIDI Support**: Full MIDI control for AudioUnit instrument plugins with note on/off, control change, program change, pitch bend, and multi-channel support
-
-- **AudioQueue Support**: High-level audio queue management for streaming and playback
-
-- **Hardware Abstraction**: Direct access to audio hardware and device management
-
-- **Format Detection**: Automatic audio format detection and conversion
-
-- **Real-time Processing**: Low-latency audio processing capabilities
-
-- **Advanced Audio Utilities**:
-  - Audio analysis (peak detection, RMS, spectral analysis)
-  - Async I/O for non-blocking audio operations
-  - Audio slicing and time-stretching
-  - Streaming audio processing
-  - Audio visualization helpers
-
-- **CoreMIDI Framework Coverage**: Full access to MIDI services, device management, and advanced routing
-
-- **Universal MIDI Packet Support**: MIDI 1.0 and 2.0 message creation and handling in UMP format
-
-- **MIDI Device Management**: Device and entity discovery, creation, and control
-
-- **MIDI Routing and Transformation**: Advanced MIDI thru connections with filtering and transformation
-
-- **MIDI Driver APIs**: Access to MIDI driver development and device integration functions
-
-- **Ableton Link Integration**: Network tempo synchronization with sub-millisecond precision
-
-- **Link + CoreAudio Sync**: Beat-accurate audio playback synchronized to Link tempo
-
-- **Link + CoreMIDI Sync**: MIDI clock and sequencing synchronized to Link beat grid
-
-- **DAW Essentials**: High-level Digital Audio Workstation building blocks
-  - Multi-track audio and MIDI timeline with transport control
-  - Clip management with trimming, fades, and automation
-  - Marker and loop region support
-  - AudioUnit plugin integration per track
-  - Parameter automation with multiple interpolation modes
-
-- **Music Theory and Generative Algorithms**: Complete music composition toolkit
-  - Music theory primitives (Note, Interval, Scale, Chord, ChordProgression)
-  - 25+ scale types (major, minor, modes, pentatonic, blues, jazz, world, exotic)
-  - 35+ chord types (triads, 7ths, extended, altered, added tone)
-  - 8 generative algorithms (Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm, BitShiftRegister)
-  - MIDI event generation compatible with MIDITrack/MIDISequence
-
-- **Markov Chain MIDI Analysis**: Advanced MIDI analysis and variant generation
-  - Analyze MIDI files to create Markov chains
-  - Configurable order (1st, 2nd, higher-order)
-  - Three modeling modes: pitch-only, pitch+duration, pitch+duration+velocity
-  - Node-edge editing for granular control
-  - Chain-scope adjustments (temperature, gravity, clamping)
-  - JSON serialization for model persistence
-
-- **Bayesian Network MIDI Analysis**: Probabilistic modeling of note dependencies
-  - Analyze MIDI files to build Bayesian networks
-  - Configurable network structure (fixed, learned, or manual)
-  - Model dependencies: pitch, duration, velocity, rhythm (IOI)
-  - Conditional probability tables with Laplace smoothing
-  - Temporal context support (configurable order)
-  - JSON serialization for model persistence
-
-- **MIDI Transformation Pipeline**: Chainable transformers for MIDI processing
-  - Pitch: Transpose, Invert, Harmonize
-  - Time: Quantize (with swing), TimeStretch, Reverse
-  - Velocity: Scale, Curve, Humanize
-  - Filters: NoteFilter, ScaleFilter (scale mask), EventTypeFilter, ChannelRemap
-  - Composable Pipeline with fluent API
-
-- **Performance Optimizations**: Cython-optimized audio buffer operations integrated into main `capi.pyx`
-
-- **Memory Management**: Zero-copy buffer pool with configurable limits and automatic cleanup
-
-- **Memory-Mapped File I/O**: Efficient large file handling with automatic mapping/unmapping
-
-## Supported Frameworks
-
-### CoreAudio
-
-- Core audio types and hardware abstraction
-- Audio device management and control
-- Hardware object manipulation
-- Audio format handling and conversion
-
-### AudioToolbox
-
-- AudioFile operations (open, read, write, close)
-- AudioQueue creation and management
-- AudioComponent discovery and management
-- High-level audio services
-
-### AudioUnit
-
-- AudioUnit discovery and instantiation
-- Real-time audio processing units
-- Audio effects and generators
-- Hardware audio output control
-- Render callback infrastructure
-- **MIDI instrument control** - Full MIDI support for instrument plugins
-  - Note On/Off messages (all 128 notes, 128 velocity levels)
-  - Control Change (volume, pan, expression, all 128 CCs)
-  - Program Change (all 128 General MIDI instruments)
-  - Pitch Bend (14-bit precision)
-  - All 16 MIDI channels
-  - Sample-accurate scheduling with offset frames
-
-### CoreMIDI
-
-- MIDI Services:  CoreMIDI framework integration with device and endpoint management
-
-- Universal MIDI Packets: MIDI 1.0 and 2.0 message creation and handling in UMP format
-
-- Message Creation: Channel voice, system, and meta message construction with type safety
-
-- Device Management: MIDI device and entity discovery, creation, and property management
-
-- MIDI Setup: External device handling, device list management, and system configuration
-
-- Driver Support: Access to MIDI driver APIs for device creation and endpoint management
-
-- Thru Connections: Advanced MIDI routing with filtering, transformation, and channel mapping
-
-- Message Transformation: Scale, filter, add, and remap MIDI messages with flexible transforms
-
-- Real-time MIDI: Low-latency MIDI processing with proper timestamp handling
-
-### Ableton Link
-
-- **Network Tempo Sync**: Multi-device tempo synchronization over local network
-
-- **Beat Quantization**: Start/stop playback on beat boundaries with quantum alignment
-
-- **Link + CoreAudio**: AudioPlayer integration with beat-accurate playback
-
-- **Link + CoreMIDI**: MIDI clock synchronization and beat-accurate sequencing
-
-- **Session Management**: Automatic peer discovery and connection with transport control
-
-- **High Precision**: Sub-millisecond timing accuracy for professional workflows
-
-- **Cross-Platform Sync**: Compatible with 100+ Link-enabled applications
+**DAW Essentials**
+- Multi-track timeline with transport, clips, fades, automation
+- AudioUnit plugin integration, Link synchronization
 
 ## Installation
 
@@ -253,16 +123,16 @@ coremusic <command> [options]
 
 ### Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `audio` | Audio file operations (info, duration, metadata) |
-| `devices` | Audio device management (list, default, info) |
-| `plugins` | AudioUnit plugin discovery (list, find, info, params) |
-| `analyze` | Audio analysis (peak, rms, silence, tempo, spectrum, key, mfcc) |
-| `convert` | Convert audio files between formats (file, batch) |
-| `midi` | MIDI device discovery (devices, inputs, outputs, send, file) |
-| `generate` | Generative music algorithms (arpeggio, euclidean, melody) |
-| `sequence` | MIDI sequence operations (info, play, tracks) |
+| Command    | Description                                                      |
+|----------- |------------------------------------------------------------------|
+| `audio`    | Audio file operations (info, duration, metadata)                 |
+| `devices`  | Audio device management (list, default, info)                    |
+| `plugins`  | AudioUnit plugin discovery (list, find, info, params)            |
+| `analyze`  | Audio analysis (peak, rms, silence, tempo, spectrum, key, mfcc)  |
+| `convert`  | Convert audio files between formats (file, batch)                |
+| `midi`     | MIDI device discovery (devices, inputs, outputs, send, file)     |
+| `generate` | Generative music algorithms (arpeggio, euclidean, melody)        |
+| `sequence` | MIDI sequence operations (info, play, tracks)                    |
 
 ### CLI Examples
 
