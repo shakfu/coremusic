@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import argparse
 
-from ._utils import require_file, EXIT_SUCCESS, CLIError
 from ._formatters import format_duration, output_json, output_table
+from ._utils import EXIT_SUCCESS, CLIError, require_file
 
 
 def register(subparsers: argparse._SubParsersAction) -> None:
@@ -134,8 +134,9 @@ def cmd_tracks(args: argparse.Namespace) -> int:
 def cmd_play(args: argparse.Namespace) -> int:
     """Play MIDI file."""
     import time
-    from coremusic.midi.utilities import MIDISequence
+
     import coremusic.capi as capi
+    from coremusic.midi.utilities import MIDISequence
 
     path = require_file(args.file)
 

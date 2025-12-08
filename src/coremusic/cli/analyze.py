@@ -5,8 +5,8 @@ from __future__ import annotations
 import argparse
 import math
 
-from ._utils import require_file, require_numpy, require_scipy, EXIT_SUCCESS
 from ._formatters import format_db, format_duration, output_json
+from ._utils import EXIT_SUCCESS, require_file, require_numpy, require_scipy
 
 
 def register(subparsers: argparse._SubParsersAction) -> None:

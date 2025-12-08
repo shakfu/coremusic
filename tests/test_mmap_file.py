@@ -8,7 +8,7 @@ from coremusic.audio.mmap_file import MMapAudioFile
 
 
 # Use test audio file
-TEST_FILE = Path(__file__).parent / "amen.wav"
+TEST_FILE = Path(__file__).parent / "data" / "wav" / "amen.wav"
 
 
 class TestMMapAudioFile:

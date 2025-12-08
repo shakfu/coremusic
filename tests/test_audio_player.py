@@ -4,6 +4,7 @@ import os
 import time
 import sys
 
+from conftest import AMEN_WAV_PATH
 import coremusic as cm
 import coremusic.capi as capi
 
@@ -13,7 +14,7 @@ def test_audio_playback():
     print("=== AudioPlayer Test ===")
 
     # Check if test file exists
-    test_file = "tests/amen.wav"
+    test_file = AMEN_WAV_PATH
     assert os.path.exists(test_file)
     print(f"Found test file: {test_file}")
 
@@ -70,7 +71,7 @@ def test_audio_player_play_method():
     """Test that play() method works as an alias for start()"""
     print("=== AudioPlayer play() Method Test ===")
 
-    test_file = "tests/amen.wav"
+    test_file = AMEN_WAV_PATH
     assert os.path.exists(test_file)
 
     try:

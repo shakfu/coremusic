@@ -1,3 +1,4 @@
+from conftest import AMEN_WAV_PATH
 import coremusic.capi as capi
 import coremusic as cm
 
@@ -5,7 +6,7 @@ import coremusic as cm
 def test_format_data_parsing():
 
     # Open an audio file
-    audio_file = capi.audio_file_open_url("tests/amen.wav")
+    audio_file = capi.audio_file_open_url(AMEN_WAV_PATH)
 
     # Get file format information
     format_data = capi.audio_file_get_property(

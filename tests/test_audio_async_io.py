@@ -12,13 +12,6 @@ import coremusic as cm
 class TestAsyncAudioFile:
     """Test AsyncAudioFile async wrapper"""
 
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
 
     @pytest.mark.asyncio
     async def test_async_audio_file_creation(self, amen_wav_path):
@@ -162,13 +155,6 @@ class TestAsyncAudioFile:
 class TestAsyncAudioFileNumPy:
     """Test AsyncAudioFile NumPy integration (if available)"""
 
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
 
     @pytest.mark.skipif(not cm.NUMPY_AVAILABLE, reason="NumPy not available")
     @pytest.mark.asyncio
@@ -212,20 +198,6 @@ class TestAsyncAudioFileNumPy:
 
 class TestAsyncAudioQueue:
     """Test AsyncAudioQueue async wrapper"""
-
-    @pytest.fixture
-    def audio_format(self):
-        """Create a valid audio format for testing"""
-        return cm.AudioFormat(
-            sample_rate=44100.0,
-            format_id="lpcm",
-            format_flags=12,  # kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked
-            bytes_per_packet=4,
-            frames_per_packet=1,
-            bytes_per_frame=4,
-            channels_per_frame=2,
-            bits_per_channel=16,
-        )
 
     @pytest.mark.asyncio
     async def test_async_audio_queue_creation(self, audio_format):
@@ -298,13 +270,6 @@ class TestAsyncAudioQueue:
 class TestAsyncIntegration:
     """Integration tests for async I/O"""
 
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
 
     @pytest.mark.asyncio
     async def test_async_file_read_and_queue_playback(self, amen_wav_path):
@@ -365,11 +330,9 @@ class TestAsyncIntegration:
         assert all(0 <= amp <= 32768 for amp in max_amplitudes)
 
     @pytest.mark.asyncio
-    async def test_async_multiple_files_concurrent(self):
+    async def test_async_multiple_files_concurrent(self, amen_wav_path):
         """Test concurrent processing of multiple audio files"""
-        amen_path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(amen_path):
-            pytest.skip(f"Test audio file not found: {amen_path}")
+        amen_path = amen_wav_path
 
         async def get_file_info(path: str):
             """Get file info asynchronously"""

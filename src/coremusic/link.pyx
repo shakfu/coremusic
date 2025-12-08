@@ -6,13 +6,14 @@
 Provides Python interface to Ableton Link tempo synchronization library.
 """
 
-from . cimport link as link_cpp
-from libcpp cimport bool as cbool
-from libcpp.memory cimport shared_ptr, make_shared
 from libc.stdint cimport int64_t, uint64_t, uintptr_t
+from libcpp cimport bool as cbool
+from libcpp.memory cimport make_shared, shared_ptr
 
 # Import microseconds type from declarations
 from coremusic.link cimport microseconds
+
+from . cimport link as link_cpp
 
 
 cdef class Clock:

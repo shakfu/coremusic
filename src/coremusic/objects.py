@@ -10,12 +10,11 @@ automatic resource cleanup, but are implemented as pure Python classes for
 simplicity.
 """
 
-from typing import Optional, Union, List, Dict, Any, Tuple, TYPE_CHECKING
-from pathlib import Path
 import struct
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
-from . import capi
-from . import os_status
+from . import capi, os_status
 
 # Check if NumPy is available
 try:

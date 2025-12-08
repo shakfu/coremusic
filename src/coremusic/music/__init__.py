@@ -24,92 +24,36 @@ Example:
     >>> events = arp.generate(num_cycles=2)
 """
 
-from . import theory
-from . import generative
-from . import markov
-from . import bayes
-
+from . import bayes, generative, markov, neural, theory
+from .bayes import (CPT, BayesianNetwork, MIDIBayesAnalyzer,
+                    MIDIBayesGenerator, NetworkConfig, NetworkMode,
+                    NoteObservation, StructureMode)
+from .bayes import \
+    analyze_and_generate as \
+    bayes_analyze_and_generate  # Bayesian Network Analysis; MIDI Analysis and Generation; Utility Functions
+from .bayes import merge_networks, network_statistics
+from .generative import (  # Base classes; Arpeggiator; Euclidean; Markov; Probabilistic; Sequence; Melody; Polyrhythm; Bit Shift Register
+    ArpConfig, Arpeggiator, ArpPattern, BitShiftRegister,
+    BitShiftRegisterConfig, BitShiftRegisterGenerator, EuclideanConfig,
+    EuclideanGenerator, Generator, GeneratorConfig, MarkovConfig,
+    MarkovGenerator, MelodyConfig, MelodyGenerator, PolyrhythmConfig,
+    PolyrhythmGenerator, ProbabilisticConfig, ProbabilisticGenerator,
+    SequenceConfig, SequenceGenerator)
+from .markov import (  # Markov Chain Analysis; MIDI Analysis and Generation; Utility Functions
+    ChainConfig, MarkovChain, MIDIMarkovAnalyzer, MIDIMarkovGenerator,
+    ModelingMode, NoteData, RhythmMode, TransitionEdge, analyze_and_generate,
+    chain_statistics, merge_chains)
+from .neural import (  # Encoders; Dataset; Model functions; Training; Generation
+    BaseEncoder, Callback, EarlyStopping, GreedySampling,
+    LearningRateScheduler, MIDIDataset, ModelCheckpoint, ModelFactory,
+    MusicGenerator, NoteEncoder, NucleusSampling, ProgressLogger,
+    SamplingStrategy, TemperatureSampling, TopKSampling, Trainer,
+    TrainingConfig, create_gru_model, create_lstm_model, create_mlp_model,
+    create_rnn_model)
 # Re-export commonly used classes
-from .theory import (
-    Note,
-    Interval,
-    IntervalQuality,
-    Scale,
-    ScaleType,
-    Chord,
-    ChordType,
-    Mode,
-    KEY_SIGNATURES,
-    CIRCLE_OF_FIFTHS,
-    note_name_to_midi,
-    midi_to_note_name,
-)
-
-from .generative import (
-    # Base classes
-    Generator,
-    GeneratorConfig,
-    # Arpeggiator
-    Arpeggiator,
-    ArpPattern,
-    ArpConfig,
-    # Euclidean
-    EuclideanGenerator,
-    EuclideanConfig,
-    # Markov
-    MarkovGenerator,
-    MarkovConfig,
-    # Probabilistic
-    ProbabilisticGenerator,
-    ProbabilisticConfig,
-    # Sequence
-    SequenceGenerator,
-    SequenceConfig,
-    # Melody
-    MelodyGenerator,
-    MelodyConfig,
-    # Polyrhythm
-    PolyrhythmGenerator,
-    PolyrhythmConfig,
-    # Bit Shift Register
-    BitShiftRegister,
-    BitShiftRegisterGenerator,
-    BitShiftRegisterConfig,
-)
-
-from .markov import (
-    # Markov Chain Analysis
-    MarkovChain,
-    ChainConfig,
-    ModelingMode,
-    RhythmMode,
-    NoteData,
-    TransitionEdge,
-    # MIDI Analysis and Generation
-    MIDIMarkovAnalyzer,
-    MIDIMarkovGenerator,
-    # Utility Functions
-    analyze_and_generate,
-    merge_chains,
-    chain_statistics,
-)
-
-from .bayes import (
-    # Bayesian Network Analysis
-    NetworkMode,
-    StructureMode,
-    NoteObservation,
-    NetworkConfig,
-    CPT,
-    BayesianNetwork,
-    # MIDI Analysis and Generation
-    MIDIBayesAnalyzer,
-    MIDIBayesGenerator,
-    # Utility Functions
-    analyze_and_generate as bayes_analyze_and_generate,
-    merge_networks,
-    network_statistics,
-)
+from .theory import (CIRCLE_OF_FIFTHS, KEY_SIGNATURES, Chord, ChordType,
+                     Interval, IntervalQuality, Mode, Note, Scale, ScaleType,
+                     midi_to_note_name, note_name_to_midi)
 
 __all__ = [
     # Submodules
@@ -183,4 +127,29 @@ __all__ = [
     "bayes_analyze_and_generate",
     "merge_networks",
     "network_statistics",
+    # Neural Network Module
+    "neural",
+    "BaseEncoder",
+    "NoteEncoder",
+    "MIDIDataset",
+    "create_mlp_model",
+    "create_rnn_model",
+    "create_lstm_model",
+    "create_gru_model",
+    "ModelFactory",
+    # Neural - Training
+    "TrainingConfig",
+    "Trainer",
+    "Callback",
+    "EarlyStopping",
+    "ModelCheckpoint",
+    "ProgressLogger",
+    "LearningRateScheduler",
+    # Neural - Generation
+    "SamplingStrategy",
+    "GreedySampling",
+    "TemperatureSampling",
+    "TopKSampling",
+    "NucleusSampling",
+    "MusicGenerator",
 ]

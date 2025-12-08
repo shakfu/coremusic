@@ -6,7 +6,6 @@ import sys
 from pathlib import Path
 from typing import NoReturn
 
-
 # Exit codes
 EXIT_SUCCESS = 0
 EXIT_ERROR = 1

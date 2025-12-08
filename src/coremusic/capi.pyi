@@ -4,7 +4,7 @@ This module provides low-level Python bindings to CoreAudio frameworks
 via Cython. All functions are thin wrappers around C APIs.
 """
 
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 # ============================================================================
 # Base Classes

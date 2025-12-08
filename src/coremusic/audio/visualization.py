@@ -16,9 +16,8 @@ Example:
     >>> spec.plot(cmap='magma')
 """
 
-from pathlib import Path
-from typing import Any, Optional, Tuple, TYPE_CHECKING
 import logging
+from typing import TYPE_CHECKING, Any, Optional, Tuple
 
 # Type checking imports
 if TYPE_CHECKING:
@@ -39,10 +38,10 @@ except ImportError:
     NUMPY_AVAILABLE = False
 
 try:
-    import matplotlib.pyplot as plt
     import matplotlib.animation as animation
-    from matplotlib.figure import Figure
+    import matplotlib.pyplot as plt
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
@@ -53,7 +52,9 @@ except ImportError:
     MATPLOTLIB_AVAILABLE = False
 
 # Import coremusic for audio file operations
-import coremusic as cm
+
+# Import base class
+from ._base import AudioFileLoaderMixin
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 
-class WaveformPlotter:
+class WaveformPlotter(AudioFileLoaderMixin):
     """Plot audio waveforms.
 
     Provides visualization of audio waveforms with optional overlays for
@@ -85,6 +86,10 @@ class WaveformPlotter:
         Raises:
             ImportError: If NumPy or matplotlib not available
         """
+        self._init_audio_loader(audio_file)
+
+    def _check_dependencies(self) -> None:
+        """Check that NumPy and matplotlib are available."""
         if not NUMPY_AVAILABLE:
             raise ImportError(
                 "NumPy is required for visualization. Install with: pip install numpy"
@@ -94,25 +99,6 @@ class WaveformPlotter:
                 "matplotlib is required for visualization. "
                 "Install with: pip install matplotlib"
             )
-
-        self.audio_file = Path(audio_file)
-        self._audio_data: Optional["NDArray"] = None
-        self._sample_rate: Optional[float] = None
-
-    def _load_audio(self) -> Tuple["NDArray", float]:
-        """Load audio data from file.
-
-        Returns:
-            Tuple of (audio_data, sample_rate)
-        """
-        if self._audio_data is None:
-            with cm.AudioFile(str(self.audio_file)) as af:
-                self._audio_data = af.read_as_numpy()  # type: ignore[attr-defined]
-                self._sample_rate = af.format.sample_rate
-
-        assert self._audio_data is not None
-        assert self._sample_rate is not None
-        return self._audio_data, self._sample_rate
 
     def plot(
         self,
@@ -283,7 +269,7 @@ class WaveformPlotter:
 # ============================================================================
 
 
-class SpectrogramPlotter:
+class SpectrogramPlotter(AudioFileLoaderMixin):
     """Plot audio spectrograms.
 
     Provides time-frequency visualization of audio using STFT.
@@ -303,6 +289,10 @@ class SpectrogramPlotter:
         Raises:
             ImportError: If NumPy or matplotlib not available
         """
+        self._init_audio_loader(audio_file)
+
+    def _check_dependencies(self) -> None:
+        """Check that NumPy and matplotlib are available."""
         if not NUMPY_AVAILABLE:
             raise ImportError(
                 "NumPy is required for visualization. Install with: pip install numpy"
@@ -312,25 +302,6 @@ class SpectrogramPlotter:
                 "matplotlib is required for visualization. "
                 "Install with: pip install matplotlib"
             )
-
-        self.audio_file = Path(audio_file)
-        self._audio_data: Optional["NDArray"] = None
-        self._sample_rate: Optional[float] = None
-
-    def _load_audio(self) -> Tuple["NDArray", float]:
-        """Load audio data from file.
-
-        Returns:
-            Tuple of (audio_data, sample_rate)
-        """
-        if self._audio_data is None:
-            with cm.AudioFile(str(self.audio_file)) as af:
-                self._audio_data = af.read_as_numpy()  # type: ignore[attr-defined]
-                self._sample_rate = af.format.sample_rate
-
-        assert self._audio_data is not None
-        assert self._sample_rate is not None
-        return self._audio_data, self._sample_rate
 
     def plot(
         self,
@@ -471,7 +442,7 @@ class SpectrogramPlotter:
 # ============================================================================
 
 
-class FrequencySpectrumPlotter:
+class FrequencySpectrumPlotter(AudioFileLoaderMixin):
     """Plot frequency spectrum.
 
     Provides visualization of frequency content at a specific time or
@@ -492,6 +463,10 @@ class FrequencySpectrumPlotter:
         Raises:
             ImportError: If NumPy or matplotlib not available
         """
+        self._init_audio_loader(audio_file)
+
+    def _check_dependencies(self) -> None:
+        """Check that NumPy and matplotlib are available."""
         if not NUMPY_AVAILABLE:
             raise ImportError(
                 "NumPy is required for visualization. Install with: pip install numpy"
@@ -501,25 +476,6 @@ class FrequencySpectrumPlotter:
                 "matplotlib is required for visualization. "
                 "Install with: pip install matplotlib"
             )
-
-        self.audio_file = Path(audio_file)
-        self._audio_data: Optional["NDArray"] = None
-        self._sample_rate: Optional[float] = None
-
-    def _load_audio(self) -> Tuple["NDArray", float]:
-        """Load audio data from file.
-
-        Returns:
-            Tuple of (audio_data, sample_rate)
-        """
-        if self._audio_data is None:
-            with cm.AudioFile(str(self.audio_file)) as af:
-                self._audio_data = af.read_as_numpy()  # type: ignore[attr-defined]
-                self._sample_rate = af.format.sample_rate
-
-        assert self._audio_data is not None
-        assert self._sample_rate is not None
-        return self._audio_data, self._sample_rate
 
     def plot(
         self,

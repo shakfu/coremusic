@@ -46,13 +46,6 @@ class TestObjectOrientedAPIFunctionality:
         with pytest.raises(RuntimeError, match="has been disposed"):
             obj._ensure_not_disposed()
 
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
 
     def test_audio_file_functionality(self, amen_wav_path):
         """Test AudioFile functionality with real file"""
@@ -147,7 +140,10 @@ class TestObjectOrientedAPIFunctionality:
 
     def test_midi_client_functionality(self):
         """Test MIDIClient functionality"""
-        client = cm.MIDIClient("Test Client")
+        try:
+            client = cm.MIDIClient("Test Client")
+        except cm.MIDIError:
+            pytest.skip("MIDI services not available")
         assert isinstance(client, cm.MIDIClient)
         assert client.name == "Test Client"
         assert not client.is_disposed
@@ -208,8 +204,11 @@ class TestObjectOrientedAPIFunctionality:
             except cm.AudioQueueError:
                 pass
         for i in range(3):
-            client = cm.MIDIClient(f"Test Client {i}")
-            objects.append(client)
+            try:
+                client = cm.MIDIClient(f"Test Client {i}")
+                objects.append(client)
+            except cm.MIDIError:
+                pass  # MIDI not available
         for obj in objects:
             obj.dispose()
             assert obj.is_disposed

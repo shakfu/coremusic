@@ -4,14 +4,10 @@ from __future__ import annotations
 
 import argparse
 
-from ._utils import require_file, EXIT_SUCCESS
-from ._formatters import (
-    format_duration,
-    format_bytes,
-    format_sample_rate,
-    output_json,
-)
-from ._mappings import get_format_display, get_channel_display
+from ._formatters import (format_bytes, format_duration, format_sample_rate,
+                          output_json)
+from ._mappings import get_channel_display, get_format_display
+from ._utils import EXIT_SUCCESS, require_file
 
 
 def register(subparsers: argparse._SubParsersAction) -> None:
@@ -114,8 +110,9 @@ def cmd_duration(args: argparse.Namespace) -> int:
 
 def cmd_metadata(args: argparse.Namespace) -> int:
     """Show audio file metadata/tags."""
-    import coremusic as cm
     from typing import Any, Dict
+
+    import coremusic as cm
 
     path = require_file(args.file)
 

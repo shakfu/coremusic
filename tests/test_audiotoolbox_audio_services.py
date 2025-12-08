@@ -43,13 +43,9 @@ class TestAudioServicesBasicOperations:
     """Test basic AudioServices operations"""
 
     @pytest.fixture
-    def test_audio_file_path(self):
+    def test_audio_file_path(self, amen_wav_path):
         """Path to test audio file"""
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        wav_path = os.path.join(test_dir, "amen.wav")
-        if not os.path.exists(wav_path):
-            pytest.skip(f"Test WAV file not found: {wav_path}")
-        return wav_path
+        return amen_wav_path
 
     def test_create_and_dispose_system_sound_id(self, test_audio_file_path):
         """Test creating and disposing a SystemSoundID"""
@@ -82,13 +78,9 @@ class TestAudioServicesPlayback:
     """Test AudioServices playback functionality"""
 
     @pytest.fixture
-    def test_audio_file_path(self):
+    def test_audio_file_path(self, amen_wav_path):
         """Path to test audio file"""
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        wav_path = os.path.join(test_dir, "amen.wav")
-        if not os.path.exists(wav_path):
-            pytest.skip(f"Test WAV file not found: {wav_path}")
-        return wav_path
+        return amen_wav_path
 
     @pytest.fixture
     def system_sound_id(self, test_audio_file_path):
@@ -118,13 +110,9 @@ class TestAudioServicesProperties:
     """Test AudioServices property functionality"""
 
     @pytest.fixture
-    def test_audio_file_path(self):
+    def test_audio_file_path(self, amen_wav_path):
         """Path to test audio file"""
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        wav_path = os.path.join(test_dir, "amen.wav")
-        if not os.path.exists(wav_path):
-            pytest.skip(f"Test WAV file not found: {wav_path}")
-        return wav_path
+        return amen_wav_path
 
     @pytest.fixture
     def system_sound_id(self, test_audio_file_path):
@@ -202,12 +190,9 @@ class TestAudioServicesErrorHandling:
             with pytest.raises((RuntimeError, ValueError)):
                 capi.audio_services_create_system_sound_id(path)
 
-    def test_property_type_validation(self):
+    def test_property_type_validation(self, amen_wav_path):
         """Test property data type validation"""
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        wav_path = os.path.join(test_dir, "amen.wav")
-        if not os.path.exists(wav_path):
-            pytest.skip(f"Test WAV file not found: {wav_path}")
+        wav_path = amen_wav_path
         sound_id = capi.audio_services_create_system_sound_id(wav_path)
         try:
             prop_id = capi.get_audio_services_property_is_ui_sound()
@@ -222,12 +207,9 @@ class TestAudioServicesErrorHandling:
 class TestAudioServicesResourceManagement:
     """Test AudioServices resource management"""
 
-    def test_multiple_sound_creation_and_disposal(self):
+    def test_multiple_sound_creation_and_disposal(self, amen_wav_path):
         """Test creating and disposing multiple system sounds"""
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        wav_path = os.path.join(test_dir, "amen.wav")
-        if not os.path.exists(wav_path):
-            pytest.skip(f"Test WAV file not found: {wav_path}")
+        wav_path = amen_wav_path
         sound_ids = []
         try:
             for i in range(5):
@@ -243,12 +225,9 @@ class TestAudioServicesResourceManagement:
                 except:
                     pass
 
-    def test_sound_id_lifecycle(self):
+    def test_sound_id_lifecycle(self, amen_wav_path):
         """Test the complete lifecycle of a SystemSoundID"""
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        wav_path = os.path.join(test_dir, "amen.wav")
-        if not os.path.exists(wav_path):
-            pytest.skip(f"Test WAV file not found: {wav_path}")
+        wav_path = amen_wav_path
         sound_id = capi.audio_services_create_system_sound_id(wav_path)
         assert isinstance(sound_id, int)
         capi.audio_services_play_system_sound(sound_id)

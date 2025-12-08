@@ -10,13 +10,6 @@ import coremusic.capi as capi
 class TestAudioFile:
     """Test AudioFile object-oriented wrapper"""
 
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
 
     def test_audio_file_creation(self, amen_wav_path):
         """Test AudioFile object creation"""
@@ -231,13 +224,6 @@ class TestAudioFileStream:
 class TestAudioFileIntegration:
     """Integration tests for AudioFile with real audio data"""
 
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
 
     def test_audio_file_vs_functional_api_consistency(self, amen_wav_path):
         """Test that OO API produces consistent results with functional API"""

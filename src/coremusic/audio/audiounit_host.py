@@ -3,12 +3,12 @@
 Provides Pythonic object-oriented wrapper for AudioUnit plugin hosting.
 """
 
-from typing import List, Dict, Optional, Any, Tuple
-import struct
 import json
+import struct
 from pathlib import Path
-from .. import capi
+from typing import Any, Dict, List, Optional, Tuple
 
+from .. import capi
 
 # ============================================================================
 # Audio Format Support

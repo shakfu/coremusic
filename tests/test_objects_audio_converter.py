@@ -11,67 +11,17 @@ import coremusic.capi as capi
 class TestAudioConverter:
     """Test AudioConverter object-oriented wrapper"""
 
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
-
-    @pytest.fixture
-    def source_format(self):
-        """Fixture providing source audio format (44.1kHz, stereo, 16-bit)"""
-        return cm.AudioFormat(
-            sample_rate=44100.0,
-            format_id="lpcm",
-            format_flags=12,
-            bytes_per_packet=4,
-            frames_per_packet=1,
-            bytes_per_frame=4,
-            channels_per_frame=2,
-            bits_per_channel=16,
-        )
-
-    @pytest.fixture
-    def dest_format_mono(self):
-        """Fixture providing destination format (44.1kHz, mono, 16-bit)"""
-        return cm.AudioFormat(
-            sample_rate=44100.0,
-            format_id="lpcm",
-            format_flags=12,
-            bytes_per_packet=2,
-            frames_per_packet=1,
-            bytes_per_frame=2,
-            channels_per_frame=1,
-            bits_per_channel=16,
-        )
-
-    @pytest.fixture
-    def dest_format_48k(self):
-        """Fixture providing destination format (48kHz, stereo, 16-bit)"""
-        return cm.AudioFormat(
-            sample_rate=48000.0,
-            format_id="lpcm",
-            format_flags=12,
-            bytes_per_packet=4,
-            frames_per_packet=1,
-            bytes_per_frame=4,
-            channels_per_frame=2,
-            bits_per_channel=16,
-        )
-
-    def test_audio_converter_creation(self, source_format, dest_format_mono):
+    def test_audio_converter_creation(self, source_format_obj, dest_format_mono_obj):
         """Test AudioConverter object creation"""
-        converter = cm.AudioConverter(source_format, dest_format_mono)
+        converter = cm.AudioConverter(source_format_obj, dest_format_mono_obj)
         assert isinstance(converter, cm.AudioConverter)
         assert isinstance(converter, cm.CoreAudioObject)
         assert not converter.is_disposed
         assert converter.object_id != 0
 
-    def test_audio_converter_properties(self, source_format, dest_format_mono):
+    def test_audio_converter_properties(self, source_format_obj, dest_format_mono_obj):
         """Test AudioConverter source and dest format properties"""
-        converter = cm.AudioConverter(source_format, dest_format_mono)
+        converter = cm.AudioConverter(source_format_obj, dest_format_mono_obj)
         src = converter.source_format
         assert isinstance(src, cm.AudioFormat)
         assert src.sample_rate == 44100.0
@@ -81,9 +31,9 @@ class TestAudioConverter:
         assert dst.sample_rate == 44100.0
         assert dst.channels_per_frame == 1
 
-    def test_audio_converter_convert(self, source_format, dest_format_mono):
+    def test_audio_converter_convert(self, source_format_obj, dest_format_mono_obj):
         """Test AudioConverter conversion"""
-        converter = cm.AudioConverter(source_format, dest_format_mono)
+        converter = cm.AudioConverter(source_format_obj, dest_format_mono_obj)
         num_frames = 100
         input_data = b"\x00\x01" * (num_frames * 2)
         output_data = converter.convert(input_data)
@@ -92,17 +42,17 @@ class TestAudioConverter:
         assert len(output_data) < len(input_data)
 
     def test_audio_converter_sample_rate_conversion(
-        self, source_format, dest_format_48k
+        self, source_format_obj, dest_format_48k_obj
     ):
         """Test AudioConverter creation for sample rate conversion"""
-        converter = cm.AudioConverter(source_format, dest_format_48k)
+        converter = cm.AudioConverter(source_format_obj, dest_format_48k_obj)
         assert isinstance(converter, cm.AudioConverter)
         assert not converter.is_disposed
         converter.dispose()
 
-    def test_audio_converter_reset(self, source_format, dest_format_mono):
+    def test_audio_converter_reset(self, source_format_obj, dest_format_mono_obj):
         """Test AudioConverter reset"""
-        converter = cm.AudioConverter(source_format, dest_format_mono)
+        converter = cm.AudioConverter(source_format_obj, dest_format_mono_obj)
         input_data = b"\x00\x01" * 200
         output1 = converter.convert(input_data)
         converter.reset()
@@ -110,9 +60,9 @@ class TestAudioConverter:
         assert isinstance(output2, bytes)
         assert len(output2) > 0
 
-    def test_audio_converter_context_manager(self, source_format, dest_format_mono):
+    def test_audio_converter_context_manager(self, source_format_obj, dest_format_mono_obj):
         """Test AudioConverter as context manager"""
-        with cm.AudioConverter(source_format, dest_format_mono) as converter:
+        with cm.AudioConverter(source_format_obj, dest_format_mono_obj) as converter:
             assert isinstance(converter, cm.AudioConverter)
             assert not converter.is_disposed
             input_data = b"\x00\x01\x02\x03" * 100
@@ -120,9 +70,9 @@ class TestAudioConverter:
             assert len(output_data) > 0
         assert converter.is_disposed
 
-    def test_audio_converter_manual_disposal(self, source_format, dest_format_mono):
+    def test_audio_converter_manual_disposal(self, source_format_obj, dest_format_mono_obj):
         """Test AudioConverter manual disposal"""
-        converter = cm.AudioConverter(source_format, dest_format_mono)
+        converter = cm.AudioConverter(source_format_obj, dest_format_mono_obj)
         assert not converter.is_disposed
         converter.dispose()
         assert converter.is_disposed
@@ -130,31 +80,31 @@ class TestAudioConverter:
         assert converter.is_disposed
 
     def test_audio_converter_operations_after_disposal(
-        self, source_format, dest_format_mono
+        self, source_format_obj, dest_format_mono_obj
     ):
         """Test operations after disposal raise errors"""
-        converter = cm.AudioConverter(source_format, dest_format_mono)
+        converter = cm.AudioConverter(source_format_obj, dest_format_mono_obj)
         converter.dispose()
         with pytest.raises(RuntimeError, match="has been disposed"):
             converter.convert(b"\x00\x01")
         with pytest.raises(RuntimeError, match="has been disposed"):
             converter.reset()
 
-    def test_audio_converter_repr(self, source_format, dest_format_mono):
+    def test_audio_converter_repr(self, source_format_obj, dest_format_mono_obj):
         """Test AudioConverter string representation"""
-        converter = cm.AudioConverter(source_format, dest_format_mono)
+        converter = cm.AudioConverter(source_format_obj, dest_format_mono_obj)
         repr_str = repr(converter)
         assert "AudioConverter" in repr_str
         assert "44100.0" in repr_str
 
     def test_audio_converter_with_real_file(
-        self, amen_wav_path, source_format, dest_format_mono
+        self, amen_wav_path, source_format_obj, dest_format_mono_obj
     ):
         """Test AudioConverter with real audio file data"""
         with cm.AudioFile(amen_wav_path) as audio_file:
             data, packet_count = audio_file.read_packets(0, 100)
             assert len(data) > 0
-            with cm.AudioConverter(source_format, dest_format_mono) as converter:
+            with cm.AudioConverter(source_format_obj, dest_format_mono_obj) as converter:
                 mono_data = converter.convert(data)
                 assert len(mono_data) > 0
                 assert len(mono_data) < len(data)
@@ -185,10 +135,10 @@ class TestAudioConverter:
             cm.AudioConverter(invalid_format, valid_format)
 
     def test_audio_converter_sample_rate_conversion_44100_to_48000(
-        self, source_format, dest_format_48k
+        self, source_format_obj, dest_format_48k_obj
     ):
         """Test sample rate conversion from 44.1kHz to 48kHz using callback API"""
-        converter = cm.AudioConverter(source_format, dest_format_48k)
+        converter = cm.AudioConverter(source_format_obj, dest_format_48k_obj)
         num_input_frames = 100
         input_data = b"\x00\x01\x02\x03" * num_input_frames
         output_data = converter.convert_with_callback(input_data, num_input_frames)
@@ -295,10 +245,10 @@ class TestAudioConverter:
         converter.dispose()
 
     def test_audio_converter_with_callback_auto_output_packet_count(
-        self, source_format, dest_format_48k
+        self, source_format_obj, dest_format_48k_obj
     ):
         """Test convert_with_callback with automatic output packet count calculation"""
-        converter = cm.AudioConverter(source_format, dest_format_48k)
+        converter = cm.AudioConverter(source_format_obj, dest_format_48k_obj)
         num_input_frames = 100
         input_data = b"\x00\x01\x02\x03" * num_input_frames
         output_data = converter.convert_with_callback(
@@ -311,40 +261,6 @@ class TestAudioConverter:
 
 class TestExtendedAudioFile:
     """Test ExtendedAudioFile object-oriented wrapper"""
-
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
-
-    @pytest.fixture
-    def temp_audio_file(self):
-        """Fixture providing temporary audio file path"""
-        fd, path = tempfile.mkstemp(suffix=".wav")
-        os.close(fd)
-        yield path
-        if os.path.exists(path):
-            try:
-                os.unlink(path)
-            except:
-                pass
-
-    @pytest.fixture
-    def pcm_format(self):
-        """Fixture providing PCM audio format"""
-        return cm.AudioFormat(
-            sample_rate=44100.0,
-            format_id="lpcm",
-            format_flags=12,
-            bytes_per_packet=4,
-            frames_per_packet=1,
-            bytes_per_frame=4,
-            channels_per_frame=2,
-            bits_per_channel=16,
-        )
 
     def test_extended_audio_file_creation(self, amen_wav_path):
         """Test ExtendedAudioFile object creation"""

@@ -50,6 +50,7 @@ dev = [
     "mypy>=1.13.0",
     "matplotlib>=3.10.7",
     "ruff>=0.14.8",
+    "isort>=7.0.0",
 ]
 
 [build-system]
@@ -113,6 +114,11 @@ namespace_packages = true
 [[tool.mypy.overrides]]
 module = "coremusic.capi"
 ignore_missing_imports = false
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = "coremusic.kann"
+ignore_missing_imports = true
 follow_imports = "skip"
 
 [[tool.mypy.overrides]]

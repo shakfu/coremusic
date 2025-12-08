@@ -24,7 +24,8 @@ def main(argv: list[str] | None = None) -> int:
     subparsers = parser.add_subparsers(dest="command", metavar="<command>")
 
     # Register command modules
-    from . import audio, devices, plugins, analyze, convert, midi, generate, sequence
+    from . import (analyze, audio, convert, devices, generate, midi, neural,
+                   plugins, sequence)
 
     audio.register(subparsers)
     devices.register(subparsers)
@@ -34,6 +35,7 @@ def main(argv: list[str] | None = None) -> int:
     midi.register(subparsers)
     generate.register(subparsers)
     sequence.register(subparsers)
+    neural.register(subparsers)
 
     args = parser.parse_args(argv)
 

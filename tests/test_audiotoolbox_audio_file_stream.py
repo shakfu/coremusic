@@ -95,13 +95,9 @@ class TestAudioFileStreamWithWaveFile:
     """Test AudioFileStream with real WAV file data"""
 
     @pytest.fixture
-    def wav_file_path(self):
+    def wav_file_path(self, amen_wav_path):
         """Path to test WAV file"""
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        wav_path = os.path.join(test_dir, "amen.wav")
-        if not os.path.exists(wav_path):
-            pytest.skip(f"Test WAV file not found: {wav_path}")
-        return wav_path
+        return amen_wav_path
 
     @pytest.fixture
     def wav_data(self, wav_file_path):

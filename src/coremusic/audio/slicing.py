@@ -16,11 +16,12 @@ Example:
     >>> recombinator.export("shuffled.wav", method="random")
 """
 
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Callable, List, Literal, Optional, Tuple, Union, TYPE_CHECKING
 import logging
 import random
+from dataclasses import dataclass
+from pathlib import Path
+from typing import (TYPE_CHECKING, Any, Callable, List, Literal, Optional,
+                    Tuple, Union)
 
 # Type checking imports
 if TYPE_CHECKING:

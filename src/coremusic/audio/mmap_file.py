@@ -8,7 +8,7 @@ import mmap
 import struct
 from io import BufferedReader
 from pathlib import Path
-from typing import Optional, Union, TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 # Conditional numpy import
 try:

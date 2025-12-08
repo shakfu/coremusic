@@ -23,11 +23,10 @@ Example:
     >>> chord.get_midi_notes()  # [60, 64, 67, 71]
 """
 
+import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import ClassVar, List, Optional, Tuple, Dict, Iterator, Union
-import re
-
+from typing import ClassVar, Dict, Iterator, List, Optional, Tuple, Union
 
 # ============================================================================
 # Constants

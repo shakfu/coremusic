@@ -5,9 +5,9 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from ._utils import require_file, CLIError, EXIT_SUCCESS
 from ._formatters import output_json
-from ._mappings import get_format_id, get_format_display, FORMAT_NAMES
+from ._mappings import FORMAT_NAMES, get_format_display, get_format_id
+from ._utils import EXIT_SUCCESS, CLIError, require_file
 
 
 def register(subparsers: argparse._SubParsersAction) -> None:

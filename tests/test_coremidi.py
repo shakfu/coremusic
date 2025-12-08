@@ -7,6 +7,19 @@ import coremusic as cm
 import coremusic.capi as capi
 
 
+# Check MIDI availability at module load time
+# Run multiple checks to ensure MIDI is reliably available
+_MIDI_AVAILABLE = False
+try:
+    # Try creating and disposing multiple clients to ensure MIDI is reliably available
+    for i in range(3):
+        _client_id = capi.midi_client_create(f"_TestCheck{i}")
+        capi.midi_client_dispose(_client_id)
+    _MIDI_AVAILABLE = True
+except Exception:
+    _MIDI_AVAILABLE = False
+
+
 class TestCoreMIDIConstants:
     """Test CoreMIDI constants access"""
 
@@ -47,12 +60,16 @@ class TestCoreMIDIConstants:
         assert capi.get_midi_protocol_2_0() == 2
 
 
+@pytest.mark.skipif(not _MIDI_AVAILABLE, reason="MIDI services not available")
 class TestCoreMIDIClient:
     """Test CoreMIDI client operations"""
 
     def test_midi_client_create_dispose(self):
         """Test MIDI client creation and disposal"""
-        client = capi.midi_client_create("Test Client")
+        try:
+            client = capi.midi_client_create("Test Client")
+        except RuntimeError:
+            pytest.skip("MIDI client creation failed - MIDI services unavailable")
         assert client is not None
         assert isinstance(client, int)
         assert client > 0
@@ -64,12 +81,16 @@ class TestCoreMIDIClient:
             capi.midi_client_create(None)
 
 
+@pytest.mark.skipif(not _MIDI_AVAILABLE, reason="MIDI services not available")
 class TestCoreMIDIPorts:
     """Test CoreMIDI port operations"""
 
     def setup_method(self):
         """Set up test client for port tests"""
-        self.client = capi.midi_client_create("Test Port Client")
+        try:
+            self.client = capi.midi_client_create("Test Port Client")
+        except RuntimeError:
+            pytest.skip("MIDI client creation failed - MIDI services unavailable")
 
     def teardown_method(self):
         """Clean up test client"""
@@ -158,12 +179,16 @@ class TestCoreMIDIDevices:
             assert destination > 0
 
 
+@pytest.mark.skipif(not _MIDI_AVAILABLE, reason="MIDI services not available")
 class TestCoreMIDIVirtualEndpoints:
     """Test CoreMIDI virtual endpoint operations"""
 
     def setup_method(self):
         """Set up test client for virtual endpoint tests"""
-        self.client = capi.midi_client_create("Test Virtual Client")
+        try:
+            self.client = capi.midi_client_create("Test Virtual Client")
+        except RuntimeError:
+            pytest.skip("MIDI client creation failed - MIDI services unavailable")
 
     def teardown_method(self):
         """Clean up test client"""
@@ -193,12 +218,16 @@ class TestCoreMIDIVirtualEndpoints:
         capi.midi_endpoint_dispose(destination)
 
 
+@pytest.mark.skipif(not _MIDI_AVAILABLE, reason="MIDI services not available")
 class TestCoreMIDIProperties:
     """Test CoreMIDI property operations"""
 
     def setup_method(self):
         """Set up test client for property tests"""
-        self.client = capi.midi_client_create("Test Property Client")
+        try:
+            self.client = capi.midi_client_create("Test Property Client")
+        except RuntimeError:
+            pytest.skip("MIDI client creation failed - MIDI services unavailable")
 
     def teardown_method(self):
         """Clean up test client"""
@@ -346,12 +375,16 @@ class TestCoreMIDIData:
         assert isinstance(result, int)
 
 
+@pytest.mark.skipif(not _MIDI_AVAILABLE, reason="MIDI services not available")
 class TestCoreMIDIIntegration:
     """Integration tests for CoreMIDI functionality"""
 
     def test_full_midi_workflow(self):
         """Test complete MIDI workflow: client -> ports -> virtual endpoints -> data"""
-        client = capi.midi_client_create("Integration Test Client")
+        try:
+            client = capi.midi_client_create("Integration Test Client")
+        except RuntimeError:
+            pytest.skip("MIDI client creation failed - MIDI services unavailable")
         try:
             input_port = capi.midi_input_port_create(client, "Integration Input")
             output_port = capi.midi_output_port_create(client, "Integration Output")

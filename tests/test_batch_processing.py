@@ -148,7 +148,7 @@ def analyze_audio(path):
 @pytest.fixture
 def sample_audio_file():
     """Path to sample audio file for testing."""
-    return Path(__file__).parent / "amen.wav"
+    return Path(__file__).parent / "data" / "wav" / "amen.wav"
 
 
 @pytest.fixture

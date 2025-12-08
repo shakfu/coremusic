@@ -17,10 +17,10 @@ Example:
     >>> print(f"Key: {key} {mode}")
 """
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING, Union
-import logging
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 # Type checking imports
 if TYPE_CHECKING:
@@ -46,6 +46,9 @@ except ImportError:
     fftfreq = None
     NUMPY_AVAILABLE = False
     SCIPY_AVAILABLE = False
+
+# Import base class
+from ._base import AudioFileLoaderMixin
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -95,7 +98,7 @@ class PitchInfo:
 # ============================================================================
 
 
-class AudioAnalyzer:
+class AudioAnalyzer(AudioFileLoaderMixin):
     """High-level audio analysis and feature extraction.
 
     Provides various audio analysis methods including beat detection,
@@ -137,39 +140,29 @@ class AudioAnalyzer:
         Raises:
             ImportError: If NumPy/SciPy are not available
         """
+        self._init_audio_loader(audio_file)
+
+    def _check_dependencies(self) -> None:
+        """Check that NumPy and SciPy are available."""
         if not NUMPY_AVAILABLE:
             raise ImportError(
                 "NumPy is required for audio analysis. Install with: pip install numpy"
             )
-
         if not SCIPY_AVAILABLE:
             raise ImportError(
                 "SciPy is required for audio analysis. Install with: pip install scipy"
             )
-
-        self.audio_file = Path(audio_file)
-        self._audio_data: Optional[np.ndarray] = None
-        self._sample_rate: Optional[float] = None
 
     def _load_audio(self) -> Tuple["NDArray", float]:
         """Load audio file if not already loaded.
 
         Returns:
             Tuple of (audio_data, sample_rate)
+
+        Note:
+            Converts stereo audio to mono automatically.
         """
-        if self._audio_data is None:
-            import coremusic as cm
-
-            # Load audio file
-            with cm.AudioFile(str(self.audio_file)) as af:
-                self._audio_data = af.read_as_numpy()  # type: ignore[attr-defined]
-                self._sample_rate = af.format.sample_rate
-
-                # Convert to mono if stereo
-                if len(self._audio_data.shape) > 1 and self._audio_data.shape[1] > 1:
-                    self._audio_data = np.mean(self._audio_data, axis=1)
-
-        return self._audio_data, self._sample_rate  # type: ignore[return-value]
+        return self._load_audio_mono()
 
     # ========================================================================
     # Spectral Analysis

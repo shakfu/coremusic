@@ -34,26 +34,18 @@ Example:
     ```
 """
 
-import multiprocessing as mp
 import concurrent.futures
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-from typing import (
-    List,
-    Any,
-    Callable,
-    Optional,
-    Union,
-    Tuple,
-    TypeVar,
-    Generic,
-    Iterable,
-)
-from dataclasses import dataclass, field
-from pathlib import Path
-from enum import Enum
+import logging
+import multiprocessing as mp
 import time
 import traceback
-import logging
+from concurrent.futures import (ProcessPoolExecutor, ThreadPoolExecutor,
+                                as_completed)
+from dataclasses import dataclass, field
+from enum import Enum
+from pathlib import Path
+from typing import (Any, Callable, Generic, Iterable, List, Optional, Tuple,
+                    TypeVar, Union)
 
 logger = logging.getLogger(__name__)
 

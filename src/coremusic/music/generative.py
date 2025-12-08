@@ -27,15 +27,14 @@ Example:
     >>> events = euclid.generate(cycles=4)
 """
 
+import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List, Optional, Tuple, Dict, Union, Any
-import random
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from .theory import Note, Chord, Scale
 from ..midi.utilities import MIDIEvent, MIDIStatus
-
+from .theory import Chord, Note, Scale
 
 # ============================================================================
 # Base Classes

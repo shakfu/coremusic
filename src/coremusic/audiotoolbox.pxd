@@ -1,9 +1,9 @@
 # audiotoolbox.pxd
 # AudioToolbox framework declarations for coremusic
 
-from .corefoundation cimport *
-from .coreaudiotypes cimport *
 from .coreaudio cimport *
+from .coreaudiotypes cimport *
+from .corefoundation cimport *
 
 # -----------------------------------------------------------------------------
 

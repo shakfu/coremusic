@@ -4,15 +4,16 @@ This module provides Pythonic, object-oriented wrappers around the CoreAudio
 functional API with automatic resource management and context manager support.
 """
 
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union, Type
 from pathlib import Path
 from types import TracebackType
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, Union
+
 from . import capi
 
 # NumPy types (conditional)
 try:
-    from numpy.typing import NDArray
     import numpy as np
+    from numpy.typing import NDArray
 except ImportError:
     NDArray = Any  # type: ignore
     np = None  # type: ignore

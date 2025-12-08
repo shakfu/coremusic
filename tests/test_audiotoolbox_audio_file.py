@@ -10,13 +10,6 @@ import coremusic.capi as capi
 class TestAudioFileOperations:
     """Test audio file operations"""
 
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
 
     def test_audio_file_open_close(self, amen_wav_path):
         """Test opening and closing audio files"""
@@ -94,13 +87,6 @@ class TestAudioFileOperations:
 class TestAudioPlayerIntegration:
     """Test integrated audio player functionality"""
 
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
 
     def test_audio_file_loading_and_analysis(self, amen_wav_path):
         """Test loading and analyzing audio file with both Python and CoreAudio"""
@@ -225,11 +211,9 @@ class TestErrorHandling:
 class TestPerformance:
     """Test performance characteristics"""
 
-    def test_audio_file_loading_performance(self):
+    def test_audio_file_loading_performance(self, amen_wav_path):
         """Test that audio file loading is reasonably fast"""
-        amen_path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(amen_path):
-            pytest.skip(f"Test audio file not found: {amen_path}")
+        amen_path = amen_wav_path
         start_time = time.time()
         with wave.open(amen_path, "rb") as wav:
             audio_data = wav.readframes(wav.getnframes())

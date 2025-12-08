@@ -17,10 +17,10 @@ Example:
     >>> timeline.play()
 """
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -60,19 +60,15 @@ class AudioUnitPlugin:
             return
 
         try:
-            from coremusic.capi import (
-                fourchar_to_int,
-                audio_component_find_next,
-                audio_component_instance_new,
-                audio_unit_initialize,
-                audio_unit_set_property,
-                get_audio_unit_property_stream_format,
-                get_audio_unit_scope_output,
-                get_audio_unit_scope_input,
-                get_linear_pcm_format_flag_is_signed_integer,
-                get_linear_pcm_format_flag_is_packed,
-            )
             import struct
+
+            from coremusic.capi import (
+                audio_component_find_next, audio_component_instance_new,
+                audio_unit_initialize, audio_unit_set_property,
+                fourchar_to_int, get_audio_unit_property_stream_format,
+                get_audio_unit_scope_input, get_audio_unit_scope_output,
+                get_linear_pcm_format_flag_is_packed,
+                get_linear_pcm_format_flag_is_signed_integer)
 
             # Determine component type
             if self.plugin_type == "instrument":
@@ -149,8 +145,9 @@ class AudioUnitPlugin:
             return
 
         try:
-            from coremusic.capi import audio_unit_set_property
             import struct
+
+            from coremusic.capi import audio_unit_set_property
 
             # Create MIDI packet (status, note, velocity)
             status = (0x90 if note_on else 0x80) | (channel & 0x0F)
@@ -199,10 +196,8 @@ class AudioUnitPlugin:
         """Clean up the AudioUnit."""
         if self._initialized and self.unit_id is not None:
             try:
-                from coremusic.capi import (
-                    audio_unit_uninitialize,
-                    audio_component_instance_dispose
-                )
+                from coremusic.capi import (audio_component_instance_dispose,
+                                            audio_unit_uninitialize)
                 audio_unit_uninitialize(self.unit_id)
                 audio_component_instance_dispose(self.unit_id)
             except Exception as e:

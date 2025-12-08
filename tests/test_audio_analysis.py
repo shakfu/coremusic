@@ -2,6 +2,7 @@
 """Tests for audio analysis module."""
 
 import pytest
+from conftest import AMEN_WAV_PATH
 import coremusic as cm
 from coremusic.audio.analysis import (
     AudioAnalyzer,
@@ -30,7 +31,7 @@ if NUMPY_AVAILABLE:
 @pytest.fixture
 def test_audio_file():
     """Path to test audio file."""
-    return "tests/amen.wav"
+    return AMEN_WAV_PATH
 
 
 @pytest.fixture
@@ -94,7 +95,7 @@ class TestAudioAnalyzer:
         monkeypatch.setattr(analysis_module, "NUMPY_AVAILABLE", False)
 
         with pytest.raises(ImportError, match="NumPy is required"):
-            AudioAnalyzer("tests/amen.wav")
+            AudioAnalyzer(AMEN_WAV_PATH)
 
     def test_load_audio(self, analyzer):
         """Test loading audio file."""

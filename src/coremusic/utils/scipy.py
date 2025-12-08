@@ -31,7 +31,7 @@ Example:
     ```
 """
 
-from typing import Optional, Tuple, Union, Literal, Any
+from typing import Any, Literal, Optional, Tuple, Union
 
 # Check for NumPy availability
 try:
@@ -46,8 +46,8 @@ except ImportError:
 
 # Check for SciPy availability
 try:
-    import scipy.signal
     import scipy.fft
+    import scipy.signal
 
     SCIPY_AVAILABLE = True
 except ImportError:

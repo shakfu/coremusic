@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import pytest
+from conftest import AMEN_WAV_PATH
 
 try:
     import numpy as np
@@ -44,15 +45,15 @@ class TestWaveformPlotter:
 
     def test_create_plotter(self):
         """Test creating WaveformPlotter."""
-        plotter = WaveformPlotter("tests/amen.wav")
+        plotter = WaveformPlotter(AMEN_WAV_PATH)
 
-        assert plotter.audio_file == Path("tests/amen.wav")
+        assert plotter.audio_file == Path(AMEN_WAV_PATH)
         assert plotter._audio_data is None
         assert plotter._sample_rate is None
 
     def test_load_audio(self):
         """Test audio loading."""
-        plotter = WaveformPlotter("tests/amen.wav")
+        plotter = WaveformPlotter(AMEN_WAV_PATH)
         data, sr = plotter._load_audio()
 
         assert isinstance(data, np.ndarray)
@@ -66,7 +67,7 @@ class TestWaveformPlotter:
 
     def test_plot_basic(self):
         """Test basic waveform plotting."""
-        plotter = WaveformPlotter("tests/amen.wav")
+        plotter = WaveformPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot()
 
         assert fig is not None
@@ -75,7 +76,7 @@ class TestWaveformPlotter:
 
     def test_plot_with_rms(self):
         """Test waveform plotting with RMS envelope."""
-        plotter = WaveformPlotter("tests/amen.wav")
+        plotter = WaveformPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot(show_rms=True, rms_window=0.05)
 
         assert fig is not None
@@ -84,7 +85,7 @@ class TestWaveformPlotter:
 
     def test_plot_with_peaks(self):
         """Test waveform plotting with peak envelope."""
-        plotter = WaveformPlotter("tests/amen.wav")
+        plotter = WaveformPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot(show_peaks=True, peak_window=0.03)
 
         assert fig is not None
@@ -93,7 +94,7 @@ class TestWaveformPlotter:
 
     def test_plot_with_rms_and_peaks(self):
         """Test waveform plotting with both envelopes."""
-        plotter = WaveformPlotter("tests/amen.wav")
+        plotter = WaveformPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot(show_rms=True, show_peaks=True)
 
         assert fig is not None
@@ -102,7 +103,7 @@ class TestWaveformPlotter:
 
     def test_plot_time_range(self):
         """Test plotting specific time range."""
-        plotter = WaveformPlotter("tests/amen.wav")
+        plotter = WaveformPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot(time_range=(0.5, 1.5))
 
         assert fig is not None
@@ -111,7 +112,7 @@ class TestWaveformPlotter:
 
     def test_plot_custom_figsize(self):
         """Test plotting with custom figure size."""
-        plotter = WaveformPlotter("tests/amen.wav")
+        plotter = WaveformPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot(figsize=(10, 3))
 
         assert fig is not None
@@ -122,7 +123,7 @@ class TestWaveformPlotter:
 
     def test_plot_custom_title(self):
         """Test plotting with custom title."""
-        plotter = WaveformPlotter("tests/amen.wav")
+        plotter = WaveformPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot(title="My Custom Waveform")
 
         assert fig is not None
@@ -132,7 +133,7 @@ class TestWaveformPlotter:
 
     def test_calculate_rms_envelope(self):
         """Test RMS envelope calculation."""
-        plotter = WaveformPlotter("tests/amen.wav")
+        plotter = WaveformPlotter(AMEN_WAV_PATH)
         data, _ = plotter._load_audio()
 
         if data.ndim > 1:
@@ -149,7 +150,7 @@ class TestWaveformPlotter:
 
     def test_calculate_peak_envelope(self):
         """Test peak envelope calculation."""
-        plotter = WaveformPlotter("tests/amen.wav")
+        plotter = WaveformPlotter(AMEN_WAV_PATH)
         data, _ = plotter._load_audio()
 
         if data.ndim > 1:
@@ -167,7 +168,7 @@ class TestWaveformPlotter:
 
     def test_save(self, tmp_path):
         """Test saving waveform plot to file."""
-        plotter = WaveformPlotter("tests/amen.wav")
+        plotter = WaveformPlotter(AMEN_WAV_PATH)
         output_path = tmp_path / "waveform.png"
 
         plotter.save(str(output_path), show_rms=True, dpi=100)
@@ -181,15 +182,15 @@ class TestSpectrogramPlotter:
 
     def test_create_plotter(self):
         """Test creating SpectrogramPlotter."""
-        plotter = SpectrogramPlotter("tests/amen.wav")
+        plotter = SpectrogramPlotter(AMEN_WAV_PATH)
 
-        assert plotter.audio_file == Path("tests/amen.wav")
+        assert plotter.audio_file == Path(AMEN_WAV_PATH)
         assert plotter._audio_data is None
         assert plotter._sample_rate is None
 
     def test_load_audio(self):
         """Test audio loading."""
-        plotter = SpectrogramPlotter("tests/amen.wav")
+        plotter = SpectrogramPlotter(AMEN_WAV_PATH)
         data, sr = plotter._load_audio()
 
         assert isinstance(data, np.ndarray)
@@ -198,7 +199,7 @@ class TestSpectrogramPlotter:
 
     def test_plot_basic(self):
         """Test basic spectrogram plotting."""
-        plotter = SpectrogramPlotter("tests/amen.wav")
+        plotter = SpectrogramPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot()
 
         assert fig is not None
@@ -207,7 +208,7 @@ class TestSpectrogramPlotter:
 
     def test_plot_custom_window_size(self):
         """Test spectrogram with custom window size."""
-        plotter = SpectrogramPlotter("tests/amen.wav")
+        plotter = SpectrogramPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot(window_size=1024, hop_size=256)
 
         assert fig is not None
@@ -216,7 +217,7 @@ class TestSpectrogramPlotter:
 
     def test_plot_custom_colormap(self):
         """Test spectrogram with different colormaps."""
-        plotter = SpectrogramPlotter("tests/amen.wav")
+        plotter = SpectrogramPlotter(AMEN_WAV_PATH)
 
         for cmap in ["viridis", "magma", "plasma", "inferno"]:
             fig, ax = plotter.plot(cmap=cmap)
@@ -226,7 +227,7 @@ class TestSpectrogramPlotter:
 
     def test_plot_db_range(self):
         """Test spectrogram with custom dB range."""
-        plotter = SpectrogramPlotter("tests/amen.wav")
+        plotter = SpectrogramPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot(min_db=-60, max_db=0)
 
         assert fig is not None
@@ -235,7 +236,7 @@ class TestSpectrogramPlotter:
 
     def test_plot_custom_window_type(self):
         """Test spectrogram with different window functions."""
-        plotter = SpectrogramPlotter("tests/amen.wav")
+        plotter = SpectrogramPlotter(AMEN_WAV_PATH)
 
         for window in ["hann", "hamming", "blackman"]:
             fig, ax = plotter.plot(window=window)
@@ -245,7 +246,7 @@ class TestSpectrogramPlotter:
 
     def test_plot_custom_title(self):
         """Test spectrogram with custom title."""
-        plotter = SpectrogramPlotter("tests/amen.wav")
+        plotter = SpectrogramPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot(title="My Custom Spectrogram")
 
         assert fig is not None
@@ -255,7 +256,7 @@ class TestSpectrogramPlotter:
 
     def test_compute_spectrogram(self):
         """Test spectrogram computation."""
-        plotter = SpectrogramPlotter("tests/amen.wav")
+        plotter = SpectrogramPlotter(AMEN_WAV_PATH)
         data, sr = plotter._load_audio()
 
         if data.ndim > 1:
@@ -277,7 +278,7 @@ class TestSpectrogramPlotter:
 
     def test_save(self, tmp_path):
         """Test saving spectrogram plot to file."""
-        plotter = SpectrogramPlotter("tests/amen.wav")
+        plotter = SpectrogramPlotter(AMEN_WAV_PATH)
         output_path = tmp_path / "spectrogram.png"
 
         plotter.save(str(output_path), dpi=100)
@@ -291,15 +292,15 @@ class TestFrequencySpectrumPlotter:
 
     def test_create_plotter(self):
         """Test creating FrequencySpectrumPlotter."""
-        plotter = FrequencySpectrumPlotter("tests/amen.wav")
+        plotter = FrequencySpectrumPlotter(AMEN_WAV_PATH)
 
-        assert plotter.audio_file == Path("tests/amen.wav")
+        assert plotter.audio_file == Path(AMEN_WAV_PATH)
         assert plotter._audio_data is None
         assert plotter._sample_rate is None
 
     def test_load_audio(self):
         """Test audio loading."""
-        plotter = FrequencySpectrumPlotter("tests/amen.wav")
+        plotter = FrequencySpectrumPlotter(AMEN_WAV_PATH)
         data, sr = plotter._load_audio()
 
         assert isinstance(data, np.ndarray)
@@ -308,7 +309,7 @@ class TestFrequencySpectrumPlotter:
 
     def test_plot_basic(self):
         """Test basic frequency spectrum plotting."""
-        plotter = FrequencySpectrumPlotter("tests/amen.wav")
+        plotter = FrequencySpectrumPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot()
 
         assert fig is not None
@@ -317,7 +318,7 @@ class TestFrequencySpectrumPlotter:
 
     def test_plot_at_time(self):
         """Test plotting spectrum at specific time."""
-        plotter = FrequencySpectrumPlotter("tests/amen.wav")
+        plotter = FrequencySpectrumPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot(time=1.0)
 
         assert fig is not None
@@ -326,7 +327,7 @@ class TestFrequencySpectrumPlotter:
 
     def test_plot_custom_window_size(self):
         """Test spectrum with custom window size."""
-        plotter = FrequencySpectrumPlotter("tests/amen.wav")
+        plotter = FrequencySpectrumPlotter(AMEN_WAV_PATH)
 
         for window_size in [2048, 4096, 8192]:
             fig, ax = plotter.plot(window_size=window_size)
@@ -336,7 +337,7 @@ class TestFrequencySpectrumPlotter:
 
     def test_plot_frequency_range(self):
         """Test spectrum with limited frequency range."""
-        plotter = FrequencySpectrumPlotter("tests/amen.wav")
+        plotter = FrequencySpectrumPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot(min_freq=100, max_freq=10000)
 
         assert fig is not None
@@ -345,7 +346,7 @@ class TestFrequencySpectrumPlotter:
 
     def test_plot_custom_window_type(self):
         """Test spectrum with different window functions."""
-        plotter = FrequencySpectrumPlotter("tests/amen.wav")
+        plotter = FrequencySpectrumPlotter(AMEN_WAV_PATH)
 
         for window in ["hann", "hamming", "blackman"]:
             fig, ax = plotter.plot(window=window)
@@ -355,7 +356,7 @@ class TestFrequencySpectrumPlotter:
 
     def test_plot_custom_title(self):
         """Test spectrum with custom title."""
-        plotter = FrequencySpectrumPlotter("tests/amen.wav")
+        plotter = FrequencySpectrumPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot(title="My Custom Spectrum")
 
         assert fig is not None
@@ -365,7 +366,7 @@ class TestFrequencySpectrumPlotter:
 
     def test_plot_average_entire_file(self):
         """Test average spectrum over entire file."""
-        plotter = FrequencySpectrumPlotter("tests/amen.wav")
+        plotter = FrequencySpectrumPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot_average()
 
         assert fig is not None
@@ -374,7 +375,7 @@ class TestFrequencySpectrumPlotter:
 
     def test_plot_average_time_range(self):
         """Test average spectrum over time range."""
-        plotter = FrequencySpectrumPlotter("tests/amen.wav")
+        plotter = FrequencySpectrumPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot_average(time_range=(0.5, 1.5))
 
         assert fig is not None
@@ -383,7 +384,7 @@ class TestFrequencySpectrumPlotter:
 
     def test_plot_average_custom_params(self):
         """Test average spectrum with custom parameters."""
-        plotter = FrequencySpectrumPlotter("tests/amen.wav")
+        plotter = FrequencySpectrumPlotter(AMEN_WAV_PATH)
         fig, ax = plotter.plot_average(
             window_size=2048, hop_size=512, min_freq=50, max_freq=8000
         )
@@ -394,7 +395,7 @@ class TestFrequencySpectrumPlotter:
 
     def test_save(self, tmp_path):
         """Test saving frequency spectrum plot to file."""
-        plotter = FrequencySpectrumPlotter("tests/amen.wav")
+        plotter = FrequencySpectrumPlotter(AMEN_WAV_PATH)
         output_path = tmp_path / "spectrum.png"
 
         plotter.save(str(output_path), time=0.5, dpi=100)
@@ -408,7 +409,7 @@ class TestIntegration:
 
     def test_visualize_complete_workflow(self, tmp_path):
         """Test complete visualization workflow."""
-        audio_file = "tests/amen.wav"
+        audio_file = AMEN_WAV_PATH
 
         # 1. Waveform
         waveform = WaveformPlotter(audio_file)
@@ -443,7 +444,7 @@ class TestIntegration:
 
     def test_plot_different_time_ranges(self):
         """Test plotting different time ranges from same file."""
-        plotter = WaveformPlotter("tests/amen.wav")
+        plotter = WaveformPlotter(AMEN_WAV_PATH)
 
         # Plot first second
         fig1, _ = plotter.plot(time_range=(0, 1))
@@ -462,7 +463,7 @@ class TestIntegration:
 
     def test_compare_window_functions(self):
         """Test comparing different window functions."""
-        plotter = SpectrogramPlotter("tests/amen.wav")
+        plotter = SpectrogramPlotter(AMEN_WAV_PATH)
 
         for window in ["hann", "hamming", "blackman"]:
             fig, ax = plotter.plot(window=window, title=f"Window: {window}")

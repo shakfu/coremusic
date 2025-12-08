@@ -25,10 +25,10 @@ Example:
     processor.stop()
 """
 
-import threading
-from typing import Callable, Optional, List, Tuple, Dict, Any, TYPE_CHECKING
-from dataclasses import dataclass, field
 import logging
+import threading
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
 from .. import capi
 from ..objects import AudioDevice, AudioDeviceManager

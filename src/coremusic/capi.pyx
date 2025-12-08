@@ -1,20 +1,20 @@
 cimport cython
-from . cimport corefoundation as cf
-from . cimport coreaudiotypes as ct
+from libc.math cimport fabs, log10, sqrt
+from libc.stdint cimport uintptr_t
+from libc.stdlib cimport free, malloc
+from libc.string cimport memcpy, memset
+
 from . cimport audiotoolbox as at
 from . cimport coreaudio as ca
+from . cimport coreaudiotypes as ct
+from . cimport corefoundation as cf
 from . cimport coremidi as cm
 
-from libc.stdlib cimport malloc, free
-from libc.string cimport memcpy, memset
-from libc.stdint cimport uintptr_t
-from libc.math cimport fabs, sqrt, log10
-
 # Import os_status for error translation
-from . import os_status
 
 # Import logging for structured error logging
-from . import log
+from . import log, os_status
+
 logger = log.config(__name__)
 
 # Forward declare Link module classes for integration

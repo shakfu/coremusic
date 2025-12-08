@@ -4,9 +4,8 @@ This module provides human-readable translations of CoreAudio OSStatus error cod
 and helpful recovery suggestions for common error scenarios.
 """
 
-from typing import Optional, Tuple, Callable, TypeVar, Any
 from functools import wraps
-
+from typing import Any, Callable, Optional, Tuple, TypeVar
 
 # CoreAudio error code mappings
 # FourCC codes are converted to integers using: ord(a)<<24 | ord(b)<<16 | ord(c)<<8 | ord(d)

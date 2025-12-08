@@ -12,14 +12,6 @@ from coremusic.audio.analysis import AudioAnalyzer
 class TestAudioAnalyzer:
     """Test AudioAnalyzer utilities"""
 
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
-
     @pytest.mark.skipif(not cm.NUMPY_AVAILABLE, reason="NumPy not available")
     def test_detect_silence(self, amen_wav_path):
         """Test silence detection"""
@@ -101,14 +93,6 @@ class TestBatchProcessing:
         """Create a temporary directory for test files"""
         with tempfile.TemporaryDirectory() as tmpdir:
             yield tmpdir
-
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
 
     def test_convert_audio_file_stereo_to_mono(self, amen_wav_path, temp_dir):
         """Test stereo to mono conversion"""
@@ -254,14 +238,6 @@ class TestAudioFileOperations:
         with tempfile.TemporaryDirectory() as tmpdir:
             yield tmpdir
 
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
-
     @pytest.mark.skip(
         reason="trim_audio requires ExtendedAudioFile.write() support - TODO"
     )
@@ -303,14 +279,6 @@ class TestAudioFileOperations:
 
 class TestUtilitiesIntegration:
     """Integration tests for utilities"""
-
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
 
     @pytest.fixture
     def temp_dir(self):
@@ -544,10 +512,10 @@ class TestAudioUnitDiscovery:
 class TestParseAudioStreamBasicDescription:
     """Tests for parse_audio_stream_basic_description utility"""
 
-    def test_parse_audio_stream_basic_description(self):
+    def test_parse_audio_stream_basic_description(self, amen_wav_path):
         """Test parsing AudioStreamBasicDescription from audio file"""
         # Open test file
-        file_id = capi.audio_file_open_url("tests/amen.wav")
+        file_id = capi.audio_file_open_url(amen_wav_path)
 
         try:
             # Get format data
@@ -592,10 +560,10 @@ class TestParseAudioStreamBasicDescription:
         with pytest.raises(ValueError, match="must be exactly 40 bytes"):
             cm.parse_audio_stream_basic_description(b"too short")
 
-    def test_parse_audio_stream_basic_description_matches_oo_api(self):
+    def test_parse_audio_stream_basic_description_matches_oo_api(self, amen_wav_path):
         """Test that parsed ASBD matches object-oriented API"""
         # Get format using functional API
-        file_id = capi.audio_file_open_url("tests/amen.wav")
+        file_id = capi.audio_file_open_url(amen_wav_path)
         format_data = capi.audio_file_get_property(
             file_id, capi.get_audio_file_property_data_format()
         )
@@ -603,7 +571,7 @@ class TestParseAudioStreamBasicDescription:
         capi.audio_file_close(file_id)
 
         # Get format using OO API
-        with cm.AudioFile("tests/amen.wav") as audio:
+        with cm.AudioFile(amen_wav_path) as audio:
             fmt = audio.format
 
             # Compare values

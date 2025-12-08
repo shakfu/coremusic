@@ -7,61 +7,20 @@ This package contains MIDI-related modules:
 - transform: MIDI transformation pipeline (Transpose, Quantize, Humanize, etc.)
 """
 
-# Import link module
-from . import link
-
 # Import transform module
-from . import transform
-
-# Import utilities classes
-from .utilities import (
-    MIDIEvent,
-    MIDIFileFormat,
-    MIDIRouter,
-    MIDISequence,
-    MIDIStatus,
-    MIDITrack,
-    Route,
-    channel_remap_transform,
-    quantize_transform,
-    transpose_transform,
-    velocity_curve_transform,
-    velocity_scale_transform,
-)
-
+# Import link module
+from . import link, transform
 # Import transform classes
-from .transform import (
-    # Base classes
-    MIDITransformer,
-    Pipeline,
-    # Pitch transformers
-    Transpose,
-    Invert,
-    Harmonize,
-    # Time transformers
-    Quantize,
-    TimeStretch,
-    TimeShift,
-    Reverse,
-    # Velocity transformers
-    VelocityScale,
-    VelocityCurve,
-    Humanize,
-    # Filter transformers
-    NoteFilter,
-    EventTypeFilter,
-    # Track transformers
-    ChannelRemap,
-    TrackMerge,
-    # Arpeggio
-    Arpeggiate,
-    # Convenience functions
-    transpose,
-    quantize,
-    humanize,
-    reverse,
-    scale_velocity,
-)
+from .transform import (  # Base classes; Pitch transformers; Time transformers; Velocity transformers; Filter transformers; Track transformers; Arpeggio; Convenience functions
+    Arpeggiate, ChannelRemap, EventTypeFilter, Harmonize, Humanize, Invert,
+    MIDITransformer, NoteFilter, Pipeline, Quantize, Reverse, TimeShift,
+    TimeStretch, TrackMerge, Transpose, VelocityCurve, VelocityScale, humanize,
+    quantize, reverse, scale_velocity, transpose)
+# Import utilities classes
+from .utilities import (MIDIEvent, MIDIFileFormat, MIDIRouter, MIDISequence,
+                        MIDIStatus, MIDITrack, Route, channel_remap_transform,
+                        quantize_transform, transpose_transform,
+                        velocity_curve_transform, velocity_scale_transform)
 
 __all__ = [
     # Submodules

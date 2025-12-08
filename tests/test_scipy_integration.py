@@ -85,27 +85,6 @@ class TestFilterDesign:
 class TestFilterApplication:
     """Test filter application functions"""
 
-    @pytest.fixture
-    def test_signal_mono(self):
-        """Generate test mono signal"""
-        sample_rate = 44100
-        duration = 0.1  # 100ms
-        t = np.linspace(0, duration, int(sample_rate * duration))
-        # Signal with 440Hz and 2000Hz components
-        signal = np.sin(2 * np.pi * 440 * t) + 0.5 * np.sin(2 * np.pi * 2000 * t)
-        return signal, sample_rate
-
-    @pytest.fixture
-    def test_signal_stereo(self):
-        """Generate test stereo signal"""
-        sample_rate = 44100
-        duration = 0.1
-        t = np.linspace(0, duration, int(sample_rate * duration))
-        left = np.sin(2 * np.pi * 440 * t)
-        right = np.sin(2 * np.pi * 880 * t)
-        signal = np.column_stack([left, right])
-        return signal, sample_rate
-
     def test_apply_lowpass_filter_mono(self, test_signal_mono):
         """Test lowpass filter on mono signal"""
         signal, sample_rate = test_signal_mono
@@ -173,26 +152,6 @@ class TestFilterApplication:
 
 class TestScipyFilterConvenience:
     """Test convenience wrapper for scipy.signal filter functions"""
-
-    @pytest.fixture
-    def test_signal_mono(self):
-        """Generate mono test signal"""
-        sample_rate = 44100
-        duration = 0.1
-        t = np.linspace(0, duration, int(sample_rate * duration))
-        signal = np.sin(2 * np.pi * 440 * t) + 0.5 * np.sin(2 * np.pi * 2000 * t)
-        return signal, sample_rate
-
-    @pytest.fixture
-    def test_signal_stereo(self):
-        """Generate stereo test signal"""
-        sample_rate = 44100
-        duration = 0.1
-        t = np.linspace(0, duration, int(sample_rate * duration))
-        left = np.sin(2 * np.pi * 440 * t)
-        right = np.sin(2 * np.pi * 880 * t)
-        signal = np.column_stack([left, right])
-        return signal, sample_rate
 
     def test_apply_scipy_filter_butter(self, test_signal_mono):
         """Test applying scipy.signal.butter output directly"""
@@ -297,15 +256,6 @@ class TestScipyFilterConvenience:
 class TestResampling:
     """Test resampling functions"""
 
-    @pytest.fixture
-    def test_audio(self):
-        """Generate test audio"""
-        sample_rate = 44100
-        duration = 0.1
-        t = np.linspace(0, duration, int(sample_rate * duration))
-        audio = np.sin(2 * np.pi * 440 * t)
-        return audio, sample_rate
-
     def test_resample_audio_upsample(self, test_audio):
         """Test upsampling (44.1kHz -> 48kHz)"""
         audio, original_rate = test_audio
@@ -373,16 +323,6 @@ class TestResampling:
 class TestSpectralAnalysis:
     """Test spectral analysis functions"""
 
-    @pytest.fixture
-    def test_signal(self):
-        """Generate test signal with known frequency"""
-        sample_rate = 44100
-        duration = 0.5
-        freq = 440  # A4 note
-        t = np.linspace(0, duration, int(sample_rate * duration))
-        signal = np.sin(2 * np.pi * freq * t)
-        return signal, sample_rate, freq
-
     def test_compute_spectrum(self, test_signal):
         """Test spectrum computation"""
         signal, sample_rate, freq = test_signal
@@ -438,15 +378,6 @@ class TestSpectralAnalysis:
 
 class TestAudioSignalProcessor:
     """Test AudioSignalProcessor class"""
-
-    @pytest.fixture
-    def test_audio(self):
-        """Generate test audio"""
-        sample_rate = 44100
-        duration = 0.2
-        t = np.linspace(0, duration, int(sample_rate * duration))
-        audio = np.sin(2 * np.pi * 440 * t) + 0.5 * np.sin(2 * np.pi * 2000 * t)
-        return audio, sample_rate
 
     def test_processor_creation(self, test_audio):
         """Test AudioSignalProcessor creation"""
@@ -572,13 +503,6 @@ class TestAudioSignalProcessor:
 class TestIntegrationWithAudioFile:
     """Test integration with AudioFile class"""
 
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
 
     def test_read_and_filter_real_audio(self, amen_wav_path):
         """Test reading real audio and applying filter"""

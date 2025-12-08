@@ -23,10 +23,11 @@ Example:
     >>> transformed.save("output.mid")
 """
 
+import random
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import Callable, Dict, List, Optional, Set, Tuple, Union, TYPE_CHECKING
-import random
+from typing import (TYPE_CHECKING, Callable, Dict, List, Optional, Set, Tuple,
+                    Union)
 
 from .utilities import MIDIEvent, MIDISequence, MIDIStatus
 

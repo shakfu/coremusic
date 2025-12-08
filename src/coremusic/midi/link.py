@@ -22,10 +22,10 @@ Example:
         clock.stop()
 """
 
-import time
 import threading
-from typing import Optional, List, TYPE_CHECKING
+import time
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, List, Optional
 
 from .. import capi
 

@@ -13,6 +13,11 @@ LINK_INCLUDES = [
     "thirdparty/link/modules/asio-standalone/asio/include",
 ]
 
+# KANN neural network library paths
+KANN_INCLUDES = [
+    "thirdparty/kann",
+]
+
 os.environ['LDFLAGS'] = " ".join([
         "-framework CoreServices",
         "-framework CoreFoundation",
@@ -49,6 +54,18 @@ extensions = [
         py_limited_api=LIMITED_API,
         language="c++",
         extra_compile_args=["-std=c++11"],
+    ),
+    Extension(
+        "coremusic.kann",
+        sources=[
+            "src/coremusic/kann.pyx",
+            "thirdparty/kann/kautodiff.c",
+            "thirdparty/kann/kann.c",
+            "thirdparty/kann/kann_extra/kann_data.c",
+        ],
+        include_dirs=KANN_INCLUDES,
+        define_macros=DEFINE_MACROS,
+        py_limited_api=LIMITED_API,
     ),
 ]
 

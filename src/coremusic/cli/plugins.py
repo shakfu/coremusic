@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import argparse
 
+from ._formatters import output_json, output_table
+from ._mappings import PLUGIN_TYPES, get_plugin_type, get_plugin_type_display
 from ._utils import EXIT_SUCCESS, CLIError
-from ._mappings import get_plugin_type, get_plugin_type_display, PLUGIN_TYPES
-from ._formatters import output_table, output_json
-
 
 # Parameter unit display names (kAudioUnitParameterUnit_* values)
 # From constants.py / audiotoolbox.pxd

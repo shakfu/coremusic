@@ -29,16 +29,11 @@ Example usage:
 """
 
 import asyncio
-from typing import Optional, Union, AsyncIterator, Any, Tuple
 from pathlib import Path
+from typing import Any, AsyncIterator, Optional, Tuple, Union
 
-from ..objects import (
-    AudioFormat,
-    AudioFile,
-    AudioQueue,
-    AudioBuffer,
-    NUMPY_AVAILABLE,
-)
+from ..objects import (NUMPY_AVAILABLE, AudioBuffer, AudioFile, AudioFormat,
+                       AudioQueue)
 
 if NUMPY_AVAILABLE:
     from numpy.typing import NDArray

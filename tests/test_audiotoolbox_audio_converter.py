@@ -10,59 +10,6 @@ import coremusic.capi as capi
 class TestAudioConverterAPI:
     """Test AudioConverter functional API"""
 
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
-
-    @pytest.fixture
-    def source_format(self):
-        """Fixture providing source audio format (44.1kHz, stereo, 16-bit)"""
-        return {
-            "sample_rate": 44100.0,
-            "format_id": capi.get_audio_format_linear_pcm(),
-            "format_flags": 12,
-            "bytes_per_packet": 4,
-            "frames_per_packet": 1,
-            "bytes_per_frame": 4,
-            "channels_per_frame": 2,
-            "bits_per_channel": 16,
-            "reserved": 0,
-        }
-
-    @pytest.fixture
-    def dest_format_mono(self):
-        """Fixture providing destination format (44.1kHz, mono, 16-bit)"""
-        return {
-            "sample_rate": 44100.0,
-            "format_id": capi.get_audio_format_linear_pcm(),
-            "format_flags": 12,
-            "bytes_per_packet": 2,
-            "frames_per_packet": 1,
-            "bytes_per_frame": 2,
-            "channels_per_frame": 1,
-            "bits_per_channel": 16,
-            "reserved": 0,
-        }
-
-    @pytest.fixture
-    def dest_format_48k(self):
-        """Fixture providing destination format (48kHz, stereo, 16-bit)"""
-        return {
-            "sample_rate": 48000.0,
-            "format_id": capi.get_audio_format_linear_pcm(),
-            "format_flags": 12,
-            "bytes_per_packet": 4,
-            "frames_per_packet": 1,
-            "bytes_per_frame": 4,
-            "channels_per_frame": 2,
-            "bits_per_channel": 16,
-            "reserved": 0,
-        }
-
     def test_audio_converter_creation(self, source_format, dest_format_mono):
         """Test AudioConverter creation and disposal"""
         converter_id = capi.audio_converter_new(source_format, dest_format_mono)

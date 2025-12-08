@@ -149,17 +149,9 @@ class TestAudioFileNumPy:
     """Tests for AudioFile.read_as_numpy()"""
 
     @pytest.fixture
-    def test_audio_file(self):
+    def test_audio_file(self, amen_wav_path):
         """Fixture providing path to test audio file"""
-        # Get test file path relative to this test file
-        test_dir = os.path.dirname(__file__)
-        audio_file = os.path.join(test_dir, "amen.wav")
-
-        # Skip if test file doesn't exist
-        if not os.path.exists(audio_file):
-            pytest.skip(f"Test audio file not found: {audio_file}")
-
-        return audio_file
+        return amen_wav_path
 
     def test_read_as_numpy_full_file(self, test_audio_file):
         """Test reading entire audio file as NumPy array"""

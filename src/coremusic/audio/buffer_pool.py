@@ -4,8 +4,8 @@ This module provides buffer pooling to reduce memory allocation overhead
 in audio processing applications.
 """
 
-from typing import Dict, List, Optional, Union
 from threading import Lock
+from typing import Dict, List, Optional, Union
 
 
 class BufferPool:

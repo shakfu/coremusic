@@ -9,6 +9,9 @@ headers/
 dist
 *.egg-info
 
+# code analysis
+.pyscn/
+
 # Coverage reports
 htmlcov/
 .coverage

@@ -11,41 +11,6 @@ import coremusic.capi as capi
 class TestExtendedAudioFileAPI:
     """Test ExtendedAudioFile functional API"""
 
-    @pytest.fixture
-    def amen_wav_path(self):
-        """Fixture providing path to amen.wav test file"""
-        path = os.path.join("tests", "amen.wav")
-        if not os.path.exists(path):
-            pytest.skip(f"Test audio file not found: {path}")
-        return path
-
-    @pytest.fixture
-    def temp_audio_file(self):
-        """Fixture providing temporary audio file path"""
-        fd, path = tempfile.mkstemp(suffix=".wav")
-        os.close(fd)
-        yield path
-        if os.path.exists(path):
-            try:
-                os.unlink(path)
-            except:
-                pass
-
-    @pytest.fixture
-    def pcm_format_dict(self):
-        """Fixture providing PCM audio format dictionary"""
-        return {
-            "sample_rate": 44100.0,
-            "format_id": capi.get_audio_format_linear_pcm(),
-            "format_flags": 12,
-            "bytes_per_packet": 4,
-            "frames_per_packet": 1,
-            "bytes_per_frame": 4,
-            "channels_per_frame": 2,
-            "bits_per_channel": 16,
-            "reserved": 0,
-        }
-
     def test_extended_audio_file_open_url(self, amen_wav_path):
         """Test opening an existing audio file"""
         ext_file_id = capi.extended_audio_file_open_url(amen_wav_path)

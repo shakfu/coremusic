@@ -1,5 +1,5 @@
 .PHONY: all sync build test test-all test-clean-install coverage coverage-html clean typecheck docs docs-clean docs-serve docs-pdf  \
-		release check publish lint
+		release check publish lint isort
 
 all: build
 
@@ -32,6 +32,9 @@ coverage-html:
 
 lint:
 	@uv run ruff check --fix src/coremusic
+
+isort:
+	@uv run isort src/coremusic
 
 typecheck:
 	@uv run mypy src/coremusic

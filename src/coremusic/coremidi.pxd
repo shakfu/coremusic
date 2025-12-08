@@ -2,9 +2,11 @@
 # Based on headers/coremidi/MIDIServices.h
 
 from libc.stdint cimport *
-from .corefoundation cimport *
-from .coreaudiotypes cimport *
+
 from .coreaudio cimport *
+from .coreaudiotypes cimport *
+from .corefoundation cimport *
+
 
 # CoreMIDI external declarations
 cdef extern from "CoreMIDI/MIDIServices.h":

@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import argparse
+from typing import Any, Dict
 
+import coremusic.capi as capi
+
+from ._formatters import format_duration, output_json, output_table
 from ._utils import EXIT_SUCCESS, CLIError, require_file
-from ._formatters import output_table, output_json, format_duration
 
 
 def register(subparsers: argparse._SubParsersAction) -> None:
@@ -67,7 +70,6 @@ def register(subparsers: argparse._SubParsersAction) -> None:
 
 def _get_endpoint_name(endpoint_id: int) -> str:
     """Get the display name of a MIDI endpoint."""
-    import coremusic.capi as capi
 
     try:
         # Try kMIDIPropertyDisplayName first
@@ -90,8 +92,6 @@ def _get_endpoint_name(endpoint_id: int) -> str:
 
 def _get_device_info(device_id: int) -> dict:
     """Get detailed information about a MIDI device."""
-    import coremusic.capi as capi
-    from typing import Any, Dict
 
     info: Dict[str, Any] = {"id": device_id}
 
@@ -135,7 +135,6 @@ def _get_device_info(device_id: int) -> dict:
 
 def cmd_devices(args: argparse.Namespace) -> int:
     """List all MIDI devices."""
-    import coremusic.capi as capi
 
     num_devices = capi.midi_get_number_of_devices()
     devices = []
@@ -170,7 +169,6 @@ def cmd_devices(args: argparse.Namespace) -> int:
 
 def cmd_inputs(args: argparse.Namespace) -> int:
     """List MIDI input sources."""
-    import coremusic.capi as capi
 
     num_sources = capi.midi_get_number_of_sources()
     sources = []
@@ -200,7 +198,6 @@ def cmd_inputs(args: argparse.Namespace) -> int:
 
 def cmd_outputs(args: argparse.Namespace) -> int:
     """List MIDI output destinations."""
-    import coremusic.capi as capi
 
     num_dests = capi.midi_get_number_of_destinations()
     destinations = []
@@ -231,7 +228,6 @@ def cmd_outputs(args: argparse.Namespace) -> int:
 def cmd_send(args: argparse.Namespace) -> int:
     """Send MIDI message."""
     import time
-    import coremusic.capi as capi
 
     # Validate inputs
     if args.note is None and args.cc is None and args.program is None:

@@ -12,19 +12,17 @@ Features:
 - AudioStreamBasicDescription parsing
 """
 
-from typing import Optional, List, Tuple, Dict, Any, Callable
-from pathlib import Path
 import glob
+import logging
 import struct
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from ..objects import (NUMPY_AVAILABLE, AudioConverter, AudioFile, AudioFormat,
+                       ExtendedAudioFile)
+from ..utils.batch import batch_process_files, batch_process_parallel
 
-from ..objects import (
-    AudioFile,
-    AudioConverter,
-    AudioFormat,
-    ExtendedAudioFile,
-    NUMPY_AVAILABLE,
-)
+logger = logging.getLogger(__name__)
 
 if NUMPY_AVAILABLE:
     pass
@@ -50,9 +48,6 @@ __all__ = [
     "batch_process_parallel",
     "batch_process_files",
 ]
-
-# Import batch processing utilities for convenience
-from ..utils.batch import batch_process_parallel, batch_process_files
 
 # ============================================================================
 # AudioStreamBasicDescription Parsing
@@ -251,7 +246,7 @@ def batch_convert(
             convert_audio_file(str(input_path), str(output_path), output_format)
             converted_files.append(str(output_path))
         except Exception as e:
-            print(f"Warning: Failed to convert {input_path}: {e}")
+            logger.warning(f"Failed to convert {input_path}: {e}")
             continue
 
     return converted_files

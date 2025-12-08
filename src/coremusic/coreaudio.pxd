@@ -1,5 +1,6 @@
-from .corefoundation cimport *
 from .coreaudiotypes cimport *
+from .corefoundation cimport *
+
 
 cdef extern from "CoreAudio/CoreAudioTypes.h":
 

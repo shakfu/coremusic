@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import argparse
 
-from ._utils import DeviceNotFoundError, EXIT_SUCCESS
-from ._formatters import output_table, output_json
+from ._formatters import output_json, output_table
+from ._utils import EXIT_SUCCESS, DeviceNotFoundError
 
 
 def register(subparsers: argparse._SubParsersAction) -> None:
@@ -72,8 +72,9 @@ def cmd_list(args: argparse.Namespace) -> int:
 
 def cmd_default(args: argparse.Namespace) -> int:
     """Show default audio devices."""
+    from typing import Any, Dict, Optional
+
     import coremusic as cm
-    from typing import Dict, Any, Optional
 
     result: Dict[str, Optional[Dict[str, Any]]] = {}
     show_input = args.input_device

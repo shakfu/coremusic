@@ -6,9 +6,10 @@
 This file declares the C++ Link API from thirdparty/link for use in Cython.
 """
 
+from libc.stdint cimport int64_t, uint64_t
 from libcpp cimport bool as cbool
 from libcpp.string cimport string
-from libc.stdint cimport uint64_t, int64_t
+
 
 # Forward declare std::chrono types we need
 cdef extern from "<chrono>" namespace "std::chrono":
