@@ -5,6 +5,10 @@ __pycache__
 docs/_build
 headers/
 
+src/coremusic/capi.c
+src/coremusic/kann.c
+src/coremusic/link.cpp
+
 .*_cache
 dist
 *.egg-info
