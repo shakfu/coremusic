@@ -1623,6 +1623,261 @@ class TestRelativePitchEncoder:
 
 
 # ============================================================================
+# Phase 4b Tests: ScaleEncoder
+# ============================================================================
+
+
+class TestScaleEncoder:
+    """Tests for ScaleEncoder class."""
+
+    def test_vocab_size_major_scale(self):
+        """Test vocabulary size for major scale."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
+        encoder = ScaleEncoder(scale, octave_range=(3, 6))
+
+        # 7 degrees * 3 octaves + 2 special tokens (REST, OUT_OF_SCALE)
+        assert encoder.vocab_size == 7 * 3 + 2
+        assert encoder.degrees_per_octave == 7
+        assert encoder.num_octaves == 3
+
+    def test_vocab_size_pentatonic_scale(self):
+        """Test vocabulary size for pentatonic scale."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        scale = Scale(Note("C", 4), ScaleType.MAJOR_PENTATONIC)
+        encoder = ScaleEncoder(scale, octave_range=(2, 7))
+
+        # 5 degrees * 5 octaves + 2 special tokens
+        assert encoder.vocab_size == 5 * 5 + 2
+        assert encoder.degrees_per_octave == 5
+
+    def test_encode_scale_notes(self):
+        """Test encoding notes in the scale."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
+        encoder = ScaleEncoder(scale, octave_range=(3, 6))
+
+        # C4 (MIDI 60) should encode to degree 0 in octave 1
+        token = encoder.midi_to_token(60)
+        assert token == 7  # octave_idx=1, degree=0: 1*7 + 0 = 7
+
+        # E4 (MIDI 64) should encode to degree 2 in octave 1
+        token = encoder.midi_to_token(64)
+        assert token == 9  # octave_idx=1, degree=2: 1*7 + 2 = 9
+
+        # G4 (MIDI 67) should encode to degree 4 in octave 1
+        token = encoder.midi_to_token(67)
+        assert token == 11  # octave_idx=1, degree=4: 1*7 + 4 = 11
+
+    def test_decode_tokens(self):
+        """Test decoding tokens back to MIDI."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
+        encoder = ScaleEncoder(scale, octave_range=(3, 6))
+
+        # Token 7 (C4) should decode back to MIDI 60
+        midi = encoder.token_to_midi(7)
+        assert midi == 60
+
+        # Token 9 (E4) should decode back to MIDI 64
+        midi = encoder.token_to_midi(9)
+        assert midi == 64
+
+    def test_special_tokens(self):
+        """Test REST and OUT_OF_SCALE tokens."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
+        encoder = ScaleEncoder(scale, octave_range=(3, 6))
+
+        # REST token should return None
+        midi = encoder.token_to_midi(encoder.REST_TOKEN)
+        assert midi is None
+
+        # OUT_OF_SCALE token should return None
+        midi = encoder.token_to_midi(encoder.OUT_OF_SCALE_TOKEN)
+        assert midi is None
+
+    def test_snap_to_scale(self):
+        """Test snapping chromatic notes to nearest scale tone."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
+        encoder = ScaleEncoder(scale, octave_range=(3, 6), snap_to_scale=True)
+
+        # C#4 (MIDI 61) should snap to C4 (60) or D4 (62)
+        token = encoder.midi_to_token(61)
+        midi = encoder.token_to_midi(token)
+        assert midi in [60, 62]  # Should snap to nearest scale tone
+
+        # F#4 (MIDI 66) should snap to F4 (65) or G4 (67)
+        token = encoder.midi_to_token(66)
+        midi = encoder.token_to_midi(token)
+        assert midi in [65, 67]
+
+    def test_no_snap_returns_out_of_scale(self):
+        """Test that chromatic notes return OUT_OF_SCALE when snap disabled."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
+        encoder = ScaleEncoder(scale, octave_range=(3, 6), snap_to_scale=False)
+
+        # C#4 (MIDI 61) should return OUT_OF_SCALE token
+        token = encoder.midi_to_token(61)
+        assert token == encoder.OUT_OF_SCALE_TOKEN
+
+    def test_encode_midi_events(self, sample_midi_events):
+        """Test encoding list of MIDI events."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
+        encoder = ScaleEncoder(scale, octave_range=(2, 7))
+
+        tokens = encoder.encode(sample_midi_events)
+
+        # Should have some tokens
+        assert len(tokens) > 0
+        # All tokens should be valid
+        for token in tokens:
+            assert 0 <= token < encoder.vocab_size
+
+    def test_decode_to_events(self):
+        """Test decoding tokens to MIDI events."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
+        encoder = ScaleEncoder(scale, octave_range=(3, 6))
+
+        # Encode C major triad
+        tokens = [7, 9, 11]  # C4, E4, G4
+
+        events = encoder.decode(tokens, tempo=120.0)
+
+        # Should have note-on and note-off for each token
+        note_ons = [e for e in events if e.is_note_on]
+        assert len(note_ons) == 3
+        assert note_ons[0].data1 == 60  # C4
+        assert note_ons[1].data1 == 64  # E4
+        assert note_ons[2].data1 == 67  # G4
+
+    def test_transpose_by_degree(self):
+        """Test transposing by scale degrees."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
+        encoder = ScaleEncoder(scale, octave_range=(3, 6))
+
+        # C4 (token 7) transposed up 2 degrees should be E4 (token 9)
+        tokens = [7]
+        transposed = encoder.transpose_by_degree(tokens, 2)
+        assert transposed == [9]
+
+        # E4 (token 9) transposed up 2 degrees should be G4 (token 11)
+        tokens = [9]
+        transposed = encoder.transpose_by_degree(tokens, 2)
+        assert transposed == [11]
+
+    def test_transpose_wraps_octave(self):
+        """Test that transposition wraps to next octave correctly."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
+        encoder = ScaleEncoder(scale, octave_range=(3, 6))
+
+        # B4 (token 13, degree 6 octave 1) + 1 degree = C5 (token 14, degree 0 octave 2)
+        tokens = [13]
+        transposed = encoder.transpose_by_degree(tokens, 1)
+        assert transposed == [14]
+
+    def test_get_scale_notes(self):
+        """Test getting all scale notes."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
+        encoder = ScaleEncoder(scale, octave_range=(4, 5))  # Just 1 octave
+
+        notes = encoder.get_scale_notes()
+
+        # Should have 7 notes for one octave
+        assert len(notes) == 7
+
+        # Check first few notes
+        assert notes[0] == (0, 60, "C4")  # C4
+        assert notes[1] == (1, 62, "D4")  # D4
+        assert notes[2] == (2, 64, "E4")  # E4
+
+    def test_different_keys(self):
+        """Test encoding works for different keys."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        # G major scale
+        scale = Scale(Note("G", 4), ScaleType.MAJOR)
+        encoder = ScaleEncoder(scale, octave_range=(4, 5))
+
+        # G4 (MIDI 67) should be degree 0 in G major
+        token = encoder.midi_to_token(67)
+        midi = encoder.token_to_midi(token)
+        assert midi == 67
+
+        # F#5 (MIDI 78) is in G major at scale octave 4, should encode properly
+        # Note: F#4 (MIDI 66) would be in scale octave 3, below our range
+        token = encoder.midi_to_token(78)
+        midi = encoder.token_to_midi(token)
+        assert midi == 78
+
+    def test_minor_scale(self):
+        """Test encoding with minor scale."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        # A minor scale
+        scale = Scale(Note("A", 4), ScaleType.NATURAL_MINOR)
+        encoder = ScaleEncoder(scale, octave_range=(4, 5))
+
+        # A4 (MIDI 69) should be degree 0
+        token = encoder.midi_to_token(69)
+        assert encoder.token_to_midi(token) == 69
+
+        # C5 (MIDI 72) is b3 in A minor, should be degree 2
+        token = encoder.midi_to_token(72)
+        assert encoder.token_to_midi(token) == 72
+
+    def test_roundtrip(self, sample_midi_events):
+        """Test encode-decode roundtrip preserves notes in scale."""
+        from coremusic.music.neural import ScaleEncoder
+        from coremusic.music.theory import Note, Scale, ScaleType
+
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
+        encoder = ScaleEncoder(scale, octave_range=(2, 7), snap_to_scale=True)
+
+        tokens = encoder.encode(sample_midi_events)
+        events = encoder.decode(tokens, tempo=120.0)
+
+        # All decoded notes should be in the C major scale
+        for event in events:
+            if event.is_note_on:
+                pc = event.data1 % 12
+                assert pc in [0, 2, 4, 5, 7, 9, 11], f"Note {event.data1} not in C major"
+
+
+# ============================================================================
 # Phase 5 Tests: MusicMetrics
 # ============================================================================
 

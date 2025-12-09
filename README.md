@@ -7,6 +7,17 @@
 
 `coremusic` is a zero-dependency Cython extension providing direct Python access to Apple's CoreAudio and CoreMIDI frameworks with near-native performance. It offers both functional (C-style) and object-oriented (Pythonic) APIs with automatic resource management.
 
+`coremusic` is a zero-dependency "batteries-included" music development toolkit for macOS. Current features include:
+
+- Low-level I/O: CoreAudio, AudioToolbox, CoreMIDI bindings.
+- Sync: Ableton Link for tempo/beat sync across devices
+- MIDI: Sequence manipulation, transforms, file I/O
+- Theory: Scales, chords, notes
+- Generation: Arpeggios, Euclidean rhythms, melodies
+- ML: Neural net generation via KANN
+- DAW: Track/mixer/session abstractions
+
+
 ### Frameworks
 
 | Framework | Capabilities |
@@ -162,7 +173,13 @@ coremusic midi devices
 coremusic sequence info song.mid
 
 # Generate Euclidean rhythm
-coremusic generate euclidean --pulses 5 --steps 8 --output rhythm.mid
+coremusic generate euclidean --pulses 5 --steps 8 rhythm.mid
+
+# Generate arpeggio with transforms
+coremusic generate arpeggio --root C4 --chord major --bpm 140 -t humanize -t quantize arp.mid
+
+# Generate melody in D dorian
+coremusic generate melody --root D4 --scale dorian --notes 64 --bpm 100 melody.mid
 
 # JSON output for scripting
 coremusic --json devices list
@@ -873,6 +890,55 @@ variant = analyze_and_generate(
 )
 ```
 
+### Neural Network Music Generation
+
+```python
+from coremusic.music.neural import (
+    MIDIDataset, NoteEncoder, ModelFactory,
+    TrainingConfig, Trainer, MusicGenerator,
+    TemperatureSampling
+)
+
+# Create encoder and dataset with preset for melody training
+encoder = NoteEncoder()
+dataset = MIDIDataset.for_melody(encoder, seq_length=16)  # Filters drums, pitch range C3-C6
+
+# Other presets available:
+# dataset = MIDIDataset.for_drums(encoder, seq_length=16)   # For drum patterns
+# dataset = MIDIDataset.for_bass(encoder, seq_length=16)    # For bass lines
+# dataset = MIDIDataset.for_chords(encoder, seq_length=16)  # For chord progressions
+
+# Load and augment MIDI files
+dataset.load_directory("midi_files/", pattern="*.mid")
+dataset.augment(transpose_range=(-3, 3))  # Data augmentation
+
+# Prepare training data
+x_train, y_train = dataset.prepare_training_data(one_hot=True)
+
+# Build model (GRU recommended - faster than LSTM, more efficient than MLP)
+model = ModelFactory.create(
+    model_type="gru",  # or "lstm", "mlp", "rnn"
+    encoder=encoder,
+    seq_length=dataset.seq_length,
+    hidden_size=64
+)
+
+# Train
+config = TrainingConfig(learning_rate=0.001, max_epochs=50, batch_size=32)
+trainer = Trainer(model, config)
+history = trainer.train(x_train, y_train)
+
+# Generate music
+generator = MusicGenerator(model, encoder, seq_length=dataset.seq_length)
+seed = dataset.get_sample_sequence()
+strategy = TemperatureSampling(temperature=0.8)
+generated = generator.generate(seed_sequence=seed, length=64, sampling_strategy=strategy)
+
+# Convert to MIDI and save
+events = encoder.decode(generated, tempo=120.0)
+# ... save to MIDI file
+```
+
 ### MIDI Transformation Pipeline
 
 ```python
@@ -1030,6 +1096,7 @@ The project includes a comprehensive test suite with 1600+ tests covering all ma
   - `generative.py`: Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm, BitShiftRegister generators
   - `markov.py`: Markov chain MIDI analysis (MarkovChain, MIDIMarkovAnalyzer, MIDIMarkovGenerator)
   - `bayes.py`: Bayesian network MIDI analysis (BayesianNetwork, MIDIBayesAnalyzer, MIDIBayesGenerator)
+  - `neural/`: Neural network music generation (MIDIDataset, NoteEncoder, ModelFactory, Trainer, MusicGenerator)
 
 #### Ableton Link Integration
 

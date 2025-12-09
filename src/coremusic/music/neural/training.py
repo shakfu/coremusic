@@ -366,6 +366,7 @@ class Trainer:
         y_train,
         x_val=None,
         y_val=None,
+        interruptible: bool = False,
     ) -> Dict[str, List[float]]:
         """Train the model.
 
@@ -374,10 +375,17 @@ class Trainer:
             y_train: Training target data (numpy array or buffer)
             x_val: Validation input data (optional, uses validation_split if None)
             y_val: Validation target data (optional)
+            interruptible: If True, use interruptible training that responds to
+                Ctrl+C between batches. If False (default), use KANN's optimized
+                internal training loop which blocks signals during training.
 
         Returns:
             Training history dict with 'loss' and 'val_loss' lists
         """
+        # Use interruptible training if requested
+        if interruptible:
+            return self._train_interruptible_impl(x_train, y_train, x_val, y_val)
+
         # Reset history
         self.history = {"loss": [], "val_loss": []}
 
@@ -498,6 +506,102 @@ class Trainer:
             should_continue = self._notify_callbacks("on_epoch_end", epoch, logs)
             if not should_continue and epoch >= self.config.min_epochs:
                 break
+
+        # Notify end
+        final_logs = {
+            "loss": self.history["loss"][-1] if self.history["loss"] else 0,
+            "epochs": len(self.history["loss"]),
+        }
+        if self.history["val_loss"]:
+            final_logs["val_loss"] = self.history["val_loss"][-1]
+
+        self._notify_callbacks("on_train_end", final_logs)
+
+        return self.history
+
+    def _train_interruptible_impl(
+        self,
+        x_train,
+        y_train,
+        x_val=None,
+        y_val=None,
+    ) -> Dict[str, List[float]]:
+        """Internal implementation for interruptible training.
+
+        This method is similar to train_epochs() but uses train_single_epoch()
+        which checks for keyboard interrupts between batches. This allows
+        training to be stopped gracefully with Ctrl+C.
+
+        Args:
+            x_train: Training input data
+            y_train: Training target data
+            x_val: Validation input data (optional)
+            y_val: Validation target data (optional)
+
+        Returns:
+            Training history dict with 'loss' and 'val_loss' lists
+
+        Raises:
+            KeyboardInterrupt: If Ctrl+C is pressed during training
+        """
+        # Reset history
+        self.history = {"loss": [], "val_loss": []}
+
+        # Notify callbacks
+        self._notify_callbacks("on_train_begin", {"config": self.config})
+
+        # If no validation data provided, split from training
+        if x_val is None and self.config.validation_split > 0:
+            split_idx = int(len(x_train) * (1 - self.config.validation_split))
+            x_val = x_train[split_idx:]
+            y_val = y_train[split_idx:]
+            x_train = x_train[:split_idx]
+            y_train = y_train[:split_idx]
+
+        # Epoch-by-epoch training with interrupt support
+        rmsprop_cache = None
+        epoch = 0
+        try:
+            for epoch in range(self.config.max_epochs):
+                self._notify_callbacks("on_epoch_begin", epoch)
+
+                # Train for one epoch using interruptible method
+                train_cost, n_err, n_base, rmsprop_cache = self.model.train_single_epoch(
+                    x_train,
+                    y_train,
+                    learning_rate=self.config.learning_rate,
+                    mini_batch_size=self.config.batch_size,
+                    rmsprop_cache=rmsprop_cache,
+                )
+
+                self.history["loss"].append(train_cost)
+
+                logs = {"loss": train_cost, "epoch": epoch}
+                if n_base > 0:
+                    logs["class_error"] = n_err / n_base
+
+                if x_val is not None and len(x_val) > 0:
+                    val_cost = self.model.cost(x_val, y_val)
+                    self.history["val_loss"].append(val_cost)
+                    logs["val_loss"] = val_cost
+
+                # Notify callbacks - check for early stop
+                should_continue = self._notify_callbacks("on_epoch_end", epoch, logs)
+                if not should_continue and epoch >= self.config.min_epochs:
+                    break
+
+        except KeyboardInterrupt:
+            logger.info(f"Training interrupted at epoch {epoch + 1}")
+            # Still notify end with partial results
+            final_logs = {
+                "loss": self.history["loss"][-1] if self.history["loss"] else 0,
+                "epochs": len(self.history["loss"]),
+                "interrupted": True,
+            }
+            if self.history["val_loss"]:
+                final_logs["val_loss"] = self.history["val_loss"][-1]
+            self._notify_callbacks("on_train_end", final_logs)
+            raise
 
         # Notify end
         final_logs = {

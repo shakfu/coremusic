@@ -70,6 +70,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
     - `augment()` - Data augmentation via transposition
     - `prepare_training_data()` - Create X, Y arrays for training
     - Sequence extraction with configurable length
+    - **Track/Channel Filtering** - Filter MIDI data during encoding
+      - `channels` - Filter by specific MIDI channels
+      - `tracks` - Filter by track indices
+      - `track_names` - Filter by track name substrings
+      - `pitch_range` - Filter notes to a pitch range (e.g., `(48, 84)` for C3-C6)
+      - `exclude_drums` - Exclude channel 9 (GM drum channel)
+    - **Dataset Presets** - Factory methods for common use cases
+      - `MIDIDataset.for_melody()` - Melody training (excludes drums, pitch range C3-C6)
+      - `MIDIDataset.for_drums()` - Drum pattern training (no filtering)
+      - `MIDIDataset.for_bass()` - Bass line training (pitch range E1-C4)
+      - `MIDIDataset.for_chords()` - Chord training (pitch range C2-C5)
   - **Model Factory** (`ModelFactory`)
     - `create()` - Build models for any encoder/architecture combination
     - `get_recommended_config()` - Hyperparameter recommendations
@@ -155,6 +166,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - `coremusic convert` - Format conversion (file, batch)
   - `coremusic midi` - MIDI device discovery (devices, inputs, outputs, send, file)
   - `coremusic generate` - Generative algorithms (arpeggio, euclidean, melody)
+    - Transform support: `--transform`/`-t` to apply transforms (humanize, reverse, arpeggiate, quantize, velocity_scale)
+    - Tempo option: `--bpm`/`-b` (renamed from `--tempo`/`-t`)
   - `coremusic sequence` - MIDI sequence operations (info, play, tracks)
   - JSON output support (`--json`) for scripting integration
 

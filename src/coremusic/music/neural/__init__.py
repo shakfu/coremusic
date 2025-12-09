@@ -47,7 +47,7 @@ from .api import (continue_music, generate_music,  # High-level API functions
                   quick_train_and_generate, train_music_model)
 from .data import (BaseEncoder,  # Base classes; Encoders; Dataset
                    EventEncoder, MIDIDataset, NoteEncoder, PianoRollEncoder,
-                   RelativePitchEncoder)
+                   RelativePitchEncoder, ScaleEncoder)
 from .evaluation import (ModelComparison,  # Metrics; Model comparison
                          ModelResult, MusicMetrics)
 from .generation import (GreedySampling,  # Sampling strategies; Generator
@@ -67,6 +67,7 @@ __all__ = [
     "EventEncoder",
     "PianoRollEncoder",
     "RelativePitchEncoder",
+    "ScaleEncoder",
     # Data - Dataset
     "MIDIDataset",
     # Models - Factory functions

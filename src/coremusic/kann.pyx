@@ -10,6 +10,7 @@
 
 cimport cython
 from cpython.mem cimport PyMem_Free, PyMem_Malloc
+from cpython.exc cimport PyErr_CheckSignals
 from libc.stdlib cimport free, malloc, calloc
 from libc.string cimport memcpy, memset
 
@@ -517,6 +518,128 @@ cdef class NeuralNetwork:
             free(y_ptrs)
 
         return result
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def train_single_epoch(self, float[:, :] x, float[:, :] y,
+                           float learning_rate=0.001,
+                           int mini_batch_size=64,
+                           float[:] rmsprop_cache=None):
+        """
+        Train the network for a single epoch with interrupt support.
+
+        This method processes one epoch batch-by-batch, checking for
+        KeyboardInterrupt (Ctrl+C) between batches. This allows training
+        to be interrupted gracefully.
+
+        Args:
+            x: Input data, shape (n_samples, input_dim)
+            y: Target data, shape (n_samples, output_dim)
+            learning_rate: Learning rate for RMSprop
+            mini_batch_size: Size of mini-batches
+            rmsprop_cache: Optional RMSprop momentum cache (will be created if None)
+
+        Returns:
+            Tuple of (average_cost, n_class_errors, n_samples, rmsprop_cache)
+            The rmsprop_cache should be passed to subsequent calls.
+
+        Raises:
+            KeyboardInterrupt: If Ctrl+C is pressed during training
+        """
+        if self._ann == NULL:
+            raise KannModelError("No network to train")
+
+        cdef int n_samples = x.shape[0]
+        cdef int n_in = x.shape[1]
+        cdef int n_out = y.shape[1]
+
+        if n_samples != y.shape[0]:
+            raise ValueError("x and y must have same number of samples")
+
+        # Get number of variables for RMSprop
+        cdef int n_var = kad_size_var(self._ann.n, self._ann.v)
+
+        # Create or use provided RMSprop cache
+        cdef float[:] r_view
+        if rmsprop_cache is None:
+            import array
+            r_view = array.array('f', [0.0] * n_var)
+        else:
+            if rmsprop_cache.shape[0] != n_var:
+                raise ValueError(f"rmsprop_cache size {rmsprop_cache.shape[0]} != n_var {n_var}")
+            r_view = rmsprop_cache
+
+        # Allocate batch buffers
+        cdef float* x1 = <float*>malloc(n_in * mini_batch_size * sizeof(float))
+        cdef float* y1 = <float*>malloc(n_out * mini_batch_size * sizeof(float))
+        cdef int* shuf = <int*>malloc(n_samples * sizeof(int))
+
+        if x1 == NULL or y1 == NULL or shuf == NULL:
+            if x1 != NULL:
+                free(x1)
+            if y1 != NULL:
+                free(y1)
+            if shuf != NULL:
+                free(shuf)
+            raise MemoryError("Failed to allocate training buffers")
+
+        cdef int i, b, n_proc, ms
+        cdef int n_train_err = 0, n_train_base = 0, c_err, c_base
+        cdef double total_cost = 0.0
+        cdef float batch_cost
+
+        try:
+            # Shuffle indices
+            for i in range(n_samples):
+                shuf[i] = i
+            kann_shuffle(n_samples, shuf)
+
+            # Bind input/output buffers
+            kann_feed_bind(self._ann, KANN_F_IN, 0, &x1)
+            kann_feed_bind(self._ann, KANN_F_TRUTH, 0, &y1)
+
+            # Set training mode
+            kann_switch(self._ann, 1)
+
+            # Process batches
+            n_proc = 0
+            while n_proc < n_samples:
+                # Check for interrupt between batches
+                if PyErr_CheckSignals() != 0:
+                    raise KeyboardInterrupt("Training interrupted")
+
+                ms = min(mini_batch_size, n_samples - n_proc)
+
+                # Copy batch data
+                for b in range(ms):
+                    memcpy(&x1[b * n_in], &x[shuf[n_proc + b], 0], n_in * sizeof(float))
+                    memcpy(&y1[b * n_out], &y[shuf[n_proc + b], 0], n_out * sizeof(float))
+
+                # Set batch size and compute cost with gradients
+                kad_sync_dim(self._ann.n, self._ann.v, ms)
+                batch_cost = kann_cost(self._ann, 0, 1)  # 1 = compute gradients
+                total_cost += batch_cost * ms
+
+                # Get classification error
+                c_err = kann_class_error(self._ann, &c_base)
+                n_train_err += c_err
+                n_train_base += c_base
+
+                # RMSprop update
+                kann_RMSprop(n_var, learning_rate, NULL, 0.9, self._ann.g, self._ann.x, &r_view[0])
+
+                n_proc += ms
+
+            # Switch back to inference mode
+            kann_switch(self._ann, 0)
+
+        finally:
+            free(x1)
+            free(y1)
+            free(shuf)
+
+        cdef float avg_cost = total_cost / n_samples if n_samples > 0 else 0.0
+        return (avg_cost, n_train_err, n_train_base, r_view)
 
     @cython.boundscheck(False)
     @cython.wraparound(False)

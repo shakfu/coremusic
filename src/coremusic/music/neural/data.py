@@ -21,9 +21,10 @@ import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 from coremusic.midi.utilities import MIDIEvent, MIDISequence, MIDIStatus
+from coremusic.music.theory import Note, Scale, ScaleType
 
 if TYPE_CHECKING:
     from coremusic.kann import Array2D
@@ -79,19 +80,59 @@ class BaseEncoder(ABC):
         """
         pass
 
-    def encode_file(self, path: Union[str, Path]) -> List[int]:
-        """Encode a MIDI file to tokens.
+    def encode_file(
+        self,
+        path: Union[str, Path],
+        channels: Optional[List[int]] = None,
+        tracks: Optional[List[int]] = None,
+        track_names: Optional[List[str]] = None,
+        pitch_range: Optional[Tuple[int, int]] = None,
+        exclude_drums: bool = False,
+    ) -> List[int]:
+        """Encode a MIDI file to tokens with optional filtering.
 
         Args:
             path: Path to MIDI file
+            channels: Only include events from these MIDI channels (0-15)
+            tracks: Only include events from these track indices
+            track_names: Only include tracks whose names contain these substrings
+            pitch_range: Only include notes within (min_pitch, max_pitch) range
+            exclude_drums: If True, exclude channel 9 (GM drums)
 
         Returns:
             List of integer tokens
         """
         sequence = MIDISequence.load(str(path))
         all_events = []
-        for track in sequence.tracks:
-            all_events.extend(track.events)
+
+        for track_idx, track in enumerate(sequence.tracks):
+            # Filter by track index
+            if tracks is not None and track_idx not in tracks:
+                continue
+
+            # Filter by track name
+            if track_names is not None:
+                track_name = getattr(track, 'name', '') or ''
+                if not any(name.lower() in track_name.lower() for name in track_names):
+                    continue
+
+            for event in track.events:
+                # Filter by channel
+                if channels is not None and event.channel not in channels:
+                    continue
+
+                # Exclude drums (channel 9 in 0-indexed, channel 10 in 1-indexed)
+                if exclude_drums and event.channel == 9:
+                    continue
+
+                # Filter by pitch range (only for note events)
+                if pitch_range is not None and (event.is_note_on or event.is_note_off):
+                    min_pitch, max_pitch = pitch_range
+                    if not (min_pitch <= event.data1 <= max_pitch):
+                        continue
+
+                all_events.append(event)
+
         # Sort by time
         all_events.sort(key=lambda e: e.time)
         return self.encode(all_events)
@@ -177,7 +218,7 @@ class NoteEncoder(BaseEncoder):
 
         Args:
             default_velocity: Velocity to use when decoding (1-127)
-            default_duration: Duration in seconds for decoded notes
+            default_duration: Duration in beats for decoded notes
         """
         self._default_velocity = default_velocity
         self._default_duration = default_duration
@@ -1048,6 +1089,394 @@ class RelativePitchEncoder(BaseEncoder):
 
 
 # ============================================================================
+# Scale Encoder
+# ============================================================================
+
+
+class ScaleEncoder(BaseEncoder):
+    """Encode MIDI notes as scale degrees within a musical scale.
+
+    This encoder maps MIDI notes to scale degree tokens, ensuring all generated
+    notes are in-key. Notes outside the scale are mapped to the nearest scale
+    tone or a special OUT_OF_SCALE token.
+
+    Token layout (for 7-note scale like major, 6 octaves):
+    - 0 to (degrees * octaves - 1): Scale degrees across octaves
+    - degrees * octaves: REST token
+    - degrees * octaves + 1: OUT_OF_SCALE token (chromatic notes)
+
+    Benefits:
+    - Smaller vocabulary (e.g., 44 tokens for major scale vs 128)
+    - All generated notes guaranteed to be in-key
+    - Model learns melodic patterns as scale degrees (more musical)
+    - Works across keys (1-3-5 is always a triad)
+
+    Attributes:
+        scale: The Scale instance defining the key and mode
+        octave_range: Tuple of (min_octave, max_octave) for encoding
+        snap_to_scale: If True, snap out-of-scale notes to nearest scale tone
+                       If False, use OUT_OF_SCALE token
+
+    Example:
+        >>> from coremusic.music.theory import Scale, Note, ScaleType
+        >>> scale = Scale(Note('C', 4), ScaleType.MAJOR)
+        >>> encoder = ScaleEncoder(scale, octave_range=(3, 6))
+        >>> encoder.vocab_size  # 7 degrees * 4 octaves + 2 special = 30
+        30
+        >>> # Encode C major notes
+        >>> encoder.midi_to_token(60)  # C4 -> degree 0, octave 1
+        7
+        >>> encoder.midi_to_token(64)  # E4 -> degree 2, octave 1
+        9
+    """
+
+    def __init__(
+        self,
+        scale: Scale,
+        octave_range: Tuple[int, int] = (2, 8),
+        snap_to_scale: bool = True,
+        default_velocity: int = 100,
+        default_duration: float = 0.25,
+    ):
+        """Initialize the ScaleEncoder.
+
+        Args:
+            scale: Scale instance defining the key and mode
+            octave_range: (min_octave, max_octave) inclusive range for encoding
+            snap_to_scale: If True, snap chromatic notes to nearest scale tone.
+                           If False, use OUT_OF_SCALE token for chromatic notes.
+            default_velocity: Velocity for decoded notes (0-127)
+            default_duration: Duration in beats for decoded notes
+        """
+        self.scale = scale
+        self.octave_range = octave_range
+        self.snap_to_scale = snap_to_scale
+        self._default_velocity = default_velocity
+        self._default_duration = default_duration
+
+        # Calculate dimensions
+        self.num_octaves = octave_range[1] - octave_range[0]
+        self.degrees_per_octave = len(scale.intervals)
+
+        # Special tokens (at the end of vocabulary)
+        self._base_vocab = self.degrees_per_octave * self.num_octaves
+        self.REST_TOKEN = self._base_vocab
+        self.OUT_OF_SCALE_TOKEN = self._base_vocab + 1
+
+        # Build lookup tables for efficient encoding/decoding
+        self._build_lookup_tables()
+
+    def _build_lookup_tables(self) -> None:
+        """Build MIDI <-> token lookup tables."""
+        # midi_to_degree: maps MIDI note -> (degree, octave_offset) or None
+        self._midi_to_degree: Dict[int, Optional[Tuple[int, int]]] = {}
+
+        # degree_octave_to_midi: maps (degree, octave) -> MIDI note
+        self._token_to_midi: Dict[int, int] = {}
+
+        root_pc = self.scale.root.pitch_class
+        intervals = self.scale.intervals
+
+        # Calculate the MIDI note of the root at each requested octave
+        # For A minor at octave 4: root MIDI = 69 (A4)
+        # For C major at octave 4: root MIDI = 60 (C4)
+        root_octave = self.scale.root.octave
+        root_midi = self.scale.root.midi
+
+        # Build mappings for each requested scale octave
+        for octave_idx in range(self.num_octaves):
+            # The actual octave number for this scale octave
+            actual_octave = self.octave_range[0] + octave_idx
+
+            # Calculate the root note for this scale octave
+            # Offset from the original root's octave
+            octave_offset = actual_octave - root_octave
+            base_midi = root_midi + (octave_offset * 12)
+
+            # Add all scale degrees for this octave
+            for degree, interval in enumerate(intervals):
+                midi = base_midi + interval
+                # Ensure MIDI is in valid range
+                if 0 <= midi <= 127:
+                    self._midi_to_degree[midi] = (degree, octave_idx)
+
+        # Build reverse mapping (token -> MIDI)
+        for midi, deg_oct in self._midi_to_degree.items():
+            if deg_oct is not None:
+                degree, octave_idx = deg_oct
+                token = octave_idx * self.degrees_per_octave + degree
+                self._token_to_midi[token] = midi
+
+    @property
+    def vocab_size(self) -> int:
+        """Size of the vocabulary (scale degrees * octaves + special tokens)."""
+        return self._base_vocab + 2  # +REST, +OUT_OF_SCALE
+
+    def midi_to_token(self, midi: int) -> int:
+        """Convert a MIDI note number to a token.
+
+        Args:
+            midi: MIDI note number (0-127)
+
+        Returns:
+            Token index
+        """
+        if midi in self._midi_to_degree:
+            deg_oct = self._midi_to_degree[midi]
+            if deg_oct is not None:
+                degree, octave_idx = deg_oct
+                return octave_idx * self.degrees_per_octave + degree
+
+        # Note is out of scale
+        if self.snap_to_scale:
+            # Find nearest scale tone
+            return self._snap_to_nearest_token(midi)
+        else:
+            return self.OUT_OF_SCALE_TOKEN
+
+    def _snap_to_nearest_token(self, midi: int) -> int:
+        """Snap a chromatic note to the nearest scale tone.
+
+        Args:
+            midi: MIDI note number
+
+        Returns:
+            Token for nearest scale tone
+        """
+        # Try notes above and below until we find a scale tone
+        for offset in range(1, 7):
+            # Try below
+            below = midi - offset
+            if below in self._midi_to_degree and self._midi_to_degree[below] is not None:
+                deg_oct = self._midi_to_degree[below]
+                degree, octave_idx = deg_oct
+                return octave_idx * self.degrees_per_octave + degree
+
+            # Try above
+            above = midi + offset
+            if above in self._midi_to_degree and self._midi_to_degree[above] is not None:
+                deg_oct = self._midi_to_degree[above]
+                degree, octave_idx = deg_oct
+                return octave_idx * self.degrees_per_octave + degree
+
+        # Fallback to OUT_OF_SCALE if no nearby scale tone found
+        return self.OUT_OF_SCALE_TOKEN
+
+    def token_to_midi(self, token: int) -> Optional[int]:
+        """Convert a token back to MIDI note number.
+
+        Args:
+            token: Token index
+
+        Returns:
+            MIDI note number, or None for special tokens
+        """
+        if token == self.REST_TOKEN or token == self.OUT_OF_SCALE_TOKEN:
+            return None
+
+        if token in self._token_to_midi:
+            return self._token_to_midi[token]
+
+        return None
+
+    def encode(self, events: List[MIDIEvent]) -> List[int]:
+        """Encode MIDI events as scale degree tokens.
+
+        Args:
+            events: List of MIDI events
+
+        Returns:
+            List of scale degree tokens
+        """
+        if not events:
+            return []
+
+        # Extract note-on events
+        note_events = [e for e in events if e.is_note_on]
+        if not note_events:
+            return []
+
+        # Sort by time
+        note_events.sort(key=lambda e: e.time)
+
+        tokens = []
+        for event in note_events:
+            token = self.midi_to_token(event.data1)
+            # Skip OUT_OF_SCALE tokens if not snapping
+            if token != self.OUT_OF_SCALE_TOKEN or not self.snap_to_scale:
+                tokens.append(token)
+
+        return tokens
+
+    def decode(
+        self,
+        tokens: List[int],
+        tempo: float = 120.0,
+        channel: int = 0,
+        **kwargs,
+    ) -> List[MIDIEvent]:
+        """Decode scale degree tokens back to MIDI events.
+
+        Args:
+            tokens: List of scale degree tokens
+            tempo: Tempo in BPM
+            channel: MIDI channel (0-15)
+            **kwargs: Additional options (unused)
+
+        Returns:
+            List of MIDIEvent objects
+        """
+        events = []
+        beat_duration = 60.0 / tempo
+        note_duration = self._default_duration * beat_duration
+        current_time = 0.0
+
+        for token in tokens:
+            if token == self.REST_TOKEN:
+                current_time += note_duration
+                continue
+            if token == self.OUT_OF_SCALE_TOKEN:
+                current_time += note_duration
+                continue
+
+            midi = self.token_to_midi(token)
+            if midi is None:
+                current_time += note_duration
+                continue
+
+            # Note on
+            events.append(
+                MIDIEvent(
+                    time=current_time,
+                    status=MIDIStatus.NOTE_ON,
+                    channel=channel,
+                    data1=midi,
+                    data2=self._default_velocity,
+                )
+            )
+
+            # Note off
+            events.append(
+                MIDIEvent(
+                    time=current_time + note_duration,
+                    status=MIDIStatus.NOTE_OFF,
+                    channel=channel,
+                    data1=midi,
+                    data2=0,
+                )
+            )
+
+            current_time += note_duration
+
+        events.sort(key=lambda e: e.time)
+        return events
+
+    def transpose(self, tokens: List[int], semitones: int) -> List[int]:
+        """Transpose tokens by semitones.
+
+        For scale encoding, transposition by scale intervals is more meaningful.
+        This method transposes by the nearest scale degree.
+
+        Args:
+            tokens: List of tokens
+            semitones: Number of semitones to transpose
+
+        Returns:
+            Transposed tokens
+        """
+        if semitones == 0:
+            return tokens.copy()
+
+        # Calculate degree offset (approximate)
+        # For diatonic scales, 1-2 semitones ~= 1 degree
+        degree_offset = round(semitones * len(self.scale.intervals) / 12)
+
+        transposed = []
+        for token in tokens:
+            if token >= self._base_vocab:
+                # Special token - keep as is
+                transposed.append(token)
+            else:
+                # Scale degree token
+                octave_idx = token // self.degrees_per_octave
+                degree = token % self.degrees_per_octave
+
+                # Apply transposition
+                new_degree = degree + degree_offset
+                new_octave = octave_idx + (new_degree // self.degrees_per_octave)
+                new_degree = new_degree % self.degrees_per_octave
+
+                # Check bounds
+                if 0 <= new_octave < self.num_octaves:
+                    new_token = new_octave * self.degrees_per_octave + new_degree
+                    transposed.append(new_token)
+                else:
+                    # Out of range - use REST
+                    transposed.append(self.REST_TOKEN)
+
+        return transposed
+
+    def transpose_by_degree(self, tokens: List[int], degrees: int) -> List[int]:
+        """Transpose tokens by scale degrees.
+
+        This is more musically meaningful than semitone transposition for
+        scale-encoded sequences.
+
+        Args:
+            tokens: List of tokens
+            degrees: Number of scale degrees to transpose (positive = up)
+
+        Returns:
+            Transposed tokens
+        """
+        if degrees == 0:
+            return tokens.copy()
+
+        transposed = []
+        for token in tokens:
+            if token >= self._base_vocab:
+                # Special token - keep as is
+                transposed.append(token)
+            else:
+                # Scale degree token
+                octave_idx = token // self.degrees_per_octave
+                degree = token % self.degrees_per_octave
+
+                # Apply transposition
+                new_degree = degree + degrees
+                new_octave = octave_idx + (new_degree // self.degrees_per_octave)
+                new_degree = new_degree % self.degrees_per_octave
+
+                # Check bounds
+                if 0 <= new_octave < self.num_octaves:
+                    new_token = new_octave * self.degrees_per_octave + new_degree
+                    transposed.append(new_token)
+                else:
+                    # Out of range - use REST
+                    transposed.append(self.REST_TOKEN)
+
+        return transposed
+
+    def get_scale_notes(self) -> List[Tuple[int, int, str]]:
+        """Get all scale notes with their tokens and names.
+
+        Returns:
+            List of (token, midi, note_name) tuples
+        """
+        notes = []
+        for token, midi in sorted(self._token_to_midi.items()):
+            note = Note.from_midi(midi)
+            notes.append((token, midi, str(note)))
+        return notes
+
+    def __repr__(self) -> str:
+        return (
+            f"ScaleEncoder({self.scale}, octaves={self.octave_range}, "
+            f"vocab_size={self.vocab_size})"
+        )
+
+
+# ============================================================================
 # MIDI Dataset
 # ============================================================================
 
@@ -1060,6 +1489,7 @@ class MIDIDataset:
     - Loading MIDI files and encoding them to token sequences
     - Data augmentation (transposition)
     - Preparing training data (X, Y arrays) for sequence prediction
+    - Track/channel filtering for cleaner training data
 
     Example:
         >>> encoder = NoteEncoder()
@@ -1067,17 +1497,162 @@ class MIDIDataset:
         >>> dataset.load_file('music.mid')
         >>> dataset.augment(transpose_range=(-5, 7))
         >>> x_train, y_train = dataset.prepare_training_data()
+
+    Example with filtering (train on melody only):
+        >>> encoder = NoteEncoder()
+        >>> dataset = MIDIDataset(
+        ...     encoder,
+        ...     seq_length=32,
+        ...     channels=[0],           # Only channel 0
+        ...     pitch_range=(48, 84),   # C3-C6 melodic range
+        ...     exclude_drums=True,
+        ... )
+        >>> dataset.load_directory('midi_files/')
+
+    Using presets:
+        >>> dataset = MIDIDataset.for_melody(NoteEncoder(), seq_length=32)
+        >>> dataset = MIDIDataset.for_drums(NoteEncoder(), seq_length=16)
+        >>> dataset = MIDIDataset.for_bass(NoteEncoder(), seq_length=32)
     """
 
     encoder: BaseEncoder
     seq_length: int
     sequences: List[List[int]] = field(default_factory=list)
+    # Filter options (applied to all loaded files)
+    channels: Optional[List[int]] = None
+    tracks: Optional[List[int]] = None
+    track_names: Optional[List[str]] = None
+    pitch_range: Optional[Tuple[int, int]] = None
+    exclude_drums: bool = False
 
-    def load_file(self, path: Union[str, Path]) -> int:
+    @classmethod
+    def for_melody(
+        cls,
+        encoder: BaseEncoder,
+        seq_length: int,
+        pitch_range: Tuple[int, int] = (48, 84),
+        **kwargs,
+    ) -> "MIDIDataset":
+        """Create dataset preset for melodic training.
+
+        Filters out drums and limits to melodic pitch range (C3-C6 by default).
+        Best for training models on melody lines, lead instruments, etc.
+
+        Args:
+            encoder: Encoder instance
+            seq_length: Sequence length for training
+            pitch_range: Min/max pitch to include (default: 48-84, C3-C6)
+            **kwargs: Additional MIDIDataset arguments
+
+        Returns:
+            Configured MIDIDataset instance
+        """
+        return cls(
+            encoder=encoder,
+            seq_length=seq_length,
+            exclude_drums=True,
+            pitch_range=pitch_range,
+            **kwargs,
+        )
+
+    @classmethod
+    def for_drums(
+        cls,
+        encoder: BaseEncoder,
+        seq_length: int,
+        **kwargs,
+    ) -> "MIDIDataset":
+        """Create dataset preset for drum/rhythm training.
+
+        No filtering applied - suitable for drum pattern MIDI files where
+        note numbers represent different percussion instruments.
+
+        Args:
+            encoder: Encoder instance
+            seq_length: Sequence length for training
+            **kwargs: Additional MIDIDataset arguments
+
+        Returns:
+            Configured MIDIDataset instance
+        """
+        return cls(
+            encoder=encoder,
+            seq_length=seq_length,
+            exclude_drums=False,
+            **kwargs,
+        )
+
+    @classmethod
+    def for_bass(
+        cls,
+        encoder: BaseEncoder,
+        seq_length: int,
+        pitch_range: Tuple[int, int] = (28, 60),
+        **kwargs,
+    ) -> "MIDIDataset":
+        """Create dataset preset for bass line training.
+
+        Filters out drums and limits to bass pitch range (E1-C4 by default).
+        Best for training models on bass lines.
+
+        Args:
+            encoder: Encoder instance
+            seq_length: Sequence length for training
+            pitch_range: Min/max pitch to include (default: 28-60, E1-C4)
+            **kwargs: Additional MIDIDataset arguments
+
+        Returns:
+            Configured MIDIDataset instance
+        """
+        return cls(
+            encoder=encoder,
+            seq_length=seq_length,
+            exclude_drums=True,
+            pitch_range=pitch_range,
+            **kwargs,
+        )
+
+    @classmethod
+    def for_chords(
+        cls,
+        encoder: BaseEncoder,
+        seq_length: int,
+        pitch_range: Tuple[int, int] = (36, 72),
+        **kwargs,
+    ) -> "MIDIDataset":
+        """Create dataset preset for chord/harmony training.
+
+        Filters out drums and uses a mid-range pitch range (C2-C5 by default).
+        Best for training models on chord progressions and harmony.
+
+        Args:
+            encoder: Encoder instance
+            seq_length: Sequence length for training
+            pitch_range: Min/max pitch to include (default: 36-72, C2-C5)
+            **kwargs: Additional MIDIDataset arguments
+
+        Returns:
+            Configured MIDIDataset instance
+        """
+        return cls(
+            encoder=encoder,
+            seq_length=seq_length,
+            exclude_drums=True,
+            pitch_range=pitch_range,
+            **kwargs,
+        )
+
+    def load_file(self, path: Union[str, Path], **filter_overrides) -> int:
         """Load a single MIDI file and add its encoded sequence.
 
         Args:
             path: Path to MIDI file
+            **filter_overrides: Override default filter options for this file:
+                - channels: Only include events from these MIDI channels
+                - tracks: Only include events from these track indices
+                - track_names: Only include tracks with matching names
+                - pitch_range: Only include notes in (min, max) range
+                - exclude_drums: Exclude channel 9 (GM drums)
 
         Returns:
             Number of tokens extracted from the file
@@ -1086,7 +1661,17 @@ class MIDIDataset:
         if not path.exists():
             raise FileNotFoundError(f"MIDI file not found: {path}")
 
-        tokens = self.encoder.encode_file(path)
+        # Merge default filters with overrides
+        filters = {
+            'channels': self.channels,
+            'tracks': self.tracks,
+            'track_names': self.track_names,
+            'pitch_range': self.pitch_range,
+            'exclude_drums': self.exclude_drums,
+        }
+        filters.update(filter_overrides)
+
+        tokens = self.encoder.encode_file(path, **filters)
         if tokens:
             self.sequences.append(tokens)
         return len(tokens)

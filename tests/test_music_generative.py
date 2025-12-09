@@ -802,14 +802,20 @@ class TestReproducibility:
 class TestMIDIFileGeneration:
     """Tests that generate actual MIDI files demonstrating each algorithm.
 
-    Generated files are saved to build/midi_files/ for audition.
+    Generated files are saved to build/midi_files/<generator_type>/ for audition.
     """
 
     @pytest.fixture(autouse=True)
     def setup_output_dir(self):
-        """Create output directory for MIDI files."""
-        self.output_dir = Path(__file__).parent.parent / "build" / "midi_files"
-        self.output_dir.mkdir(parents=True, exist_ok=True)
+        """Create base output directory for MIDI files."""
+        self.base_output_dir = Path(__file__).parent.parent / "build" / "midi_files"
+        self.base_output_dir.mkdir(parents=True, exist_ok=True)
+
+    def _get_output_dir(self, generator_type: str) -> Path:
+        """Get output directory for a specific generator type."""
+        output_dir = self.base_output_dir / generator_type
+        output_dir.mkdir(parents=True, exist_ok=True)
+        return output_dir
 
     def _events_to_track(self, events, track):
         """Helper to convert generator events to MIDITrack."""
@@ -842,7 +848,7 @@ class TestMIDIFileGeneration:
 
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "arpeggiator_up.mid"
+        output_path = self._get_output_dir("arpeggiator") / "arpeggiator_up.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -862,7 +868,7 @@ class TestMIDIFileGeneration:
 
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "arpeggiator_up_down.mid"
+        output_path = self._get_output_dir("arpeggiator") / "arpeggiator_up_down.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -881,7 +887,7 @@ class TestMIDIFileGeneration:
 
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "arpeggiator_random.mid"
+        output_path = self._get_output_dir("arpeggiator") / "arpeggiator_random.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -899,7 +905,7 @@ class TestMIDIFileGeneration:
 
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "euclidean_tresillo_3_8.mid"
+        output_path = self._get_output_dir("euclidean") / "euclidean_tresillo_3_8.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -917,7 +923,7 @@ class TestMIDIFileGeneration:
 
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "euclidean_cinquillo_5_8.mid"
+        output_path = self._get_output_dir("euclidean") / "euclidean_cinquillo_5_8.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -935,7 +941,7 @@ class TestMIDIFileGeneration:
 
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "euclidean_7_12.mid"
+        output_path = self._get_output_dir("euclidean") / "euclidean_7_12.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -962,7 +968,7 @@ class TestMIDIFileGeneration:
 
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "markov_melody.mid"
+        output_path = self._get_output_dir("markov") / "markov_melody.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -994,7 +1000,7 @@ class TestMIDIFileGeneration:
         events = markov.generate(num_notes=48, start_note=69)
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "markov_pentatonic.mid"
+        output_path = self._get_output_dir("markov") / "markov_pentatonic.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -1013,7 +1019,7 @@ class TestMIDIFileGeneration:
 
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "probabilistic_dorian.mid"
+        output_path = self._get_output_dir("probabilistic") / "probabilistic_dorian.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -1044,7 +1050,7 @@ class TestMIDIFileGeneration:
 
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "probabilistic_weighted.mid"
+        output_path = self._get_output_dir("probabilistic") / "probabilistic_weighted.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -1086,7 +1092,7 @@ class TestMIDIFileGeneration:
         events = sequencer.generate(cycles=8)
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "sequence_drums.mid"
+        output_path = self._get_output_dir("sequence") / "sequence_drums.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -1113,7 +1119,7 @@ class TestMIDIFileGeneration:
         events = sequencer.generate(cycles=8)
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "sequence_melodic.mid"
+        output_path = self._get_output_dir("sequence") / "sequence_melodic.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -1133,7 +1139,7 @@ class TestMIDIFileGeneration:
 
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "melody_major.mid"
+        output_path = self._get_output_dir("melody") / "melody_major.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -1154,7 +1160,7 @@ class TestMIDIFileGeneration:
 
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "melody_blues.mid"
+        output_path = self._get_output_dir("melody") / "melody_blues.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -1174,7 +1180,7 @@ class TestMIDIFileGeneration:
         events = poly.generate(cycles=8)
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "polyrhythm_3_4.mid"
+        output_path = self._get_output_dir("polyrhythm") / "polyrhythm_3_4.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -1195,7 +1201,7 @@ class TestMIDIFileGeneration:
         events = poly.generate(cycles=8)
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "polyrhythm_5_4_3.mid"
+        output_path = self._get_output_dir("polyrhythm") / "polyrhythm_5_4_3.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -1235,7 +1241,7 @@ class TestMIDIFileGeneration:
         hh_events = hh.generate(cycles=4)
         self._events_to_track(hh_events, drum_track)
 
-        output_path = self.output_dir / "combined_arp_drums.mid"
+        output_path = self._get_output_dir("combined") / "combined_arp_drums.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -1256,7 +1262,7 @@ class TestMIDIFileGeneration:
                                               beats_per_chord=4, config=arp_config)
         self._events_to_track(events, track)
 
-        output_path = self.output_dir / "progression_ii_V_I_vi.mid"
+        output_path = self._get_output_dir("progression") / "progression_ii_V_I_vi.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -1306,7 +1312,7 @@ class TestMIDIFileGeneration:
         arp_events = arp.generate(duration=16 * beat_duration * 4)
         self._events_to_track(arp_events, arp_track)
 
-        output_path = self.output_dir / "full_composition.mid"
+        output_path = self._get_output_dir("composition") / "full_composition.mid"
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -1824,7 +1830,7 @@ class TestBitShiftRegisterMIDIFileGeneration:
     @pytest.fixture(autouse=True)
     def setup_output_dir(self):
         """Create output directory for MIDI files."""
-        self.output_dir = Path(__file__).parent.parent / "build" / "midi_files"
+        self.output_dir = Path(__file__).parent.parent / "build" / "midi_files" / "shift_register"
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def _events_to_track(self, events, track):

@@ -4,12 +4,22 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import List, Optional
 
 from ._formatters import output_json
 from ._utils import EXIT_SUCCESS, CLIError
 
 # Arpeggio pattern choices
 ARP_PATTERNS = ["up", "down", "up_down", "down_up", "random", "as_played"]
+
+# Available transforms with sensible defaults
+AVAILABLE_TRANSFORMS = [
+    "humanize",
+    "reverse",
+    "arpeggiate",
+    "quantize",
+    "velocity_scale",
+]
 
 # Scale type choices
 SCALE_TYPES = [
@@ -51,13 +61,15 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         help="Number of cycles (default: 4)"
     )
     arp_parser.add_argument(
-        "--tempo", "-t", type=float, default=120.0,
+        "--bpm", "-b", type=float, default=120.0,
+        dest="tempo",
         help="Tempo in BPM (default: 120)"
     )
     arp_parser.add_argument(
         "--velocity", "-v", type=int, default=100,
         help="Note velocity 0-127 (default: 100)"
     )
+    _add_transform_args(arp_parser)
     arp_parser.set_defaults(func=cmd_arpeggio)
 
     # generate euclidean
@@ -80,13 +92,15 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         help="Number of cycles (default: 4)"
     )
     euclid_parser.add_argument(
-        "--tempo", "-t", type=float, default=120.0,
+        "--bpm", "-b", type=float, default=120.0,
+        dest="tempo",
         help="Tempo in BPM (default: 120)"
     )
     euclid_parser.add_argument(
         "--velocity", "-v", type=int, default=100,
         help="Note velocity 0-127 (default: 100)"
     )
+    _add_transform_args(euclid_parser)
     euclid_parser.set_defaults(func=cmd_euclidean)
 
     # generate melody
@@ -105,7 +119,8 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         help="Number of notes to generate (default: 32)"
     )
     melody_parser.add_argument(
-        "--tempo", "-t", type=float, default=120.0,
+        "--bpm", "-b", type=float, default=120.0,
+        dest="tempo",
         help="Tempo in BPM (default: 120)"
     )
     melody_parser.add_argument(
@@ -116,6 +131,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         "--seed", type=int, default=None,
         help="Random seed for reproducibility"
     )
+    _add_transform_args(melody_parser)
     melody_parser.set_defaults(func=cmd_melody)
 
     parser.set_defaults(func=lambda args: parser.print_help() or EXIT_SUCCESS)
@@ -204,8 +220,59 @@ def _get_arp_pattern(pattern_name: str):
     return mapping.get(pattern_name, ArpPattern.UP)
 
 
-def _save_events_to_midi(events, output_path: Path, tempo: float):
-    """Save MIDIEvents to a MIDI file."""
+def _add_transform_args(parser: argparse.ArgumentParser) -> None:
+    """Add transform arguments to a parser."""
+    parser.add_argument(
+        "--transform", "-t",
+        action="append",
+        dest="transforms",
+        metavar="NAME",
+        choices=AVAILABLE_TRANSFORMS,
+        help=f"Apply transform(s) to output. Can be repeated. "
+             f"Available: {', '.join(AVAILABLE_TRANSFORMS)}"
+    )
+
+
+def _create_transforms(transform_names: Optional[List[str]]) -> List:
+    """Create transform instances from names."""
+    from coremusic.midi.transform import (
+        Humanize, Reverse, Arpeggiate, Quantize, VelocityScale
+    )
+
+    if not transform_names:
+        return []
+
+    # Map names to transform factories with sensible defaults
+    factories = {
+        "humanize": lambda: Humanize(timing=0.02, velocity=15),
+        "reverse": lambda: Reverse(),
+        "arpeggiate": lambda: Arpeggiate(rate=0.125),
+        "quantize": lambda: Quantize(grid=0.125),  # 1/8 note
+        "velocity_scale": lambda: VelocityScale(min_vel=60, max_vel=120),
+    }
+
+    transforms = []
+    for name in transform_names:
+        if name in factories:
+            transforms.append(factories[name]())
+    return transforms
+
+
+def _apply_transforms(sequence, transforms: List):
+    """Apply transforms to a MIDI sequence."""
+    result = sequence
+    for transform in transforms:
+        result = transform.transform(result)
+    return result
+
+
+def _save_events_to_midi(
+    events,
+    output_path: Path,
+    tempo: float,
+    transforms: Optional[List] = None,
+):
+    """Save MIDIEvents to a MIDI file, optionally applying transforms."""
     from coremusic.midi.utilities import MIDISequence, MIDIStatus
 
     seq = MIDISequence(tempo=tempo)
@@ -228,6 +295,10 @@ def _save_events_to_midi(events, output_path: Path, tempo: float):
                 duration = event.time - start_time
                 if duration > 0:
                     track.add_note(start_time, event.data1, velocity, duration, event.channel)
+
+    # Apply transforms if any
+    if transforms:
+        seq = _apply_transforms(seq, transforms)
 
     seq.save(str(output_path))
 
@@ -257,8 +328,9 @@ def cmd_arpeggio(args: argparse.Namespace) -> int:
     # Generate events
     events = arp.generate(num_cycles=args.cycles)
 
-    # Save to MIDI
-    _save_events_to_midi(events, output_path, args.tempo)
+    # Create transforms and save to MIDI
+    transforms = _create_transforms(getattr(args, 'transforms', None))
+    _save_events_to_midi(events, output_path, args.tempo, transforms)
 
     if args.json:
         output_json({
@@ -269,6 +341,7 @@ def cmd_arpeggio(args: argparse.Namespace) -> int:
             "cycles": args.cycles,
             "tempo": args.tempo,
             "events": len(events),
+            "transforms": args.transforms or [],
         })
     else:
         print(f"Generated arpeggio: {output_path.name}")
@@ -277,6 +350,8 @@ def cmd_arpeggio(args: argparse.Namespace) -> int:
         print(f"  Cycles: {args.cycles}")
         print(f"  Tempo: {args.tempo} BPM")
         print(f"  Events: {len(events)}")
+        if args.transforms:
+            print(f"  Transforms: {', '.join(args.transforms)}")
 
     return EXIT_SUCCESS
 
@@ -305,8 +380,9 @@ def cmd_euclidean(args: argparse.Namespace) -> int:
     # Generate events
     events = euclid.generate(cycles=args.cycles)
 
-    # Save to MIDI
-    _save_events_to_midi(events, output_path, args.tempo)
+    # Create transforms and save to MIDI
+    transforms = _create_transforms(getattr(args, 'transforms', None))
+    _save_events_to_midi(events, output_path, args.tempo, transforms)
 
     # Get pattern as string
     pattern_list = euclid.get_pattern()
@@ -322,6 +398,7 @@ def cmd_euclidean(args: argparse.Namespace) -> int:
             "cycles": args.cycles,
             "tempo": args.tempo,
             "events": len(events),
+            "transforms": args.transforms or [],
         })
     else:
         print(f"Generated Euclidean rhythm: {output_path.name}")
@@ -330,6 +407,8 @@ def cmd_euclidean(args: argparse.Namespace) -> int:
         print(f"  Cycles: {args.cycles}")
         print(f"  Tempo: {args.tempo} BPM")
         print(f"  Events: {len(events)}")
+        if args.transforms:
+            print(f"  Transforms: {', '.join(args.transforms)}")
 
     return EXIT_SUCCESS
 
@@ -357,8 +436,9 @@ def cmd_melody(args: argparse.Namespace) -> int:
     # Generate events
     events = melody.generate(num_notes=args.notes)
 
-    # Save to MIDI
-    _save_events_to_midi(events, output_path, args.tempo)
+    # Create transforms and save to MIDI
+    transforms = _create_transforms(getattr(args, 'transforms', None))
+    _save_events_to_midi(events, output_path, args.tempo, transforms)
 
     if args.json:
         output_json({
@@ -369,6 +449,7 @@ def cmd_melody(args: argparse.Namespace) -> int:
             "tempo": args.tempo,
             "seed": args.seed,
             "events": len(events),
+            "transforms": args.transforms or [],
         })
     else:
         print(f"Generated melody: {output_path.name}")
@@ -378,5 +459,7 @@ def cmd_melody(args: argparse.Namespace) -> int:
         if args.seed is not None:
             print(f"  Seed: {args.seed}")
         print(f"  Events: {len(events)}")
+        if args.transforms:
+            print(f"  Transforms: {', '.join(args.transforms)}")
 
     return EXIT_SUCCESS
