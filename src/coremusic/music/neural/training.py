@@ -413,6 +413,9 @@ class Trainer:
             val_cost = self.model.cost(x_val, y_val)
             self.history["val_loss"].append(val_cost)
 
+        # Store epochs count in history for access by callers
+        self.history["epochs_trained"] = epochs_trained
+
         logs = {
             "loss": train_cost,
             "epochs": epochs_trained,
@@ -536,3 +539,81 @@ class Trainer:
             path: Path to load model from
         """
         self.model = NeuralNetwork.load(path)
+
+    def train_rnn_sequences(
+        self,
+        sequences: List[List[int]],
+        seq_length: int,
+        vocab_size: int,
+        grad_clip: float = 5.0,
+    ) -> Dict[str, List[float]]:
+        """Train an RNN model on token sequences using backpropagation through time.
+
+        This method is specifically designed for RNN/LSTM/GRU models and uses
+        proper BPTT (backpropagation through time) instead of the standard
+        feedforward training API.
+
+        Args:
+            sequences: List of token sequences (each sequence is a list of ints)
+            seq_length: Length of subsequences for BPTT unrolling
+            vocab_size: Size of the vocabulary (number of possible tokens)
+            grad_clip: Gradient clipping threshold (default 5.0)
+
+        Returns:
+            Training history dict with 'loss' and 'val_loss' lists
+
+        Example:
+            >>> # Prepare sequences (lists of token indices)
+            >>> sequences = [[0, 1, 2, 3, 4, ...], [5, 6, 7, 8, ...], ...]
+            >>> history = trainer.train_rnn_sequences(
+            ...     sequences=sequences,
+            ...     seq_length=32,
+            ...     vocab_size=128,
+            ... )
+        """
+        # Filter sequences that are too short
+        valid_sequences = [s for s in sequences if len(s) > seq_length]
+        if not valid_sequences:
+            logger.warning("No sequences long enough for training")
+            return {"loss": [], "val_loss": []}
+
+        # Reset history
+        self.history = {"loss": [], "val_loss": []}
+
+        # Notify callbacks
+        self._notify_callbacks("on_train_begin", {"config": self.config})
+
+        # Use the model's train_rnn method
+        history = self.model.train_rnn(
+            sequences=valid_sequences,
+            seq_length=seq_length,
+            vocab_size=vocab_size,
+            learning_rate=self.config.learning_rate,
+            mini_batch_size=self.config.batch_size,
+            max_epochs=self.config.max_epochs,
+            grad_clip=grad_clip,
+            validation_fraction=self.config.validation_split,
+            verbose=self.config.verbose,
+        )
+
+        # Copy history from train_rnn result
+        self.history["loss"] = history.get("loss", [])
+        self.history["val_loss"] = history.get("val_loss", [])
+
+        # Notify callbacks
+        final_logs = {
+            "loss": self.history["loss"][-1] if self.history["loss"] else 0,
+            "epochs": len(self.history["loss"]),
+        }
+        if self.history["val_loss"]:
+            final_logs["val_loss"] = self.history["val_loss"][-1]
+
+        self._notify_callbacks("on_train_end", final_logs)
+
+        if self.config.verbose > 0:
+            logger.info(
+                f"RNN Training completed: {len(self.history['loss'])} epochs, "
+                f"final loss: {final_logs['loss']:.6f}"
+            )
+
+        return self.history

@@ -10,8 +10,8 @@
 
 cimport cython
 from cpython.mem cimport PyMem_Free, PyMem_Malloc
-from libc.stdlib cimport free, malloc
-from libc.string cimport memcpy
+from libc.stdlib cimport free, malloc, calloc
+from libc.string cimport memcpy, memset
 
 from .kann cimport *
 
@@ -517,6 +517,279 @@ cdef class NeuralNetwork:
             free(y_ptrs)
 
         return result
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def train_rnn(self, sequences, int seq_length, int vocab_size,
+                  float learning_rate=0.001,
+                  int mini_batch_size=32,
+                  int max_epochs=100,
+                  float grad_clip=10.0,
+                  float validation_fraction=0.1,
+                  int verbose=1):
+        """
+        Train an RNN using proper backpropagation through time (BPTT).
+
+        This method unrolls the RNN and trains it on sequences, which is
+        required for LSTM, GRU, and RNN models to learn effectively.
+
+        Args:
+            sequences: List of integer sequences (token indices)
+            seq_length: Length of unrolled sequence for BPTT
+            vocab_size: Size of vocabulary (for one-hot encoding)
+            learning_rate: Learning rate for RMSprop
+            mini_batch_size: Size of mini-batches
+            max_epochs: Maximum number of epochs
+            grad_clip: Gradient clipping threshold (0 = disabled)
+            validation_fraction: Fraction of data for validation
+            verbose: Verbosity level (0=silent, 1=progress)
+
+        Returns:
+            Dictionary with training history: {'loss': [...], 'val_loss': [...]}
+        """
+        import random
+
+        if self._ann == NULL:
+            raise KannModelError("No network to train")
+
+        cdef int n_var = kad_size_var(self._ann.n, self._ann.v)
+        cdef int n_seq = len(sequences)
+        cdef int n_train, n_val
+        cdef int epoch, batch_idx, t, b, node_idx, node_len
+        cdef int seq_idx, seq_len
+        cdef float total_cost, batch_cost, avg_loss, avg_val_loss
+        cdef int actual_batch_size, tokens_processed
+        cdef float clipped, val_cost
+        cdef int val_tokens, start_pos, token, next_token
+        cdef int val_batch_idx, val_actual_batch, valid_in_batch
+        cdef size_t buf_size
+        cdef kad_node_t* node
+
+        # Split into training and validation
+        n_val = int(n_seq * validation_fraction)
+        n_train = n_seq - n_val
+
+        if n_train < mini_batch_size:
+            mini_batch_size = n_train if n_train > 0 else 1
+
+        # Unroll the RNN for seq_length time steps
+        cdef kann_t* ua = NULL
+        cdef int* len_arr = <int*>malloc(sizeof(int))
+        if len_arr == NULL:
+            raise MemoryError("Failed to allocate memory")
+        len_arr[0] = seq_length
+
+        try:
+            ua = kann_unroll_array(self._ann, len_arr)
+        finally:
+            free(len_arr)
+
+        if ua == NULL:
+            raise KannModelError("Failed to unroll network (is it an RNN?)")
+
+        # Allocate arrays for input/output at each time step
+        cdef float** x_seq = <float**>malloc(seq_length * sizeof(float*))
+        cdef float** y_seq = <float**>malloc(seq_length * sizeof(float*))
+        cdef float* r = <float*>calloc(n_var, sizeof(float))  # RMSprop memory
+
+        if x_seq == NULL or y_seq == NULL or r == NULL:
+            if x_seq != NULL:
+                free(x_seq)
+            if y_seq != NULL:
+                free(y_seq)
+            if r != NULL:
+                free(r)
+            kann_delete_unrolled(ua)
+            raise MemoryError("Failed to allocate memory for training")
+
+        # Initialize all pointers to NULL first
+        for t in range(seq_length):
+            x_seq[t] = NULL
+            y_seq[t] = NULL
+
+        # Allocate data buffers for each time step
+        buf_size = vocab_size * mini_batch_size
+        for t in range(seq_length):
+            x_seq[t] = <float*>calloc(buf_size, sizeof(float))
+            y_seq[t] = <float*>calloc(buf_size, sizeof(float))
+            if x_seq[t] == NULL or y_seq[t] == NULL:
+                # Clean up on failure
+                for b in range(seq_length):
+                    if x_seq[b] != NULL:
+                        free(x_seq[b])
+                    if y_seq[b] != NULL:
+                        free(y_seq[b])
+                free(x_seq)
+                free(y_seq)
+                free(r)
+                kann_delete_unrolled(ua)
+                raise MemoryError("Failed to allocate time step buffers")
+
+        # Training history
+        history = {'loss': [], 'val_loss': []}
+
+        # Set batch size and bind inputs/outputs
+        kad_sync_dim(ua.n, ua.v, mini_batch_size)
+        kann_switch(ua, 1)  # Training mode
+        kann_feed_bind(ua, KANN_F_IN, 0, x_seq)
+        kann_feed_bind(ua, KANN_F_TRUTH, 0, y_seq)
+
+        try:
+            for epoch in range(max_epochs):
+                total_cost = 0.0
+                tokens_processed = 0
+
+                # Shuffle training sequences
+                train_indices = list(range(n_train))
+                random.shuffle(train_indices)
+
+                # Process sequences in mini-batches
+                batch_idx = 0
+                while batch_idx < n_train:
+                    actual_batch_size = min(mini_batch_size, n_train - batch_idx)
+
+                    # Reset hidden states for all nodes with pre pointer
+                    node_idx = 0
+                    while node_idx < ua.n:
+                        node = ua.v[node_idx]
+                        if node.pre != NULL and node.x != NULL:
+                            node_len = kad_len(node)
+                            if node_len > 0:
+                                memset(node.x, 0, node_len * sizeof(float))
+                        node_idx += 1
+
+                    # Clear input/output buffers
+                    for t in range(seq_length):
+                        memset(x_seq[t], 0, buf_size * sizeof(float))
+                        memset(y_seq[t], 0, buf_size * sizeof(float))
+
+                    # Fill in the batch
+                    for b in range(actual_batch_size):
+                        seq_idx = train_indices[batch_idx + b]
+                        seq = sequences[seq_idx]
+                        seq_len = len(seq)
+
+                        if seq_len <= seq_length:
+                            continue
+
+                        # Random starting position
+                        start_pos = random.randint(0, seq_len - seq_length - 1)
+
+                        for t in range(seq_length):
+                            # Input: current token
+                            token = seq[start_pos + t]
+                            if 0 <= token < vocab_size:
+                                x_seq[t][b * vocab_size + token] = 1.0
+
+                            # Target: next token
+                            next_token = seq[start_pos + t + 1]
+                            if 0 <= next_token < vocab_size:
+                                y_seq[t][b * vocab_size + next_token] = 1.0
+
+                    # Forward and backward pass
+                    batch_cost = kann_cost(ua, 0, 1)  # 1 = compute gradients
+                    total_cost += batch_cost * seq_length * actual_batch_size
+                    tokens_processed += seq_length * actual_batch_size
+
+                    # Gradient clipping
+                    if grad_clip > 0.0:
+                        clipped = kann_grad_clip(grad_clip, n_var, ua.g)
+
+                    # RMSprop update
+                    kann_RMSprop(n_var, learning_rate, NULL, 0.9, ua.g, ua.x, r)
+
+                    batch_idx += mini_batch_size
+
+                # Compute average loss
+                avg_loss = total_cost / tokens_processed if tokens_processed > 0 else 0.0
+                history['loss'].append(avg_loss)
+
+                # Validation (compute cost on held-out sequences)
+                # Must match training: accumulate cost * seq_length * batch_size, divide by total tokens
+                if n_val > 0:
+                    val_cost = 0.0
+                    val_tokens = 0
+                    kann_switch(ua, 0)  # Inference mode
+
+                    # Process validation sequences in mini-batches (like training)
+                    val_batch_idx = 0
+                    while val_batch_idx < n_val:
+                        val_actual_batch = min(mini_batch_size, n_val - val_batch_idx)
+
+                        # Reset hidden states
+                        node_idx = 0
+                        while node_idx < ua.n:
+                            node = ua.v[node_idx]
+                            if node.pre != NULL and node.x != NULL:
+                                node_len = kad_len(node)
+                                if node_len > 0:
+                                    memset(node.x, 0, node_len * sizeof(float))
+                            node_idx += 1
+
+                        # Clear buffers
+                        t = 0
+                        while t < seq_length:
+                            memset(x_seq[t], 0, buf_size * sizeof(float))
+                            memset(y_seq[t], 0, buf_size * sizeof(float))
+                            t += 1
+
+                        # Fill in the validation batch
+                        valid_in_batch = 0
+                        b = 0
+                        while b < val_actual_batch:
+                            seq_idx = n_train + val_batch_idx + b
+                            seq = sequences[seq_idx]
+                            seq_len = len(seq)
+                            b += 1
+
+                            if seq_len <= seq_length:
+                                continue
+
+                            # Use a fixed position for validation (deterministic)
+                            start_pos = 0
+
+                            t = 0
+                            while t < seq_length:
+                                token = seq[start_pos + t]
+                                if 0 <= token < vocab_size:
+                                    x_seq[t][valid_in_batch * vocab_size + token] = 1.0
+                                next_token = seq[start_pos + t + 1]
+                                if 0 <= next_token < vocab_size:
+                                    y_seq[t][valid_in_batch * vocab_size + next_token] = 1.0
+                                t += 1
+
+                            valid_in_batch += 1
+
+                        if valid_in_batch > 0:
+                            # Accumulate cost same as training: cost * seq_length * batch_size
+                            val_cost += kann_cost(ua, 0, 0) * seq_length * valid_in_batch
+                            val_tokens += seq_length * valid_in_batch
+
+                        val_batch_idx += val_actual_batch
+
+                    avg_val_loss = val_cost / val_tokens if val_tokens > 0 else 0.0
+                    history['val_loss'].append(avg_val_loss)
+                    kann_switch(ua, 1)  # Back to training mode
+
+                if verbose > 0:
+                    if n_val > 0:
+                        print(f"epoch: {epoch + 1}; train cost: {avg_loss:.4f}; val cost: {avg_val_loss:.4f}")
+                    else:
+                        print(f"epoch: {epoch + 1}; train cost: {avg_loss:.4f}")
+
+        finally:
+            # Clean up
+            for t in range(seq_length):
+                if x_seq[t] != NULL:
+                    free(x_seq[t])
+                if y_seq[t] != NULL:
+                    free(y_seq[t])
+            free(x_seq)
+            free(y_seq)
+            free(r)
+            kann_delete_unrolled(ua)
+
+        return history
 
     @cython.boundscheck(False)
     @cython.wraparound(False)

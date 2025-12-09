@@ -1160,9 +1160,11 @@ class MIDIDataset:
         Returns:
             Number of new sequences created
         """
-        if not isinstance(self.encoder, NoteEncoder):
+        # Check if encoder supports transposition
+        if not hasattr(self.encoder, 'transpose'):
             raise NotImplementedError(
-                "Augmentation currently only supported for NoteEncoder"
+                f"Augmentation not supported for {self.encoder.__class__.__name__} "
+                "(no transpose method)"
             )
 
         min_t, max_t = transpose_range

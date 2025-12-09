@@ -182,6 +182,7 @@ cdef extern from "kautodiff.h":
     # Size utilities
     int kad_size_var(int n, kad_node_t *const* v)
     int kad_size_const(int n, kad_node_t *const* v)
+    int kad_len(const kad_node_t *p)
 
     # Graph I/O
     int kad_save(FILE *fp, int n_node, kad_node_t **node)

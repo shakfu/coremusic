@@ -23,9 +23,25 @@ Example:
 
 from typing import List, Optional
 
-from coremusic.kann import COST_MULTI_CROSS_ENTROPY, NeuralNetwork
+from coremusic.kann import (
+    COST_MULTI_CROSS_ENTROPY,
+    NeuralNetwork,
+    RNN_NORM,
+    RNN_VAR_H0,
+)
 
 from .data import BaseEncoder
+
+# Re-export RNN flags for convenience
+__all__ = [
+    "create_mlp_model",
+    "create_rnn_model",
+    "create_lstm_model",
+    "create_gru_model",
+    "ModelFactory",
+    "RNN_NORM",
+    "RNN_VAR_H0",
+]
 
 # ============================================================================
 # Model Factory Functions
@@ -125,6 +141,12 @@ def create_lstm_model(
     allow them to learn long-range dependencies in sequences. Better
     gradient flow than vanilla RNNs.
 
+    WARNING: LSTM training currently uses the feedforward training API
+    (kann_train_fnn1) which does not properly implement backpropagation
+    through time (BPTT). For effective sequence learning, use MLP models
+    instead until proper RNN training is implemented. LSTM models created
+    here can still be used for inference if trained with external tools.
+
     Args:
         input_size: Size of input at each timestep (vocab_size for one-hot)
         hidden_size: Size of LSTM hidden state
@@ -163,6 +185,12 @@ def create_gru_model(
     GRU (Gated Recurrent Unit) is a simplified alternative to LSTM with
     fewer parameters. Often achieves similar performance with faster
     training.
+
+    WARNING: GRU training currently uses the feedforward training API
+    (kann_train_fnn1) which does not properly implement backpropagation
+    through time (BPTT). For effective sequence learning, use MLP models
+    instead until proper RNN training is implemented. GRU models created
+    here can still be used for inference if trained with external tools.
 
     Args:
         input_size: Size of input at each timestep (vocab_size for one-hot)
@@ -330,10 +358,11 @@ class ModelFactory:
             config["dropout"] = 0.3
         elif model_type in ("lstm", "gru"):
             config["hidden_size"] = 256
-            config["rnn_flags"] = 0
+            # Use layer normalization for better gradient flow
+            config["rnn_flags"] = RNN_NORM
         elif model_type == "rnn":
             config["hidden_size"] = 128
-            config["rnn_flags"] = 0
+            config["rnn_flags"] = RNN_NORM
 
         return config
 
@@ -360,30 +389,31 @@ class ModelFactory:
             "mlp": (
                 "Multi-Layer Perceptron (MLP)\n"
                 "- Fixed input window (flattened one-hot sequence)\n"
-                "- Simple, fast training\n"
+                "- Simple, fast training - RECOMMENDED\n"
                 "- Limited temporal awareness (fixed window only)\n"
-                "- Best for: Quick experiments, small datasets"
+                "- Best for: Music generation, quick experiments"
             ),
             "rnn": (
                 "Simple Recurrent Neural Network (RNN)\n"
                 "- Processes sequences step-by-step\n"
                 "- Basic recurrent connections\n"
                 "- Prone to vanishing gradients\n"
-                "- Best for: Learning short-term patterns"
+                "- WARNING: Training not fully implemented (use MLP instead)"
             ),
             "lstm": (
                 "Long Short-Term Memory (LSTM)\n"
                 "- Gated recurrent architecture\n"
-                "- Better gradient flow\n"
+                "- Better gradient flow in theory\n"
                 "- Can learn long-range dependencies\n"
-                "- Best for: Musical phrases, structure learning"
+                "- WARNING: Training not fully implemented (use MLP instead)\n"
+                "- Note: Requires proper BPTT via kann_unroll()"
             ),
             "gru": (
                 "Gated Recurrent Unit (GRU)\n"
                 "- Simplified LSTM alternative\n"
                 "- Fewer parameters, faster training\n"
                 "- Similar performance to LSTM\n"
-                "- Best for: Balanced speed/quality tradeoff"
+                "- WARNING: Training not fully implemented (use MLP instead)"
             ),
         }
         model_type = model_type.lower()

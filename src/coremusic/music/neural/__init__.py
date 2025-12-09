@@ -53,9 +53,9 @@ from .evaluation import (ModelComparison,  # Metrics; Model comparison
 from .generation import (GreedySampling,  # Sampling strategies; Generator
                          MusicGenerator, NucleusSampling, SamplingStrategy,
                          TemperatureSampling, TopKSampling)
-from .models import (  # Model factory functions; Model factory class
-    ModelFactory, create_gru_model, create_lstm_model, create_mlp_model,
-    create_rnn_model)
+from .models import (  # Model factory functions; Model factory class; RNN flags
+    ModelFactory, RNN_NORM, RNN_VAR_H0, create_gru_model, create_lstm_model,
+    create_mlp_model, create_rnn_model)
 from .training import (Callback,  # Configuration; Trainer; Callbacks
                        EarlyStopping, LearningRateScheduler, ModelCheckpoint,
                        ProgressLogger, Trainer, TrainingConfig)
@@ -75,6 +75,9 @@ __all__ = [
     "create_lstm_model",
     "create_gru_model",
     "ModelFactory",
+    # Models - RNN flags
+    "RNN_NORM",
+    "RNN_VAR_H0",
     # Training - Configuration
     "TrainingConfig",
     # Training - Trainer

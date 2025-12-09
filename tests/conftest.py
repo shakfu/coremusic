@@ -22,6 +22,7 @@ AMEN_WAV_PATH = os.path.join(WAV_DIR, "amen.wav")
 CANON_MID_PATH = os.path.join(MIDI_DIR, "canon.mid")
 DEMO_MID_PATH = os.path.join(MIDI_DIR, "demo.mid")
 GROOVE_DIR = os.path.join(MIDI_DIR, "groove")
+CLASSICAL_DIR = os.path.join(MIDI_DIR, "classical")
 
 # Legacy path aliases for backwards compatibility
 AMEN_WAV = AMEN_WAV_PATH
