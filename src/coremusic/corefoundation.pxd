@@ -27,7 +27,6 @@ cdef extern from "CoreFoundation/CFBase.h":
     ctypedef int64_t        SInt64
     ctypedef SInt32         OSStatus
 
-    ctypedef CFDictionaryRef
     ctypedef UInt32          FourCharCode
     ctypedef FourCharCode    OSType
 
