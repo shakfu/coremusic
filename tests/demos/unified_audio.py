@@ -293,8 +293,8 @@ class UnifiedAudioDemo:
             audio_unit = capi.audio_component_instance_new(component_id)
             try:
                 self.print_success("AudioUnit property access: AVAILABLE")
-            except:
-                self.print_info("AudioUnit property access: Limited")
+            except Exception as e:
+                self.print_info(f"AudioUnit property access: Limited ({e})")
             capi.audio_component_instance_dispose(audio_unit)
             self.demo_results["advanced"] = True
             return True

@@ -4,13 +4,13 @@
 import sys
 from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# Add tests/examples to path for local module imports
+sys.path.insert(0, str(Path(__file__).parent))
 
 import pytest
 
 from coremusic.music.theory import Note, Chord, ChordType, Scale, ScaleType
-from coremusic.music.generative import (
+from generative.generative import (
     Generator,
     GeneratorConfig,
     Arpeggiator,

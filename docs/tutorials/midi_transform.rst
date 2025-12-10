@@ -419,6 +419,6 @@ Here's a complete workflow processing a MIDI file:
 See Also
 --------
 
-- :doc:`music_theory` - Music theory and generative algorithms
+- :doc:`music_theory` - Music theory fundamentals
 - ``coremusic.midi.utilities`` - MIDI file I/O
 - ``coremusic.midi.link`` - Ableton Link integration

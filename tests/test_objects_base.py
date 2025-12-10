@@ -156,42 +156,27 @@ class TestExceptionHierarchy:
 class TestObjectOrientedAPIAvailability:
     """Test that all OO API classes are available through main import"""
 
-    def test_base_classes_available(self):
-        """Test base infrastructure classes are available"""
-        assert hasattr(cm, "CoreAudioObject")
-        assert hasattr(cm, "AudioFormat")
+    # All required classes that must be exported from coremusic
+    REQUIRED_CLASSES = [
+        # Base classes
+        "CoreAudioObject", "AudioFormat",
+        # Exception classes
+        "CoreAudioError", "AudioFileError", "AudioQueueError",
+        "AudioUnitError", "MIDIError", "MusicPlayerError",
+        # Audio file classes
+        "AudioFile", "AudioFileStream",
+        # Audio queue classes
+        "AudioBuffer", "AudioQueue",
+        # Audio unit classes
+        "AudioComponentDescription", "AudioComponent", "AudioUnit",
+        # MIDI classes
+        "MIDIClient", "MIDIPort", "MIDIInputPort", "MIDIOutputPort",
+    ]
 
-    def test_exception_classes_available(self):
-        """Test exception classes are available"""
-        assert hasattr(cm, "CoreAudioError")
-        assert hasattr(cm, "AudioFileError")
-        assert hasattr(cm, "AudioQueueError")
-        assert hasattr(cm, "AudioUnitError")
-        assert hasattr(cm, "MIDIError")
-        assert hasattr(cm, "MusicPlayerError")
-
-    def test_audio_file_classes_available(self):
-        """Test audio file classes are available"""
-        assert hasattr(cm, "AudioFile")
-        assert hasattr(cm, "AudioFileStream")
-
-    def test_audio_queue_classes_available(self):
-        """Test audio queue classes are available"""
-        assert hasattr(cm, "AudioBuffer")
-        assert hasattr(cm, "AudioQueue")
-
-    def test_audio_unit_classes_available(self):
-        """Test audio unit classes are available"""
-        assert hasattr(cm, "AudioComponentDescription")
-        assert hasattr(cm, "AudioComponent")
-        assert hasattr(cm, "AudioUnit")
-
-    def test_midi_classes_available(self):
-        """Test MIDI classes are available"""
-        assert hasattr(cm, "MIDIClient")
-        assert hasattr(cm, "MIDIPort")
-        assert hasattr(cm, "MIDIInputPort")
-        assert hasattr(cm, "MIDIOutputPort")
+    @pytest.mark.parametrize("class_name", REQUIRED_CLASSES)
+    def test_class_available(self, class_name):
+        """Test that required class is available via main import"""
+        assert hasattr(cm, class_name), f"Missing class: {class_name}"
 
     def test_functional_api_available_via_capi(self):
         """Test that functional API is available via capi submodule"""

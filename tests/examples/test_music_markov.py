@@ -6,12 +6,12 @@ import sys
 import tempfile
 from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# Add tests/examples to path for local module imports
+sys.path.insert(0, str(Path(__file__).parent))
 
 import pytest
 
-from coremusic.music.markov import (
+from generative.markov import (
     MarkovChain,
     ChainConfig,
     ModelingMode,

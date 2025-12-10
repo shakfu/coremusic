@@ -15,8 +15,6 @@ Key Features:
 - JSON serialization for saving/loading trained chains
 
 Example:
-    >>> from coremusic.music.markov import MIDIMarkovAnalyzer, MIDIMarkovGenerator
-    >>>
     >>> # Analyze a MIDI file
     >>> analyzer = MIDIMarkovAnalyzer(order=2)
     >>> chain = analyzer.analyze_file("song.mid")

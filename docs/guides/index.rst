@@ -111,7 +111,7 @@ See the :doc:`/cookbook/index` for ready-to-use recipes.
 
 **Prefer command-line tools?**
 
-The :doc:`cli` covers all CLI commands for audio, MIDI, and generative music.
+The :doc:`cli` covers all CLI commands for audio and MIDI operations.
 
 **Need API reference?**
 

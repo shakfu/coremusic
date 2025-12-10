@@ -21,8 +21,8 @@ Key Features
 - **Professional Audio Support**: Real-time processing, multi-channel audio, hardware control
 - **Comprehensive MIDI**: MIDI 1.0/2.0 support, device management, advanced routing
 - **Precise Timing & Sync**: CoreAudioClock for audio/MIDI synchronization and tempo control
-- **Music Theory & Generative**: Notes, scales, chords, arpeggiators, Euclidean rhythms, Markov chains
-- **Command Line Interface**: CLI for audio analysis, conversion, MIDI, and generative music
+- **Music Theory**: Notes, scales, chords, intervals, and harmonic analysis
+- **Command Line Interface**: CLI for audio analysis, conversion, and MIDI operations
 
 Quick Start
 -----------
@@ -110,33 +110,26 @@ Audio/MIDI Synchronization
 
        clock.stop()
 
-Music Theory and Generative
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Music Theory
+^^^^^^^^^^^^
 
 .. code-block:: python
 
    from coremusic.music.theory import Note, Scale, ScaleType, Chord, ChordType
-   from coremusic.music.generative import Arpeggiator, ArpPattern, EuclideanGenerator
 
    # Create notes, scales, and chords
    c4 = Note.from_name("C4")
    c_major = Scale(c4, ScaleType.MAJOR)
    cmaj7 = Chord(c4, ChordType.MAJOR_7)
 
-   # Generate arpeggios
-   arp = Arpeggiator(cmaj7.notes, pattern=ArpPattern.UP_DOWN, note_duration=0.25)
-   events = arp.generate(num_notes=16)
+   # Get scale degrees and chord notes
+   print(f"C Major scale: {[n.name for n in c_major.notes]}")
+   print(f"CMaj7 chord: {[n.name for n in cmaj7.notes]}")
 
-   # Create Euclidean rhythms (Cinquillo pattern)
-   euclidean = EuclideanGenerator(pulses=5, steps=8, note=c4, step_duration=0.125)
-   rhythm_events = euclidean.generate(num_cycles=4)
-
-   # Export to MIDI
-   from coremusic.midi.utilities import MIDISequence
-   sequence = MIDISequence()
-   track = sequence.create_track("Arpeggio")
-   # ... add events and save
-   sequence.save("composition.mid")
+   # Interval analysis
+   from coremusic.music.theory import Interval
+   interval = Interval.between(c4, Note.from_name("G4"))
+   print(f"Interval: {interval.name}")  # Perfect Fifth
 
 Command Line Interface
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -156,9 +149,6 @@ Command Line Interface
    # List audio devices and plugins
    coremusic devices list
    coremusic plugins list --type effect
-
-   # Generate arpeggio pattern to MIDI
-   coremusic generate arpeggio output.mid --root C4 --chord maj7
 
 See :doc:`guides/cli` for complete CLI documentation.
 

@@ -12,12 +12,16 @@ Tests cover all components of the bayes module including:
 
 import json
 import os
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
 
-from coremusic.music.bayes import (
+# Add tests/examples to path for local module imports
+sys.path.insert(0, str(Path(__file__).parent))
+
+from generative.bayes import (
     # Enums
     NetworkMode,
     StructureMode,

@@ -5,9 +5,9 @@
 
 ## Overview
 
-`coremusic` is a zero-dependency Cython extension providing direct Python access to Apple's CoreAudio and CoreMIDI frameworks with near-native performance. It offers both functional (C-style) and object-oriented (Pythonic) APIs with automatic resource management.
+`coremusic` is a zero-dependency music development toolkit for macOS providing direct Python access via cython to Apple's CoreAudio and CoreMIDI frameworks with near-native performance. It offers both functional (C-style) and object-oriented (Pythonic) APIs with automatic resource management.
 
-`coremusic` is a zero-dependency music development toolkit for macOS. Current features include:
+Current features include:
 
 - Low-level I/O: CoreAudio, AudioToolbox, CoreMIDI bindings
 - Sync: Ableton Link for tempo/beat sync across devices

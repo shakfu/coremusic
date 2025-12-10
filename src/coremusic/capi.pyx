@@ -17,6 +17,9 @@ from . import log, os_status
 
 logger = log.config(__name__)
 
+# Buffer size constants
+DEF STRING_BUFFER_SIZE = 256  # Buffer size for CFString conversions and component names
+
 # Forward declare Link module classes for integration
 cdef extern from *:
     """
@@ -52,6 +55,144 @@ cdef str format_osstatus_error(cf.OSStatus status, str operation):
     )
 
     return message
+
+
+# ============================================================================
+# Helper Functions for Common Patterns
+# ============================================================================
+
+# AudioStreamBasicDescription Conversion Helpers
+cdef void dict_to_asbd(dict format_dict, at.AudioStreamBasicDescription* asbd) noexcept:
+    """Convert a Python dict to AudioStreamBasicDescription struct.
+
+    This helper centralizes the common pattern of converting format dictionaries
+    to AudioStreamBasicDescription structs, reducing code duplication.
+
+    Args:
+        format_dict: Dictionary with format keys (sample_rate, format_id, etc.)
+        asbd: Pointer to AudioStreamBasicDescription struct to fill
+    """
+    asbd.mSampleRate = format_dict.get('sample_rate', 44100.0)
+    asbd.mFormatID = format_dict.get('format_id', ca.kAudioFormatLinearPCM)
+    asbd.mFormatFlags = format_dict.get('format_flags',
+        ca.kLinearPCMFormatFlagIsSignedInteger | ca.kLinearPCMFormatFlagIsPacked)
+    asbd.mBytesPerPacket = format_dict.get('bytes_per_packet', 4)
+    asbd.mFramesPerPacket = format_dict.get('frames_per_packet', 1)
+    asbd.mBytesPerFrame = format_dict.get('bytes_per_frame', 4)
+    asbd.mChannelsPerFrame = format_dict.get('channels_per_frame', 2)
+    asbd.mBitsPerChannel = format_dict.get('bits_per_channel', 16)
+    asbd.mReserved = 0
+
+
+cdef dict asbd_to_dict(at.AudioStreamBasicDescription* asbd):
+    """Convert an AudioStreamBasicDescription struct to Python dict.
+
+    This helper centralizes the common pattern of converting
+    AudioStreamBasicDescription structs to Python dictionaries.
+
+    Args:
+        asbd: Pointer to AudioStreamBasicDescription struct
+
+    Returns:
+        Dictionary with all ASBD fields
+    """
+    return {
+        'sample_rate': asbd.mSampleRate,
+        'format_id': asbd.mFormatID,
+        'format_flags': asbd.mFormatFlags,
+        'bytes_per_packet': asbd.mBytesPerPacket,
+        'frames_per_packet': asbd.mFramesPerPacket,
+        'bytes_per_frame': asbd.mBytesPerFrame,
+        'channels_per_frame': asbd.mChannelsPerFrame,
+        'bits_per_channel': asbd.mBitsPerChannel,
+        'reserved': asbd.mReserved
+    }
+
+
+# CFStringRef Conversion Helpers
+cdef str cfstring_to_str(cf.CFStringRef string_ref):
+    """Convert a CFStringRef to Python string.
+
+    This helper centralizes CFString extraction, handling both short and long strings.
+    The caller is responsible for releasing the CFStringRef if needed.
+
+    Args:
+        string_ref: CFStringRef to convert
+
+    Returns:
+        Python string, or empty string if conversion fails
+    """
+    if string_ref == <cf.CFStringRef>0:
+        return ""
+
+    cdef char buffer[STRING_BUFFER_SIZE]
+    cdef str result
+    cdef cf.CFIndex length
+    cdef cf.CFIndex max_size
+    cdef char* large_buffer
+
+    # Try small buffer first (common case)
+    if cf.CFStringGetCString(string_ref, buffer, sizeof(buffer), cf.kCFStringEncodingUTF8):
+        return buffer.decode('utf-8')
+
+    # Fallback: allocate larger buffer for long strings
+    length = cf.CFStringGetLength(string_ref)
+    max_size = cf.CFStringGetMaximumSizeForEncoding(length, cf.kCFStringEncodingUTF8)
+    large_buffer = <char*>malloc(max_size + 1)
+
+    if large_buffer == <char*>0:
+        return ""
+
+    try:
+        if cf.CFStringGetCString(string_ref, large_buffer, max_size + 1, cf.kCFStringEncodingUTF8):
+            result = large_buffer.decode('utf-8')
+            return result
+        return ""
+    finally:
+        free(large_buffer)
+
+
+cdef cf.CFStringRef str_to_cfstring(str py_string):
+    """Convert a Python string to CFStringRef.
+
+    IMPORTANT: The caller is responsible for releasing the returned CFStringRef
+    using cf.CFRelease() when done.
+
+    Args:
+        py_string: Python string to convert
+
+    Returns:
+        CFStringRef (must be released by caller), or NULL on failure
+    """
+    cdef bytes string_bytes = py_string.encode('utf-8')
+    return cf.CFStringCreateWithCString(
+        cf.kCFAllocatorDefault,
+        string_bytes,
+        cf.kCFStringEncodingUTF8
+    )
+
+
+# AudioObjectPropertyAddress Helper
+cdef void init_property_address(
+    ca.AudioObjectPropertyAddress* address,
+    cf.UInt32 selector,
+    cf.UInt32 scope,
+    cf.UInt32 element
+) noexcept:
+    """Initialize an AudioObjectPropertyAddress struct.
+
+    This helper reduces boilerplate for property address setup.
+
+    Args:
+        address: Pointer to address struct to initialize
+        selector: Property selector (e.g., kAudioHardwarePropertyDevices)
+        scope: Property scope (0 = kAudioObjectPropertyScopeGlobal)
+        element: Property element (0 = kAudioObjectPropertyElementMain)
+    """
+    address.mSelector = selector
+    address.mScope = scope
+    address.mElement = element
+
 
 def fourchar_to_int(code: str) -> int:
    """Convert fourcc chars to an int
@@ -103,9 +244,7 @@ def audio_object_get_property_data(int object_id, int property_selector, int sco
     cdef char* buffer
     cdef bytes result
 
-    address.mSelector = property_selector
-    address.mScope = scope
-    address.mElement = element
+    init_property_address(&address, property_selector, scope, element)
 
     # Get the data size
     status = ca.AudioObjectGetPropertyDataSize(object_id, &address, 0, <void*>0, &data_size)
@@ -142,45 +281,17 @@ def audio_object_get_property_string(int object_id, int property_selector, int s
     cdef cf.UInt32 data_size = sizeof(cf.CFStringRef)
     cdef cf.OSStatus status
     cdef cf.CFStringRef string_ref
-    cdef char buffer[1024]
-    cdef bytes result
-    cdef cf.CFIndex length
-    cdef cf.CFIndex max_size
-    cdef char* large_buffer
 
-    address.mSelector = property_selector
-    address.mScope = scope
-    address.mElement = element
+    init_property_address(&address, property_selector, scope, element)
 
     # Get the CFStringRef
     status = ca.AudioObjectGetPropertyData(object_id, &address, 0, <void*>0, &data_size, &string_ref)
     if status != 0:
         raise RuntimeError(format_osstatus_error(status, "AudioObjectGetPropertyData"))
 
-    if string_ref == <cf.CFStringRef>0:
-        return b''
-
-    # Extract the C string from the CFStringRef
-    if cf.CFStringGetCString(string_ref, buffer, sizeof(buffer), cf.kCFStringEncodingUTF8):
-        result = buffer
-        return result
-
-    # Fallback: try to get length and allocate larger buffer
-    length = cf.CFStringGetLength(string_ref)
-    max_size = cf.CFStringGetMaximumSizeForEncoding(length, cf.kCFStringEncodingUTF8)
-    large_buffer = <char*>malloc(max_size + 1)
-
-    if large_buffer == <char*>0:
-        return b''
-
-    try:
-        if cf.CFStringGetCString(string_ref, large_buffer, max_size + 1, cf.kCFStringEncodingUTF8):
-            result = large_buffer
-            return result
-        else:
-            return b''
-    finally:
-        free(large_buffer)
+    # Use helper to convert CFString to Python string (returns str, encode to bytes for compatibility)
+    cdef str result_str = cfstring_to_str(string_ref)
+    return result_str.encode('utf-8') if result_str else b''
 
 
 def audio_hardware_get_devices() -> list:
@@ -192,9 +303,12 @@ def audio_hardware_get_devices() -> list:
     cdef int device_count
     cdef list devices = []
 
-    address.mSelector = ca.kAudioHardwarePropertyDevices
-    address.mScope = 0  # kAudioObjectPropertyScopeGlobal
-    address.mElement = 0  # kAudioObjectPropertyElementMain
+    init_property_address(
+        &address,
+        ca.kAudioHardwarePropertyDevices,
+        ca.kAudioObjectPropertyScopeGlobal,
+        ca.kAudioObjectPropertyElementMain
+    )
 
     # Get the data size
     status = ca.AudioObjectGetPropertyDataSize(ca.kAudioObjectSystemObject, &address, 0, NULL, &data_size)
@@ -228,9 +342,12 @@ def audio_hardware_get_default_output_device() -> int:
     cdef ca.AudioObjectID device_id = 0
     cdef cf.OSStatus status
 
-    address.mSelector = ca.kAudioHardwarePropertyDefaultOutputDevice
-    address.mScope = 0  # kAudioObjectPropertyScopeGlobal
-    address.mElement = 0  # kAudioObjectPropertyElementMain
+    init_property_address(
+        &address,
+        ca.kAudioHardwarePropertyDefaultOutputDevice,
+        ca.kAudioObjectPropertyScopeGlobal,
+        ca.kAudioObjectPropertyElementMain
+    )
 
     status = ca.AudioObjectGetPropertyData(ca.kAudioObjectSystemObject, &address, 0, NULL, &data_size, &device_id)
     if status != 0:
@@ -246,9 +363,12 @@ def audio_hardware_get_default_input_device() -> int:
     cdef ca.AudioObjectID device_id = 0
     cdef cf.OSStatus status
 
-    address.mSelector = ca.kAudioHardwarePropertyDefaultInputDevice
-    address.mScope = 0  # kAudioObjectPropertyScopeGlobal
-    address.mElement = 0  # kAudioObjectPropertyElementMain
+    init_property_address(
+        &address,
+        ca.kAudioHardwarePropertyDefaultInputDevice,
+        ca.kAudioObjectPropertyScopeGlobal,
+        ca.kAudioObjectPropertyElementMain
+    )
 
     status = ca.AudioObjectGetPropertyData(ca.kAudioObjectSystemObject, &address, 0, NULL, &data_size, &device_id)
     if status != 0:
@@ -482,19 +602,8 @@ def audio_file_stream_get_property(long stream_id, int property_id):
 
         # Handle different property types
         if property_id == at.kAudioFileStreamProperty_DataFormat:
-            # Return AudioStreamBasicDescription as dict
-            desc = <at.AudioStreamBasicDescription*>buffer
-            return {
-                'sample_rate': desc.mSampleRate,
-                'format_id': desc.mFormatID,
-                'format_flags': desc.mFormatFlags,
-                'bytes_per_packet': desc.mBytesPerPacket,
-                'frames_per_packet': desc.mFramesPerPacket,
-                'bytes_per_frame': desc.mBytesPerFrame,
-                'channels_per_frame': desc.mChannelsPerFrame,
-                'bits_per_channel': desc.mBitsPerChannel,
-                'reserved': desc.mReserved
-            }
+            # Return AudioStreamBasicDescription as dict using helper
+            return asbd_to_dict(<at.AudioStreamBasicDescription*>buffer)
         elif property_id in [at.kAudioFileStreamProperty_ReadyToProducePackets,
                            at.kAudioFileStreamProperty_FileFormat,
                            at.kAudioFileStreamProperty_MaximumPacketSize,
@@ -559,29 +668,9 @@ def audio_converter_new(source_format: dict, dest_format: dict) -> int:
     cdef at.AudioStreamBasicDescription dst_format
     cdef at.AudioConverterRef converter
 
-    # Set up source format
-    src_format.mSampleRate = source_format.get('sample_rate', 44100.0)
-    src_format.mFormatID = source_format.get('format_id', ca.kAudioFormatLinearPCM)
-    src_format.mFormatFlags = source_format.get('format_flags',
-        ca.kLinearPCMFormatFlagIsSignedInteger | ca.kLinearPCMFormatFlagIsPacked)
-    src_format.mBytesPerPacket = source_format.get('bytes_per_packet', 4)
-    src_format.mFramesPerPacket = source_format.get('frames_per_packet', 1)
-    src_format.mBytesPerFrame = source_format.get('bytes_per_frame', 4)
-    src_format.mChannelsPerFrame = source_format.get('channels_per_frame', 2)
-    src_format.mBitsPerChannel = source_format.get('bits_per_channel', 16)
-    src_format.mReserved = 0
-
-    # Set up destination format
-    dst_format.mSampleRate = dest_format.get('sample_rate', 44100.0)
-    dst_format.mFormatID = dest_format.get('format_id', ca.kAudioFormatLinearPCM)
-    dst_format.mFormatFlags = dest_format.get('format_flags',
-        ca.kLinearPCMFormatFlagIsSignedInteger | ca.kLinearPCMFormatFlagIsPacked)
-    dst_format.mBytesPerPacket = dest_format.get('bytes_per_packet', 4)
-    dst_format.mFramesPerPacket = dest_format.get('frames_per_packet', 1)
-    dst_format.mBytesPerFrame = dest_format.get('bytes_per_frame', 4)
-    dst_format.mChannelsPerFrame = dest_format.get('channels_per_frame', 2)
-    dst_format.mBitsPerChannel = dest_format.get('bits_per_channel', 16)
-    dst_format.mReserved = 0
+    # Set up formats using helper
+    dict_to_asbd(source_format, &src_format)
+    dict_to_asbd(dest_format, &dst_format)
 
     cdef cf.OSStatus status = at.AudioConverterNew(&src_format, &dst_format, &converter)
     if status != 0:
@@ -820,16 +909,8 @@ def audio_converter_fill_complex_buffer(
     callback_data.total_packets = input_packet_count
     callback_data.packet_size = source_format_dict['bytes_per_packet']
 
-    # Fill source format structure
-    callback_data.source_format.mSampleRate = source_format_dict['sample_rate']
-    callback_data.source_format.mFormatID = source_format_dict['format_id']
-    callback_data.source_format.mFormatFlags = source_format_dict['format_flags']
-    callback_data.source_format.mBytesPerPacket = source_format_dict['bytes_per_packet']
-    callback_data.source_format.mFramesPerPacket = source_format_dict['frames_per_packet']
-    callback_data.source_format.mBytesPerFrame = source_format_dict['bytes_per_frame']
-    callback_data.source_format.mChannelsPerFrame = source_format_dict['channels_per_frame']
-    callback_data.source_format.mBitsPerChannel = source_format_dict['bits_per_channel']
-    callback_data.source_format.mReserved = 0
+    # Fill source format structure using helper
+    dict_to_asbd(source_format_dict, &callback_data.source_format)
 
     # Allocate output buffer (estimate size generously)
     # For sample rate conversion, output size = input_size * (output_rate / input_rate)
@@ -965,7 +1046,7 @@ def extended_audio_file_create_with_url(str file_path, int file_type, source_for
     Returns:
         ExtAudioFile ID
     """
-    cdef cf.CFStringRef cf_path = cf.CFStringCreateWithCString(NULL, file_path.encode('utf-8'), cf.kCFStringEncodingUTF8)
+    cdef cf.CFStringRef cf_path = str_to_cfstring(file_path)
     cdef cf.CFURLRef url = cf.CFURLCreateWithFileSystemPath(NULL, cf_path, cf.kCFURLPOSIXPathStyle, False)
     cdef at.AudioStreamBasicDescription format
     cdef at.ExtAudioFileRef ext_file
@@ -974,17 +1055,8 @@ def extended_audio_file_create_with_url(str file_path, int file_type, source_for
         cf.CFRelease(cf_path)
         raise ValueError(f"Failed to create URL from path: {file_path}")
 
-    # Set up audio format
-    format.mSampleRate = source_format.get('sample_rate', 44100.0)
-    format.mFormatID = source_format.get('format_id', ca.kAudioFormatLinearPCM)
-    format.mFormatFlags = source_format.get('format_flags',
-        ca.kLinearPCMFormatFlagIsSignedInteger | ca.kLinearPCMFormatFlagIsPacked)
-    format.mBytesPerPacket = source_format.get('bytes_per_packet', 4)
-    format.mFramesPerPacket = source_format.get('frames_per_packet', 1)
-    format.mBytesPerFrame = source_format.get('bytes_per_frame', 4)
-    format.mChannelsPerFrame = source_format.get('channels_per_frame', 2)
-    format.mBitsPerChannel = source_format.get('bits_per_channel', 16)
-    format.mReserved = 0
+    # Set up audio format using helper
+    dict_to_asbd(source_format, &format)
 
     cdef cf.OSStatus status = at.ExtAudioFileCreateWithURL(
         url,
@@ -1162,17 +1234,8 @@ def audio_queue_new_output(audio_format):
     cdef at.AudioStreamBasicDescription format
     cdef at.AudioQueueRef queue
 
-    # Set up the audio format
-    format.mSampleRate = audio_format.get('sample_rate', 44100.0)
-    format.mFormatID = audio_format.get('format_id', ca.kAudioFormatLinearPCM)
-    format.mFormatFlags = audio_format.get('format_flags',
-        ca.kLinearPCMFormatFlagIsSignedInteger | ca.kLinearPCMFormatFlagIsPacked)
-    format.mBytesPerPacket = audio_format.get('bytes_per_packet', 4)
-    format.mFramesPerPacket = audio_format.get('frames_per_packet', 1)
-    format.mBytesPerFrame = audio_format.get('bytes_per_frame', 4)
-    format.mChannelsPerFrame = audio_format.get('channels_per_frame', 2)
-    format.mBitsPerChannel = audio_format.get('bits_per_channel', 16)
-    format.mReserved = 0
+    # Set up the audio format using helper
+    dict_to_asbd(audio_format, &format)
 
     cdef cf.OSStatus status = at.AudioQueueNewOutput(
         &format,
@@ -1456,15 +1519,10 @@ def audio_component_copy_name(long component_id):
     if status != 0 or name_ref == NULL:
         return None
 
-    # Convert CFString to Python string
-    cdef char buffer[256]
-    cdef str name = None
-
-    if cf.CFStringGetCString(name_ref, buffer, 256, cf.kCFStringEncodingUTF8):
-        name = buffer.decode('utf-8')
-
+    # Convert CFString to Python string using helper
+    cdef str name = cfstring_to_str(name_ref)
     cf.CFRelease(name_ref)
-    return name
+    return name if name else None
 
 
 def audio_component_get_description(long component_id):
@@ -1647,7 +1705,7 @@ def audio_unit_get_component_info(long component_id):
     cdef cf.CFStringRef name_ref = NULL
     cdef cf.UInt32 version = 0
     cdef cf.OSStatus status
-    cdef char buffer[256]
+    cdef char buffer[STRING_BUFFER_SIZE]
 
     # Get component description
     status = at.AudioComponentGetDescription(component, &desc)
@@ -1758,7 +1816,7 @@ def audio_unit_get_parameter_info(long audio_unit_id, param_id, scope=0):
     cdef at.AudioUnitParameterInfo param_info
     cdef cf.UInt32 data_size = sizeof(at.AudioUnitParameterInfo)
     cdef cf.OSStatus status
-    cdef char buffer[256]
+    cdef char buffer[STRING_BUFFER_SIZE]
 
     # Get parameter info
     # NOTE: For kAudioUnitProperty_ParameterInfo, the element argument should be the parameter ID
@@ -1882,7 +1940,7 @@ def audio_unit_get_factory_presets(long audio_unit_id):
     cdef cf.CFArrayRef presets_array = NULL
     cdef cf.CFIndex num_presets
     cdef at.AUPreset* preset
-    cdef char buffer[256]
+    cdef char buffer[STRING_BUFFER_SIZE]
     cdef cf.SInt32 preset_number
     cdef str preset_name
     cdef list result = []
@@ -5097,14 +5155,7 @@ def midi_device_new_entity(long device, str name, int protocol, bint embedded, i
         RuntimeError: If entity creation fails
     """
     cdef cm.MIDIEntityRef entity
-    cdef cf.CFStringRef cf_name
-    cdef bytes name_bytes = name.encode('utf-8')
-
-    cf_name = cf.CFStringCreateWithCString(
-        cf.kCFAllocatorDefault,
-        name_bytes,
-        cf.kCFStringEncodingUTF8
-    )
+    cdef cf.CFStringRef cf_name = str_to_cfstring(name)
 
     cdef cf.OSStatus status
     try:
@@ -5144,14 +5195,7 @@ def midi_device_add_entity(long device, str name, bint embedded, int num_source_
         RuntimeError: If entity creation fails
     """
     cdef cm.MIDIEntityRef entity
-    cdef cf.CFStringRef cf_name
-    cdef bytes name_bytes = name.encode('utf-8')
-
-    cf_name = cf.CFStringCreateWithCString(
-        cf.kCFAllocatorDefault,
-        name_bytes,
-        cf.kCFStringEncodingUTF8
-    )
+    cdef cf.CFStringRef cf_name = str_to_cfstring(name)
 
     cdef cf.OSStatus status
     try:

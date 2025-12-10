@@ -1,10 +1,13 @@
 """pytest test suite for AudioServices functionality."""
 
+import logging
 import os
 import pytest
 import tempfile
 import coremusic as cm
 import coremusic.capi as capi
+
+logger = logging.getLogger(__name__)
 
 
 class TestAudioServicesConstants:
@@ -219,11 +222,11 @@ class TestAudioServicesResourceManagement:
                 assert sound_id != 0
             assert len(set(sound_ids)) == len(sound_ids)
         finally:
-            for sound_id in sound_ids:
+            for i, sound_id in enumerate(sound_ids):
                 try:
                     capi.audio_services_dispose_system_sound_id(sound_id)
-                except:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Cleanup failed for sound_id {i}: {e}")
 
     def test_sound_id_lifecycle(self, amen_wav_path):
         """Test the complete lifecycle of a SystemSoundID"""

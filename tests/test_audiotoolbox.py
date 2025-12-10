@@ -1,3 +1,4 @@
+import logging
 import os
 import struct
 import time
@@ -5,6 +6,8 @@ import wave
 import pytest
 import coremusic as cm
 import coremusic.capi as capi
+
+logger = logging.getLogger(__name__)
 
 
 class TestAudioComponentDiscovery:
@@ -59,8 +62,8 @@ class TestAudioUnitInfrastructure:
         try:
             capi.audio_unit_uninitialize(audio_unit)
             capi.audio_component_instance_dispose(audio_unit)
-        except:
-            pass
+        except Exception as e:
+            logger.warning(f"Cleanup failed (uninitialize/dispose): {e}")
 
     def test_audio_unit_creation(self, audio_unit):
         """Test AudioUnit creation"""

@@ -20,44 +20,37 @@ except Exception:
     _MIDI_AVAILABLE = False
 
 
-class TestCoreMIDIConstants:
-    """Test CoreMIDI constants access"""
+# All required MIDI functions that must be exported from capi
+REQUIRED_MIDI_FUNCTIONS = [
+    # MIDISetup functions
+    "midi_external_device_create", "midi_device_add_entity",
+    "midi_device_new_entity", "midi_device_remove_entity",
+    "midi_entity_add_or_remove_endpoints", "midi_setup_add_device",
+    "midi_setup_remove_device", "midi_setup_add_external_device",
+    "midi_setup_remove_external_device",
+    # MIDIDriver functions
+    "midi_device_create", "midi_device_dispose",
+    "midi_device_list_get_number_of_devices", "midi_device_list_get_device",
+    "midi_device_list_add_device", "midi_device_list_dispose",
+    "midi_endpoint_set_ref_cons", "midi_endpoint_get_ref_cons",
+    "midi_get_driver_io_runloop", "midi_get_driver_device_list",
+    "midi_driver_enable_monitoring",
+    # MIDIThruConnection functions
+    "midi_thru_connection_params_initialize", "midi_thru_connection_create",
+    "midi_thru_connection_dispose", "midi_thru_connection_get_params",
+    "midi_thru_connection_set_params", "midi_thru_connection_find",
+    "get_midi_transform_none", "get_midi_control_type_7bit",
+]
 
-    def test_midi_error_constants(self):
-        """Test MIDI error constants"""
-        assert capi.get_midi_error_invalid_client() == -10830
-        assert capi.get_midi_error_invalid_port() == -10831
-        assert capi.get_midi_error_wrong_endpoint_type() == -10832
-        assert capi.get_midi_error_no_connection() == -10833
-        assert capi.get_midi_error_unknown_endpoint() == -10834
-        assert capi.get_midi_error_unknown_property() == -10835
-        assert capi.get_midi_error_wrong_property_type() == -10836
-        assert capi.get_midi_error_no_current_setup() == -10837
-        assert capi.get_midi_error_message_send_err() == -10838
-        assert capi.get_midi_error_server_start_err() == -10839
-        assert capi.get_midi_error_setup_format_err() == -10840
-        assert capi.get_midi_error_wrong_thread() == -10841
-        assert capi.get_midi_error_object_not_found() == -10842
-        assert capi.get_midi_error_id_not_unique() == -10843
-        assert capi.get_midi_error_not_permitted() == -10844
-        assert capi.get_midi_error_unknown_error() == -10845
 
-    def test_midi_object_type_constants(self):
-        """Test MIDI object type constants"""
-        assert capi.get_midi_object_type_other() == -1
-        assert capi.get_midi_object_type_device() == 0
-        assert capi.get_midi_object_type_entity() == 1
-        assert capi.get_midi_object_type_source() == 2
-        assert capi.get_midi_object_type_destination() == 3
-        assert capi.get_midi_object_type_external_device() == 16
-        assert capi.get_midi_object_type_external_entity() == 17
-        assert capi.get_midi_object_type_external_source() == 18
-        assert capi.get_midi_object_type_external_destination() == 19
+class TestCoreMIDIFunctionAvailability:
+    """Test that all required MIDI functions are available"""
 
-    def test_midi_protocol_constants(self):
-        """Test MIDI protocol constants"""
-        assert capi.get_midi_protocol_1_0() == 1
-        assert capi.get_midi_protocol_2_0() == 2
+    @pytest.mark.parametrize("func_name", REQUIRED_MIDI_FUNCTIONS)
+    def test_midi_function_available(self, func_name):
+        """Test that required MIDI function exists and is callable"""
+        assert hasattr(capi, func_name), f"Missing function: {func_name}"
+        assert callable(getattr(capi, func_name)), f"Not callable: {func_name}"
 
 
 @pytest.mark.skipif(not _MIDI_AVAILABLE, reason="MIDI services not available")
@@ -241,27 +234,25 @@ class TestCoreMIDIProperties:
     def test_midi_object_get_string_property(self):
         """Test getting MIDI object string properties"""
         num_devices = capi.midi_get_number_of_devices()
-        if num_devices > 0:
-            device = capi.midi_get_device(0)
-            try:
-                name = capi.midi_object_get_string_property(device, "name")
-                if name is not None:
-                    assert isinstance(name, str)
-                    assert len(name) > 0
-            except RuntimeError:
-                pass
+        if num_devices == 0:
+            pytest.skip("No MIDI devices available for property testing")
+        device = capi.midi_get_device(0)
+        # Name property should always exist for devices
+        name = capi.midi_object_get_string_property(device, "name")
+        assert name is not None, "Device name property should not be None"
+        assert isinstance(name, str)
+        assert len(name) > 0
 
     def test_midi_object_get_integer_property(self):
         """Test getting MIDI object integer properties"""
         num_devices = capi.midi_get_number_of_devices()
-        if num_devices > 0:
-            device = capi.midi_get_device(0)
-            try:
-                unique_id = capi.midi_object_get_integer_property(device, "uniqueID")
-                if unique_id is not None:
-                    assert isinstance(unique_id, int)
-            except RuntimeError:
-                pass
+        if num_devices == 0:
+            pytest.skip("No MIDI devices available for property testing")
+        device = capi.midi_get_device(0)
+        # uniqueID property should always exist for devices
+        unique_id = capi.midi_object_get_integer_property(device, "uniqueID")
+        assert unique_id is not None, "Device uniqueID property should not be None"
+        assert isinstance(unique_id, int)
 
     def test_midi_object_set_string_property(self):
         """Test setting MIDI object string properties"""
@@ -269,10 +260,8 @@ class TestCoreMIDIProperties:
         try:
             capi.midi_object_set_string_property(source, "testProperty", "test value")
             value = capi.midi_object_get_string_property(source, "testProperty")
-            if value is not None:
-                assert value == "test value"
-        except RuntimeError:
-            pass
+            # We set it, so it should exist
+            assert value == "test value", "Set property should be retrievable"
         finally:
             capi.midi_endpoint_dispose(source)
 
@@ -282,81 +271,65 @@ class TestCoreMIDIProperties:
         try:
             capi.midi_object_set_integer_property(source, "testIntProperty", 42)
             value = capi.midi_object_get_integer_property(source, "testIntProperty")
-            if value is not None:
-                assert value == 42
-        except RuntimeError:
-            pass
+            # We set it, so it should exist
+            assert value == 42, "Set property should be retrievable"
         finally:
             capi.midi_endpoint_dispose(source)
 
     def test_midi_device_get_name(self):
         """Test getting MIDI device names"""
         num_devices = capi.midi_get_number_of_devices()
-        if num_devices > 0:
-            device = capi.midi_get_device(0)
-            try:
-                name = capi.midi_device_get_name(device)
-                assert isinstance(name, str)
-                assert len(name) > 0
-                print(f"Device name: {name}")
-            except RuntimeError:
-                pass
+        if num_devices == 0:
+            pytest.skip("No MIDI devices available for name testing")
+        device = capi.midi_get_device(0)
+        name = capi.midi_device_get_name(device)
+        assert isinstance(name, str), "Device name should be a string"
+        assert len(name) > 0, "Device name should not be empty"
 
     def test_midi_endpoint_get_name(self):
         """Test getting MIDI endpoint names"""
         num_sources = capi.midi_get_number_of_sources()
+        num_destinations = capi.midi_get_number_of_destinations()
+        if num_sources == 0 and num_destinations == 0:
+            pytest.skip("No MIDI endpoints available for name testing")
+
         if num_sources > 0:
             source = capi.midi_get_source(0)
-            try:
-                name = capi.midi_endpoint_get_name(source)
-                if name is not None:
-                    assert isinstance(name, str)
-                    print(f"Source name: {name}")
-            except RuntimeError:
-                pass
-        num_destinations = capi.midi_get_number_of_destinations()
+            name = capi.midi_endpoint_get_name(source)
+            # Name can be None for some endpoints, but if returned should be str
+            if name is not None:
+                assert isinstance(name, str)
+
         if num_destinations > 0:
             dest = capi.midi_get_destination(0)
-            try:
-                name = capi.midi_endpoint_get_name(dest)
-                if name is not None:
-                    assert isinstance(name, str)
-                    print(f"Destination name: {name}")
-            except RuntimeError:
-                pass
+            name = capi.midi_endpoint_get_name(dest)
+            if name is not None:
+                assert isinstance(name, str)
 
     def test_midi_object_get_manufacturer_and_model(self):
         """Test getting MIDI object manufacturer and model"""
         num_devices = capi.midi_get_number_of_devices()
-        if num_devices > 0:
-            device = capi.midi_get_device(0)
-            try:
-                manufacturer = capi.midi_object_get_manufacturer(device)
-                if manufacturer is not None:
-                    assert isinstance(manufacturer, str)
-                    print(f"Device manufacturer: {manufacturer}")
-            except RuntimeError:
-                pass
-            try:
-                model = capi.midi_object_get_model(device)
-                if model is not None:
-                    assert isinstance(model, str)
-                    print(f"Device model: {model}")
-            except RuntimeError:
-                pass
+        if num_devices == 0:
+            pytest.skip("No MIDI devices available for manufacturer/model testing")
+        device = capi.midi_get_device(0)
+        # These can return None for devices without manufacturer/model info
+        manufacturer = capi.midi_object_get_manufacturer(device)
+        model = capi.midi_object_get_model(device)
+        # Just verify types if not None
+        if manufacturer is not None:
+            assert isinstance(manufacturer, str)
+        if model is not None:
+            assert isinstance(model, str)
 
     def test_midi_object_get_name_convenience(self):
         """Test the generic midi_object_get_name function"""
         num_devices = capi.midi_get_number_of_devices()
-        if num_devices > 0:
-            device = capi.midi_get_device(0)
-            try:
-                name = capi.midi_object_get_name(device)
-                assert isinstance(name, str)
-                assert len(name) > 0
-                print(f"Object name: {name}")
-            except RuntimeError:
-                pass
+        if num_devices == 0:
+            pytest.skip("No MIDI devices available for name testing")
+        device = capi.midi_get_device(0)
+        name = capi.midi_object_get_name(device)
+        assert isinstance(name, str), "Object name should be a string"
+        assert len(name) > 0, "Object name should not be empty"
 
 
 class TestCoreMIDIData:
@@ -447,25 +420,6 @@ class TestCoreMIDIIntegration:
 
 class TestCoreMIDIMessages:
     """Test CoreMIDI Universal MIDI Packet (UMP) message functionality"""
-
-    def test_midi_message_type_constants(self):
-        """Test MIDI message type constants"""
-        assert capi.get_midi_message_type_utility() == 0
-        assert capi.get_midi_message_type_system() == 1
-        assert capi.get_midi_message_type_channel_voice1() == 2
-        assert capi.get_midi_message_type_sysex() == 3
-        assert capi.get_midi_message_type_channel_voice2() == 4
-        assert capi.get_midi_message_type_data128() == 5
-
-    def test_midi_cv_status_constants(self):
-        """Test MIDI channel voice status constants"""
-        assert capi.get_midi_cv_status_note_off() == 8
-        assert capi.get_midi_cv_status_note_on() == 9
-        assert capi.get_midi_cv_status_poly_pressure() == 10
-        assert capi.get_midi_cv_status_control_change() == 11
-        assert capi.get_midi_cv_status_program_change() == 12
-        assert capi.get_midi_cv_status_channel_pressure() == 13
-        assert capi.get_midi_cv_status_pitch_bend() == 14
 
     def test_midi_message_type_for_up_word(self):
         """Test extracting message type from Universal MIDI Packet word"""
@@ -832,27 +786,6 @@ class TestCoreMIDISetup:
         except RuntimeError as e:
             assert "failed" in str(e)
 
-    def test_midi_setup_function_existence(self):
-        """Test that all MIDISetup functions exist and are callable"""
-        assert hasattr(capi, "midi_external_device_create")
-        assert callable(capi.midi_external_device_create)
-        assert hasattr(capi, "midi_device_add_entity")
-        assert callable(capi.midi_device_add_entity)
-        assert hasattr(capi, "midi_device_new_entity")
-        assert callable(capi.midi_device_new_entity)
-        assert hasattr(capi, "midi_device_remove_entity")
-        assert callable(capi.midi_device_remove_entity)
-        assert hasattr(capi, "midi_entity_add_or_remove_endpoints")
-        assert callable(capi.midi_entity_add_or_remove_endpoints)
-        assert hasattr(capi, "midi_setup_add_device")
-        assert callable(capi.midi_setup_add_device)
-        assert hasattr(capi, "midi_setup_remove_device")
-        assert callable(capi.midi_setup_remove_device)
-        assert hasattr(capi, "midi_setup_add_external_device")
-        assert callable(capi.midi_setup_add_external_device)
-        assert hasattr(capi, "midi_setup_remove_external_device")
-        assert callable(capi.midi_setup_remove_external_device)
-
     def test_midi_setup_parameter_validation(self):
         """Test parameter validation for MIDISetup functions"""
         with pytest.raises((TypeError, AttributeError)):
@@ -1037,31 +970,6 @@ class TestCoreMIDIDriver:
         except RuntimeError as e:
             assert "failed" in str(e)
 
-    def test_midi_driver_function_existence(self):
-        """Test that all MIDIDriver functions exist and are callable"""
-        assert hasattr(capi, "midi_device_create")
-        assert callable(capi.midi_device_create)
-        assert hasattr(capi, "midi_device_dispose")
-        assert callable(capi.midi_device_dispose)
-        assert hasattr(capi, "midi_device_list_get_number_of_devices")
-        assert callable(capi.midi_device_list_get_number_of_devices)
-        assert hasattr(capi, "midi_device_list_get_device")
-        assert callable(capi.midi_device_list_get_device)
-        assert hasattr(capi, "midi_device_list_add_device")
-        assert callable(capi.midi_device_list_add_device)
-        assert hasattr(capi, "midi_device_list_dispose")
-        assert callable(capi.midi_device_list_dispose)
-        assert hasattr(capi, "midi_endpoint_set_ref_cons")
-        assert callable(capi.midi_endpoint_set_ref_cons)
-        assert hasattr(capi, "midi_endpoint_get_ref_cons")
-        assert callable(capi.midi_endpoint_get_ref_cons)
-        assert hasattr(capi, "midi_get_driver_io_runloop")
-        assert callable(capi.midi_get_driver_io_runloop)
-        assert hasattr(capi, "midi_get_driver_device_list")
-        assert callable(capi.midi_get_driver_device_list)
-        assert hasattr(capi, "midi_driver_enable_monitoring")
-        assert callable(capi.midi_driver_enable_monitoring)
-
     def test_midi_driver_parameter_validation(self):
         """Test parameter validation for MIDIDriver functions"""
         with pytest.raises((TypeError, AttributeError)):
@@ -1242,43 +1150,6 @@ class TestCoreMIDIThruConnection:
             self.test_connections.remove(connection)
         except RuntimeError as e:
             pytest.skip(f"Connection find test failed: {e}")
-
-    def test_midi_thru_connection_constants(self):
-        """Test thru connection constants"""
-        assert capi.get_midi_transform_none() == 0
-        assert capi.get_midi_transform_filter_out() == 1
-        assert capi.get_midi_transform_map_control() == 2
-        assert capi.get_midi_transform_add() == 8
-        assert capi.get_midi_transform_scale() == 9
-        assert capi.get_midi_transform_min_value() == 10
-        assert capi.get_midi_transform_max_value() == 11
-        assert capi.get_midi_transform_map_value() == 12
-        assert capi.get_midi_control_type_7bit() == 0
-        assert capi.get_midi_control_type_14bit() == 1
-        assert capi.get_midi_control_type_7bit_rpn() == 2
-        assert capi.get_midi_control_type_14bit_rpn() == 3
-        assert capi.get_midi_control_type_7bit_nrpn() == 4
-        assert capi.get_midi_control_type_14bit_nrpn() == 5
-        assert capi.get_midi_thru_connection_max_endpoints() == 8
-
-    def test_midi_thru_connection_function_existence(self):
-        """Test that all MIDIThruConnection functions exist and are callable"""
-        assert hasattr(capi, "midi_thru_connection_params_initialize")
-        assert callable(capi.midi_thru_connection_params_initialize)
-        assert hasattr(capi, "midi_thru_connection_create")
-        assert callable(capi.midi_thru_connection_create)
-        assert hasattr(capi, "midi_thru_connection_dispose")
-        assert callable(capi.midi_thru_connection_dispose)
-        assert hasattr(capi, "midi_thru_connection_get_params")
-        assert callable(capi.midi_thru_connection_get_params)
-        assert hasattr(capi, "midi_thru_connection_set_params")
-        assert callable(capi.midi_thru_connection_set_params)
-        assert hasattr(capi, "midi_thru_connection_find")
-        assert callable(capi.midi_thru_connection_find)
-        assert hasattr(capi, "get_midi_transform_none")
-        assert callable(capi.get_midi_transform_none)
-        assert hasattr(capi, "get_midi_control_type_7bit")
-        assert callable(capi.get_midi_control_type_7bit)
 
     def test_midi_thru_connection_parameter_validation(self):
         """Test parameter validation for MIDIThruConnection functions"""

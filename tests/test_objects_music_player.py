@@ -1,8 +1,11 @@
 """Tests for MusicPlayer, MusicSequence, and MusicTrack OO API."""
 
+import logging
 import os
 import pytest
 import coremusic as cm
+
+logger = logging.getLogger(__name__)
 
 
 class TestMusicTrack:
@@ -140,8 +143,13 @@ class TestMusicSequence:
             sequence.new_track()
 
             # Index 1 should fail (only 1 track at index 0)
-            with pytest.raises(cm.MusicPlayerError):
+            # Raises IndexError for out-of-range, ValueError for negative
+            with pytest.raises((IndexError, ValueError)):
                 sequence.get_track(1)
+
+            # Negative index should raise ValueError
+            with pytest.raises(ValueError):
+                sequence.get_track(-1)
         finally:
             sequence.dispose()
 
@@ -325,8 +333,8 @@ class TestMusicPlayer:
                 player.start()
                 # Note: may or may not be playing depending on system state
                 # Just ensure no exception
-            except:
-                pass  # Some systems may not allow playback
+            except Exception as e:
+                logger.warning(f"Playback start skipped (system state): {e}")
 
             # Stop
             player.stop()
@@ -413,8 +421,8 @@ class TestMusicPlayerIntegration:
             # Try to start (may fail on some systems)
             try:
                 player.start()
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"Playback start skipped (system state): {e}")
 
             # Stop
             player.stop()

@@ -1,10 +1,15 @@
 """Tests for DAW (Digital Audio Workstation) essentials module."""
 
 import os
+import sys
 import pytest
 from pathlib import Path
+
+# Add tests/examples to path for local module imports
+sys.path.insert(0, str(Path(__file__).parent))
+
 import coremusic as cm
-from coremusic.daw import (
+from daw.daw import (
     TimelineMarker,
     TimeRange,
     Clip,

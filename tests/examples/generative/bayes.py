@@ -14,8 +14,6 @@ Key Features:
 - JSON serialization for saving/loading trained networks
 
 Example:
-    >>> from coremusic.music.bayes import MIDIBayesAnalyzer, MIDIBayesGenerator
-    >>>
     >>> # Analyze a MIDI file
     >>> analyzer = MIDIBayesAnalyzer()
     >>> network = analyzer.analyze_file("song.mid")

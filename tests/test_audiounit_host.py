@@ -3,8 +3,11 @@
 Tests plugin discovery, instantiation, parameter control, and preset management.
 """
 
+import logging
 import pytest
 import coremusic.capi as capi
+
+logger = logging.getLogger(__name__)
 
 
 class TestAudioUnitPluginDiscovery:
@@ -415,13 +418,13 @@ class TestAudioUnitPresets:
 
                 except Exception as e:
                     # Some plugins may fail to instantiate - clean up if needed
-                    print(f"  ✗ {info.get('name', 'Unknown')} failed: {e}")
+                    print(f"  x {info.get('name', 'Unknown')} failed: {e}")
                     if unit_id is not None:
                         try:
                             capi.audio_unit_uninitialize(unit_id)
                             capi.audio_component_instance_dispose(unit_id)
-                        except:
-                            pass
+                        except Exception as cleanup_err:
+                            logger.warning(f"Cleanup failed: {cleanup_err}")
                     continue
 
         print("\n" + "=" * 70)
@@ -525,13 +528,13 @@ class TestAudioUnitPresets:
 
                 except Exception as e:
                     # Some plugins may fail to instantiate - clean up if needed
-                    print(f"    ✗ Failed: {e}")
+                    print(f"    x Failed: {e}")
                     if unit_id is not None:
                         try:
                             capi.audio_unit_uninitialize(unit_id)
                             capi.audio_component_instance_dispose(unit_id)
-                        except:
-                            pass
+                        except Exception as cleanup_err:
+                            logger.warning(f"Cleanup failed: {cleanup_err}")
                     continue
 
         print("\n" + "=" * 70)

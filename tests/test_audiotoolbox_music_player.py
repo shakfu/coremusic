@@ -1,10 +1,13 @@
 """pytest test suite for MusicPlayer functionality."""
 
+import logging
 import os
 import pytest
 import tempfile
 import coremusic as cm
 import coremusic.capi as capi
+
+logger = logging.getLogger(__name__)
 
 
 class TestMusicPlayerConstants:
@@ -136,8 +139,8 @@ class TestMusicPlayerBasicOperations:
         finally:
             try:
                 capi.music_player_set_sequence(player, 0)
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"Cleanup failed (set_sequence): {e}")
             capi.dispose_music_sequence(sequence)
             capi.dispose_music_player(player)
 
@@ -168,8 +171,8 @@ class TestMusicPlayerBasicOperations:
             try:
                 capi.music_player_stop(player)
                 capi.music_player_set_sequence(player, 0)
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"Cleanup failed (stop/set_sequence): {e}")
             capi.dispose_music_sequence(sequence)
             capi.dispose_music_player(player)
 
@@ -441,8 +444,8 @@ class TestMusicPlayerIntegration:
             try:
                 capi.music_player_stop(player)
                 capi.music_player_set_sequence(player, 0)
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"Cleanup failed (stop/set_sequence): {e}")
             capi.dispose_music_sequence(sequence)
             capi.dispose_music_player(player)
 
@@ -494,8 +497,8 @@ class TestMusicPlayerResourceManagement:
                     capi.music_player_set_sequence(player, 0)
                     capi.dispose_music_sequence(sequence)
                     capi.dispose_music_player(player)
-                except:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Cleanup failed for player/sequence {i}: {e}")
 
     def test_multiple_sequences(self):
         """Test creating multiple sequences"""
@@ -514,11 +517,11 @@ class TestMusicPlayerResourceManagement:
                 count = capi.music_sequence_get_track_count(sequence)
                 assert count == i + 1
         finally:
-            for sequence in sequences:
+            for i, sequence in enumerate(sequences):
                 try:
                     capi.dispose_music_sequence(sequence)
-                except:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Cleanup failed for sequence {i}: {e}")
 
     def test_sequence_lifecycle(self):
         """Test complete sequence lifecycle"""

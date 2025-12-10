@@ -17,6 +17,54 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- **Integration Tests** - Comprehensive end-to-end workflow tests (`tests/test_integration_workflows.py`)
+  - `TestAudioProcessSaveWorkflow` (3 tests): Audio file read, effect discovery/configuration, format conversion, multi-effect chains, file output
+  - `TestMIDIToAudioUnitWorkflow` (4 tests): MIDI file loading, MusicSequence creation, MusicPlayer playback, DLSMusicDevice instrument control
+  - `TestLinkSessionSynchronization` (7 tests): Session sync, tempo sync, transport sync, beat quantization, AudioPlayer integration, multi-player sync, clock precision
+  - `TestCombinedWorkflows` (2 tests): MIDI-to-audio file workflow, Link-synchronized MIDI playback
+  - Total: 16 new integration tests covering all major subsystem interactions
+
+### Changed
+
+- **Refactored Repeated Patterns** - Created helper functions to reduce code duplication
+  - `init_property_address()` in `capi.pyx:173` - Initializes AudioObjectPropertyAddress structs consistently
+  - `dict_to_asbd()` and `asbd_to_dict()` in `capi.pyx` - Converts between dict and AudioStreamBasicDescription struct
+  - `parse_audio_stream_basic_description()` in `audio/utilities.py` - Parses ASBD bytes to dictionary
+  - `cfstring_to_str()` in `capi.pyx` - Converts CFStringRef to Python string
+
+- **Eliminated Magic Numbers** - Replaced hardcoded values with named constants
+  - Property address scope/element now use `ca.kAudioObjectPropertyScopeGlobal` and `ca.kAudioObjectPropertyElementMain` instead of `0, 0`
+  - Buffer sizes now use `STRING_BUFFER_SIZE` constant (defined as 256) instead of hardcoded values
+
+### Improved
+
+- **Parameter Validation** - Added comprehensive input validation to `objects.py` methods
+  - `convert_with_callback()`: Validates input_packet_count, output_packet_count, input_data type
+  - `get_track()`: Validates index range with descriptive IndexError messages
+  - `get_node_at_index()`: Validates index range with descriptive IndexError messages
+  - `set_stream_format()`: Validates format type and element index
+  - `MusicPlayer.time` setter: Validates non-negative time
+  - All validation raises appropriate exception types (ValueError, TypeError, IndexError)
+
+- **Documentation Examples** - Added usage examples to key method docstrings
+  - `read_packets()`: Example showing chunked audio reading
+  - `get_stream_format()`: Example showing format inspection
+  - `set_stream_format()`: Example showing format configuration
+  - `get_track()`: Example showing track iteration
+  - `add_node()`: Example showing graph construction with effect chain
+
+- **Test Quality Cleanup** - Removed redundant and low-value tests, consolidated existence checks
+  - Removed 17 constant-verification tests (testing hardcoded values against themselves)
+  - Consolidated 9 existence-check tests into 2 parameterized tests (18 classes, 28 functions)
+  - Strengthened 8 weak property tests (use `pytest.skip()` instead of silent `if` blocks)
+  - Final test count: 1586 passed, 78 skipped, 36 deselected
+
+- **Documentation Examples** - Fixed broken imports in `tests/examples/` test files
+  - Updated imports from removed modules (`coremusic.daw`, `coremusic.music.generative`, etc.) to local example modules
+  - Fixed `docs/tutorials/music_theory.rst` to remove references to moved modules
+
 ### Removed
 
 - **Neural Module** - Removed `coremusic.music.neural` subpackage

@@ -1,10 +1,13 @@
 """pytest test suite for MusicDevice functionality."""
 
+import logging
 import os
 import pytest
 import tempfile
 import coremusic as cm
 import coremusic.capi as capi
+
+logger = logging.getLogger(__name__)
 
 
 class TestMusicDeviceConstants:
@@ -146,8 +149,8 @@ class TestMusicDeviceBasicOperations:
         yield unit
         try:
             capi.audio_component_instance_dispose(unit)
-        except:
-            pass
+        except Exception as e:
+            logger.warning(f"Cleanup failed (dispose unit): {e}")
 
     def test_music_device_midi_event_basic(self, music_device_unit):
         """Test basic MIDI event sending"""
@@ -256,7 +259,8 @@ class TestMusicDeviceIntegration:
                 capi.audio_unit_initialize(unit)
                 yield unit
                 capi.audio_unit_uninitialize(unit)
-            except:
+            except Exception as e:
+                logger.warning(f"Unit initialization/cleanup issue: {e}")
                 yield unit
             capi.audio_component_instance_dispose(unit)
         except Exception as e:

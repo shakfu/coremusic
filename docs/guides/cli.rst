@@ -3,7 +3,7 @@ Command Line Interface
 
 CoreMusic includes a comprehensive command-line interface for common audio and MIDI operations.
 The CLI provides quick access to audio analysis, format conversion, device management, plugin discovery,
-MIDI operations, and generative music features without writing Python code.
+and MIDI operations without writing Python code.
 
 Installation and Usage
 ----------------------

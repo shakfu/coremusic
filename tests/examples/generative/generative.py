@@ -15,15 +15,15 @@ various algorithmic composition techniques:
 All generators produce MIDIEvent objects compatible with coremusic.midi.
 
 Example:
-    >>> from coremusic.music import theory, generative
+    >>> from coremusic.music import theory
     >>>
     >>> # Create an arpeggiator
     >>> chord = theory.Chord(theory.Note('C', 4), theory.ChordType.MAJOR_7)
-    >>> arp = generative.Arpeggiator(chord, generative.ArpPattern.UP_DOWN)
+    >>> arp = Arpeggiator(chord, ArpPattern.UP_DOWN)
     >>> events = arp.generate(num_cycles=2)
     >>>
     >>> # Create a Euclidean rhythm
-    >>> euclid = generative.EuclideanGenerator(pulses=5, steps=8, pitch=36)
+    >>> euclid = EuclideanGenerator(pulses=5, steps=8, pitch=36)
     >>> events = euclid.generate(cycles=4)
 """
 

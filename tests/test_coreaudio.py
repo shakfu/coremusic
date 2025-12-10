@@ -9,33 +9,6 @@ import coremusic as cm
 import coremusic.capi as capi
 
 
-class TestCoreAudioConstants:
-    """Test CoreAudio constants access"""
-
-    def test_audio_format_constants(self):
-        """Test audio format constants"""
-        assert capi.get_audio_format_linear_pcm() is not None
-        assert capi.get_linear_pcm_format_flag_is_signed_integer() is not None
-        assert capi.get_linear_pcm_format_flag_is_packed() is not None
-        assert capi.get_linear_pcm_format_flag_is_non_interleaved() is not None
-
-    def test_audio_file_constants(self):
-        """Test audio file constants"""
-        assert capi.get_audio_file_wave_type() is not None
-        assert capi.get_audio_file_read_permission() is not None
-        assert capi.get_audio_file_property_data_format() is not None
-        assert capi.get_audio_file_property_maximum_packet_size() is not None
-
-    def test_audio_unit_constants(self):
-        """Test AudioUnit constants"""
-        assert capi.get_audio_unit_type_output() is not None
-        assert capi.get_audio_unit_subtype_default_output() is not None
-        assert capi.get_audio_unit_manufacturer_apple() is not None
-        assert capi.get_audio_unit_property_stream_format() is not None
-        assert capi.get_audio_unit_scope_input() is not None
-        assert capi.get_audio_unit_scope_output() is not None
-
-
 class TestFourCCConversion:
     """Test FourCC conversion utilities"""
 

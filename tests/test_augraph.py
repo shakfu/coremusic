@@ -216,8 +216,13 @@ class TestAUGraphOO:
         """Test AUGraph error handling"""
         graph = cm.AUGraph()
         try:
-            with pytest.raises(cm.AUGraphError):
+            # Out-of-range index raises IndexError
+            with pytest.raises(IndexError):
                 graph.get_node_at_index(999)
+
+            # Negative index raises ValueError
+            with pytest.raises(ValueError):
+                graph.get_node_at_index(-1)
         finally:
             graph.dispose()
 

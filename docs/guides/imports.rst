@@ -64,7 +64,6 @@ CoreMusic uses a hierarchical package structure for better organization::
    │   ├── scipy.py        # SciPy integration
    │   └── fourcc.py       # FourCC utilities
    │
-   ├── daw.py              # DAW building blocks
    └── link.py             # Ableton Link
 
 Import Patterns
@@ -249,27 +248,6 @@ Utils Subpackage Imports
    from coremusic import capi
    fourcc = capi.fourchar_to_int('lpcm')
    string = capi.int_to_fourchar(fourcc)
-
-DAW Subpackage Imports
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-   from coremusic.daw import (
-       Timeline,
-       Track,
-       Clip,
-       MIDIClip,
-       MIDINote,
-       TimelineMarker,
-       TimeRange,
-       AutomationLane
-   )
-
-   # Create timeline
-   timeline = Timeline(tempo=120.0, sample_rate=44100.0)
-   track = Track(name="Audio")
-   timeline.add_track(track)
 
 Link Subpackage Imports
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -510,23 +488,6 @@ Utils Subpackage (coremusic.utils.*)
        is_valid_fourcc,
    )
 
-DAW Subpackage (coremusic.daw.*)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-   from coremusic.daw import (
-       Timeline,
-       Track,
-       Clip,
-       MIDIClip,
-       MIDINote,
-       TimelineMarker,
-       TimeRange,
-       AutomationLane,
-       AudioUnitPlugin,  # Re-exported from audiounit_host
-   )
-
 Link Subpackage (coremusic.link.*)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -553,7 +514,7 @@ Import Best Practices
    # Good: Clear and explicit
    from coremusic.audio.analysis import AudioAnalyzer
    from coremusic.midi import load_midi_file
-   from coremusic.daw import Timeline
+   from coremusic import link
 
    # Also good: Import submodule
    from coremusic import audio
@@ -613,7 +574,7 @@ Import Best Practices
    # CoreMusic - subpackages
    from coremusic.audio import AsyncAudioFile
    from coremusic.midi import load_midi_file
-   from coremusic.daw import Timeline
+   from coremusic import link
 
 Import Examples by Use Case
 ----------------------------
@@ -666,19 +627,6 @@ Audio Analysis
    analyzer.load_audio()
    beats = analyzer.detect_beats()
    pitch = analyzer.detect_pitch()
-
-DAW Development
-^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-   from coremusic.daw import Timeline, Track, Clip
-
-   timeline = Timeline(tempo=120.0)
-   track = Track(name="Audio")
-   clip = Clip(file_path="audio.wav", start_time=0.0)
-   track.add_clip(clip)
-   timeline.add_track(track)
 
 Link Synchronization
 ^^^^^^^^^^^^^^^^^^^^
@@ -785,9 +733,6 @@ Quick Reference Card
 
    # === Utils Subpackage ===
    from coremusic.utils import scipy, fourcc
-
-   # === DAW Subpackage ===
-   from coremusic.daw import Timeline, Track, Clip
 
    # === Link Subpackage ===
    from coremusic import link

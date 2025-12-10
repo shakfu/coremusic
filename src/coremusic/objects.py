@@ -369,7 +369,40 @@ class AudioFile(capi.CoreAudioObject):
         return self._format
 
     def read_packets(self, start_packet: int, packet_count: int) -> Tuple[bytes, int]:
-        """Read audio packets from the file"""
+        """Read audio packets from the file.
+
+        Args:
+            start_packet: Starting packet index (must be non-negative)
+            packet_count: Number of packets to read (must be positive)
+
+        Returns:
+            Tuple of (audio_data_bytes, packets_read)
+
+        Raises:
+            ValueError: If start_packet < 0 or packet_count <= 0
+            AudioFileError: If reading fails
+
+        Example::
+
+            import coremusic as cm
+
+            # Read audio data in chunks
+            with cm.AudioFile("audio.wav") as audio:
+                chunk_size = 4096
+                offset = 0
+
+                while True:
+                    data, packets_read = audio.read_packets(offset, chunk_size)
+                    if packets_read == 0:
+                        break
+                    # Process data...
+                    offset += packets_read
+        """
+        if start_packet < 0:
+            raise ValueError(f"start_packet must be non-negative, got {start_packet}")
+        if packet_count <= 0:
+            raise ValueError(f"packet_count must be positive, got {packet_count}")
+
         self._ensure_not_disposed()
         if not self._is_open:
             self.open()
@@ -409,6 +442,11 @@ class AudioFile(capi.CoreAudioObject):
             raise ImportError(
                 "NumPy is not available. Install numpy to use this feature."
             )
+
+        if start_packet < 0:
+            raise ValueError(f"start_packet must be non-negative, got {start_packet}")
+        if packet_count is not None and packet_count <= 0:
+            raise ValueError(f"packet_count must be positive, got {packet_count}")
 
         self._ensure_not_disposed()
         if not self._is_open:
@@ -602,7 +640,18 @@ class AudioFileStream(capi.CoreAudioObject):
             raise AudioFileError(f"Failed to parse bytes: {e}")
 
     def seek(self, packet_offset: int) -> None:
-        """Seek to packet offset"""
+        """Seek to packet offset.
+
+        Args:
+            packet_offset: Packet offset to seek to (must be non-negative)
+
+        Raises:
+            ValueError: If packet_offset < 0
+            AudioFileError: If stream not open or seek fails
+        """
+        if packet_offset < 0:
+            raise ValueError(f"packet_offset must be non-negative, got {packet_offset}")
+
         self._ensure_not_disposed()
         if not self._is_open:
             raise AudioFileError("Stream not open")
@@ -760,6 +809,15 @@ class AudioConverter(capi.CoreAudioObject):
                     num_frames = len(output_data) // dest_format.bytes_per_frame
                     out.write(num_frames, output_data)
         """
+        if input_packet_count <= 0:
+            raise ValueError(f"input_packet_count must be positive, got {input_packet_count}")
+        if output_packet_count is not None and output_packet_count <= 0:
+            raise ValueError(f"output_packet_count must be positive, got {output_packet_count}")
+        if not isinstance(input_data, (bytes, bytearray)):
+            raise TypeError(f"input_data must be bytes or bytearray, got {type(input_data).__name__}")
+        if len(input_data) == 0:
+            raise ValueError("input_data cannot be empty")
+
         self._ensure_not_disposed()
 
         # Auto-calculate output packet count if not provided
@@ -1062,14 +1120,18 @@ class ExtendedAudioFile(capi.CoreAudioObject):
         Automatically converts to client format if set.
 
         Args:
-            num_frames: Number of frames to read
+            num_frames: Number of frames to read (must be positive)
 
         Returns:
             Tuple of (audio_data_bytes, frames_read)
 
         Raises:
+            ValueError: If num_frames <= 0
             AudioFileError: If reading fails
         """
+        if num_frames <= 0:
+            raise ValueError(f"num_frames must be positive, got {num_frames}")
+
         self._ensure_not_disposed()
         if not self._is_open:
             self.open()
@@ -1114,6 +1176,13 @@ class ExtendedAudioFile(capi.CoreAudioObject):
                 audio_data = struct.pack(f'<{len(samples)}h', *samples)
                 out_file.write(num_frames=44100, audio_data=audio_data)
         """
+        if num_frames <= 0:
+            raise ValueError(f"num_frames must be positive, got {num_frames}")
+        if not isinstance(audio_data, (bytes, bytearray)):
+            raise TypeError(f"audio_data must be bytes or bytearray, got {type(audio_data).__name__}")
+        if len(audio_data) == 0:
+            raise ValueError("audio_data cannot be empty")
+
         self._ensure_not_disposed()
         if not self._is_open:
             raise AudioFileError("File not open")
@@ -1406,6 +1475,18 @@ class AudioUnit(capi.CoreAudioObject):
 
         Returns:
             AudioFormat object with the current stream format
+
+        Raises:
+            AudioUnitError: If scope is invalid or getting format fails
+
+        Example::
+
+            # Get the output format of an AudioUnit
+            with AudioUnit(component) as unit:
+                format = unit.get_stream_format('output', 0)
+                print(f"Sample rate: {format.sample_rate}")
+                print(f"Channels: {format.channels_per_frame}")
+                print(f"Bits: {format.bits_per_channel}")
         """
         self._ensure_not_disposed()
 
@@ -1465,8 +1546,34 @@ class AudioUnit(capi.CoreAudioObject):
         Args:
             format: AudioFormat object with desired format
             scope: 'input', 'output', or 'global' (default: 'output')
-            element: Element index (default: 0)
+            element: Element index (must be non-negative, default: 0)
+
+        Raises:
+            TypeError: If format is not an AudioFormat
+            ValueError: If scope is invalid or element is negative
+            AudioUnitError: If setting format fails
+
+        Example::
+
+            import coremusic as cm
+
+            # Create a stereo 44.1kHz 16-bit PCM format
+            format = cm.AudioFormat(
+                sample_rate=44100.0,
+                format_id='lpcm',
+                channels_per_frame=2,
+                bits_per_channel=16
+            )
+
+            # Set the input format on an effect unit
+            with cm.AudioUnit(effect_component) as effect:
+                effect.set_stream_format(format, 'input', 0)
         """
+        if not isinstance(format, AudioFormat):
+            raise TypeError(f"format must be AudioFormat, got {type(format).__name__}")
+        if element < 0:
+            raise ValueError(f"element must be non-negative, got {element}")
+
         self._ensure_not_disposed()
 
         # Map scope name to constant
@@ -2294,6 +2401,31 @@ class AUGraph(capi.CoreAudioObject):
 
         Raises:
             AUGraphError: If adding node fails
+
+        Example::
+
+            import coremusic as cm
+
+            # Create a graph with an effect and output node
+            with cm.AUGraph() as graph:
+                # Add a reverb effect
+                reverb_desc = cm.AudioComponentDescription(
+                    type='aufx',
+                    subtype='rvb2',
+                    manufacturer='appl'
+                )
+                reverb_node = graph.add_node(reverb_desc)
+
+                # Add default output
+                output_desc = cm.AudioComponentDescription(
+                    type='auou',
+                    subtype='def ',
+                    manufacturer='appl'
+                )
+                output_node = graph.add_node(output_desc)
+
+                # Connect reverb -> output
+                graph.connect_nodes(reverb_node, 0, output_node, 0)
         """
         self._ensure_not_disposed()
         try:
@@ -2339,15 +2471,27 @@ class AUGraph(capi.CoreAudioObject):
         """Get node ID at the specified index
 
         Args:
-            index: Node index
+            index: Node index (must be non-negative and < node_count)
 
         Returns:
             Node ID
 
         Raises:
-            AUGraphError: If index is invalid
+            ValueError: If index is negative
+            IndexError: If index >= node_count
+            AUGraphError: If getting node fails
         """
+        if index < 0:
+            raise ValueError(f"index must be non-negative, got {index}")
+
         self._ensure_not_disposed()
+
+        count = self.node_count
+        if index >= count:
+            if count == 0:
+                raise IndexError(f"node index {index} out of range (graph has no nodes)")
+            raise IndexError(f"node index {index} out of range (0-{count-1})")
+
         try:
             return capi.au_graph_get_ind_node(self.object_id, index)
         except Exception as e:
@@ -2783,14 +2927,15 @@ class MusicTrack(capi.CoreAudioObject):
         """Add a MIDI note event to the track
 
         Args:
-            time: Time position in beats
+            time: Time position in beats (must be non-negative)
             channel: MIDI channel (0-15)
             note: MIDI note number (0-127)
             velocity: Note-on velocity (1-127)
             release_velocity: Note-off velocity (0-127)
-            duration: Note duration in beats
+            duration: Note duration in beats (must be positive)
 
         Raises:
+            ValueError: If parameters are out of valid MIDI range
             MusicPlayerError: If adding note fails
 
         Example::
@@ -2798,6 +2943,19 @@ class MusicTrack(capi.CoreAudioObject):
             # Add middle C with velocity 100 for 1 beat
             track.add_midi_note(0.0, 0, 60, 100, 64, 1.0)
         """
+        if time < 0:
+            raise ValueError(f"time must be non-negative, got {time}")
+        if not 0 <= channel <= 15:
+            raise ValueError(f"channel must be 0-15, got {channel}")
+        if not 0 <= note <= 127:
+            raise ValueError(f"note must be 0-127, got {note}")
+        if not 1 <= velocity <= 127:
+            raise ValueError(f"velocity must be 1-127, got {velocity}")
+        if not 0 <= release_velocity <= 127:
+            raise ValueError(f"release_velocity must be 0-127, got {release_velocity}")
+        if duration <= 0:
+            raise ValueError(f"duration must be positive, got {duration}")
+
         self._ensure_not_disposed()
         try:
             capi.music_track_new_midi_note_event(
@@ -2816,12 +2974,13 @@ class MusicTrack(capi.CoreAudioObject):
         """Add a MIDI channel event to the track
 
         Args:
-            time: Time position in beats
-            status: MIDI status byte (e.g., 0xB0 for CC on channel 0)
-            data1: First data byte
-            data2: Second data byte
+            time: Time position in beats (must be non-negative)
+            status: MIDI status byte (e.g., 0xB0 for CC on channel 0, 0x80-0xEF)
+            data1: First data byte (0-127)
+            data2: Second data byte (0-127)
 
         Raises:
+            ValueError: If parameters are out of valid MIDI range
             MusicPlayerError: If adding event fails
 
         Example::
@@ -2832,6 +2991,15 @@ class MusicTrack(capi.CoreAudioObject):
             # Add volume control change
             track.add_midi_channel_event(0.0, 0xB0, 7, 100)
         """
+        if time < 0:
+            raise ValueError(f"time must be non-negative, got {time}")
+        if not 0x80 <= status <= 0xEF:
+            raise ValueError(f"status must be 0x80-0xEF (channel message), got {hex(status)}")
+        if not 0 <= data1 <= 127:
+            raise ValueError(f"data1 must be 0-127, got {data1}")
+        if not 0 <= data2 <= 127:
+            raise ValueError(f"data2 must be 0-127, got {data2}")
+
         self._ensure_not_disposed()
         try:
             capi.music_track_new_midi_channel_event(
@@ -2844,10 +3012,11 @@ class MusicTrack(capi.CoreAudioObject):
         """Add a tempo change event to the track
 
         Args:
-            time: Time position in beats
-            bpm: Tempo in beats per minute
+            time: Time position in beats (must be non-negative)
+            bpm: Tempo in beats per minute (must be positive, typically 20-999)
 
         Raises:
+            ValueError: If time is negative or bpm is not positive
             MusicPlayerError: If adding tempo event fails
 
         Note:
@@ -2862,6 +3031,11 @@ class MusicTrack(capi.CoreAudioObject):
             # Speed up to 140 BPM at beat 32
             tempo_track.add_tempo_event(32.0, 140.0)
         """
+        if time < 0:
+            raise ValueError(f"time must be non-negative, got {time}")
+        if bpm <= 0:
+            raise ValueError(f"bpm must be positive, got {bpm}")
+
         self._ensure_not_disposed()
         try:
             capi.music_track_new_extended_tempo_event(self.object_id, time, bpm)
@@ -2940,16 +3114,38 @@ class MusicSequence(capi.CoreAudioObject):
         """Get track at specified index
 
         Args:
-            index: Track index (0-based)
+            index: Track index (0-based, must be non-negative)
 
         Returns:
             MusicTrack at the specified index
 
         Raises:
+            ValueError: If index is negative
+            IndexError: If index >= track_count
             MusicPlayerError: If getting track fails
-            IndexError: If index out of range
+
+        Example::
+
+            # Iterate through all tracks in a sequence
+            sequence = cm.MusicSequence()
+            sequence.load_from_file("song.mid")
+
+            for i in range(sequence.track_count):
+                track = sequence.get_track(i)
+                print(f"Track {i}: {track}")
         """
+        if index < 0:
+            raise ValueError(f"index must be non-negative, got {index}")
+
         self._ensure_not_disposed()
+
+        # Check bounds
+        count = self.track_count
+        if index >= count:
+            if count == 0:
+                raise IndexError(f"track index {index} out of range (sequence has no tracks)")
+            raise IndexError(f"track index {index} out of range (0-{count-1})")
+
         try:
             track_id = capi.music_sequence_get_ind_track(self.object_id, index)
             # Check if we already have this track in our cache
@@ -3162,11 +3358,15 @@ class MusicPlayer(capi.CoreAudioObject):
         """Set playback time position
 
         Args:
-            time: Time position in beats
+            time: Time position in beats (must be non-negative)
 
         Raises:
+            ValueError: If time is negative
             MusicPlayerError: If setting time fails
         """
+        if time < 0:
+            raise ValueError(f"time must be non-negative, got {time}")
+
         self._ensure_not_disposed()
         try:
             capi.music_player_set_time(self.object_id, time)
