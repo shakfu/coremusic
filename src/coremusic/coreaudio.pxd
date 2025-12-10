@@ -87,8 +87,15 @@ cdef extern from "CoreAudio/AudioHardware.h":
     cdef OSStatus AudioObjectSetPropertyData( AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress, UInt32 inQualifierDataSize, const void* inQualifierData, UInt32 inDataSize, const void* inData)
     cdef OSStatus AudioObjectAddPropertyListener( AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress, AudioObjectPropertyListenerProc inListener, void* inClientData)
     cdef OSStatus AudioObjectRemovePropertyListener( AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress, AudioObjectPropertyListenerProc inListener, void*  inClientData)
-    # cdef OSStatus AudioObjectAddPropertyListenerBlock( AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress, dispatch_queue_t inDispatchQueue, AudioObjectPropertyListenerBlock inListener)
-    # cdef OSStatus AudioObjectRemovePropertyListenerBlock( AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress, dispatch_queue_t inDispatchQueue, AudioObjectPropertyListenerBlock inListener)
+
+    # Note: Block-based property listener APIs are not exposed due to Cython limitations
+    # with Objective-C blocks and dispatch_queue_t. Use the callback-based versions above:
+    #   AudioObjectAddPropertyListener / AudioObjectRemovePropertyListener
+    # Original signatures:
+    #   OSStatus AudioObjectAddPropertyListenerBlock(AudioObjectID, const AudioObjectPropertyAddress*,
+    #       dispatch_queue_t, AudioObjectPropertyListenerBlock)
+    #   OSStatus AudioObjectRemovePropertyListenerBlock(AudioObjectID, const AudioObjectPropertyAddress*,
+    #       dispatch_queue_t, AudioObjectPropertyListenerBlock)
 
     ctypedef enum:
         kAudioSystemObjectClassID = 1634957683
@@ -123,7 +130,12 @@ cdef extern from "CoreAudio/AudioHardware.h":
     ctypedef AudioDeviceIOProc AudioDeviceIOProcID
 
     cdef OSStatus AudioDeviceCreateIOProcID( AudioObjectID inDevice, AudioDeviceIOProc inProc, void* inClientData, AudioDeviceIOProcID * outIOProcID)
-    # cdef OSStatus AudioDeviceCreateIOProcIDWithBlock( AudioDeviceIOProcID * outIOProcID, AudioObjectID inDevice, dispatch_queue_t inDispatchQueue, AudioDeviceIOBlock inIOBlock)
+
+    # Note: Block-based IO proc API not exposed due to Cython limitations with
+    # Objective-C blocks and dispatch_queue_t. Use AudioDeviceCreateIOProcID above.
+    # Original signature:
+    #   OSStatus AudioDeviceCreateIOProcIDWithBlock(AudioDeviceIOProcID*, AudioObjectID,
+    #       dispatch_queue_t, AudioDeviceIOBlock)
     cdef OSStatus AudioDeviceDestroyIOProcID( AudioObjectID inDevice, AudioDeviceIOProcID inIOProcID)
     cdef OSStatus AudioDeviceStart( AudioObjectID inDevice, AudioDeviceIOProcID inProcID)
     cdef OSStatus AudioDeviceStartAtTime( AudioObjectID inDevice, AudioDeviceIOProcID inProcID, AudioTimeStamp* ioRequestedStartTime, UInt32 inFlags)
@@ -180,7 +192,8 @@ cdef extern from "CoreAudio/AudioHardware.h":
     # AudioObject property elements
     ctypedef enum:
         kAudioObjectPropertyElementMain = 0  # Main element
-        kAudioObjectPropertyElementMaster = 0  # Master element (deprecated, same as Main)
+        # DEPRECATED: Use kAudioObjectPropertyElementMain instead (macOS 12.0+)
+        kAudioObjectPropertyElementMaster = 0  # Deprecated alias for Main
 
     ctypedef enum:
         kAudioDevicePropertyDeviceUID = 1969841184  # 'uid '

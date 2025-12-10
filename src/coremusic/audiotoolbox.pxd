@@ -689,7 +689,9 @@ cdef extern from "AudioToolbox/AudioConverter.h":
                                                     const AudioBufferList* inInputData,
                                                     AudioBufferList* outOutputData)
 
-    # Deprecated functions (macOS only)
+    # DEPRECATED: Use AudioConverterFillComplexBuffer instead (macOS 10.2+)
+    # This function only works with non-interleaved audio and has been superseded
+    # by AudioConverterFillComplexBuffer which handles all audio configurations.
     cdef OSStatus AudioConverterFillBuffer(AudioConverterRef inAudioConverter,
                                           AudioConverterInputDataProc inInputDataProc,
                                           void* inInputDataProcUserData,
@@ -962,13 +964,19 @@ cdef extern from "AudioToolbox/AudioServices.h":
 
     cdef OSStatus AudioServicesDisposeSystemSoundID(SystemSoundID inSystemSoundID)
 
+    # Note: Block-based API - actual signature uses dispatch_block_t (void (^)(void))
+    # Simplified to void* for Cython compatibility since blocks cannot be directly
+    # represented in Cython. Use AudioServicesAddSystemSoundCompletion for callback support.
     cdef void AudioServicesPlayAlertSoundWithCompletion(
         SystemSoundID inSystemSoundID,
-        void* inCompletionBlock)  # Note: simplified - actual signature uses blocks
+        void* inCompletionBlock)
 
+    # Note: Block-based API - actual signature uses dispatch_block_t (void (^)(void))
+    # Simplified to void* for Cython compatibility since blocks cannot be directly
+    # represented in Cython. Use AudioServicesAddSystemSoundCompletion for callback support.
     cdef void AudioServicesPlaySystemSoundWithCompletion(
         SystemSoundID inSystemSoundID,
-        void* inCompletionBlock)  # Note: simplified - actual signature uses blocks
+        void* inCompletionBlock)
 
     cdef OSStatus AudioServicesGetPropertyInfo(
         AudioServicesPropertyID inPropertyID,
@@ -991,9 +999,12 @@ cdef extern from "AudioToolbox/AudioServices.h":
         UInt32 inPropertyDataSize,
         const void* inPropertyData)
 
-    # Deprecated functions (but still widely used)
+    # DEPRECATED: Use AudioServicesPlayAlertSoundWithCompletion instead (macOS 10.11+)
+    # These functions are deprecated but still widely used for simple sound playback.
+    # They work synchronously and don't provide completion notification.
     cdef void AudioServicesPlayAlertSound(SystemSoundID inSystemSoundID)
 
+    # DEPRECATED: Use AudioServicesPlaySystemSoundWithCompletion instead (macOS 10.11+)
     cdef void AudioServicesPlaySystemSound(SystemSoundID inSystemSoundID)
 
     cdef OSStatus AudioServicesAddSystemSoundCompletion(

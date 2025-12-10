@@ -94,6 +94,11 @@ cdef extern from "CoreMIDI/MIDIServices.h":
         void* request)
 
     # Block types (forward declarations)
+    # Note: These are Objective-C blocks that cannot be directly represented in Cython.
+    # Actual signatures:
+    #   MIDINotifyBlock = void (^)(const MIDINotification *message)
+    #   MIDIReceiveBlock = void (^)(const MIDIPacketList *pktlist, void *srcConnRefCon)
+    # Use MIDINotifyProc/MIDIReadProc callback functions instead for Cython compatibility.
     ctypedef void* MIDINotifyBlock
     ctypedef void* MIDIReceiveBlock
 
@@ -412,7 +417,9 @@ cdef extern from "CoreMIDI/MIDISetup.h":
         ItemCount numDestinationEndpoints,
         MIDIEntityRef* newEntity)
 
-    # MIDIDeviceAddEntity - Deprecated but still available for compatibility
+    # DEPRECATED: Use MIDIDeviceNewEntity instead (macOS 11.0+, iOS 14.0+)
+    # MIDIDeviceAddEntity doesn't support MIDI 2.0 protocol specification.
+    # Kept for backwards compatibility with older macOS/iOS versions.
     cdef OSStatus MIDIDeviceAddEntity(
         MIDIDeviceRef device,
         CFStringRef name,

@@ -17,6 +17,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Changed
+
+- **Render Callback Performance Optimization** - Optimized `audio_player_render_callback()` in `capi.pyx`
+  - Replaced frame-by-frame loop with block `memcpy()` for entire buffer transfer
+  - Critical path optimization: callback is invoked 44,100+ times/second at 44.1kHz
+  - Expected 2-5x performance improvement for real-time audio playback
+
 ### Added
 
 - **Integration Tests** - Comprehensive end-to-end workflow tests (`tests/test_integration_workflows.py`)
@@ -54,6 +61,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - `set_stream_format()`: Example showing format configuration
   - `get_track()`: Example showing track iteration
   - `add_node()`: Example showing graph construction with effect chain
+
+- **Declaration File Documentation** - Added deprecation notes and block type documentation to `.pxd` files
+  - Deprecated API notes with replacement recommendations:
+    - `AudioConverterFillBuffer` -> `AudioConverterFillComplexBuffer`
+    - `AudioServicesPlayAlertSound/PlaySystemSound` -> completion block versions
+    - `MIDIDeviceAddEntity` -> `MIDIDeviceNewEntity`
+    - `kAudioObjectPropertyElementMaster` -> `kAudioObjectPropertyElementMain`
+  - Block-based API documentation explaining Cython limitations:
+    - `audiotoolbox.pxd`: AudioServices completion block APIs
+    - `coremidi.pxd`: MIDINotifyBlock, MIDIReceiveBlock types
+    - `coreaudio.pxd`: Property listener and IO proc block APIs
 
 - **Test Quality Cleanup** - Removed redundant and low-value tests, consolidated existence checks
   - Removed 17 constant-verification tests (testing hardcoded values against themselves)
