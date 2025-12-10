@@ -17,123 +17,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
-### Added
+### Removed
 
-- **KANN Neural Network Library Integration** - Complete Cython wrapper for the KANN (Klib Artificial Neural Network) C library (`coremusic.kann`)
-  - **Core Neural Network Class** (`NeuralNetwork`)
-    - Factory methods for model creation: `mlp()`, `lstm()`, `gru()`, `rnn()`
-    - Training: `train()` for feedforward, `train_rnn()` for RNN with proper BPTT
-    - Inference: `apply()` for single samples, `cost()` for batch evaluation
-    - RNN control: `unroll()`, `rnn_start()`, `rnn_end()`, `switch()`
-    - Model I/O: `save()`, `load()` for persistence
-    - Properties: `n_var`, `n_const`, `input_dim`, `output_dim`
-  - **Model Architectures**
-    - MLP (Multi-Layer Perceptron) with configurable hidden layers and dropout
-    - LSTM (Long Short-Term Memory) for sequence modeling
-    - GRU (Gated Recurrent Unit) - simplified LSTM alternative
-    - Simple RNN for basic recurrence
-    - All support layer normalization (`RNN_NORM`) and variable initial hidden states (`RNN_VAR_H0`)
-  - **Training Features**
-    - RMSprop optimizer with configurable learning rate
-    - Mini-batch training with validation split
-    - Early stopping with configurable patience
-    - Gradient clipping for RNN stability
-    - Cross-entropy loss (binary and multi-class) and MSE
-  - **Graph Building API** (`GraphBuilder`)
-    - Low-level computational graph construction
-    - Layer types: `input()`, `dense()`, `lstm()`, `gru()`, `rnn()`, `dropout()`, `layernorm()`
-    - Activations: `relu()`, `sigmoid()`, `tanh()`, `softmax()`
-    - Cost functions: `cross_entropy()`, `mse()`
-    - `build()` to compile graph into `NeuralNetwork`
-  - **Data Utilities**
-    - `Array2D` - 2D array class compatible with buffer protocol (numpy/array.array)
-    - `DataSet` - TSV file loading with row/column names and grouping
-    - `one_hot_encode()` - Convert integer labels to one-hot vectors
-    - `softmax_sample()` - Temperature-based sampling from probability distributions
-    - `prepare_sequence_data()` - Prepare sequences for training
-    - `set_seed()`, `set_verbose()` - Global configuration
-  - **Exception Hierarchy**
-    - `KannError` - Base exception
-    - `KannModelError` - Model operation errors
-    - `KannTrainingError` - Training errors
-  - 49 comprehensive tests covering all functionality
+- **Neural Module** - Removed `coremusic.music.neural` subpackage
+  - Out of scope for the core package
+  - Included: `api.py`, `data.py`, `evaluation.py`, `generation.py`, `models.py`, `training.py`
+  - Associated tests removed: `test_music_neural.py`, `test_neural_training_classical.py`
+  - Demo scripts removed: `tests/demos/neural/`
+  - Keeping the package lean and fit-for-purpose
 
-- **Neural Network Music Generation Module** - High-level API for training and generating music with neural networks (`coremusic.music.neural`)
-  - **Encoders** - Convert MIDI events to/from neural network tokens
-    - `NoteEncoder` - Simple note-to-token mapping (vocab_size=128)
-    - `EventEncoder` - Rich event vocabulary with note-on, note-off, time shifts, velocity
-    - `PianoRollEncoder` - Piano roll representation for polyphonic music
-    - `RelativePitchEncoder` - Interval-based encoding
-    - All support `encode()`, `decode()`, `encode_file()`, `transpose()`
-  - **Dataset Management** (`MIDIDataset`)
-    - `load_file()`, `load_directory()` - Load MIDI files
-    - `augment()` - Data augmentation via transposition
-    - `prepare_training_data()` - Create X, Y arrays for training
-    - Sequence extraction with configurable length
-    - **Track/Channel Filtering** - Filter MIDI data during encoding
-      - `channels` - Filter by specific MIDI channels
-      - `tracks` - Filter by track indices
-      - `track_names` - Filter by track name substrings
-      - `pitch_range` - Filter notes to a pitch range (e.g., `(48, 84)` for C3-C6)
-      - `exclude_drums` - Exclude channel 9 (GM drum channel)
-    - **Dataset Presets** - Factory methods for common use cases
-      - `MIDIDataset.for_melody()` - Melody training (excludes drums, pitch range C3-C6)
-      - `MIDIDataset.for_drums()` - Drum pattern training (no filtering)
-      - `MIDIDataset.for_bass()` - Bass line training (pitch range E1-C4)
-      - `MIDIDataset.for_chords()` - Chord training (pitch range C2-C5)
-  - **Model Factory** (`ModelFactory`)
-    - `create()` - Build models for any encoder/architecture combination
-    - `get_recommended_config()` - Hyperparameter recommendations
-    - `list_models()`, `describe_model()` - Discovery and documentation
-    - Supports: mlp, lstm, gru, rnn
-  - **Training Infrastructure** (`Trainer`, `TrainingConfig`)
-    - `train()` - Standard feedforward training
-    - `train_epochs()` - Epoch-by-epoch training with callbacks
-    - `train_rnn_sequences()` - RNN training with proper BPTT
-    - `evaluate()`, `save_checkpoint()`, `load_checkpoint()`
-  - **Callback System**
-    - `EarlyStopping` - Stop on validation plateau
-    - `ModelCheckpoint` - Save best models during training
-    - `ProgressLogger` - Training progress logging
-    - `LearningRateScheduler` - Dynamic learning rate adjustment
-  - **Sampling Strategies** for generation
-    - `GreedySampling` - Always pick highest probability
-    - `TemperatureSampling` - Temperature-controlled randomness
-    - `TopKSampling` - Sample from top K candidates
-    - `NucleusSampling` - Top-P (nucleus) sampling
-  - **Music Generator** (`MusicGenerator`)
-    - `generate()` - Generate token sequences
-    - `generate_midi()` - Generate complete MIDI sequences
-    - Configurable duration, tempo, seeding
-    - Support for all sampling strategies
-  - **Evaluation Metrics** (`MusicMetrics`)
-    - Pitch statistics: range, mean, std, entropy
-    - Interval analysis: distribution, melodic patterns
-    - Rhythmic analysis: note density, timing patterns
-    - Self-similarity and repetition detection
-  - **Model Comparison** (`ModelComparison`)
-    - Compare multiple models on same data
-    - Statistical significance testing
-    - Best model selection
+- **Generative Algorithms** - Moved from package to examples
+  - `coremusic.music.generative` module removed from package
+  - `coremusic.music.markov` module removed from package
+  - `coremusic.music.bayes` module removed from package
+  - Code relocated to `tests/examples/` directory for reference
+  - Associated tests removed: `test_music_generative.py`, `test_music_markov.py`, `test_music_bayes.py`
 
-- **RNN Training with Backpropagation Through Time (BPTT)**
-  - `NeuralNetwork.train_rnn()` - Proper BPTT implementation
-    - Network unrolling via `kann_unroll_array()` for gradient propagation
-    - Input/output sequence binding via `kann_feed_bind()`
-    - Manual training loop with `kann_cost()` and `kann_RMSprop()`
-    - Gradient clipping for training stability
-    - Hidden state reset between sequences
-    - Validation support with held-out sequences
-  - `Trainer.train_rnn_sequences()` - High-level API for RNN training
-  - **Result**: LSTM/GRU models now learn effectively (loss ~4.9 to ~3.6) instead of being stuck at ~93% error
+- **DAW Integration** - Removed `coremusic.daw` module
+  - Moved to `tests/examples/` directory
+  - Associated tests removed: `test_daw.py`
 
-### Fixed
-
-- **RNN/LSTM/GRU Training** - Fixed non-learning RNN models
-  - Previously: RNN models used `kann_train_fnn1()` (feedforward API) without BPTT
-  - Now: Proper BPTT via `train_rnn()` enables gradient flow through time steps
-  - Added missing `calloc` and `memset` imports to Cython module
-  - Added `kad_len()` function declaration to `kann.pxd`
+- **CLI Commands** - Removed generative CLI commands
+  - `coremusic generate` command removed
+  - `coremusic neural` command removed
 
 ## [0.1.10]
 

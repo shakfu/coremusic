@@ -6,8 +6,8 @@ import argparse
 from pathlib import Path
 from typing import List, Optional
 
-from ._formatters import output_json
-from ._utils import EXIT_SUCCESS, CLIError
+from coremusic.cli._formatters import output_json
+from coremusic.cli._utils import EXIT_SUCCESS, CLIError
 
 # Arpeggio pattern choices
 ARP_PATTERNS = ["up", "down", "up_down", "down_up", "random", "as_played"]
@@ -207,7 +207,7 @@ def _get_scale_type(scale_name: str):
 
 def _get_arp_pattern(pattern_name: str):
     """Get ArpPattern enum from string."""
-    from coremusic.music.generative import ArpPattern
+    from .generative import ArpPattern
 
     mapping = {
         "up": ArpPattern.UP,
@@ -305,7 +305,7 @@ def _save_events_to_midi(
 
 def cmd_arpeggio(args: argparse.Namespace) -> int:
     """Generate arpeggio pattern."""
-    from coremusic.music.generative import ArpConfig, Arpeggiator
+    from .generative import ArpConfig, Arpeggiator
     from coremusic.music.theory import Chord
 
     output_path = Path(args.output)
@@ -358,7 +358,7 @@ def cmd_arpeggio(args: argparse.Namespace) -> int:
 
 def cmd_euclidean(args: argparse.Namespace) -> int:
     """Generate Euclidean rhythm."""
-    from coremusic.music.generative import EuclideanConfig, EuclideanGenerator
+    from .generative import EuclideanConfig, EuclideanGenerator
 
     output_path = Path(args.output)
 
@@ -415,7 +415,7 @@ def cmd_euclidean(args: argparse.Namespace) -> int:
 
 def cmd_melody(args: argparse.Namespace) -> int:
     """Generate melodic pattern."""
-    from coremusic.music.generative import MelodyConfig, MelodyGenerator
+    from .generative import MelodyConfig, MelodyGenerator
     from coremusic.music.theory import Scale
 
     output_path = Path(args.output)

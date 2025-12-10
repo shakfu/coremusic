@@ -33,8 +33,8 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from ..midi.utilities import MIDIEvent, MIDIStatus
-from .theory import Chord, Note, Scale
+from coremusic.midi.utilities import MIDIEvent, MIDIStatus
+from coremusic.music.theory import Chord, Note, Scale
 
 # ============================================================================
 # Base Classes

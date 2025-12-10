@@ -76,7 +76,6 @@ See [CHANGELOG.md](CHANGELOG.md) for completed features.
 - L-system based melody generation
 - Cellular automata rhythms
 - Genetic algorithm composition
-- Neural network integration (optional dependency)
 - Stochastic grammar-based generation
 
 #### Live Performance Integration

@@ -76,25 +76,34 @@ Module Organization
 - ``coremusic.constants`` - Enum classes for CoreAudio constants
 - ``coremusic.audio`` - Audio processing utilities (async_io, streaming, analysis)
 - ``coremusic.midi`` - MIDI utilities and Link integration
-- ``coremusic.daw`` - DAW framework (Timeline, Track, Clip)
+- ``coremusic.music`` - Music theory (notes, scales, chords)
 - ``coremusic.link`` - Ableton Link tempo synchronization
 - ``coremusic.utils.scipy`` - SciPy integration (optional)
 """
 
 # Import subpackages
-# Import Ableton Link classes
-# Import buffer management utilities
-# Import OSStatus error translation utilities
-from . import (audio, buffer_utils, constants, daw, link, midi, music,
-               os_status, utils)
+from . import audio, buffer_utils, constants, link, midi, music, os_status, utils
+
 # Import async I/O classes from new location
-from .audio.async_io import (AsyncAudioFile, AsyncAudioQueue,
-                             create_output_queue_async, open_audio_file_async)
+from .audio.async_io import (
+    AsyncAudioFile,
+    AsyncAudioQueue,
+    create_output_queue_async,
+    open_audio_file_async,
+)
+
 # Import AudioUnit hosting
-from .audio.audiounit_host import (AudioFormatConverter, AudioUnitChain,
-                                   AudioUnitHost, AudioUnitParameter,
-                                   AudioUnitPlugin, AudioUnitPreset,
-                                   PluginAudioFormat, PresetManager)
+from .audio.audiounit_host import (
+    AudioFormatConverter,
+    AudioUnitChain,
+    AudioUnitHost,
+    AudioUnitParameter,
+    AudioUnitPlugin,
+    AudioUnitPreset,
+    PluginAudioFormat,
+    PresetManager,
+)
+
 # Import high-level utilities (re-exported)
 from .audio.utilities import AudioEffectsChain as AudioEffectsChain
 from .audio.utilities import AudioFormatPresets as AudioFormatPresets
@@ -102,46 +111,101 @@ from .audio.utilities import batch_convert as batch_convert
 from .audio.utilities import batch_process_files as batch_process_files
 from .audio.utilities import batch_process_parallel as batch_process_parallel
 from .audio.utilities import convert_audio_file as convert_audio_file
-from .audio.utilities import \
-    create_simple_effect_chain as create_simple_effect_chain
+from .audio.utilities import create_simple_effect_chain as create_simple_effect_chain
 from .audio.utilities import find_audio_unit_by_name as find_audio_unit_by_name
 from .audio.utilities import get_audiounit_names as get_audiounit_names
-from .audio.utilities import \
-    list_available_audio_units as list_available_audio_units
-from .audio.utilities import \
-    parse_audio_stream_basic_description as \
-    parse_audio_stream_basic_description
+from .audio.utilities import list_available_audio_units as list_available_audio_units
+from .audio.utilities import (
+    parse_audio_stream_basic_description as parse_audio_stream_basic_description,
+)
 from .audio.utilities import trim_audio as trim_audio
-from .buffer_utils import (AudioStreamBasicDescription, calculate_buffer_size,
-                           optimal_buffer_size, pack_audio_buffer,
-                           unpack_audio_buffer)
+from .buffer_utils import (
+    AudioStreamBasicDescription,
+    calculate_buffer_size,
+    optimal_buffer_size,
+    pack_audio_buffer,
+    unpack_audio_buffer,
+)
+
 # Import commonly-used constants for convenience
-from .constants import (  # Audio File; Audio Format; Audio Converter; Extended Audio File; AudioUnit; Audio Queue; Audio Object/Device; MIDI
-    AudioConverterProperty, AudioConverterQuality, AudioDeviceProperty,
-    AudioFilePermission, AudioFileProperty, AudioFileType, AudioFormatID,
-    AudioObjectProperty, AudioQueueParameter, AudioQueueProperty,
-    AudioUnitElement, AudioUnitParameterUnit, AudioUnitProperty,
-    AudioUnitRenderActionFlags, AudioUnitScope, ExtendedAudioFileProperty,
-    LinearPCMFormatFlag, MIDIControlChange, MIDIObjectProperty, MIDIStatus)
-# Import DAW classes for convenience
-from .daw import (AutomationLane, Clip, Timeline, TimelineMarker, TimeRange,
-                  Track)
+from .constants import (
+    # Audio File
+    AudioFilePermission,
+    AudioFileProperty,
+    AudioFileType,
+    # Audio Format
+    AudioFormatID,
+    LinearPCMFormatFlag,
+    # Audio Converter
+    AudioConverterProperty,
+    AudioConverterQuality,
+    # Extended Audio File
+    ExtendedAudioFileProperty,
+    # AudioUnit
+    AudioUnitElement,
+    AudioUnitParameterUnit,
+    AudioUnitProperty,
+    AudioUnitRenderActionFlags,
+    AudioUnitScope,
+    # Audio Queue
+    AudioQueueParameter,
+    AudioQueueProperty,
+    # Audio Object/Device
+    AudioDeviceProperty,
+    AudioObjectProperty,
+    # MIDI
+    MIDIControlChange,
+    MIDIObjectProperty,
+    MIDIStatus,
+)
+
 # Import Link + MIDI integration from new location
 from .midi import link as link_midi
+
 # Import object-oriented API (primary interface)
-from .objects import (NUMPY_AVAILABLE, AudioBuffer, AudioClock, AudioComponent,
-                      AudioComponentDescription, AudioConverter,
-                      AudioConverterError, AudioDevice, AudioDeviceError,
-                      AudioDeviceManager, AudioFile, AudioFileError,
-                      AudioFileStream, AudioFormat, AudioPlayer, AudioQueue,
-                      AudioQueueError, AudioUnit, AudioUnitError, AUGraph,
-                      AUGraphError, ClockTimeFormat, CoreAudioError,
-                      CoreAudioObject, ExtendedAudioFile, MIDIClient,
-                      MIDIError, MIDIInputPort, MIDIOutputPort, MIDIPort,
-                      MusicPlayer, MusicPlayerError, MusicSequence, MusicTrack)
-from .os_status import (check_os_status, check_return_status,
-                        format_os_status_error, handle_exceptions,
-                        raises_on_error)
+from .objects import (
+    NUMPY_AVAILABLE,
+    AudioBuffer,
+    AudioClock,
+    AudioComponent,
+    AudioComponentDescription,
+    AudioConverter,
+    AudioConverterError,
+    AudioDevice,
+    AudioDeviceError,
+    AudioDeviceManager,
+    AudioFile,
+    AudioFileError,
+    AudioFileStream,
+    AudioFormat,
+    AudioPlayer,
+    AudioQueue,
+    AudioQueueError,
+    AudioUnit,
+    AudioUnitError,
+    AUGraph,
+    AUGraphError,
+    ClockTimeFormat,
+    CoreAudioError,
+    CoreAudioObject,
+    ExtendedAudioFile,
+    MIDIClient,
+    MIDIError,
+    MIDIInputPort,
+    MIDIOutputPort,
+    MIDIPort,
+    MusicPlayer,
+    MusicPlayerError,
+    MusicSequence,
+    MusicTrack,
+)
+from .os_status import (
+    check_os_status,
+    check_return_status,
+    format_os_status_error,
+    handle_exceptions,
+    raises_on_error,
+)
 
 __all__ = [
     # Base class
@@ -209,14 +273,6 @@ __all__ = [
     "PresetManager",
     # NumPy availability flag
     "NUMPY_AVAILABLE",
-    # DAW Essentials
-    "daw",  # daw module
-    "Timeline",
-    "Track",
-    "Clip",
-    "TimelineMarker",
-    "TimeRange",
-    "AutomationLane",
     # Error handling decorators
     "check_os_status",
     "check_return_status",
@@ -252,8 +308,8 @@ __all__ = [
     "MIDIStatus",
     "MIDIControlChange",
     "MIDIObjectProperty",
-    # Music theory and generative
-    "music",  # music module with theory and generative submodules
+    # Music theory
+    "music",  # music module with theory submodule
     # Submodules (also exported for attribute access)
     "audio",  # audio subpackage
     "midi",  # midi subpackage

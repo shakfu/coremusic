@@ -42,7 +42,7 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-from ..midi.utilities import MIDIEvent, MIDISequence, MIDITrack
+from coremusic.midi.utilities import MIDIEvent, MIDISequence, MIDITrack
 
 # ============================================================================
 # Enums and Types

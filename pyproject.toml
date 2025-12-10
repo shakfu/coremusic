@@ -117,11 +117,6 @@ ignore_missing_imports = false
 follow_imports = "skip"
 
 [[tool.mypy.overrides]]
-module = "coremusic.kann"
-ignore_missing_imports = true
-follow_imports = "skip"
-
-[[tool.mypy.overrides]]
 module = [
     "scipy.*",
     "numpy.*",

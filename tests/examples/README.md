@@ -2,24 +2,43 @@
 
 Complete, working examples demonstrating coremusic capabilities.
 
+This directory contains both standalone utility scripts and experimental modules that are **not part of the core coremusic package**.
+
+## Directory Structure
+
+```
+tests/examples/
+├── audio_converter.py    # Audio format converter utility
+├── audio_inspector.py    # Audio file inspection utility
+├── daw/                  # DAW-like timeline/track/clip framework
+│   └── daw.py
+├── generative/           # Generative music algorithms
+│   ├── generative.py     # Arpeggiator, Euclidean, Melody generators
+│   ├── markov.py         # Markov chain analysis and generation
+│   ├── bayes.py          # Bayesian network music generation
+│   └── cli.py            # CLI commands (not integrated with main CLI)
+├── test_daw.py           # Tests for DAW module
+├── test_music_bayes.py   # Tests for Bayesian module
+├── test_music_generative.py  # Tests for generative module
+└── test_music_markov.py  # Tests for Markov module
+```
+
 ## Quick Start
 
-All examples are standalone Python scripts that can be run directly:
+All standalone examples can be run directly:
 
 ```bash
 # From the project root
-python examples/audio_inspector.py tests/amen.wav
+python tests/examples/audio_inspector.py tests/amen.wav
 
 # Or make executable and run
-chmod +x examples/audio_inspector.py
-./examples/audio_inspector.py tests/amen.wav
+chmod +x tests/examples/audio_inspector.py
+./tests/examples/audio_inspector.py tests/amen.wav
 ```
 
-## Available Examples
+## Standalone Utilities
 
-### Basic Examples
-
-#### Audio Inspector
+### Audio Inspector
 **File:** `audio_inspector.py`
 
 Comprehensive audio file inspection tool that displays:
@@ -31,7 +50,7 @@ Comprehensive audio file inspection tool that displays:
 
 **Usage:**
 ```bash
-python examples/audio_inspector.py audio.wav
+python tests/examples/audio_inspector.py audio.wav
 ```
 
 **Example Output:**
@@ -58,7 +77,7 @@ CLASSIFICATION
   Bitrate:      1,411 kbps
 ```
 
-#### Audio Converter
+### Audio Converter
 **File:** `audio_converter.py`
 
 Convert audio files between different sample rates while preserving quality.
@@ -72,60 +91,43 @@ Convert audio files between different sample rates while preserving quality.
 **Usage:**
 ```bash
 # Convert to 48kHz
-python examples/audio_converter.py input.wav output.wav --rate 48000
+python tests/examples/audio_converter.py input.wav output.wav --rate 48000
 
 # Convert to 44.1kHz
-python examples/audio_converter.py input.wav output.wav --rate 44100
+python tests/examples/audio_converter.py input.wav output.wav --rate 44100
 ```
 
-**Example Output:**
-```
-Converting: input.wav
-Output:     output.wav
+## Experimental Modules
 
-Source Format:
-  Sample Rate:  44100.0 Hz
-  Channels:     2
-  Duration:     2.74s
+These modules demonstrate advanced use cases but are not production-ready and may have different quality standards than the core wrappers.
 
-Target Format:
-  Sample Rate:  48000.0 Hz
-  Channels:     2
+### DAW Module (`daw/`)
 
-Converting...
-Conversion complete!
+DAW-like timeline/track/clip framework for arranging audio and MIDI.
 
-Verifying output...
-  Output Sample Rate: 48000.0 Hz
-  Output Duration:    2.74s
-  Duration Preserved: Yes
-```
+### Generative Module (`generative/`)
 
-## Coming Soon
+Generative music algorithms including:
+- **generative.py** - Arpeggiator, Euclidean rhythm, Melody generators
+- **markov.py** - Markov chain analysis and generation
+- **bayes.py** - Bayesian network music generation
+- **cli.py** - CLI commands (standalone, not integrated with main CLI)
 
-### Audio Processing Examples
-- **Real-time Processor**: Process audio in real-time
-- **Batch Converter**: Convert multiple files
-- **Audio Analyzer**: Analyze audio characteristics
-- **Waveform Generator**: Generate audio waveforms
+### Using Experimental Modules
 
-### AudioUnit Examples
-- **AudioUnit Explorer**: Discover available AudioUnits
-- **Effect Chain**: Chain multiple audio effects
-- **Custom Processor**: Create custom AudioUnit
-- **Parameter Controller**: Automate parameters
+These modules are not installed as part of coremusic. To use them:
 
-### MIDI Examples
-- **MIDI Monitor**: Monitor MIDI input
-- **MIDI Router**: Route MIDI between devices
-- **MIDI Transformer**: Transform MIDI messages
-- **Virtual Keyboard**: Create virtual MIDI keyboard
+1. Add the examples directory to your Python path:
+   ```python
+   import sys
+   sys.path.insert(0, '/path/to/coremusic/tests/examples')
+   ```
 
-### Advanced Examples
-- **Multi-channel Processor**: Handle surround audio
-- **Low Latency Streamer**: Minimal latency streaming
-- **Audio Visualizer**: Real-time visualization
-- **SciPy Integration**: Signal processing with SciPy
+2. Import the modules:
+   ```python
+   from daw.daw import Timeline, Track, Clip
+   from generative.generative import Arpeggiator, EuclideanGenerator
+   ```
 
 ## Prerequisites
 
@@ -144,71 +146,18 @@ Install optional dependencies:
 pip install numpy scipy matplotlib
 ```
 
-## Example Structure
+## Note
 
-Each example follows this structure:
+The experimental modules are provided for educational and experimental purposes. They may:
+- Have incomplete test coverage
+- Contain experimental APIs that may change
+- Not follow the same quality standards as the core package
 
-1. **Docstring**: Description and usage
-2. **Imports**: Required modules
-3. **Helper Functions**: Utility functions
-4. **Main Function**: Core implementation
-5. **Argument Parsing**: Command-line handling
-6. **Error Handling**: Robust error handling
-
-## Contributing Examples
-
-We welcome example contributions! To add an example:
-
-1. Create a standalone, working script
-2. Add comprehensive docstrings
-3. Include usage instructions in the docstring
-4. Handle errors gracefully
-5. Add to this README
-6. Test with various inputs
-
-### Example Template
-
-```python
-#!/usr/bin/env python3
-"""
-Example Name
-
-Brief description of what this example demonstrates.
-
-Usage: python example_name.py <arguments>
-"""
-
-import coremusic as cm
-import sys
-
-def main():
-    """Main function."""
-    if len(sys.argv) < 2:
-        print("Usage: python example_name.py <audio_file>")
-        sys.exit(1)
-
-    filepath = sys.argv[1]
-
-    try:
-        # Your implementation here
-        pass
-
-    except cm.AudioFileError as e:
-        print(f"Audio file error: {e}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
-```
-
-## See Also
-
-- [Tutorials](../sphinx/tutorials/index.rst) - Step-by-step tutorials
-- [Cookbook](../sphinx/cookbook/index.rst) - Recipe collection
-- [API Reference](../sphinx/api/index.rst) - Complete API documentation
+For production use, consider the core coremusic package which provides:
+- CoreAudio/AudioToolbox bindings
+- CoreMIDI bindings
+- Ableton Link integration
+- Music theory primitives (coremusic.music.theory)
 
 ## License
 

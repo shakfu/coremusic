@@ -9,8 +9,3 @@ include src/coremusic/py.typed
 recursive-include thirdparty/link/include *.hpp *.ipp
 recursive-include thirdparty/link/modules/asio-standalone/asio/include *.hpp *.ipp
 
-# Thirdparty: KANN neural network library
-include thirdparty/kann/*.c
-include thirdparty/kann/*.h
-include thirdparty/kann/kann_extra/*.c
-include thirdparty/kann/kann_extra/*.h

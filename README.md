@@ -7,15 +7,12 @@
 
 `coremusic` is a zero-dependency Cython extension providing direct Python access to Apple's CoreAudio and CoreMIDI frameworks with near-native performance. It offers both functional (C-style) and object-oriented (Pythonic) APIs with automatic resource management.
 
-`coremusic` is a zero-dependency "batteries-included" music development toolkit for macOS. Current features include:
+`coremusic` is a zero-dependency music development toolkit for macOS. Current features include:
 
-- Low-level I/O: CoreAudio, AudioToolbox, CoreMIDI bindings.
+- Low-level I/O: CoreAudio, AudioToolbox, CoreMIDI bindings
 - Sync: Ableton Link for tempo/beat sync across devices
 - MIDI: Sequence manipulation, transforms, file I/O
-- Theory: Scales, chords, notes
-- Generation: Arpeggios, Euclidean rhythms, melodies
-- ML: Neural net generation via KANN
-- DAW: Track/mixer/session abstractions
+- Theory: Scales, chords, notes (coremusic.music.theory)
 
 
 ### Frameworks
@@ -41,14 +38,16 @@
 - Transformation pipeline: transpose, quantize, humanize, filter, harmonize
 - AudioUnit instrument control: notes, CC, program change, pitch bend (16 channels)
 
-**Composition**
-- Music theory: 25+ scales, 35+ chords, progressions
-- 8 generative algorithms: Arpeggiator, Euclidean, Markov, Melody, Polyrhythm, etc.
-- Markov/Bayesian MIDI analysis with variant generation
+**Music Theory**
+- 25+ scales, 35+ chords, progressions
+- Note, Interval, Scale, Chord classes
 
-**DAW Essentials**
-- Multi-track timeline with transport, clips, fades, automation
-- AudioUnit plugin integration, Link synchronization
+**Experimental Features (in `examples/`)**
+
+The following features are available as experimental code in the `examples/` directory:
+- Generative algorithms: Arpeggiator, Euclidean, Markov, Melody, Polyrhythm
+- Markov/Bayesian MIDI analysis with variant generation
+- DAW abstractions: Timeline, Track, Clip, Automation
 
 ## Installation
 
@@ -142,7 +141,6 @@ coremusic <command> [options]
 | `analyze`  | Audio analysis (peak, rms, silence, tempo, spectrum, key, mfcc)  |
 | `convert`  | Convert audio files between formats (file, batch)                |
 | `midi`     | MIDI device discovery (devices, inputs, outputs, send, file)     |
-| `generate` | Generative music algorithms (arpeggio, euclidean, melody)        |
 | `sequence` | MIDI sequence operations (info, play, tracks)                    |
 
 ### CLI Examples
@@ -171,15 +169,6 @@ coremusic midi devices
 
 # Show MIDI file info
 coremusic sequence info song.mid
-
-# Generate Euclidean rhythm
-coremusic generate euclidean --pulses 5 --steps 8 rhythm.mid
-
-# Generate arpeggio with transforms
-coremusic generate arpeggio --root C4 --chord major --bpm 140 -t humanize -t quantize arp.mid
-
-# Generate melody in D dorian
-coremusic generate melody --root D4 --scale dorian --notes 64 --bpm 100 melody.mid
 
 # JSON output for scripting
 coremusic --json devices list
@@ -636,66 +625,40 @@ capi.apply_fade_in(left, fade_samples=1000)
 capi.apply_fade_out(right, fade_samples=1000)
 ```
 
-### DAW Timeline and Multi-Track Operations
+### DAW Timeline and Multi-Track Operations (Experimental)
+
+> **Note:** DAW features are experimental and located in `examples/daw/`. They are not part of the core package.
 
 ```python
-import coremusic as cm
+# Add examples/ to your Python path first
+import sys
+sys.path.insert(0, '/path/to/coremusic/examples')
+
+from daw import Timeline, Track, Clip
 
 # Create DAW timeline
-timeline = cm.Timeline(sample_rate=48000, tempo=128.0)
+timeline = Timeline(sample_rate=48000, tempo=128.0)
 
 # Add tracks
 drums = timeline.add_track("Drums", "audio")
 vocals = timeline.add_track("Vocals", "audio")
 
 # Add clips with trimming and fades
-drums.add_clip(cm.Clip("drums.wav"), start_time=0.0)
+drums.add_clip(Clip("drums.wav"), start_time=0.0)
 vocals.add_clip(
-    cm.Clip("vocals.wav").trim(2.0, 26.0).set_fades(0.5, 1.0),
+    Clip("vocals.wav").trim(2.0, 26.0).set_fades(0.5, 1.0),
     start_time=8.0
 )
 
-# Add automation
-volume_auto = vocals.automate("volume")
-volume_auto.add_point(8.0, 0.0)   # Fade in
-volume_auto.add_point(10.0, 1.0)  # Full volume
-volume_auto.add_point(30.0, 1.0)
-volume_auto.add_point(32.0, 0.0)  # Fade out
-
-# Add markers and loop region
-timeline.add_marker(0.0, "Intro")
-timeline.add_marker(16.0, "Chorus", color="#FF0000")
-timeline.set_loop_region(16.0, 32.0)
-
 # Transport control
-timeline.play()              # Start from current playhead
-timeline.play(from_time=8.0) # Start from specific time
-timeline.pause()             # Pause (keep playhead)
-timeline.stop()              # Stop (reset playhead)
-
-# Recording
-vocals.record_enable(True)
-timeline.record()  # Record on armed tracks
-
-# Enable Link synchronization
-timeline.enable_link(True)
-
-# Query timeline state
-print(f"Duration: {timeline.get_duration():.2f}s")
-print(f"Playhead: {timeline.playhead:.2f}s")
-print(f"Playing: {timeline.is_playing}")
-print(f"Tracks: {len(timeline.tracks)}")
-print(f"Markers: {len(timeline.markers)}")
+timeline.play()
+timeline.stop()
 ```
 
-### Music Theory and Generative Algorithms
+### Music Theory
 
 ```python
-from coremusic.music.theory import Note, Scale, ScaleType, Chord, ChordType, ChordProgression
-from coremusic.music.generative import (
-    Arpeggiator, ArpPattern, EuclideanGenerator,
-    MarkovGenerator, MelodyGenerator, PolyrhythmGenerator
-)
+from coremusic.music.theory import Note, Scale, ScaleType, Chord, ChordType
 
 # Music Theory Basics
 c4 = Note.from_name("C4")
@@ -711,233 +674,25 @@ cmaj7 = Chord(Note.from_name("C4"), ChordType.MAJOR_7)
 dm7 = Chord(Note.from_name("D4"), ChordType.MINOR_7)
 g7 = Chord(Note.from_name("G4"), ChordType.DOMINANT_7)
 
-# Chord Progressions with Roman Numerals
-progression = ChordProgression.from_roman("C", ["I", "vi", "IV", "V"])
-for chord in progression.chords:
-    print(f"{chord.root}: {[str(n) for n in chord.notes]}")
-
-# Arpeggiator (10 patterns: UP, DOWN, UP_DOWN, RANDOM, etc.)
-chord = Chord(Note.from_name("C4"), ChordType.MAJOR)
-arp = Arpeggiator(chord.notes, pattern=ArpPattern.UP_DOWN, note_duration=0.25)
-events = arp.generate(num_notes=16)
-
-# Euclidean Rhythms (Bjorklund's algorithm)
-# Classic patterns: tresillo (3,8), cinquillo (5,8), rumba (7,12)
-euclidean = EuclideanGenerator(
-    pulses=5, steps=8,  # Cinquillo pattern
-    note=Note.from_name("C4"),
-    step_duration=0.125
-)
-events = euclidean.generate(num_cycles=4)
-
-# Markov Chain Melody Generation
-markov = MarkovGenerator(order=2)
-markov.train([60, 62, 64, 65, 67, 65, 64, 62])  # Train on note sequence
-markov.set_scale_constraint(Scale(Note.from_name("C4"), ScaleType.MAJOR))
-events = markov.generate(num_notes=16, start_note=Note.from_name("C4"))
-
-# Polyrhythm Generator (e.g., 3 against 4)
-poly = PolyrhythmGenerator(cycle_duration=1.0)
-poly.add_layer(divisions=3, note=Note.from_name("C4"), velocity=100)
-poly.add_layer(divisions=4, note=Note.from_name("E4"), velocity=80)
-events = poly.generate(num_cycles=4)
-
-# Bit Shift Register (gate-based sequencing)
-from coremusic.music.generative import BitShiftRegister, BitShiftRegisterGenerator, BitShiftRegisterConfig
-
-# Create shift register with seed pattern
-register = BitShiftRegister(seed=0b10110101, taps=[0, 2, 5])
-for _ in range(8):
-    gate = register.clock()  # Returns True/False based on LSB
-    print(f"Gate: {gate}, Register: {register.value:08b}")
-
-# Full generator with variable velocity and duration
-config = BitShiftRegisterConfig(
-    seed=0b11001010,
-    note=60,  # C4
-    velocity_mode='pattern',
-    velocity_pattern=[100, 80, 60, 80],
-    duration_mode='random',
-    duration_min=0.1,
-    duration_max=0.3
-)
-bsr_gen = BitShiftRegisterGenerator(config)
-events = bsr_gen.generate(num_steps=16)
-
 # Export to MIDI file
 from coremusic.midi.utilities import MIDISequence
 sequence = MIDISequence()
-track = sequence.create_track("Arpeggio")
+track = sequence.create_track("Melody")
 # Add events to track and save
 sequence.save("composition.mid")
 ```
 
-### Markov Chain MIDI Analysis
+### Generative Algorithms (Experimental)
 
-```python
-from coremusic.music.markov import (
-    MarkovChain, ChainConfig, ModelingMode, RhythmMode,
-    MIDIMarkovAnalyzer, MIDIMarkovGenerator,
-    analyze_and_generate, merge_chains, chain_statistics
-)
+> **Note:** Generative music features are experimental and located in `examples/generative/`. They are not part of the core package.
 
-# Create and train a Markov chain
-config = ChainConfig(
-    order=2,  # 2nd-order Markov chain
-    modeling_mode=ModelingMode.PITCH_ONLY,
-    temperature=1.0
-)
-chain = MarkovChain(config)
-chain.train([60, 62, 64, 65, 67, 65, 64, 62, 60])  # C major scale fragment
-
-# Sample from the chain
-next_note = chain.sample(history=[64, 65])  # Given E, F, what comes next?
-
-# Analyze an existing MIDI file
-analyzer = MIDIMarkovAnalyzer(config)
-chain = analyzer.analyze_file("original.mid", track_index=1)
-
-# Node-edge editing - adjust individual transitions
-chain.set_transition_probability((60,), 64, 0.8)  # Make C -> E more likely
-chain.remove_transition((60,), 67)  # Remove C -> G transition
-
-# Chain-scope adjustments
-chain.set_temperature(0.5)  # Less random (more likely to pick high-probability)
-chain.set_note_range(48, 72)  # Constrain to 2 octaves
-chain.set_gravity(60, 0.3)  # Bias toward C (root note)
-chain.sparsify(threshold=0.05)  # Remove transitions with < 5% probability
-
-# Generate a variant
-generator = MIDIMarkovGenerator(chain, tempo=120)
-variant_sequence = generator.generate(num_notes=32, start_pitch=60)
-variant_sequence.save("variant.mid")
-
-# Save/load chains for reuse
-chain.save("my_chain.json")
-loaded_chain = MarkovChain.load("my_chain.json")
-
-# Merge chains from multiple songs
-chains = [analyzer.analyze_file(f) for f in ["song1.mid", "song2.mid"]]
-merged = merge_chains(chains, weights=[0.7, 0.3])
-
-# Get chain statistics
-stats = chain_statistics(chain)
-print(f"States: {stats['num_states']}, Transitions: {stats['num_transitions']}")
-print(f"Entropy: {stats['entropy']:.2f} bits")
-
-# One-step convenience function
-variant = analyze_and_generate(
-    "input.mid",
-    num_notes=64,
-    order=2,
-    temperature=0.8
-)
-variant.save("output.mid")
-```
-
-### Bayesian Network MIDI Analysis
-
-```python
-from coremusic.music.bayes import (
-    BayesianNetwork, NetworkConfig, NetworkMode, StructureMode,
-    MIDIBayesAnalyzer, MIDIBayesGenerator,
-    analyze_and_generate, merge_networks, network_statistics
-)
-
-# Create and configure a Bayesian network
-config = NetworkConfig(
-    mode=NetworkMode.PITCH_DURATION_VELOCITY,  # Model pitch, duration, and velocity
-    structure_mode=StructureMode.FIXED,  # Use predefined structure
-    temporal_order=2,  # Consider 2 previous notes
-    smoothing_alpha=1.0  # Laplace smoothing
-)
-
-# Analyze a MIDI file
-analyzer = MIDIBayesAnalyzer(config=config)
-network = analyzer.analyze_file("original.mid", track_index=1)
-
-# Manual structure editing (for MANUAL mode)
-# network.add_edge("prev_pitch", "pitch")
-# network.add_edge("pitch", "duration")
-# network.add_edge("pitch", "velocity")
-
-# Generate a variation
-generator = MIDIBayesGenerator(network)
-variant_sequence = generator.generate(num_notes=32, tempo=120.0, start_pitch=60)
-variant_sequence.save("variant.mid")
-
-# Save/load networks for reuse
-network.save("my_network.json")
-loaded_network = BayesianNetwork.load("my_network.json")
-
-# Merge networks from multiple songs
-networks = [analyzer.analyze_file(f, track_index=1) for f in ["song1.mid", "song2.mid"]]
-merged = merge_networks(networks, weights=[0.7, 0.3])
-
-# Get network statistics
-stats = network_statistics(network)
-print(f"Variables: {stats['num_variables']}, Edges: {stats['num_edges']}")
-print(f"Observations: {stats['num_observations']}")
-print(f"Average entropy: {stats['average_entropy']:.2f} bits")
-
-# One-step convenience function
-variant = analyze_and_generate(
-    "input.mid",
-    "output.mid",
-    num_notes=64,
-    mode=NetworkMode.FULL,  # Include rhythm (IOI)
-    temporal_order=2
-)
-```
-
-### Neural Network Music Generation
-
-```python
-from coremusic.music.neural import (
-    MIDIDataset, NoteEncoder, ModelFactory,
-    TrainingConfig, Trainer, MusicGenerator,
-    TemperatureSampling
-)
-
-# Create encoder and dataset with preset for melody training
-encoder = NoteEncoder()
-dataset = MIDIDataset.for_melody(encoder, seq_length=16)  # Filters drums, pitch range C3-C6
-
-# Other presets available:
-# dataset = MIDIDataset.for_drums(encoder, seq_length=16)   # For drum patterns
-# dataset = MIDIDataset.for_bass(encoder, seq_length=16)    # For bass lines
-# dataset = MIDIDataset.for_chords(encoder, seq_length=16)  # For chord progressions
-
-# Load and augment MIDI files
-dataset.load_directory("midi_files/", pattern="*.mid")
-dataset.augment(transpose_range=(-3, 3))  # Data augmentation
-
-# Prepare training data
-x_train, y_train = dataset.prepare_training_data(one_hot=True)
-
-# Build model (GRU recommended - faster than LSTM, more efficient than MLP)
-model = ModelFactory.create(
-    model_type="gru",  # or "lstm", "mlp", "rnn"
-    encoder=encoder,
-    seq_length=dataset.seq_length,
-    hidden_size=64
-)
-
-# Train
-config = TrainingConfig(learning_rate=0.001, max_epochs=50, batch_size=32)
-trainer = Trainer(model, config)
-history = trainer.train(x_train, y_train)
-
-# Generate music
-generator = MusicGenerator(model, encoder, seq_length=dataset.seq_length)
-seed = dataset.get_sample_sequence()
-strategy = TemperatureSampling(temperature=0.8)
-generated = generator.generate(seed_sequence=seed, length=64, sampling_strategy=strategy)
-
-# Convert to MIDI and save
-events = encoder.decode(generated, tempo=120.0)
-# ... save to MIDI file
-```
+See `examples/generative/` for:
+- Arpeggiator (10 patterns: UP, DOWN, UP_DOWN, RANDOM, etc.)
+- Euclidean rhythm generator (Bjorklund's algorithm)
+- Markov chain melody generation
+- Bayesian network MIDI analysis
+- Polyrhythm generator
+- Bit shift register sequencing
 
 ### MIDI Transformation Pipeline
 
@@ -1091,12 +846,8 @@ The project includes a comprehensive test suite with 1600+ tests covering all ma
   - `utilities.py`: MIDI file I/O, sequencing, and routing
   - `transform.py`: MIDI transformation pipeline (Transpose, Quantize, Humanize, etc.)
 
-- **`src/coremusic/music/`**: Music theory and generative algorithms:
+- **`src/coremusic/music/`**: Music theory:
   - `theory.py`: Note, Interval, Scale (25+ types), Chord (35+ types), ChordProgression
-  - `generative.py`: Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm, BitShiftRegister generators
-  - `markov.py`: Markov chain MIDI analysis (MarkovChain, MIDIMarkovAnalyzer, MIDIMarkovGenerator)
-  - `bayes.py`: Bayesian network MIDI analysis (BayesianNetwork, MIDIBayesAnalyzer, MIDIBayesGenerator)
-  - `neural/`: Neural network music generation (MIDIDataset, NoteEncoder, ModelFactory, Trainer, MusicGenerator)
 
 #### Ableton Link Integration
 
@@ -1105,8 +856,6 @@ The project includes a comprehensive test suite with 1600+ tests covering all ma
 - **`thirdparty/link/`**: Ableton Link library (C++ headers and implementation)
 
 #### High-Level Features
-
-- **`src/coremusic/daw.py`**: DAW essentials (Timeline, Track, Clip, Automation)
 
 - **`src/coremusic/buffer_utils.py`**: Audio buffer utilities and conversion helpers
 
@@ -1117,6 +866,13 @@ The project includes a comprehensive test suite with 1600+ tests covering all ma
 - **`src/coremusic/log.py`**: Logging utilities for audio operations
 
 - **`src/coremusic/utils/`**: Utility modules (FourCC conversion, type helpers, etc.)
+
+#### Experimental Features (examples/)
+
+The `examples/` directory contains experimental code not part of the core package:
+
+- **`examples/daw/`**: DAW essentials (Timeline, Track, Clip, Automation)
+- **`examples/generative/`**: Generative music algorithms (Arpeggiator, Euclidean, Markov, Bayes)
 
 #### Build Configuration
 
