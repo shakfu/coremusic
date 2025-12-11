@@ -17,22 +17,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.1.11]
+
+### Changed
+
+- **Audio Player Test Duration** - Reduced `test_audio_playback` from 10 seconds to 2 seconds
+  - Improves test suite execution time while maintaining coverage
+
+- **Render Callback Performance Optimization** - Optimized `audio_player_render_callback()` in `capi.pyx`
+  - Replaced frame-by-frame loop with block `memcpy()` for entire buffer transfer
+  - Critical path optimization: callback is invoked 44,100+ times/second at 44.1kHz
+  - Expected 2-5x performance improvement for real-time audio playback
+
 ### Added
 
-- **CLI Phase 1: Quick Wins** - Essential MIDI commands for debugging and device testing
+- Essential MIDI commands for debugging and device testing
   - `midi output panic` - Sends all-notes-off (CC 123) and all-sound-off (CC 120) on all 16 channels to stop stuck notes
   - `midi output test` - Sends test note (middle C, note 60) to verify MIDI connectivity
   - `midi device info <name>` - Shows detailed MIDI device info including entities, sources, and destinations
   - `midi file dump <path>` - Hex dump of raw MIDI events with time, track, channel, type, and data
 
-- **CLI Phase 2: Core Functionality** - Audio playback, MIDI monitoring, and plugin processing
+- **Audio playback, MIDI monitoring, and plugin processing
   - `audio play <path>` - Plays audio file with progress bar, supports `--loop` option
   - `midi input monitor [index]` - Real-time MIDI input monitoring with message formatting (Ctrl+C to stop)
   - `midi file play <path>` - Plays MIDI file to output device with precise timing
   - `plugin process <name> <audio> -o <output>` - Applies effect plugin to audio file
   - `plugin render <name> <midi> -o <output>` - Renders MIDI through instrument plugin to audio file
 
-- **CLI Phase 3: Extended Features** - Audio manipulation, analysis, and device control
+- Audio manipulation, analysis, and device control
   - `convert normalize <input> <output>` - Normalizes audio to target peak or RMS level with `--target` and `--mode` options
   - `convert trim <input> <output>` - Extracts portion of audio file with `--start`, `--end`, or `--duration` options
   - `midi input record [index] -o <file>` - Records MIDI input to file with optional `--duration` and `--tempo`
@@ -42,7 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - `device set-default <name>` - Set default audio device with `--input` or `--output` flags
   - `device mute <name> [on|off]` - Get or set device mute state
 
-- **CoreAudio Property Setter API** - New low-level functions for modifying audio hardware properties (`capi.pyx`)
+-  New low-level functions for modifying audio hardware properties (`capi.pyx`)
   - `audio_object_set_property_data()` - Sets property data on an AudioObject (volume, mute, default device)
   - `audio_object_is_property_settable()` - Checks if a property can be modified
   - `get_audio_device_property_volume_scalar()` - Volume property selector constant
@@ -50,7 +62,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - `get_audio_hardware_property_default_output_device()` - Default output device property selector
   - `get_audio_hardware_property_default_input_device()` - Default input device property selector
 
-- **AudioDevice Volume and Mute Control** - New methods in `AudioDevice` class (`objects.py`)
+- New methods in `AudioDevice` class (`objects.py`)
   - `get_volume(scope, channel)` - Get volume level (0.0-1.0) for a specific scope and channel
   - `set_volume(level, scope, channel)` - Set volume level with validation and settability check
   - `get_mute(scope, channel)` - Get mute state (True/False) for a specific scope and channel
@@ -60,7 +72,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - `set_default_output_device(device)` - Set the system default output device
   - `set_default_input_device(device)` - Set the system default input device
 
-- **CLI Phase 4: Advanced Features** - Audio recording, plugin presets, and MIDI quantization
+- Audio recording, plugin presets, and MIDI quantization
   - `audio record -o <path>` - Records audio from input device with progress bar, `--duration`, `--sample-rate`, `--channels`
   - `plugin preset list <name>` - Lists factory presets for a plugin with index numbers
   - `plugin process --preset <name|number>` - Added preset selection to effect processing
@@ -71,29 +83,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - Uses AudioQueue API for input capture from default device
   - Supports configurable sample rate and channel count
   - Saves recordings to WAV format via AudioFileCreateWithURL
-
-### Fixed
-
-- **MIDI Test Suite Reliability** - Fixed MIDI tests being skipped when running full test suite
-  - Root cause: Long-running audio playback tests (CoreAudio) interfere with CoreMIDI services on macOS
-  - Solution: Added pytest hook in `conftest.py` to run MIDI tests first, before audio playback tests
-  - Result: 41 additional tests now pass (1689 passed vs 1648 previously)
-
-### Changed
-
-- **Audio Player Test Duration** - Reduced `test_audio_playback` from 10 seconds to 2 seconds
-  - Improves test suite execution time while maintaining coverage
-
-## [0.1.11]
-
-### Changed
-
-- **Render Callback Performance Optimization** - Optimized `audio_player_render_callback()` in `capi.pyx`
-  - Replaced frame-by-frame loop with block `memcpy()` for entire buffer transfer
-  - Critical path optimization: callback is invoked 44,100+ times/second at 44.1kHz
-  - Expected 2-5x performance improvement for real-time audio playback
-
-### Added
 
 - **Zero-Copy Audio Functions** - High-performance memoryview variants for buffer operations (`capi.pyx`)
   - `audio_file_read_packets_into()`: Reads audio packets directly into caller-provided buffer
@@ -199,6 +188,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **CLI Commands** - Removed generative CLI commands
   - `coremusic generate` command removed
   - `coremusic neural` command removed
+
+### Fixed
+
+- **MIDI Test Suite Reliability** - Fixed MIDI tests being skipped when running full test suite
+  - Root cause: Long-running audio playback tests (CoreAudio) interfere with CoreMIDI services on macOS
+  - Solution: Added pytest hook in `conftest.py` to run MIDI tests first, before audio playback tests
+  - Result: 41 additional tests now pass (1689 passed vs 1648 previously)
 
 ## [0.1.10]
 
