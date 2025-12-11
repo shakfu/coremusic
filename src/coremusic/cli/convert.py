@@ -526,7 +526,6 @@ def cmd_normalize(args: argparse.Namespace) -> int:
 
 def cmd_trim(args: argparse.Namespace) -> int:
     """Trim audio to time range."""
-    import numpy as np
 
     import coremusic as cm
 

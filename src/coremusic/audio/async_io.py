@@ -203,7 +203,7 @@ class AsyncAudioFile:
                 NumPy array with shape (frames, channels)
             """
             return await asyncio.to_thread(
-                self._audio_file.read_as_numpy,  # type: ignore[attr-defined]
+                self._audio_file.read_as_numpy,
                 start_packet,
                 packet_count,
             )
@@ -239,7 +239,7 @@ class AsyncAudioFile:
                 remaining = chunk_size
                 try:
                     chunk = await asyncio.to_thread(
-                        self._audio_file.read_as_numpy,  # type: ignore[attr-defined]
+                        self._audio_file.read_as_numpy,
                         current_packet,
                         remaining,
                     )

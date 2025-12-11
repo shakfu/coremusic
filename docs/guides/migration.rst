@@ -649,28 +649,101 @@ Audio Effects
 Feature Comparison Matrix
 --------------------------
 
-======================== ======= ========= ======== ======= ========== =========
-Feature                  pydub   soundfile wave     mido    CoreAudio  CoreMusic
-======================== ======= ========= ======== ======= ========== =========
-Audio File I/O           ✅      ✅        ✅       ❌      ✅         ✅
-Format Conversion        ✅      ❌        ❌       ❌      ✅         ✅
-Real-time Audio          ❌      ❌        ❌       ❌      ✅         ✅
-AudioUnit Support        ❌      ❌        ❌       ❌      ✅         ✅
-MIDI I/O                 ❌      ❌        ❌       ✅      ✅         ✅
-MIDI Files               ❌      ❌        ❌       ✅      ✅         ✅
-Hardware Control         ❌      ❌        ❌       ❌      ✅         ✅
-Streaming                ⚠️      ✅        ⚠️       N/A     ✅         ✅
-NumPy Integration        ⚠️      ✅        ❌       ❌      ❌         ✅
-Cross-platform           ✅      ✅        ✅       ✅      ❌         ❌
-External Dependencies    ffmpeg  libsndfile ❌      ❌      ❌         ❌
-Performance              Medium  High      Low      High    Native     Native
-======================== ======= ========= ======== ======= ========== =========
+.. list-table::
+   :header-rows: 1
+   :widths: 25 10 12 10 10 12 12
 
-Legend:
-- ✅ Full support
-- ⚠️ Limited support
-- ❌ Not supported
-- N/A Not applicable
+   * - Feature
+     - pydub
+     - soundfile
+     - wave
+     - mido
+     - CoreAudio
+     - CoreMusic
+   * - Audio File I/O
+     - Yes
+     - Yes
+     - Yes
+     - No
+     - Yes
+     - Yes
+   * - Format Conversion
+     - Yes
+     - No
+     - No
+     - No
+     - Yes
+     - Yes
+   * - Real-time Audio
+     - No
+     - No
+     - No
+     - No
+     - Yes
+     - Yes
+   * - AudioUnit Support
+     - No
+     - No
+     - No
+     - No
+     - Yes
+     - Yes
+   * - MIDI I/O
+     - No
+     - No
+     - No
+     - Yes
+     - Yes
+     - Yes
+   * - MIDI Files
+     - No
+     - No
+     - No
+     - Yes
+     - Yes
+     - Yes
+   * - Hardware Control
+     - No
+     - No
+     - No
+     - No
+     - Yes
+     - Yes
+   * - Streaming
+     - Limited
+     - Yes
+     - Limited
+     - N/A
+     - Yes
+     - Yes
+   * - NumPy Integration
+     - Limited
+     - Yes
+     - No
+     - No
+     - No
+     - Yes
+   * - Cross-platform
+     - Yes
+     - Yes
+     - Yes
+     - Yes
+     - No
+     - No
+   * - External Dependencies
+     - ffmpeg
+     - libsndfile
+     - None
+     - None
+     - None
+     - None
+   * - Performance
+     - Medium
+     - High
+     - Low
+     - High
+     - Native
+     - Native
 
 Migration Checklist
 -------------------

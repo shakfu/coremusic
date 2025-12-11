@@ -60,6 +60,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - `set_default_output_device(device)` - Set the system default output device
   - `set_default_input_device(device)` - Set the system default input device
 
+- **CLI Phase 4: Advanced Features** - Audio recording, plugin presets, and MIDI quantization
+  - `audio record -o <path>` - Records audio from input device with progress bar, `--duration`, `--sample-rate`, `--channels`
+  - `plugin preset list <name>` - Lists factory presets for a plugin with index numbers
+  - `plugin process --preset <name|number>` - Added preset selection to effect processing
+  - `plugin render --preset <name|number>` - Added preset selection to instrument rendering
+  - `midi file quantize <path> -o <output>` - Quantizes MIDI note timing to grid with `--grid` (1/4, 1/8, 1/16, etc.) and `--strength` (0.0-1.0)
+
+- **AudioRecorder Class** - New Cython class for audio input recording (`capi.pyx`)
+  - Uses AudioQueue API for input capture from default device
+  - Supports configurable sample rate and channel count
+  - Saves recordings to WAV format via AudioFileCreateWithURL
+
 ### Fixed
 
 - **MIDI Test Suite Reliability** - Fixed MIDI tests being skipped when running full test suite

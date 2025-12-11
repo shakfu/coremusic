@@ -3073,6 +3073,372 @@ cdef class AudioPlayer:
             self.player_data.buffer_list = NULL
 
 
+# Audio recorder state structure
+cdef struct AudioRecorderData:
+    cf.Float32* buffer
+    cf.UInt32 buffer_size_frames
+    cf.UInt32 current_frame
+    cf.UInt32 sample_rate
+    cf.UInt32 channels
+    cf.Boolean recording
+
+# Number of audio queue buffers for recording
+DEF NUM_RECORD_BUFFERS = 3
+DEF RECORD_BUFFER_DURATION_SECONDS = 0.1  # 100ms per buffer
+
+# Audio queue input callback for recording
+cdef void audio_recorder_input_callback(
+    void* user_data,
+    at.AudioQueueRef queue,
+    at.AudioQueueBufferRef buffer,
+    const at.AudioTimeStamp* start_time,
+    at.UInt32 num_packet_descriptions,
+    const at.AudioStreamPacketDescription* packet_descs
+) noexcept nogil:
+    """Input callback that receives audio data from the microphone"""
+    cdef AudioRecorderData* recorder_data
+    cdef cf.UInt32 frames_available
+    cdef cf.UInt32 frames_to_copy
+    cdef cf.UInt32 buffer_frames
+    cdef cf.Float32* input_data
+    cdef size_t bytes_to_copy
+
+    if user_data == NULL or buffer == NULL:
+        # Re-enqueue the buffer and return
+        at.AudioQueueEnqueueBuffer(queue, buffer, 0, NULL)
+        return
+
+    recorder_data = <AudioRecorderData*>user_data
+
+    if not recorder_data.recording or recorder_data.buffer == NULL:
+        # Re-enqueue the buffer and return
+        at.AudioQueueEnqueueBuffer(queue, buffer, 0, NULL)
+        return
+
+    # Calculate frames in this buffer
+    buffer_frames = buffer.mAudioDataByteSize // (sizeof(cf.Float32) * recorder_data.channels)
+    input_data = <cf.Float32*>buffer.mAudioData
+
+    # Calculate how many frames we can still store
+    frames_available = recorder_data.buffer_size_frames - recorder_data.current_frame
+    frames_to_copy = buffer_frames
+    if frames_to_copy > frames_available:
+        frames_to_copy = frames_available
+
+    if frames_to_copy > 0:
+        # Copy audio data to our buffer
+        bytes_to_copy = <size_t>(frames_to_copy * recorder_data.channels * sizeof(cf.Float32))
+        memcpy(
+            &recorder_data.buffer[recorder_data.current_frame * recorder_data.channels],
+            input_data,
+            bytes_to_copy
+        )
+        recorder_data.current_frame += frames_to_copy
+
+    # Check if buffer is full
+    if recorder_data.current_frame >= recorder_data.buffer_size_frames:
+        recorder_data.recording = False
+    else:
+        # Re-enqueue the buffer for more recording
+        at.AudioQueueEnqueueBuffer(queue, buffer, 0, NULL)
+
+
+cdef class AudioRecorder:
+    """Pure Cython audio recorder using AudioQueue for input capture
+
+    Records audio from the default input device to a buffer that can be
+    saved to a file.
+    """
+    cdef AudioRecorderData recorder_data
+    cdef at.AudioQueueRef audio_queue
+    cdef at.AudioQueueBufferRef buffers[NUM_RECORD_BUFFERS]
+    cdef at.AudioStreamBasicDescription format
+    cdef bint initialized
+    cdef str output_path
+
+    def __init__(self, sample_rate=44100, channels=2):
+        """Initialize the AudioRecorder
+
+        Args:
+            sample_rate: Sample rate for recording (default: 44100)
+            channels: Number of channels (1=mono, 2=stereo, default: 2)
+        """
+        memset(&self.recorder_data, 0, sizeof(AudioRecorderData))
+        self.audio_queue = NULL
+        self.initialized = False
+        self.output_path = None
+
+        # Store format parameters
+        self.recorder_data.sample_rate = sample_rate
+        self.recorder_data.channels = channels
+
+        # Initialize format
+        self.format.mSampleRate = sample_rate
+        self.format.mFormatID = ca.kAudioFormatLinearPCM
+        self.format.mFormatFlags = ca.kLinearPCMFormatFlagIsFloat
+        self.format.mBytesPerPacket = sizeof(cf.Float32) * channels
+        self.format.mFramesPerPacket = 1
+        self.format.mBytesPerFrame = sizeof(cf.Float32) * channels
+        self.format.mChannelsPerFrame = channels
+        self.format.mBitsPerChannel = 32
+        self.format.mReserved = 0
+
+    def setup_input(self, float duration):
+        """Setup the audio input queue for recording
+
+        Args:
+            duration: Maximum recording duration in seconds
+        """
+        cdef cf.OSStatus status
+        cdef cf.UInt32 buffer_size
+        cdef int i
+
+        # Calculate buffer sizes
+        self.recorder_data.buffer_size_frames = <cf.UInt32>(duration * self.recorder_data.sample_rate)
+        self.recorder_data.current_frame = 0
+        self.recorder_data.recording = False
+
+        # Allocate main recording buffer
+        cdef size_t total_bytes = <size_t>(self.recorder_data.buffer_size_frames * self.recorder_data.channels * sizeof(cf.Float32))
+        self.recorder_data.buffer = <cf.Float32*>malloc(total_bytes)
+        if self.recorder_data.buffer == NULL:
+            raise MemoryError("Could not allocate recording buffer")
+        memset(self.recorder_data.buffer, 0, total_bytes)
+
+        # Create audio queue for input
+        # IMPORTANT: Use current thread's run loop so callbacks work when we call run_loop()
+        status = at.AudioQueueNewInput(
+            &self.format,
+            audio_recorder_input_callback,
+            &self.recorder_data,
+            cf.CFRunLoopGetCurrent(),  # Use THIS thread's run loop
+            cf.kCFRunLoopCommonModes,  # Use common modes for reliable scheduling
+            0,     # Reserved flags
+            &self.audio_queue
+        )
+        if status != 0:
+            free(self.recorder_data.buffer)
+            self.recorder_data.buffer = NULL
+            raise RuntimeError(f"Could not create audio input queue: {status}")
+
+        # Allocate and enqueue buffers
+        buffer_size = <cf.UInt32>(RECORD_BUFFER_DURATION_SECONDS * self.recorder_data.sample_rate *
+                                   self.recorder_data.channels * sizeof(cf.Float32))
+
+        for i in range(NUM_RECORD_BUFFERS):
+            status = at.AudioQueueAllocateBuffer(self.audio_queue, buffer_size, &self.buffers[i])
+            if status != 0:
+                at.AudioQueueDispose(self.audio_queue, True)
+                self.audio_queue = NULL
+                free(self.recorder_data.buffer)
+                self.recorder_data.buffer = NULL
+                raise RuntimeError(f"Could not allocate audio buffer {i}: {status}")
+
+            status = at.AudioQueueEnqueueBuffer(self.audio_queue, self.buffers[i], 0, NULL)
+            if status != 0:
+                at.AudioQueueDispose(self.audio_queue, True)
+                self.audio_queue = NULL
+                free(self.recorder_data.buffer)
+                self.recorder_data.buffer = NULL
+                raise RuntimeError(f"Could not enqueue audio buffer {i}: {status}")
+
+        self.initialized = True
+        return 0  # noErr
+
+    def start(self):
+        """Start audio recording"""
+        if not self.initialized:
+            raise RuntimeError("AudioRecorder not initialized. Call setup_input() first.")
+
+        self.recorder_data.recording = True
+        self.recorder_data.current_frame = 0
+
+        cdef cf.OSStatus status = at.AudioQueueStart(self.audio_queue, NULL)
+        if status != 0:
+            self.recorder_data.recording = False
+            raise RuntimeError(f"Could not start audio queue: {status}")
+
+        return 0  # noErr
+
+    def stop(self):
+        """Stop audio recording"""
+        if not self.initialized:
+            return 0  # noErr
+
+        self.recorder_data.recording = False
+
+        cdef cf.OSStatus status = at.AudioQueueStop(self.audio_queue, True)
+        if status != 0:
+            raise RuntimeError(f"Could not stop audio queue: {status}")
+
+        return 0  # noErr
+
+    def is_recording(self):
+        """Check if audio is currently being recorded"""
+        return bool(self.recorder_data.recording)
+
+    def get_progress(self):
+        """Get current recording progress as a float (0.0 to 1.0)"""
+        if self.recorder_data.buffer_size_frames == 0:
+            return 0.0
+        return <float>self.recorder_data.current_frame / <float>self.recorder_data.buffer_size_frames
+
+    def get_recorded_frames(self):
+        """Get the number of frames recorded so far"""
+        return self.recorder_data.current_frame
+
+    def get_recorded_duration(self):
+        """Get the recorded duration in seconds"""
+        if self.recorder_data.sample_rate == 0:
+            return 0.0
+        return <float>self.recorder_data.current_frame / <float>self.recorder_data.sample_rate
+
+    def run_loop(self, double seconds=0.1):
+        """Run the CFRunLoop to process audio queue callbacks.
+
+        Must be called periodically while recording to receive audio data.
+
+        Args:
+            seconds: How long to run the loop (default 0.1 seconds)
+        """
+        cf.CFRunLoopRunInMode(cf.kCFRunLoopDefaultMode, seconds, False)
+
+    def save_to_file(self, str file_path):
+        """Save the recorded audio to a WAV file
+
+        Args:
+            file_path: Path to save the WAV file
+        """
+        cdef bytes path_bytes = file_path.encode('utf-8')
+        cdef cf.CFURLRef url_ref
+        cdef at.ExtAudioFileRef ext_audio_file
+        cdef cf.OSStatus status
+        cdef cf.UInt32 num_frames
+        cdef at.AudioStreamBasicDescription file_format
+        cdef ca.AudioBufferList buffer_list
+
+        if self.recorder_data.buffer == NULL or self.recorder_data.current_frame == 0:
+            raise RuntimeError("No audio data to save")
+
+        # Create file URL
+        url_ref = cf.CFURLCreateFromFileSystemRepresentation(
+            cf.kCFAllocatorDefault,
+            <const cf.UInt8*>path_bytes,
+            len(path_bytes),
+            False
+        )
+        if url_ref == NULL:
+            raise ValueError(f"Could not create URL for file: {file_path}")
+
+        # Define file format (16-bit integer PCM for WAV compatibility)
+        file_format.mSampleRate = self.recorder_data.sample_rate
+        file_format.mFormatID = ca.kAudioFormatLinearPCM
+        file_format.mFormatFlags = ca.kLinearPCMFormatFlagIsSignedInteger | ca.kLinearPCMFormatFlagIsPacked
+        file_format.mBytesPerPacket = 2 * self.recorder_data.channels  # 16-bit = 2 bytes
+        file_format.mFramesPerPacket = 1
+        file_format.mBytesPerFrame = 2 * self.recorder_data.channels
+        file_format.mChannelsPerFrame = self.recorder_data.channels
+        file_format.mBitsPerChannel = 16
+        file_format.mReserved = 0
+
+        # Create ExtAudioFile (handles format conversion)
+        status = at.ExtAudioFileCreateWithURL(
+            url_ref,
+            at.kAudioFileWAVEType,
+            &file_format,
+            NULL,  # No channel layout
+            at.kAudioFileFlags_EraseFile,
+            &ext_audio_file
+        )
+        cf.CFRelease(url_ref)
+
+        if status != 0:
+            raise RuntimeError(f"Could not create audio file: {status}")
+
+        # Set client format (float32, what we have in memory)
+        status = at.ExtAudioFileSetProperty(
+            ext_audio_file,
+            at.kExtAudioFileProperty_ClientDataFormat,
+            sizeof(self.format),
+            &self.format
+        )
+        if status != 0:
+            at.ExtAudioFileDispose(ext_audio_file)
+            raise RuntimeError(f"Could not set client format: {status}")
+
+        # Prepare buffer list for writing
+        buffer_list.mNumberBuffers = 1
+        buffer_list.mBuffers[0].mNumberChannels = self.recorder_data.channels
+        buffer_list.mBuffers[0].mDataByteSize = self.recorder_data.current_frame * self.recorder_data.channels * sizeof(cf.Float32)
+        buffer_list.mBuffers[0].mData = self.recorder_data.buffer
+
+        # Write audio data (ExtAudioFile converts float32 to int16)
+        num_frames = self.recorder_data.current_frame
+        status = at.ExtAudioFileWrite(ext_audio_file, num_frames, &buffer_list)
+
+        at.ExtAudioFileDispose(ext_audio_file)
+
+        if status != 0:
+            raise RuntimeError(f"Could not write audio data: {status}")
+
+        return 0  # noErr
+
+    def get_audio_data(self):
+        """Get the recorded audio data as a Python bytes object
+
+        Returns:
+            bytes: Raw audio data (interleaved float32 samples)
+        """
+        if self.recorder_data.buffer == NULL or self.recorder_data.current_frame == 0:
+            return b''
+
+        cdef size_t num_bytes = <size_t>(self.recorder_data.current_frame * self.recorder_data.channels * sizeof(cf.Float32))
+        # Use PyBytes_FromStringAndSize to avoid null-termination issues with binary data
+        return (<char*>self.recorder_data.buffer)[:num_bytes]
+
+    @property
+    def sample_rate(self):
+        """Get the sample rate"""
+        return self.recorder_data.sample_rate
+
+    @property
+    def channels(self):
+        """Get the number of channels"""
+        return self.recorder_data.channels
+
+    def has_audio_content(self):
+        """Check if the recording contains actual audio (non-silent).
+
+        Returns True if non-zero samples were detected, False if silent.
+        Silent recordings typically indicate microphone permission issues.
+        """
+        if self.recorder_data.buffer == NULL or self.recorder_data.current_frame == 0:
+            return False
+
+        cdef cf.UInt32 total_samples = self.recorder_data.current_frame * self.recorder_data.channels
+        cdef cf.UInt32 i
+        cdef cf.Float32 sample
+
+        # Check a subset of samples for efficiency (every 100th sample)
+        for i in range(0, total_samples, 100):
+            sample = self.recorder_data.buffer[i]
+            if sample != 0.0:
+                return True
+
+        return False
+
+    def __dealloc__(self):
+        """Clean up resources when the object is destroyed"""
+        if self.audio_queue != NULL:
+            at.AudioQueueStop(self.audio_queue, True)
+            at.AudioQueueDispose(self.audio_queue, True)
+            self.audio_queue = NULL
+
+        if self.recorder_data.buffer != NULL:
+            free(self.recorder_data.buffer)
+            self.recorder_data.buffer = NULL
+
+
 # AudioFileStream constant getter functions
 def get_audio_file_stream_property_ready_to_produce_packets():
     """Get the ready to produce packets for an audio file stream"""

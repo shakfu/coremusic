@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from types import FrameType
 from typing import Any, Dict
 
 import coremusic.capi as capi
@@ -118,6 +119,16 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     file_play_parser.add_argument("--device", "-d", type=int, default=0,
                                   help="Output device index (default: 0)")
     file_play_parser.set_defaults(func=cmd_file_play)
+    # midi file quantize
+    file_quantize_parser = file_sub.add_parser("quantize", help="Quantize MIDI note timing to grid")
+    file_quantize_parser.add_argument("path", help="Input MIDI file path")
+    file_quantize_parser.add_argument("-o", "--output", required=True,
+                                      help="Output MIDI file path")
+    file_quantize_parser.add_argument("--grid", "-g", type=str, default="1/16",
+                                      help="Quantize grid (e.g., 1/4, 1/8, 1/16, 1/32) (default: 1/16)")
+    file_quantize_parser.add_argument("--strength", "-s", type=float, default=1.0,
+                                      help="Quantize strength 0.0-1.0 (default: 1.0 = full)")
+    file_quantize_parser.set_defaults(func=cmd_file_quantize)
     file_parser.set_defaults(func=lambda args: file_parser.print_help() or EXIT_SUCCESS)
 
     parser.set_defaults(func=lambda args: parser.print_help() or EXIT_SUCCESS)
@@ -464,11 +475,11 @@ def cmd_device_info(args: argparse.Namespace) -> int:
         num_entities = capi.midi_device_get_number_of_entities(device_id)
         for i in range(num_entities):
             entity_id = capi.midi_device_get_entity(device_id, i)
-            entity_info = {"index": i, "id": entity_id}
+            entity_info: dict[str, object] = {"index": i, "id": entity_id}
 
             # Get entity sources
             num_sources = capi.midi_entity_get_number_of_sources(entity_id)
-            sources = []
+            sources: list[dict[str, object]] = []
             for j in range(num_sources):
                 src_id = capi.midi_entity_get_source(entity_id, j)
                 src_name = _get_endpoint_name(src_id)
@@ -477,7 +488,7 @@ def cmd_device_info(args: argparse.Namespace) -> int:
 
             # Get entity destinations
             num_dests = capi.midi_entity_get_number_of_destinations(entity_id)
-            destinations = []
+            destinations: list[dict[str, object]] = []
             for j in range(num_dests):
                 dest_id = capi.midi_entity_get_destination(entity_id, j)
                 dest_name = _get_endpoint_name(dest_id)
@@ -510,14 +521,18 @@ def cmd_device_info(args: argparse.Namespace) -> int:
             print()
             for ent in entities_info:
                 print(f"Entity {ent['index']}:")
-                if ent["sources"]:
+                sources_obj = ent.get("sources", [])
+                destinations_obj = ent.get("destinations", [])
+                if sources_obj and isinstance(sources_obj, list):
                     print("  Inputs:")
-                    for src in ent["sources"]:
-                        print(f"    [{src['index']}] {src['name']}")
-                if ent["destinations"]:
+                    for src in sources_obj:
+                        if isinstance(src, dict):
+                            print(f"    [{src['index']}] {src['name']}")
+                if destinations_obj and isinstance(destinations_obj, list):
                     print("  Outputs:")
-                    for dest in ent["destinations"]:
-                        print(f"    [{dest['index']}] {dest['name']}")
+                    for dest in destinations_obj:
+                        if isinstance(dest, dict):
+                            print(f"    [{dest['index']}] {dest['name']}")
 
     return EXIT_SUCCESS
 
@@ -570,7 +585,7 @@ def cmd_output_test(args: argparse.Namespace) -> int:
                 "status": "ok",
             })
         else:
-            print(f"  Note Off: C4 (60)")
+            print("  Note Off: C4 (60)")
             print("  Status:   OK")
 
     finally:
@@ -735,7 +750,7 @@ def cmd_input_monitor(args: argparse.Namespace) -> int:
         else:
             print_midi_message(msg)
 
-    def signal_handler(sig: int, frame: Any) -> None:
+    def signal_handler(sig: int, frame: FrameType | None) -> None:
         """Handle Ctrl+C to stop monitoring."""
         stop_event.set()
 
@@ -743,10 +758,12 @@ def cmd_input_monitor(args: argparse.Namespace) -> int:
     original_handler = signal.signal(signal.SIGINT, signal_handler)
 
     try:
-        # Create MIDI client with callback
+        # Create MIDI client
+        # Note: MIDI input monitoring requires polling - the callback is not
+        # currently supported by the low-level API
         client_id = capi.midi_client_create("coremusic-monitor")
         try:
-            port_id = capi.midi_input_port_create(client_id, "input", midi_callback)
+            port_id = capi.midi_input_port_create(client_id, "input")
             capi.midi_port_connect_source(port_id, source_id)
 
             if not args.json:
@@ -801,8 +818,8 @@ def cmd_file_dump(args: argparse.Namespace) -> int:
 
     try:
         seq = MIDISequence.load(str(path))
-    except Exception as e:
-        raise CLIError(f"Failed to load MIDI file: {e}")
+    except Exception as err:
+        raise CLIError(f"Failed to load MIDI file: {err}")
 
     # Collect events to display
     events_to_show = []
@@ -911,7 +928,7 @@ def cmd_file_play(args: argparse.Namespace) -> int:
     # Stop flag for Ctrl+C
     stop_requested = False
 
-    def signal_handler(sig: int, frame: Any) -> None:
+    def signal_handler(sig: int, frame: FrameType | None) -> None:
         nonlocal stop_requested
         stop_requested = True
 
@@ -939,11 +956,12 @@ def cmd_file_play(args: argparse.Namespace) -> int:
             # Wait until event time
             target_time = start_time + event.time
             now = time.time()
-            if target_time > now:
-                time.sleep(target_time - now)
+            wait_time = target_time - now
+            if wait_time > 0:
+                time.sleep(wait_time)
 
             if stop_requested:
-                break
+                break  # type: ignore[unreachable]
 
             # Send MIDI event
             midi_data = event.to_bytes()
@@ -987,7 +1005,7 @@ def cmd_input_record(args: argparse.Namespace) -> int:
     import time
     from pathlib import Path
 
-    from coremusic.midi.utilities import MIDIEvent, MIDISequence, MIDITrack
+    from coremusic.midi.utilities import MIDIEvent, MIDISequence
 
     num_sources = capi.midi_get_number_of_sources()
     if num_sources == 0:
@@ -1021,7 +1039,7 @@ def cmd_input_record(args: argparse.Namespace) -> int:
         with event_lock:
             recorded_events.append((relative_time, data))
 
-    def signal_handler(sig: int, frame: Any) -> None:
+    def signal_handler(sig: int, frame: FrameType | None) -> None:
         """Handle Ctrl+C to stop recording."""
         stop_event.set()
 
@@ -1029,10 +1047,12 @@ def cmd_input_record(args: argparse.Namespace) -> int:
     original_handler = signal.signal(signal.SIGINT, signal_handler)
 
     try:
-        # Create MIDI client with callback
+        # Create MIDI client
+        # Note: MIDI input recording requires polling - the callback is not
+        # currently supported by the low-level API
         client_id = capi.midi_client_create("coremusic-record")
         try:
-            port_id = capi.midi_input_port_create(client_id, "input", midi_callback)
+            port_id = capi.midi_input_port_create(client_id, "input")
             capi.midi_port_connect_source(port_id, source_id)
 
             if not args.json:
@@ -1066,8 +1086,8 @@ def cmd_input_record(args: argparse.Namespace) -> int:
             return EXIT_SUCCESS
 
         # Create MIDISequence
-        seq = MIDISequence(tempo=args.tempo, ppq=480)
-        track = MIDITrack(name="Recorded")
+        seq = MIDISequence(tempo=args.tempo)
+        track = seq.add_track("Recorded")
 
         for rel_time, data in events_copy:
             if len(data) >= 2:
@@ -1083,9 +1103,7 @@ def cmd_input_record(args: argparse.Namespace) -> int:
                     data1=d1,
                     data2=d2,
                 )
-                track.add_event(event)
-
-        seq.add_track(track)
+                track.events.append(event)
 
         # Save to file
         try:
@@ -1115,5 +1133,93 @@ def cmd_input_record(args: argparse.Namespace) -> int:
 
     finally:
         signal.signal(signal.SIGINT, original_handler)
+
+    return EXIT_SUCCESS
+
+
+def cmd_file_quantize(args: argparse.Namespace) -> int:
+    """Quantize MIDI note timing to grid."""
+    from pathlib import Path
+
+    from coremusic.midi.utilities import MIDISequence, MIDIStatus
+
+    input_path = require_file(args.path)
+    output_path = Path(args.output)
+
+    # Parse grid value (e.g., "1/16" -> 0.25 beats)
+    try:
+        if "/" in args.grid:
+            num, denom = args.grid.split("/")
+            grid_beats = float(num) / float(denom) * 4  # Convert to beats (1/4 = 1 beat)
+        else:
+            grid_beats = float(args.grid)
+    except ValueError:
+        raise CLIError(f"Invalid grid value: {args.grid}. Use format like 1/4, 1/8, 1/16, or decimal.")
+
+    if grid_beats <= 0:
+        raise CLIError("Grid value must be positive")
+
+    strength = max(0.0, min(1.0, args.strength))
+
+    # Load MIDI file
+    try:
+        seq = MIDISequence.load(str(input_path))
+    except Exception as e:
+        raise CLIError(f"Failed to load MIDI file: {e}")
+
+    # Calculate grid in seconds based on tempo
+    tempo = seq.tempo if seq.tempo else 120.0
+    seconds_per_beat = 60.0 / tempo
+    grid_seconds = grid_beats * seconds_per_beat
+
+    if not args.json:
+        print(f"Quantizing: {input_path.name}")
+        print(f"Grid:       {args.grid} ({grid_beats:.4f} beats, {grid_seconds:.4f}s)")
+        print(f"Strength:   {strength:.0%}")
+        print(f"Tempo:      {tempo:.1f} BPM")
+
+    # Quantize note events in all tracks
+    total_events = 0
+    quantized_events = 0
+
+    for track in seq.tracks:
+        for event in track.events:
+            # Only quantize note events
+            if event.status in (MIDIStatus.NOTE_ON, MIDIStatus.NOTE_OFF):
+                total_events += 1
+
+                # Find nearest grid point
+                nearest_grid = round(event.time / grid_seconds) * grid_seconds
+
+                # Apply strength (interpolate between original and quantized)
+                new_time = event.time + (nearest_grid - event.time) * strength
+
+                # Only count as quantized if time actually changed
+                if abs(new_time - event.time) > 0.0001:
+                    quantized_events += 1
+                    event.time = max(0.0, new_time)
+
+    # Save quantized file
+    try:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        seq.save(str(output_path))
+    except Exception as e:
+        raise CLIError(f"Failed to save MIDI file: {e}")
+
+    if args.json:
+        output_json({
+            "input": str(input_path.absolute()),
+            "output": str(output_path.absolute()),
+            "grid": args.grid,
+            "grid_beats": grid_beats,
+            "grid_seconds": grid_seconds,
+            "strength": strength,
+            "tempo": tempo,
+            "total_note_events": total_events,
+            "quantized_events": quantized_events,
+        })
+    else:
+        print(f"\nOutput:     {output_path}")
+        print(f"Events:     {quantized_events}/{total_events} notes adjusted")
 
     return EXIT_SUCCESS

@@ -2,8 +2,8 @@ Command Line Interface
 ======================
 
 CoreMusic includes a comprehensive command-line interface for common audio and MIDI operations.
-The CLI provides quick access to audio analysis, format conversion, device management, plugin discovery,
-and MIDI operations without writing Python code.
+The CLI provides quick access to audio playback, recording, analysis, format conversion, device management,
+plugin processing, and MIDI operations without writing Python code.
 
 Installation and Usage
 ----------------------
@@ -45,31 +45,36 @@ Available Commands
    * - Command
      - Description
    * - ``audio``
-     - Audio file operations (info, duration, metadata)
+     - Audio file operations (info, play, record, duration, metadata)
    * - ``devices``
-     - Audio device management (list, default, info)
-   * - ``plugins``
-     - AudioUnit plugin discovery (list, find, info, params)
+     - Audio device management (list, info, volume, mute, set-default)
+   * - ``plugin``
+     - AudioUnit plugin discovery and processing (list, find, info, params, process, render)
    * - ``analyze``
-     - Audio analysis (peak, rms, silence, tempo, spectrum, key, mfcc)
+     - Audio analysis (levels, tempo, key, spectrum, loudness, onsets)
    * - ``convert``
-     - Convert audio files between formats
+     - Audio conversion (file, batch, normalize, trim)
    * - ``midi``
-     - MIDI device discovery (devices, inputs, outputs, send, file)
-   * - ``generate``
-     - Generative music algorithms (arpeggio, euclidean, melody)
+     - MIDI operations (devices, input, output, file)
    * - ``sequence``
      - MIDI sequence operations (info, play, tracks)
 
 Audio Command
 -------------
 
-Audio file information and metadata operations.
+Audio file information, playback, and recording operations.
 
 .. code-block:: bash
 
    # Display audio file information
    coremusic audio info song.wav
+
+   # Play audio file
+   coremusic audio play song.wav
+   coremusic audio play song.wav --loop
+
+   # Record audio from input device
+   coremusic audio record -o recording.wav -d 10
 
    # Get duration in different formats
    coremusic audio duration song.wav
@@ -85,6 +90,17 @@ Audio file information and metadata operations.
    Display comprehensive audio file information including format, sample rate,
    channels, bit depth, duration, and file size.
 
+``play <file> [--loop]``
+   Play an audio file with optional looping. Shows progress bar during playback.
+
+``record -o <output> [-d <duration>] [--sample-rate RATE] [--channels N]``
+   Record audio from the default input device. Options:
+
+   - ``-o, --output`` - Output file path (required)
+   - ``-d, --duration`` - Recording duration in seconds
+   - ``--sample-rate`` - Sample rate (default: 44100)
+   - ``--channels`` - Number of channels (default: 2)
+
 ``duration <file> [--format FORMAT]``
    Get audio file duration. Format options: ``seconds`` (default), ``mm:ss``, ``samples``.
 
@@ -94,7 +110,7 @@ Audio file information and metadata operations.
 Devices Command
 ---------------
 
-Audio device discovery and management.
+Audio device discovery, management, and control.
 
 .. code-block:: bash
 
@@ -109,6 +125,18 @@ Audio device discovery and management.
    # Show detailed device information
    coremusic devices info "Built-in Output"
 
+   # Get/set device volume (0.0-1.0)
+   coremusic devices volume "MacBook Pro Speakers"
+   coremusic devices volume "MacBook Pro Speakers" 0.5
+
+   # Get/set device mute state
+   coremusic devices mute "MacBook Pro Speakers"
+   coremusic devices mute "MacBook Pro Speakers" on
+
+   # Set default device
+   coremusic devices set-default "External Headphones" --output
+   coremusic devices set-default "USB Microphone" --input
+
 **Subcommands:**
 
 ``list``
@@ -120,35 +148,60 @@ Audio device discovery and management.
 ``info <device>``
    Show detailed information for a specific device (by name or UID).
 
-Plugins Command
----------------
+``volume <device> [level]``
+   Get or set device volume (0.0-1.0). Options:
 
-Discover and inspect AudioUnit plugins installed on the system.
+   - ``--scope`` - Volume scope: ``output`` (default) or ``input``
+   - ``--channel`` - Channel number (default: 0 for master)
+
+``mute <device> [on|off]``
+   Get or set device mute state.
+
+``set-default <device> [--input|--output]``
+   Set the system default input or output device.
+
+Plugin Command
+--------------
+
+Discover, inspect, and use AudioUnit plugins installed on the system.
 
 .. code-block:: bash
 
    # List all plugins
-   coremusic plugins list
+   coremusic plugin list
+
+   # List only plugin names (for scripting)
+   coremusic plugin list --name-only
 
    # Filter by type
-   coremusic plugins list --type effect
-   coremusic plugins list --type instrument
-   coremusic plugins list --type generator
+   coremusic plugin list --type effect
+   coremusic plugin list --type instrument
 
    # Search for plugins
-   coremusic plugins find "reverb"
-   coremusic plugins find "synth" --type instrument
+   coremusic plugin find "reverb"
+   coremusic plugin find "synth" --type instrument
 
    # Show plugin details
-   coremusic plugins info "AUGraphicEQ"
+   coremusic plugin info "AUGraphicEQ"
 
    # Show plugin parameters
-   coremusic plugins params "AUBandpass"
+   coremusic plugin params "AUBandpass"
+
+   # List factory presets
+   coremusic plugin preset list "AUReverb2"
+
+   # Process audio through effect plugin
+   coremusic plugin process "AUDelay" input.wav -o output.wav
+   coremusic plugin process "AUReverb2" input.wav -o output.wav --preset "Large Hall"
+
+   # Render MIDI through instrument plugin
+   coremusic plugin render "DLSMusicDevice" song.mid -o rendered.wav
+   coremusic plugin render "DLSMusicDevice" song.mid -o rendered.wav --preset 0
 
 **Plugin Types:**
 
-- ``effect`` - Audio effect processors
-- ``instrument`` - Virtual instruments
+- ``effect`` - Audio effect processors (reverb, delay, EQ, etc.)
+- ``instrument`` - Virtual instruments (synths, samplers)
 - ``generator`` - Audio generators
 - ``music_effect`` - MIDI-enabled effects
 - ``mixer`` - Mixer units
@@ -158,8 +211,12 @@ Discover and inspect AudioUnit plugins installed on the system.
 
 **Subcommands:**
 
-``list [--type TYPE] [--manufacturer NAME]``
+``list [--type TYPE] [--manufacturer NAME] [--name-only]``
    List available AudioUnit plugins with optional filtering.
+
+   - ``--type`` - Filter by plugin type
+   - ``--manufacturer`` - Filter by manufacturer
+   - ``--name-only`` - Print only unique plugin names (one per line)
 
 ``find <query> [--type TYPE]``
    Search for plugins by name.
@@ -170,6 +227,15 @@ Discover and inspect AudioUnit plugins installed on the system.
 ``params <name>``
    Display all parameters for a plugin with their ranges and units.
 
+``preset list <name>``
+   List factory presets for a plugin.
+
+``process <name> <input> -o <output> [--preset NAME|NUMBER]``
+   Apply an effect plugin to an audio file.
+
+``render <name> <midi> -o <output> [--preset NAME|NUMBER] [--sample-rate RATE] [--duration SEC]``
+   Render a MIDI file through an instrument plugin to audio.
+
 Analyze Command
 ---------------
 
@@ -177,15 +243,15 @@ Audio analysis and feature extraction.
 
 .. code-block:: bash
 
+   # Show both peak and RMS levels
+   coremusic analyze levels song.wav
+
    # Measure peak amplitude
    coremusic analyze peak song.wav
    coremusic analyze peak song.wav --db
 
    # Calculate RMS level
    coremusic analyze rms song.wav --db
-
-   # Show both peak and RMS
-   coremusic analyze levels song.wav
 
    # Detect silence regions
    coremusic analyze silence song.wav --threshold -40 --min-duration 0.5
@@ -200,19 +266,25 @@ Audio analysis and feature extraction.
    # Detect musical key
    coremusic analyze key song.wav
 
+   # LUFS loudness measurement
+   coremusic analyze loudness song.wav
+
+   # Onset detection
+   coremusic analyze onsets song.wav --threshold 0.5 --min-gap 0.1
+
    # Extract MFCC features
    coremusic analyze mfcc song.wav --coefficients 13
 
 **Subcommands:**
+
+``levels <file>``
+   Show both peak and RMS levels in dB.
 
 ``peak <file> [--db]``
    Calculate peak amplitude. Use ``--db`` for decibel output.
 
 ``rms <file> [--db]``
    Calculate RMS (average) level.
-
-``levels <file>``
-   Show both peak and RMS levels in dB.
 
 ``silence <file> [--threshold DB] [--min-duration SEC]``
    Detect silence regions. Default threshold: -40 dB, minimum duration: 0.5s.
@@ -225,6 +297,12 @@ Audio analysis and feature extraction.
 
 ``key <file>``
    Detect the musical key of the audio.
+
+``loudness <file>``
+   LUFS loudness measurement with integrated LUFS, loudness range, peak, and RMS.
+
+``onsets <file> [--threshold FLOAT] [--min-gap SEC]``
+   Onset detection using spectral flux.
 
 ``mfcc <file> [--coefficients N] [--time SEC]``
    Extract Mel-frequency cepstral coefficients for audio fingerprinting.
@@ -254,6 +332,14 @@ Convert audio files between formats with sample rate and channel conversion.
    # Batch conversion
    coremusic convert batch input_dir/ output_dir/ --format wav
 
+   # Normalize audio
+   coremusic convert normalize input.wav output.wav --target -1.0
+   coremusic convert normalize input.wav output.wav --target -14.0 --mode rms
+
+   # Trim audio
+   coremusic convert trim input.wav output.wav --start 10 --end 30
+   coremusic convert trim input.wav output.wav --start 5 --duration 10
+
 **Supported Formats:**
 
 - ``wav`` - Uncompressed PCM
@@ -280,115 +366,85 @@ Convert audio files between formats with sample rate and channel conversion.
 ``batch <input_dir> <output_dir> [--format FORMAT]``
    Batch convert all audio files in a directory.
 
+``normalize <input> <output> [--target DB] [--mode peak|rms]``
+   Normalize audio to target peak or RMS level.
+
+``trim <input> <output> [--start SEC] [--end SEC] [--duration SEC]``
+   Extract a portion of an audio file.
+
 MIDI Command
 ------------
 
-MIDI device discovery and basic MIDI operations.
+MIDI device discovery, monitoring, recording, and basic MIDI operations.
 
 .. code-block:: bash
 
    # List all MIDI devices
    coremusic midi devices
 
-   # List input sources only
-   coremusic midi inputs
+   # Show detailed device info
+   coremusic midi device info "USB MIDI Controller"
 
-   # List output destinations only
-   coremusic midi outputs
+   # Monitor MIDI input
+   coremusic midi input monitor
+   coremusic midi input monitor 0
 
-   # Send a note
-   coremusic midi send --note 60 --velocity 100 --duration 0.5
+   # Record MIDI input to file
+   coremusic midi input record -o recorded.mid -d 30
+   coremusic midi input record -o recorded.mid --tempo 120
 
-   # Send to specific device
-   coremusic midi send --device 1 --note 64
+   # Send test note
+   coremusic midi output test
+   coremusic midi output test --device 1
 
-   # Send control change
-   coremusic midi send --cc 1 64
-
-   # Send program change
-   coremusic midi send --program 5
+   # Send panic (all notes off)
+   coremusic midi output panic
 
    # Show MIDI file info
-   coremusic midi file song.mid
+   coremusic midi file info song.mid
+
+   # Hex dump of MIDI file
+   coremusic midi file dump song.mid
+
+   # Play MIDI file
+   coremusic midi file play song.mid
+   coremusic midi file play song.mid --device 1
+
+   # Quantize MIDI file
+   coremusic midi file quantize input.mid -o output.mid --grid 1/16
+   coremusic midi file quantize input.mid -o output.mid --grid 1/8 --strength 0.8
 
 **Subcommands:**
 
 ``devices``
    List all MIDI devices (physical and virtual).
 
-``inputs``
-   List MIDI input sources.
+``device info <name>``
+   Show detailed MIDI device info including entities, sources, and destinations.
 
-``outputs``
-   List MIDI output destinations.
+``input monitor [index]``
+   Monitor MIDI input in real-time. Press Ctrl+C to stop.
 
-``send [options]``
-   Send MIDI messages. Options:
+``input record -o <file> [-d <duration>] [--tempo BPM]``
+   Record MIDI input to a file.
 
-   - ``--device``, ``-d`` - Output device index (default: 0)
-   - ``--note``, ``-n`` - MIDI note number (0-127)
-   - ``--velocity``, ``-v`` - Note velocity (default: 100)
-   - ``--channel``, ``-c`` - MIDI channel 0-15 (default: 0)
-   - ``--cc NUM VAL`` - Send control change
-   - ``--program``, ``-p`` - Send program change
-   - ``--duration`` - Note duration in seconds (default: 0.5)
+``output test [--device INDEX]``
+   Send a test note (middle C) to verify MIDI connectivity.
 
-``file <path>``
+``output panic [--device INDEX]``
+   Send all-notes-off (CC 123) and all-sound-off (CC 120) on all 16 channels.
+
+``file info <path>``
    Show MIDI file information.
 
-Generate Command
-----------------
+``file dump <path>``
+   Hex dump of raw MIDI events with time, track, channel, type, and data.
 
-Generative music algorithms for creating MIDI patterns.
+``file play <path> [--device INDEX] [--tempo BPM]``
+   Play MIDI file through an output device.
 
-.. code-block:: bash
-
-   # Generate arpeggio pattern
-   coremusic generate arpeggio output.mid --root C4 --chord major --pattern up
-
-   # Generate with options
-   coremusic generate arpeggio output.mid \
-       --root F#3 --chord min7 --pattern up_down \
-       --cycles 8 --tempo 140 --velocity 90
-
-   # Generate Euclidean rhythm
-   coremusic generate euclidean drums.mid --pulses 5 --steps 8
-
-   # Generate melody from scale
-   coremusic generate melody melody.mid --root A4 --scale minor_pentatonic
-
-**Arpeggio Patterns:**
-
-- ``up`` - Ascending notes
-- ``down`` - Descending notes
-- ``up_down`` - Ascending then descending
-- ``down_up`` - Descending then ascending
-- ``random`` - Random order
-- ``as_played`` - Original order
-
-**Chord Types:**
-
-- ``major``, ``minor``, ``dim``, ``aug``
-- ``sus2``, ``sus4``
-- ``maj7``, ``min7``, ``dom7``, ``dim7``, ``m7b5``
-
-**Scale Types:**
-
-- ``major``, ``natural_minor``, ``harmonic_minor``, ``melodic_minor``
-- ``dorian``, ``phrygian``, ``lydian``, ``mixolydian``, ``aeolian``, ``locrian``
-- ``major_pentatonic``, ``minor_pentatonic``
-- ``blues``, ``chromatic``, ``whole_tone``
-
-**Subcommands:**
-
-``arpeggio <output> [options]``
-   Generate arpeggio pattern from a chord.
-
-``euclidean <output> [options]``
-   Generate Euclidean rhythm pattern (e.g., 5 hits in 8 steps = Cinquillo).
-
-``melody <output> [options]``
-   Generate random melody from a scale.
+``file quantize <input> -o <output> [--grid GRID] [--strength FLOAT]``
+   Quantize MIDI note timing to grid. Grid options: ``1/4``, ``1/8``, ``1/16``, ``1/32``.
 
 Sequence Command
 ----------------
@@ -439,8 +495,11 @@ All commands support ``--json`` for machine-readable output:
    # List devices as JSON
    coremusic --json devices list
 
+   # List plugins as JSON
+   coremusic --json plugin list --type effect
+
    # Pipe to jq for processing
-   coremusic --json plugins list | jq '.[] | select(.type == "Effect")'
+   coremusic --json plugin list | jq '.[] | select(.type == "Effect")'
 
 Environment Variables
 ---------------------
@@ -451,9 +510,6 @@ Environment Variables
    .. code-block:: bash
 
       DEBUG=1 coremusic analyze tempo song.wav
-
-``COLOR``
-   Set to ``0`` to disable colored output (default: enabled).
 
 Examples
 --------
@@ -466,23 +522,22 @@ Complete Workflow Example
    # 1. Check audio file info
    coremusic audio info recording.wav
 
-   # 2. Analyze levels
+   # 2. Analyze levels and tempo
    coremusic analyze levels recording.wav
-
-   # 3. Detect tempo
    coremusic analyze tempo recording.wav
 
-   # 4. Convert to AAC
-   coremusic convert file recording.wav recording.aac --quality high
+   # 3. Normalize and trim
+   coremusic convert normalize recording.wav normalized.wav --target -1.0
+   coremusic convert trim normalized.wav trimmed.wav --start 2 --end 30
+
+   # 4. Process through effect plugin
+   coremusic plugin process "AUReverb2" trimmed.wav -o final.wav --preset "Medium Hall"
 
    # 5. Check available MIDI outputs
-   coremusic midi outputs
+   coremusic midi devices
 
-   # 6. Generate accompaniment
-   coremusic generate arpeggio accomp.mid --root C4 --chord maj7
-
-   # 7. Play the generated MIDI
-   coremusic sequence play accomp.mid
+   # 6. Play MIDI accompaniment
+   coremusic midi file play accompaniment.mid
 
 Batch Processing Script
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -499,16 +554,19 @@ Batch Processing Script
        echo
    done
 
-Plugin Parameter Export
+Plugin Discovery Script
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
-   # Export all effect plugins and their parameters to JSON
-   coremusic --json plugins list --type effect > effects.json
+   # Find all reverb plugins
+   coremusic plugin list --name-only | grep -i reverb
+
+   # Export all effect plugins to JSON
+   coremusic --json plugin list --type effect > effects.json
 
    # Get parameters for a specific plugin
-   coremusic --json plugins params "AUGraphicEQ" > eq_params.json
+   coremusic --json plugin params "AUGraphicEQ" > eq_params.json
 
 See Also
 --------

@@ -230,10 +230,10 @@ class AudioFile(capi.CoreAudioObject):
         """Iterator over audio packets"""
         ...
 
-    def read_frames_numpy(
-        self, start: int = 0, count: Optional[int] = None, dtype: Optional[Any] = None
+    def read_as_numpy(
+        self, start_packet: int = 0, packet_count: Optional[int] = None
     ) -> NDArray:
-        """Read audio frames as NumPy array (requires NumPy)"""
+        """Read audio data as NumPy array (requires NumPy)"""
         ...
 
     def __repr__(self) -> str: ...
@@ -826,6 +826,16 @@ class AudioDeviceManager:
     @staticmethod
     def find_by_uid(uid: str) -> Optional[AudioDevice]:
         """Find device by UID"""
+        ...
+
+    @staticmethod
+    def set_default_output_device(device: AudioDevice) -> None:
+        """Set default output device"""
+        ...
+
+    @staticmethod
+    def set_default_input_device(device: AudioDevice) -> None:
+        """Set default input device"""
         ...
 
 # ============================================================================

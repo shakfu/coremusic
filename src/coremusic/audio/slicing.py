@@ -162,7 +162,7 @@ class AudioSlicer:
             import coremusic as cm
 
             with cm.AudioFile(self.audio_file) as af:
-                self._audio_data = af.read_as_numpy()  # type: ignore[attr-defined]
+                self._audio_data = af.read_as_numpy()
                 self._sample_rate = af.format.sample_rate
 
                 # Convert to mono for analysis

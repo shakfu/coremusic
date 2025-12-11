@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 
+import coremusic.capi as capi
 from ._formatters import output_json, output_table
 from ._mappings import PLUGIN_TYPES, get_plugin_type, get_plugin_type_display
 from ._utils import EXIT_SUCCESS, CLIError
@@ -51,6 +52,8 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     list_parser.add_argument("--type", dest="plugin_type", choices=list(PLUGIN_TYPES.keys()),
                              help="Filter by plugin type")
     list_parser.add_argument("--manufacturer", help="Filter by manufacturer")
+    list_parser.add_argument("--name-only", action="store_true",
+                             help="Print only unique plugin names")
     list_parser.set_defaults(func=cmd_list)
 
     # plugin find
@@ -75,6 +78,8 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     process_parser.add_argument("name", help="Plugin name (partial match)")
     process_parser.add_argument("input", help="Input audio file path")
     process_parser.add_argument("-o", "--output", required=True, help="Output audio file path")
+    process_parser.add_argument("--preset", type=str, default=None,
+                                help="Factory preset name or number to load")
     process_parser.set_defaults(func=cmd_process)
 
     # plugin render
@@ -86,7 +91,20 @@ def register(subparsers: argparse._SubParsersAction) -> None:
                                help="Output sample rate (default: 44100)")
     render_parser.add_argument("--duration", type=float, default=None,
                                help="Extra duration in seconds after MIDI ends (default: 1.0)")
+    render_parser.add_argument("--preset", type=str, default=None,
+                               help="Factory preset name or number to load")
     render_parser.set_defaults(func=cmd_render)
+
+    # plugin preset
+    preset_parser = plugin_sub.add_parser("preset", help="Plugin preset management")
+    preset_sub = preset_parser.add_subparsers(dest="preset_command", metavar="<subcommand>")
+
+    # plugin preset list
+    preset_list_parser = preset_sub.add_parser("list", help="List factory presets for a plugin")
+    preset_list_parser.add_argument("name", help="Plugin name (partial match)")
+    preset_list_parser.set_defaults(func=cmd_preset_list)
+
+    preset_parser.set_defaults(func=lambda args: preset_parser.print_help() or EXIT_SUCCESS)
 
     parser.set_defaults(func=lambda args: parser.print_help() or EXIT_SUCCESS)
 
@@ -122,18 +140,23 @@ def cmd_list(args: argparse.Namespace) -> int:
 
     if args.json:
         output_json(components)
+    elif args.name_only:
+        # Print unique names only
+        names = sorted(set(c.get("name", "Unknown") for c in components))
+        for name in names:
+            print(name)
     else:
         if not components:
             print("No plugins found.")
             return EXIT_SUCCESS
 
-        headers = ["Name", "Type", "Manufacturer"]
+        headers = ["Type", "Mfr", "Name"]
         rows = []
         for c in components:
             rows.append([
-                c.get("name", "Unknown"),
                 get_plugin_type_display(c.get("type", "")),
                 c.get("manufacturer", "Unknown"),
+                c.get("name", "Unknown"),
             ])
 
         print(f"Found {len(components)} plugins:\n")
@@ -298,6 +321,79 @@ def cmd_params(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def cmd_preset_list(args: argparse.Namespace) -> int:
+    """List factory presets for a plugin."""
+    import coremusic.capi as capi
+
+    plugin = _find_plugin_by_name(args.name)
+    comp_id = _get_component_id_for_plugin(plugin)
+
+    # Create AudioUnit instance to query presets
+    au_id = capi.audio_component_instance_new(comp_id)
+    try:
+        capi.audio_unit_initialize(au_id)
+
+        # Get factory presets
+        presets = capi.audio_unit_get_factory_presets(au_id)
+
+        if args.json:
+            output_json({
+                "plugin": plugin.get("name"),
+                "presets": presets,
+            })
+        else:
+            if not presets:
+                print(f"No factory presets found for '{plugin.get('name')}'")
+                return EXIT_SUCCESS
+
+            print(f"Factory presets for '{plugin.get('name')}':\n")
+            headers = ["Number", "Name"]
+            rows = [[str(p["number"]), p["name"]] for p in presets]
+            output_table(headers, rows)
+
+    finally:
+        try:
+            capi.audio_unit_uninitialize(au_id)
+        except Exception:
+            pass
+        try:
+            capi.audio_component_instance_dispose(au_id)
+        except Exception:
+            pass
+
+    return EXIT_SUCCESS
+
+
+def _load_preset_by_name_or_number(au_id: int, preset_arg: str) -> str | None:
+    """Load a factory preset by name or number. Returns preset name if found."""
+    import coremusic.capi as capi
+
+    presets = capi.audio_unit_get_factory_presets(au_id)
+    if not presets:
+        return None
+
+    # Try to parse as number first
+    try:
+        preset_num = int(preset_arg)
+        for p in presets:
+            if p["number"] == preset_num:
+                capi.audio_unit_set_current_preset(au_id, preset_num)
+                return str(p["name"])
+        # Number not found in presets
+        return None
+    except ValueError:
+        pass
+
+    # Try to match by name (case-insensitive partial match)
+    preset_lower = preset_arg.lower()
+    for p in presets:
+        if preset_lower in str(p["name"]).lower():
+            capi.audio_unit_set_current_preset(au_id, int(p["number"]))
+            return str(p["name"])
+
+    return None
+
+
 def cmd_process(args: argparse.Namespace) -> int:
     """Apply effect plugin to audio file."""
     import struct
@@ -346,6 +442,15 @@ def cmd_process(args: argparse.Namespace) -> int:
     try:
         capi.audio_unit_initialize(au_id)
 
+        # Load preset if specified
+        preset_name = None
+        if args.preset:
+            preset_name = _load_preset_by_name_or_number(au_id, args.preset)
+            if preset_name is None:
+                raise CLIError(f"Preset not found: {args.preset}")
+            if not args.json:
+                print(f"Preset:     {preset_name}")
+
         # Convert input to float32 if needed
         if fmt.bits_per_channel == 16:
             # Convert int16 to float32
@@ -388,7 +493,7 @@ def cmd_process(args: argparse.Namespace) -> int:
 
         # Convert back to int16 for WAV output
         num_samples = len(processed_data) // 4
-        float_samples = struct.unpack(f'{num_samples}f', processed_data)
+        float_samples = list(struct.unpack(f'{num_samples}f', processed_data))
         int_samples = [int(max(-32768, min(32767, s * 32768))) for s in float_samples]
         output_data = struct.pack(f'<{len(int_samples)}h', *int_samples)
 
@@ -471,6 +576,15 @@ def cmd_render(args: argparse.Namespace) -> int:
 
     try:
         capi.audio_unit_initialize(au_id)
+
+        # Load preset if specified
+        preset_name = None
+        if args.preset:
+            preset_name = _load_preset_by_name_or_number(au_id, args.preset)
+            if preset_name is None:
+                raise CLIError(f"Preset not found: {args.preset}")
+            if not args.json:
+                print(f"Preset:     {preset_name}")
 
         # Collect all MIDI events sorted by time
         all_events = []

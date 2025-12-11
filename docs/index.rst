@@ -3,7 +3,7 @@ CoreMusic Documentation
 
 **CoreMusic** is a comprehensive Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing both functional and object-oriented Python bindings for professional audio and MIDI development on macOS.
 
-.. image:: https://img.shields.io/badge/python-3.6+-blue.svg
+.. image:: https://img.shields.io/badge/python-3.11+-blue.svg
    :target: https://www.python.org/downloads/
    :alt: Python Version
 
@@ -136,19 +136,22 @@ Command Line Interface
 
 .. code-block:: bash
 
-   # Get audio file information
-   coremusic audio info song.wav
+   # Audio playback and recording
+   coremusic audio play song.wav --loop
+   coremusic audio record -o recording.wav -d 10
 
-   # Analyze audio levels and tempo
+   # Analyze audio
    coremusic analyze levels song.wav
    coremusic analyze tempo song.wav
 
-   # Convert audio format
-   coremusic convert file input.wav output.aac --quality high
+   # AudioUnit plugins
+   coremusic plugin list --type effect
+   coremusic plugin process "AUDelay" input.wav -o output.wav
 
-   # List audio devices and plugins
-   coremusic devices list
-   coremusic plugins list --type effect
+   # MIDI operations
+   coremusic midi devices
+   coremusic midi input monitor
+   coremusic midi output panic
 
 See :doc:`guides/cli` for complete CLI documentation.
 

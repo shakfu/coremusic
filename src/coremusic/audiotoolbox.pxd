@@ -29,7 +29,7 @@ cdef extern from "AudioToolbox/AudioQueue.h":
     ctypedef AudioQueueBuffer* AudioQueueBufferRef
 
     ctypedef void (*AudioQueueOutputCallback)(void* inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer)
-    ctypedef void (*AudioQueueInputCallback)(void* inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer, const AudioTimeStamp* inStartTime, UInt32 inNumberPacketDescriptions)
+    ctypedef void (*AudioQueueInputCallback)(void* inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer, const AudioTimeStamp* inStartTime, UInt32 inNumberPacketDescriptions, const AudioStreamPacketDescription* inPacketDescs)
 
     ctypedef enum:
         kAudioQueueErr_InvalidBuffer = -66687
@@ -64,8 +64,8 @@ cdef extern from "AudioToolbox/AudioQueue.h":
     cdef OSStatus AudioQueueAllocateBuffer(AudioQueueRef inAQ, UInt32 inBufferByteSize, AudioQueueBufferRef* outBuffer)
     cdef OSStatus AudioQueueAllocateBufferWithPacketDescriptions(AudioQueueRef inAQ, UInt32 inBufferByteSize, UInt32 inNumberPacketDescriptions, AudioQueueBufferRef* outBuffer)
     cdef OSStatus AudioQueueFreeBuffer(AudioQueueRef inAQ, AudioQueueBufferRef inBuffer)
-    cdef OSStatus AudioQueueEnqueueBuffer(AudioQueueRef inAQ, AudioQueueBufferRef inBuffer, UInt32 inNumPacketDescs, const void* inPacketDescs)
-    cdef OSStatus AudioQueueEnqueueBufferWithParameters(AudioQueueRef inAQ, AudioQueueBufferRef inBuffer, UInt32 inNumPacketDescs, const void* inPacketDescs, UInt32 inTrimFramesAtStart, UInt32 inTrimFramesAtEnd, UInt32 inNumParamValues, const AudioQueueParameterEvent* inParamValues, const AudioTimeStamp* inStartTime, AudioTimeStamp* outActualStartTime)
+    cdef OSStatus AudioQueueEnqueueBuffer(AudioQueueRef inAQ, AudioQueueBufferRef inBuffer, UInt32 inNumPacketDescs, const void* inPacketDescs) nogil
+    cdef OSStatus AudioQueueEnqueueBufferWithParameters(AudioQueueRef inAQ, AudioQueueBufferRef inBuffer, UInt32 inNumPacketDescs, const void* inPacketDescs, UInt32 inTrimFramesAtStart, UInt32 inTrimFramesAtEnd, UInt32 inNumParamValues, const AudioQueueParameterEvent* inParamValues, const AudioTimeStamp* inStartTime, AudioTimeStamp* outActualStartTime) nogil
     cdef OSStatus AudioQueueStart(AudioQueueRef inAQ, const AudioTimeStamp* inStartTime)
     cdef OSStatus AudioQueuePrime(AudioQueueRef inAQ, UInt32 inNumberOfFramesToPrepare, UInt32* outNumberOfFramesPrepared)
     cdef OSStatus AudioQueueStop(AudioQueueRef inAQ, Boolean inImmediate)
@@ -151,6 +151,7 @@ cdef extern from "AudioToolbox/AudioFile.h":
         kAudioFilePropertyUseAudioTrack = 1969385580      # 'uatk'
 
     cdef OSStatus AudioFileOpenURL(CFURLRef inFileRef, AudioFilePermissions inPermissions, AudioFileTypeID inFileTypeHint, AudioFileID* outAudioFile)
+    cdef OSStatus AudioFileCreateWithURL(CFURLRef inFileRef, AudioFileTypeID inFileType, const AudioStreamBasicDescription* inFormat, AudioFileFlags inFlags, AudioFileID* outAudioFile)
     cdef OSStatus AudioFileClose(AudioFileID inAudioFile)
     cdef OSStatus AudioFileOptimize(AudioFileID inAudioFile)
     cdef OSStatus AudioFileReadBytes(AudioFileID inAudioFile, Boolean inUseCache, SInt64 inStartingByte, UInt32* ioNumBytes, void* outBuffer)

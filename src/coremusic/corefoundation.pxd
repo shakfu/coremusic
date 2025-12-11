@@ -57,6 +57,19 @@ cdef extern from "CoreFoundation/CoreFoundation.h":
     cdef void CFRelease(CFTypeRef cf)
     cdef CFAllocatorRef kCFAllocatorDefault
 
+    # CFRunLoop functions for audio queue callbacks
+    cdef CFRunLoopRef CFRunLoopGetCurrent()
+    cdef SInt32 CFRunLoopRunInMode(CFStringRef mode, double seconds, Boolean returnAfterSourceHandled)
+    cdef CFStringRef kCFRunLoopDefaultMode
+    cdef CFStringRef kCFRunLoopCommonModes
+
+    # CFRunLoopRunInMode return values
+    ctypedef enum:
+        kCFRunLoopRunFinished = 1
+        kCFRunLoopRunStopped = 2
+        kCFRunLoopRunTimedOut = 3
+        kCFRunLoopRunHandledSource = 4
+
     # Type checking functions
     ctypedef unsigned long CFTypeID
     cdef CFTypeID CFGetTypeID(CFTypeRef cf)
