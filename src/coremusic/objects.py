@@ -2152,6 +2152,151 @@ class AudioDevice(capi.CoreAudioObject):
         except Exception as e:
             raise AudioDeviceError(f"Failed to get stream configuration: {e}")
 
+    def get_volume(self, scope: str = "output", channel: int = 0) -> Optional[float]:
+        """Get volume level for a channel
+
+        Args:
+            scope: 'input' or 'output' (default: 'output')
+            channel: Channel index (0 = main/master)
+
+        Returns:
+            Volume level as float (0.0-1.0), or None if not available
+        """
+        scope_map = {
+            "input": capi.get_audio_object_property_scope_input(),
+            "output": capi.get_audio_object_property_scope_output(),
+        }
+        scope_val = scope_map.get(scope.lower())
+        if scope_val is None:
+            raise AudioDeviceError(f"Invalid scope: {scope}")
+
+        try:
+            data = capi.audio_object_get_property_data(
+                self.object_id,
+                capi.get_audio_device_property_volume_scalar(),
+                scope_val,
+                channel,
+            )
+            if len(data) >= 4:
+                return struct.unpack("<f", data[:4])[0]
+            return None
+        except Exception:
+            return None
+
+    def set_volume(self, level: float, scope: str = "output", channel: int = 0) -> None:
+        """Set volume level for a channel
+
+        Args:
+            level: Volume level (0.0-1.0)
+            scope: 'input' or 'output' (default: 'output')
+            channel: Channel index (0 = main/master)
+
+        Raises:
+            AudioDeviceError: If setting volume fails or is not supported
+        """
+        if not 0.0 <= level <= 1.0:
+            raise ValueError("Volume level must be between 0.0 and 1.0")
+
+        scope_map = {
+            "input": capi.get_audio_object_property_scope_input(),
+            "output": capi.get_audio_object_property_scope_output(),
+        }
+        scope_val = scope_map.get(scope.lower())
+        if scope_val is None:
+            raise AudioDeviceError(f"Invalid scope: {scope}")
+
+        # Check if property is settable
+        if not capi.audio_object_is_property_settable(
+            self.object_id,
+            capi.get_audio_device_property_volume_scalar(),
+            scope_val,
+            channel,
+        ):
+            raise AudioDeviceError("Volume is not settable on this device/channel")
+
+        try:
+            data = struct.pack("<f", level)
+            capi.audio_object_set_property_data(
+                self.object_id,
+                capi.get_audio_device_property_volume_scalar(),
+                scope_val,
+                channel,
+                data,
+            )
+        except Exception as e:
+            raise AudioDeviceError(f"Failed to set volume: {e}")
+
+    def get_mute(self, scope: str = "output", channel: int = 0) -> Optional[bool]:
+        """Get mute state for a channel
+
+        Args:
+            scope: 'input' or 'output' (default: 'output')
+            channel: Channel index (0 = main/master)
+
+        Returns:
+            True if muted, False if not muted, None if not available
+        """
+        scope_map = {
+            "input": capi.get_audio_object_property_scope_input(),
+            "output": capi.get_audio_object_property_scope_output(),
+        }
+        scope_val = scope_map.get(scope.lower())
+        if scope_val is None:
+            raise AudioDeviceError(f"Invalid scope: {scope}")
+
+        try:
+            data = capi.audio_object_get_property_data(
+                self.object_id,
+                capi.get_audio_device_property_mute(),
+                scope_val,
+                channel,
+            )
+            if len(data) >= 4:
+                return bool(struct.unpack("<I", data[:4])[0])
+            return None
+        except Exception:
+            return None
+
+    def set_mute(self, muted: bool, scope: str = "output", channel: int = 0) -> None:
+        """Set mute state for a channel
+
+        Args:
+            muted: True to mute, False to unmute
+            scope: 'input' or 'output' (default: 'output')
+            channel: Channel index (0 = main/master)
+
+        Raises:
+            AudioDeviceError: If setting mute fails or is not supported
+        """
+        scope_map = {
+            "input": capi.get_audio_object_property_scope_input(),
+            "output": capi.get_audio_object_property_scope_output(),
+        }
+        scope_val = scope_map.get(scope.lower())
+        if scope_val is None:
+            raise AudioDeviceError(f"Invalid scope: {scope}")
+
+        # Check if property is settable
+        if not capi.audio_object_is_property_settable(
+            self.object_id,
+            capi.get_audio_device_property_mute(),
+            scope_val,
+            channel,
+        ):
+            raise AudioDeviceError("Mute is not settable on this device/channel")
+
+        try:
+            data = struct.pack("<I", 1 if muted else 0)
+            capi.audio_object_set_property_data(
+                self.object_id,
+                capi.get_audio_device_property_mute(),
+                scope_val,
+                channel,
+                data,
+            )
+        except Exception as e:
+            raise AudioDeviceError(f"Failed to set mute: {e}")
+
     def __repr__(self) -> str:
         name = self.name or "Unknown"
         return f"AudioDevice(id={self.object_id}, name='{name}')"
@@ -2256,6 +2401,58 @@ class AudioDeviceManager:
                 # Some devices may not have UID property accessible
                 continue
         return None
+
+    @staticmethod
+    def set_default_output_device(device: AudioDevice) -> None:
+        """Set the default output device
+
+        Args:
+            device: AudioDevice to set as default output
+
+        Raises:
+            AudioDeviceError: If setting fails
+
+        Note:
+            This requires the device to support being a default device.
+            Not all devices (like aggregate devices) can be set as default.
+        """
+        try:
+            data = struct.pack("<I", device.object_id)
+            capi.audio_object_set_property_data(
+                1,  # kAudioObjectSystemObject
+                capi.get_audio_hardware_property_default_output_device(),
+                capi.get_audio_object_property_scope_global(),
+                0,
+                data,
+            )
+        except Exception as e:
+            raise AudioDeviceError(f"Failed to set default output device: {e}")
+
+    @staticmethod
+    def set_default_input_device(device: AudioDevice) -> None:
+        """Set the default input device
+
+        Args:
+            device: AudioDevice to set as default input
+
+        Raises:
+            AudioDeviceError: If setting fails
+
+        Note:
+            This requires the device to support being a default device.
+            Not all devices (like aggregate devices) can be set as default.
+        """
+        try:
+            data = struct.pack("<I", device.object_id)
+            capi.audio_object_set_property_data(
+                1,  # kAudioObjectSystemObject
+                capi.get_audio_hardware_property_default_input_device(),
+                capi.get_audio_object_property_scope_global(),
+                0,
+                data,
+            )
+        except Exception as e:
+            raise AudioDeviceError(f"Failed to set default input device: {e}")
 
 
 # ============================================================================

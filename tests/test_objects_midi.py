@@ -7,13 +7,10 @@ import coremusic.capi as capi
 
 
 # Check MIDI availability at module load time
-# Run multiple checks to ensure MIDI is reliably available
 _MIDI_AVAILABLE = False
 try:
-    # Try creating and disposing multiple clients to ensure MIDI is reliably available
-    for i in range(3):
-        _client_id = capi.midi_client_create(f"_TestCheck{i}")
-        capi.midi_client_dispose(_client_id)
+    _client_id = capi.midi_client_create("_TestCheck")
+    capi.midi_client_dispose(_client_id)
     _MIDI_AVAILABLE = True
 except Exception:
     _MIDI_AVAILABLE = False
@@ -30,7 +27,6 @@ pytestmark = pytest.mark.skipif(
 def skip_if_midi_fails():
     """Autouse fixture to skip tests if MIDI operations fail at runtime."""
     try:
-        # Double-check MIDI availability at test time
         test_client = capi.midi_client_create("_RuntimeCheck")
         capi.midi_client_dispose(test_client)
     except Exception:

@@ -1,21 +1,5 @@
 # TODO
 
-## Summary
-
-**CoreMusic Status:** Production-ready professional audio framework for Python with **1,457+ tests passing** (100% success rate)
-
-**Current Capabilities:**
-- Complete AudioUnit Host (190 plugins: 111 effects, 62 instruments)
-- Full MIDI support with AudioUnit instruments
-- Ableton Link tempo synchronization
-- Complete CoreMIDI and CoreAudio wrappers
-- Performance-optimized with Cython operations, buffer pooling, and memory-mapped I/O
-- Proper optional dependency handling (numpy, scipy, matplotlib)
-- DAW essentials (Timeline, tracks, clips, automation)
-- Music theory primitives (Note, Interval, Scale, Chord, ChordProgression)
-- Generative algorithms (Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm)
-- MIDI transformation pipeline (Transpose, Quantize, Humanize, Harmonize, Reverse, etc.)
-
 See [CHANGELOG.md](CHANGELOG.md) for completed features.
 
 ---
@@ -66,18 +50,6 @@ See [CHANGELOG.md](CHANGELOG.md) for completed features.
 
 ### Music Module - Future Enhancements
 
-#### Additional Generative Algorithms
-
-**Priority: LOW** - Expand generative capabilities
-
-**Current state:** 7 generators (Arpeggiator, Euclidean, Markov, Probabilistic, Sequence, Melody, Polyrhythm)
-
-**Potential additions:**
-- L-system based melody generation
-- Cellular automata rhythms
-- Genetic algorithm composition
-- Stochastic grammar-based generation
-
 #### Live Performance Integration
 
 **Priority: MEDIUM** - Real-time generative performance
@@ -88,26 +60,13 @@ See [CHANGELOG.md](CHANGELOG.md) for completed features.
 - Pattern morphing and transitions
 - Live recording of generated sequences
 
-#### MIDI File Transformation Pipeline - COMPLETED
-
-**Status: IMPLEMENTED** - See `coremusic.midi.transform`
-
-Implemented transformers:
-- **Pitch**: Transpose, Invert, Harmonize
-- **Time**: Quantize (with swing), TimeStretch, TimeShift, Reverse
-- **Velocity**: VelocityScale, VelocityCurve, Humanize
-- **Filters**: NoteFilter, EventTypeFilter
-- **Track**: ChannelRemap, TrackMerge, Arpeggiate
-
-68 tests in `tests/test_midi_transform.py`
-
 ---
 
 ## Missing/Unwrapped CoreAudio APIs
 
 ### AudioWorkInterval (macOS 10.16+, iOS 14.0+)
 
-**Priority: Medium-Low** - Advanced realtime workgroup management
+**Priority: Low** - Advanced realtime workgroup management
 
 **What it provides:**
 - OS workgroup creation for realtime audio threads
@@ -115,8 +74,6 @@ Implemented transformers:
 - CPU usage optimization for power vs. performance
 
 **Relevance:** Highly specialized - needed only for advanced audio apps creating custom realtime threads. Most apps use device-owned workgroups automatically.
-
-**Priority: Low priority**  - niche use case for professional audio developers.
 
 ---
 
@@ -130,36 +87,30 @@ Implemented transformers:
 
 **Relevance:** Very specialized - audio monitoring/routing utilities, system-wide audio capture.
 
-**Priority: Low priority** - requires Objective-C bridge, limited applicability.
-
 ---
 
 ### CAFFile Data Structures
 
-**Priority: Low** - Informational only
+**Priority: Very Low** - Informational only
 
 **What it provides:**
 - Core Audio Format (CAF) file chunk definitions
 - CAF header structures
 
-**Relevance:** Informational header - actual CAF file I/O is already handled by `AudioFile` API. Adding these structures would only help developers parsing CAF files manually (rare).
-
-**Priority: Very Low priority** - no functional gap.
+**Relevance:** Informational header - actual CAF file I/O is already handled by `AudioFile` API.
 
 ---
 
 ### AudioCodec Component API
 
-**Priority: Low-Medium** - Low-level codec interface
+**Priority: Low** - Low-level codec interface
 
 **What it provides:**
 - Direct codec component management
 - Custom encoder/decoder control
 - Packet-level audio translation
 
-**Relevance:** Very low-level API. Most use cases covered by `AudioConverter` (higher-level) and `ExtendedAudioFile` (even higher-level). Direct codec access needed only for custom codec implementations or highly specialized workflows.
-
-**Priority: Low priority** - `AudioConverter` covers 95% of use cases.
+**Relevance:** Very low-level API. Most use cases covered by `AudioConverter` and `ExtendedAudioFile`.
 
 ---
 
@@ -186,8 +137,6 @@ available_plugins = cm.discover_audio_units(type='effect')
 - Community-contributed effects
 - Integration with third-party AudioUnits
 
-**Priority: High priority** - requires custom AudioUnit host implementation
-
 ---
 
 ### Documentation Improvements
@@ -198,29 +147,26 @@ available_plugins = cm.discover_audio_units(type='effect')
 - Video demonstrations of key features
 - Migration guides for users coming from other audio libraries
 
-**Priority: MEDIUM**- ongoing documentation work
+**Priority: MEDIUM** - ongoing documentation work
 
 ---
 
 ## Prioritized Roadmap
 
-### Recently Completed
-- [x] **MIDI Transformation Pipeline** - Chainable MIDI transformers (transpose, quantize, humanize, etc.)
-
-### Near-term (Next 3-6 months)
+### Near-term
 - [ ] **Plugin UI Integration** - Cocoa view integration for plugin UIs
 - [ ] **Link-Aware Plugins** - Tempo callback integration for tempo-synced effects
 - [ ] **Advanced MIDI** - MIDI file playback, live CoreMIDI routing, MIDI learn
 - [ ] **Live Generative Performance** - Link-synchronized generators, real-time parameter modulation
 - [ ] **Documentation** - Comprehensive API documentation with examples
 
-### Future Enhancements (6-12 months)
+### Future Enhancements
 - [ ] **Plugin System** - Custom AudioUnit registration (advanced users)
 - [ ] **Additional Generative Algorithms** - L-systems, cellular automata, genetic algorithms
 - [ ] **Additional Examples** - More comprehensive demo applications
 - [ ] **Performance Profiling Tools** - Built-in profiling for audio pipelines
 
-### Specialized (Optional, unlikely)
+### Specialized (Optional)
 - [ ] **AudioWorkInterval** - For advanced realtime audio developers
 - [ ] **AudioCodec API** - Direct codec component access (niche use case)
 - [ ] **AudioHardwareTapping** - Process tapping (requires Objective-C bridge)

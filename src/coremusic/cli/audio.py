@@ -34,6 +34,13 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     meta_parser.add_argument("file", help="Audio file path")
     meta_parser.set_defaults(func=cmd_metadata)
 
+    # audio play
+    play_parser = audio_sub.add_parser("play", help="Play audio file to default output")
+    play_parser.add_argument("file", help="Audio file path")
+    play_parser.add_argument("--loop", "-l", action="store_true",
+                             help="Loop playback")
+    play_parser.set_defaults(func=cmd_play)
+
     parser.set_defaults(func=lambda args: parser.print_help() or EXIT_SUCCESS)
 
 
@@ -175,5 +182,99 @@ def cmd_metadata(args: argparse.Namespace) -> int:
             print("Tags:")
             for key, value in metadata["tags"].items():
                 print(f"  {key}: {value}")
+
+    return EXIT_SUCCESS
+
+
+def cmd_play(args: argparse.Namespace) -> int:
+    """Play audio file to default output device."""
+    import signal
+    import time
+
+    import coremusic as cm
+    from coremusic.capi import AudioPlayer
+
+    from ._utils import CLIError
+
+    path = require_file(args.file)
+
+    # Get file info for display
+    try:
+        with cm.AudioFile(str(path)) as audio_file:
+            duration = audio_file.duration
+            fmt = audio_file.format
+    except Exception as e:
+        raise CLIError(f"Failed to open audio file: {e}")
+
+    # Create and set up audio player
+    try:
+        player = AudioPlayer()
+        player.load_file(str(path))
+        player.setup_output()
+    except Exception as e:
+        raise CLIError(f"Failed to initialize audio player: {e}")
+
+    # Set looping if requested
+    player.set_looping(args.loop)
+
+    # Stop flag for Ctrl+C
+    stop_requested = False
+
+    def signal_handler(sig: int, frame) -> None:
+        nonlocal stop_requested
+        stop_requested = True
+
+    original_handler = signal.signal(signal.SIGINT, signal_handler)
+
+    try:
+        if args.json:
+            # Start playback silently for JSON output
+            player.start()
+
+            while player.is_playing() and not stop_requested:
+                time.sleep(0.1)
+
+            player.stop()
+
+            output_json({
+                "file": str(path.absolute()),
+                "duration": duration,
+                "sample_rate": fmt.sample_rate,
+                "channels": fmt.channels_per_frame,
+                "looped": args.loop,
+                "stopped": stop_requested,
+            })
+        else:
+            print(f"Playing: {path.name}")
+            print(f"Duration: {format_duration(duration)}")
+            print(f"Format:  {get_format_display(fmt.format_id)} {fmt.sample_rate:.0f}Hz {fmt.channels_per_frame}ch")
+            if args.loop:
+                print("Looping: Yes")
+            print("Press Ctrl+C to stop...\n")
+
+            player.start()
+
+            # Show progress while playing
+            try:
+                while player.is_playing() and not stop_requested:
+                    progress = player.get_progress()
+                    elapsed = progress * duration
+                    bar_width = 40
+                    filled = int(bar_width * progress)
+                    bar = "=" * filled + "-" * (bar_width - filled)
+                    print(f"\r[{bar}] {format_duration(elapsed)} / {format_duration(duration)}", end="", flush=True)
+                    time.sleep(0.1)
+            except KeyboardInterrupt:
+                stop_requested = True
+
+            player.stop()
+
+            if stop_requested:
+                print("\n\nStopped.")
+            else:
+                print("\n\nFinished.")
+
+    finally:
+        signal.signal(signal.SIGINT, original_handler)
 
     return EXIT_SUCCESS

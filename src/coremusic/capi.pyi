@@ -4,7 +4,7 @@ This module provides low-level Python bindings to CoreAudio frameworks
 via Cython. All functions are thin wrappers around C APIs.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # ============================================================================
 # Base Classes
@@ -59,6 +59,25 @@ def audio_file_read_packets(
     """Read audio packets from file. Returns (data, actual_count)."""
     ...
 
+def audio_file_read_packets_into(
+    file_id: int, start_packet: int, packet_count: int, buffer: bytearray
+) -> Tuple[int, int]:
+    """Read packets directly into a provided buffer (zero-copy).
+
+    High-performance variant that reads directly into a caller-provided buffer,
+    avoiding memory allocation and copying.
+
+    Args:
+        file_id: AudioFile ID from audio_file_open_url()
+        start_packet: Starting packet number
+        packet_count: Number of packets to read
+        buffer: Pre-allocated buffer (bytearray or numpy array) to read into
+
+    Returns:
+        Tuple of (bytes_read, packets_read)
+    """
+    ...
+
 # ============================================================================
 # Audio File Stream Operations
 # ============================================================================
@@ -71,8 +90,25 @@ def audio_file_stream_close(stream_id: int) -> None:
     """Close an audio file stream."""
     ...
 
-def audio_file_stream_parse_bytes(stream_id: int, data: bytes) -> None:
+def audio_file_stream_parse_bytes(stream_id: int, data: bytes, flags: int = 0) -> int:
     """Parse audio data bytes."""
+    ...
+
+def audio_file_stream_parse_buffer(
+    stream_id: int, data: Union[bytes, bytearray], flags: int = 0
+) -> int:
+    """Parse buffer data through the AudioFileStream parser (zero-copy).
+
+    High-performance variant that accepts any buffer object without copying.
+
+    Args:
+        stream_id: AudioFileStream ID
+        data: Audio data (bytes, bytearray, or numpy uint8 array)
+        flags: Parse flags (default 0)
+
+    Returns:
+        OSStatus code (0 for success)
+    """
     ...
 
 def audio_file_stream_seek(stream_id: int, packet_offset: int) -> None:
@@ -219,6 +255,27 @@ def audio_unit_render(
     num_channels: int
 ) -> bytes:
     """Render audio through the AudioUnit."""
+    ...
+
+def audio_unit_render_into(
+    audio_unit_id: int,
+    input_data: Union[bytes, bytearray],
+    output_buffer: bytearray,
+    num_frames: int,
+    num_channels: int = 2
+) -> int:
+    """Process audio through an AudioUnit directly into provided buffers (zero-copy).
+
+    Args:
+        audio_unit_id: AudioUnit instance ID
+        input_data: Input audio data (bytes, bytearray, or numpy uint8 array)
+        output_buffer: Pre-allocated output buffer (bytearray or numpy uint8 array)
+        num_frames: Number of frames to process
+        num_channels: Number of channels (default 2)
+
+    Returns:
+        Number of bytes written to output_buffer
+    """
     ...
 
 # ============================================================================
@@ -472,6 +529,24 @@ def audio_converter_convert_buffer(converter_id: int, input_data: bytes) -> byte
     """Convert audio data buffer."""
     ...
 
+def audio_converter_convert_buffer_into(
+    converter_id: int, input_data: Union[bytes, bytearray], output_buffer: bytearray
+) -> int:
+    """Convert audio data directly into a provided output buffer (zero-copy).
+
+    High-performance variant that accepts memoryview/buffer input and writes
+    directly to a caller-provided output buffer.
+
+    Args:
+        converter_id: AudioConverter ID from audio_converter_new()
+        input_data: Input audio data (bytes, bytearray, or numpy array)
+        output_buffer: Pre-allocated output buffer (bytearray or numpy array)
+
+    Returns:
+        Number of bytes written to output_buffer
+    """
+    ...
+
 def audio_converter_get_property(converter_id: int, property_id: int) -> bytes:
     """Get a property from audio converter."""
     ...
@@ -484,6 +559,39 @@ def audio_converter_set_property(
 
 def audio_converter_reset(converter_id: int) -> None:
     """Reset audio converter."""
+    ...
+
+def audio_converter_fill_complex_buffer(
+    converter_id: int,
+    input_data: bytes,
+    input_packet_count: int,
+    output_packet_count: int,
+    source_format_dict: Dict[str, Any]
+) -> Tuple[bytes, int]:
+    """Convert audio using callback-based API for complex conversions."""
+    ...
+
+def audio_converter_fill_complex_buffer_into(
+    converter_id: int,
+    input_data: Union[bytes, bytearray],
+    output_buffer: bytearray,
+    input_packet_count: int,
+    output_packet_count: int,
+    source_format_dict: Dict[str, Any]
+) -> Tuple[int, int]:
+    """Convert audio using callback-based API directly into provided buffers (zero-copy).
+
+    Args:
+        converter_id: AudioConverter ID
+        input_data: Input audio data (bytes, bytearray, or numpy uint8 array)
+        output_buffer: Pre-allocated output buffer (bytearray or numpy uint8 array)
+        input_packet_count: Number of packets in input data
+        output_packet_count: Number of output packets to produce
+        source_format_dict: Source AudioStreamBasicDescription as dict
+
+    Returns:
+        Tuple of (bytes_written, actual_packet_count)
+    """
     ...
 
 # ============================================================================
@@ -510,6 +618,22 @@ def extended_audio_file_dispose(ext_file_id: int) -> None:
 
 def extended_audio_file_read(ext_file_id: int, num_frames: int) -> Tuple[bytes, int]:
     """Read frames from extended audio file."""
+    ...
+
+def extended_audio_file_read_into(
+    ext_file_id: int, num_frames: int, buffer: bytearray, num_channels: int = 2
+) -> Tuple[int, int]:
+    """Read frames directly into a provided buffer (zero-copy).
+
+    Args:
+        ext_file_id: ExtAudioFile ID
+        num_frames: Number of frames to read
+        buffer: Pre-allocated buffer (bytearray or numpy uint8 array)
+        num_channels: Number of audio channels (default 2)
+
+    Returns:
+        Tuple of (bytes_read, frames_read)
+    """
     ...
 
 def extended_audio_file_write(

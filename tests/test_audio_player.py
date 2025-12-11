@@ -42,9 +42,9 @@ def test_audio_playback():
         result = player.start()
         print(f"Started playback (result: {result})")
 
-        # Monitor playback for a few seconds
+        # Monitor playback briefly (reduced from 10s to 2s to avoid MIDI service interference)
         print("Playback status:")
-        for i in range(10):
+        for i in range(2):
             is_playing = player.is_playing()
             progress = player.get_progress()
             print(f"  {i + 1:2d}s: Playing={is_playing}, Progress={progress:.3f}")

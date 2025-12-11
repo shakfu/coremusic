@@ -1,6 +1,6 @@
 [project]
 name = "coremusic"
-version = "0.1.10"
+version = "0.1.11"
 authors = [
   { name="Shakeeb Alireza", email="author@example.com" },
 ]

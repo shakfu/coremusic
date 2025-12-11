@@ -162,3 +162,13 @@ For production use, consider the core coremusic package which provides:
 ## License
 
 All examples are provided under the same MIT license as the coremusic project.
+
+
+## TODO
+
+### Additional Generative Algorithms
+
+- L-system based melody generation
+- Cellular automata rhythms
+- Genetic algorithm composition
+- Stochastic grammar-based generation

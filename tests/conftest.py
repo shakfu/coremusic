@@ -11,6 +11,30 @@ Constants can be imported directly:
 import os
 import pytest
 
+
+# ============================================================================
+# Test Ordering Hook - Run MIDI tests first
+# ============================================================================
+# MIDI services can become temporarily unavailable after long-running audio
+# playback tests due to macOS system-level interactions between CoreAudio and
+# CoreMIDI. Running MIDI tests first ensures they execute before any audio
+# playback tests can interfere with MIDI services.
+
+
+def pytest_collection_modifyitems(session, config, items):
+    """Reorder tests to run MIDI tests first."""
+    midi_tests = []
+    other_tests = []
+
+    for item in items:
+        if "test_objects_midi" in str(item.fspath) or "test_coremidi" in str(item.fspath):
+            midi_tests.append(item)
+        else:
+            other_tests.append(item)
+
+    # Put MIDI tests first
+    items[:] = midi_tests + other_tests
+
 # Base paths for test data
 TEST_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(TEST_DIR, "data")

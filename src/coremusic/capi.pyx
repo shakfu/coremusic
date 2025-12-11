@@ -271,6 +271,54 @@ def audio_object_get_property_data(int object_id, int property_selector, int sco
         free(buffer)
 
 
+def audio_object_set_property_data(int object_id, int property_selector, int scope, int element, bytes data):
+    """Set property data on an AudioObject
+
+    Args:
+        object_id: The AudioObjectID
+        property_selector: The property selector (e.g., kAudioDevicePropertyVolumeScalar)
+        scope: The property scope (e.g., kAudioObjectPropertyScopeOutput)
+        element: The property element (0 for main/master)
+        data: The raw bytes data to set
+
+    Raises:
+        RuntimeError: If setting the property fails
+    """
+    cdef ca.AudioObjectPropertyAddress address
+    cdef cf.OSStatus status
+
+    init_property_address(&address, property_selector, scope, element)
+
+    status = ca.AudioObjectSetPropertyData(object_id, &address, 0, <void*>0, len(data), <const void*><char*>data)
+    if status != 0:
+        raise RuntimeError(format_osstatus_error(status, "AudioObjectSetPropertyData"))
+
+
+def audio_object_is_property_settable(int object_id, int property_selector, int scope, int element) -> bool:
+    """Check if a property is settable on an AudioObject
+
+    Args:
+        object_id: The AudioObjectID
+        property_selector: The property selector
+        scope: The property scope
+        element: The property element
+
+    Returns:
+        True if the property is settable, False otherwise
+    """
+    cdef ca.AudioObjectPropertyAddress address
+    cdef cf.OSStatus status
+    cdef cf.Boolean is_settable = 0
+
+    init_property_address(&address, property_selector, scope, element)
+
+    status = ca.AudioObjectIsPropertySettable(object_id, &address, &is_settable)
+    if status != 0:
+        return False
+
+    return bool(is_settable)
+
+
 def audio_object_get_property_string(int object_id, int property_selector, int scope, int element):
     """Get a string property from an AudioObject
 
@@ -505,6 +553,84 @@ def audio_file_read_packets(long audio_file_id, long start_packet, int num_packe
         free(buffer)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def audio_file_read_packets_into(long audio_file_id, long start_packet, int num_packets,
+                                  char[::1] buffer not None):
+    """Read packets from an audio file directly into a provided buffer (zero-copy).
+
+    This is a high-performance variant of audio_file_read_packets() that reads
+    directly into a caller-provided buffer, avoiding memory allocation and copying.
+
+    Args:
+        audio_file_id: AudioFile ID from audio_file_open_url()
+        start_packet: Starting packet number
+        num_packets: Number of packets to read
+        buffer: Contiguous byte buffer (bytearray or numpy array) to read into.
+                Must be large enough to hold the requested packets.
+
+    Returns:
+        Tuple of (bytes_read, packets_read) indicating actual data read.
+        The data is written directly into the provided buffer.
+
+    Raises:
+        RuntimeError: If the read operation fails
+        ValueError: If buffer is too small
+
+    Example:
+        >>> import numpy as np
+        >>> file_id = audio_file_open_url("audio.wav")
+        >>> # Pre-allocate buffer (e.g., 1MB)
+        >>> buffer = bytearray(1024 * 1024)
+        >>> bytes_read, packets_read = audio_file_read_packets_into(
+        ...     file_id, 0, 10000, buffer)
+        >>> # Data is now in buffer[:bytes_read]
+        >>> audio_file_close(file_id)
+    """
+    cdef at.AudioFileID audio_file = <at.AudioFileID>audio_file_id
+    cdef cf.UInt32 num_bytes = <cf.UInt32>buffer.shape[0]
+    cdef cf.UInt32 packet_count = <cf.UInt32>num_packets
+    cdef cf.OSStatus status
+
+    # Validate buffer size by checking max packet size
+    cdef cf.UInt32 max_packet_size = 0
+    cdef cf.UInt32 prop_size = sizeof(cf.UInt32)
+
+    status = at.AudioFileGetProperty(
+        audio_file,
+        at.kAudioFilePropertyMaximumPacketSize,
+        &prop_size,
+        &max_packet_size
+    )
+
+    if status != 0:
+        raise RuntimeError(format_osstatus_error(status, "AudioFileGetProperty (MaximumPacketSize)"))
+
+    cdef cf.UInt32 required_size = max_packet_size * packet_count
+    if <cf.UInt32>buffer.shape[0] < required_size:
+        raise ValueError(
+            f"Buffer too small: {buffer.shape[0]} bytes provided, "
+            f"but {required_size} bytes required for {num_packets} packets "
+            f"(max packet size: {max_packet_size})"
+        )
+
+    # Read directly into the provided buffer
+    status = at.AudioFileReadPackets(
+        audio_file,
+        False,  # don't use cache
+        &num_bytes,
+        NULL,   # no packet descriptions
+        <cf.SInt64>start_packet,
+        &packet_count,
+        &buffer[0]
+    )
+
+    if status != 0:
+        raise RuntimeError(format_osstatus_error(status, "AudioFileReadPackets"))
+
+    return num_bytes, packet_count
+
+
 # AudioFileStream Functions
 # Dummy callback functions to avoid NULL pointer issues
 cdef void dummy_property_listener(void* client_data, at.AudioFileStreamID stream,
@@ -556,6 +682,57 @@ def audio_file_stream_parse_bytes(long stream_id, bytes data, int flags=0):
         stream,
         data_size,
         <const void*>data_ptr,
+        <at.AudioFileStreamParseFlags>flags
+    )
+
+    if status != 0:
+        raise RuntimeError(format_osstatus_error(status, "AudioFileStreamParseBytes"))
+
+    return status
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def audio_file_stream_parse_buffer(long stream_id,
+                                    const unsigned char[::1] data not None,
+                                    int flags=0):
+    """Parse buffer data through the AudioFileStream parser (zero-copy).
+
+    This is a high-performance variant of audio_file_stream_parse_bytes() that
+    accepts any buffer object (bytes, bytearray, numpy array, memoryview) without
+    copying the data.
+
+    Useful for streaming scenarios where:
+    - Data arrives in chunks from network/file
+    - Buffer pools are reused across multiple parse calls
+    - Large buffers need to be parsed without copying
+
+    Args:
+        stream_id: AudioFileStream ID from audio_file_stream_open()
+        data: Audio data as contiguous buffer (bytes, bytearray, numpy uint8 array)
+        flags: Parse flags (default 0)
+
+    Returns:
+        OSStatus code (0 for success)
+
+    Raises:
+        RuntimeError: If parsing fails
+
+    Example:
+        >>> stream_id = audio_file_stream_open()
+        >>> # Reusable buffer for streaming
+        >>> buffer = bytearray(4096)
+        >>> while chunk := read_from_network(buffer):
+        ...     audio_file_stream_parse_buffer(stream_id, buffer[:len(chunk)])
+        >>> audio_file_stream_close(stream_id)
+    """
+    cdef at.AudioFileStreamID stream = <at.AudioFileStreamID>stream_id
+    cdef cf.UInt32 data_size = <cf.UInt32>data.shape[0]
+
+    cdef cf.OSStatus status = at.AudioFileStreamParseBytes(
+        stream,
+        data_size,
+        &data[0],
         <at.AudioFileStreamParseFlags>flags
     )
 
@@ -723,6 +900,59 @@ def audio_converter_convert_buffer(long converter_id, bytes input_data) -> bytes
         return result
     finally:
         free(output_buffer)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def audio_converter_convert_buffer_into(long converter_id,
+                                         const unsigned char[::1] input_data not None,
+                                         unsigned char[::1] output_buffer not None):
+    """Convert audio data directly into a provided output buffer (zero-copy).
+
+    This is a high-performance variant of audio_converter_convert_buffer() that:
+    1. Accepts memoryview/buffer input (bytes, bytearray, numpy array)
+    2. Writes directly to a caller-provided output buffer
+    3. Avoids all memory allocation and copying
+
+    Args:
+        converter_id: AudioConverter ID from audio_converter_new()
+        input_data: Input audio data as contiguous buffer (bytes, bytearray, or numpy array)
+        output_buffer: Pre-allocated output buffer (bytearray or numpy array).
+                      Must be large enough for converted output (typically 4x input for upsampling)
+
+    Returns:
+        Number of bytes written to output_buffer
+
+    Raises:
+        RuntimeError: If conversion fails or output buffer is too small
+
+    Example:
+        >>> # Create converter (e.g., 44.1kHz -> 48kHz)
+        >>> converter = audio_converter_new(source_format, dest_format)
+        >>> # Pre-allocate output buffer (4x input size for safety)
+        >>> input_data = bytearray(audio_bytes)
+        >>> output_buffer = bytearray(len(input_data) * 4)
+        >>> bytes_written = audio_converter_convert_buffer_into(
+        ...     converter, input_data, output_buffer)
+        >>> # Converted data is in output_buffer[:bytes_written]
+    """
+    cdef at.AudioConverterRef converter = <at.AudioConverterRef>converter_id
+    cdef cf.UInt32 input_data_size = <cf.UInt32>input_data.shape[0]
+    cdef cf.UInt32 output_data_size = <cf.UInt32>output_buffer.shape[0]
+    cdef cf.OSStatus status
+
+    status = at.AudioConverterConvertBuffer(
+        converter,
+        input_data_size,
+        &input_data[0],
+        &output_data_size,
+        &output_buffer[0]
+    )
+
+    if status != 0:
+        raise RuntimeError(format_osstatus_error(status, "AudioConverterConvertBuffer"))
+
+    return output_data_size
 
 
 def audio_converter_get_property(long converter_id, int property_id) -> bytes:
@@ -955,6 +1185,103 @@ def audio_converter_fill_complex_buffer(
         free(output_buffer_list)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def audio_converter_fill_complex_buffer_into(
+    long converter_id,
+    const unsigned char[::1] input_data not None,
+    unsigned char[::1] output_buffer not None,
+    int input_packet_count,
+    int output_packet_count,
+    dict source_format_dict
+) -> tuple:
+    """Convert audio using callback-based API directly into provided buffers (zero-copy).
+
+    This is a high-performance variant of audio_converter_fill_complex_buffer() that:
+    1. Accepts memoryview input (bytes, bytearray, numpy array)
+    2. Writes converted data directly to caller-provided output buffer
+    3. Avoids all memory allocation (except for internal AudioBufferList struct)
+
+    Supports all types of conversions including:
+    - Sample rate changes (e.g., 44.1kHz -> 48kHz)
+    - Bit depth changes (e.g., 16-bit -> 24-bit)
+    - Channel count changes (stereo <-> mono)
+    - Codec conversions (e.g., MP3 -> PCM)
+
+    Args:
+        converter_id: AudioConverter ID from audio_converter_new()
+        input_data: Input audio data as contiguous buffer
+        output_buffer: Pre-allocated output buffer (bytearray or numpy uint8 array).
+                      Should be 4x input size for sample rate upsampling headroom
+        input_packet_count: Number of packets in input data
+        output_packet_count: Number of output packets to produce
+        source_format_dict: Source AudioStreamBasicDescription as dict
+
+    Returns:
+        (bytes_written, actual_packet_count) tuple
+
+    Raises:
+        RuntimeError: If conversion fails
+
+    Example:
+        >>> # Sample rate conversion 44.1kHz -> 48kHz
+        >>> input_data = bytearray(audio_bytes)
+        >>> output_buffer = bytearray(len(input_data) * 4)
+        >>> bytes_written, packets = audio_converter_fill_complex_buffer_into(
+        ...     converter, input_data, output_buffer,
+        ...     input_packets, output_packets, source_format)
+        >>> # Converted data is in output_buffer[:bytes_written]
+    """
+    cdef at.AudioConverterRef converter = <at.AudioConverterRef>converter_id
+    cdef AudioConverterCallbackData callback_data
+    cdef at.AudioBufferList* output_buffer_list
+    cdef cf.UInt32 output_data_packet_size = output_packet_count
+    cdef cf.OSStatus status
+    cdef cf.UInt32 actual_bytes
+
+    # Initialize callback data pointing directly to input memoryview
+    callback_data.input_buffer = <char*>&input_data[0]
+    callback_data.input_buffer_size = <cf.UInt32>input_data.shape[0]
+    callback_data.packets_read = 0
+    callback_data.total_packets = input_packet_count
+    callback_data.packet_size = source_format_dict['bytes_per_packet']
+
+    # Fill source format structure using helper
+    dict_to_asbd(source_format_dict, &callback_data.source_format)
+
+    # Allocate AudioBufferList (small fixed-size struct, unavoidable)
+    output_buffer_list = <at.AudioBufferList*>malloc(sizeof(at.AudioBufferList) + sizeof(at.AudioBuffer))
+    if output_buffer_list == NULL:
+        raise MemoryError("Failed to allocate AudioBufferList")
+
+    try:
+        # Setup output buffer list to point directly to the provided buffer
+        output_buffer_list.mNumberBuffers = 1
+        output_buffer_list.mBuffers[0].mNumberChannels = callback_data.source_format.mChannelsPerFrame
+        output_buffer_list.mBuffers[0].mDataByteSize = <cf.UInt32>output_buffer.shape[0]
+        output_buffer_list.mBuffers[0].mData = &output_buffer[0]
+
+        # Call AudioConverterFillComplexBuffer
+        status = at.AudioConverterFillComplexBuffer(
+            converter,
+            audio_converter_input_callback,  # Our callback function
+            &callback_data,                   # User data
+            &output_data_packet_size,         # In/Out: packet count
+            output_buffer_list,               # Output buffer
+            NULL                              # Packet descriptions (optional)
+        )
+
+        if status != 0:
+            raise RuntimeError(format_osstatus_error(status, "AudioConverterFillComplexBuffer"))
+
+        # Return actual bytes written and packet count
+        actual_bytes = output_buffer_list.mBuffers[0].mDataByteSize
+        return (actual_bytes, output_data_packet_size)
+
+    finally:
+        free(output_buffer_list)
+
+
 # AudioConverter property getters
 def get_audio_converter_property_min_input_buffer_size() -> int:
     """Get the minimum input buffer size for an audio converter"""
@@ -1119,6 +1446,69 @@ def extended_audio_file_read(long ext_file_id, int num_frames) -> tuple:
         return (result, frames_to_read)
     finally:
         free(buffer)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def extended_audio_file_read_into(long ext_file_id, int num_frames,
+                                   unsigned char[::1] buffer not None,
+                                   int num_channels=2) -> tuple:
+    """Read audio frames from ExtendedAudioFile directly into a provided buffer (zero-copy).
+
+    This is a high-performance variant of extended_audio_file_read() that reads
+    directly into a caller-provided buffer, avoiding memory allocation and copying.
+
+    Args:
+        ext_file_id: ExtAudioFile ID from extended_audio_file_open_url()
+        num_frames: Number of frames to read
+        buffer: Pre-allocated buffer (bytearray or numpy uint8 array) to read into.
+                Must be large enough: num_frames * num_channels * bytes_per_sample
+        num_channels: Number of audio channels (default 2 for stereo)
+
+    Returns:
+        Tuple of (bytes_read, frames_read) indicating actual data read.
+        The data is written directly into the provided buffer.
+
+    Raises:
+        RuntimeError: If the read operation fails
+        ValueError: If buffer is too small
+
+    Example:
+        >>> ext_file = extended_audio_file_open_url("audio.wav")
+        >>> # Pre-allocate buffer for 1024 stereo float32 frames
+        >>> buffer = bytearray(1024 * 2 * 4)  # frames * channels * sizeof(float32)
+        >>> bytes_read, frames_read = extended_audio_file_read_into(
+        ...     ext_file, 1024, buffer, num_channels=2)
+        >>> # Data is now in buffer[:bytes_read]
+        >>> extended_audio_file_dispose(ext_file)
+    """
+    cdef at.ExtAudioFileRef ext_file = <at.ExtAudioFileRef>ext_file_id
+    cdef cf.UInt32 frames_to_read = num_frames
+    cdef cf.UInt32 buffer_size = <cf.UInt32>buffer.shape[0]
+    cdef at.AudioBufferList buffer_list
+    cdef cf.OSStatus status
+
+    # Validate buffer size (assume float32 samples = 4 bytes per sample)
+    cdef cf.UInt32 required_size = num_frames * num_channels * 4
+    if buffer_size < required_size:
+        raise ValueError(
+            f"Buffer too small: {buffer_size} bytes provided, "
+            f"but {required_size} bytes required for {num_frames} frames "
+            f"({num_channels} channels, 4 bytes/sample)"
+        )
+
+    # Setup buffer list to point directly to the provided buffer
+    buffer_list.mNumberBuffers = 1
+    buffer_list.mBuffers[0].mNumberChannels = num_channels
+    buffer_list.mBuffers[0].mDataByteSize = buffer_size
+    buffer_list.mBuffers[0].mData = &buffer[0]
+
+    status = at.ExtAudioFileRead(ext_file, &frames_to_read, &buffer_list)
+    if status != 0:
+        raise RuntimeError(format_osstatus_error(status, "ExtAudioFileRead"))
+
+    cdef cf.UInt32 actual_size = buffer_list.mBuffers[0].mDataByteSize
+    return (actual_size, frames_to_read)
 
 
 def extended_audio_file_write(long ext_file_id, int num_frames, bytes audio_data):
@@ -1430,6 +1820,22 @@ def get_audio_device_property_preferred_channels_for_stereo():
 def get_audio_device_property_stream_configuration():
     """Get the stream configuration for an audio device"""
     return ca.kAudioDevicePropertyStreamConfiguration
+
+def get_audio_device_property_volume_scalar():
+    """Get the volume scalar property selector (0.0-1.0)"""
+    return ca.kAudioDevicePropertyVolumeScalar
+
+def get_audio_device_property_mute():
+    """Get the mute property selector"""
+    return ca.kAudioDevicePropertyMute
+
+def get_audio_hardware_property_default_output_device():
+    """Get the default output device property selector"""
+    return ca.kAudioHardwarePropertyDefaultOutputDevice
+
+def get_audio_hardware_property_default_input_device():
+    """Get the default input device property selector"""
+    return ca.kAudioHardwarePropertyDefaultInputDevice
 
 # AudioObject scope constants
 def get_audio_object_property_scope_global():
@@ -2111,6 +2517,92 @@ def audio_unit_render(long audio_unit_id, input_data, num_frames, sample_rate=44
             if buffer_list.mBuffers[0].mData != NULL:
                 free(buffer_list.mBuffers[0].mData)
             free(buffer_list)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def audio_unit_render_into(long audio_unit_id,
+                           const unsigned char[::1] input_data not None,
+                           unsigned char[::1] output_buffer not None,
+                           int num_frames,
+                           int num_channels=2):
+    """Process audio through an AudioUnit directly into provided buffers (zero-copy).
+
+    This is a high-performance variant of audio_unit_render() that:
+    1. Accepts memoryview input (bytes, bytearray, numpy array)
+    2. Writes processed audio directly to caller-provided output buffer
+    3. Avoids all memory allocation and copying
+
+    Args:
+        audio_unit_id: AudioUnit instance ID from audio_component_instance_new()
+        input_data: Input audio data as contiguous buffer (interleaved float32)
+        output_buffer: Pre-allocated output buffer (bytearray or numpy uint8 array).
+                      Must be at least num_frames * num_channels * 4 bytes
+        num_frames: Number of frames to process
+        num_channels: Number of channels (default 2)
+
+    Returns:
+        Number of bytes written to output_buffer
+
+    Raises:
+        RuntimeError: If the render operation fails
+        ValueError: If buffers are too small
+
+    Example:
+        >>> # Process 1024 stereo float32 frames
+        >>> input_data = bytearray(audio_bytes)
+        >>> output_buffer = bytearray(1024 * 2 * 4)  # frames * channels * sizeof(float32)
+        >>> bytes_written = audio_unit_render_into(
+        ...     unit_id, input_data, output_buffer, 1024, num_channels=2)
+        >>> # Processed data is in output_buffer[:bytes_written]
+    """
+    cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
+    cdef cf.OSStatus status
+    cdef at.AudioUnitRenderActionFlags flags = 0
+    cdef ca.AudioTimeStamp timestamp
+    cdef ca.AudioBufferList buffer_list
+    cdef cf.UInt32 buffer_size = num_frames * num_channels * sizeof(cf.Float32)
+
+    # Validate buffer sizes
+    if <cf.UInt32>input_data.shape[0] < buffer_size:
+        raise ValueError(
+            f"Input buffer too small: {input_data.shape[0]} bytes provided, "
+            f"but {buffer_size} bytes required for {num_frames} frames"
+        )
+    if <cf.UInt32>output_buffer.shape[0] < buffer_size:
+        raise ValueError(
+            f"Output buffer too small: {output_buffer.shape[0]} bytes provided, "
+            f"but {buffer_size} bytes required for {num_frames} frames"
+        )
+
+    # Copy input data to output buffer (AudioUnitRender operates in-place)
+    memcpy(&output_buffer[0], &input_data[0], buffer_size)
+
+    # Setup buffer list to point directly to the output buffer
+    buffer_list.mNumberBuffers = 1
+    buffer_list.mBuffers[0].mNumberChannels = num_channels
+    buffer_list.mBuffers[0].mDataByteSize = buffer_size
+    buffer_list.mBuffers[0].mData = &output_buffer[0]
+
+    # Setup timestamp
+    memset(&timestamp, 0, sizeof(ca.AudioTimeStamp))
+    timestamp.mSampleTime = 0
+    timestamp.mFlags = ca.kAudioTimeStampSampleTimeValid
+
+    # Render audio
+    status = at.AudioUnitRender(
+        unit,
+        &flags,
+        &timestamp,
+        0,  # output bus
+        <cf.UInt32>num_frames,
+        &buffer_list
+    )
+
+    if status != 0:
+        raise RuntimeError(format_osstatus_error(status, "AudioUnitRender"))
+
+    return buffer_size
 
 
 # AudioUnit constant getter functions

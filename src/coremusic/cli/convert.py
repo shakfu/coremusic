@@ -116,6 +116,56 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     )
     batch_parser.set_defaults(func=cmd_batch)
 
+    # convert normalize
+    normalize_parser = convert_sub.add_parser(
+        "normalize",
+        help="Normalize audio to target level",
+        description="Normalize audio file to a target peak or RMS level.",
+    )
+    normalize_parser.add_argument("input", help="Input audio file")
+    normalize_parser.add_argument("output", help="Output file path")
+    normalize_parser.add_argument(
+        "--target", "-t",
+        type=float,
+        default=-1.0,
+        help="Target level in dB (default: -1.0 dBFS for peak)",
+    )
+    normalize_parser.add_argument(
+        "--mode", "-m",
+        choices=["peak", "rms"],
+        default="peak",
+        help="Normalization mode (default: peak)",
+    )
+    normalize_parser.set_defaults(func=cmd_normalize)
+
+    # convert trim
+    trim_parser = convert_sub.add_parser(
+        "trim",
+        help="Trim audio to time range",
+        description="Extract a portion of an audio file by specifying start and end times.",
+    )
+    trim_parser.add_argument("input", help="Input audio file")
+    trim_parser.add_argument("output", help="Output file path")
+    trim_parser.add_argument(
+        "--start", "-s",
+        type=float,
+        default=0.0,
+        help="Start time in seconds (default: 0.0)",
+    )
+    trim_parser.add_argument(
+        "--end", "-e",
+        type=float,
+        default=None,
+        help="End time in seconds (default: end of file)",
+    )
+    trim_parser.add_argument(
+        "--duration", "-d",
+        type=float,
+        default=None,
+        help="Duration in seconds (alternative to --end)",
+    )
+    trim_parser.set_defaults(func=cmd_trim)
+
     parser.set_defaults(func=lambda args: parser.print_help() or EXIT_SUCCESS)
 
 
@@ -382,5 +432,172 @@ def cmd_batch(args: argparse.Namespace) -> int:
         print(f"Converted {success_count}/{len(input_files)} files")
         if error_count > 0:
             print(f"Errors: {error_count}")
+
+    return EXIT_SUCCESS
+
+
+def cmd_normalize(args: argparse.Namespace) -> int:
+    """Normalize audio to target level."""
+    import math
+
+    import numpy as np
+
+    import coremusic as cm
+
+    from ._utils import require_numpy
+
+    require_numpy()
+
+    input_path = require_file(args.input)
+    output_path = Path(args.output)
+
+    # Open source file
+    with cm.AudioFile(str(input_path)) as source:
+        source_format = source.format
+        audio_data = source.read_as_numpy()
+
+        # Convert to float for processing
+        if audio_data.dtype in [np.int16, np.int32]:
+            max_val = np.iinfo(audio_data.dtype).max
+            audio_float = audio_data.astype(np.float32) / max_val
+        else:
+            audio_float = audio_data.astype(np.float32)
+
+        # Calculate current level
+        if args.mode == "peak":
+            current_level = np.max(np.abs(audio_float))
+        else:  # rms
+            current_level = np.sqrt(np.mean(audio_float ** 2))
+
+        if current_level == 0:
+            raise CLIError("Audio file is silent, cannot normalize")
+
+        # Calculate gain
+        target_linear = 10 ** (args.target / 20)
+        gain = target_linear / current_level
+
+        # Apply gain
+        normalized = audio_float * gain
+
+        # Clip to prevent overflow
+        normalized = np.clip(normalized, -1.0, 1.0)
+
+        # Convert back to original format
+        if audio_data.dtype == np.int16:
+            normalized_int = (normalized * 32767).astype(np.int16)
+            output_bytes = normalized_int.tobytes()
+        elif audio_data.dtype == np.int32:
+            normalized_int = (normalized * 2147483647).astype(np.int32)
+            output_bytes = normalized_int.tobytes()
+        else:
+            output_bytes = normalized.tobytes()
+
+    # Write output file
+    file_type = _get_file_type_for_extension(output_path)
+    try:
+        with cm.ExtendedAudioFile.create(str(output_path), file_type, source_format) as out_file:
+            num_frames = len(output_bytes) // source_format.bytes_per_frame
+            out_file.write(num_frames, output_bytes)
+    except Exception as e:
+        raise CLIError(f"Failed to write output file: {e}")
+
+    # Calculate levels for output
+    current_db = 20 * math.log10(current_level) if current_level > 0 else float("-inf")
+    gain_db = 20 * math.log10(gain) if gain > 0 else 0
+
+    if args.json:
+        output_json({
+            "input": str(input_path.absolute()),
+            "output": str(output_path.absolute()),
+            "mode": args.mode,
+            "original_level_db": current_db,
+            "target_level_db": args.target,
+            "gain_applied_db": gain_db,
+        })
+    else:
+        print(f"Normalized: {input_path.name} -> {output_path.name}")
+        print(f"  Mode:     {args.mode}")
+        print(f"  Original: {current_db:.1f} dB")
+        print(f"  Target:   {args.target:.1f} dB")
+        print(f"  Gain:     {gain_db:+.1f} dB")
+
+    return EXIT_SUCCESS
+
+
+def cmd_trim(args: argparse.Namespace) -> int:
+    """Trim audio to time range."""
+    import numpy as np
+
+    import coremusic as cm
+
+    from ._utils import require_numpy
+
+    require_numpy()
+
+    input_path = require_file(args.input)
+    output_path = Path(args.output)
+
+    # Open source file and read all data
+    with cm.AudioFile(str(input_path)) as source:
+        source_format = source.format
+        duration = source.duration
+        sample_rate = source_format.sample_rate
+        audio_data = source.read_as_numpy()
+
+    # Calculate start and end frames
+    start_frame = int(args.start * sample_rate)
+
+    if args.duration is not None:
+        end_frame = start_frame + int(args.duration * sample_rate)
+    elif args.end is not None:
+        end_frame = int(args.end * sample_rate)
+    else:
+        end_frame = len(audio_data)
+
+    # Validate range
+    total_frames = len(audio_data)
+    if start_frame < 0:
+        start_frame = 0
+    if end_frame > total_frames:
+        end_frame = total_frames
+    if start_frame >= end_frame:
+        raise CLIError(f"Invalid time range: start ({args.start}s) >= end ({end_frame / sample_rate:.3f}s)")
+
+    # Extract the trimmed portion
+    trimmed_data = audio_data[start_frame:end_frame]
+    frames_read = len(trimmed_data)
+
+    # Convert to bytes
+    trimmed_bytes = trimmed_data.tobytes()
+
+    # Calculate actual times
+    actual_start = start_frame / sample_rate
+    actual_end = end_frame / sample_rate
+    actual_duration = actual_end - actual_start
+
+    # Write output file
+    file_type = _get_file_type_for_extension(output_path)
+    try:
+        with cm.ExtendedAudioFile.create(str(output_path), file_type, source_format) as out_file:
+            out_file.write(frames_read, trimmed_bytes)
+    except Exception as e:
+        raise CLIError(f"Failed to write output file: {e}")
+
+    if args.json:
+        output_json({
+            "input": str(input_path.absolute()),
+            "output": str(output_path.absolute()),
+            "original_duration": duration,
+            "start_time": actual_start,
+            "end_time": actual_end,
+            "trimmed_duration": actual_duration,
+            "frames_written": frames_read,
+        })
+    else:
+        from ._formatters import format_duration
+        print(f"Trimmed: {input_path.name} -> {output_path.name}")
+        print(f"  Original: {format_duration(duration)}")
+        print(f"  Range:    {format_duration(actual_start)} - {format_duration(actual_end)}")
+        print(f"  Duration: {format_duration(actual_duration)}")
 
     return EXIT_SUCCESS
