@@ -162,6 +162,7 @@ Documentation Contents
    :maxdepth: 2
    :caption: User Guide
 
+   quickstart
    getting_started
    guides/index
    tutorials/index

@@ -21,6 +21,8 @@ htmlcov/
 .coverage.*
 coverage.xml
 *.cover
+.venv
+venv
 
 # Backup files
 *.bak

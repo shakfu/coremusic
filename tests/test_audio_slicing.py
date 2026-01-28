@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Tests for audio slicing and recombination module."""
+from __future__ import annotations
 
 import sys
 from pathlib import Path

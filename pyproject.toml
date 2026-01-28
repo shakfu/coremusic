@@ -2,7 +2,7 @@
 name = "coremusic"
 version = "0.1.11"
 authors = [
-  { name="Shakeeb Alireza", email="author@example.com" },
+    { name = "Shakeeb Alireza", email = "shakfu@users.noreply.github.com" }
 ]
 description = "Python bindings for Apple CoreAudio"
 readme = "README.md"
@@ -54,11 +54,32 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools >= 61", "cython >= 3.1.4"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.8", "cython"]
+build-backend = "scikit_build_core.build"
 
-[tool.setuptools]
-include-package-data = false
+[tool.scikit-build]
+wheel.packages = ["src/coremusic"]
+cmake.build-type = "Release"
+sdist.include = [
+    "thirdparty",
+    "src/coremusic/*.pyi", 
+    "src/coremusic/*.pxd", 
+    "src/coremusic/*.pyx", 
+    "src/coremusic/*.c", 
+    "src/coremusic/*.cpp", 
+    "src/coremusic/py.typed",
+
+    # Thirdparty: Ableton Link headers
+    "thirdparty/link/include/**/*.hpp",
+    "thirdparty/link/include/**/*.ipp",
+    "thirdparty/link/modules/asio-standalone/asio/include/**/*.hpp",
+    "thirdparty/link/modules/asio-standalone/asio/include/**/*.ipp",
+]
+
+sdist.exclude = [".git/", "*.egg-info/"]
+wheel.exclude = ["**.pyx", "**.pxd", "**.pxi", "**.c", "**.cpp", "**.h", "**.hpp"]
+
+
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

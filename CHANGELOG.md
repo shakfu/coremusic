@@ -17,6 +17,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Changed
+
+- **Build System Migration** - Converted from setuptools to scikit-build-core with CMake
+  - Replaced `setup.py` with `CMakeLists.txt` for building Cython extensions
+  - `capi` module: C extension with CoreAudio/CoreMIDI/AudioToolbox frameworks
+  - `link` module: C++11 extension with Ableton Link headers
+  - Cython directives (`language_level=3`, `embedsignature=True`) passed via CMake
+  - macOS-only build configuration (removed Windows/Linux conditionals)
+
+- **Makefile Improvements** - Consolidated and enhanced build targets
+  - `test` now excludes slow tests by default (`-m "not slow"`)
+  - `test-all` runs complete test suite including slow tests
+  - `release` builds wheels for Python 3.11-3.14
+  - `typecheck` now checks full `src/coremusic` directory
+  - Added `isort`, `docs-clean`, `docs-serve`, `docs-pdf`, `docs-linkcheck` targets
+  - Fixed `clean` to not delete `.so` files from `.venv`
+  - Organized `help` output into categories
+
+### Fixed
+
+- **Test Collection Error** - Added `from __future__ import annotations` to `tests/test_audio_slicing.py` to fix `NameError` when numpy type hints were evaluated at class definition time
+
 ## [0.1.11]
 
 ### Changed
