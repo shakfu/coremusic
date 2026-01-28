@@ -156,7 +156,7 @@ pipeline.apply(seq).save("output.mid")
 ```python
 from coremusic.music.theory import Note, Scale, ScaleType, Chord, ChordType
 
-c4 = Note.from_name("C4")
+c4 = Note.from_midi(60)  # Middle C
 c_major = Scale(c4, ScaleType.MAJOR)
 cmaj7 = Chord(c4, ChordType.MAJOR_7)
 ```
@@ -230,8 +230,37 @@ make test-all       # All tests (1600+)
 
 ## Documentation
 
+### Getting Started
+
+- **[Quick Start Guide](docs/quickstart.rst)**: 5-minute introduction to coremusic
+
+### Tutorials
+
+Step-by-step guides for common tasks:
+
+- **[Audio Playback](docs/tutorials/audio_playback.rst)**: Simple to advanced playback, looping, streaming, effects
+- **[Audio Recording](docs/tutorials/audio_recording.rst)**: Recording from input devices, monitoring, formats
+- **[MIDI Basics](docs/tutorials/midi_basics.rst)**: Devices, messages, sending/receiving MIDI
+- **[Effects Processing](docs/tutorials/effects_processing.rst)**: AudioUnit effects chains, parameters, presets
+
+### Reference
+
 - **[Link Integration Guide](docs/link_integration.md)**: Ableton Link with CoreAudio/CoreMIDI
 - **[Error Handling Guide](docs/ERROR_DECORATOR.md)**: OSStatus codes, exceptions
+
+### Executable Examples
+
+The `tests/tutorials/` directory contains doctest-based tutorials that serve as both documentation and tests:
+
+```bash
+# Run all tutorial doctests
+pytest tests/tutorials/ --doctest-modules -v
+
+# Run specific tutorial
+pytest tests/tutorials/test_audio_file_basics.py --doctest-modules -v
+```
+
+Available tutorials: `test_quickstart.py`, `test_audio_file_basics.py`, `test_midi_basics.py`, `test_effects_processing.py`, `test_music_theory.py`
 
 ## Resources
 

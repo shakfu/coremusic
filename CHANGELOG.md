@@ -35,6 +35,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - Fixed `clean` to not delete `.so` files from `.venv`
   - Organized `help` output into categories
 
+### Added
+
+- **Comprehensive Documentation** - New tutorials, quick-start guide, and doctest examples
+  - `docs/quickstart.rst` - 5-minute getting started guide
+  - `docs/tutorials/audio_playback.rst` - Audio playback from simple to advanced
+  - `docs/tutorials/audio_recording.rst` - Recording from input devices
+  - `docs/tutorials/effects_processing.rst` - AudioUnit effects processing
+  - `docs/tutorials/midi_basics.rst` - MIDI fundamentals and message handling
+
+- **Doctest Tutorial Suite** - 84 executable doctests in `tests/tutorials/`
+  - `test_audio_file_basics.py` - Audio file operations (12 tests)
+  - `test_midi_basics.py` - MIDI device and message handling (13 tests)
+  - `test_effects_processing.py` - AudioUnit effects (17 tests)
+  - `test_music_theory.py` - Notes, scales, chords, intervals (18 tests)
+  - `test_quickstart.py` - Quick reference examples (24 tests)
+
 ### Fixed
 
 - **Test Collection Error** - Added `from __future__ import annotations` to `tests/test_audio_slicing.py` to fix `NameError` when numpy type hints were evaluated at class definition time
