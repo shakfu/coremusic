@@ -331,6 +331,19 @@ class AudioDeviceManager:
     Provides static methods for device discovery and retrieval.
     """
 
+    def __repr__(self) -> str:
+        devices = self.get_devices()
+        return f"AudioDeviceManager({len(devices)} devices)"
+
+    @staticmethod
+    def get_all_devices() -> List[AudioDevice]:
+        """Get all available audio devices (alias for get_devices)
+
+        Returns:
+            List of AudioDevice objects
+        """
+        return AudioDeviceManager.get_devices()
+
     @staticmethod
     def get_devices() -> List[AudioDevice]:
         """Get all available audio devices

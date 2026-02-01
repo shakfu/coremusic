@@ -34,6 +34,10 @@ class MIDIPort(capi.CoreAudioObject):
     def name(self) -> str:
         return self._name
 
+    def __repr__(self) -> str:
+        status = "disposed" if self.is_disposed else "active"
+        return f"{self.__class__.__name__}({self._name!r}, {status})"
+
     def dispose(self) -> None:
         """Dispose of the MIDI port"""
         if not self.is_disposed:
@@ -131,6 +135,11 @@ class MIDIClient(capi.CoreAudioObject):
     @property
     def name(self) -> str:
         return self._name
+
+    def __repr__(self) -> str:
+        if self.is_disposed:
+            return f"MIDIClient({self._name!r}, disposed)"
+        return f"MIDIClient({self._name!r}, ports={len(self._ports)})"
 
     def create_input_port(self, name: str) -> MIDIInputPort:
         """Create a MIDI input port"""

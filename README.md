@@ -102,6 +102,29 @@ coremusic --json plugin list --type instrument
 
 ## Quick Start
 
+### One-Liner Convenience Functions
+
+```python
+import coremusic as cm
+
+# Quick playback
+cm.play("song.wav")                    # Blocking playback
+handle = cm.play_async("song.wav")     # Non-blocking, returns control handle
+handle.stop()                          # Stop when done
+
+# Quick analysis
+tempo = cm.analyze_tempo("song.wav")   # Get BPM
+key, mode = cm.analyze_key("song.wav") # Get musical key
+info = cm.get_info("song.wav")         # Get file metadata
+
+# Quick conversion
+cm.convert("input.wav", "output.mp3")
+
+# List resources
+devices = cm.list_devices()
+plugins = cm.list_plugins(type='effect')
+```
+
 ### Audio Files
 
 ```python

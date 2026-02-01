@@ -63,6 +63,9 @@ class AudioComponentDescription:
             "flags_mask": self.flags_mask,
         }
 
+    def __repr__(self) -> str:
+        return f"AudioComponentDescription({self.type!r}, {self.subtype!r}, {self.manufacturer!r})"
+
 
 class AudioComponent(capi.CoreAudioObject):
     """Audio component wrapper"""
@@ -98,6 +101,9 @@ class AudioComponent(capi.CoreAudioObject):
             return unit
         except Exception as e:
             raise AudioUnitError(f"Failed to create instance: {e}")
+
+    def __repr__(self) -> str:
+        return f"AudioComponent({self._description.type!r}, {self._description.subtype!r})"
 
 
 class AudioUnit(capi.CoreAudioObject):
@@ -497,6 +503,12 @@ class AudioUnit(capi.CoreAudioObject):
             "Direct rendering not yet implemented. "
             "Use the audio player infrastructure with render callbacks for real-time audio."
         )
+
+    def __repr__(self) -> str:
+        if self.is_disposed:
+            return f"AudioUnit({self._description.subtype!r}, disposed)"
+        status = "initialized" if self._is_initialized else "uninitialized"
+        return f"AudioUnit({self._description.subtype!r}, {status})"
 
     def __enter__(self):
         self.initialize()

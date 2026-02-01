@@ -24,6 +24,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - Usage: `eval "$(coremusic completion bash)"` (add to shell rc file)
   - Completes commands, subcommands, and audio file extensions
 
+- **Convenience Functions** - Added simple one-liner functions for common operations
+  - `cm.play("audio.wav")` - Quick audio playback (blocking or async)
+  - `cm.play_async("audio.wav")` - Non-blocking playback with control handle
+  - `cm.convert("input.wav", "output.mp3")` - Quick format conversion
+  - `cm.analyze_tempo("audio.wav")` - Get BPM
+  - `cm.analyze_key("audio.wav")` - Get musical key
+  - `cm.analyze_loudness("audio.wav")` - Get LUFS loudness
+  - `cm.get_duration("audio.wav")` - Get duration in seconds
+  - `cm.get_info("audio.wav")` - Get file metadata as dict
+  - `cm.list_devices()` - List audio devices
+  - `cm.list_plugins()` - List AudioUnit plugins
+
+- **Improved REPL Experience** - Added `__repr__` to all major classes
+  - Better introspection for AudioFile, AudioFormat, AudioQueue, MIDIClient, AudioUnit, etc.
+
 ### Changed
 
 - **CI/CD Enabled** - GitHub Actions workflow now triggers on push/PR to main and develop branches

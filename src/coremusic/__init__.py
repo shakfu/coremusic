@@ -207,6 +207,20 @@ from .os_status import (
     raises_on_error,
 )
 
+# Import shortcut functions for quick operations
+from .shortcuts import (
+    analyze_key,
+    analyze_loudness,
+    analyze_tempo,
+    convert,
+    get_duration,
+    get_info,
+    list_devices,
+    list_plugins,
+    play,
+    play_async,
+)
+
 __all__ = [
     # Base class
     "CoreAudioObject",
@@ -315,4 +329,15 @@ __all__ = [
     "midi",  # midi subpackage
     "utils",  # utils subpackage
     "os_status",  # os_status module
+    # Convenience functions
+    "play",
+    "play_async",
+    "convert",
+    "analyze_tempo",
+    "analyze_key",
+    "analyze_loudness",
+    "get_duration",
+    "get_info",
+    "list_devices",
+    "list_plugins",
 ]

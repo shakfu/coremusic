@@ -546,6 +546,10 @@ class AudioFileStream(capi.CoreAudioObject):
         except Exception as e:
             raise AudioFileError(f"Failed to get property: {e}")
 
+    def __repr__(self) -> str:
+        status = "open" if self._is_open else "closed"
+        return f"AudioFileStream({status})"
+
     def dispose(self) -> None:
         """Dispose of the audio file stream"""
         if not self.is_disposed:
@@ -1081,6 +1085,9 @@ class AudioBuffer(capi.CoreAudioObject):
     def buffer_size(self) -> int:
         return self._buffer_size
 
+    def __repr__(self) -> str:
+        return f"AudioBuffer(size={self._buffer_size})"
+
 
 class AudioQueue(capi.CoreAudioObject):
     """Audio queue for buffered playback and recording"""
@@ -1136,6 +1143,11 @@ class AudioQueue(capi.CoreAudioObject):
             capi.audio_queue_stop(self.object_id, immediate)
         except Exception as e:
             raise AudioQueueError(f"Failed to stop queue: {e}")
+
+    def __repr__(self) -> str:
+        if self.is_disposed:
+            return "AudioQueue(disposed)"
+        return f"AudioQueue({self._format.sample_rate}Hz, {self._format.channels_per_frame}ch, buffers={len(self._buffers)})"
 
     def dispose(self, immediate: bool = True) -> None:
         """Dispose of the audio queue"""
