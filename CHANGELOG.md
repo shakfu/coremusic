@@ -17,12 +17,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.1.13]
+
 ### Added
 
 - **Batch Convert Progress Bar** - Added progress indicator for `coremusic convert batch`
   - Shows ASCII progress bar with file count and percentage during conversion
   - Errors collected and displayed at end instead of inline
   - Cleaner output: `[==============================] 50/50 (100%)`
+
+- **Rhythm and Meter Module** - Added rhythm/meter representation to music theory
+  - `NoteValue` enum: whole, half, quarter, eighth, sixteenth with dotted/triplet support
+  - `TimeSignature` class: meter classification, beat/measure calculations, grid quantization
+  - `Duration` class: note values with dots and tuplet modifiers
+  - `RhythmPattern` class: rhythmic sequences with onset positions and tempo scaling
+  - `COMMON_PATTERNS`: four_on_floor, eighth_notes, sixteenth_notes presets
+  - Enhances MIDI quantization, tempo analysis, and sequence generation
 
 - **Shell Completion** - Added `coremusic completion` command for shell autocompletion
   - Supports bash, zsh, and fish shells

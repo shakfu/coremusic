@@ -1149,9 +1149,10 @@ cdef extern from "AudioToolbox/MusicPlayer.h":
     ctypedef Float64 MusicTimeStamp
     ctypedef UInt32 MusicEventType
 
-    # Forward declarations for missing types
-    ctypedef void* AUGraph
-    ctypedef UInt32 AUNode
+    # Forward declarations (must match AUGraph section declarations)
+    ctypedef struct OpaqueAUGraph
+    ctypedef OpaqueAUGraph* AUGraph
+    ctypedef SInt32 AUNode
 
     # Event types constants
     ctypedef enum:
@@ -1365,10 +1366,7 @@ cdef extern from "AudioToolbox/MusicPlayer.h":
 
 cdef extern from "AudioToolbox/AUGraph.h":
 
-    # Type definitions
-    ctypedef struct OpaqueAUGraph
-    ctypedef OpaqueAUGraph* AUGraph
-    ctypedef SInt32 AUNode
+    # Note: AUGraph and AUNode types are forward-declared in MusicPlayer section above
 
     # Error codes
     ctypedef enum:

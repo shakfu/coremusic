@@ -19,7 +19,7 @@ A zero-dependency music development toolkit for macOS providing Python access to
 
 **MIDI**: Device discovery, virtual devices, routing, transformation pipeline (transpose, quantize, humanize, harmonize)
 
-**Music Theory**: 25+ scales, 35+ chords, Note/Interval/Scale/Chord classes
+**Music Theory**: 25+ scales, 35+ chords, Note/Interval/Scale/Chord classes, time signatures, rhythmic patterns
 
 ## Installation
 
@@ -230,6 +230,19 @@ from coremusic.music.theory import Note, Scale, ScaleType, Chord, ChordType
 c4 = Note.from_midi(60)  # Middle C
 c_major = Scale(c4, ScaleType.MAJOR)
 cmaj7 = Chord(c4, ChordType.MAJOR_7)
+```
+
+### Rhythm and Meter
+
+```python
+from coremusic.music.theory import TimeSignature, NoteValue, Duration, RhythmPattern
+
+ts = TimeSignature(4, 4)
+dotted_quarter = Duration(NoteValue.QUARTER, dots=1)
+triplet = Duration.triplet(NoteValue.EIGHTH)
+
+pattern = RhythmPattern.straight_eighths(8)
+onset_times = pattern.scale_to_tempo(120)  # At 120 BPM
 ```
 
 ### Ableton Link

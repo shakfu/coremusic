@@ -333,7 +333,7 @@ cdef extern from "CoreAudio/CoreAudio.h":
         UInt32              mBitsPerChannel
         UInt32              mReserved
 
-    cdef Float64    kAudioStreamAnyRate = 0.0
+    const Float64 kAudioStreamAnyRate
 
     ctypedef enum:
         kAudioFormatLinearPCM = 1819304813

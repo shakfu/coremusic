@@ -23,6 +23,13 @@ from coremusic.music.theory import (
     CIRCLE_OF_FIFTHS,
     note_name_to_midi,
     midi_to_note_name,
+    # Rhythm classes
+    NoteValue,
+    MeterType,
+    TimeSignature,
+    Duration,
+    RhythmPattern,
+    COMMON_PATTERNS,
 )
 
 
@@ -643,3 +650,278 @@ class TestKeySignaturesAndCircleOfFifths:
         assert 'G' in CIRCLE_OF_FIFTHS
         assert 'F' in CIRCLE_OF_FIFTHS
         assert len(CIRCLE_OF_FIFTHS) == 12
+
+
+# ============================================================================
+# Rhythm and Meter Tests
+# ============================================================================
+
+
+class TestNoteValue:
+    """Tests for NoteValue enum."""
+
+    def test_note_value_beats(self):
+        """Test beat values for standard note durations."""
+        assert NoteValue.WHOLE.beats == 1.0
+        assert NoteValue.HALF.beats == 0.5
+        assert NoteValue.QUARTER.beats == 0.25
+        assert NoteValue.EIGHTH.beats == 0.125
+        assert NoteValue.SIXTEENTH.beats == 0.0625
+
+    def test_dotted_values(self):
+        """Test dotted note durations."""
+        # Dotted quarter = 1.5 * quarter
+        assert NoteValue.QUARTER.dotted(1) == 0.375
+        # Double dotted = 1.75 * original
+        assert NoteValue.QUARTER.dotted(2) == 0.4375
+
+    def test_triplet_values(self):
+        """Test triplet durations."""
+        # Triplet = 2/3 of original
+        assert abs(NoteValue.QUARTER.triplet() - 0.25 * (2/3)) < 0.0001
+        assert abs(NoteValue.EIGHTH.triplet() - 0.125 * (2/3)) < 0.0001
+
+    def test_ticks_per_quarter(self):
+        """Test MIDI tick calculations."""
+        # At 480 PPQN, quarter = 480 ticks
+        assert NoteValue.QUARTER.ticks_per_quarter == 480
+        assert NoteValue.HALF.ticks_per_quarter == 960
+        assert NoteValue.EIGHTH.ticks_per_quarter == 240
+
+    def test_from_beats(self):
+        """Test finding note value from beats."""
+        assert NoteValue.from_beats(0.25) == NoteValue.QUARTER
+        assert NoteValue.from_beats(0.5) == NoteValue.HALF
+        assert NoteValue.from_beats(0.125) == NoteValue.EIGHTH
+
+    def test_from_beats_invalid(self):
+        """Test that invalid beat values raise error."""
+        with pytest.raises(ValueError):
+            NoteValue.from_beats(0.33)  # No standard value
+
+
+class TestTimeSignature:
+    """Tests for TimeSignature class."""
+
+    def test_common_time(self):
+        """Test 4/4 time signature."""
+        ts = TimeSignature(4, 4)
+        assert ts.beats_per_measure == 4
+        assert ts.beat_duration == 0.25
+        assert ts.measure_duration == 1.0
+        assert ts.is_simple
+        assert not ts.is_compound
+        assert ts.meter_type == MeterType.SIMPLE_QUADRUPLE
+
+    def test_waltz_time(self):
+        """Test 3/4 time signature."""
+        ts = TimeSignature(3, 4)
+        assert ts.beats_per_measure == 3
+        assert ts.measure_duration == 0.75
+        assert ts.meter_type == MeterType.SIMPLE_TRIPLE
+
+    def test_compound_duple(self):
+        """Test 6/8 time signature (compound duple)."""
+        ts = TimeSignature(6, 8)
+        assert ts.is_compound
+        assert ts.beat_groups == 2
+        assert ts.meter_type == MeterType.COMPOUND_DUPLE
+
+    def test_compound_triple(self):
+        """Test 9/8 time signature (compound triple)."""
+        ts = TimeSignature(9, 8)
+        assert ts.is_compound
+        assert ts.beat_groups == 3
+        assert ts.meter_type == MeterType.COMPOUND_TRIPLE
+
+    def test_irregular_meter(self):
+        """Test 5/4 time signature (irregular)."""
+        ts = TimeSignature(5, 4)
+        assert ts.meter_type == MeterType.IRREGULAR
+
+    def test_beats_to_seconds(self):
+        """Test beat to seconds conversion."""
+        ts = TimeSignature(4, 4)
+        # At 120 BPM, one quarter = 0.5 seconds
+        assert ts.beats_to_seconds(1, 120) == 0.5
+        assert ts.beats_to_seconds(4, 120) == 2.0
+
+    def test_seconds_to_beats(self):
+        """Test seconds to beats conversion."""
+        ts = TimeSignature(4, 4)
+        # At 120 BPM, 0.5 seconds = 1 quarter
+        assert ts.seconds_to_beats(0.5, 120) == 1.0
+        assert ts.seconds_to_beats(2.0, 120) == 4.0
+
+    def test_quantize_to_grid(self):
+        """Test grid quantization."""
+        ts = TimeSignature(4, 4)
+        # Quantize to eighth notes
+        pos = ts.quantize_to_grid(0.52, NoteValue.EIGHTH, strength=1.0)
+        assert abs(pos - 0.5) < 0.001  # Should snap to 0.5
+
+    def test_get_beat_positions(self):
+        """Test getting beat positions."""
+        ts = TimeSignature(4, 4)
+        positions = ts.get_beat_positions(1)
+        assert positions == [0, 1, 2, 3]
+
+    def test_get_downbeats(self):
+        """Test getting downbeat positions."""
+        ts = TimeSignature(4, 4)
+        downbeats = ts.get_downbeats(4)
+        assert downbeats == [0, 4, 8, 12]
+
+    def test_class_constants(self):
+        """Test predefined time signatures."""
+        assert TimeSignature.COMMON_TIME == TimeSignature(4, 4)
+        assert TimeSignature.CUT_TIME == TimeSignature(2, 2)
+        assert TimeSignature.WALTZ_TIME == TimeSignature(3, 4)
+
+    def test_invalid_denominator(self):
+        """Test that invalid denominators raise error."""
+        with pytest.raises(ValueError):
+            TimeSignature(4, 5)  # Not a power of 2
+
+    def test_str_representation(self):
+        """Test string representation."""
+        ts = TimeSignature(6, 8)
+        assert str(ts) == "6/8"
+
+
+class TestDuration:
+    """Tests for Duration class."""
+
+    def test_basic_duration(self):
+        """Test basic duration without modifiers."""
+        d = Duration(NoteValue.QUARTER)
+        assert d.beats == 0.25
+        assert d.ticks == 480
+
+    def test_dotted_duration(self):
+        """Test dotted duration."""
+        d = Duration(NoteValue.QUARTER, dots=1)
+        assert d.beats == 0.375
+
+    def test_double_dotted(self):
+        """Test double dotted duration."""
+        d = Duration(NoteValue.QUARTER, dots=2)
+        assert d.beats == 0.4375
+
+    def test_triplet_duration(self):
+        """Test triplet duration."""
+        d = Duration(NoteValue.EIGHTH, tuplet=(3, 2))
+        expected = 0.125 * (2 / 3)
+        assert abs(d.beats - expected) < 0.0001
+
+    def test_triplet_factory(self):
+        """Test triplet factory method."""
+        d = Duration.triplet(NoteValue.QUARTER)
+        assert d.tuplet == (3, 2)
+
+    def test_dotted_factory(self):
+        """Test dotted factory method."""
+        d = Duration.dotted(NoteValue.HALF, dots=1)
+        assert d.dots == 1
+        assert d.value == NoteValue.HALF
+
+    def test_to_seconds(self):
+        """Test conversion to seconds."""
+        d = Duration(NoteValue.QUARTER)
+        # At 120 BPM, quarter = 0.5 seconds
+        assert d.to_seconds(120) == 0.5
+
+    def test_invalid_dots(self):
+        """Test that invalid dots raise error."""
+        with pytest.raises(ValueError):
+            Duration(NoteValue.QUARTER, dots=4)
+
+
+class TestRhythmPattern:
+    """Tests for RhythmPattern class."""
+
+    def test_total_beats(self):
+        """Test total beats calculation."""
+        pattern = RhythmPattern([
+            Duration(NoteValue.QUARTER),
+            Duration(NoteValue.QUARTER),
+            Duration(NoteValue.HALF),
+        ])
+        assert pattern.total_beats == 1.0
+
+    def test_fits_measure(self):
+        """Test measure fitting check."""
+        pattern = RhythmPattern([Duration(NoteValue.QUARTER) for _ in range(4)])
+        assert pattern.fits_measure(TimeSignature(4, 4))
+        assert not pattern.fits_measure(TimeSignature(3, 4))
+
+    def test_get_onset_positions(self):
+        """Test onset position calculation."""
+        pattern = RhythmPattern([
+            Duration(NoteValue.QUARTER),
+            Duration(NoteValue.QUARTER),
+            Duration(NoteValue.QUARTER),
+            Duration(NoteValue.QUARTER),
+        ])
+        positions = pattern.get_onset_positions()
+        assert positions == [0.0, 0.25, 0.5, 0.75]
+
+    def test_scale_to_tempo(self):
+        """Test scaling to tempo."""
+        pattern = RhythmPattern([
+            Duration(NoteValue.QUARTER),
+            Duration(NoteValue.QUARTER),
+        ])
+        times = pattern.scale_to_tempo(120)  # 120 BPM
+        assert times[0] == 0.0
+        assert times[1] == 0.5  # 0.25 * 4 * (60/120) = 0.5
+
+    def test_repeat(self):
+        """Test pattern repetition."""
+        pattern = RhythmPattern([Duration(NoteValue.QUARTER)])
+        repeated = pattern.repeat(4)
+        assert len(repeated) == 4
+        assert repeated.total_beats == 1.0
+
+    def test_from_string(self):
+        """Test creating pattern from string."""
+        pattern = RhythmPattern.from_string("xxxx", NoteValue.QUARTER)
+        assert len(pattern) == 4
+        assert pattern.total_beats == 1.0
+
+    def test_straight_eighths(self):
+        """Test straight eighths factory."""
+        pattern = RhythmPattern.straight_eighths(8)
+        assert len(pattern) == 8
+        assert pattern.total_beats == 1.0
+
+    def test_iteration(self):
+        """Test iterating over pattern."""
+        pattern = RhythmPattern([
+            Duration(NoteValue.QUARTER),
+            Duration(NoteValue.QUARTER),
+        ])
+        durations = list(pattern)
+        assert len(durations) == 2
+
+
+class TestCommonPatterns:
+    """Tests for predefined rhythm patterns."""
+
+    def test_four_on_floor(self):
+        """Test four on the floor pattern."""
+        pattern = COMMON_PATTERNS["four_on_floor"]
+        assert pattern.total_beats == 1.0
+        assert pattern.fits_measure(TimeSignature(4, 4))
+
+    def test_eighth_notes(self):
+        """Test eighth notes pattern."""
+        pattern = COMMON_PATTERNS["eighth_notes"]
+        assert len(pattern) == 8
+        assert pattern.total_beats == 1.0
+
+    def test_sixteenth_notes(self):
+        """Test sixteenth notes pattern."""
+        pattern = COMMON_PATTERNS["sixteenth_notes"]
+        assert len(pattern) == 16
+        assert pattern.total_beats == 1.0

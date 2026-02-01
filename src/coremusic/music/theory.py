@@ -7,6 +7,7 @@ This module provides foundational music theory constructs:
 - Scales (major, minor, modes, exotic scales)
 - Chords (triads, sevenths, extended, altered)
 - Key signatures and circle of fifths
+- Rhythm and meter (time signatures, note values, patterns)
 
 All classes are designed to work seamlessly with MIDI note numbers
 (0-127) while providing human-readable interfaces.
@@ -1047,3 +1048,573 @@ class ChordProgression:
     def __repr__(self) -> str:
         symbols = [str(c) for c in self.chords]
         return f"ChordProgression({symbols})"
+
+
+# ============================================================================
+# Rhythm and Meter
+# ============================================================================
+
+
+class NoteValue(Enum):
+    """Standard note duration values.
+
+    Values represent the fraction of a whole note (1.0 = whole note).
+
+    Example:
+        >>> NoteValue.QUARTER.beats  # 1.0 beat in 4/4
+        0.25
+        >>> NoteValue.EIGHTH.beats
+        0.125
+    """
+    WHOLE = 1.0
+    HALF = 0.5
+    QUARTER = 0.25
+    EIGHTH = 0.125
+    SIXTEENTH = 0.0625
+    THIRTY_SECOND = 0.03125
+    SIXTY_FOURTH = 0.015625
+
+    # Common aliases
+    SEMIBREVE = 1.0
+    MINIM = 0.5
+    CROTCHET = 0.25
+    QUAVER = 0.125
+    SEMIQUAVER = 0.0625
+
+    @property
+    def beats(self) -> float:
+        """Duration as fraction of whole note."""
+        return self.value
+
+    @property
+    def ticks_per_quarter(self) -> float:
+        """Duration in ticks at 480 PPQN (standard MIDI resolution)."""
+        return self.value * 4 * 480  # 4 quarters per whole * 480 ticks per quarter
+
+    def dotted(self, dots: int = 1) -> float:
+        """Return duration with dots applied.
+
+        Args:
+            dots: Number of dots (1 = 1.5x, 2 = 1.75x, etc.)
+
+        Returns:
+            Duration as fraction of whole note
+        """
+        multiplier = sum(0.5 ** i for i in range(dots + 1))
+        return self.value * multiplier
+
+    def triplet(self) -> float:
+        """Return triplet duration (2/3 of normal)."""
+        return self.value * (2 / 3)
+
+    @classmethod
+    def from_beats(cls, beats: float, tolerance: float = 0.001) -> 'NoteValue':
+        """Find closest note value for a beat duration.
+
+        Args:
+            beats: Duration as fraction of whole note
+            tolerance: Matching tolerance
+
+        Returns:
+            Closest NoteValue
+
+        Raises:
+            ValueError: If no close match found
+        """
+        for nv in cls:
+            if abs(nv.value - beats) < tolerance:
+                return nv
+        raise ValueError(f"No standard note value for {beats} beats")
+
+
+class MeterType(Enum):
+    """Meter classification."""
+    SIMPLE_DUPLE = "simple_duple"      # 2/4
+    SIMPLE_TRIPLE = "simple_triple"    # 3/4
+    SIMPLE_QUADRUPLE = "simple_quadruple"  # 4/4
+    COMPOUND_DUPLE = "compound_duple"  # 6/8
+    COMPOUND_TRIPLE = "compound_triple"  # 9/8
+    COMPOUND_QUADRUPLE = "compound_quadruple"  # 12/8
+    IRREGULAR = "irregular"  # 5/4, 7/8, etc.
+
+
+@dataclass(frozen=True)
+class TimeSignature:
+    """Time signature representation.
+
+    Represents a musical time signature with numerator (beats per measure)
+    and denominator (beat unit as fraction of whole note).
+
+    Attributes:
+        numerator: Number of beats per measure
+        denominator: Beat unit (4 = quarter, 8 = eighth, etc.)
+
+    Example:
+        >>> ts = TimeSignature(4, 4)  # Common time
+        >>> ts.beats_per_measure
+        4
+        >>> ts.beat_duration
+        0.25
+        >>> ts.measure_duration
+        1.0
+        >>>
+        >>> ts = TimeSignature(6, 8)  # Compound duple
+        >>> ts.is_compound
+        True
+        >>> ts.beat_groups
+        2
+    """
+    numerator: int
+    denominator: int
+
+    # Common time signatures as class constants
+    COMMON_TIME: ClassVar['TimeSignature']
+    CUT_TIME: ClassVar['TimeSignature']
+    WALTZ_TIME: ClassVar['TimeSignature']
+
+    def __post_init__(self) -> None:
+        if self.numerator < 1:
+            raise ValueError("Numerator must be positive")
+        if self.denominator not in (1, 2, 4, 8, 16, 32):
+            raise ValueError("Denominator must be a power of 2 (1, 2, 4, 8, 16, 32)")
+
+    @property
+    def beats_per_measure(self) -> int:
+        """Number of beats per measure."""
+        return self.numerator
+
+    @property
+    def beat_duration(self) -> float:
+        """Duration of one beat as fraction of whole note."""
+        return 1.0 / self.denominator
+
+    @property
+    def measure_duration(self) -> float:
+        """Duration of one measure as fraction of whole note."""
+        return self.numerator / self.denominator
+
+    @property
+    def measure_ticks(self) -> int:
+        """Duration of one measure in ticks at 480 PPQN."""
+        return int(self.measure_duration * 4 * 480)
+
+    @property
+    def beat_ticks(self) -> int:
+        """Duration of one beat in ticks at 480 PPQN."""
+        return int(self.beat_duration * 4 * 480)
+
+    @property
+    def is_compound(self) -> bool:
+        """True if this is a compound meter (beats subdivide into 3)."""
+        return self.numerator in (6, 9, 12) and self.denominator == 8
+
+    @property
+    def is_simple(self) -> bool:
+        """True if this is a simple meter (beats subdivide into 2)."""
+        return not self.is_compound and self.numerator in (2, 3, 4)
+
+    @property
+    def beat_groups(self) -> int:
+        """Number of main beat groups per measure.
+
+        For compound meters, this is numerator/3.
+        For simple meters, this equals numerator.
+        """
+        if self.is_compound:
+            return self.numerator // 3
+        return self.numerator
+
+    @property
+    def meter_type(self) -> MeterType:
+        """Classify the meter type."""
+        if self.is_compound:
+            groups = self.beat_groups
+            if groups == 2:
+                return MeterType.COMPOUND_DUPLE
+            elif groups == 3:
+                return MeterType.COMPOUND_TRIPLE
+            elif groups == 4:
+                return MeterType.COMPOUND_QUADRUPLE
+        elif self.is_simple:
+            if self.numerator == 2:
+                return MeterType.SIMPLE_DUPLE
+            elif self.numerator == 3:
+                return MeterType.SIMPLE_TRIPLE
+            elif self.numerator == 4:
+                return MeterType.SIMPLE_QUADRUPLE
+        return MeterType.IRREGULAR
+
+    def beats_to_seconds(self, beats: float, tempo: float) -> float:
+        """Convert beats to seconds at given tempo.
+
+        Args:
+            beats: Number of beats (in denominator units)
+            tempo: Tempo in BPM (quarter notes per minute)
+
+        Returns:
+            Duration in seconds
+        """
+        # Convert to quarter notes, then to seconds
+        quarter_notes = beats * (4 / self.denominator)
+        return quarter_notes * (60 / tempo)
+
+    def seconds_to_beats(self, seconds: float, tempo: float) -> float:
+        """Convert seconds to beats at given tempo.
+
+        Args:
+            seconds: Duration in seconds
+            tempo: Tempo in BPM
+
+        Returns:
+            Number of beats (in denominator units)
+        """
+        quarter_notes = seconds * (tempo / 60)
+        return quarter_notes * (self.denominator / 4)
+
+    def quantize_to_grid(self, position: float, grid: NoteValue,
+                         strength: float = 1.0) -> float:
+        """Quantize a position to a rhythmic grid.
+
+        Args:
+            position: Position in beats (denominator units)
+            grid: Grid resolution
+            strength: Quantize strength 0.0-1.0 (1.0 = full snap)
+
+        Returns:
+            Quantized position
+        """
+        # Convert grid to same units as position
+        grid_beats = grid.beats * self.denominator
+        nearest = round(position / grid_beats) * grid_beats
+        return position + (nearest - position) * strength
+
+    def get_beat_positions(self, measures: int = 1) -> List[float]:
+        """Get beat positions within measures.
+
+        Args:
+            measures: Number of measures
+
+        Returns:
+            List of beat positions (in denominator units)
+        """
+        positions = []
+        for m in range(measures):
+            for b in range(self.numerator):
+                positions.append(m * self.numerator + b)
+        return positions
+
+    def get_downbeats(self, measures: int = 1) -> List[float]:
+        """Get downbeat (first beat) positions.
+
+        Args:
+            measures: Number of measures
+
+        Returns:
+            List of downbeat positions
+        """
+        return [m * self.numerator for m in range(measures)]
+
+    def __str__(self) -> str:
+        return f"{self.numerator}/{self.denominator}"
+
+    def __repr__(self) -> str:
+        return f"TimeSignature({self.numerator}, {self.denominator})"
+
+
+# Initialize class constants after class definition
+TimeSignature.COMMON_TIME = TimeSignature(4, 4)
+TimeSignature.CUT_TIME = TimeSignature(2, 2)
+TimeSignature.WALTZ_TIME = TimeSignature(3, 4)
+
+
+@dataclass
+class Duration:
+    """Rhythmic duration with dots and tuplet modifiers.
+
+    Represents a musical duration that can include dotted notes
+    and tuplet ratios.
+
+    Attributes:
+        value: Base note value
+        dots: Number of dots (0-3)
+        tuplet: Tuplet ratio as (notes, in_space_of), e.g., (3, 2) for triplet
+
+    Example:
+        >>> d = Duration(NoteValue.QUARTER)
+        >>> d.beats
+        0.25
+        >>>
+        >>> d = Duration(NoteValue.QUARTER, dots=1)  # Dotted quarter
+        >>> d.beats
+        0.375
+        >>>
+        >>> d = Duration(NoteValue.EIGHTH, tuplet=(3, 2))  # Eighth triplet
+        >>> d.beats  # 0.125 * (2/3)
+        0.0833...
+    """
+    value: NoteValue
+    dots: int = 0
+    tuplet: Optional[Tuple[int, int]] = None
+
+    def __post_init__(self) -> None:
+        if self.dots < 0 or self.dots > 3:
+            raise ValueError("Dots must be 0-3")
+        if self.tuplet is not None:
+            n, space = self.tuplet
+            if n < 2 or space < 1:
+                raise ValueError("Invalid tuplet ratio")
+
+    @property
+    def beats(self) -> float:
+        """Total duration as fraction of whole note."""
+        base = self.value.beats
+
+        # Apply dots
+        if self.dots > 0:
+            multiplier = sum(0.5 ** i for i in range(self.dots + 1))
+            base *= multiplier
+
+        # Apply tuplet
+        if self.tuplet:
+            n, space = self.tuplet
+            base *= space / n
+
+        return base
+
+    @property
+    def ticks(self) -> int:
+        """Duration in ticks at 480 PPQN."""
+        return int(self.beats * 4 * 480)
+
+    def to_seconds(self, tempo: float) -> float:
+        """Convert to seconds at given tempo (BPM).
+
+        Args:
+            tempo: Tempo in quarter notes per minute
+
+        Returns:
+            Duration in seconds
+        """
+        quarter_notes = self.beats * 4
+        return quarter_notes * (60 / tempo)
+
+    @classmethod
+    def triplet(cls, value: NoteValue) -> 'Duration':
+        """Create a triplet duration.
+
+        Args:
+            value: Base note value
+
+        Returns:
+            Triplet duration
+        """
+        return cls(value, tuplet=(3, 2))
+
+    @classmethod
+    def dotted(cls, value: NoteValue, dots: int = 1) -> 'Duration':
+        """Create a dotted duration.
+
+        Args:
+            value: Base note value
+            dots: Number of dots
+
+        Returns:
+            Dotted duration
+        """
+        return cls(value, dots=dots)
+
+    def __repr__(self) -> str:
+        parts = [self.value.name]
+        if self.dots:
+            parts.append(f"dots={self.dots}")
+        if self.tuplet:
+            parts.append(f"tuplet={self.tuplet}")
+        return f"Duration({', '.join(parts)})"
+
+
+@dataclass
+class RhythmPattern:
+    """A sequence of rhythmic durations.
+
+    Represents a rhythmic pattern that can be used for quantization
+    templates, drum patterns, or rhythmic analysis.
+
+    Attributes:
+        durations: List of Duration objects
+        name: Optional pattern name
+
+    Example:
+        >>> # Create a basic rock beat pattern (in eighths)
+        >>> pattern = RhythmPattern([
+        ...     Duration(NoteValue.QUARTER),
+        ...     Duration(NoteValue.EIGHTH),
+        ...     Duration(NoteValue.EIGHTH),
+        ...     Duration(NoteValue.QUARTER),
+        ...     Duration(NoteValue.QUARTER),
+        ... ], name="basic_rock")
+        >>>
+        >>> pattern.total_beats
+        1.0  # One measure in 4/4
+        >>>
+        >>> pattern.fits_measure(TimeSignature(4, 4))
+        True
+    """
+    durations: List[Duration]
+    name: Optional[str] = None
+
+    @property
+    def total_beats(self) -> float:
+        """Total duration as fraction of whole note."""
+        return sum(d.beats for d in self.durations)
+
+    @property
+    def total_ticks(self) -> int:
+        """Total duration in ticks at 480 PPQN."""
+        return sum(d.ticks for d in self.durations)
+
+    def fits_measure(self, time_sig: TimeSignature) -> bool:
+        """Check if pattern fits exactly in one measure.
+
+        Args:
+            time_sig: Time signature to check against
+
+        Returns:
+            True if pattern equals one measure
+        """
+        return abs(self.total_beats - time_sig.measure_duration) < 0.001
+
+    def get_onset_positions(self) -> List[float]:
+        """Get onset positions for each duration.
+
+        Returns:
+            List of positions (in beats from start)
+        """
+        positions = []
+        pos = 0.0
+        for d in self.durations:
+            positions.append(pos)
+            pos += d.beats
+        return positions
+
+    def scale_to_tempo(self, tempo: float) -> List[float]:
+        """Get onset times in seconds at given tempo.
+
+        Args:
+            tempo: Tempo in BPM
+
+        Returns:
+            List of onset times in seconds
+        """
+        positions = self.get_onset_positions()
+        # Convert from whole-note fractions to seconds
+        # beats * 4 = quarter notes, * 60/tempo = seconds
+        return [p * 4 * (60 / tempo) for p in positions]
+
+    def repeat(self, times: int) -> 'RhythmPattern':
+        """Create a repeated pattern.
+
+        Args:
+            times: Number of repetitions
+
+        Returns:
+            New pattern with repetitions
+        """
+        return RhythmPattern(
+            durations=self.durations * times,
+            name=f"{self.name}_x{times}" if self.name else None
+        )
+
+    @classmethod
+    def from_string(cls, pattern: str, base_value: NoteValue = NoteValue.EIGHTH,
+                    name: Optional[str] = None) -> 'RhythmPattern':
+        """Create pattern from string notation.
+
+        Uses 'x' for notes and '.' for rests. Each character represents
+        the base_value duration.
+
+        Args:
+            pattern: Pattern string (e.g., "x.x.x.x." for off-beats)
+            base_value: Duration for each character
+            name: Optional pattern name
+
+        Returns:
+            RhythmPattern instance
+
+        Example:
+            >>> p = RhythmPattern.from_string("xxxx", NoteValue.QUARTER)
+            >>> p.total_beats
+            1.0
+        """
+        durations = []
+        for char in pattern:
+            if char in ('x', 'X', '1'):
+                durations.append(Duration(base_value))
+            elif char in ('.', '0', '-'):
+                durations.append(Duration(base_value))  # Rest treated as duration
+        return cls(durations, name=name)
+
+    @classmethod
+    def straight_eighths(cls, count: int = 8) -> 'RhythmPattern':
+        """Create straight eighth note pattern.
+
+        Args:
+            count: Number of eighth notes
+
+        Returns:
+            Pattern of straight eighth notes
+        """
+        return cls(
+            [Duration(NoteValue.EIGHTH) for _ in range(count)],
+            name="straight_eighths"
+        )
+
+    @classmethod
+    def swing_eighths(cls, count: int = 8, swing_ratio: float = 2/3) -> 'RhythmPattern':
+        """Create swung eighth note pattern.
+
+        Args:
+            count: Number of eighth note pairs (will create count*2 durations)
+            swing_ratio: Ratio of first note duration (default 2/3 for triplet swing)
+
+        Returns:
+            Pattern with alternating long-short eighths
+        """
+        durations = []
+        eighth = NoteValue.EIGHTH.beats
+        for _ in range(count):
+            long = Duration(NoteValue.EIGHTH)
+            long_beats = eighth * (swing_ratio * 2)
+            short_beats = eighth * ((1 - swing_ratio) * 2)
+            # Approximate with closest values - in practice use tuplets
+            durations.append(Duration(NoteValue.EIGHTH, tuplet=(3, 2)))
+            durations.append(Duration(NoteValue.SIXTEENTH, tuplet=(3, 2)))
+        return cls(durations, name="swing_eighths")
+
+    def __len__(self) -> int:
+        return len(self.durations)
+
+    def __iter__(self) -> Iterator[Duration]:
+        return iter(self.durations)
+
+    def __repr__(self) -> str:
+        name_str = f", name='{self.name}'" if self.name else ""
+        return f"RhythmPattern({len(self.durations)} durations, total={self.total_beats:.3f}{name_str})"
+
+
+# Common rhythm patterns
+COMMON_PATTERNS = {
+    "four_on_floor": RhythmPattern(
+        [Duration(NoteValue.QUARTER) for _ in range(4)],
+        name="four_on_floor"
+    ),
+    "backbeat": RhythmPattern(
+        [Duration(NoteValue.QUARTER), Duration(NoteValue.QUARTER),
+         Duration(NoteValue.QUARTER), Duration(NoteValue.QUARTER)],
+        name="backbeat"
+    ),
+    "eighth_notes": RhythmPattern.straight_eighths(8),
+    "sixteenth_notes": RhythmPattern(
+        [Duration(NoteValue.SIXTEENTH) for _ in range(16)],
+        name="sixteenth_notes"
+    ),
+}
