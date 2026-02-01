@@ -17,6 +17,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- **Shell Completion** - Added `coremusic completion` command for shell autocompletion
+  - Supports bash, zsh, and fish shells
+  - Usage: `eval "$(coremusic completion bash)"` (add to shell rc file)
+  - Completes commands, subcommands, and audio file extensions
+
+### Changed
+
+- **CI/CD Enabled** - GitHub Actions workflow now triggers on push/PR to main and develop branches
+  - Previously was manual dispatch only (`workflow_dispatch`)
+  - Runs tests on Python 3.11, 3.12, 3.13, 3.14
+
+- **Dynamic Version** - CLI version now uses `importlib.metadata` instead of hardcoded string
+  - Fixes version mismatch between CLI and package metadata
+  - Falls back gracefully during development
+
+- **Objects Module Refactored** - Split monolithic `objects.py` (3700+ lines) into `objects/` subpackage
+  - `objects/audio.py` - AudioFormat, AudioFile, AudioFileStream, AudioConverter, ExtendedAudioFile, AudioBuffer, AudioQueue
+  - `objects/audiounit.py` - AudioComponentDescription, AudioComponent, AudioUnit
+  - `objects/midi.py` - MIDIPort, MIDIInputPort, MIDIOutputPort, MIDIClient
+  - `objects/devices.py` - AudioDevice, AudioDeviceManager
+  - `objects/augraph.py` - AUGraph
+  - `objects/clock.py` - ClockTimeFormat, AudioClock
+  - `objects/music.py` - MusicTrack, MusicSequence, MusicPlayer
+  - `objects/exceptions.py` - All exception classes
+  - Backward compatible: all existing imports continue to work
+
 ## [0.1.12]
 
 ### Changed

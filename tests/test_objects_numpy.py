@@ -250,8 +250,9 @@ class TestAudioFileNumPy:
 
     def test_read_as_numpy_no_numpy_raises(self, test_audio_file, monkeypatch):
         """Test that read_as_numpy raises if NumPy not available"""
-        # Temporarily mock NUMPY_AVAILABLE to False
-        monkeypatch.setattr(cm.objects, "NUMPY_AVAILABLE", False)
+        # Temporarily mock NUMPY_AVAILABLE to False in the audio module
+        import coremusic.objects.audio as audio_module
+        monkeypatch.setattr(audio_module, "NUMPY_AVAILABLE", False)
 
         with cm.AudioFile(test_audio_file) as audio:
             with pytest.raises(ImportError, match="NumPy is not available"):

@@ -53,6 +53,22 @@ coremusic <command> [options]
 | `convert`  | Audio conversion (file, batch, normalize, trim)                  |
 | `midi`     | MIDI operations (devices, monitor, record, send, file, output)   |
 | `sequence` | MIDI sequence operations (info, play, tracks)                    |
+| `completion` | Generate shell completion scripts (bash, zsh, fish)            |
+
+### Shell Completion
+
+Enable tab completion for commands and options:
+
+```bash
+# Bash (add to ~/.bashrc)
+eval "$(coremusic completion bash)"
+
+# Zsh (add to ~/.zshrc)
+eval "$(coremusic completion zsh)"
+
+# Fish (add to ~/.config/fish/config.fish)
+coremusic completion fish | source
+```
 
 ### Examples
 
@@ -210,12 +226,19 @@ Both APIs interoperate - OO objects expose underlying IDs when needed.
 
 ```
 src/coremusic/
-  __init__.py          # Package entry, OO API
-  capi.pyx/pxd         # Cython bindings
-  objects.py           # OO wrappers
+  __init__.py          # Package entry, OO API exports
+  capi.pyx/pxd         # Cython bindings to CoreAudio/CoreMIDI
+  objects/             # Object-oriented wrappers
+    audio.py           # AudioFile, AudioFormat, AudioQueue, etc.
+    audiounit.py       # AudioUnit, AudioComponent
+    midi.py            # MIDIClient, MIDIPort
+    devices.py         # AudioDevice, AudioDeviceManager
+    music.py           # MusicPlayer, MusicSequence, MusicTrack
+    exceptions.py      # Exception hierarchy
   audio/               # Analysis, buffer pool, streaming
   midi/                # Utilities, transforms, Link integration
   music/               # Theory (scales, chords)
+  cli/                 # Command-line interface
   link.pyx             # Ableton Link bindings
 ```
 

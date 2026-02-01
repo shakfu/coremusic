@@ -4,8 +4,15 @@ from __future__ import annotations
 
 import argparse
 import sys
+from importlib.metadata import version as get_pkg_version
 
-VERSION = "0.1.11"
+
+def get_version() -> str:
+    """Get package version from metadata."""
+    try:
+        return get_pkg_version("coremusic")
+    except Exception:
+        return "0.1.12"  # Fallback during development
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -15,7 +22,7 @@ def main(argv: list[str] | None = None) -> int:
         description="CoreMusic - Python bindings for Apple CoreAudio.",
     )
     parser.add_argument(
-        "--version", action="version", version=f"%(prog)s {VERSION}"
+        "--version", action="version", version=f"%(prog)s {get_version()}"
     )
     parser.add_argument(
         "--json", action="store_true", help="Output in JSON format"
@@ -24,7 +31,7 @@ def main(argv: list[str] | None = None) -> int:
     subparsers = parser.add_subparsers(dest="command", metavar="<command>")
 
     # Register command modules
-    from . import analyze, audio, convert, devices, midi, plugins, sequence
+    from . import analyze, audio, completion, convert, devices, midi, plugins, sequence
 
     audio.register(subparsers)
     devices.register(subparsers)
@@ -33,6 +40,7 @@ def main(argv: list[str] | None = None) -> int:
     convert.register(subparsers)
     midi.register(subparsers)
     sequence.register(subparsers)
+    completion.register(subparsers)
 
     args = parser.parse_args(argv)
 
