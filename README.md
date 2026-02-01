@@ -71,7 +71,27 @@ make test   # Run tests
 ## Command Line Interface
 
 ```bash
-coremusic <command> [options]
+% coremusic --help
+usage: coremusic [-h] [--version] [--json] <command> ...
+
+CoreMusic - Python bindings for Apple CoreAudio.
+
+positional arguments:
+  <command>
+    audio     Audio file operations
+    device    Audio device management
+    plugin    AudioUnit plugin discovery
+    analyze   Audio analysis and feature extraction
+    convert   Convert audio files between formats
+    midi      MIDI operations
+    sequence  MIDI sequence operations
+    completion
+              Generate shell completion scripts
+
+options:
+  -h, --help  show this help message and exit
+  --version   show program's version number and exit
+  --json      Output in JSON format
 ```
 
 | Command    | Description                                                      |
