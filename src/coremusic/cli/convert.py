@@ -346,12 +346,19 @@ def cmd_batch(args: argparse.Namespace) -> int:
     results = []
     success_count = 0
     error_count = 0
+    errors: list[tuple[str, str]] = []
+    total_files = len(input_files)
+    sorted_files = sorted(input_files)
 
-    if not args.json:
-        print(f"Converting {len(input_files)} files...")
-        print()
+    for i, input_path in enumerate(sorted_files):
+        # Show progress bar (not in JSON mode)
+        if not args.json:
+            progress = (i + 1) / total_files
+            bar_width = 30
+            filled = int(bar_width * progress)
+            bar = "=" * filled + "-" * (bar_width - filled)
+            print(f"\r[{bar}] {i + 1}/{total_files} ({int(progress * 100)}%)", end="", flush=True)
 
-    for input_path in sorted(input_files):
         # Determine output path
         relative_path = input_path.relative_to(input_dir)
         output_path = output_dir / relative_path.with_suffix(output_ext)
@@ -404,17 +411,18 @@ def cmd_batch(args: argparse.Namespace) -> int:
                     out_file.write(num_frames, converted_data)
 
             success_count += 1
-            if not args.json:
-                print(f"  OK: {input_path.name} -> {output_path.name}")
 
         except Exception as e:
             error_count += 1
             result["status"] = "error"
             result["error"] = str(e)
-            if not args.json:
-                print(f"  FAIL: {input_path.name} - {e}")
+            errors.append((input_path.name, str(e)))
 
         results.append(result)
+
+    # Clear progress bar line
+    if not args.json:
+        print("\r" + " " * 60 + "\r", end="")
 
     if args.json:
         output_json({
@@ -422,16 +430,17 @@ def cmd_batch(args: argparse.Namespace) -> int:
             "output_dir": str(output_dir.absolute()),
             "pattern": args.pattern,
             "format": args.output_format,
-            "total": len(input_files),
+            "total": total_files,
             "success": success_count,
             "errors": error_count,
             "files": results,
         })
     else:
-        print()
-        print(f"Converted {success_count}/{len(input_files)} files")
-        if error_count > 0:
-            print(f"Errors: {error_count}")
+        print(f"Converted {success_count}/{total_files} files")
+        if errors:
+            print(f"\nErrors ({error_count}):")
+            for filename, error_msg in errors:
+                print(f"  {filename}: {error_msg}")
 
     return EXIT_SUCCESS
 

@@ -81,7 +81,7 @@ coremusic <command> [options]
 | `plugin`   | AudioUnit plugins (list, find, info, params, process, render)    |
 | `analyze`  | Audio analysis (levels, tempo, key, spectrum, loudness, onsets)  |
 | `convert`  | Audio conversion (file, batch, normalize, trim)                  |
-| `midi`     | MIDI operations (devices, monitor, record, send, file, output)   |
+| `midi`     | MIDI operations (list, info, play, quantize, receive, send, panic) |
 | `sequence` | MIDI sequence operations (info, play, tracks)                    |
 | `completion` | Generate shell completion scripts (bash, zsh, fish)            |
 
@@ -120,11 +120,13 @@ coremusic plugin process "AUDelay" input.wav -o output.wav
 coremusic plugin render "DLSMusicDevice" song.mid -o rendered.wav
 
 # MIDI
-coremusic midi devices
-coremusic midi input monitor
-coremusic midi output panic
-coremusic midi file play song.mid
-coremusic midi file quantize input.mid -o quantized.mid --grid 1/16
+coremusic midi list
+coremusic midi receive                              # Display incoming MIDI
+coremusic midi receive -o recording.mid             # Save to MIDI file
+coremusic midi receive --plugin "DLSMusicDevice"    # Route to synth plugin
+coremusic midi play song.mid
+coremusic midi quantize input.mid -o quantized.mid --grid 1/16
+coremusic midi panic
 
 # JSON output for scripting
 coremusic --json plugin list --type instrument

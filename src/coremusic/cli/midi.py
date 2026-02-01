@@ -14,122 +14,85 @@ from ._utils import EXIT_SUCCESS, CLIError, print_help_default, require_file
 
 def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """Register MIDI commands."""
-    parser = subparsers.add_parser("midi", help="MIDI device discovery and information")
+    parser = subparsers.add_parser("midi", help="MIDI operations")
     midi_sub = parser.add_subparsers(dest="midi_command", metavar="<subcommand>")
 
-    # midi device <action>
-    device_parser = midi_sub.add_parser("device", help="MIDI device operations")
-    device_sub = device_parser.add_subparsers(dest="device_action", metavar="<action>")
-    device_list_parser = device_sub.add_parser("list", help="List all MIDI devices")
-    device_list_parser.set_defaults(func=cmd_devices)
-    # midi device info
-    device_info_parser = device_sub.add_parser("info", help="Show detailed MIDI device information")
-    device_info_parser.add_argument("name", help="Device name (partial match)")
-    device_info_parser.set_defaults(func=cmd_device_info)
-    device_parser.set_defaults(func=lambda args: print_help_default(device_parser))
+    # midi list [--verbose]
+    list_parser = midi_sub.add_parser("list", help="List MIDI devices, inputs, and outputs")
+    list_parser.add_argument("--verbose", "-v", action="store_true",
+                             help="Show detailed device information")
+    list_parser.set_defaults(func=cmd_list)
 
-    # midi input <action>
-    input_parser = midi_sub.add_parser("input", help="MIDI input operations")
-    input_sub = input_parser.add_subparsers(dest="input_action", metavar="<action>")
-    input_list_parser = input_sub.add_parser("list", help="List MIDI input sources")
-    input_list_parser.set_defaults(func=cmd_inputs)
-    # midi input monitor
-    input_monitor_parser = input_sub.add_parser("monitor", help="Monitor incoming MIDI messages")
-    input_monitor_parser.add_argument("index", type=int, nargs="?", default=0,
-                                      help="Input source index (default: 0)")
-    input_monitor_parser.set_defaults(func=cmd_input_monitor)
-    # midi input record
-    input_record_parser = input_sub.add_parser("record", help="Record MIDI input to file")
-    input_record_parser.add_argument("index", type=int, nargs="?", default=0,
-                                     help="Input source index (default: 0)")
-    input_record_parser.add_argument("-o", "--output", required=True,
-                                     help="Output MIDI file path")
-    input_record_parser.add_argument("--duration", "-d", type=float, default=None,
-                                     help="Recording duration in seconds (default: until Ctrl+C)")
-    input_record_parser.add_argument("--tempo", "-t", type=float, default=120.0,
-                                     help="Tempo in BPM for the output file (default: 120)")
-    input_record_parser.set_defaults(func=cmd_input_record)
-    input_parser.set_defaults(func=lambda args: print_help_default(input_parser))
+    # midi info <file> [--events]
+    info_parser = midi_sub.add_parser("info", help="Show MIDI file information")
+    info_parser.add_argument("path", help="MIDI file path")
+    info_parser.add_argument("--events", "-e", action="store_true",
+                             help="Show event table instead of summary")
+    info_parser.add_argument("--track", "-t", type=int, default=None,
+                             help="Track index to show (default: all tracks)")
+    info_parser.add_argument("--limit", "-n", type=int, default=100,
+                             help="Maximum events to display (default: 100)")
+    info_parser.set_defaults(func=cmd_info)
 
-    # midi output <action>
-    output_parser = midi_sub.add_parser("output", help="MIDI output operations")
-    output_sub = output_parser.add_subparsers(dest="output_action", metavar="<action>")
-    output_list_parser = output_sub.add_parser("list", help="List MIDI output destinations")
-    output_list_parser.set_defaults(func=cmd_outputs)
-    # midi output send
-    send_parser = output_sub.add_parser("send", help="Send MIDI message")
-    send_parser.add_argument(
-        "--device", "-d", type=int, default=0,
-        help="Output device index (default: 0)"
-    )
-    send_parser.add_argument(
-        "--note", "-n", type=int,
-        help="Send note on/off (MIDI note number 0-127)"
-    )
-    send_parser.add_argument(
-        "--velocity", "-v", type=int, default=100,
-        help="Note velocity (default: 100)"
-    )
-    send_parser.add_argument(
-        "--channel", "-c", type=int, default=0,
-        help="MIDI channel 0-15 (default: 0)"
-    )
-    send_parser.add_argument(
-        "--cc", type=int, nargs=2, metavar=("NUM", "VAL"),
-        help="Send control change (controller number and value)"
-    )
-    send_parser.add_argument(
-        "--program", "-p", type=int,
-        help="Send program change (0-127)"
-    )
-    send_parser.add_argument(
-        "--duration", type=float, default=0.5,
-        help="Note duration in seconds (default: 0.5)"
-    )
-    send_parser.set_defaults(func=cmd_send)
-    # midi output test
-    test_parser = output_sub.add_parser("test", help="Send test note to verify connectivity")
-    test_parser.add_argument("index", type=int, nargs="?", default=0,
+    # midi play <file>
+    play_parser = midi_sub.add_parser("play", help="Play MIDI file to output device")
+    play_parser.add_argument("path", help="MIDI file path")
+    play_parser.add_argument("--device", "-d", type=int, default=0,
+                             help="Output device index (default: 0)")
+    play_parser.set_defaults(func=cmd_play)
+
+    # midi quantize <file> -o <output>
+    quantize_parser = midi_sub.add_parser("quantize", help="Quantize MIDI note timing to grid")
+    quantize_parser.add_argument("path", help="Input MIDI file path")
+    quantize_parser.add_argument("-o", "--output", required=True,
+                                 help="Output MIDI file path")
+    quantize_parser.add_argument("--grid", "-g", type=str, default="1/16",
+                                 help="Quantize grid (e.g., 1/4, 1/8, 1/16, 1/32) (default: 1/16)")
+    quantize_parser.add_argument("--strength", "-s", type=float, default=1.0,
+                                 help="Quantize strength 0.0-1.0 (default: 1.0 = full)")
+    quantize_parser.set_defaults(func=cmd_quantize)
+
+    # midi receive [--device N] [-o file] [--plugin name] [--quiet]
+    receive_parser = midi_sub.add_parser("receive", help="Receive MIDI input (display, record, or route to plugin)")
+    receive_parser.add_argument("--device", "-d", type=int, default=0,
+                                help="Input device index (default: 0)")
+    receive_parser.add_argument("-o", "--output", default=None,
+                                help="Output file (.mid for MIDI, .wav/.aif for audio with --plugin)")
+    receive_parser.add_argument("--plugin", "-p", default=None,
+                                help="Route MIDI to AudioUnit plugin (plays audio)")
+    receive_parser.add_argument("--quiet", "-q", action="store_true",
+                                help="Suppress audio output (only save to file)")
+    receive_parser.add_argument("--duration", type=float, default=None,
+                                help="Recording duration in seconds (default: until Ctrl+C)")
+    receive_parser.add_argument("--tempo", "-t", type=float, default=120.0,
+                                help="Tempo in BPM for MIDI file output (default: 120)")
+    receive_parser.set_defaults(func=cmd_receive)
+
+    # midi send <dest> [--note N] [--cc N N] [--program N] [--test]
+    send_parser = midi_sub.add_parser("send", help="Send MIDI message to output")
+    send_parser.add_argument("dest", type=int, nargs="?", default=0,
                              help="Output destination index (default: 0)")
-    test_parser.set_defaults(func=cmd_output_test)
-    # midi output panic
-    panic_parser = output_sub.add_parser("panic", help="Send all-notes-off on all channels")
-    panic_parser.add_argument("index", type=int, nargs="?", default=None,
-                              help="Output destination index (default: all outputs)")
-    panic_parser.set_defaults(func=cmd_output_panic)
-    output_parser.set_defaults(func=lambda args: print_help_default(output_parser))
+    send_parser.add_argument("--test", action="store_true",
+                             help="Send test note (middle C) to verify connectivity")
+    send_parser.add_argument("--note", "-n", type=int,
+                             help="Send note on/off (MIDI note number 0-127)")
+    send_parser.add_argument("--velocity", "-v", type=int, default=100,
+                             help="Note velocity (default: 100)")
+    send_parser.add_argument("--channel", "-c", type=int, default=0,
+                             help="MIDI channel 0-15 (default: 0)")
+    send_parser.add_argument("--cc", type=int, nargs=2, metavar=("NUM", "VAL"),
+                             help="Send control change (controller number and value)")
+    send_parser.add_argument("--program", "-p", type=int,
+                             help="Send program change (0-127)")
+    send_parser.add_argument("--duration", type=float, default=0.5,
+                             help="Note duration in seconds (default: 0.5)")
+    send_parser.set_defaults(func=cmd_send)
 
-    # midi file <action>
-    file_parser = midi_sub.add_parser("file", help="MIDI file operations")
-    file_sub = file_parser.add_subparsers(dest="file_action", metavar="<action>")
-    file_info_parser = file_sub.add_parser("info", help="Show MIDI file information")
-    file_info_parser.add_argument("path", help="MIDI file path")
-    file_info_parser.set_defaults(func=cmd_file)
-    # midi file dump
-    file_dump_parser = file_sub.add_parser("dump", help="Hex dump of raw MIDI events")
-    file_dump_parser.add_argument("path", help="MIDI file path")
-    file_dump_parser.add_argument("--track", "-t", type=int, default=None,
-                                  help="Track index to dump (default: all tracks)")
-    file_dump_parser.add_argument("--limit", "-n", type=int, default=100,
-                                  help="Maximum events to display (default: 100)")
-    file_dump_parser.set_defaults(func=cmd_file_dump)
-    # midi file play
-    file_play_parser = file_sub.add_parser("play", help="Play MIDI file to output device")
-    file_play_parser.add_argument("path", help="MIDI file path")
-    file_play_parser.add_argument("--device", "-d", type=int, default=0,
-                                  help="Output device index (default: 0)")
-    file_play_parser.set_defaults(func=cmd_file_play)
-    # midi file quantize
-    file_quantize_parser = file_sub.add_parser("quantize", help="Quantize MIDI note timing to grid")
-    file_quantize_parser.add_argument("path", help="Input MIDI file path")
-    file_quantize_parser.add_argument("-o", "--output", required=True,
-                                      help="Output MIDI file path")
-    file_quantize_parser.add_argument("--grid", "-g", type=str, default="1/16",
-                                      help="Quantize grid (e.g., 1/4, 1/8, 1/16, 1/32) (default: 1/16)")
-    file_quantize_parser.add_argument("--strength", "-s", type=float, default=1.0,
-                                      help="Quantize strength 0.0-1.0 (default: 1.0 = full)")
-    file_quantize_parser.set_defaults(func=cmd_file_quantize)
-    file_parser.set_defaults(func=lambda args: print_help_default(file_parser))
+    # midi panic [<dest>]
+    panic_parser = midi_sub.add_parser("panic", help="Send all-notes-off on all channels")
+    panic_parser.add_argument("dest", type=int, nargs="?", default=None,
+                              help="Output destination index (default: all outputs)")
+    panic_parser.set_defaults(func=cmd_panic)
 
     parser.set_defaults(func=lambda args: print_help_default(parser))
 
@@ -199,94 +162,74 @@ def _get_device_info(device_id: int) -> dict[str, Any]:
     return info
 
 
-def cmd_devices(args: argparse.Namespace) -> int:
-    """List all MIDI devices."""
-
+def cmd_list(args: argparse.Namespace) -> int:
+    """List all MIDI devices, inputs, and outputs."""
+    # Gather devices
     num_devices = capi.midi_get_number_of_devices()
     devices = []
-
     for i in range(num_devices):
         device_id = capi.midi_get_device(i)
         info = _get_device_info(device_id)
+        info["index"] = i
         devices.append(info)
 
-    if args.json:
-        output_json(devices)
-    else:
-        if not devices:
-            print("No MIDI devices found.")
-            return EXIT_SUCCESS
-
-        headers = ["Name", "Manufacturer", "Inputs", "Outputs"]
-        rows = []
-        for d in devices:
-            rows.append([
-                d["name"],
-                d["manufacturer"] or "(unknown)",
-                str(d["sources"]),
-                str(d["destinations"]),
-            ])
-
-        print(f"Found {len(devices)} MIDI devices:\n")
-        output_table(headers, rows)
-
-    return EXIT_SUCCESS
-
-
-def cmd_inputs(args: argparse.Namespace) -> int:
-    """List MIDI input sources."""
-
+    # Gather inputs
     num_sources = capi.midi_get_number_of_sources()
-    sources = []
-
+    inputs = []
     for i in range(num_sources):
         source_id = capi.midi_get_source(i)
         name = _get_endpoint_name(source_id)
-        sources.append({
-            "index": i,
-            "id": source_id,
-            "name": name,
-        })
+        inputs.append({"index": i, "id": source_id, "name": name})
 
-    if args.json:
-        output_json(sources)
-    else:
-        if not sources:
-            print("No MIDI input sources found.")
-            return EXIT_SUCCESS
-
-        print(f"Found {len(sources)} MIDI inputs:\n")
-        for s in sources:
-            print(f"  [{s['index']}] {s['name']}")
-
-    return EXIT_SUCCESS
-
-
-def cmd_outputs(args: argparse.Namespace) -> int:
-    """List MIDI output destinations."""
-
+    # Gather outputs
     num_dests = capi.midi_get_number_of_destinations()
-    destinations = []
-
+    outputs = []
     for i in range(num_dests):
         dest_id = capi.midi_get_destination(i)
         name = _get_endpoint_name(dest_id)
-        destinations.append({
-            "index": i,
-            "id": dest_id,
-            "name": name,
-        })
+        outputs.append({"index": i, "id": dest_id, "name": name})
 
     if args.json:
-        output_json(destinations)
-    else:
-        if not destinations:
-            print("No MIDI output destinations found.")
-            return EXIT_SUCCESS
+        output_json({
+            "devices": devices,
+            "inputs": inputs,
+            "outputs": outputs,
+        })
+        return EXIT_SUCCESS
 
-        print(f"Found {len(destinations)} MIDI outputs:\n")
-        for d in destinations:
-            print(f"  [{d['index']}] {d['name']}")
+    # Text output
+    if not devices and not inputs and not outputs:
+        print("No MIDI devices found.")
+        return EXIT_SUCCESS
+
+    # Devices section
+    if devices:
+        print(f"Devices ({len(devices)}):")
+        if args.verbose:
+            for d in devices:
+                print(f"\n  [{d['index']}] {d['name']}")
+                if d["manufacturer"]:
+                    print(f"      Manufacturer: {d['manufacturer']}")
+                if d["model"]:
+                    print(f"      Model:        {d['model']}")
+                print(f"      Inputs:       {d['sources']}")
+                print(f"      Outputs:      {d['destinations']}")
+        else:
+            for d in devices:
+                mfr = f" ({d['manufacturer']})" if d["manufacturer"] else ""
+                print(f"  [{d['index']}] {d['name']}{mfr}")
+
+    # Inputs section
+    if inputs:
+        print(f"\nInputs ({len(inputs)}):")
+        for inp in inputs:
+            print(f"  [{inp['index']}] {inp['name']}")
+
+    # Outputs section
+    if outputs:
+        print(f"\nOutputs ({len(outputs)}):")
+        for out in outputs:
+            print(f"  [{out['index']}] {out['name']}")
 
     return EXIT_SUCCESS
 
@@ -295,9 +238,15 @@ def cmd_send(args: argparse.Namespace) -> int:
     """Send MIDI message."""
     import time
 
+    # Handle --test flag (send middle C)
+    if args.test:
+        args.note = 60
+        args.velocity = 80
+        args.duration = 0.3
+
     # Validate inputs
     if args.note is None and args.cc is None and args.program is None:
-        raise CLIError("Must specify --note, --cc, or --program")
+        raise CLIError("Must specify --note, --cc, --program, or --test")
 
     if not 0 <= args.channel <= 15:
         raise CLIError(f"Channel must be 0-15, got {args.channel}")
@@ -307,10 +256,10 @@ def cmd_send(args: argparse.Namespace) -> int:
     if num_dests == 0:
         raise CLIError("No MIDI output destinations available")
 
-    if args.device >= num_dests:
-        raise CLIError(f"Device index {args.device} out of range (0-{num_dests-1})")
+    if args.dest >= num_dests:
+        raise CLIError(f"Device index {args.dest} out of range (0-{num_dests-1})")
 
-    dest_id = capi.midi_get_destination(args.device)
+    dest_id = capi.midi_get_destination(args.dest)
     dest_name = _get_endpoint_name(dest_id)
 
     # Create MIDI client and output port
@@ -381,8 +330,8 @@ def cmd_send(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
-def cmd_file(args: argparse.Namespace) -> int:
-    """Show MIDI file information."""
+def cmd_info(args: argparse.Namespace) -> int:
+    """Show MIDI file information or event table."""
     from coremusic.midi.utilities import MIDISequence
 
     path = require_file(args.path)
@@ -392,7 +341,11 @@ def cmd_file(args: argparse.Namespace) -> int:
     except Exception as e:
         raise CLIError(f"Failed to load MIDI file: {e}")
 
-    # Gather statistics
+    # If --events flag, show event table (formerly cmd_file_dump)
+    if args.events:
+        return _show_events(args, path, seq)
+
+    # Otherwise show summary (formerly cmd_file)
     total_events = sum(len(t.events) for t in seq.tracks)
     total_notes = sum(
         len([e for e in t.events if e.status == 0x90])
@@ -445,169 +398,85 @@ def cmd_file(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
-def cmd_device_info(args: argparse.Namespace) -> int:
-    """Show detailed MIDI device information."""
-    name_query = args.name.lower()
+def _show_events(args: argparse.Namespace, path: Any, seq: Any) -> int:
+    """Show MIDI event table (helper for cmd_info --events)."""
+    # Collect events to display
+    events_to_show = []
 
-    # Find matching device
-    num_devices = capi.midi_get_number_of_devices()
-    found_device = None
-    found_index = None
+    if args.track is not None:
+        if args.track >= len(seq.tracks):
+            raise CLIError(f"Track {args.track} out of range (0-{len(seq.tracks)-1})")
+        tracks_to_dump = [(args.track, seq.tracks[args.track])]
+    else:
+        tracks_to_dump = list(enumerate(seq.tracks))
 
-    for i in range(num_devices):
-        device_id = capi.midi_get_device(i)
-        info = _get_device_info(device_id)
-        if name_query in info["name"].lower():
-            found_device = info
-            found_device["device_id"] = device_id
-            found_index = i
-            break
+    for track_idx, track in tracks_to_dump:
+        for event in track.events:
+            events_to_show.append({
+                "track": track_idx,
+                "time": event.time,
+                "status": event.status,
+                "channel": event.channel,
+                "data1": event.data1,
+                "data2": event.data2,
+                "bytes": event.to_bytes().hex(),
+            })
 
-    if found_device is None:
-        raise CLIError(f"MIDI device not found: {args.name}")
+    # Sort by time
+    events_to_show.sort(key=lambda e: (e["time"], e["track"]))
 
-    # Get additional details
-    device_id = found_device["device_id"]
-
-    # Gather entity details
-    entities_info = []
-    try:
-        num_entities = capi.midi_device_get_number_of_entities(device_id)
-        for i in range(num_entities):
-            entity_id = capi.midi_device_get_entity(device_id, i)
-            entity_info: dict[str, object] = {"index": i, "id": entity_id}
-
-            # Get entity sources
-            num_sources = capi.midi_entity_get_number_of_sources(entity_id)
-            sources: list[dict[str, object]] = []
-            for j in range(num_sources):
-                src_id = capi.midi_entity_get_source(entity_id, j)
-                src_name = _get_endpoint_name(src_id)
-                sources.append({"index": j, "id": src_id, "name": src_name})
-            entity_info["sources"] = sources
-
-            # Get entity destinations
-            num_dests = capi.midi_entity_get_number_of_destinations(entity_id)
-            destinations: list[dict[str, object]] = []
-            for j in range(num_dests):
-                dest_id = capi.midi_entity_get_destination(entity_id, j)
-                dest_name = _get_endpoint_name(dest_id)
-                destinations.append({"index": j, "id": dest_id, "name": dest_name})
-            entity_info["destinations"] = destinations
-
-            entities_info.append(entity_info)
-    except Exception:
-        pass
+    # Limit output
+    total_events = len(events_to_show)
+    events_to_show = events_to_show[:args.limit]
 
     if args.json:
         output_json({
-            "index": found_index,
-            "id": device_id,
-            "name": found_device["name"],
-            "manufacturer": found_device["manufacturer"],
-            "model": found_device["model"],
-            "entities": entities_info,
+            "file": str(path.absolute()),
+            "total_events": total_events,
+            "displayed": len(events_to_show),
+            "events": events_to_show,
         })
     else:
-        print(f"Name:         {found_device['name']}")
-        print(f"Index:        {found_index}")
-        print(f"Manufacturer: {found_device['manufacturer'] or '(unknown)'}")
-        print(f"Model:        {found_device['model'] or '(unknown)'}")
-        print(f"Entities:     {len(entities_info)}")
-        print(f"Total Inputs: {found_device['sources']}")
-        print(f"Total Outputs:{found_device['destinations']}")
+        print(f"File: {path.name}")
+        print(f"Events: {total_events} total, showing {len(events_to_show)}\n")
 
-        if entities_info:
-            print()
-            for ent in entities_info:
-                print(f"Entity {ent['index']}:")
-                sources_obj = ent.get("sources", [])
-                destinations_obj = ent.get("destinations", [])
-                if sources_obj and isinstance(sources_obj, list):
-                    print("  Inputs:")
-                    for src in sources_obj:
-                        if isinstance(src, dict):
-                            print(f"    [{src['index']}] {src['name']}")
-                if destinations_obj and isinstance(destinations_obj, list):
-                    print("  Outputs:")
-                    for dest in destinations_obj:
-                        if isinstance(dest, dict):
-                            print(f"    [{dest['index']}] {dest['name']}")
+        headers = ["Time", "Track", "Ch", "Type", "Data", "Hex"]
+        rows = []
+        for e in events_to_show:
+            status_name = _get_status_name(e["status"])
+            if e["status"] in (0xC0, 0xD0):
+                data_str = f"{e['data1']:3d}"
+            else:
+                data_str = f"{e['data1']:3d} {e['data2']:3d}"
 
-    return EXIT_SUCCESS
+            rows.append([
+                f"{e['time']:.3f}",
+                str(e["track"]),
+                str(e["channel"]),
+                status_name,
+                data_str,
+                e["bytes"],
+            ])
 
+        output_table(headers, rows)
 
-def cmd_output_test(args: argparse.Namespace) -> int:
-    """Send test note to verify MIDI connectivity."""
-    import time
-
-    num_dests = capi.midi_get_number_of_destinations()
-    if num_dests == 0:
-        raise CLIError("No MIDI output destinations available")
-
-    if args.index >= num_dests:
-        raise CLIError(f"Output index {args.index} out of range (0-{num_dests-1})")
-
-    dest_id = capi.midi_get_destination(args.index)
-    dest_name = _get_endpoint_name(dest_id)
-
-    client_id = capi.midi_client_create("coremusic-test")
-    try:
-        port_id = capi.midi_output_port_create(client_id, "output")
-
-        # Send middle C (note 60) at medium velocity
-        note = 60
-        velocity = 80
-        channel = 0
-        duration = 0.3
-
-        # Note on
-        note_on = bytes([0x90 | channel, note, velocity])
-        capi.midi_send(port_id, dest_id, note_on, 0)
-
-        if not args.json:
-            print(f"Testing: {dest_name}")
-            print(f"  Note On:  C4 (60) vel={velocity}")
-
-        time.sleep(duration)
-
-        # Note off
-        note_off = bytes([0x80 | channel, note, 0])
-        capi.midi_send(port_id, dest_id, note_off, 0)
-
-        if args.json:
-            output_json({
-                "device": dest_name,
-                "index": args.index,
-                "note": note,
-                "velocity": velocity,
-                "duration": duration,
-                "status": "ok",
-            })
-        else:
-            print("  Note Off: C4 (60)")
-            print("  Status:   OK")
-
-    finally:
-        try:
-            capi.midi_client_dispose(client_id)
-        except Exception:
-            pass
+        if total_events > args.limit:
+            print(f"\n... and {total_events - args.limit} more events (use --limit to show more)")
 
     return EXIT_SUCCESS
 
 
-def cmd_output_panic(args: argparse.Namespace) -> int:
+def cmd_panic(args: argparse.Namespace) -> int:
     """Send all-notes-off on all channels to stop stuck notes."""
     num_dests = capi.midi_get_number_of_destinations()
     if num_dests == 0:
         raise CLIError("No MIDI output destinations available")
 
     # Determine which outputs to send panic to
-    if args.index is not None:
-        if args.index >= num_dests:
-            raise CLIError(f"Output index {args.index} out of range (0-{num_dests-1})")
-        dest_indices = [args.index]
+    if args.dest is not None:
+        if args.dest >= num_dests:
+            raise CLIError(f"Output index {args.dest} out of range (0-{num_dests-1})")
+        dest_indices = [args.dest]
     else:
         dest_indices = list(range(num_dests))
 
@@ -651,22 +520,68 @@ def cmd_output_panic(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
-def cmd_input_monitor(args: argparse.Namespace) -> int:
-    """Monitor incoming MIDI messages with live display."""
+def cmd_receive(args: argparse.Namespace) -> int:
+    """Receive MIDI input - display, record to file, or route to plugin.
+
+    Modes:
+    - No args: Display incoming MIDI messages
+    - -o file.mid: Save to MIDI file
+    - --plugin Name: Route to AudioUnit plugin, play audio
+    - --plugin Name -o file.wav: Route to plugin, play audio AND save to file
+    - --plugin Name -o file.wav --quiet: Route to plugin, only save to file
+    """
     import signal
     import threading
+    import time
+    from pathlib import Path
+
+    # Validate arguments
+    if args.quiet and not args.output:
+        raise CLIError("--quiet requires -o/--output")
+
+    if args.quiet and not args.plugin:
+        raise CLIError("--quiet only makes sense with --plugin (no audio to suppress otherwise)")
 
     num_sources = capi.midi_get_number_of_sources()
     if num_sources == 0:
         raise CLIError("No MIDI input sources available")
 
-    if args.index >= num_sources:
-        raise CLIError(f"Input index {args.index} out of range (0-{num_sources-1})")
+    if args.device >= num_sources:
+        raise CLIError(f"Input index {args.device} out of range (0-{num_sources-1})")
 
-    source_id = capi.midi_get_source(args.index)
+    source_id = capi.midi_get_source(args.device)
     source_name = _get_endpoint_name(source_id)
 
-    # Event counter for JSON output
+    # Determine output path and type
+    output_path = Path(args.output) if args.output else None
+    is_midi_output = output_path and output_path.suffix.lower() in (".mid", ".midi")
+    is_audio_output = output_path and output_path.suffix.lower() in (".wav", ".aif", ".aiff", ".m4a", ".caf")
+
+    # Validate output type
+    if output_path and args.plugin and is_midi_output:
+        raise CLIError("Cannot save MIDI file when using --plugin (use .wav/.aif for audio)")
+    if output_path and not args.plugin and is_audio_output:
+        raise CLIError("Audio output requires --plugin")
+
+    # Add .mid extension if saving MIDI without extension
+    if output_path and not args.plugin and not is_midi_output and not is_audio_output:
+        output_path = output_path.with_suffix(".mid")
+        is_midi_output = True
+
+    # Route to appropriate handler
+    if args.plugin:
+        return _receive_with_plugin(args, source_id, source_name, output_path, is_audio_output)
+    elif output_path:
+        return _receive_to_midi_file(args, source_id, source_name, output_path)
+    else:
+        return _receive_display(args, source_id, source_name)
+
+
+def _receive_display(args: argparse.Namespace, source_id: int, source_name: str) -> int:
+    """Display incoming MIDI messages (formerly cmd_monitor)."""
+    import signal
+    import threading
+
     event_count = 0
     events_list: list[Dict[str, Any]] = []
     stop_event = threading.Event()
@@ -740,37 +655,29 @@ def cmd_input_monitor(args: argparse.Namespace) -> int:
             print(f"[{ts:10.3f}] ch={ch:2d}  Other     {msg['raw']}")
 
     def midi_callback(data: bytes, timestamp: float) -> None:
-        """Callback for incoming MIDI messages."""
         nonlocal event_count
         event_count += 1
         msg = format_midi_message(data, timestamp)
-
         if args.json:
             events_list.append(msg)
         else:
             print_midi_message(msg)
 
     def signal_handler(sig: int, frame: FrameType | None) -> None:
-        """Handle Ctrl+C to stop monitoring."""
         stop_event.set()
 
-    # Set up signal handler
     original_handler = signal.signal(signal.SIGINT, signal_handler)
 
     try:
-        # Create MIDI client
-        # Note: MIDI input monitoring requires polling - the callback is not
-        # currently supported by the low-level API
-        client_id = capi.midi_client_create("coremusic-monitor")
+        client_id = capi.midi_client_create("coremusic-receive")
         try:
             port_id = capi.midi_input_port_create(client_id, "input")
             capi.midi_port_connect_source(port_id, source_id)
 
             if not args.json:
-                print(f"Monitoring: {source_name}")
+                print(f"Receiving from: {source_name}")
                 print("Press Ctrl+C to stop...\n")
 
-            # Wait for stop signal
             while not stop_event.is_set():
                 stop_event.wait(timeout=0.1)
 
@@ -783,12 +690,280 @@ def cmd_input_monitor(args: argparse.Namespace) -> int:
         if args.json:
             output_json({
                 "source": source_name,
-                "index": args.index,
+                "index": args.device,
                 "event_count": event_count,
                 "events": events_list,
             })
         else:
             print(f"\nStopped. Received {event_count} events.")
+
+    finally:
+        signal.signal(signal.SIGINT, original_handler)
+
+    return EXIT_SUCCESS
+
+
+def _receive_to_midi_file(args: argparse.Namespace, source_id: int, source_name: str, output_path: Any) -> int:
+    """Save incoming MIDI to file (formerly cmd_record)."""
+    import signal
+    import threading
+    import time
+
+    from coremusic.midi.utilities import MIDIEvent, MIDISequence
+
+    recorded_events: list[Tuple[float, bytes]] = []
+    start_time: float = 0.0
+    stop_event = threading.Event()
+    event_lock = threading.Lock()
+
+    def midi_callback(data: bytes, timestamp: float) -> None:
+        nonlocal start_time
+        if start_time == 0.0:
+            start_time = timestamp
+        relative_time = timestamp - start_time
+        with event_lock:
+            recorded_events.append((relative_time, data))
+
+    def signal_handler(sig: int, frame: FrameType | None) -> None:
+        stop_event.set()
+
+    original_handler = signal.signal(signal.SIGINT, signal_handler)
+
+    try:
+        client_id = capi.midi_client_create("coremusic-receive")
+        try:
+            port_id = capi.midi_input_port_create(client_id, "input")
+            capi.midi_port_connect_source(port_id, source_id)
+
+            if not args.json:
+                print(f"Recording from: {source_name}")
+                print(f"Output: {output_path}")
+                if args.duration:
+                    print(f"Duration: {args.duration:.1f} seconds")
+                else:
+                    print("Press Ctrl+C to stop...")
+                print()
+
+            recording_start = time.time()
+            while not stop_event.is_set():
+                if args.duration and (time.time() - recording_start) >= args.duration:
+                    break
+                stop_event.wait(timeout=0.1)
+
+        finally:
+            try:
+                capi.midi_client_dispose(client_id)
+            except Exception:
+                pass
+
+        with event_lock:
+            events_copy = list(recorded_events)
+
+        if not events_copy:
+            if not args.json:
+                print("No MIDI events recorded.")
+            return EXIT_SUCCESS
+
+        seq = MIDISequence(tempo=args.tempo)
+        track = seq.add_track("Recorded")
+
+        for rel_time, data in events_copy:
+            if len(data) >= 2:
+                status = data[0] & 0xF0
+                channel = data[0] & 0x0F
+                d1 = data[1]
+                d2 = data[2] if len(data) > 2 else 0
+                event = MIDIEvent(
+                    time=rel_time,
+                    status=status,
+                    channel=channel,
+                    data1=d1,
+                    data2=d2,
+                )
+                track.events.append(event)
+
+        try:
+            seq.save(str(output_path))
+        except Exception as e:
+            raise CLIError(f"Failed to save MIDI file: {e}")
+
+        recording_duration = events_copy[-1][0] if events_copy else 0.0
+        note_on_count = sum(1 for _, d in events_copy if len(d) >= 1 and (d[0] & 0xF0) == 0x90)
+
+        if args.json:
+            output_json({
+                "source": source_name,
+                "index": args.device,
+                "output": str(output_path.absolute()),
+                "event_count": len(events_copy),
+                "note_count": note_on_count,
+                "duration_seconds": recording_duration,
+                "tempo": args.tempo,
+            })
+        else:
+            print(f"\nRecording saved: {output_path}")
+            print(f"  Events:   {len(events_copy)}")
+            print(f"  Notes:    {note_on_count}")
+            print(f"  Duration: {format_duration(recording_duration)}")
+
+    finally:
+        signal.signal(signal.SIGINT, original_handler)
+
+    return EXIT_SUCCESS
+
+
+def _receive_with_plugin(args: argparse.Namespace, source_id: int, source_name: str,
+                         output_path: Any, is_audio_output: bool) -> int:
+    """Route incoming MIDI to AudioUnit plugin with optional audio capture."""
+    import signal
+    import threading
+    import time
+
+    from coremusic.audio.audiounit_host import AudioUnitHost
+
+    stop_event = threading.Event()
+    event_count = 0
+    note_count = 0
+
+    def signal_handler(sig: int, frame: FrameType | None) -> None:
+        stop_event.set()
+
+    original_handler = signal.signal(signal.SIGINT, signal_handler)
+
+    try:
+        # Load the AudioUnit plugin
+        host = AudioUnitHost()
+        try:
+            plugin = host.load_plugin(args.plugin, type='instrument')
+        except Exception as e:
+            raise CLIError(f"Failed to load plugin '{args.plugin}': {e}")
+
+        if not args.json:
+            print(f"Receiving from: {source_name}")
+            print(f"Plugin: {args.plugin}")
+            if output_path:
+                print(f"Output: {output_path}")
+            if args.quiet:
+                print("Audio output: disabled (quiet mode)")
+            if args.duration:
+                print(f"Duration: {args.duration:.1f} seconds")
+            else:
+                print("Press Ctrl+C to stop...")
+            print()
+
+        # Set up audio output and optional file capture
+        audio_chunks: list[bytes] = []
+        sample_rate = 44100
+        channels = 2
+
+        # Initialize plugin
+        try:
+            plugin.instantiate()
+            plugin.initialize()
+        except Exception as e:
+            raise CLIError(f"Failed to initialize plugin: {e}")
+
+        # Set up audio output queue if not quiet
+        output_queue = None
+        if not args.quiet:
+            import coremusic as cm
+            audio_format = cm.AudioFormat(
+                sample_rate=float(sample_rate),
+                format_id="lpcm",
+                channels_per_frame=channels,
+                bits_per_channel=32,
+            )
+            output_queue = cm.AudioQueue.new_output(audio_format)
+
+        # Create MIDI client
+        client_id = capi.midi_client_create("coremusic-receive")
+        try:
+            port_id = capi.midi_input_port_create(client_id, "input")
+            capi.midi_port_connect_source(port_id, source_id)
+
+            start_time = time.time()
+            last_render_time = start_time
+
+            while not stop_event.is_set():
+                if args.duration and (time.time() - start_time) >= args.duration:
+                    break
+
+                # Render audio from plugin periodically
+                current_time = time.time()
+                if current_time - last_render_time >= 0.01:  # ~100Hz render rate
+                    try:
+                        # Render a small buffer
+                        frames = 512
+                        rendered = plugin.render(frames)
+                        if rendered and len(rendered) > 0:
+                            if output_path:
+                                audio_chunks.append(rendered)
+                            if output_queue:
+                                output_queue.enqueue_buffer(rendered)
+                    except Exception:
+                        pass  # Ignore render errors
+                    last_render_time = current_time
+
+                stop_event.wait(timeout=0.01)
+
+        finally:
+            try:
+                capi.midi_client_dispose(client_id)
+            except Exception:
+                pass
+
+        # Clean up plugin
+        try:
+            plugin.dispose()
+        except Exception:
+            pass
+
+        # Save audio file if requested
+        if output_path and audio_chunks:
+            try:
+                import coremusic as cm
+                from coremusic.constants import AudioFileType
+
+                audio_data = b''.join(audio_chunks)
+                audio_format = cm.AudioFormat(
+                    sample_rate=float(sample_rate),
+                    format_id="lpcm",
+                    channels_per_frame=channels,
+                    bits_per_channel=32,
+                )
+
+                ext = output_path.suffix.lower()
+                file_type = {
+                    '.wav': AudioFileType.WAVE,
+                    '.aif': AudioFileType.AIFF,
+                    '.aiff': AudioFileType.AIFF,
+                    '.m4a': AudioFileType.M4A,
+                    '.caf': AudioFileType.CAF,
+                }.get(ext, AudioFileType.WAVE)
+
+                with cm.ExtendedAudioFile.create(str(output_path), file_type, audio_format) as out_file:
+                    num_frames = len(audio_data) // (channels * 4)  # 4 bytes per float32
+                    out_file.write(num_frames, audio_data)
+
+                if not args.json:
+                    duration = num_frames / sample_rate
+                    print(f"\nAudio saved: {output_path}")
+                    print(f"  Duration: {format_duration(duration)}")
+
+            except Exception as e:
+                raise CLIError(f"Failed to save audio file: {e}")
+
+        if args.json:
+            output_json({
+                "source": source_name,
+                "index": args.device,
+                "plugin": args.plugin,
+                "output": str(output_path) if output_path else None,
+                "event_count": event_count,
+                "note_count": note_count,
+            })
+        elif not output_path:
+            print(f"\nStopped.")
 
     finally:
         signal.signal(signal.SIGINT, original_handler)
@@ -810,84 +985,7 @@ def _get_status_name(status: int) -> str:
     return names.get(status, f"0x{status:02X}")
 
 
-def cmd_file_dump(args: argparse.Namespace) -> int:
-    """Hex dump of raw MIDI events from file."""
-    from coremusic.midi.utilities import MIDISequence
-
-    path = require_file(args.path)
-
-    try:
-        seq = MIDISequence.load(str(path))
-    except Exception as err:
-        raise CLIError(f"Failed to load MIDI file: {err}")
-
-    # Collect events to display
-    events_to_show = []
-
-    if args.track is not None:
-        if args.track >= len(seq.tracks):
-            raise CLIError(f"Track {args.track} out of range (0-{len(seq.tracks)-1})")
-        tracks_to_dump = [(args.track, seq.tracks[args.track])]
-    else:
-        tracks_to_dump = list(enumerate(seq.tracks))
-
-    for track_idx, track in tracks_to_dump:
-        for event in track.events:
-            events_to_show.append({
-                "track": track_idx,
-                "time": event.time,
-                "status": event.status,
-                "channel": event.channel,
-                "data1": event.data1,
-                "data2": event.data2,
-                "bytes": event.to_bytes().hex(),
-            })
-
-    # Sort by time
-    events_to_show.sort(key=lambda e: (e["time"], e["track"]))
-
-    # Limit output
-    total_events = len(events_to_show)
-    events_to_show = events_to_show[:args.limit]
-
-    if args.json:
-        output_json({
-            "file": str(path.absolute()),
-            "total_events": total_events,
-            "displayed": len(events_to_show),
-            "events": events_to_show,
-        })
-    else:
-        print(f"File: {path.name}")
-        print(f"Events: {total_events} total, showing {len(events_to_show)}\n")
-
-        headers = ["Time", "Track", "Ch", "Type", "Data", "Hex"]
-        rows = []
-        for e in events_to_show:
-            status_name = _get_status_name(e["status"])
-            if e["status"] in (0xC0, 0xD0):
-                data_str = f"{e['data1']:3d}"
-            else:
-                data_str = f"{e['data1']:3d} {e['data2']:3d}"
-
-            rows.append([
-                f"{e['time']:.3f}",
-                str(e["track"]),
-                str(e["channel"]),
-                status_name,
-                data_str,
-                e["bytes"],
-            ])
-
-        output_table(headers, rows)
-
-        if total_events > args.limit:
-            print(f"\n... and {total_events - args.limit} more events (use --limit to show more)")
-
-    return EXIT_SUCCESS
-
-
-def cmd_file_play(args: argparse.Namespace) -> int:
+def cmd_play(args: argparse.Namespace) -> int:
     """Play MIDI file to output device."""
     import signal
     import time
@@ -998,146 +1096,7 @@ def cmd_file_play(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
-def cmd_input_record(args: argparse.Namespace) -> int:
-    """Record MIDI input to file."""
-    import signal
-    import threading
-    import time
-    from pathlib import Path
-
-    from coremusic.midi.utilities import MIDIEvent, MIDISequence
-
-    num_sources = capi.midi_get_number_of_sources()
-    if num_sources == 0:
-        raise CLIError("No MIDI input sources available")
-
-    if args.index >= num_sources:
-        raise CLIError(f"Input index {args.index} out of range (0-{num_sources-1})")
-
-    source_id = capi.midi_get_source(args.index)
-    source_name = _get_endpoint_name(source_id)
-
-    output_path = Path(args.output)
-    if output_path.suffix.lower() not in (".mid", ".midi"):
-        output_path = output_path.with_suffix(".mid")
-
-    # Recording state
-    recorded_events: list[Tuple[float, bytes]] = []
-    start_time: float = 0.0
-    stop_event = threading.Event()
-    event_lock = threading.Lock()
-
-    def midi_callback(data: bytes, timestamp: float) -> None:
-        """Callback for incoming MIDI messages."""
-        nonlocal start_time
-        if start_time == 0.0:
-            start_time = timestamp
-
-        # Calculate relative time in seconds
-        relative_time = timestamp - start_time
-
-        with event_lock:
-            recorded_events.append((relative_time, data))
-
-    def signal_handler(sig: int, frame: FrameType | None) -> None:
-        """Handle Ctrl+C to stop recording."""
-        stop_event.set()
-
-    # Set up signal handler
-    original_handler = signal.signal(signal.SIGINT, signal_handler)
-
-    try:
-        # Create MIDI client
-        # Note: MIDI input recording requires polling - the callback is not
-        # currently supported by the low-level API
-        client_id = capi.midi_client_create("coremusic-record")
-        try:
-            port_id = capi.midi_input_port_create(client_id, "input")
-            capi.midi_port_connect_source(port_id, source_id)
-
-            if not args.json:
-                print(f"Recording from: {source_name}")
-                if args.duration:
-                    print(f"Duration: {args.duration:.1f} seconds")
-                else:
-                    print("Press Ctrl+C to stop...")
-                print()
-
-            # Record for specified duration or until interrupted
-            recording_start = time.time()
-            while not stop_event.is_set():
-                if args.duration and (time.time() - recording_start) >= args.duration:
-                    break
-                stop_event.wait(timeout=0.1)
-
-        finally:
-            try:
-                capi.midi_client_dispose(client_id)
-            except Exception:
-                pass
-
-        # Create MIDI file from recorded events
-        with event_lock:
-            events_copy = list(recorded_events)
-
-        if not events_copy:
-            if not args.json:
-                print("No MIDI events recorded.")
-            return EXIT_SUCCESS
-
-        # Create MIDISequence
-        seq = MIDISequence(tempo=args.tempo)
-        track = seq.add_track("Recorded")
-
-        for rel_time, data in events_copy:
-            if len(data) >= 2:
-                status = data[0] & 0xF0
-                channel = data[0] & 0x0F
-                d1 = data[1]
-                d2 = data[2] if len(data) > 2 else 0
-
-                event = MIDIEvent(
-                    time=rel_time,
-                    status=status,
-                    channel=channel,
-                    data1=d1,
-                    data2=d2,
-                )
-                track.events.append(event)
-
-        # Save to file
-        try:
-            seq.save(str(output_path))
-        except Exception as e:
-            raise CLIError(f"Failed to save MIDI file: {e}")
-
-        # Calculate recording stats
-        recording_duration = events_copy[-1][0] if events_copy else 0.0
-        note_on_count = sum(1 for _, d in events_copy if len(d) >= 1 and (d[0] & 0xF0) == 0x90)
-
-        if args.json:
-            output_json({
-                "source": source_name,
-                "index": args.index,
-                "output": str(output_path.absolute()),
-                "event_count": len(events_copy),
-                "note_count": note_on_count,
-                "duration_seconds": recording_duration,
-                "tempo": args.tempo,
-            })
-        else:
-            print(f"\nRecording saved: {output_path}")
-            print(f"  Events:   {len(events_copy)}")
-            print(f"  Notes:    {note_on_count}")
-            print(f"  Duration: {format_duration(recording_duration)}")
-
-    finally:
-        signal.signal(signal.SIGINT, original_handler)
-
-    return EXIT_SUCCESS
-
-
-def cmd_file_quantize(args: argparse.Namespace) -> int:
+def cmd_quantize(args: argparse.Namespace) -> int:
     """Quantize MIDI note timing to grid."""
     from pathlib import Path
 

@@ -19,6 +19,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Added
 
+- **Batch Convert Progress Bar** - Added progress indicator for `coremusic convert batch`
+  - Shows ASCII progress bar with file count and percentage during conversion
+  - Errors collected and displayed at end instead of inline
+  - Cleaner output: `[==============================] 50/50 (100%)`
+
 - **Shell Completion** - Added `coremusic completion` command for shell autocompletion
   - Supports bash, zsh, and fish shells
   - Usage: `eval "$(coremusic completion bash)"` (add to shell rc file)
@@ -50,6 +55,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - Documented `NUMPY_AVAILABLE` and `SCIPY_AVAILABLE` flags in README
 
 ### Changed
+
+- **MIDI CLI Restructured** - Flattened command hierarchy from 3 levels to 2 levels
+  - `midi list` - Combined device/input/output listing (was `midi device list`, `midi input list`, `midi output list`)
+  - `midi info <file>` - File metadata with `--events` flag for event table (was `midi file info`, `midi file dump`)
+  - `midi play <file>` - Play MIDI file (was `midi file play`)
+  - `midi quantize <file>` - Quantize timing (was `midi file quantize`)
+  - `midi receive` - Unified MIDI input command (was `midi input monitor`, `midi input record`)
+    - Display mode: `midi receive` (shows incoming MIDI)
+    - Record mode: `midi receive -o file.mid` (saves to MIDI file)
+    - Plugin mode: `midi receive --plugin "DLSMusicDevice"` (routes to AudioUnit, plays audio)
+    - Capture mode: `midi receive --plugin X -o file.wav` (routes to plugin, saves audio)
+    - Quiet mode: `midi receive --plugin X -o file.wav --quiet` (saves audio without playback)
+  - `midi send` - Send MIDI with `--test` flag (was `midi output send`, `midi output test`)
+  - `midi panic` - All notes off (was `midi output panic`)
+  - Consistent with rest of CLI structure
 
 - **CI/CD Enabled** - GitHub Actions workflow now triggers on push/PR to main and develop branches
   - Previously was manual dispatch only (`workflow_dispatch`)
