@@ -317,18 +317,24 @@ class AudioConverter(CoreAudioObject):
             AudioConverterError: If conversion fails
 
         Example:
+```
+
             ```python
             # Convert 44.1kHz to 48kHz
             source_format = AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
             dest_format = AudioFormat(48000.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
 
-            with AudioConverter(source_format, dest_format) as converter:
-                # Read input data
-                with AudioFile("input_44100.wav") as af:
-                    input_data, packet_count = af.read_packets(0, 999999999)
+```text
+with AudioConverter(source_format, dest_format) as converter:
+# Read input data
+with AudioFile("input_44100.wav") as af:
+input_data, packet_count = af.read_packets(0, 999999999)
+```
 
-                # Convert
-                output_data = converter.convert_with_callback(input_data, packet_count)
+```text
+# Convert
+output_data = converter.convert_with_callback(input_data, packet_count)
+```
 
                 # Write output
                 with ExtendedAudioFile.create("output_48000.wav", 'WAVE', dest_format) as out:
@@ -337,26 +343,39 @@ class AudioConverter(CoreAudioObject):
             ```
         """
 
-    # Property access - IMPLEMENTED
-    def get_property(self, property_id: int) -> bytes
-        """Get a property from the converter"""
-
-    def set_property(self, property_id: int, data: bytes) -> None
-        """Set a property on the converter"""
-
-    # State management - IMPLEMENTED
-    def reset(self) -> None
-        """Reset the converter to its initial state"""
-
-    def dispose(self) -> None
-        """Dispose of the audio converter"""
-
-    # Context manager support - IMPLEMENTED
-    def __enter__(self) -> 'AudioConverter'
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None
+```text
+# Property access - IMPLEMENTED
+def get_property(self, property_id: int) -> bytes
+"""Get a property from the converter"""
 ```
 
+```text
+def set_property(self, property_id: int, data: bytes) -> None
+"""Set a property on the converter"""
+```
+
+```text
+# State management - IMPLEMENTED
+def reset(self) -> None
+"""Reset the converter to its initial state"""
+```
+
+```text
+def dispose(self) -> None
+"""Dispose of the audio converter"""
+```
+
+```text
+# Context manager support - IMPLEMENTED
+def __enter__(self) -> 'AudioConverter'
+def __exit__(self, exc_type, exc_val, exc_tb) -> None
+```
+
+```text
+
 ### ExtendedAudioFile Operations - IMPLEMENTED
+
+```
 
 ```python
 class ExtendedAudioFile(CoreAudioObject):
@@ -953,6 +972,7 @@ class AsyncAudioQueue:
 ### Current Implementation Status
 
 **IMPLEMENTED (13 core classes + high-level utilities):**
+
 - **Base Infrastructure**: `CoreAudioObject`, `AudioFormat`, `AudioBuffer`
 - **Exception Hierarchy**: `CoreAudioError`, `AudioFileError`, `AudioQueueError`, `AudioUnitError`, `AudioConverterError`, `MIDIError`
 - **Audio File Framework**: `AudioFile` (partial), `AudioFileStream` (partial)
@@ -966,6 +986,7 @@ class AsyncAudioQueue:
 - **Async I/O**: `AsyncAudioFile`, `AsyncAudioQueue`
 
 **Current Features:**
+
 - **Automatic resource management** with Cython `__dealloc__` and context managers
 - **Type safety** with proper Python classes instead of integer IDs
 - **Exception hierarchy** for consistent error handling
@@ -982,6 +1003,7 @@ class AsyncAudioQueue:
 - **Backward compatibility** - functional API remains fully available
 
 **NOT YET IMPLEMENTED:**
+
 - Music framework (MusicPlayer, MusicSequence, MusicTrack, etc.)
 - System Sound Services
 - Advanced MIDI classes (MIDIDevice, MIDIEndpoint, MIDISystem, etc.)

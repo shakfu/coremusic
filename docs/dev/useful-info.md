@@ -1,6 +1,5 @@
 # Useful Info about CoreAudio
 
-
 ## Links
 
 - [AudioUnitSDK](https://github.com/apple/AudioUnitSDK) - Apple AudioUnit SDK: The AudioUnitSDK contains a set of base classes as well as utility sources required for Audio Unit development. These utility classes extend or wrap Core Audio API’s providing developers with the essential scaffolding to create audio effects, instruments, and generators on Apple platforms. They provide an easier to implement C++ class model wrapping the C framework APIs.
@@ -35,10 +34,10 @@
 
 - [Handmade Hero: forum posts re coreaudio](https://hero.handmade.network/forums/code-discussion/t/56-mac_os_x_coreaudio_reference_setup_code)
 
-	- [handmade-alt-proto](https://github.com/zenmumbler/handmade-alt-proto)
-	- [osx port of handmade hero](https://github.com/itfrombit/osx_handmade)
-	- [osx_handmade_minimal](https://github.com/itfrombit/osx_handmade_minimal)
-	- [makebundle](https://gist.github.com/framkant/1c135f8d6d012ceceda6)
+  - [handmade-alt-proto](https://github.com/zenmumbler/handmade-alt-proto)
+  - [osx port of handmade hero](https://github.com/itfrombit/osx_handmade)
+  - [osx_handmade_minimal](https://github.com/itfrombit/osx_handmade_minimal)
+  - [makebundle](https://gist.github.com/framkant/1c135f8d6d012ceceda6)
 
 ## Examples
 
@@ -73,5 +72,3 @@
 - [AudioUnitSample](https://github.com/StevenKuo/AudioUnitSample) - Uses remoteIO audioUnit to play streaming audio.
 
 - [AUParamsApp](https://github.com/genedelisa/AUParamsApp) - An AUv3 MIDI plugin. See the blog post
-
-

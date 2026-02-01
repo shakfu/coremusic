@@ -9,6 +9,7 @@
 This document describes the Ableton Link integration in CoreMusic, which provides tempo synchronization and network music capabilities.
 
 **What has been implemented:**
+
 - Complete Cython wrapper for Link C++ API
 - Link + CoreAudio integration (beat-accurate audio playback)
 - Link + CoreMIDI integration (MIDI clock sync and sequencing)
@@ -198,7 +199,7 @@ CoreMusic could benefit from Link by providing:
 
 ### Three-Layer Design
 
-```
+```text
 ┌─────────────────────────────────────────────────┐
 │  Python Layer (coremusic/objects.py)            │
 │  - High-level Link class                        │
@@ -1281,6 +1282,7 @@ git submodule update --init --recursive
 # Install
 pip install -e .
 ```
+```
 
 ### API Documentation
 
@@ -1322,7 +1324,7 @@ Link is designed to be realtime-safe:
 
 Monitor Ableton Link repository:
 
-- Repository: https://github.com/Ableton/link
+- Repository: <https://github.com/Ableton/link>
 - Stable releases: Use tagged versions
 - API stability: Link API has been stable since 2016
 
@@ -1404,24 +1406,28 @@ The Ableton Link integration has been successfully implemented and is production
 ### Completed Components
 
 [x] **Core Link Wrapper** (`src/coremusic/link.pyx`, `link.pxd`)
+
 - Complete Cython wrapper for Link C++ API
 - LinkSession class with context manager support
 - SessionState and Clock classes for timing queries
 - All basic Link functionality exposed
 
 [x] **Link + CoreAudio Integration**
+
 - AudioPlayer with Link support for beat-accurate playback
 - Timing bridge between CoreAudio timestamps and Link microseconds
 - Latency compensation integration
 - Working render callbacks with Link timing
 
 [x] **Link + CoreMIDI Integration** (`src/coremusic/link_midi.py`)
+
 - LinkMIDIClock: MIDI clock synchronization (24 clocks per quarter note)
 - LinkMIDISequencer: Beat-accurate MIDI event scheduling
 - Time conversion utilities (Link beats ↔ host time)
 - Start/Stop/Continue message support
 
 [x] **Testing & Validation**
+
 - 15 tests for basic Link API (`tests/test_link.py`)
 - 19 tests for high-level API (`tests/test_link_high_level_api.py`)
 - 20 tests for MIDI integration (`tests/test_link_midi.py`)
@@ -1429,6 +1435,7 @@ The Ableton Link integration has been successfully implemented and is production
 - **Total: 63 Link-related tests passing**
 
 [x] **Documentation & Examples**
+
 - Complete integration guide: `docs/link_integration.md`
 - Interactive demos:
   - `tests/demos/link_high_level_demo.py` - Basic Link usage

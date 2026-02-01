@@ -121,6 +121,7 @@ Stop an audio queue.
 Create a MIDI 1.0 Universal Packet for channel voice messages.
 
 **Parameters:**
+
 - `group` (int): MIDI group (0-15)
 - `status` (int): MIDI status byte (use `get_midi_status_*()` functions)
 - `channel` (int): MIDI channel (0-15)
@@ -134,6 +135,7 @@ Create a MIDI 1.0 Universal Packet for channel voice messages.
 Create a MIDI 2.0 Universal Packet for enhanced channel voice messages.
 
 **Parameters:**
+
 - `group` (int): MIDI group (0-15)
 - `status` (int): MIDI 2.0 status
 - `channel` (int): MIDI channel (0-15)
@@ -161,6 +163,7 @@ Get the number of MIDI sources in the system.
 Create a new virtual MIDI device.
 
 **Parameters:**
+
 - `name` (str): Device name
 
 **Returns:** Device reference (int)
@@ -170,6 +173,7 @@ Create a new virtual MIDI device.
 Dispose of a MIDI device.
 
 **Parameters:**
+
 - `device` (int): Device reference from `midi_device_create()`
 
 #### MIDI Thru Connections
@@ -191,6 +195,7 @@ Create a basic MIDI thru connection.
 Create a MIDI thru connection with custom parameters.
 
 **Parameters:**
+
 - `params` (dict): Connection parameters from `midi_thru_connection_params_initialize()`
 
 **Returns:** Thru connection reference (int)
@@ -200,6 +205,7 @@ Create a MIDI thru connection with custom parameters.
 Dispose of a MIDI thru connection.
 
 **Parameters:**
+
 - `connection` (int): Connection reference
 
 ### Utility Functions

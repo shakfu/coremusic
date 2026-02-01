@@ -25,7 +25,7 @@ This document tracks the coverage of CoreAudio APIs in the coremusic Python bind
 - **CoreMIDI** - Complete MIDI support
 - **AudioServices** - System sound services
 
-###  Deprecated (Lower Priority)
+### Deprecated (Lower Priority)
 
 - **AUGraph** - Audio unit graphs (use AVAudioEngine instead)
 - **AudioSession** - iOS audio session (use AVAudioSession instead)
@@ -44,7 +44,7 @@ This document tracks the coverage of CoreAudio APIs in the coremusic Python bind
 - [x] **Wrapped** - API is fully wrapped and available in Python
 - [!] **Partial** - Some functions wrapped but not complete
 - [X] **Not Wrapped** - API not yet wrapped
--  **Deprecated** - API is deprecated but may still be useful
+- **Deprecated** - API is deprecated but may still be useful
 
 ---
 
@@ -320,37 +320,37 @@ This document tracks the coverage of CoreAudio APIs in the coremusic Python bind
 
 ### AUGraph (Deprecated)
 
--  NewAUGraph
--  DisposeAUGraph
--  AUGraphAddNode
--  AUGraphRemoveNode
--  AUGraphGetNodeCount
--  AUGraphGetIndNode
--  AUGraphNodeInfo
--  AUGraphConnectNodeInput
--  AUGraphDisconnectNodeInput
--  AUGraphClearConnections
--  AUGraphGetNumberOfConnections
--  AUGraphGetConnectionInfo
--  AUGraphUpdate
--  AUGraphOpen
--  AUGraphClose
--  AUGraphInitialize
--  AUGraphUninitialize
--  AUGraphStart
--  AUGraphStop
--  AUGraphIsRunning
--  AUGraphIsInitialized
--  AUGraphIsOpen
+- NewAUGraph
+- DisposeAUGraph
+- AUGraphAddNode
+- AUGraphRemoveNode
+- AUGraphGetNodeCount
+- AUGraphGetIndNode
+- AUGraphNodeInfo
+- AUGraphConnectNodeInput
+- AUGraphDisconnectNodeInput
+- AUGraphClearConnections
+- AUGraphGetNumberOfConnections
+- AUGraphGetConnectionInfo
+- AUGraphUpdate
+- AUGraphOpen
+- AUGraphClose
+- AUGraphInitialize
+- AUGraphUninitialize
+- AUGraphStart
+- AUGraphStop
+- AUGraphIsRunning
+- AUGraphIsInitialized
+- AUGraphIsOpen
 
 ### AudioSession (iOS - Deprecated)
 
--  AudioSessionInitialize
--  AudioSessionSetActive
--  AudioSessionGetProperty
--  AudioSessionSetProperty
--  AudioSessionAddPropertyListener
--  AudioSessionRemovePropertyListener
+- AudioSessionInitialize
+- AudioSessionSetActive
+- AudioSessionGetProperty
+- AudioSessionSetProperty
+- AudioSessionAddPropertyListener
+- AudioSessionRemovePropertyListener
 
 ### Other AudioToolbox APIs
 

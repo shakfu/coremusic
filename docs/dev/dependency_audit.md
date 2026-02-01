@@ -14,10 +14,12 @@
 **Status**: Now properly optional
 
 **Issue Found**:
+
 - `src/coremusic/audio/mmap_file.py` had unconditional `import numpy as np` at module level
 - This caused `ImportError` when importing coremusic without numpy installed
 
 **Fix Applied**:
+
 ```python
 # Before (line 11):
 import numpy as np
@@ -34,10 +36,12 @@ except ImportError:
 ```
 
 **Runtime Checks Added**:
+
 - `MMapAudioFile.read_as_numpy()`: Raises helpful ImportError if numpy not available
 - `MMapAudioFile.__getitem__()`: Raises helpful ImportError for array access without numpy
 
 **Files Audited**:
+
 - [x] `src/coremusic/objects.py` - Conditional import (already correct)
 - [x] `src/coremusic/buffer_utils.py` - Function-level imports (lazy loading, correct)
 - [x] `src/coremusic/audio/analysis.py` - Conditional import (already correct)
@@ -53,7 +57,9 @@ except ImportError:
 **Status**: Properly optional (no issues found)
 
 **Implementation**:
+
 - `src/coremusic/utils/scipy.py` has conditional imports:
+
   ```python
   try:
       import scipy.signal
@@ -62,11 +68,13 @@ except ImportError:
   except ImportError:
       SCIPY_AVAILABLE = False
   ```
+
 - All scipy functionality is isolated in the utils.scipy module
 - Module can be imported even without scipy installed
 - Functions raise clear errors when called without scipy
 
 **Files Checked**:
+
 - [x] `src/coremusic/utils/scipy.py` - Conditional import
 - [x] `src/coremusic/utils/__init__.py` - Safe module-level import
 
@@ -75,6 +83,7 @@ except ImportError:
 **Status**: Properly optional (no issues found)
 
 **Implementation**:
+
 - All matplotlib imports are either:
   - Inside try/except blocks at module level
   - Inside functions (lazy loading)
@@ -82,12 +91,14 @@ except ImportError:
 - `MATPLOTLIB_AVAILABLE` flag exported for runtime checks
 
 **Files Checked**:
+
 - [x] `src/coremusic/audio/visualization.py` - Conditional import
 - [x] `src/coremusic/utils/scipy.py` - Function-level imports (lazy loading)
 
 ## Verification Tests
 
 ### Test 1: Import Without Optional Dependencies
+
 ```python
 # Block numpy, scipy, matplotlib
 sys.modules['numpy'] = FakeModule('numpy')
@@ -100,6 +111,7 @@ import coremusic  # [x] Success
 **Result**: [x] All imports successful
 
 ### Test 2: Core Functionality Without NumPy
+
 ```python
 from coremusic import AudioFile, AudioQueue, AudioUnit  # [x] Success
 import coremusic.capi as capi  # [x] Success
@@ -108,6 +120,7 @@ import coremusic.capi as capi  # [x] Success
 **Result**: [x] All core functionality available
 
 ### Test 3: Full Test Suite
+
 ```bash
 make test
 ```
@@ -117,6 +130,7 @@ make test
 ## Dependency Configuration
 
 ### pyproject.toml
+
 ```toml
 [project]
 dependencies = []  # [x] No required dependencies beyond stdlib
@@ -134,6 +148,7 @@ dev = [
 ## Recommendations
 
 ### 1. Documentation [x] Already Clear
+
 The README already documents optional dependencies well, but could add:
 
 ```markdown
@@ -144,11 +159,15 @@ The README already documents optional dependencies well, but could add:
 - **Matplotlib** (optional): Required for audio visualization features
 
 Install with optional dependencies:
+
 ```bash
 pip install coremusic[audio]  # includes numpy
 pip install coremusic[full]   # includes numpy, scipy, matplotlib
 ```
 ```
+
+
+```text
 
 ### 2. Setup.py Extras (Future Enhancement)
 Consider adding optional dependency groups to setup.py:
@@ -163,7 +182,9 @@ extras_require = {
 ```
 
 ### 3. Runtime Feature Detection [x] Already Implemented
+
 All modules properly export availability flags:
+
 - `coremusic.NUMPY_AVAILABLE`
 - `coremusic.audio.mmap_file.NUMPY_AVAILABLE`
 - `coremusic.utils.scipy.SCIPY_AVAILABLE`

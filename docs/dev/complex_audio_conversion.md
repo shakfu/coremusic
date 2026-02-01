@@ -29,6 +29,7 @@ cm.convert_audio_file("stereo_44100.wav", "mono_48000.wav", output_format)
 ```
 
 **Supported conversions:**
+
 - [x] Sample rate changes (e.g., 44.1kHz → 48kHz, 48kHz → 96kHz)
 - [x] Bit depth changes (e.g., 16-bit → 24-bit)
 - [x] Channel count changes (stereo ↔ mono)
@@ -66,6 +67,7 @@ OSStatus AudioConverterFillComplexBuffer(
 ```
 
 **How it works:**
+
 1. AudioConverter requests output data
 2. When it needs input, it calls your callback function
 3. Your callback provides input data on demand
@@ -314,18 +316,24 @@ class AudioConverter(capi.CoreAudioObject):
             AudioConverterError: If conversion fails
 
         Example:
+```
+
             ```python
             # Convert 44.1kHz to 48kHz
             source_format = AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
             dest_format = AudioFormat(48000.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
 
-            with AudioConverter(source_format, dest_format) as converter:
-                # Read input data
-                with AudioFile("input_44100.wav") as af:
-                    input_data, packet_count = af.read_packets(0, 999999999)
+```text
+with AudioConverter(source_format, dest_format) as converter:
+# Read input data
+with AudioFile("input_44100.wav") as af:
+input_data, packet_count = af.read_packets(0, 999999999)
+```
 
-                # Convert
-                output_data = converter.convert_with_callback(input_data, packet_count)
+```text
+# Convert
+output_data = converter.convert_with_callback(input_data, packet_count)
+```
 
                 # Write output
                 with ExtendedAudioFile.create("output_48000.wav", 'WAVE', dest_format) as out:
@@ -335,28 +343,35 @@ class AudioConverter(capi.CoreAudioObject):
         """
         self._ensure_not_disposed()
 
-        # Auto-calculate output packet count if not provided
-        if output_packet_count is None:
-            # Estimate based on sample rate ratio
-            rate_ratio = self._dest_format.sample_rate / self._source_format.sample_rate
-            output_packet_count = int(input_packet_count * rate_ratio * 1.1)  # 10% extra
-
-        try:
-            output_data, actual_packets = capi.audio_converter_fill_complex_buffer(
-                self.object_id,
-                input_data,
-                input_packet_count,
-                output_packet_count,
-                self._source_format.to_dict()
-            )
-            return output_data
-        except Exception as e:
-            raise AudioConverterError(f"Failed to convert audio: {e}")
+```text
+# Auto-calculate output packet count if not provided
+if output_packet_count is None:
+# Estimate based on sample rate ratio
+rate_ratio = self._dest_format.sample_rate / self._source_format.sample_rate
+output_packet_count = int(input_packet_count * rate_ratio * 1.1)  # 10% extra
 ```
+
+```text
+try:
+output_data, actual_packets = capi.audio_converter_fill_complex_buffer(
+self.object_id,
+input_data,
+input_packet_count,
+output_packet_count,
+self._source_format.to_dict()
+)
+return output_data
+except Exception as e:
+raise AudioConverterError(f"Failed to convert audio: {e}")
+```
+
+```text
 
 ### 5. Update Utilities (Python)
 
 Update `convert_audio_file()` in `src/coremusic/utilities.py`:
+
+```
 
 ```python
 def convert_audio_file(
@@ -378,15 +393,19 @@ def convert_audio_file(
         output_format: Target AudioFormat
 
     Example:
+```
+
         ```python
         import coremusic as cm
 
-        # Convert to different sample rate
-        cm.convert_audio_file(
-            "input_44100.wav",
-            "output_48000.wav",
-            cm.AudioFormat(48000.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
-        )
+```text
+# Convert to different sample rate
+cm.convert_audio_file(
+"input_44100.wav",
+"output_48000.wav",
+cm.AudioFormat(48000.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
+)
+```
 
         # Convert to mono AND change sample rate
         cm.convert_audio_file(
@@ -400,57 +419,71 @@ def convert_audio_file(
     with AudioFile(input_path) as input_file:
         source_format = input_file.format
 
-        # If formats match exactly, just copy
-        if _formats_match(source_format, output_format):
-            import shutil
-            shutil.copy(input_path, output_path)
-            return
+```text
+# If formats match exactly, just copy
+if _formats_match(source_format, output_format):
+import shutil
+shutil.copy(input_path, output_path)
+return
+```
 
-        # Read all audio data
-        audio_data, packet_count = input_file.read_packets(0, 999999999)
+```text
+# Read all audio data
+audio_data, packet_count = input_file.read_packets(0, 999999999)
+```
 
-        # Determine which conversion method to use
-        needs_complex_conversion = (
-            source_format.sample_rate != output_format.sample_rate or
-            source_format.bits_per_channel != output_format.bits_per_channel
-        )
+```text
+# Determine which conversion method to use
+needs_complex_conversion = (
+source_format.sample_rate != output_format.sample_rate or
+source_format.bits_per_channel != output_format.bits_per_channel
+)
+```
 
-        # Convert using AudioConverter
-        with AudioConverter(source_format, output_format) as converter:
-            if needs_complex_conversion:
-                # Use callback-based API for complex conversions
-                converted_data = converter.convert_with_callback(audio_data, packet_count)
-            else:
-                # Use simple buffer API for channel-only conversions
-                converted_data = converter.convert(audio_data)
+```text
+# Convert using AudioConverter
+with AudioConverter(source_format, output_format) as converter:
+if needs_complex_conversion:
+# Use callback-based API for complex conversions
+converted_data = converter.convert_with_callback(audio_data, packet_count)
+else:
+# Use simple buffer API for channel-only conversions
+converted_data = converter.convert(audio_data)
+```
 
-        # Write to output file
-        from . import capi
-        output_ext_file = ExtendedAudioFile.create(
-            output_path,
-            capi.get_audio_file_wave_type(),
-            output_format
-        )
-        try:
-            num_frames = len(converted_data) // output_format.bytes_per_frame
-            output_ext_file.write(num_frames, converted_data)
-        finally:
-            output_ext_file.close()
-
+```text
+# Write to output file
+from . import capi
+output_ext_file = ExtendedAudioFile.create(
+output_path,
+capi.get_audio_file_wave_type(),
+output_format
+)
+try:
+num_frames = len(converted_data) // output_format.bytes_per_frame
+output_ext_file.write(num_frames, converted_data)
+finally:
+output_ext_file.close()
+```
 
 def _formats_match(fmt1: AudioFormat, fmt2: AudioFormat) -> bool:
     """Check if two formats are identical"""
-    return (
-        fmt1.sample_rate == fmt2.sample_rate and
-        fmt1.channels_per_frame == fmt2.channels_per_frame and
-        fmt1.bits_per_channel == fmt2.bits_per_channel and
-        fmt1.format_id == fmt2.format_id
-    )
+
+```text
+return (
+fmt1.sample_rate == fmt2.sample_rate and
+fmt1.channels_per_frame == fmt2.channels_per_frame and
+fmt1.bits_per_channel == fmt2.bits_per_channel and
+fmt1.format_id == fmt2.format_id
+)
 ```
+
+```text
 
 ## Implementation Status
 
 ### Phase 1: Core Callback Infrastructure [x] COMPLETE
+
 - [x] Define `AudioConverterCallbackData` struct in `capi.pyx` (lines 657-663)
 - [x] Implement `audio_converter_input_callback()` function with `nogil` and `noexcept` (lines 666-723)
 - [x] Implement `audio_converter_fill_complex_buffer()` wrapper (lines 737-832)
@@ -458,12 +491,14 @@ def _formats_match(fmt1: AudioFormat, fmt2: AudioFormat) -> bool:
 - [x] Safe memory allocation/deallocation with try/finally blocks
 
 ### Phase 2: Python API [x] COMPLETE
+
 - [x] Add `convert_with_callback()` method to `AudioConverter` class (objects.py:553-616)
 - [x] Update `convert_audio_file()` to use callback API automatically (utilities.py:364-442)
 - [x] Auto-calculation of output packet count based on sample rate ratio
 - [x] Comprehensive error handling and exception propagation
 
 ### Phase 3: Testing [x] COMPLETE
+
 - [x] Test sample rate conversion (44.1kHz ↔ 48kHz) - 6 new tests added
 - [x] Test bit depth conversion (16-bit → 24-bit) - verified in test_utilities.py
 - [x] Test combined conversions (rate + depth + channels) - all passing
@@ -472,6 +507,7 @@ def _formats_match(fmt1: AudioFormat, fmt2: AudioFormat) -> bool:
 - [x] All tests passing: 474 passed, 36 skipped, 0 failures
 
 ### Phase 4: Documentation [x] COMPLETE
+
 - [x] Usage examples in `AudioConverter.convert_with_callback()` docstring
 - [x] Updated `convert_audio_file()` documentation
 - [x] Updated CHANGELOG.md with implementation details
@@ -481,6 +517,7 @@ def _formats_match(fmt1: AudioFormat, fmt2: AudioFormat) -> bool:
 ## Implementation Results
 
 **Actual implementation:**
+
 - Low-level C callback infrastructure: 180 lines of Cython code (capi.pyx:653-833)
 - Python API enhancements: 64 lines (objects.py:553-616, utilities.py updates)
 - Testing: 9 comprehensive tests added (6 in test_objects_audio_converter.py, 3 in test_utilities.py)
@@ -488,6 +525,7 @@ def _formats_match(fmt1: AudioFormat, fmt2: AudioFormat) -> bool:
 - **Total implementation time**: Successfully completed with full test coverage
 
 **Performance verified:**
+
 - Sample rate conversion ratio: 1.080 (matches expected 1.088 for 44.1→48kHz)
 - Duration preservation: < 0.000003s error for 2.743s audio file
 - Memory safety: All allocations properly managed with try/finally blocks
@@ -496,9 +534,13 @@ def _formats_match(fmt1: AudioFormat, fmt2: AudioFormat) -> bool:
 ## Key Implementation Challenges (Solved)
 
 ### 1. GIL Management [x]
+
 **Challenge:** The callback runs in `nogil` context but needs to access input data.
 
 **Solution:** Store C pointers instead of Python objects in the callback data structure:
+
+```
+
 ```cython
 cdef struct AudioConverterCallbackData:
     char* input_buffer         # C pointer (not Python object)
@@ -513,9 +555,11 @@ cdef at.OSStatus audio_converter_input_callback(...) noexcept nogil:
 ```
 
 ### 2. Memory Management [x]
+
 **Challenge:** Proper allocation and cleanup of buffers without memory leaks.
 
 **Solution:** Use try/finally blocks for guaranteed cleanup:
+
 ```cython
 output_buffer = <char*>malloc(output_buffer_size)
 if output_buffer == NULL:
@@ -530,9 +574,11 @@ finally:
 ```
 
 ### 3. Error Handling [x]
+
 **Challenge:** Proper error handling and status code checking.
 
 **Solution:** Check all CoreAudio status codes and raise detailed exceptions:
+
 ```cython
 status = at.AudioConverterFillComplexBuffer(...)
 if status != 0:
@@ -540,9 +586,11 @@ if status != 0:
 ```
 
 ### 4. Packet Description Handling [x]
+
 **Challenge:** Variable bitrate formats may need packet descriptions.
 
 **Solution:** Pass NULL for packet descriptions (works for PCM formats):
+
 ```cython
 status = at.AudioConverterFillComplexBuffer(
     converter,
@@ -553,18 +601,22 @@ status = at.AudioConverterFillComplexBuffer(
     NULL  # Packet descriptions not needed for PCM
 )
 ```
+
 Note: For VBR formats (AAC, MP3), packet descriptions can be added if needed.
 
 ### 5. Buffer Sizing [x]
+
 **Challenge:** Calculating correct output buffer sizes for variable-rate conversions.
 
 **Solution:** Allocate generously (4x input size) to handle all conversions safely:
+
 ```cython
 output_buffer_size = len(input_data) * 4  # 4x for safety
 output_buffer = <char*>malloc(output_buffer_size)
 ```
 
 Auto-calculate output packet count based on sample rate ratio:
+
 ```python
 rate_ratio = dest_format.sample_rate / source_format.sample_rate
 output_packet_count = int(input_packet_count * rate_ratio * 1.1)  # 10% extra
@@ -622,12 +674,14 @@ def convert_audio_file_using_extended(
 ```
 
 **Advantages:**
+
 - [x] Already implemented in CoreMusic
 - [x] No new code required
 - [x] Handles all conversion types automatically
 - [x] Simple API
 
 **Disadvantages:**
+
 - [!] Less control over conversion process
 - [!] Cannot access intermediate conversion state
 - [!] May be less efficient (extra buffering)
@@ -723,10 +777,12 @@ The complex audio conversion feature is now fully implemented and production-rea
 ## References
 
 **Apple Documentation:**
+
 - [AudioConverter.h](https://developer.apple.com/documentation/audiotoolbox/audioconverter)
 - [AudioConverterFillComplexBuffer](https://developer.apple.com/documentation/audiotoolbox/1387909-audioconverterfillcomplexbuffer)
 - [Audio Converter Services](https://developer.apple.com/library/archive/documentation/MusicAudio/Conceptual/CoreAudioOverview/CoreAudioEssentials/CoreAudioEssentials.html#//apple_ref/doc/uid/TP40003577-CH10-SW14)
 
 **Code Examples:**
+
 - [afconvert source code](https://opensource.apple.com/source/CarbonHeaders/CarbonHeaders-18.1/AudioToolbox.h) - Apple's audio conversion tool
 - [Audio File Convert Test](https://github.com/eppz/iOS.Library.eppz_kit) - Example implementations

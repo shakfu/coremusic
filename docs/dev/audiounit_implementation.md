@@ -126,6 +126,7 @@ with host.load_plugin("AUDelay") as delay:
 ### Test Coverage
 
 #### Low-Level API Tests (`tests/test_audiounit_host.py`)
+
 - Plugin discovery by type and manufacturer
 - Component info retrieval
 - Parameter list enumeration
@@ -134,6 +135,7 @@ with host.load_plugin("AUDelay") as delay:
 - Preset loading
 
 #### High-Level API Tests (`tests/test_audiounit_host_highlevel.py`)
+
 - AudioUnitHost creation and discovery
 - AudioUnitPlugin lifecycle
 - Context manager support
@@ -143,6 +145,7 @@ with host.load_plugin("AUDelay") as delay:
 - Multi-plugin workflows
 
 #### MIDI Tests (`tests/test_audiounit_midi.py`)
+
 - Instrument plugin discovery and loading
 - MIDI Note On/Off messages
 - Multiple simultaneous notes
@@ -161,6 +164,7 @@ with host.load_plugin("AUDelay") as delay:
 ### 1. Low-Level C API Demo (`tests/demos/audiounit_browser_demo.py`)
 
 Interactive plugin browser demonstrating:
+
 - Plugin discovery across all categories
 - Detailed plugin information
 - Parameter inspection and control
@@ -168,6 +172,7 @@ Interactive plugin browser demonstrating:
 - Real-time parameter manipulation
 
 **Features:**
+
 - Lists 190 plugins discovered on system
 - Interactive parameter control
 - Preset browsing
@@ -176,6 +181,7 @@ Interactive plugin browser demonstrating:
 ### 2. High-Level Pythonic API Demo (`tests/demos/audiounit_highlevel_demo.py`)
 
 6 interactive demonstrations (effect plugins):
+
 1. **Plugin Discovery** - Browse plugins by category
 2. **Plugin Loading** - Context manager usage
 3. **Parameter Control** - Three ways to set parameters
@@ -184,6 +190,7 @@ Interactive plugin browser demonstrating:
 6. **Complete Workflow** - End-to-end example
 
 **Features:**
+
 - Clean, intuitive API showcase
 - Complete workflow examples
 - Best practices demonstration
@@ -191,6 +198,7 @@ Interactive plugin browser demonstrating:
 ### 3. Instrument Plugin MIDI Demo (`tests/demos/audiounit_instrument_demo.py`)
 
 8 interactive demonstrations (MIDI instruments):
+
 1. **Discover Instruments** - Browse 62 instrument plugins
 2. **Basic MIDI Control** - Note on/off, chords, scales
 3. **Instrument Selection** - General MIDI program changes
@@ -201,6 +209,7 @@ Interactive plugin browser demonstrating:
 8. **Interactive Keyboard** - Real-time key mapping demo
 
 **Features:**
+
 - Complete MIDI functionality showcase
 - Multi-channel orchestration examples
 - Sample-accurate timing demonstrations
@@ -479,7 +488,6 @@ with cm.AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu') as sy
     # Notes will play with sample-accurate timing
 ```
 
-
 ### Factory Presets
 
 ```python
@@ -553,6 +561,7 @@ typedef struct AUPreset {
 ```
 
 Added 26 parameter unit types:
+
 - Generic, Indexed, Boolean
 - Percent, Seconds, SampleFrames
 - Hertz, Cents, Decibels
@@ -560,6 +569,7 @@ Added 26 parameter unit types:
 - And 14 more...
 
 Added 12 parameter flags:
+
 - HasName, HasClump
 - DisplayLogarithmic, DisplaySquareRoot
 - IsReadable, IsWritable
@@ -580,6 +590,7 @@ Implemented 11 new functions:
 9. **`audio_unit_render`** - Process audio through plugin
 
 All functions include:
+
 - Comprehensive error handling
 - Proper memory management
 - Type conversions (C ↔ Python)
@@ -683,16 +694,19 @@ class AudioUnitPreset:
 ## Performance Characteristics
 
 ### Plugin Discovery
+
 - **Fast caching** - First discovery ~1 second, subsequent instant
 - **Efficient filtering** - Filter at C level, not Python
 - **Lazy loading** - Plugin info loaded on demand
 
 ### Parameter Access
+
 - **Direct C calls** - No Python overhead
 - **Cached metadata** - Info loaded once at initialization
 - **Value clamping** - Validated at Python level
 
 ### Audio Processing
+
 - **Near-native speed** - Cython compiled to C
 - **Zero-copy buffers** - Memory mapped where possible
 - **Proper alignment** - AudioBufferList properly aligned
@@ -702,6 +716,7 @@ class AudioUnitPreset:
 ### 1. Use Context Managers
 
 **Good:**
+
 ```python
 with cm.AudioUnitPlugin.from_name("AUDelay") as plugin:
     plugin['Delay Time'] = 0.5
@@ -710,6 +725,7 @@ with cm.AudioUnitPlugin.from_name("AUDelay") as plugin:
 ```
 
 **Avoid:**
+
 ```python
 plugin = cm.AudioUnitPlugin.from_name("AUDelay")
 plugin.instantiate()
@@ -724,12 +740,14 @@ plugin.dispose()
 ### 2. Use Dictionary-Style Parameter Access
 
 **Good:**
+
 ```python
 plugin['Delay Time'] = 0.5
 value = plugin['Delay Time']
 ```
 
 **Also Good (but more verbose):**
+
 ```python
 param = plugin.get_parameter('Delay Time')
 param.value = 0.5
@@ -796,26 +814,31 @@ if len(effects) > 0:
 ### Planned Enhancements
 
 #### Phase 6: Link Integration (Planned)
+
 - Tempo callback integration
 - Beat/bar position for tempo-synced plugins
 - Transport state synchronization
 
 #### Phase 7: User Presets (Planned)
+
 - ClassInfo serialization/deserialization
 - User preset file I/O (.aupreset format)
 - Preset import/export
 
 #### Phase 8: MIDI Integration (Planned)
+
 - MIDI event scheduling
 - Note on/off for instrument plugins
 - CC message routing
 
 #### Phase 9: Plugin UI (Planned)
+
 - Cocoa view instantiation
 - Window management
 - UI update synchronization
 
 #### Phase 10: Advanced Routing (Planned)
+
 - AudioUnitChain class
 - Automatic format conversion
 - Parallel processing
@@ -833,6 +856,7 @@ CoreMusic now provides **production-ready AudioUnit plugin hosting** that enable
 [x] Build professional audio applications
 
 The implementation is:
+
 - **Complete** - All essential features working
 - **Tested** - 643 tests passing, 190 plugins verified
 - **Documented** - Comprehensive docs and demos

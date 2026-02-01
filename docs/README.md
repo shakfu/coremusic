@@ -77,7 +77,7 @@ make docs-clean
 
 ## Documentation Structure
 
-```
+```text
 sphinx/
 ├── conf.py                 # Sphinx configuration
 ├── index.rst              # Main documentation index
@@ -107,10 +107,13 @@ sphinx/
 ## Documentation Sections
 
 ### Getting Started
+
 Basic installation, configuration, and first steps with coremusic.
 
 ### API Reference
+
 Complete API documentation auto-generated from docstrings:
+
 - AudioFile and AudioFormat classes
 - AudioUnit classes and functions
 - AudioQueue operations
@@ -118,7 +121,9 @@ Complete API documentation auto-generated from docstrings:
 - Utility functions
 
 ### Tutorials
+
 Step-by-step tutorials covering:
+
 - Audio file operations
 - Real-time audio processing
 - AudioUnit development
@@ -126,7 +131,9 @@ Step-by-step tutorials covering:
 - Advanced techniques
 
 ### Cookbook
+
 Ready-to-use recipes for common tasks:
+
 - File operations
 - Audio processing
 - Real-time audio
@@ -134,6 +141,7 @@ Ready-to-use recipes for common tasks:
 - Integration with NumPy/SciPy
 
 ### Examples
+
 Complete, working example applications demonstrating coremusic capabilities.
 
 ## Writing Documentation
@@ -143,6 +151,7 @@ Complete, working example applications demonstrating coremusic capabilities.
 Sphinx uses reStructuredText format:
 
 **Headers:**
+
 ```rst
 Chapter
 =======
@@ -155,6 +164,7 @@ Subsection
 ```
 
 **Code blocks:**
+
 ```rst
 .. code-block:: python
 
@@ -164,12 +174,14 @@ Subsection
 ```
 
 **Links:**
+
 ```rst
 :doc:`other_page`
 :ref:`section-label`
 ```
 
 **Notes and warnings:**
+
 ```rst
 .. note::
    This is a note.
@@ -327,7 +339,7 @@ pip install sphinx-autobuild
 sphinx-autobuild sphinx sphinx/_build/html
 ```
 
-Visit http://localhost:8000 - documentation rebuilds automatically when files change.
+Visit <http://localhost:8000> - documentation rebuilds automatically when files change.
 
 ### Link Checking
 
@@ -357,14 +369,17 @@ make docs-linkcheck
 ### Build Errors
 
 **"module not found" errors:**
+
 - Ensure coremusic is built: `make build`
 - Add `src/` to Python path in `conf.py`
 
 **Extension errors:**
+
 - Install required extensions: `pip install sphinx-rtd-theme`
 - Check `extensions` list in `conf.py`
 
 **Autodoc errors:**
+
 - Verify module imports work
 - Check function/class names are correct
 - Ensure docstrings are properly formatted
@@ -372,10 +387,12 @@ make docs-linkcheck
 ### Formatting Issues
 
 **Code blocks not formatting:**
+
 - Check indentation (3 spaces after `.. code-block::`)
 - Verify language is specified: `.. code-block:: python`
 
 **Links broken:**
+
 - Use correct syntax: `:doc:\`page\`` not `:doc:\`page.rst\``
 - Check file paths are relative to current file
 
@@ -390,6 +407,7 @@ We welcome documentation contributions! To contribute:
 5. Submit a pull request
 
 Good documentation contributions:
+
 - Fix typos or unclear explanations
 - Add missing examples
 - Improve code samples

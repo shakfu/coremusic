@@ -8,12 +8,14 @@ This document analyzes the potential refactoring of existing error handling code
 ## Overview
 
 New error handling decorators have been implemented and tested (64/64 tests passing):
+
 - `@check_os_status` - Check OSStatus return values
 - `@check_return_status` - Check (result, status) tuples
 - `@raises_on_error` - Convert None/empty returns to exceptions
 - `@handle_exceptions` - Enhance error messages with context
 
 New buffer utilities have been implemented:
+
 - `AudioStreamBasicDescription` dataclass for type-safe format handling
 - Buffer packing/unpacking utilities
 - Format conversion helpers
@@ -218,6 +220,7 @@ class AudioFile(capi.CoreAudioObject):
 ### 1. Cleaner Error Handling
 
 **Before**: Manual try-except with generic error messages
+
 ```python
 try:
     file_id = capi.audio_file_open_url(self._path)
@@ -228,6 +231,7 @@ except Exception as e:
 ```
 
 **After**: `@handle_exceptions` decorator provides consistent error context
+
 ```python
 @handle_exceptions("open audio file", reraise_as=AudioFileError)
 def open(self) -> "AudioFile":
@@ -245,12 +249,14 @@ def open(self) -> "AudioFile":
 ### 3. Better Error Messages
 
 **Before**:
-```
+
+```text
 AudioFileError: Failed to open file /path/to/file.wav: [Errno 2] No such file or directory
 ```
 
 **After**:
-```
+
+```text
 AudioFileError: Failed to open audio file: kAudioFileFileNotFoundError (File not found)
 Suggestion: Verify the file path exists and is spelled correctly
 ```
@@ -258,11 +264,13 @@ Suggestion: Verify the file path exists and is spelled correctly
 ### 4. Type Safety
 
 **Before**: `AudioFormat` (simple dataclass)
+
 - No validation
 - Manual FourCC conversion
 - No helper methods
 
 **After**: `AudioStreamBasicDescription` with validation and helper methods
+
 - Automatic validation of parameters
 - FourCC conversion built-in
 - Properties: `is_pcm`, `is_float`, `is_interleaved`, etc.
@@ -339,18 +347,21 @@ Based on grep analysis, the following files have error handling that could benef
 ## Migration Strategy
 
 ### Phase 1: New Code (Complete)
+
 - [x] Implement decorators in `os_status.py`
 - [x] Implement buffer utilities in `buffer_utils.py`
 - [x] Add comprehensive tests (64/64 passing)
 - [x] Export from main `__init__.py`
 
 ### Phase 2: Gradual Refactoring (Deferred)
+
 1. Start with AudioFile class (most used)
 2. Refactor one class at a time
 3. Run full test suite after each refactoring
 4. Update any tests that check exact error messages
 
 ### Phase 3: Documentation Update (Deferred)
+
 1. Update examples to show decorator usage
 2. Add migration guide for users extending classes
 3. Update API documentation
@@ -368,11 +379,13 @@ The refactoring is **100% backward compatible**:
 ## Testing
 
 Current test coverage:
+
 - **31 tests** for error handling decorators
 - **33 tests** for buffer utilities
 - **64/64 tests passing** (100%)
 
 After refactoring, existing tests should:
+
 - Continue to pass with same functionality
 - May need updates if they check exact error message text
 - Error messages will be more detailed (generally better)
@@ -382,6 +395,7 @@ After refactoring, existing tests should:
 ### When to Use Each Decorator
 
 **`@check_os_status`**: For functions returning OSStatus directly
+
 ```python
 @check_os_status("initialize audio unit", AudioUnitError)
 def initialize(self):
@@ -389,6 +403,7 @@ def initialize(self):
 ```
 
 **`@check_return_status`**: For functions returning (result, status) tuples
+
 ```python
 @check_return_status("read packets", AudioFileError, status_index=1)
 def read_packets(self, start, count):
@@ -397,6 +412,7 @@ def read_packets(self, start, count):
 ```
 
 **`@raises_on_error`**: For functions that return None on error
+
 ```python
 @raises_on_error("find audio component", AudioUnitError)
 def find_component(self, desc):
@@ -404,6 +420,7 @@ def find_component(self, desc):
 ```
 
 **`@handle_exceptions`**: For general exception handling with context
+
 ```python
 @handle_exceptions("process audio buffer", reraise_as=AudioFileError)
 def process_buffer(self, data):
@@ -414,6 +431,7 @@ def process_buffer(self, data):
 ## Performance Impact
 
 The decorators add minimal overhead:
+
 - Single function call wrapper
 - One isinstance check
 - String formatting only on error
@@ -423,11 +441,13 @@ The decorators add minimal overhead:
 ## Recommendation
 
 **Defer refactoring until:**
+
 1. Major version bump (breaking change window)
 2. Significant new feature development
 3. Dedicated refactoring sprint
 
 **Proceed incrementally:**
+
 - Refactor one class at a time
 - Run full test suite between changes
 - Monitor for any issues in production usage

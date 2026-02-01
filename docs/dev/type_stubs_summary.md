@@ -7,6 +7,7 @@ Comprehensive `.pyi` type stub files have been created for the **coremusic** pac
 ## Created Files
 
 ### 1. `src/coremusic/__init__.pyi` (2 KB)
+
 - **Purpose**: Package-level type hints
 - **Contents**:
   - Re-exports all functional API from `capi`
@@ -15,6 +16,7 @@ Comprehensive `.pyi` type stub files have been created for the **coremusic** pac
   - Module metadata (`__version__`, `__all__`)
 
 ### 2. `src/coremusic/capi.pyi` (40 KB) [+]
+
 - **Purpose**: Complete type stubs for the functional C-style API
 - **Coverage**: **401 function signatures** (covering all 390 functions in `capi.pyx`)
 - **Contents**:
@@ -36,7 +38,8 @@ Comprehensive `.pyi` type stub files have been created for the **coremusic** pac
   - **200+ constant getters** for all frameworks
 
 **Categorization by Framework:**
-```
+
+```text
 Utility Functions:        2
 AudioHardware:            8
 AudioFile:                9
@@ -56,6 +59,7 @@ Total:                  390+ functions
 ```
 
 ### 3. `src/coremusic/objects.pyi` (23 KB)
+
 - **Purpose**: Type stubs for the object-oriented Pythonic API
 - **Contents**:
   - **Exception hierarchy** (9 exception classes)
@@ -76,18 +80,21 @@ Total:                  390+ functions
 ## Key Features
 
 ### [x] Complete Coverage
+
 - **100% function coverage** - All 390 functions in `capi.pyx` have type hints
 - **All OO classes** - Complete type hints for object-oriented API
 - **Proper return types** - All functions annotated with correct return types
 - **Parameter types** - Full parameter type annotations
 
 ### [x] IDE Support
+
 - **Autocomplete** - Full IntelliSense/autocomplete in VS Code, PyCharm, etc.
 - **Type checking** - Compatible with mypy, pyright, pytype
 - **Documentation** - Docstrings included in type stubs for hover info
 - **Context managers** - Proper `__enter__`/`__exit__` types
 
 ### [x] Advanced Types
+
 - **Union types** - `Union[str, Path]` for file paths
 - **Optional types** - Proper `Optional[T]` for nullable values
 - **Literal types** - String literals for mode parameters
@@ -96,6 +103,7 @@ Total:                  390+ functions
 - **NumPy types** - `NDArray` types when NumPy available
 
 ### [x] Professional Quality
+
 - **Organized by framework** - Clear section headers
 - **Comprehensive docs** - Docstrings for all public APIs
 - **Consistent style** - Follows Python typing conventions
@@ -131,6 +139,7 @@ sources: list[tuple[int, str]] = cm.MIDIClient.get_sources()
 ### IDE Autocomplete
 
 When you type `cm.AudioFile.`, your IDE will show:
+
 - All properties (`format`, `duration`, `sample_rate`, etc.)
 - All methods (`open()`, `close()`, `read_frames()`, etc.)
 - Parameter hints for each method
@@ -225,6 +234,7 @@ setup(
 ```
 
 Create `src/coremusic/py.typed` (empty file):
+
 ```bash
 touch src/coremusic/py.typed
 ```
@@ -232,6 +242,7 @@ touch src/coremusic/py.typed
 ### 2. Add Mypy Configuration
 
 Create `mypy.ini`:
+
 ```ini
 [mypy]
 python_version = 3.9

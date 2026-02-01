@@ -38,6 +38,7 @@ print(f"{desc.type}/{desc.subtype}/{desc.manufacturer}")
 ```
 
 **Features:**
+
 - Case-insensitive matching by default
 - Substring matching (searches for 'Delay' finds 'AUDelay')
 - Returns `AudioComponent` object (can create instances directly)
@@ -60,7 +61,8 @@ effects = cm.list_available_audio_units(filter_type='aufx')
 ```
 
 **Example output:**
-```
+
+```text
 Found 676 AudioUnits total
 
 1. Apple PAC3 Transcoder: acdc/pac3/appl
@@ -86,6 +88,7 @@ effect_names = cm.get_audiounit_names(filter_type='aufx')
 ```
 
 **Features:**
+
 - Simple list of strings (names only)
 - Optional filtering by FourCC type code
 - Lighter weight than `list_available_audio_units()` if you only need names
@@ -190,6 +193,7 @@ if component:
 The implementation follows the exact pattern you provided:
 
 **Your C++ Code:**
+
 ```cpp
 while((component = AudioComponentFindNext(component, &desc)))
 {
@@ -212,6 +216,7 @@ while((component = AudioComponentFindNext(component, &desc)))
 ```
 
 **Python Implementation:**
+
 ```python
 component_id = 0  # NULL
 while True:
@@ -240,6 +245,7 @@ while True:
 ### Memory Management
 
 Properly handles CoreFoundation memory:
+
 - `CFStringRef` created by `AudioComponentCopyName` is released via `CFRelease`
 - CFString conversion uses `CFStringGetCString` with proper buffer management
 - No memory leaks
@@ -265,6 +271,7 @@ Added **11 comprehensive tests** (`tests/test_utilities.py::TestAudioUnitDiscove
 ## Performance
 
 On a typical macOS system:
+
 - **676 AudioUnits** enumerated
 - Search time: **< 100ms** for iteration through all components
 - No caching (fresh search each time)
@@ -279,13 +286,15 @@ On a typical macOS system:
 
 ## Benefits
 
-### Before (FourCC only):
+### Before (FourCC only)
+
 ```python
 # Had to know exact codes
 delay = chain.add_effect('aufx', 'dely', 'appl')
 ```
 
-### After (Name-based):
+### After (Name-based)
+
 ```python
 # Intuitive and discoverable
 delay = chain.add_effect_by_name('AUDelay')
