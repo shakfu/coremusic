@@ -14,7 +14,7 @@ if TYPE_CHECKING:
         from numpy.typing import NDArray as NDArray_
     except ImportError:
         NDArray_ = Any  # type: ignore[misc,assignment]
-    NDArray = NDArray_
+    NDArray = NDArray_[Any]
 
 
 class AudioFileLoaderMixin:

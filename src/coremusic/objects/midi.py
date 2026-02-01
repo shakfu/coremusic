@@ -9,7 +9,7 @@ This module provides classes for working with MIDI:
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from .. import capi
 from .exceptions import MIDIError
@@ -59,7 +59,7 @@ class MIDIPort(capi.CoreAudioObject):
 class MIDIInputPort(MIDIPort):
     """MIDI input port for receiving MIDI data"""
 
-    def connect_source(self, source) -> None:
+    def connect_source(self, source: Any) -> None:
         """Connect to a MIDI source"""
         self._ensure_not_disposed()
         try:
@@ -67,7 +67,7 @@ class MIDIInputPort(MIDIPort):
         except Exception as e:
             raise MIDIError(f"Failed to connect source: {e}")
 
-    def disconnect_source(self, source) -> None:
+    def disconnect_source(self, source: Any) -> None:
         """Disconnect from a MIDI source"""
         self._ensure_not_disposed()
         try:
@@ -79,7 +79,7 @@ class MIDIInputPort(MIDIPort):
 class MIDIOutputPort(MIDIPort):
     """MIDI output port for sending MIDI data"""
 
-    def send_data(self, destination, data: bytes, timestamp: int = 0) -> None:
+    def send_data(self, destination: Any, data: bytes, timestamp: int = 0) -> None:
         """Send MIDI data to a destination endpoint
 
         Args:

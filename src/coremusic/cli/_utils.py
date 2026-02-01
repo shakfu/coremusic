@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 from typing import NoReturn
@@ -46,6 +47,21 @@ def error(message: str, exit_code: int = EXIT_ERROR) -> NoReturn:
 def warning(message: str) -> None:
     """Print warning message to stderr."""
     print(f"Warning: {message}", file=sys.stderr)
+
+
+def print_help_default(parser: "argparse.ArgumentParser") -> int:
+    """Default function that prints help and returns EXIT_SUCCESS.
+
+    Use with parser.set_defaults(func=...) to show help when no subcommand is given.
+
+    Args:
+        parser: The argument parser to print help for
+
+    Returns:
+        EXIT_SUCCESS (0)
+    """
+    parser.print_help()
+    return EXIT_SUCCESS
 
 
 def require_file(path: str) -> Path:

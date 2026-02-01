@@ -49,10 +49,10 @@ class CustomFormatter(logging.Formatter):
         logging.CRITICAL: cfmt.format(bold_red, reset),
     }
 
-    def __init__(self, use_color=COLOR):
+    def __init__(self, use_color: bool = COLOR) -> None:
         self.use_color = use_color
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         """Custom logger formatting method"""
         if not self.use_color:
             log_fmt = self.fmt

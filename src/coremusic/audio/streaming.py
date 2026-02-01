@@ -40,7 +40,7 @@ if TYPE_CHECKING:
     except ImportError:
         NDArray_ = Any  # type: ignore[misc,assignment]
 
-    NDArray = NDArray_
+    NDArray = NDArray_[Any]
 
 
 logger = logging.getLogger(__name__)

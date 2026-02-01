@@ -322,7 +322,7 @@ class Note:
     octave: int = 4
     velocity: int = 100
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # Normalize note name
         self.name = self.name.upper()
         if self.name in ENHARMONIC_MAP:

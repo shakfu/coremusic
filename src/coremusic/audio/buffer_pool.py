@@ -5,7 +5,7 @@ in audio processing applications.
 """
 
 from threading import Lock
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 class BufferPool:
@@ -297,7 +297,7 @@ class PooledBuffer:
         self.buffer = self.pool.acquire(self.size)
         return self.buffer
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Release buffer back to pool."""
         if self.buffer is not None:
             self.pool.release(self.buffer)
@@ -324,7 +324,7 @@ class BufferPoolStats:
         print(stats.summary())
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize statistics tracker."""
         self._acquisitions = 0
         self._releases = 0

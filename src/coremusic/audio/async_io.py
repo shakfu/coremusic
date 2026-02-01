@@ -130,8 +130,8 @@ class AsyncAudioFile:
         Returns:
             Tuple of (audio data as bytes, actual packet count)
         """
-        return await asyncio.to_thread(  # type: ignore[call-arg]
-            self._audio_file.read_packets,  # type: ignore[arg-type]
+        return await asyncio.to_thread(
+            self._audio_file.read_packets,
             start_packet,
             packet_count,
         )
@@ -168,11 +168,11 @@ class AsyncAudioFile:
         # If total_packets not specified, read until we get no data
         while True:
             remaining = chunk_size
-            chunk_data, actual_count = await asyncio.to_thread(  # type: ignore[call-arg]
+            chunk_data, actual_count = await asyncio.to_thread(
                 self._audio_file.read_packets, current_packet, remaining
             )
 
-            if actual_count == 0 or not chunk_data:  # type: ignore[comparison-overlap]
+            if actual_count == 0 or not chunk_data:
                 break
 
             yield chunk_data
@@ -192,7 +192,7 @@ class AsyncAudioFile:
 
         async def read_as_numpy_async(
             self, start_packet: int = 0, packet_count: Optional[int] = None
-        ) -> "NDArray":
+        ) -> "NDArray[Any]":
             """Read audio data as NumPy array asynchronously.
 
             Args:
@@ -213,7 +213,7 @@ class AsyncAudioFile:
             chunk_size: int = 4096,
             start_packet: int = 0,
             total_packets: Optional[int] = None,
-        ) -> AsyncIterator["NDArray"]:
+        ) -> AsyncIterator["NDArray[Any]"]:
             """Stream audio data as NumPy arrays asynchronously.
 
             Args:
@@ -310,7 +310,7 @@ class AsyncAudioQueue:
         Returns:
             AsyncAudioQueue instance
         """
-        queue = await asyncio.to_thread(AudioQueue.new_output, audio_format)  # type: ignore[attr-defined]
+        queue = await asyncio.to_thread(AudioQueue.new_output, audio_format)
         return cls(queue)
 
     async def __aenter__(self) -> "AsyncAudioQueue":
@@ -338,7 +338,7 @@ class AsyncAudioQueue:
         Args:
             buffer: AudioBuffer to enqueue
         """
-        await asyncio.to_thread(self._queue.enqueue_buffer, buffer)  # type: ignore[attr-defined]
+        await asyncio.to_thread(self._queue.enqueue_buffer, buffer)
 
     async def start_async(self) -> None:
         """Start the audio queue asynchronously."""
@@ -358,12 +358,12 @@ class AsyncAudioQueue:
         Args:
             immediate: If True, dispose immediately; if False, wait for buffers to finish
         """
-        await asyncio.to_thread(self._queue.dispose, immediate)  # type: ignore[call-arg]
+        await asyncio.to_thread(self._queue.dispose, immediate)
 
     @property
     def format(self) -> AudioFormat:
         """Get the audio format (synchronous property)."""
-        return self._queue._format  # type: ignore[no-any-return,attr-defined]
+        return self._queue._format
 
     def __repr__(self) -> str:
         return f"AsyncAudioQueue(format={self.format})"

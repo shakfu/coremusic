@@ -349,7 +349,8 @@ class AudioUnit(capi.CoreAudioObject):
                 2, capi.get_audio_unit_scope_global(), 0
             )  # kAudioUnitProperty_SampleRate = 2
             if len(data) >= 8:
-                return struct.unpack("<d", data[:8])[0]
+                result: float = struct.unpack("<d", data[:8])[0]
+                return result
             return 0.0
         except Exception:
             # Fallback to stream format sample rate
@@ -408,7 +409,8 @@ class AudioUnit(capi.CoreAudioObject):
                 12, capi.get_audio_unit_scope_global(), 0
             )  # kAudioUnitProperty_Latency = 12
             if len(data) >= 8:
-                return struct.unpack("<d", data[:8])[0]
+                result: float = struct.unpack("<d", data[:8])[0]
+                return result
             return 0.0
         except Exception:
             return 0.0
@@ -422,7 +424,8 @@ class AudioUnit(capi.CoreAudioObject):
                 6, capi.get_audio_unit_scope_global(), 0
             )  # kAudioUnitProperty_CPULoad = 6
             if len(data) >= 4:
-                return struct.unpack("<f", data[:4])[0]
+                result: float = struct.unpack("<f", data[:4])[0]
+                return result
             return 0.0
         except Exception:
             return 0.0
@@ -436,7 +439,8 @@ class AudioUnit(capi.CoreAudioObject):
                 14, capi.get_audio_unit_scope_global(), 0
             )  # kAudioUnitProperty_MaximumFramesPerSlice = 14
             if len(data) >= 4:
-                return struct.unpack("<L", data[:4])[0]
+                result: int = struct.unpack("<L", data[:4])[0]
+                return result
             return 0
         except Exception:
             return 0
@@ -510,11 +514,11 @@ class AudioUnit(capi.CoreAudioObject):
         status = "initialized" if self._is_initialized else "uninitialized"
         return f"AudioUnit({self._description.subtype!r}, {status})"
 
-    def __enter__(self):
+    def __enter__(self) -> "AudioUnit":
         self.initialize()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.uninitialize()
         self.dispose()
 

@@ -7,7 +7,7 @@ This module provides utilities for working with audio buffers, including:
 """
 
 from dataclasses import dataclass
-from typing import Tuple, Union
+from typing import Any, Tuple, Union
 
 
 @dataclass
@@ -59,7 +59,7 @@ class AudioStreamBasicDescription:
     channels_per_frame: int
     bits_per_channel: int
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate format parameters."""
         if self.sample_rate <= 0:
             raise ValueError(f"Invalid sample rate: {self.sample_rate}")
@@ -149,7 +149,7 @@ class AudioStreamBasicDescription:
             return 0
         return num_bytes // self.bytes_per_frame
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary suitable for capi functions.
 
         Returns:
@@ -167,7 +167,7 @@ class AudioStreamBasicDescription:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'AudioStreamBasicDescription':
+    def from_dict(cls, data: dict[str, Any]) -> 'AudioStreamBasicDescription':
         """Create from dictionary.
 
         Args:

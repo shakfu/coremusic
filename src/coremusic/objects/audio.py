@@ -404,7 +404,7 @@ class AudioFile(capi.CoreAudioObject):
             )
             if len(duration_data) >= 8:
                 # Duration is a Float64 (double)
-                duration = struct.unpack("<d", duration_data[:8])[0]
+                duration: float = struct.unpack("<d", duration_data[:8])[0]
                 return duration
             else:
                 # Fallback: calculate from packet count and sample rate
@@ -416,9 +416,10 @@ class AudioFile(capi.CoreAudioObject):
                     packet_count = struct.unpack("<Q", packet_count_data[:8])[0]
                     format = self.format
                     if format.sample_rate > 0:
-                        return (
+                        calculated: float = (
                             packet_count * format.frames_per_packet / format.sample_rate
                         )
+                        return calculated
                 return 0.0
         except Exception:
             # If all methods fail, return 0.0
@@ -780,7 +781,7 @@ class AudioConverter(capi.CoreAudioObject):
         """Enter context manager"""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit context manager and dispose"""
         self.dispose()
 
@@ -848,7 +849,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
         """
         file = cls(path)
         try:
-            file_id = capi.extended_audio_file_create_with_url(
+            file_id = capi.extended_audio_file_create_with_url(  # type: ignore[call-arg]
                 str(path), file_type, format.to_dict()
             )
             file._set_object_id(file_id)

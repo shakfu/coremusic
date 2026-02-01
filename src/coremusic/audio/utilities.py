@@ -299,7 +299,7 @@ def convert_audio_file(
             return
 
         # Read all audio data
-        audio_data, packet_count = input_file.read_packets(0, 999999999)  # type: ignore[call-arg]
+        audio_data, packet_count = input_file.read_packets(0, 999999999)
 
         # Determine which conversion method to use
         needs_complex_conversion = (
@@ -311,7 +311,7 @@ def convert_audio_file(
         with AudioConverter(source_format, output_format) as converter:
             if needs_complex_conversion:
                 # Use callback-based API for complex conversions
-                converted_data = converter.convert_with_callback(  # type: ignore[attr-defined]
+                converted_data = converter.convert_with_callback(
                     audio_data, packet_count
                 )
             else:
@@ -460,7 +460,7 @@ def trim_audio(
             packet_count = None  # Read to end
 
         # Read trimmed data
-        data, actual_count = input_file.read_packets(  # type: ignore[call-arg]
+        data, actual_count = input_file.read_packets(
             start_packet, packet_count or 999999999
         )
 
@@ -473,7 +473,7 @@ def trim_audio(
             format,
         )
         try:
-            output_ext_file.write(actual_count, data)  # type: ignore[arg-type]
+            output_ext_file.write(actual_count, data)
         finally:
             output_ext_file.close()
 
@@ -517,15 +517,15 @@ class AudioEffectsChain:
         ```
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Create a new audio effects chain"""
         from ..objects import AUGraph
 
         self._graph = AUGraph()
-        self._nodes = {}  # Map of node_id -> description
+        self._nodes: dict[int, Any] = {}  # Map of node_id -> description
 
     @property
-    def graph(self):
+    def graph(self) -> Any:
         """Get the underlying AUGraph"""
         return self._graph
 
@@ -561,7 +561,7 @@ class AudioEffectsChain:
         """
         from ..objects import AudioComponentDescription
 
-        desc = AudioComponentDescription(  # type: ignore[call-arg]
+        desc = AudioComponentDescription(
             type=effect_type,
             subtype=effect_subtype,
             manufacturer=manufacturer,
@@ -644,7 +644,7 @@ class AudioEffectsChain:
             chain.connect(eq_node, output_node)
             ```
         """
-        self._graph.connect(source_node, source_bus, dest_node, dest_bus)  # type: ignore[attr-defined]
+        self._graph.connect(source_node, source_bus, dest_node, dest_bus)
 
     def disconnect(self, dest_node: int, dest_bus: int = 0) -> None:
         """Disconnect a node input.
@@ -653,7 +653,7 @@ class AudioEffectsChain:
             dest_node: Destination node ID
             dest_bus: Destination input bus (default: 0)
         """
-        self._graph.disconnect(dest_node, dest_bus)  # type: ignore[attr-defined]
+        self._graph.disconnect(dest_node, dest_bus)
 
     def remove_node(self, node_id: int) -> None:
         """Remove a node from the chain.
@@ -704,7 +704,7 @@ class AudioEffectsChain:
         """Context manager entry"""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Context manager exit"""
         self.dispose()
 
@@ -784,7 +784,7 @@ def create_simple_effect_chain(
 # ============================================================================
 
 
-def find_audio_unit_by_name(name: str, case_sensitive: bool = False):
+def find_audio_unit_by_name(name: str, case_sensitive: bool = False) -> Optional[Any]:
     """Find an AudioUnit by name (searches all available AudioComponents).
 
     This function iterates through all available AudioComponents and matches
@@ -856,7 +856,7 @@ def find_audio_unit_by_name(name: str, case_sensitive: bool = False):
                 )
 
                 # Create AudioComponent object
-                desc = AudioComponentDescription(  # type: ignore[call-arg]
+                desc = AudioComponentDescription(
                     type=type_fourcc,
                     subtype=subtype_fourcc,
                     manufacturer=manufacturer_fourcc,

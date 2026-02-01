@@ -29,6 +29,36 @@ pip install coremusic
 
 **Requirements:** macOS, Python 3.11+
 
+### Optional Dependencies
+
+CoreMusic has zero runtime dependencies by default. Optional features require additional packages:
+
+```bash
+# Audio analysis (beat detection, pitch detection, key detection)
+pip install coremusic[analysis]
+
+# Visualization (waveform plots, spectrograms)
+pip install coremusic[visualization]
+
+# All optional features
+pip install coremusic[all]
+```
+
+Check feature availability at runtime:
+
+```python
+import coremusic as cm
+
+if cm.NUMPY_AVAILABLE:
+    # NumPy-based features available
+    data = audio.read_as_numpy()
+
+if cm.audio.analysis.SCIPY_AVAILABLE:
+    # SciPy-based analysis available
+    analyzer = cm.audio.analysis.AudioAnalyzer("song.wav")
+    tempo = analyzer.detect_beats().tempo
+```
+
 ### Building from Source
 
 ```bash

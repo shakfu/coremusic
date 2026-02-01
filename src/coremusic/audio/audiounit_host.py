@@ -205,7 +205,7 @@ class AudioFormatConverter:
             return struct.pack(f'{len(output_samples)}{struct_fmt}', *output_samples)
 
     @staticmethod
-    def _normalize_sample(sample, sample_format: str) -> float:
+    def _normalize_sample(sample: Any, sample_format: str) -> float:
         """Normalize a sample to float32 range [-1.0, 1.0]"""
         if sample_format == PluginAudioFormat.FLOAT32:
             return float(sample)
@@ -219,12 +219,12 @@ class AudioFormatConverter:
             raise ValueError(f"Unknown sample format: {sample_format}")
 
     @staticmethod
-    def _normalize_to_float(samples: Tuple, sample_format: str) -> List[float]:
+    def _normalize_to_float(samples: Tuple[Any, ...], sample_format: str) -> List[float]:
         """Normalize all samples to float32"""
         return [AudioFormatConverter._normalize_sample(s, sample_format) for s in samples]
 
     @staticmethod
-    def _denormalize_sample(float_sample: float, sample_format: str):
+    def _denormalize_sample(float_sample: float, sample_format: str) -> Any:
         """Denormalize from float32 to target format"""
         # Clamp to valid range
         float_sample = max(-1.0, min(1.0, float_sample))
@@ -248,7 +248,7 @@ class AudioFormatConverter:
             raise ValueError(f"Unknown sample format: {sample_format}")
 
     @staticmethod
-    def _denormalize_from_float(float_samples: Tuple[float, ...], sample_format: str) -> List:
+    def _denormalize_from_float(float_samples: Tuple[float, ...], sample_format: str) -> List[Any]:
         """Denormalize all samples from float32"""
         return [AudioFormatConverter._denormalize_sample(s, sample_format) for s in float_samples]
 
@@ -315,7 +315,7 @@ class AudioUnitParameter:
         )
 
     @value.setter
-    def value(self, new_value: float):
+    def value(self, new_value: float) -> None:
         """Set parameter value"""
         if self._plugin._unit_id is None:
             raise RuntimeError("Plugin not instantiated")
@@ -484,7 +484,7 @@ class PresetManager:
 
         return sorted(presets)
 
-    def delete_preset(self, plugin_name: str, preset_name: str):
+    def delete_preset(self, plugin_name: str, preset_name: str) -> None:
         """Delete a user preset
 
         Args:
@@ -497,7 +497,7 @@ class PresetManager:
         if preset_file.exists():
             preset_file.unlink()
 
-    def export_preset(self, plugin_name: str, preset_name: str, output_path: Path):
+    def export_preset(self, plugin_name: str, preset_name: str, output_path: Path) -> None:
         """Export a preset to a custom location
 
         Args:
@@ -712,7 +712,7 @@ class AudioUnitPlugin:
         self._parameter_map = None
         return self
 
-    def dispose(self):
+    def dispose(self) -> None:
         """Dispose the AudioUnit instance"""
         if self._unit_id is not None:
             if self._initialized:
@@ -720,11 +720,11 @@ class AudioUnitPlugin:
             capi.audio_component_instance_dispose(self._unit_id)
             self._unit_id = None
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Complete cleanup (alias for dispose)"""
         self.dispose()
 
-    def _discover_parameters(self):
+    def _discover_parameters(self) -> None:
         """Discover all parameters"""
         if self._unit_id is None:
             return
@@ -742,7 +742,7 @@ class AudioUnitPlugin:
             except Exception:
                 pass  # Skip parameters we can't access
 
-    def _discover_presets(self):
+    def _discover_presets(self) -> None:
         """Discover factory presets"""
         if self._unit_id is None:
             return
@@ -770,7 +770,7 @@ class AudioUnitPlugin:
             return []
         return self._presets
 
-    def get_parameter(self, name_or_id) -> Optional[AudioUnitParameter]:
+    def get_parameter(self, name_or_id: Any) -> Optional[AudioUnitParameter]:
         """Get parameter by name or ID"""
         if not self._initialized:
             raise RuntimeError("Plugin not initialized")
@@ -786,20 +786,20 @@ class AudioUnitPlugin:
                 return self._parameter_map.get(name_or_id)
             return None
 
-    def set_parameter(self, name_or_id, value: float):
+    def set_parameter(self, name_or_id: Any, value: float) -> None:
         """Set parameter value by name or ID"""
         param = self.get_parameter(name_or_id)
         if param is None:
             raise ValueError(f"Parameter '{name_or_id}' not found")
         param.value = value
 
-    def load_factory_preset(self, preset: AudioUnitPreset):
+    def load_factory_preset(self, preset: AudioUnitPreset) -> None:
         """Load a factory preset"""
         if not self._initialized or self._unit_id is None:
             raise RuntimeError("Plugin not initialized")
         capi.audio_unit_set_current_preset(self._unit_id, preset.number)
 
-    def load_preset(self, preset_name: str):
+    def load_preset(self, preset_name: str) -> None:
         """Load a user preset by name
 
         Args:
@@ -833,7 +833,7 @@ class AudioUnitPlugin:
             self._preset_manager = PresetManager()
         return self._preset_manager.list_presets(self.name)
 
-    def delete_preset(self, preset_name: str):
+    def delete_preset(self, preset_name: str) -> None:
         """Delete a user preset
 
         Args:
@@ -843,7 +843,7 @@ class AudioUnitPlugin:
             self._preset_manager = PresetManager()
         self._preset_manager.delete_preset(self.name, preset_name)
 
-    def export_preset(self, preset_name: str, output_path: Path):
+    def export_preset(self, preset_name: str, output_path: Path) -> None:
         """Export a preset to a custom location
 
         Args:
@@ -928,7 +928,7 @@ class AudioUnitPlugin:
 
         return output_data
 
-    def set_audio_format(self, audio_format: PluginAudioFormat):
+    def set_audio_format(self, audio_format: PluginAudioFormat) -> None:
         """Set the default audio format for this plugin
 
         Args:
@@ -941,7 +941,7 @@ class AudioUnitPlugin:
         """Get the current audio format"""
         return self._audio_format
 
-    def send_midi(self, status: int, data1: int, data2: int, offset_frames: int = 0):
+    def send_midi(self, status: int, data1: int, data2: int, offset_frames: int = 0) -> None:
         """Send MIDI message to instrument plugin
 
         Args:
@@ -961,7 +961,7 @@ class AudioUnitPlugin:
 
         capi.music_device_midi_event(self._unit_id, status, data1, data2, offset_frames)
 
-    def note_on(self, channel: int, note: int, velocity: int, offset_frames: int = 0):
+    def note_on(self, channel: int, note: int, velocity: int, offset_frames: int = 0) -> None:
         """Send MIDI Note On message
 
         Args:
@@ -976,7 +976,7 @@ class AudioUnitPlugin:
         status, data1, data2 = capi.midi_note_on(channel, note, velocity)
         self.send_midi(status, data1, data2, offset_frames)
 
-    def note_off(self, channel: int, note: int, velocity: int = 0, offset_frames: int = 0):
+    def note_off(self, channel: int, note: int, velocity: int = 0, offset_frames: int = 0) -> None:
         """Send MIDI Note Off message
 
         Args:
@@ -991,7 +991,7 @@ class AudioUnitPlugin:
         status, data1, data2 = capi.midi_note_off(channel, note, velocity)
         self.send_midi(status, data1, data2, offset_frames)
 
-    def control_change(self, channel: int, controller: int, value: int, offset_frames: int = 0):
+    def control_change(self, channel: int, controller: int, value: int, offset_frames: int = 0) -> None:
         """Send MIDI Control Change message
 
         Args:
@@ -1007,7 +1007,7 @@ class AudioUnitPlugin:
         status, data1, data2 = capi.midi_control_change(channel, controller, value)
         self.send_midi(status, data1, data2, offset_frames)
 
-    def program_change(self, channel: int, program: int, offset_frames: int = 0):
+    def program_change(self, channel: int, program: int, offset_frames: int = 0) -> None:
         """Send MIDI Program Change message
 
         Args:
@@ -1021,7 +1021,7 @@ class AudioUnitPlugin:
         status, data1, data2 = capi.midi_program_change(channel, program)
         self.send_midi(status, data1, data2, offset_frames)
 
-    def pitch_bend(self, channel: int, value: int, offset_frames: int = 0):
+    def pitch_bend(self, channel: int, value: int, offset_frames: int = 0) -> None:
         """Send MIDI Pitch Bend message
 
         Args:
@@ -1036,7 +1036,7 @@ class AudioUnitPlugin:
         status, data1, data2 = capi.midi_pitch_bend(channel, value)
         self.send_midi(status, data1, data2, offset_frames)
 
-    def all_notes_off(self, channel: int):
+    def all_notes_off(self, channel: int) -> None:
         """Turn off all notes on a channel
 
         Args:
@@ -1055,7 +1055,7 @@ class AudioUnitPlugin:
             raise KeyError(f"Parameter '{key}' not found")
         return param.value
 
-    def __setitem__(self, key: str, value: float):
+    def __setitem__(self, key: str, value: float) -> None:
         """Set parameter value by name"""
         self.set_parameter(key, value)
 
@@ -1065,10 +1065,9 @@ class AudioUnitPlugin:
         self.initialize()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Context manager exit"""
         self.cleanup()
-        return False
 
     def __repr__(self) -> str:
         status = "initialized" if self._initialized else "not initialized"
@@ -1100,7 +1099,7 @@ class AudioUnitHost:
         'mixer': 'aumx',
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the AudioUnit host"""
         self._plugin_cache: Optional[List[Dict[str, Any]]] = None
 
@@ -1139,7 +1138,7 @@ class AudioUnitHost:
 
         return plugins
 
-    def load_plugin(self, name_or_id, type: Optional[str] = None) -> AudioUnitPlugin:
+    def load_plugin(self, name_or_id: Any, type: Optional[str] = None) -> AudioUnitPlugin:
         """Load a plugin by name or component ID
 
         Args:
@@ -1214,7 +1213,7 @@ class AudioUnitChain:
         self._initialized = False
         self._audio_format = audio_format or PluginAudioFormat()
 
-    def add_plugin(self, name_or_plugin, auto_initialize: bool = True):
+    def add_plugin(self, name_or_plugin: Any, auto_initialize: bool = True) -> int:
         """Add a plugin to the end of the chain
 
         Args:
@@ -1245,7 +1244,7 @@ class AudioUnitChain:
         self._plugins.append(plugin)
         return len(self._plugins) - 1
 
-    def insert_plugin(self, index: int, name_or_plugin, auto_initialize: bool = True):
+    def insert_plugin(self, index: int, name_or_plugin: Any, auto_initialize: bool = True) -> int:
         """Insert a plugin at a specific position in the chain
 
         Args:
@@ -1278,7 +1277,7 @@ class AudioUnitChain:
         self._plugin_names.insert(index, plugin_name)
         return index
 
-    def remove_plugin(self, index: int):
+    def remove_plugin(self, index: int) -> None:
         """Remove a plugin from the chain
 
         Args:
@@ -1302,7 +1301,7 @@ class AudioUnitChain:
             return self._plugins[index]
         raise IndexError(f"Plugin index {index} out of range (0-{len(self._plugins)-1})")
 
-    def configure_plugin(self, index: int, parameters: Dict[str, float]):
+    def configure_plugin(self, index: int, parameters: Dict[str, float]) -> None:
         """Configure a plugin's parameters
 
         Args:
@@ -1408,7 +1407,7 @@ class AudioUnitChain:
 
         return mixed_data
 
-    def bypass_plugin(self, index: int, bypass: bool = True):
+    def bypass_plugin(self, index: int, bypass: bool = True) -> None:
         """Bypass a plugin in the chain (plugin remains in chain but doesn't process)
 
         Args:
@@ -1422,7 +1421,7 @@ class AudioUnitChain:
         # For now, we document the intended behavior
         raise NotImplementedError("Plugin bypass not yet implemented")
 
-    def dispose(self):
+    def dispose(self) -> None:
         """Dispose all plugins in the chain"""
         for plugin in self._plugins:
             plugin.dispose()
@@ -1433,10 +1432,9 @@ class AudioUnitChain:
         """Context manager entry"""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Context manager exit"""
         self.dispose()
-        return False
 
     def __len__(self) -> int:
         """Get number of plugins in chain"""

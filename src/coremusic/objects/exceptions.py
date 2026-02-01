@@ -30,7 +30,7 @@ class CoreAudioError(Exception):
         self.status_code = status_code
 
     @classmethod
-    def from_os_status(cls, status: int, operation: str = ""):
+    def from_os_status(cls, status: int, operation: str = "") -> "CoreAudioError":
         """Create exception from OSStatus code with human-readable error message.
 
         Args:

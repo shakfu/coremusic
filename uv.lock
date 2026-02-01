@@ -246,6 +246,20 @@ name = "coremusic"
 version = "0.1.12"
 source = { editable = "." }
 
+[package.optional-dependencies]
+all = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "scipy" },
+]
+analysis = [
+    { name = "numpy" },
+    { name = "scipy" },
+]
+visualization = [
+    { name = "matplotlib" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "isort" },
@@ -263,6 +277,15 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [
+    { name = "matplotlib", marker = "extra == 'all'", specifier = ">=3.8" },
+    { name = "matplotlib", marker = "extra == 'visualization'", specifier = ">=3.8" },
+    { name = "numpy", marker = "extra == 'all'", specifier = ">=2.0" },
+    { name = "numpy", marker = "extra == 'analysis'", specifier = ">=2.0" },
+    { name = "scipy", marker = "extra == 'all'", specifier = ">=1.10" },
+    { name = "scipy", marker = "extra == 'analysis'", specifier = ">=1.10" },
+]
+provides-extras = ["analysis", "visualization", "all"]
 
 [package.metadata.requires-dev]
 dev = [

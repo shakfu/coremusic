@@ -6,10 +6,10 @@ import argparse
 import math
 
 from ._formatters import format_db, format_duration, output_json
-from ._utils import EXIT_SUCCESS, require_file, require_numpy, require_scipy
+from ._utils import EXIT_SUCCESS, print_help_default, require_file, require_numpy, require_scipy
 
 
-def register(subparsers: argparse._SubParsersAction) -> None:
+def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """Register analyze commands."""
     parser = subparsers.add_parser("analyze", help="Audio analysis and feature extraction")
     analyze_sub = parser.add_subparsers(dest="analyze_command", metavar="<subcommand>")
@@ -98,7 +98,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     )
     onsets_parser.set_defaults(func=cmd_onsets)
 
-    parser.set_defaults(func=lambda args: parser.print_help() or EXIT_SUCCESS)
+    parser.set_defaults(func=lambda args: print_help_default(parser))
 
 
 def cmd_peak(args: argparse.Namespace) -> int:

@@ -55,7 +55,7 @@ except ImportError:
     scipy = None
 
 
-def _require_scipy(func_name: str = "this function"):
+def _require_scipy(func_name: str = "this function") -> None:
     """Raise ImportError if SciPy is not available."""
     if not SCIPY_AVAILABLE:
         raise ImportError(
@@ -63,7 +63,7 @@ def _require_scipy(func_name: str = "this function"):
         )
 
 
-def _require_numpy(func_name: str = "this function"):
+def _require_numpy(func_name: str = "this function") -> None:
     """Raise ImportError if NumPy is not available."""
     if not NUMPY_AVAILABLE:
         raise ImportError(

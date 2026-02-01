@@ -567,7 +567,7 @@ class VelocityCurve(MIDITransformer):
         >>> curved = VelocityCurve(curve='exp').transform(sequence)
     """
 
-    CURVES = {
+    CURVES: Dict[str, Callable[[float], float]] = {
         'linear': lambda x: x,
         'log': lambda x: (x ** 0.5),  # Square root for softer feel
         'exp': lambda x: (x ** 2),    # Square for more dynamic
@@ -602,7 +602,7 @@ class VelocityCurve(MIDITransformer):
                 if event.is_note_on:
                     # Normalize to 0-1, apply curve, scale back
                     normalized = event.data2 / 127.0
-                    curved = self.curve_func(normalized)
+                    curved = float(self.curve_func(normalized))
                     event.data2 = max(1, min(127, int(curved * 127)))
 
         return result
@@ -1020,7 +1020,7 @@ class Arpeggiate(MIDITransformer):
         self.note_duration = note_duration
         self.seed = seed
 
-    def _get_pattern_order(self, notes: list, rng: random.Random) -> List[int]:
+    def _get_pattern_order(self, notes: List[MIDIEvent], rng: random.Random) -> List[int]:
         """Get indices for pattern."""
         n = len(notes)
         if self.pattern == 'up':

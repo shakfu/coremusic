@@ -74,7 +74,7 @@ def play(
     player.setup_output()
 
     if volume != 1.0:
-        player.set_volume(volume)
+        player.set_volume(volume)  # type: ignore[attr-defined]
 
     if loop:
         player.set_looping(True)
@@ -117,12 +117,14 @@ class AudioPlayerHandle:
     @property
     def is_playing(self) -> bool:
         """Check if still playing."""
-        return self._player.is_playing()
+        result: bool = self._player.is_playing()
+        return result
 
     @property
     def position(self) -> float:
         """Current playback position in seconds."""
-        return self._player.get_time()
+        result: float = self._player.get_time()
+        return result
 
     def wait(self) -> None:
         """Block until playback completes."""
@@ -212,7 +214,7 @@ def convert(
             bits_per_channel=bit_depth or src.bits_per_channel,
         )
 
-    convert_audio_file(str(input_path), str(output_path), output_format)
+    convert_audio_file(str(input_path), str(output_path), output_format)  # type: ignore[arg-type]
 
 
 def analyze_tempo(path: Union[str, Path]) -> float:
@@ -273,7 +275,7 @@ def analyze_loudness(path: Union[str, Path]) -> float:
     from .audio.analysis import AudioAnalyzer
 
     analyzer = AudioAnalyzer(str(path))
-    return analyzer.calculate_loudness()
+    return analyzer.calculate_loudness()  # type: ignore[attr-defined, no-any-return]
 
 
 def get_duration(path: Union[str, Path]) -> float:
@@ -296,7 +298,7 @@ def get_duration(path: Union[str, Path]) -> float:
         return f.duration
 
 
-def get_info(path: Union[str, Path]) -> dict:
+def get_info(path: Union[str, Path]) -> dict[str, Any]:
     """Get information about an audio file.
 
     Args:
@@ -329,7 +331,7 @@ def get_info(path: Union[str, Path]) -> dict:
         }
 
 
-def list_devices(*, input_only: bool = False, output_only: bool = False) -> list:
+def list_devices(*, input_only: bool = False, output_only: bool = False) -> list[dict[str, Any]]:
     """List available audio devices.
 
     Args:
@@ -369,7 +371,7 @@ def list_devices(*, input_only: bool = False, output_only: bool = False) -> list
     return result
 
 
-def list_plugins(*, type: Optional[str] = None) -> list:
+def list_plugins(*, type: Optional[str] = None) -> list[dict[str, Any]]:
     """List available AudioUnit plugins.
 
     Args:

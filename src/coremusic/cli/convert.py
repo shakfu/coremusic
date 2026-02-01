@@ -7,10 +7,10 @@ from pathlib import Path
 
 from ._formatters import output_json
 from ._mappings import FORMAT_NAMES, get_format_display, get_format_id
-from ._utils import EXIT_SUCCESS, CLIError, require_file
+from ._utils import EXIT_SUCCESS, CLIError, print_help_default, require_file
 
 
-def register(subparsers: argparse._SubParsersAction) -> None:
+def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """Register convert commands."""
     parser = subparsers.add_parser(
         "convert",
@@ -166,7 +166,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     )
     trim_parser.set_defaults(func=cmd_trim)
 
-    parser.set_defaults(func=lambda args: parser.print_help() or EXIT_SUCCESS)
+    parser.set_defaults(func=lambda args: print_help_default(parser))
 
 
 def _infer_format_from_extension(path: Path) -> str:
@@ -236,7 +236,7 @@ def cmd_convert(args: argparse.Namespace) -> int:
         file_type = _get_file_type_for_extension(output_path)
 
         # Read all source data
-        frame_count = source.frame_count
+        frame_count = source.frame_count  # type: ignore[attr-defined]
         source_data, frames_read = source.read(frame_count)
 
         # Check if conversion is needed
@@ -383,7 +383,7 @@ def cmd_batch(args: argparse.Namespace) -> int:
                 )
 
                 file_type = _get_file_type_for_extension(output_path)
-                frame_count = source.frame_count
+                frame_count = source.frame_count  # type: ignore[attr-defined]
                 source_data, _ = source.read(frame_count)
 
                 # Check if conversion is needed

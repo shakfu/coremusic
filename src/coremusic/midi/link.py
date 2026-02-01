@@ -116,7 +116,7 @@ class LinkMIDIClock:
         self._stop_event = threading.Event()
         self._last_beat = 0.0
 
-    def start(self):
+    def start(self) -> None:
         """Start sending MIDI clock messages
 
         Sends MIDI Start message (0xFA) and begins clock thread.
@@ -132,7 +132,7 @@ class LinkMIDIClock:
         self._thread = threading.Thread(target=self._clock_thread, daemon=True)
         self._thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop sending MIDI clock messages
 
         Sends MIDI Stop message (0xFC) and stops clock thread.
@@ -150,7 +150,7 @@ class LinkMIDIClock:
         # Send MIDI Stop message
         self._send_realtime_message(MIDI_STOP)
 
-    def _send_realtime_message(self, status_byte: int):
+    def _send_realtime_message(self, status_byte: int) -> None:
         """Send MIDI System Real-Time message
 
         Args:
@@ -167,7 +167,7 @@ class LinkMIDIClock:
         except Exception as e:
             print(f"Error sending MIDI message: {e}")
 
-    def _clock_thread(self):
+    def _clock_thread(self) -> None:
         """Clock thread that sends MIDI clock messages
 
         Queries Link beat position and sends clock messages at the correct
@@ -261,7 +261,7 @@ class LinkMIDISequencer:
         self._stop_event = threading.Event()
         self._lock = threading.Lock()
 
-    def schedule_event(self, beat: float, message: bytes):
+    def schedule_event(self, beat: float, message: bytes) -> None:
         """Schedule a MIDI event at a specific beat position
 
         Args:
@@ -280,7 +280,7 @@ class LinkMIDISequencer:
         note: int,
         velocity: int,
         duration: float
-    ):
+    ) -> None:
         """Schedule a MIDI note with automatic note-off
 
         Args:
@@ -298,7 +298,7 @@ class LinkMIDISequencer:
         status, data1, data2 = capi.midi_note_off(channel, note, velocity=0)
         self.schedule_event(beat + duration, bytes([status, data1, data2]))
 
-    def schedule_cc(self, beat: float, channel: int, controller: int, value: int):
+    def schedule_cc(self, beat: float, channel: int, controller: int, value: int) -> None:
         """Schedule a MIDI CC message
 
         Args:
@@ -310,12 +310,12 @@ class LinkMIDISequencer:
         status, data1, data2 = capi.midi_control_change(channel, controller, value)
         self.schedule_event(beat, bytes([status, data1, data2]))
 
-    def clear_events(self):
+    def clear_events(self) -> None:
         """Clear all scheduled events"""
         with self._lock:
             self.events.clear()
 
-    def start(self):
+    def start(self) -> None:
         """Start the sequencer"""
         if self.running:
             return
@@ -331,7 +331,7 @@ class LinkMIDISequencer:
         self._thread = threading.Thread(target=self._sequencer_thread, daemon=True)
         self._thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the sequencer"""
         if not self.running:
             return
@@ -343,7 +343,7 @@ class LinkMIDISequencer:
             self._thread.join(timeout=1.0)
             self._thread = None
 
-    def _sequencer_thread(self):
+    def _sequencer_thread(self) -> None:
         """Sequencer thread that sends scheduled events"""
         # Check at high frequency for accurate timing
         sleep_interval = 0.001  # 1ms

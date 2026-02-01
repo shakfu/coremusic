@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import argparse
+from typing import Any
 
 from ._formatters import (format_bytes, format_duration, format_sample_rate,
                           output_json)
 from ._mappings import get_channel_display, get_format_display
-from ._utils import EXIT_SUCCESS, require_file
+from ._utils import EXIT_SUCCESS, print_help_default, require_file
 
 
-def register(subparsers: argparse._SubParsersAction) -> None:
+def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """Register audio commands."""
     parser = subparsers.add_parser("audio", help="Audio file operations")
     audio_sub = parser.add_subparsers(dest="audio_command", metavar="<subcommand>")
@@ -55,7 +56,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
                                choices=[1, 2], help="Number of channels (default: 2)")
     record_parser.set_defaults(func=cmd_record)
 
-    parser.set_defaults(func=lambda args: parser.print_help() or EXIT_SUCCESS)
+    parser.set_defaults(func=lambda args: print_help_default(parser))
 
 
 def cmd_info(args: argparse.Namespace) -> int:
@@ -162,8 +163,8 @@ def cmd_metadata(args: argparse.Namespace) -> int:
                 import coremusic.capi as capi
                 info_dict_prop = cm.AudioFileProperty.INFO_DICTIONARY
                 info_data = capi.audio_file_get_property(audio_file.object_id, info_dict_prop)
-                if info_data and isinstance(info_data, dict):  # type: ignore[unreachable]
-                    metadata["tags"] = info_data  # type: ignore[unreachable]
+                if info_data and isinstance(info_data, dict):
+                    metadata["tags"] = info_data
         except Exception:
             # Info dictionary not available for this format
             pass
@@ -234,7 +235,7 @@ def cmd_play(args: argparse.Namespace) -> int:
     # Stop flag for Ctrl+C
     stop_requested = False
 
-    def signal_handler(sig: int, frame) -> None:
+    def signal_handler(sig: int, frame: Any) -> None:
         nonlocal stop_requested
         stop_requested = True
 
@@ -329,7 +330,7 @@ def cmd_record(args: argparse.Namespace) -> int:
     # Stop flag for Ctrl+C
     stop_requested = False
 
-    def signal_handler(sig: int, frame) -> None:
+    def signal_handler(sig: int, frame: Any) -> None:
         nonlocal stop_requested
         stop_requested = True
 

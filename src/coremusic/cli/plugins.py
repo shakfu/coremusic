@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import argparse
+from typing import Any
 
 import coremusic.capi as capi
 from ._formatters import output_json, output_table
 from ._mappings import PLUGIN_TYPES, get_plugin_type, get_plugin_type_display
-from ._utils import EXIT_SUCCESS, CLIError
+from ._utils import EXIT_SUCCESS, CLIError, print_help_default
 
 # Parameter unit display names (kAudioUnitParameterUnit_* values)
 # From constants.py / audiotoolbox.pxd
@@ -42,7 +43,7 @@ PARAM_UNIT_NAMES = {
 }
 
 
-def register(subparsers: argparse._SubParsersAction) -> None:
+def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """Register plugin commands."""
     parser = subparsers.add_parser("plugin", help="AudioUnit plugin discovery")
     plugin_sub = parser.add_subparsers(dest="plugin_command", metavar="<subcommand>")
@@ -104,12 +105,12 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     preset_list_parser.add_argument("name", help="Plugin name (partial match)")
     preset_list_parser.set_defaults(func=cmd_preset_list)
 
-    preset_parser.set_defaults(func=lambda args: preset_parser.print_help() or EXIT_SUCCESS)
+    preset_parser.set_defaults(func=lambda args: print_help_default(preset_parser))
 
-    parser.set_defaults(func=lambda args: parser.print_help() or EXIT_SUCCESS)
+    parser.set_defaults(func=lambda args: print_help_default(parser))
 
 
-def _get_all_plugins(type_code: str | None = None) -> list[dict]:
+def _get_all_plugins(type_code: str | None = None) -> list[dict[str, Any]]:
     """Get all plugins with their info."""
     import coremusic.capi as capi
 
@@ -189,7 +190,7 @@ def cmd_find(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
-def _find_plugin_by_name(name: str) -> dict:
+def _find_plugin_by_name(name: str) -> dict[str, Any]:
     """Find a plugin by name (partial match, returns first match)."""
     components = _get_all_plugins()
     name_lower = name.lower()
@@ -201,7 +202,7 @@ def _find_plugin_by_name(name: str) -> dict:
     raise CLIError(f"Plugin not found: {name}")
 
 
-def _get_component_id_for_plugin(plugin_info: dict) -> int:
+def _get_component_id_for_plugin(plugin_info: dict[str, Any]) -> int:
     """Get the component ID for a plugin by searching for it."""
     import coremusic.capi as capi
 

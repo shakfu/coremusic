@@ -1,0 +1,63 @@
+# Pre-commit hooks for coremusic
+# Install: uv run pre-commit install
+# Run manually: uv run pre-commit run --all-files
+
+repos:
+  # Ruff - Fast Python linter and formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: [--fix]
+      # Run the formatter
+      - id: ruff-format
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Trim trailing whitespace
+      - id: trailing-whitespace
+        exclude: ^tests/data/
+      # Ensure files end with newline
+      - id: end-of-file-fixer
+        exclude: ^tests/data/
+      # Check YAML syntax
+      - id: check-yaml
+      # Check TOML syntax
+      - id: check-toml
+      # Check for merge conflict markers
+      - id: check-merge-conflict
+      # Check for large files
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+        exclude: ^tests/data/
+      # Check Python syntax
+      - id: check-ast
+      # Check for debugger imports
+      - id: debug-statements
+
+  # Type checking with mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.1
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - numpy>=2.0
+        args:
+          - '--ignore-missing-imports'
+          - '--strict'
+        files: ^src/coremusic/
+        exclude: ^src/coremusic/capi\.pyx$
+
+# Configuration
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false

@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import argparse
+from typing import Any
 
 from ._formatters import output_json, output_table
-from ._utils import EXIT_SUCCESS, DeviceNotFoundError
+from ._utils import EXIT_SUCCESS, DeviceNotFoundError, print_help_default
 
 
-def register(subparsers: argparse._SubParsersAction) -> None:
+def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """Register device commands."""
     parser = subparsers.add_parser("device", help="Audio device management")
     device_sub = parser.add_subparsers(dest="device_command", metavar="<subcommand>")
@@ -61,7 +62,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
                              help="Channel index (default: 0 for main)")
     mute_parser.set_defaults(func=cmd_mute)
 
-    parser.set_defaults(func=lambda args: parser.print_help() or EXIT_SUCCESS)
+    parser.set_defaults(func=lambda args: print_help_default(parser))
 
 
 def cmd_list(args: argparse.Namespace) -> int:
@@ -198,7 +199,7 @@ def cmd_info(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
-def _find_device(device_name: str):
+def _find_device(device_name: str) -> Any:
     """Find device by name or UID."""
     import coremusic as cm
 

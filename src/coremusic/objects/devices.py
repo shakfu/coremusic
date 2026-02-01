@@ -43,13 +43,14 @@ class AudioDevice(capi.CoreAudioObject):
             scope = capi.get_audio_object_property_scope_global()
 
         try:
-            data = capi.audio_object_get_property_string(
+            data = capi.audio_object_get_property_string(  # type: ignore[attr-defined]
                 self.object_id, property_id, scope, element
             )
             if data:
                 # Decode UTF-8 string from CoreFoundation
                 # Remove any null terminators
-                return data.decode("utf-8", errors="ignore").strip("\x00")
+                result: str = data.decode("utf-8", errors="ignore").strip("\x00")
+                return result
             return ""
         except Exception:
             return ""
@@ -66,7 +67,8 @@ class AudioDevice(capi.CoreAudioObject):
                 self.object_id, property_id, scope, element
             )
             if len(data) >= 4:
-                return struct.unpack("<L", data[:4])[0]
+                result: int = struct.unpack("<L", data[:4])[0]
+                return result
             return 0
         except Exception:
             return 0
@@ -83,7 +85,8 @@ class AudioDevice(capi.CoreAudioObject):
                 self.object_id, property_id, scope, element
             )
             if len(data) >= 8:
-                return struct.unpack("<d", data[:8])[0]
+                result: float = struct.unpack("<d", data[:8])[0]
+                return result
             return 0.0
         except Exception:
             return 0.0
@@ -193,12 +196,13 @@ class AudioDevice(capi.CoreAudioObject):
         try:
             data = capi.audio_object_get_property_data(
                 self.object_id,
-                capi.get_audio_device_property_volume_scalar(),
+                capi.get_audio_device_property_volume_scalar(),  # type: ignore[attr-defined]
                 scope_val,
                 channel,
             )
             if len(data) >= 4:
-                return struct.unpack("<f", data[:4])[0]
+                result: float = struct.unpack("<f", data[:4])[0]
+                return result
             return None
         except Exception:
             return None
@@ -226,9 +230,9 @@ class AudioDevice(capi.CoreAudioObject):
             raise AudioDeviceError(f"Invalid scope: {scope}")
 
         # Check if property is settable
-        if not capi.audio_object_is_property_settable(
+        if not capi.audio_object_is_property_settable(  # type: ignore[attr-defined]
             self.object_id,
-            capi.get_audio_device_property_volume_scalar(),
+            capi.get_audio_device_property_volume_scalar(),  # type: ignore[attr-defined]
             scope_val,
             channel,
         ):
@@ -236,9 +240,9 @@ class AudioDevice(capi.CoreAudioObject):
 
         try:
             data = struct.pack("<f", level)
-            capi.audio_object_set_property_data(
+            capi.audio_object_set_property_data(  # type: ignore[attr-defined]
                 self.object_id,
-                capi.get_audio_device_property_volume_scalar(),
+                capi.get_audio_device_property_volume_scalar(),  # type: ignore[attr-defined]
                 scope_val,
                 channel,
                 data,
@@ -267,7 +271,7 @@ class AudioDevice(capi.CoreAudioObject):
         try:
             data = capi.audio_object_get_property_data(
                 self.object_id,
-                capi.get_audio_device_property_mute(),
+                capi.get_audio_device_property_mute(),  # type: ignore[attr-defined]
                 scope_val,
                 channel,
             )
@@ -297,9 +301,9 @@ class AudioDevice(capi.CoreAudioObject):
             raise AudioDeviceError(f"Invalid scope: {scope}")
 
         # Check if property is settable
-        if not capi.audio_object_is_property_settable(
+        if not capi.audio_object_is_property_settable(  # type: ignore[attr-defined]
             self.object_id,
-            capi.get_audio_device_property_mute(),
+            capi.get_audio_device_property_mute(),  # type: ignore[attr-defined]
             scope_val,
             channel,
         ):
@@ -307,9 +311,9 @@ class AudioDevice(capi.CoreAudioObject):
 
         try:
             data = struct.pack("<I", 1 if muted else 0)
-            capi.audio_object_set_property_data(
+            capi.audio_object_set_property_data(  # type: ignore[attr-defined]
                 self.object_id,
-                capi.get_audio_device_property_mute(),
+                capi.get_audio_device_property_mute(),  # type: ignore[attr-defined]
                 scope_val,
                 channel,
                 data,
@@ -451,9 +455,9 @@ class AudioDeviceManager:
         """
         try:
             data = struct.pack("<I", device.object_id)
-            capi.audio_object_set_property_data(
+            capi.audio_object_set_property_data(  # type: ignore[attr-defined]
                 1,  # kAudioObjectSystemObject
-                capi.get_audio_hardware_property_default_output_device(),
+                capi.get_audio_hardware_property_default_output_device(),  # type: ignore[attr-defined]
                 capi.get_audio_object_property_scope_global(),
                 0,
                 data,
@@ -477,9 +481,9 @@ class AudioDeviceManager:
         """
         try:
             data = struct.pack("<I", device.object_id)
-            capi.audio_object_set_property_data(
+            capi.audio_object_set_property_data(  # type: ignore[attr-defined]
                 1,  # kAudioObjectSystemObject
-                capi.get_audio_hardware_property_default_input_device(),
+                capi.get_audio_hardware_property_default_input_device(),  # type: ignore[attr-defined]
                 capi.get_audio_object_property_scope_global(),
                 0,
                 data,

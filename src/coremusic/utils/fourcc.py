@@ -225,7 +225,7 @@ class FourCCValue:
         """Return detailed representation."""
         return f"FourCCValue('{self._str}', 0x{self._int:08X})"
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Compare with another FourCC value (string or integer)."""
         if isinstance(other, FourCCValue):
             return self._int == other._int

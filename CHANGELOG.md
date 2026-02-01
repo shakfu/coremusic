@@ -39,6 +39,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Improved REPL Experience** - Added `__repr__` to all major classes
   - Better introspection for AudioFile, AudioFormat, AudioQueue, MIDIClient, AudioUnit, etc.
 
+- **Developer Documentation** - Added contributor guidelines and tooling
+  - `CONTRIBUTING.md` - Build prerequisites, development setup, code style, testing guidelines
+  - `.pre-commit-config.yaml` - Pre-commit hooks for ruff, mypy, and file checks
+
+- **Optional Dependencies** - Added extras for optional features in pyproject.toml
+  - `coremusic[analysis]` - NumPy and SciPy for audio analysis
+  - `coremusic[visualization]` - Matplotlib for waveform/spectrogram plots
+  - `coremusic[all]` - All optional dependencies
+  - Documented `NUMPY_AVAILABLE` and `SCIPY_AVAILABLE` flags in README
+
 ### Changed
 
 - **CI/CD Enabled** - GitHub Actions workflow now triggers on push/PR to main and develop branches

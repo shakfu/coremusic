@@ -690,7 +690,7 @@ class MIDIRouter:
         >>> router.process_event("keyboard", event)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize MIDI router."""
         self.routes: List[Route] = []
         self.transforms: Dict[str, Callable[[MIDIEvent], MIDIEvent]] = {}

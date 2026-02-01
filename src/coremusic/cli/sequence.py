@@ -5,10 +5,10 @@ from __future__ import annotations
 import argparse
 
 from ._formatters import format_duration, output_json, output_table
-from ._utils import EXIT_SUCCESS, CLIError, require_file
+from ._utils import EXIT_SUCCESS, CLIError, print_help_default, require_file
 
 
-def register(subparsers: argparse._SubParsersAction) -> None:
+def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """Register sequence commands."""
     parser = subparsers.add_parser("sequence", help="MIDI sequence operations")
     seq_sub = parser.add_subparsers(dest="sequence_command", metavar="<subcommand>")
@@ -36,7 +36,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     list_parser.add_argument("file", help="MIDI file path")
     list_parser.set_defaults(func=cmd_tracks)
 
-    parser.set_defaults(func=lambda args: parser.print_help() or EXIT_SUCCESS)
+    parser.set_defaults(func=lambda args: print_help_default(parser))
 
 
 def cmd_info(args: argparse.Namespace) -> int:

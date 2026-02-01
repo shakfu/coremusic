@@ -7,7 +7,7 @@
 .PHONY: all sync build rebuild test test-all test-clean-install lint isort format typecheck qa \
         clean distclean wheel sdist dist check publish-test publish upgrade \
         coverage coverage-html docs docs-clean docs-serve docs-pdf docs-linkcheck \
-        release snap help
+        release help
 
 # Default target
 all: build
@@ -128,10 +128,6 @@ release:
 	@uv build --wheel --python 3.12
 	@uv build --wheel --python 3.13
 	@uv build --wheel --python 3.14
-
-# Quick git snapshot
-snap:
-	@git add --all . && git commit -m 'snap' && git push
 
 # Clean build artifacts
 clean:

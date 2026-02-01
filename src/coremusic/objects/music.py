@@ -86,8 +86,8 @@ class MusicTrack(capi.CoreAudioObject):
 
         self._ensure_not_disposed()
         try:
-            capi.music_track_new_midi_note_event(
-                self.object_id, time, channel, note, velocity, release_velocity, duration
+            capi.music_track_new_midi_note_event(  # type: ignore[call-arg]
+                self.object_id, time, channel, note, velocity, release_velocity, duration  # type: ignore[arg-type]
             )
         except Exception as e:
             raise MusicPlayerError(f"Failed to add MIDI note: {e}")
@@ -130,8 +130,8 @@ class MusicTrack(capi.CoreAudioObject):
 
         self._ensure_not_disposed()
         try:
-            capi.music_track_new_midi_channel_event(
-                self.object_id, time, status, data1, data2
+            capi.music_track_new_midi_channel_event(  # type: ignore[call-arg]
+                self.object_id, time, status, data1, data2  # type: ignore[arg-type]
             )
         except Exception as e:
             raise MusicPlayerError(f"Failed to add MIDI channel event: {e}")
@@ -181,7 +181,7 @@ class MusicSequence(capi.CoreAudioObject):
     played back through a MusicPlayer. Supports saving/loading MIDI files.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Create a new music sequence
 
         Raises:
@@ -367,7 +367,7 @@ class MusicSequence(capi.CoreAudioObject):
         """
         self._ensure_not_disposed()
         try:
-            capi.music_sequence_file_load(self.object_id, str(file_path))
+            capi.music_sequence_file_load(self.object_id, str(file_path))  # type: ignore[call-arg]
             # Clear track cache since file load may change tracks
             self._tracks = []
             self._tempo_track = None
@@ -415,7 +415,7 @@ class MusicPlayer(capi.CoreAudioObject):
     including start/stop, tempo control, and time position.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Create a new music player
 
         Raises:

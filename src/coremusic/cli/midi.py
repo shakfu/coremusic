@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import argparse
 from types import FrameType
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 import coremusic.capi as capi
 
 from ._formatters import format_duration, output_json, output_table
-from ._utils import EXIT_SUCCESS, CLIError, require_file
+from ._utils import EXIT_SUCCESS, CLIError, print_help_default, require_file
 
 
-def register(subparsers: argparse._SubParsersAction) -> None:
+def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """Register MIDI commands."""
     parser = subparsers.add_parser("midi", help="MIDI device discovery and information")
     midi_sub = parser.add_subparsers(dest="midi_command", metavar="<subcommand>")
@@ -26,7 +26,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     device_info_parser = device_sub.add_parser("info", help="Show detailed MIDI device information")
     device_info_parser.add_argument("name", help="Device name (partial match)")
     device_info_parser.set_defaults(func=cmd_device_info)
-    device_parser.set_defaults(func=lambda args: device_parser.print_help() or EXIT_SUCCESS)
+    device_parser.set_defaults(func=lambda args: print_help_default(device_parser))
 
     # midi input <action>
     input_parser = midi_sub.add_parser("input", help="MIDI input operations")
@@ -49,7 +49,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     input_record_parser.add_argument("--tempo", "-t", type=float, default=120.0,
                                      help="Tempo in BPM for the output file (default: 120)")
     input_record_parser.set_defaults(func=cmd_input_record)
-    input_parser.set_defaults(func=lambda args: input_parser.print_help() or EXIT_SUCCESS)
+    input_parser.set_defaults(func=lambda args: print_help_default(input_parser))
 
     # midi output <action>
     output_parser = midi_sub.add_parser("output", help="MIDI output operations")
@@ -97,7 +97,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     panic_parser.add_argument("index", type=int, nargs="?", default=None,
                               help="Output destination index (default: all outputs)")
     panic_parser.set_defaults(func=cmd_output_panic)
-    output_parser.set_defaults(func=lambda args: output_parser.print_help() or EXIT_SUCCESS)
+    output_parser.set_defaults(func=lambda args: print_help_default(output_parser))
 
     # midi file <action>
     file_parser = midi_sub.add_parser("file", help="MIDI file operations")
@@ -129,9 +129,9 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     file_quantize_parser.add_argument("--strength", "-s", type=float, default=1.0,
                                       help="Quantize strength 0.0-1.0 (default: 1.0 = full)")
     file_quantize_parser.set_defaults(func=cmd_file_quantize)
-    file_parser.set_defaults(func=lambda args: file_parser.print_help() or EXIT_SUCCESS)
+    file_parser.set_defaults(func=lambda args: print_help_default(file_parser))
 
-    parser.set_defaults(func=lambda args: parser.print_help() or EXIT_SUCCESS)
+    parser.set_defaults(func=lambda args: print_help_default(parser))
 
 
 def _get_endpoint_name(endpoint_id: int) -> str:
@@ -156,7 +156,7 @@ def _get_endpoint_name(endpoint_id: int) -> str:
     return f"Unknown ({endpoint_id})"
 
 
-def _get_device_info(device_id: int) -> dict:
+def _get_device_info(device_id: int) -> dict[str, Any]:
     """Get detailed information about a MIDI device."""
 
     info: Dict[str, Any] = {"id": device_id}
@@ -668,7 +668,7 @@ def cmd_input_monitor(args: argparse.Namespace) -> int:
 
     # Event counter for JSON output
     event_count = 0
-    events_list: list = []
+    events_list: list[Dict[str, Any]] = []
     stop_event = threading.Event()
 
     def format_midi_message(data: bytes, timestamp: float) -> Dict[str, Any]:
@@ -961,7 +961,7 @@ def cmd_file_play(args: argparse.Namespace) -> int:
                 time.sleep(wait_time)
 
             if stop_requested:
-                break  # type: ignore[unreachable]
+                break
 
             # Send MIDI event
             midi_data = event.to_bytes()
@@ -1022,7 +1022,7 @@ def cmd_input_record(args: argparse.Namespace) -> int:
         output_path = output_path.with_suffix(".mid")
 
     # Recording state
-    recorded_events: list = []
+    recorded_events: list[Tuple[float, bytes]] = []
     start_time: float = 0.0
     stop_event = threading.Event()
     event_lock = threading.Lock()

@@ -245,7 +245,7 @@ def get_fish_completion() -> str:
     return "\n".join(lines)
 
 
-def register(subparsers: argparse._SubParsersAction) -> None:
+def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """Register completion command."""
     parser = subparsers.add_parser(
         "completion",

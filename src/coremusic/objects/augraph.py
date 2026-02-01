@@ -6,7 +6,7 @@ This module provides classes for working with Audio Unit Graphs:
 
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Any, Tuple
 
 from .. import capi
 from .audiounit import AudioComponentDescription
@@ -27,7 +27,7 @@ class AUGraph(capi.CoreAudioObject):
     fully functional and useful for advanced audio processing scenarios.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Create a new AUGraph
 
         Raises:
@@ -259,7 +259,9 @@ class AUGraph(capi.CoreAudioObject):
         """
         self._ensure_not_disposed()
         try:
-            desc_dict, audio_unit_id = capi.au_graph_node_info(self.object_id, node_id)
+            result: Any = capi.au_graph_node_info(self.object_id, node_id)
+            desc_dict: dict[str, int] = result[0]
+            audio_unit_id: int = result[1]
 
             # Convert back to AudioComponentDescription
             desc = AudioComponentDescription(
@@ -365,7 +367,7 @@ class AUGraph(capi.CoreAudioObject):
         """Enter context manager"""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit context manager and dispose"""
         self.dispose()
 
