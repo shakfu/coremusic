@@ -110,8 +110,8 @@ coremusic analyze tempo song.wav
 coremusic convert normalize input.wav output.wav --target -1.0
 
 # Devices
-coremusic devices list
-coremusic devices volume "MacBook Pro Speakers" 0.5
+coremusic device list
+coremusic device volume "MacBook Pro Speakers" 0.5
 
 # Plugins
 coremusic plugin list --type effect
