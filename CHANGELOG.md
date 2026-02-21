@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - `test_context_manager_with_operations`: Added retry loop for Link tempo propagation which can lag on CI runners.
   - `test_beat_tracking_pattern`: Replaced `beat >= 0.0` assertion with monotonicity check; `beat_at_time` can return negative values before the session timeline origin.
 - **CoreMIDI segfault in `test_full_midi_workflow`** - Removed `midi_send_data` call to a virtual destination created with a NULL read proc callback. `MIDIDestinationCreate` is called with `NULL` as the read proc in `midi_destination_create`, so `MIDISend` to that endpoint invokes a NULL function pointer, causing a segfault on CI.
+- **CI smoke test import path** - Updated `ci.yml` smoke test to import `audio_file_open_url` from `coremusic.capi` instead of the top-level `coremusic` namespace, which was cleaned up during the v0.2.0 restructure.
 
 ## [0.2.0]
 
