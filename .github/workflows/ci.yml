@@ -150,4 +150,4 @@ jobs:
 
     - name: Run basic smoke tests
       run: |
-        python -c "import coremusic as cm; assert hasattr(cm, 'audio_file_open_url'); print('Smoke tests passed')"
+        python -c "import coremusic; from coremusic import capi; assert hasattr(capi, 'audio_file_open_url'); print('Smoke tests passed')"
