@@ -10,10 +10,7 @@ Tests cover all components of the bayes module including:
 - Utility functions
 """
 
-import json
-import os
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -120,11 +117,11 @@ class TestNoteObservation:
         obs = NoteObservation(pitch=60, duration=0.5, velocity=100, ioi=0.25, time=1.0)
         data = obs.to_dict()
 
-        assert data['pitch'] == 60
-        assert data['duration'] == 0.5
-        assert data['velocity'] == 100
-        assert data['ioi'] == 0.25
-        assert data['time'] == 1.0
+        assert data["pitch"] == 60
+        assert data["duration"] == 0.5
+        assert data["velocity"] == 100
+        assert data["ioi"] == 0.25
+        assert data["time"] == 1.0
 
         restored = NoteObservation.from_dict(data)
         assert restored.pitch == obs.pitch
@@ -208,8 +205,8 @@ class TestCPT:
         cpt.observe(62, ())
 
         # Check probabilities
-        assert cpt.get_probability(60, ()) == pytest.approx(2/3)
-        assert cpt.get_probability(62, ()) == pytest.approx(1/3)
+        assert cpt.get_probability(60, ()) == pytest.approx(2 / 3)
+        assert cpt.get_probability(62, ()) == pytest.approx(1 / 3)
 
     def test_observe_with_parents(self):
         """Test observations with parent conditioning."""
@@ -225,8 +222,8 @@ class TestCPT:
         cpt.observe(64, (62,))
 
         # Check conditional probabilities
-        assert cpt.get_probability(62, (60,)) == pytest.approx(2/3)
-        assert cpt.get_probability(64, (60,)) == pytest.approx(1/3)
+        assert cpt.get_probability(62, (60,)) == pytest.approx(2 / 3)
+        assert cpt.get_probability(64, (60,)) == pytest.approx(1 / 3)
         assert cpt.get_probability(64, (62,)) == pytest.approx(1.0)
 
     def test_laplace_smoothing(self):
@@ -762,11 +759,11 @@ class TestUtilityFunctions:
 
         stats = network_statistics(network)
 
-        assert 'mode' in stats
-        assert 'num_variables' in stats
-        assert 'num_edges' in stats
-        assert 'num_observations' in stats
-        assert 'average_entropy' in stats
+        assert "mode" in stats
+        assert "num_variables" in stats
+        assert "num_edges" in stats
+        assert "num_observations" in stats
+        assert "average_entropy" in stats
 
 
 # ============================================================================
@@ -842,7 +839,9 @@ class TestMIDIFileGeneration:
     @pytest.fixture(autouse=True)
     def setup_output_dir(self):
         """Create output directory."""
-        self.output_dir = Path(__file__).parent.parent / "build" / "midi_files" / "bayes"
+        self.output_dir = (
+            Path(__file__).parent.parent / "build" / "midi_files" / "bayes"
+        )
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def test_generate_variation_basic(self, test_midi_file):

@@ -12,7 +12,9 @@ def get_version() -> str:
     try:
         return get_pkg_version("coremusic")
     except Exception:
-        return "0.1.12"  # Fallback during development
+        from coremusic import __version__
+
+        return __version__
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -24,9 +26,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--version", action="version", version=f"%(prog)s {get_version()}"
     )
-    parser.add_argument(
-        "--json", action="store_true", help="Output in JSON format"
-    )
+    parser.add_argument("--json", action="store_true", help="Output in JSON format")
 
     subparsers = parser.add_subparsers(dest="command", metavar="<command>")
 
@@ -61,6 +61,18 @@ def main(argv: list[str] | None = None) -> int:
         if isinstance(e, CLIError):
             print(f"Error: {e}", file=sys.stderr)
             return e.exit_code
+
+        from coremusic.exceptions import CoreAudioError
+        from coremusic.os_status import get_error_suggestion
+
+        if isinstance(e, CoreAudioError):
+            print(f"Error: {e}", file=sys.stderr)
+            if e.status_code != 0:
+                suggestion = get_error_suggestion(e.status_code)
+                if suggestion:
+                    print(f"Hint: {suggestion}", file=sys.stderr)
+            return 1
+
         raise
 
 

@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """Tests for batch parallel processing utilities."""
 
-import os
 import time
-import tempfile
 from pathlib import Path
 import pytest
-from coremusic.objects import AudioFile
+from coremusic.audio import AudioFile
 from coremusic.utils.batch import (
     batch_process_parallel,
     batch_process_files,
@@ -686,7 +684,9 @@ class TestEdgeCases:
 
     def test_none_results(self):
         """Test handling of None results."""
-        result = batch_process_parallel(items=[1, 2, 3, 4, 5], func=return_none_for_even)
+        result = batch_process_parallel(
+            items=[1, 2, 3, 4, 5], func=return_none_for_even
+        )
 
         # All should succeed, some with None results
         assert result.successful == 5

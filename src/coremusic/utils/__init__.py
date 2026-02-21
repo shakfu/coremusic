@@ -9,9 +9,17 @@ This package contains various utility modules for CoreMusic:
 
 # Import utilities modules
 from . import batch, fourcc, scipy
+
 # Import commonly used batch processing functions
-from .batch import (BatchOptions, BatchProgress, BatchResult, ProcessingMode,
-                    RetryPolicy, batch_process_files, batch_process_parallel)
+from .batch import (
+    BatchOptions,
+    BatchProgress,
+    BatchResult,
+    ProcessingMode,
+    RetryPolicy,
+    batch_process_files,
+    batch_process_parallel,
+)
 
 __all__ = [
     # Submodules

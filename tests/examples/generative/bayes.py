@@ -49,17 +49,19 @@ from coremusic.midi.utilities import MIDIEvent, MIDISequence, MIDITrack
 
 class NetworkMode(Enum):
     """What properties to model in the Bayesian network."""
-    PITCH_ONLY = auto()           # Just pitch dependencies
-    PITCH_DURATION = auto()       # Pitch and duration
+
+    PITCH_ONLY = auto()  # Just pitch dependencies
+    PITCH_DURATION = auto()  # Pitch and duration
     PITCH_DURATION_VELOCITY = auto()  # Pitch, duration, velocity
-    FULL = auto()                 # All properties including rhythm (IOI)
+    FULL = auto()  # All properties including rhythm (IOI)
 
 
 class StructureMode(Enum):
     """How to determine network structure."""
-    FIXED = auto()        # Predefined structure
-    LEARNED = auto()      # Learn structure from data
-    MANUAL = auto()       # User-specified structure
+
+    FIXED = auto()  # Predefined structure
+    LEARNED = auto()  # Learn structure from data
+    MANUAL = auto()  # User-specified structure
 
 
 # Variable names used in the network
@@ -71,6 +73,7 @@ VAR_PREV_PITCH = "prev_pitch"
 VAR_PREV_DURATION = "prev_duration"
 VAR_PREV_VELOCITY = "prev_velocity"
 VAR_PREV_IOI = "prev_ioi"
+
 
 # For higher-order models
 def var_pitch_lag(lag: int) -> str:
@@ -99,6 +102,7 @@ class NoteObservation:
         ioi: Inter-onset interval from previous note (beats)
         time: Absolute onset time in beats
     """
+
     pitch: int
     duration: float
     velocity: int
@@ -108,22 +112,22 @@ class NoteObservation:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
-            'pitch': self.pitch,
-            'duration': self.duration,
-            'velocity': self.velocity,
-            'ioi': self.ioi,
-            'time': self.time,
+            "pitch": self.pitch,
+            "duration": self.duration,
+            "velocity": self.velocity,
+            "ioi": self.ioi,
+            "time": self.time,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'NoteObservation':
+    def from_dict(cls, data: Dict[str, Any]) -> "NoteObservation":
         """Create from dictionary."""
         return cls(
-            pitch=data['pitch'],
-            duration=data['duration'],
-            velocity=data['velocity'],
-            ioi=data.get('ioi', 0.0),
-            time=data.get('time', 0.0),
+            pitch=data["pitch"],
+            duration=data["duration"],
+            velocity=data["velocity"],
+            ioi=data.get("ioi", 0.0),
+            time=data.get("time", 0.0),
         )
 
 
@@ -145,6 +149,7 @@ class NetworkConfig:
         default_ioi: Default IOI in beats
         seed: Random seed for reproducibility
     """
+
     mode: NetworkMode = NetworkMode.PITCH_DURATION_VELOCITY
     structure_mode: StructureMode = StructureMode.FIXED
     temporal_order: int = 1
@@ -162,41 +167,43 @@ class NetworkConfig:
         if self.temporal_order < 1:
             raise ValueError(f"temporal_order must be >= 1, got {self.temporal_order}")
         if self.smoothing_alpha < 0:
-            raise ValueError(f"smoothing_alpha must be >= 0, got {self.smoothing_alpha}")
+            raise ValueError(
+                f"smoothing_alpha must be >= 0, got {self.smoothing_alpha}"
+            )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
-            'mode': self.mode.name,
-            'structure_mode': self.structure_mode.name,
-            'temporal_order': self.temporal_order,
-            'smoothing_alpha': self.smoothing_alpha,
-            'pitch_bins': self.pitch_bins,
-            'duration_bins': self.duration_bins,
-            'velocity_bins': self.velocity_bins,
-            'ioi_bins': self.ioi_bins,
-            'default_duration': self.default_duration,
-            'default_velocity': self.default_velocity,
-            'default_ioi': self.default_ioi,
-            'seed': self.seed,
+            "mode": self.mode.name,
+            "structure_mode": self.structure_mode.name,
+            "temporal_order": self.temporal_order,
+            "smoothing_alpha": self.smoothing_alpha,
+            "pitch_bins": self.pitch_bins,
+            "duration_bins": self.duration_bins,
+            "velocity_bins": self.velocity_bins,
+            "ioi_bins": self.ioi_bins,
+            "default_duration": self.default_duration,
+            "default_velocity": self.default_velocity,
+            "default_ioi": self.default_ioi,
+            "seed": self.seed,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'NetworkConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> "NetworkConfig":
         """Create from dictionary."""
         return cls(
-            mode=NetworkMode[data.get('mode', 'PITCH_DURATION_VELOCITY')],
-            structure_mode=StructureMode[data.get('structure_mode', 'FIXED')],
-            temporal_order=data.get('temporal_order', 1),
-            smoothing_alpha=data.get('smoothing_alpha', 1.0),
-            pitch_bins=data.get('pitch_bins', 0),
-            duration_bins=data.get('duration_bins', 16),
-            velocity_bins=data.get('velocity_bins', 8),
-            ioi_bins=data.get('ioi_bins', 16),
-            default_duration=data.get('default_duration', 0.5),
-            default_velocity=data.get('default_velocity', 100),
-            default_ioi=data.get('default_ioi', 0.5),
-            seed=data.get('seed'),
+            mode=NetworkMode[data.get("mode", "PITCH_DURATION_VELOCITY")],
+            structure_mode=StructureMode[data.get("structure_mode", "FIXED")],
+            temporal_order=data.get("temporal_order", 1),
+            smoothing_alpha=data.get("smoothing_alpha", 1.0),
+            pitch_bins=data.get("pitch_bins", 0),
+            duration_bins=data.get("duration_bins", 16),
+            velocity_bins=data.get("velocity_bins", 8),
+            ioi_bins=data.get("ioi_bins", 16),
+            default_duration=data.get("default_duration", 0.5),
+            default_velocity=data.get("default_velocity", 100),
+            default_ioi=data.get("default_ioi", 0.5),
+            seed=data.get("seed"),
         )
 
 
@@ -231,7 +238,9 @@ class CPT:
 
         # Counts: {parent_values: {value: count}}
         # parent_values is a tuple of parent values
-        self._counts: Dict[Tuple[int, ...], Dict[int, int]] = defaultdict(lambda: defaultdict(int))
+        self._counts: Dict[Tuple[int, ...], Dict[int, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
 
         # All observed values for this variable
         self._values: Set[int] = set()
@@ -266,7 +275,9 @@ class CPT:
 
         # Laplace smoothing
         num_values = len(self._values) if self._values else 1
-        prob = (count + self.smoothing_alpha) / (total + self.smoothing_alpha * num_values)
+        prob = (count + self.smoothing_alpha) / (
+            total + self.smoothing_alpha * num_values
+        )
 
         return prob
 
@@ -344,37 +355,39 @@ class CPT:
         # Convert counts to JSON-serializable format
         counts_list = []
         for parent_vals, value_counts in self._counts.items():
-            counts_list.append({
-                'parent_values': list(parent_vals),
-                'counts': dict(value_counts),
-            })
+            counts_list.append(
+                {
+                    "parent_values": list(parent_vals),
+                    "counts": dict(value_counts),
+                }
+            )
 
         return {
-            'variable': self.variable,
-            'parents': list(self.parents),
-            'smoothing_alpha': self.smoothing_alpha,
-            'counts': counts_list,
-            'values': list(self._values),
+            "variable": self.variable,
+            "parents": list(self.parents),
+            "smoothing_alpha": self.smoothing_alpha,
+            "counts": counts_list,
+            "values": list(self._values),
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'CPT':
+    def from_dict(cls, data: Dict[str, Any]) -> "CPT":
         """Create from dictionary."""
         cpt = cls(
-            variable=data['variable'],
-            parents=tuple(data.get('parents', [])),
-            smoothing_alpha=data.get('smoothing_alpha', 1.0),
+            variable=data["variable"],
+            parents=tuple(data.get("parents", [])),
+            smoothing_alpha=data.get("smoothing_alpha", 1.0),
         )
 
         # Restore counts
-        for entry in data.get('counts', []):
-            parent_vals = tuple(entry['parent_values'])
-            for val_str, count in entry['counts'].items():
+        for entry in data.get("counts", []):
+            parent_vals = tuple(entry["parent_values"])
+            for val_str, count in entry["counts"].items():
                 val = int(val_str)
                 cpt._counts[parent_vals][val] = count
 
         # Restore values
-        cpt._values = set(data.get('values', []))
+        cpt._values = set(data.get("values", []))
 
         return cpt
 
@@ -457,8 +470,7 @@ class BayesianNetwork:
         if name in self._variables:
             # Remove edges
             edges_to_remove = [
-                (p, c) for (p, c) in self._edges
-                if p == name or c == name
+                (p, c) for (p, c) in self._edges if p == name or c == name
             ]
             for edge in edges_to_remove:
                 self.remove_edge(*edge)
@@ -482,7 +494,9 @@ class BayesianNetwork:
         if (parent, child) not in self._edges:
             # Check for cycles
             if self._would_create_cycle(parent, child):
-                raise ValueError(f"Adding edge {parent} -> {child} would create a cycle")
+                raise ValueError(
+                    f"Adding edge {parent} -> {child} would create a cycle"
+                )
 
             self._edges.add((parent, child))
             self._parents[child].add(parent)
@@ -569,9 +583,7 @@ class BayesianNetwork:
             parents = tuple(sorted(self._parents.get(variable, set())))
 
             # Get parent values
-            parent_values = tuple(
-                observation.get(p, 0) for p in parents
-            )
+            parent_values = tuple(observation.get(p, 0) for p in parents)
 
             self._cpts[variable].observe(value, parent_values)
 
@@ -611,7 +623,11 @@ class BayesianNetwork:
         # Add current variables based on mode
         self.add_variable(VAR_PITCH)
 
-        if self.config.mode in (NetworkMode.PITCH_DURATION, NetworkMode.PITCH_DURATION_VELOCITY, NetworkMode.FULL):
+        if self.config.mode in (
+            NetworkMode.PITCH_DURATION,
+            NetworkMode.PITCH_DURATION_VELOCITY,
+            NetworkMode.FULL,
+        ):
             self.add_variable(VAR_DURATION)
 
         if self.config.mode in (NetworkMode.PITCH_DURATION_VELOCITY, NetworkMode.FULL):
@@ -626,14 +642,22 @@ class BayesianNetwork:
             self.add_variable(prev_pitch)
             self.add_edge(prev_pitch, VAR_PITCH)
 
-            if self.config.mode in (NetworkMode.PITCH_DURATION, NetworkMode.PITCH_DURATION_VELOCITY, NetworkMode.FULL):
+            if self.config.mode in (
+                NetworkMode.PITCH_DURATION,
+                NetworkMode.PITCH_DURATION_VELOCITY,
+                NetworkMode.FULL,
+            ):
                 prev_dur = var_duration_lag(lag)
                 self.add_variable(prev_dur)
                 # Previous pitch influences current duration
                 self.add_edge(prev_pitch, VAR_DURATION)
 
         # Add same-timestep dependencies
-        if self.config.mode in (NetworkMode.PITCH_DURATION, NetworkMode.PITCH_DURATION_VELOCITY, NetworkMode.FULL):
+        if self.config.mode in (
+            NetworkMode.PITCH_DURATION,
+            NetworkMode.PITCH_DURATION_VELOCITY,
+            NetworkMode.FULL,
+        ):
             self.add_edge(VAR_PITCH, VAR_DURATION)
 
         if self.config.mode in (NetworkMode.PITCH_DURATION_VELOCITY, NetworkMode.FULL):
@@ -864,7 +888,9 @@ class BayesianNetwork:
         """Get total number of observations."""
         return self._num_observations
 
-    def get_entropy(self, variable: str, evidence: Optional[Dict[str, int]] = None) -> float:
+    def get_entropy(
+        self, variable: str, evidence: Optional[Dict[str, int]] = None
+    ) -> float:
         """Get entropy of a variable given evidence.
 
         Args:
@@ -898,37 +924,37 @@ class BayesianNetwork:
     def to_dict(self) -> Dict[str, Any]:
         """Convert network to dictionary."""
         return {
-            'version': '1.0',
-            'config': self.config.to_dict(),
-            'variables': list(self._variables),
-            'edges': [list(e) for e in self._edges],
-            'cpts': {var: cpt.to_dict() for var, cpt in self._cpts.items()},
-            'track_name': self._track_name,
-            'source_file': self._source_file,
-            'num_observations': self._num_observations,
+            "version": "1.0",
+            "config": self.config.to_dict(),
+            "variables": list(self._variables),
+            "edges": [list(e) for e in self._edges],
+            "cpts": {var: cpt.to_dict() for var, cpt in self._cpts.items()},
+            "track_name": self._track_name,
+            "source_file": self._source_file,
+            "num_observations": self._num_observations,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'BayesianNetwork':
+    def from_dict(cls, data: Dict[str, Any]) -> "BayesianNetwork":
         """Create network from dictionary."""
-        config = NetworkConfig.from_dict(data.get('config', {}))
+        config = NetworkConfig.from_dict(data.get("config", {}))
         network = cls(config)
 
         # Restore variables
-        for var in data.get('variables', []):
+        for var in data.get("variables", []):
             network.add_variable(var)
 
         # Restore edges
-        for parent, child in data.get('edges', []):
+        for parent, child in data.get("edges", []):
             network.add_edge(parent, child)
 
         # Restore CPTs
-        for var, cpt_data in data.get('cpts', {}).items():
+        for var, cpt_data in data.get("cpts", {}).items():
             network._cpts[var] = CPT.from_dict(cpt_data)
 
-        network._track_name = data.get('track_name', '')
-        network._source_file = data.get('source_file', '')
-        network._num_observations = data.get('num_observations', 0)
+        network._track_name = data.get("track_name", "")
+        network._source_file = data.get("source_file", "")
+        network._num_observations = data.get("num_observations", 0)
 
         return network
 
@@ -937,7 +963,7 @@ class BayesianNetwork:
         return json.dumps(self.to_dict(), indent=indent)
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'BayesianNetwork':
+    def from_json(cls, json_str: str) -> "BayesianNetwork":
         """Create from JSON string."""
         return cls.from_dict(json.loads(json_str))
 
@@ -948,7 +974,7 @@ class BayesianNetwork:
         path.write_text(self.to_json())
 
     @classmethod
-    def load(cls, filepath: Union[str, Path]) -> 'BayesianNetwork':
+    def load(cls, filepath: Union[str, Path]) -> "BayesianNetwork":
         """Load network from JSON file."""
         path = Path(filepath)
         if not path.exists():
@@ -1093,12 +1119,14 @@ class MIDIBayesAnalyzer:
                     time_beats = on_event.time / beat_duration
                     duration_beats = (event.time - on_event.time) / beat_duration
 
-                    observations.append(NoteObservation(
-                        pitch=event.data1,
-                        duration=max(0.001, duration_beats),
-                        velocity=on_event.data2,
-                        time=time_beats,
-                    ))
+                    observations.append(
+                        NoteObservation(
+                            pitch=event.data1,
+                            duration=max(0.001, duration_beats),
+                            velocity=on_event.data2,
+                            time=time_beats,
+                        )
+                    )
 
         # Sort by time and compute IOIs
         observations.sort(key=lambda n: n.time)
@@ -1152,7 +1180,9 @@ class MIDIBayesGenerator:
             Generated MIDISequence
         """
         sequence = MIDISequence(tempo=tempo)
-        track = sequence.add_track(f"Generated from {self.network._track_name or 'network'}")
+        track = sequence.add_track(
+            f"Generated from {self.network._track_name or 'network'}"
+        )
         track.channel = channel
 
         if self.network.get_num_observations() == 0:
@@ -1211,7 +1241,7 @@ class MIDIBayesGenerator:
 
             # Trim history to temporal order
             if len(history) > self.network.config.temporal_order:
-                history = history[-self.network.config.temporal_order:]
+                history = history[-self.network.config.temporal_order :]
 
             current_time += ioi
 
@@ -1285,7 +1315,7 @@ class MIDIBayesGenerator:
             history.append(obs)
 
             if len(history) > self.network.config.temporal_order:
-                history = history[-self.network.config.temporal_order:]
+                history = history[-self.network.config.temporal_order :]
 
             current_time += ioi * beat_duration
 
@@ -1305,11 +1335,15 @@ class MIDIBayesGenerator:
 
                 prev_pitch_var = var_pitch_lag(lag)
                 if prev_pitch_var in self.network._variables:
-                    evidence[prev_pitch_var] = self.network._discretize_pitch(prev.pitch)
+                    evidence[prev_pitch_var] = self.network._discretize_pitch(
+                        prev.pitch
+                    )
 
                 prev_dur_var = var_duration_lag(lag)
                 if prev_dur_var in self.network._variables:
-                    evidence[prev_dur_var] = self.network._discretize_duration(prev.duration)
+                    evidence[prev_dur_var] = self.network._discretize_duration(
+                        prev.duration
+                    )
 
         # Add start pitch if specified and no history
         if start_pitch is not None and len(history) == 0:
@@ -1376,7 +1410,9 @@ def merge_networks(
         weights = [1.0] * len(networks)
 
     if len(weights) != len(networks):
-        raise ValueError(f"Weights length {len(weights)} != networks length {len(networks)}")
+        raise ValueError(
+            f"Weights length {len(weights)} != networks length {len(networks)}"
+        )
 
     # Use first network as template
     merged = BayesianNetwork(networks[0].config)
@@ -1416,15 +1452,15 @@ def network_statistics(network: BayesianNetwork) -> Dict[str, Any]:
         Dictionary of statistics
     """
     return {
-        'mode': network.config.mode.name,
-        'structure_mode': network.config.structure_mode.name,
-        'temporal_order': network.config.temporal_order,
-        'num_variables': len(network._variables),
-        'num_edges': len(network._edges),
-        'num_observations': network.get_num_observations(),
-        'average_entropy': network.get_average_entropy(),
-        'variables': network.get_variables(),
-        'edges': network.get_edges(),
-        'track_name': network._track_name,
-        'source_file': network._source_file,
+        "mode": network.config.mode.name,
+        "structure_mode": network.config.structure_mode.name,
+        "temporal_order": network.config.temporal_order,
+        "num_variables": len(network._variables),
+        "num_edges": len(network._edges),
+        "num_observations": network.get_num_observations(),
+        "average_entropy": network.get_average_entropy(),
+        "variables": network.get_variables(),
+        "edges": network.get_edges(),
+        "track_name": network._track_name,
+        "source_file": network._source_file,
     }

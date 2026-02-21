@@ -9,6 +9,7 @@ actual MIDI devices are skipped when no devices are available.
 
 Run with: pytest tests/tutorials/test_midi_basics.py --doctest-modules -v
 """
+
 from __future__ import annotations
 
 
@@ -33,7 +34,7 @@ def get_midi_device_counts():
 def create_midi_client():
     """Create a MIDI client.
 
-    >>> from coremusic.objects import MIDIClient
+    >>> from coremusic.midi import MIDIClient
     >>> client = MIDIClient("Test Client")
     >>> assert client is not None
     >>> # Always dispose when done
@@ -45,7 +46,7 @@ def create_midi_client():
 def create_midi_output_port():
     """Create a MIDI output port.
 
-    >>> from coremusic.objects import MIDIClient
+    >>> from coremusic.midi import MIDIClient
     >>> client = MIDIClient("Test Client")
     >>> try:
     ...     output_port = client.create_output_port("Test Output")
@@ -59,7 +60,7 @@ def create_midi_output_port():
 def create_midi_input_port():
     """Create a MIDI input port.
 
-    >>> from coremusic.objects import MIDIClient
+    >>> from coremusic.midi import MIDIClient
     >>> client = MIDIClient("Test Client")
     >>> try:
     ...     input_port = client.create_input_port("Test Input")
@@ -271,7 +272,7 @@ def build_midi_melody():
 def midi_client_lifecycle():
     """Demonstrate proper MIDI client lifecycle.
 
-    >>> from coremusic.objects import MIDIClient
+    >>> from coremusic.midi import MIDIClient
     >>> # Create client
     >>> client = MIDIClient("Lifecycle Test")
     >>> # Create ports
@@ -287,4 +288,5 @@ def midi_client_lifecycle():
 # Test runner
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod(verbose=True)

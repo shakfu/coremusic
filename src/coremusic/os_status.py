@@ -4,8 +4,13 @@ This module provides human-readable translations of CoreAudio OSStatus error cod
 and helpful recovery suggestions for common error scenarios.
 """
 
+from __future__ import annotations
+
+import logging
 from functools import wraps
-from typing import Any, Callable, Optional, Tuple, TypeVar
+from typing import Any, Callable, TypeVar
+
+logger = logging.getLogger(__name__)
 
 # CoreAudio error code mappings
 # FourCC codes are converted to integers using: ord(a)<<24 | ord(b)<<16 | ord(c)<<8 | ord(d)
@@ -21,7 +26,10 @@ AUDIO_HARDWARE_ERRORS = {
     0x216F626A: ("kAudioHardwareBadObjectError", "Bad object"),  # '!obj'
     0x21646576: ("kAudioHardwareBadDeviceError", "Bad device"),  # '!dev'
     0x21737472: ("kAudioHardwareBadStreamError", "Bad stream"),  # '!str'
-    0x756E6F70: ("kAudioHardwareUnsupportedOperationError", "Unsupported operation"),  # 'unop'
+    0x756E6F70: (
+        "kAudioHardwareUnsupportedOperationError",
+        "Unsupported operation",
+    ),  # 'unop'
     0x6E726479: ("kAudioHardwareNotReadyError", "Hardware not ready"),  # 'nrdy'
     0x21646174: ("kAudioDeviceUnsupportedFormatError", "Unsupported format"),  # '!dat'
     0x21686F67: ("kAudioDevicePermissionsError", "Permissions error"),  # '!hog'
@@ -30,18 +38,39 @@ AUDIO_HARDWARE_ERRORS = {
 # AudioFile errors
 AUDIO_FILE_ERRORS = {
     0x7768743F: ("kAudioFileUnspecifiedError", "Unspecified error"),  # 'wht?'
-    0x7479703F: ("kAudioFileUnsupportedFileTypeError", "Unsupported file type"),  # 'typ?'
-    0x666D743F: ("kAudioFileUnsupportedDataFormatError", "Unsupported data format"),  # 'fmt?'
-    0x7074793F: ("kAudioFileUnsupportedPropertyError", "Unsupported property"),  # 'pty?'
+    0x7479703F: (
+        "kAudioFileUnsupportedFileTypeError",
+        "Unsupported file type",
+    ),  # 'typ?'
+    0x666D743F: (
+        "kAudioFileUnsupportedDataFormatError",
+        "Unsupported data format",
+    ),  # 'fmt?'
+    0x7074793F: (
+        "kAudioFileUnsupportedPropertyError",
+        "Unsupported property",
+    ),  # 'pty?'
     0x2173697A: ("kAudioFileBadPropertySizeError", "Bad property size"),  # '!siz'
     0x70726D3F: ("kAudioFilePermissionsError", "Permissions error"),  # 'prm?'
     0x6F70746D: ("kAudioFileNotOptimizedError", "File not optimized"),  # 'optm'
     0x63686B3F: ("kAudioFileInvalidChunkError", "Invalid chunk"),  # 'chk?'
-    0x6F66663F: ("kAudioFileDoesNotAllow64BitDataSizeError", "Does not allow 64-bit data size"),  # 'off?'
-    0x70636B3F: ("kAudioFileInvalidPacketOffsetError", "Invalid packet offset"),  # 'pck?'
-    0x6465703F: ("kAudioFileInvalidPacketDependencyError", "Invalid packet dependency"),  # 'dep?'
+    0x6F66663F: (
+        "kAudioFileDoesNotAllow64BitDataSizeError",
+        "Does not allow 64-bit data size",
+    ),  # 'off?'
+    0x70636B3F: (
+        "kAudioFileInvalidPacketOffsetError",
+        "Invalid packet offset",
+    ),  # 'pck?'
+    0x6465703F: (
+        "kAudioFileInvalidPacketDependencyError",
+        "Invalid packet dependency",
+    ),  # 'dep?'
     0x6474613F: ("kAudioFileInvalidFileError", "Invalid file"),  # 'dta?'
-    0x6F703F3F: ("kAudioFileOperationNotSupportedError", "Operation not supported"),  # 'op??'
+    0x6F703F3F: (
+        "kAudioFileOperationNotSupportedError",
+        "Operation not supported",
+    ),  # 'op??'
     -38: ("kAudioFileNotOpenError", "File not open"),
     -39: ("kAudioFileEndOfFileError", "End of file"),
     -40: ("kAudioFilePositionError", "Invalid position"),
@@ -51,27 +80,57 @@ AUDIO_FILE_ERRORS = {
 # AudioFormat errors
 AUDIO_FORMAT_ERRORS = {
     0x77686174: ("kAudioFormatUnspecifiedError", "Unspecified error"),  # 'what'
-    0x70726F70: ("kAudioFormatUnsupportedPropertyError", "Unsupported property"),  # 'prop'
+    0x70726F70: (
+        "kAudioFormatUnsupportedPropertyError",
+        "Unsupported property",
+    ),  # 'prop'
     0x2173697A: ("kAudioFormatBadPropertySizeError", "Bad property size"),  # '!siz'
     0x21737063: ("kAudioFormatBadSpecifierSizeError", "Bad specifier size"),  # '!spc'
-    0x666D743F: ("kAudioFormatUnsupportedDataFormatError", "Unsupported data format"),  # 'fmt?'
+    0x666D743F: (
+        "kAudioFormatUnsupportedDataFormatError",
+        "Unsupported data format",
+    ),  # 'fmt?'
     0x21666D74: ("kAudioFormatUnknownFormatError", "Unknown format"),  # '!fmt'
 }
 
 # AudioFileStream errors
 AUDIO_FILE_STREAM_ERRORS = {
-    0x7479703F: ("kAudioFileStreamError_UnsupportedFileType", "Unsupported file type"),  # 'typ?'
-    0x666D743F: ("kAudioFileStreamError_UnsupportedDataFormat", "Unsupported data format"),  # 'fmt?'
-    0x7074793F: ("kAudioFileStreamError_UnsupportedProperty", "Unsupported property"),  # 'pty?'
-    0x2173697A: ("kAudioFileStreamError_BadPropertySize", "Bad property size"),  # '!siz'
+    0x7479703F: (
+        "kAudioFileStreamError_UnsupportedFileType",
+        "Unsupported file type",
+    ),  # 'typ?'
+    0x666D743F: (
+        "kAudioFileStreamError_UnsupportedDataFormat",
+        "Unsupported data format",
+    ),  # 'fmt?'
+    0x7074793F: (
+        "kAudioFileStreamError_UnsupportedProperty",
+        "Unsupported property",
+    ),  # 'pty?'
+    0x2173697A: (
+        "kAudioFileStreamError_BadPropertySize",
+        "Bad property size",
+    ),  # '!siz'
     0x6F70746D: ("kAudioFileStreamError_NotOptimized", "Not optimized"),  # 'optm'
-    0x70636B3F: ("kAudioFileStreamError_InvalidPacketOffset", "Invalid packet offset"),  # 'pck?'
+    0x70636B3F: (
+        "kAudioFileStreamError_InvalidPacketOffset",
+        "Invalid packet offset",
+    ),  # 'pck?'
     0x6474613F: ("kAudioFileStreamError_InvalidFile", "Invalid file"),  # 'dta?'
     0x756E6B3F: ("kAudioFileStreamError_ValueUnknown", "Value unknown"),  # 'unk?'
     0x6D6F7265: ("kAudioFileStreamError_DataUnavailable", "Data unavailable"),  # 'more'
-    0x6E6F7065: ("kAudioFileStreamError_IllegalOperation", "Illegal operation"),  # 'nope'
-    0x7768743F: ("kAudioFileStreamError_UnspecifiedError", "Unspecified error"),  # 'wht?'
-    0x64736321: ("kAudioFileStreamError_DiscontinuityCantRecover", "Discontinuity can't recover"),  # 'dsc!'
+    0x6E6F7065: (
+        "kAudioFileStreamError_IllegalOperation",
+        "Illegal operation",
+    ),  # 'nope'
+    0x7768743F: (
+        "kAudioFileStreamError_UnspecifiedError",
+        "Unspecified error",
+    ),  # 'wht?'
+    0x64736321: (
+        "kAudioFileStreamError_DiscontinuityCantRecover",
+        "Discontinuity can't recover",
+    ),  # 'dsc!'
 }
 
 # AudioCodec errors
@@ -83,7 +142,10 @@ AUDIO_CODEC_ERRORS = {
     0x6E6F7065: ("kAudioCodecIllegalOperationError", "Illegal operation"),  # 'nope'
     0x21646174: ("kAudioCodecUnsupportedFormatError", "Unsupported format"),  # '!dat'
     0x21737474: ("kAudioCodecStateError", "State error"),  # '!stt'
-    0x21627566: ("kAudioCodecNotEnoughBufferSpaceError", "Not enough buffer space"),  # '!buf'
+    0x21627566: (
+        "kAudioCodecNotEnoughBufferSpaceError",
+        "Not enough buffer space",
+    ),  # '!buf'
     0x62616461: ("kAudioCodecBadDataError", "Bad data"),  # 'bada'
 }
 
@@ -147,7 +209,45 @@ AUDIO_QUEUE_ERRORS = {
     -66703: ("kAudioQueueErr_InvalidOfflineMode", "Invalid offline mode"),
 }
 
-# Combine all error dictionaries
+# Combine all error dictionaries.
+#
+# Lookup precedence (later dicts overwrite earlier for shared keys):
+#   AUDIO_HARDWARE_ERRORS < AUDIO_FILE_ERRORS < AUDIO_FORMAT_ERRORS
+#   < AUDIO_FILE_STREAM_ERRORS < AUDIO_CODEC_ERRORS < AUDIO_UNIT_ERRORS
+#   < SYSTEM_ERRORS < AUDIO_QUEUE_ERRORS
+#
+# Shared FourCC codes and their final resolution:
+#   0x2173697A ('!siz') -- appears in Hardware, File, Format, FileStream, Codec
+#                          -> resolves to AUDIO_CODEC (kAudioCodecBadPropertySizeError)
+#   0x77686174 ('what') -- appears in Hardware, Format, Codec
+#                          -> resolves to AUDIO_CODEC (kAudioCodecUnspecifiedError)
+#   0x77686F3F ('who?') -- appears in Hardware, Codec
+#                          -> resolves to AUDIO_CODEC (kAudioCodecUnknownPropertyError)
+#   0x6E6F7065 ('nope') -- appears in Hardware, FileStream, Codec
+#                          -> resolves to AUDIO_CODEC (kAudioCodecIllegalOperationError)
+#   0x21646174 ('!dat') -- appears in Hardware, Codec
+#                          -> resolves to AUDIO_CODEC (kAudioCodecUnsupportedFormatError)
+#   0x7479703F ('typ?') -- appears in File, FileStream
+#                          -> resolves to AUDIO_FILE_STREAM (UnsupportedFileType)
+#   0x666D743F ('fmt?') -- appears in File, Format, FileStream
+#                          -> resolves to AUDIO_FILE_STREAM (UnsupportedDataFormat)
+#   0x7074793F ('pty?') -- appears in File, FileStream
+#                          -> resolves to AUDIO_FILE_STREAM (UnsupportedProperty)
+#   0x7768743F ('wht?') -- appears in File, FileStream
+#                          -> resolves to AUDIO_FILE_STREAM (UnspecifiedError)
+#   0x6F70746D ('optm') -- appears in File, FileStream
+#                          -> resolves to AUDIO_FILE_STREAM (NotOptimized)
+#   0x70636B3F ('pck?') -- appears in File, FileStream
+#                          -> resolves to AUDIO_FILE_STREAM (InvalidPacketOffset)
+#   0x6474613F ('dta?') -- appears in File, FileStream
+#                          -> resolves to AUDIO_FILE_STREAM (InvalidFile)
+#       0 (no error)    -- appears in Hardware, Codec
+#                          -> resolves to AUDIO_CODEC (kAudioCodecNoError)
+#
+# This ordering is intentional: codec/stream errors are more specific than
+# hardware/file errors for the same FourCC, so they take precedence.
+# The RECOVERY_SUGGESTIONS dict is independent and keyed by error code
+# without ambiguity concerns (generic suggestions cover all contexts).
 ALL_ERRORS = {
     **AUDIO_HARDWARE_ERRORS,
     **AUDIO_FILE_ERRORS,
@@ -169,20 +269,17 @@ RECOVERY_SUGGESTIONS = {
     -38: "Ensure the file is opened before performing this operation",
     -108: "Free up system memory or reduce buffer sizes",
     -128: "Check system security settings or user permissions",
-
     # Audio file errors
     0x70726D3F: "Check file permissions - the file may be read-only or locked by another process",
     0x7479703F: "Verify the audio file format is supported (WAV, AIFF, MP3, AAC, etc.)",
     0x666D743F: "Check that the audio format is supported by CoreAudio",
     0x6474613F: "The file may be corrupted or incomplete",
     -43: "Verify the file path exists and is spelled correctly",
-
     # Audio hardware errors
     0x21646576: "Check that the audio device is connected and recognized by the system",
     0x21686F67: "Another application may have exclusive access to the audio device",
     0x73746F70: "Start the audio hardware before performing this operation",
     0x6E726479: "Wait for audio hardware to become ready or restart the audio system",
-
     # Audio unit errors
     -10875: "The AudioUnit property you're trying to access doesn't exist",
     -10876: "Check AudioUnit parameter values are within valid ranges",
@@ -193,7 +290,6 @@ RECOVERY_SUGGESTIONS = {
     -10863: "The AudioUnit plugin file is broken or incompatible",
     -10885: "Initialize the AudioUnit before attempting to use it",
     -10891: "The AudioUnit is already initialized - dispose and recreate if needed",
-
     # Audio queue errors
     -66687: "No audio output device available - check system audio settings",
     -66685: "Verify AudioQueue parameters (buffer size, format, etc.) are valid",
@@ -227,20 +323,22 @@ def os_status_to_string(status: int) -> str:
     # Try to interpret as FourCC if it looks like a character code
     if status > 0x20202020 and status < 0x7F7F7F7F:
         try:
-            fourcc = bytes([
-                (status >> 24) & 0xFF,
-                (status >> 16) & 0xFF,
-                (status >> 8) & 0xFF,
-                status & 0xFF
-            ]).decode('ascii', errors='ignore')
+            fourcc = bytes(
+                [
+                    (status >> 24) & 0xFF,
+                    (status >> 16) & 0xFF,
+                    (status >> 8) & 0xFF,
+                    status & 0xFF,
+                ]
+            ).decode("ascii", errors="ignore")
             return f"Unknown error '{fourcc}' (0x{status:08X})"
         except Exception:
-            pass
+            logger.debug("Failed to decode FourCC for status code 0x%08X", status)
 
     return f"Unknown error code {status}"
 
 
-def get_error_suggestion(status: int) -> Optional[str]:
+def get_error_suggestion(status: int) -> str | None:
     """Get recovery suggestion for an OSStatus error code.
 
     Args:
@@ -287,7 +385,7 @@ def format_os_status_error(status: int, operation: str = "") -> str:
     return message
 
 
-def get_error_info(status: int) -> Tuple[str, str, Optional[str]]:
+def get_error_info(status: int) -> tuple[str, str, str | None]:
     """Get complete error information as a tuple.
 
     Args:
@@ -318,12 +416,11 @@ def get_error_info(status: int) -> Tuple[str, str, Optional[str]]:
 
 
 # Type variable for decorator return types
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 def check_os_status(
-    operation: str = "",
-    exception_class: type = Exception
+    operation: str = "", exception_class: type = Exception
 ) -> Callable[[F], F]:
     """Decorator to check OSStatus return values and raise appropriate exceptions.
 
@@ -355,6 +452,7 @@ def check_os_status(
         - If the status is 0, the original return value is passed through
         - If the status is non-zero, an exception is raised with detailed error info
     """
+
     def decorator(func: F) -> F:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -373,9 +471,7 @@ def check_os_status(
 
 
 def check_return_status(
-    operation: str = "",
-    exception_class: type = Exception,
-    status_index: int = 0
+    operation: str = "", exception_class: type = Exception, status_index: int = 0
 ) -> Callable[[F], F]:
     """Decorator for functions that return (result, status) tuples.
 
@@ -410,6 +506,7 @@ def check_return_status(
         - On success (status == 0), returns the non-status values
         - On error (status != 0), raises exception with detailed error info
     """
+
     def decorator(func: F) -> F:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -442,8 +539,7 @@ def check_return_status(
 
 
 def raises_on_error(
-    operation: str = "",
-    exception_class: type = Exception
+    operation: str = "", exception_class: type = Exception
 ) -> Callable[[F], F]:
     """Decorator that converts None/empty returns into exceptions.
 
@@ -474,6 +570,7 @@ def raises_on_error(
         - Raises exception if return value is None, 0, empty string, or empty container
         - Otherwise passes through the return value unchanged
     """
+
     def decorator(func: F) -> F:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -481,7 +578,9 @@ def raises_on_error(
 
             # Check for error conditions
             if result is None or result == 0 or result == "" or result == []:
-                error_msg = f"Failed to {operation}" if operation else f"{func.__name__} failed"
+                error_msg = (
+                    f"Failed to {operation}" if operation else f"{func.__name__} failed"
+                )
                 raise exception_class(error_msg)
 
             return result
@@ -492,8 +591,7 @@ def raises_on_error(
 
 
 def handle_exceptions(
-    operation: str = "",
-    reraise_as: Optional[type] = None
+    operation: str = "", reraise_as: type | None = None
 ) -> Callable[[F], F]:
     """Decorator that provides better error messages for caught exceptions.
 
@@ -525,6 +623,7 @@ def handle_exceptions(
         - Can optionally convert exception types
         - Useful for converting low-level exceptions to domain-specific ones
     """
+
     def decorator(func: F) -> F:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:

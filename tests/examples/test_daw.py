@@ -1,6 +1,5 @@
 """Tests for DAW (Digital Audio Workstation) essentials module."""
 
-import os
 import sys
 import pytest
 from pathlib import Path
@@ -303,7 +302,7 @@ class TestTrack:
         clip2 = Clip("test2.wav")
         clip2.duration = 5.0
 
-        track.add_clip(clip1, start_time=0.0)   # 0-5
+        track.add_clip(clip1, start_time=0.0)  # 0-5
         track.add_clip(clip2, start_time=10.0)  # 10-15
 
         clips_at_2 = track.get_clips_at_time(2.0)
@@ -417,7 +416,7 @@ class TestTimeline:
         """Test record"""
         timeline = Timeline()
         track1 = timeline.add_track("Track1")
-        track2 = timeline.add_track("Track2")
+        timeline.add_track("Track2")
 
         track1.record_enable(True)
 
@@ -505,7 +504,7 @@ class TestTimeline:
         clip2 = Clip("test2.wav")
         clip2.duration = 5.0
 
-        track1.add_clip(clip1, start_time=0.0)   # Ends at 10
+        track1.add_clip(clip1, start_time=0.0)  # Ends at 10
         track2.add_clip(clip2, start_time=20.0)  # Ends at 25
 
         assert timeline.get_duration() == 25.0
@@ -526,7 +525,7 @@ class TestIntegration:
 
         # Add tracks
         drums = timeline.add_track("Drums", "audio")
-        bass = timeline.add_track("Bass", "audio")
+        timeline.add_track("Bass", "audio")
         vocals = timeline.add_track("Vocals", "audio")
 
         # Add clips
@@ -545,9 +544,9 @@ class TestIntegration:
 
         # Add automation
         volume_automation = vocals.automate("volume")
-        volume_automation.add_point(8.0, 0.0)    # Fade in
+        volume_automation.add_point(8.0, 0.0)  # Fade in
         volume_automation.add_point(10.0, 1.0)
-        volume_automation.add_point(30.0, 1.0)   # Fade out
+        volume_automation.add_point(30.0, 1.0)  # Fade out
         volume_automation.add_point(32.0, 0.0)
 
         # Set loop region
@@ -571,7 +570,7 @@ class TestIntegration:
 
         # Create 3 tracks with multiple clips each
         for i in range(3):
-            track = timeline.add_track(f"Track{i+1}")
+            track = timeline.add_track(f"Track{i + 1}")
 
             # Add 3 clips per track
             for j in range(3):

@@ -7,7 +7,8 @@ Usage:
 
 import sys
 import os
-from coremusic.objects import AudioFile, NUMPY_AVAILABLE
+from coremusic.audio import AudioFile
+from coremusic.base import NUMPY_AVAILABLE
 
 
 def main():
@@ -25,7 +26,9 @@ def main():
         data = audio.read_as_numpy()
 
         print(f"File: {audio_path}")
-        print(f"Format: {format.sample_rate:.0f} Hz, {format.channels_per_frame} ch, {format.bits_per_channel} bit")
+        print(
+            f"Format: {format.sample_rate:.0f} Hz, {format.channels_per_frame} ch, {format.bits_per_channel} bit"
+        )
         print(f"Duration: {audio.duration:.2f}s")
         print(f"Array shape: {data.shape}")
         print(f"Array dtype: {data.dtype}")

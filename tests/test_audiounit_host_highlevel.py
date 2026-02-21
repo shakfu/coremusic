@@ -22,24 +22,24 @@ class TestAudioUnitHost:
         counts = host.get_plugin_count()
 
         print(f"\nPlugin counts: {counts}")
-        assert 'effect' in counts
-        assert 'instrument' in counts
-        assert counts['effect'] > 0  # Should have at least some effects
+        assert "effect" in counts
+        assert "instrument" in counts
+        assert counts["effect"] > 0  # Should have at least some effects
 
     def test_discover_effects(self):
         """Test discovering effect plugins"""
         host = AudioUnitHost()
-        effects = host.discover_plugins(type='effect')
+        effects = host.discover_plugins(type="effect")
 
         print(f"\nFound {len(effects)} effect plugins")
         assert len(effects) > 0
         assert isinstance(effects, list)
-        assert 'name' in effects[0]
+        assert "name" in effects[0]
 
     def test_discover_instruments(self):
         """Test discovering instrument plugins"""
         host = AudioUnitHost()
-        instruments = host.discover_plugins(type='instrument')
+        instruments = host.discover_plugins(type="instrument")
 
         print(f"\nFound {len(instruments)} instrument plugins")
         assert len(instruments) > 0
@@ -47,7 +47,7 @@ class TestAudioUnitHost:
     def test_discover_apple_plugins(self):
         """Test discovering Apple plugins"""
         host = AudioUnitHost()
-        apple_plugins = host.discover_plugins(manufacturer='appl')
+        apple_plugins = host.discover_plugins(manufacturer="appl")
 
         print(f"\nFound {len(apple_plugins)} Apple plugins")
         assert len(apple_plugins) > 0
@@ -60,7 +60,7 @@ class TestAudioUnitPlugin:
     def test_create_plugin_from_name(self):
         """Test creating plugin by name"""
         # AUBandpass should exist on all macOS systems
-        plugin = AudioUnitPlugin.from_name("Bandpass", component_type='aufx')
+        plugin = AudioUnitPlugin.from_name("Bandpass", component_type="aufx")
 
         assert plugin is not None
         assert plugin.name is not None
@@ -70,7 +70,7 @@ class TestAudioUnitPlugin:
 
     def test_plugin_lifecycle(self):
         """Test plugin instantiate/initialize/dispose lifecycle"""
-        plugin = AudioUnitPlugin.from_name("Bandpass", component_type='aufx')
+        plugin = AudioUnitPlugin.from_name("Bandpass", component_type="aufx")
 
         # Instantiate
         plugin.instantiate()
@@ -85,7 +85,7 @@ class TestAudioUnitPlugin:
 
     def test_plugin_context_manager(self):
         """Test plugin with context manager"""
-        with AudioUnitPlugin.from_name("Bandpass", component_type='aufx') as plugin:
+        with AudioUnitPlugin.from_name("Bandpass", component_type="aufx") as plugin:
             assert plugin.is_initialized
             print(f"\nPlugin: {plugin}")
 
@@ -93,7 +93,7 @@ class TestAudioUnitPlugin:
 
     def test_plugin_parameters(self):
         """Test accessing plugin parameters"""
-        with AudioUnitPlugin.from_name("Bandpass", component_type='aufx') as plugin:
+        with AudioUnitPlugin.from_name("Bandpass", component_type="aufx") as plugin:
             params = plugin.parameters
 
             print(f"\nPlugin has {len(params)} parameters:")
@@ -104,7 +104,7 @@ class TestAudioUnitPlugin:
 
     def test_get_parameter_by_name(self):
         """Test getting parameter by name"""
-        with AudioUnitPlugin.from_name("Bandpass", component_type='aufx') as plugin:
+        with AudioUnitPlugin.from_name("Bandpass", component_type="aufx") as plugin:
             if len(plugin.parameters) > 0:
                 param_name = plugin.parameters[0].name
                 param = plugin.get_parameter(param_name)
@@ -115,7 +115,7 @@ class TestAudioUnitPlugin:
 
     def test_set_parameter_value(self):
         """Test setting parameter value"""
-        with AudioUnitPlugin.from_name("Bandpass", component_type='aufx') as plugin:
+        with AudioUnitPlugin.from_name("Bandpass", component_type="aufx") as plugin:
             if len(plugin.parameters) > 0:
                 param = plugin.parameters[0]
                 original_value = param.value
@@ -127,11 +127,13 @@ class TestAudioUnitPlugin:
                 # Verify
                 assert abs(param.value - new_value) < 0.01
 
-                print(f"\nSet {param.name} from {original_value:.3f} to {param.value:.3f}")
+                print(
+                    f"\nSet {param.name} from {original_value:.3f} to {param.value:.3f}"
+                )
 
     def test_dictionary_parameter_access(self):
         """Test dictionary-style parameter access"""
-        with AudioUnitPlugin.from_name("Bandpass", component_type='aufx') as plugin:
+        with AudioUnitPlugin.from_name("Bandpass", component_type="aufx") as plugin:
             if len(plugin.parameters) > 0:
                 param_name = plugin.parameters[0].name
 
@@ -147,7 +149,7 @@ class TestAudioUnitPlugin:
 
     def test_plugin_factory_presets(self):
         """Test accessing factory presets"""
-        with AudioUnitPlugin.from_name("Bandpass", component_type='aufx') as plugin:
+        with AudioUnitPlugin.from_name("Bandpass", component_type="aufx") as plugin:
             presets = plugin.factory_presets
 
             print(f"\nPlugin has {len(presets)} factory presets")
@@ -157,7 +159,7 @@ class TestAudioUnitPlugin:
 
     def test_load_preset(self):
         """Test loading a factory preset"""
-        with AudioUnitPlugin.from_name("Bandpass", component_type='aufx') as plugin:
+        with AudioUnitPlugin.from_name("Bandpass", component_type="aufx") as plugin:
             presets = plugin.factory_presets
 
             if len(presets) > 0:
@@ -175,14 +177,14 @@ class TestAudioUnitHostIntegration:
         host = AudioUnitHost()
 
         # Discover effects
-        effects = host.discover_plugins(type='effect', manufacturer='appl')
+        effects = host.discover_plugins(type="effect", manufacturer="appl")
         assert len(effects) > 0
 
         # Load first plugin
         plugin_info = effects[0]
         print(f"\nTesting with: {plugin_info['name']}")
 
-        with host.load_plugin(plugin_info['name'], type='effect') as plugin:
+        with host.load_plugin(plugin_info["name"], type="effect") as plugin:
             print(f"  Loaded: {plugin}")
             print(f"  Parameters: {len(plugin.parameters)}")
             print(f"  Presets: {len(plugin.factory_presets)}")
@@ -193,14 +195,15 @@ class TestAudioUnitHostIntegration:
         """Test working with multiple plugins"""
         host = AudioUnitHost()
 
-        effects = host.discover_plugins(type='effect', manufacturer='appl')
+        effects = host.discover_plugins(type="effect", manufacturer="appl")
         if len(effects) >= 2:
             print("\nLoading multiple plugins:")
 
             # Load first two plugins
-            with host.load_plugin(effects[0]['name']) as plugin1, \
-                 host.load_plugin(effects[1]['name']) as plugin2:
-
+            with (
+                host.load_plugin(effects[0]["name"]) as plugin1,
+                host.load_plugin(effects[1]["name"]) as plugin2,
+            ):
                 print(f"  Plugin 1: {plugin1.name}")
                 print(f"  Plugin 2: {plugin2.name}")
 
@@ -215,7 +218,7 @@ class TestAudioUnitParameter:
     @pytest.fixture
     def plugin_with_params(self):
         """Create a plugin with parameters"""
-        plugin = AudioUnitPlugin.from_name("Bandpass", component_type='aufx')
+        plugin = AudioUnitPlugin.from_name("Bandpass", component_type="aufx")
         plugin.instantiate()
         plugin.initialize()
         yield plugin

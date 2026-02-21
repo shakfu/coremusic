@@ -6,6 +6,7 @@ All examples are executable doctests.
 
 Run with: pytest tests/tutorials/test_music_theory.py --doctest-modules -v
 """
+
 from __future__ import annotations
 
 
@@ -357,4 +358,5 @@ def diatonic_chords():
 # Test runner
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod(verbose=True)

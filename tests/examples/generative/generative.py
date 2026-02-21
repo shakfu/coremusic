@@ -54,6 +54,7 @@ class GeneratorConfig:
         humanize_velocity: Random velocity variation (0-127)
         seed: Random seed for reproducibility (None = random)
     """
+
     tempo: float = 120.0
     channel: int = 0
     velocity: int = 100
@@ -116,12 +117,16 @@ class Generator(ABC):
         """
         # Timing humanization
         if self.config.humanize_timing > 0:
-            time += self._rng.uniform(-self.config.humanize_timing, self.config.humanize_timing)
+            time += self._rng.uniform(
+                -self.config.humanize_timing, self.config.humanize_timing
+            )
             time = max(0.0, time)
 
         # Velocity humanization
         if self.config.humanize_velocity > 0:
-            velocity += self._rng.randint(-self.config.humanize_velocity, self.config.humanize_velocity)
+            velocity += self._rng.randint(
+                -self.config.humanize_velocity, self.config.humanize_velocity
+            )
             velocity = max(1, min(127, velocity))
 
         return time, velocity
@@ -146,7 +151,9 @@ class Generator(ABC):
         """
         return [
             MIDIEvent(time, MIDIStatus.NOTE_ON, self.config.channel, pitch, velocity),
-            MIDIEvent(time + duration, MIDIStatus.NOTE_OFF, self.config.channel, pitch, 0),
+            MIDIEvent(
+                time + duration, MIDIStatus.NOTE_OFF, self.config.channel, pitch, 0
+            ),
         ]
 
     @abstractmethod
@@ -173,14 +180,18 @@ class Generator(ABC):
                 # Find matching note off
                 note_off_time = None
                 for off_event in events:
-                    if (off_event.status == MIDIStatus.NOTE_OFF and
-                        off_event.data1 == event.data1 and
-                        off_event.time > event.time):
+                    if (
+                        off_event.status == MIDIStatus.NOTE_OFF
+                        and off_event.data1 == event.data1
+                        and off_event.time > event.time
+                    ):
                         note_off_time = off_event.time
                         break
                 if note_off_time:
                     duration = note_off_time - event.time
-                    track.add_note(event.time, event.data1, event.data2, duration, event.channel)
+                    track.add_note(
+                        event.time, event.data1, event.data2, duration, event.channel
+                    )
 
 
 # ============================================================================
@@ -190,16 +201,17 @@ class Generator(ABC):
 
 class ArpPattern(Enum):
     """Arpeggiator pattern types."""
-    UP = auto()              # Ascending
-    DOWN = auto()            # Descending
-    UP_DOWN = auto()         # Ascending then descending
-    DOWN_UP = auto()         # Descending then ascending
+
+    UP = auto()  # Ascending
+    DOWN = auto()  # Descending
+    UP_DOWN = auto()  # Ascending then descending
+    DOWN_UP = auto()  # Descending then ascending
     UP_DOWN_INCLUSIVE = auto()  # Up/down including top/bottom notes twice
-    RANDOM = auto()          # Random order
-    RANDOM_WALK = auto()     # Random steps (adjacent notes)
-    AS_PLAYED = auto()       # Order as defined in chord
-    OUTSIDE_IN = auto()      # Lowest, highest, 2nd lowest, 2nd highest...
-    INSIDE_OUT = auto()      # Middle outward
+    RANDOM = auto()  # Random order
+    RANDOM_WALK = auto()  # Random steps (adjacent notes)
+    AS_PLAYED = auto()  # Order as defined in chord
+    OUTSIDE_IN = auto()  # Lowest, highest, 2nd lowest, 2nd highest...
+    INSIDE_OUT = auto()  # Middle outward
 
 
 @dataclass
@@ -216,6 +228,7 @@ class ArpConfig(GeneratorConfig):
         accent_pattern: Optional list of accent positions (1-indexed)
         accent_velocity: Velocity for accented notes
     """
+
     note_duration: float = 0.5  # In beats
     gate: float = 0.9
     octave_range: int = 1
@@ -410,7 +423,9 @@ class Arpeggiator(Generator):
                 # Apply humanization
                 time, velocity = self._apply_humanize(time, velocity)
 
-                events.extend(self._create_note_events(time, pitch, velocity, note_duration))
+                events.extend(
+                    self._create_note_events(time, pitch, velocity, note_duration)
+                )
 
                 current_time += note_time
                 step += 1
@@ -425,7 +440,9 @@ class Arpeggiator(Generator):
                 velocity = self._get_velocity(step)
                 time, velocity = self._apply_humanize(time, velocity)
 
-                events.extend(self._create_note_events(time, pitch, velocity, note_duration))
+                events.extend(
+                    self._create_note_events(time, pitch, velocity, note_duration)
+                )
 
                 current_time += note_time
                 step += 1
@@ -443,8 +460,9 @@ class Arpeggiator(Generator):
 
         # Check accent pattern
         if self.config.accent_pattern:
-            if (step + 1) in self.config.accent_pattern or \
-               ((step % len(self.config.accent_pattern or [1])) + 1) in self.config.accent_pattern:
+            if (step + 1) in self.config.accent_pattern or (
+                (step % len(self.config.accent_pattern or [1])) + 1
+            ) in self.config.accent_pattern:
                 velocity = self.config.accent_velocity
 
         return velocity
@@ -467,6 +485,7 @@ class EuclideanConfig(GeneratorConfig):
         gate: Gate time as fraction
         rotation: Pattern rotation (shift pattern start)
     """
+
     note_duration: float = 0.5
     gate: float = 0.8
     rotation: int = 0
@@ -517,7 +536,9 @@ class EuclideanGenerator(Generator):
     def _compute_pattern(self) -> List[int]:
         """Compute Euclidean pattern using Bjorklund's algorithm."""
         if self.pulses > self.steps:
-            raise ValueError(f"Pulses ({self.pulses}) cannot exceed steps ({self.steps})")
+            raise ValueError(
+                f"Pulses ({self.pulses}) cannot exceed steps ({self.steps})"
+            )
 
         if self.pulses == 0:
             return [0] * self.steps
@@ -540,7 +561,7 @@ class EuclideanGenerator(Generator):
             new_pattern = []
             for i in range(iterations):
                 new_pattern.append(pattern[i] + pattern[-(i + 1)])
-            new_pattern.extend(pattern[iterations:-iterations or None])
+            new_pattern.extend(pattern[iterations : -iterations or None])
 
             pattern = new_pattern
 
@@ -601,11 +622,17 @@ class EuclideanGenerator(Generator):
         for cycle in range(cycles):
             for step, hit in enumerate(self._pattern):
                 if hit:
-                    time = self._apply_swing(current_time, step + cycle * len(self._pattern))
+                    time = self._apply_swing(
+                        current_time, step + cycle * len(self._pattern)
+                    )
                     velocity = self.config.velocity
                     time, velocity = self._apply_humanize(time, velocity)
 
-                    events.extend(self._create_note_events(time, self.pitch, velocity, note_duration))
+                    events.extend(
+                        self._create_note_events(
+                            time, self.pitch, velocity, note_duration
+                        )
+                    )
 
                 current_time += step_duration
 
@@ -629,6 +656,7 @@ class MarkovConfig(GeneratorConfig):
         gate: Gate time as fraction
         order: Markov chain order (1 = first order, 2 = second order, etc.)
     """
+
     note_duration: float = 0.5
     gate: float = 0.9
     order: int = 1
@@ -679,7 +707,9 @@ class MarkovGenerator(Generator):
     def config(self, value: MarkovConfig):
         self._config = value
 
-    def train(self, sequence: List[Union[int, Note]], order: Optional[int] = None) -> None:
+    def train(
+        self, sequence: List[Union[int, Note]], order: Optional[int] = None
+    ) -> None:
         """Train transition matrix from a sequence.
 
         Args:
@@ -699,7 +729,7 @@ class MarkovGenerator(Generator):
         counts: Dict[tuple, Dict[int, int]] = {}
 
         for i in range(len(notes) - order):
-            state = tuple(notes[i:i + order])
+            state = tuple(notes[i : i + order])
             next_note = notes[i + order]
 
             if state not in counts:
@@ -714,7 +744,9 @@ class MarkovGenerator(Generator):
             total = sum(next_counts.values())
             # For first-order, use single int key
             key = state[0] if order == 1 else state
-            self.transitions[key] = {note: count / total for note, count in next_counts.items()}  # type: ignore[index]
+            self.transitions[key] = {
+                note: count / total for note, count in next_counts.items()
+            }  # type: ignore[index]
 
     def set_transitions(self, transitions: Dict[int, Dict[int, float]]) -> None:
         """Set transition probabilities manually.
@@ -793,7 +825,9 @@ class MarkovGenerator(Generator):
             velocity = self.config.velocity
             time, velocity = self._apply_humanize(time, velocity)
 
-            events.extend(self._create_note_events(time, current, velocity, note_duration))
+            events.extend(
+                self._create_note_events(time, current, velocity, note_duration)
+            )
 
             current = self._get_next_note(current)
             current_time += self.config.note_duration * beat_duration
@@ -818,6 +852,7 @@ class ProbabilisticConfig(GeneratorConfig):
         gate: Gate time as fraction
         rest_probability: Probability of rest (0.0-1.0)
     """
+
     note_duration: float = 0.5
     gate: float = 0.9
     rest_probability: float = 0.0
@@ -932,7 +967,9 @@ class ProbabilisticGenerator(Generator):
             velocity = self.config.velocity
             time, velocity = self._apply_humanize(time, velocity)
 
-            events.extend(self._create_note_events(time, pitch, velocity, note_duration))
+            events.extend(
+                self._create_note_events(time, pitch, velocity, note_duration)
+            )
             current_time += self.config.note_duration * beat_duration
 
         return sorted(events, key=lambda e: e.time)
@@ -954,6 +991,7 @@ class SequenceConfig(GeneratorConfig):
         step_duration: Duration of each step in beats
         gate: Gate time as fraction
     """
+
     step_duration: float = 0.25  # 16th notes
     gate: float = 0.8
 
@@ -969,6 +1007,7 @@ class Step:
         probability: Probability of triggering (0.0-1.0)
         slide: If True, glide to next note
     """
+
     pitch: Optional[int] = None
     velocity: Optional[int] = None
     gate: Optional[float] = None
@@ -1021,7 +1060,9 @@ class SequenceGenerator(Generator):
             step: Step configuration
         """
         if not 0 <= index < self.num_steps:
-            raise ValueError(f"Step index {index} out of range (0-{self.num_steps - 1})")
+            raise ValueError(
+                f"Step index {index} out of range (0-{self.num_steps - 1})"
+            )
         self._steps[index] = step
 
     def clear_step(self, index: int) -> None:
@@ -1039,7 +1080,7 @@ class SequenceGenerator(Generator):
             pattern: List of MIDI notes (None for rest)
             velocity: Default velocity
         """
-        for i, pitch in enumerate(pattern[:self.num_steps]):
+        for i, pitch in enumerate(pattern[: self.num_steps]):
             if pitch is not None:
                 self._steps[i] = Step(pitch=pitch, velocity=velocity)
             else:
@@ -1075,7 +1116,11 @@ class SequenceGenerator(Generator):
                         continue
 
                     pitch = step.pitch
-                    velocity = step.velocity if step.velocity is not None else self.config.velocity
+                    velocity = (
+                        step.velocity
+                        if step.velocity is not None
+                        else self.config.velocity
+                    )
                     gate = step.gate if step.gate is not None else self.config.gate
 
                     note_duration = step_duration * gate
@@ -1083,7 +1128,9 @@ class SequenceGenerator(Generator):
                     time = self._apply_swing(current_time, global_step)
                     time, velocity = self._apply_humanize(time, velocity)
 
-                    events.extend(self._create_note_events(time, pitch, velocity, note_duration))
+                    events.extend(
+                        self._create_note_events(time, pitch, velocity, note_duration)
+                    )
 
                 current_time += step_duration
 
@@ -1111,6 +1158,7 @@ class MelodyConfig(GeneratorConfig):
         phrase_length: Target phrase length in notes
         rest_probability: Probability of rest between phrases
     """
+
     note_duration: float = 0.5
     gate: float = 0.9
     max_jump: int = 7  # Perfect fifth
@@ -1176,11 +1224,13 @@ class MelodyGenerator(Generator):
             # Find nearest scale note
             current_idx = min(
                 range(len(self._scale_notes)),
-                key=lambda i: abs(self._scale_notes[i] - current)
+                key=lambda i: abs(self._scale_notes[i] - current),
             )
 
         # Calculate step range
-        max_step = self.config.max_jump // 2 + 1  # Convert semitones to approximate scale steps
+        max_step = (
+            self.config.max_jump // 2 + 1
+        )  # Convert semitones to approximate scale steps
 
         # Apply contour tendency
         bias = self.config.contour_tendency + direction_hint * 0.3
@@ -1252,7 +1302,9 @@ class MelodyGenerator(Generator):
             velocity = self.config.velocity
             time, velocity = self._apply_humanize(time, velocity)
 
-            events.extend(self._create_note_events(time, current, velocity, note_duration))
+            events.extend(
+                self._create_note_events(time, current, velocity, note_duration)
+            )
 
             # Get next note
             current = self._get_next_note(current, direction_hint)
@@ -1278,6 +1330,7 @@ class PolyrhythmConfig(GeneratorConfig):
         note_duration: Base note duration in beats
         gate: Gate time as fraction
     """
+
     note_duration: float = 0.25
     gate: float = 0.8
 
@@ -1292,6 +1345,7 @@ class RhythmLayer:
         velocity: Note velocity
         offset: Time offset in beats
     """
+
     pulses: int
     pitch: int = 60
     velocity: int = 100
@@ -1372,16 +1426,22 @@ class PolyrhythmGenerator(Generator):
                 pulse_interval = cycle_duration / layer.pulses
 
                 for pulse in range(layer.pulses):
-                    time = cycle_start + layer.offset * beat_duration + pulse * pulse_interval
+                    time = (
+                        cycle_start
+                        + layer.offset * beat_duration
+                        + pulse * pulse_interval
+                    )
                     step = cycle * max(lyr.pulses for lyr in self.layers) + pulse
 
                     time = self._apply_swing(time, step)
                     velocity = layer.velocity
                     time, velocity = self._apply_humanize(time, velocity)
 
-                    events.extend(self._create_note_events(
-                        time, layer.pitch, velocity, note_duration
-                    ))
+                    events.extend(
+                        self._create_note_events(
+                            time, layer.pitch, velocity, note_duration
+                        )
+                    )
 
         return sorted(events, key=lambda e: e.time)
 
@@ -1411,23 +1471,28 @@ class BitShiftRegisterConfig(GeneratorConfig):
         duration_max: Maximum duration multiplier for random mode
         duration_pattern: List of duration multipliers for pattern mode
     """
+
     step_duration: float = 0.25  # 16th notes
     gate: float = 0.8
-    velocity_mode: str = 'fixed'
+    velocity_mode: str = "fixed"
     velocity_min: int = 64
     velocity_max: int = 127
     velocity_pattern: Optional[List[int]] = None
-    duration_mode: str = 'fixed'
+    duration_mode: str = "fixed"
     duration_min: float = 0.5
     duration_max: float = 1.0
     duration_pattern: Optional[List[float]] = None
 
     def __post_init__(self):
         super().__post_init__()
-        if self.velocity_mode not in ('fixed', 'random', 'pattern'):
-            raise ValueError(f"velocity_mode must be 'fixed', 'random', or 'pattern', got {self.velocity_mode}")
-        if self.duration_mode not in ('fixed', 'random', 'pattern'):
-            raise ValueError(f"duration_mode must be 'fixed', 'random', or 'pattern', got {self.duration_mode}")
+        if self.velocity_mode not in ("fixed", "random", "pattern"):
+            raise ValueError(
+                f"velocity_mode must be 'fixed', 'random', or 'pattern', got {self.velocity_mode}"
+            )
+        if self.duration_mode not in ("fixed", "random", "pattern"):
+            raise ValueError(
+                f"duration_mode must be 'fixed', 'random', or 'pattern', got {self.duration_mode}"
+            )
         if not 0 <= self.velocity_min <= 127:
             raise ValueError(f"velocity_min must be 0-127, got {self.velocity_min}")
         if not 0 <= self.velocity_max <= 127:
@@ -1472,7 +1537,9 @@ class BitShiftRegister:
 
         if initial_state is not None:
             if len(initial_state) != size:
-                raise ValueError(f"Initial state length {len(initial_state)} != size {size}")
+                raise ValueError(
+                    f"Initial state length {len(initial_state)} != size {size}"
+                )
             self.bits = [1 if b else 0 for b in initial_state]
         else:
             self.bits = [0] * size
@@ -1614,10 +1681,7 @@ class BitShiftRegisterGenerator(Generator):
         if pitches is None:
             self._pitches = [60, 62, 64, 67]  # C4, D4, E4, G4
         else:
-            self._pitches = [
-                p.midi if isinstance(p, Note) else p
-                for p in pitches
-            ]
+            self._pitches = [p.midi if isinstance(p, Note) else p for p in pitches]
 
         if not self._pitches:
             raise ValueError("Must provide at least one pitch")
@@ -1648,10 +1712,7 @@ class BitShiftRegisterGenerator(Generator):
         Args:
             pitches: List of MIDI pitches or Notes
         """
-        self._pitches = [
-            p.midi if isinstance(p, Note) else p
-            for p in pitches
-        ]
+        self._pitches = [p.midi if isinstance(p, Note) else p for p in pitches]
         if not self._pitches:
             raise ValueError("Must provide at least one pitch")
 
@@ -1668,16 +1729,13 @@ class BitShiftRegisterGenerator(Generator):
         """Get velocity for a step based on configuration."""
         mode = self.config.velocity_mode
 
-        if mode == 'fixed':
+        if mode == "fixed":
             return self.config.velocity
 
-        elif mode == 'random':
-            return self._rng.randint(
-                self.config.velocity_min,
-                self.config.velocity_max
-            )
+        elif mode == "random":
+            return self._rng.randint(self.config.velocity_min, self.config.velocity_max)
 
-        elif mode == 'pattern':
+        elif mode == "pattern":
             if self.config.velocity_pattern:
                 idx = step % len(self.config.velocity_pattern)
                 return self.config.velocity_pattern[idx]
@@ -1689,16 +1747,13 @@ class BitShiftRegisterGenerator(Generator):
         """Get duration multiplier for a step based on configuration."""
         mode = self.config.duration_mode
 
-        if mode == 'fixed':
+        if mode == "fixed":
             return 1.0
 
-        elif mode == 'random':
-            return self._rng.uniform(
-                self.config.duration_min,
-                self.config.duration_max
-            )
+        elif mode == "random":
+            return self._rng.uniform(self.config.duration_min, self.config.duration_max)
 
-        elif mode == 'pattern':
+        elif mode == "pattern":
             if self.config.duration_pattern:
                 idx = step % len(self.config.duration_pattern)
                 return self.config.duration_pattern[idx]
@@ -1823,13 +1878,13 @@ class BitShiftRegisterGenerator(Generator):
             step_events, output_gate = self.clock_step(gate_in, current_time)
 
             trace_entry = {
-                'step': step,
-                'input_gate': gate_in,
-                'register_state': str(self._register),
-                'output_gate': output_gate,
-                'pitch': None,
-                'velocity': None,
-                'action': 'rest',
+                "step": step,
+                "input_gate": gate_in,
+                "register_state": str(self._register),
+                "output_gate": output_gate,
+                "pitch": None,
+                "velocity": None,
+                "action": "rest",
             }
 
             if step_events:
@@ -1837,9 +1892,9 @@ class BitShiftRegisterGenerator(Generator):
                 # Extract pitch and velocity from note on event
                 note_on = next((e for e in step_events if e.is_note_on), None)
                 if note_on:
-                    trace_entry['pitch'] = note_on.data1
-                    trace_entry['velocity'] = note_on.data2
-                    trace_entry['action'] = 'play'
+                    trace_entry["pitch"] = note_on.data1
+                    trace_entry["velocity"] = note_on.data2
+                    trace_entry["action"] = "play"
 
             trace.append(trace_entry)
             current_time += step_duration
@@ -1881,7 +1936,9 @@ def create_arp_from_progression(
 
     for chord in progression:
         arp.set_chord(chord)
-        chord_events = arp.generate(duration=beats_per_chord * beat_duration, start_time=current_time)
+        chord_events = arp.generate(
+            duration=beats_per_chord * beat_duration, start_time=current_time
+        )
         events.extend(chord_events)
         current_time += beats_per_chord * beat_duration
 
@@ -1904,7 +1961,7 @@ def combine_generators(
     all_events = []
 
     for gen, kwargs in generators:
-        kwargs['start_time'] = kwargs.get('start_time', 0.0) + start_time
+        kwargs["start_time"] = kwargs.get("start_time", 0.0) + start_time
         events = gen.generate(**kwargs)
         all_events.extend(events)
 

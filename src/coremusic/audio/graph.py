@@ -6,11 +6,12 @@ This module provides classes for working with Audio Unit Graphs:
 
 from __future__ import annotations
 
-from typing import Any, Tuple
+from typing import Any
 
-from .. import capi
-from .audiounit import AudioComponentDescription
-from .exceptions import AUGraphError
+from coremusic import capi
+from coremusic.exceptions import AUGraphError
+
+from .units import AudioComponentDescription
 
 __all__ = [
     "AUGraph",
@@ -153,7 +154,7 @@ class AUGraph(capi.CoreAudioObject):
         Example::
 
             import coremusic as cm
-            from coremusic.objects import AudioComponentDescription
+            from coremusic.audio import AudioComponentDescription
 
             # Create a graph with an effect and output node
             with cm.AUGraph() as graph:
@@ -238,15 +239,17 @@ class AUGraph(capi.CoreAudioObject):
         count = self.node_count
         if index >= count:
             if count == 0:
-                raise IndexError(f"node index {index} out of range (graph has no nodes)")
-            raise IndexError(f"node index {index} out of range (0-{count-1})")
+                raise IndexError(
+                    f"node index {index} out of range (graph has no nodes)"
+                )
+            raise IndexError(f"node index {index} out of range (0-{count - 1})")
 
         try:
             return capi.au_graph_get_ind_node(self.object_id, index)
         except Exception as e:
             raise AUGraphError(f"Failed to get node at index {index}: {e}")
 
-    def get_node_info(self, node_id: int) -> Tuple[AudioComponentDescription, int]:
+    def get_node_info(self, node_id: int) -> tuple[AudioComponentDescription, int]:
         """Get information about a node
 
         Args:

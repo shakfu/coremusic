@@ -34,18 +34,18 @@ Example:
     ```
 """
 
+from __future__ import annotations
+
 import concurrent.futures
 import logging
 import multiprocessing as mp
 import time
 import traceback
-from concurrent.futures import (ProcessPoolExecutor, ThreadPoolExecutor,
-                                as_completed)
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import (Any, Callable, Generic, Iterable, List, Optional, Tuple,
-                    TypeVar, Union)
+from typing import Any, Callable, Generic, Iterable, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -100,12 +100,12 @@ class BatchOptions:
         ordered: Maintain input order in results (may reduce performance)
     """
 
-    max_workers: Optional[int] = None
+    max_workers: int | None = None
     mode: ProcessingMode = ProcessingMode.PROCESSES
     retry_policy: RetryPolicy = RetryPolicy.NONE
     max_retries: int = 3
-    timeout: Optional[float] = None
-    chunk_size: Optional[int] = None
+    timeout: float | None = None
+    chunk_size: int | None = None
     fail_fast: bool = False
     ordered: bool = False
 
@@ -136,7 +136,7 @@ class BatchProgress:
     failed: int = 0
     in_progress: int = 0
     elapsed_time: float = 0.0
-    current_item: Optional[Any] = None
+    current_item: Any | None = None
 
     @property
     def percent(self) -> float:
@@ -153,7 +153,7 @@ class BatchProgress:
         return (self.completed + self.failed) / self.elapsed_time
 
     @property
-    def estimated_remaining(self) -> Optional[float]:
+    def estimated_remaining(self) -> float | None:
         """Estimated remaining time in seconds."""
         if self.items_per_second == 0:
             return None
@@ -162,7 +162,11 @@ class BatchProgress:
 
     def __str__(self) -> str:
         """Human-readable progress string."""
-        eta = f", ETA: {self.estimated_remaining:.1f}s" if self.estimated_remaining else ""
+        eta = (
+            f", ETA: {self.estimated_remaining:.1f}s"
+            if self.estimated_remaining
+            else ""
+        )
         return (
             f"Progress: {self.percent:.1f}% "
             f"({self.completed}/{self.total} completed, "
@@ -191,11 +195,11 @@ class ItemResult(Generic[T, R]):
     """
 
     item: T
-    result: Optional[R] = None
+    result: R | None = None
     success: bool = True
-    error: Optional[str] = None
-    error_type: Optional[str] = None
-    traceback_str: Optional[str] = None
+    error: str | None = None
+    error_type: str | None = None
+    traceback_str: str | None = None
     attempts: int = 1
     duration: float = 0.0
 
@@ -213,12 +217,12 @@ class BatchResult(Generic[T, R]):
         options: Processing options used
     """
 
-    results: List[ItemResult[T, R]] = field(default_factory=list)
+    results: list[ItemResult[T, R]] = field(default_factory=list)
     total: int = 0
     successful: int = 0
     failed: int = 0
     total_duration: float = 0.0
-    options: Optional[BatchOptions] = None
+    options: BatchOptions | None = None
 
     @property
     def success_rate(self) -> float:
@@ -228,19 +232,21 @@ class BatchResult(Generic[T, R]):
         return self.successful / self.total * 100.0
 
     @property
-    def successful_results(self) -> List[Optional[R]]:
+    def successful_results(self) -> list[R | None]:
         """List of successful results only (includes None values)."""
         return [r.result for r in self.results if r.success]
 
     @property
-    def failed_items(self) -> List[T]:
+    def failed_items(self) -> list[T]:
         """List of items that failed processing."""
         return [r.item for r in self.results if not r.success]
 
     @property
-    def errors(self) -> List[Tuple[T, str]]:
+    def errors(self) -> list[tuple[T, str]]:
         """List of (item, error_message) tuples for failed items."""
-        return [(r.item, r.error or "Unknown error") for r in self.results if not r.success]
+        return [
+            (r.item, r.error or "Unknown error") for r in self.results if not r.success
+        ]
 
     def __str__(self) -> str:
         """Human-readable summary."""
@@ -274,9 +280,11 @@ def _process_item_with_retry(
     """
     start_time = time.time()
     attempts = 0
-    last_error: Optional[Exception] = None
+    last_error: Exception | None = None
 
-    max_attempts = 1 if options.retry_policy == RetryPolicy.NONE else options.max_retries + 1
+    max_attempts = (
+        1 if options.retry_policy == RetryPolicy.NONE else options.max_retries + 1
+    )
 
     for attempt in range(max_attempts):
         attempts = attempt + 1
@@ -330,9 +338,9 @@ def _process_item_with_retry(
 def batch_process_parallel(
     items: Iterable[T],
     func: Callable[[T], R],
-    max_workers: Optional[int] = None,
-    progress_callback: Optional[Callable[[BatchProgress], None]] = None,
-    options: Optional[BatchOptions] = None,
+    max_workers: int | None = None,
+    progress_callback: Callable[[BatchProgress], None] | None = None,
+    options: BatchOptions | None = None,
 ) -> BatchResult[T, R]:
     """Process items in parallel with progress tracking.
 
@@ -414,27 +422,41 @@ def batch_process_parallel(
 
     # Choose processing mode
     if options.mode == ProcessingMode.SEQUENTIAL:
-        return _process_sequential(items_list, func, options, progress, progress_callback, start_time)
+        return _process_sequential(
+            items_list, func, options, progress, progress_callback, start_time
+        )
     elif options.mode == ProcessingMode.THREADS:
         return _process_parallel(
-            items_list, func, options, progress, progress_callback, start_time, use_threads=True
+            items_list,
+            func,
+            options,
+            progress,
+            progress_callback,
+            start_time,
+            use_threads=True,
         )
     else:  # PROCESSES
         return _process_parallel(
-            items_list, func, options, progress, progress_callback, start_time, use_threads=False
+            items_list,
+            func,
+            options,
+            progress,
+            progress_callback,
+            start_time,
+            use_threads=False,
         )
 
 
 def _process_sequential(
-    items: List[T],
+    items: list[T],
     func: Callable[[T], R],
     options: BatchOptions,
     progress: BatchProgress,
-    progress_callback: Optional[Callable[[BatchProgress], None]],
+    progress_callback: Callable[[BatchProgress], None] | None,
     start_time: float,
 ) -> BatchResult[T, R]:
     """Process items sequentially (for debugging or testing)."""
-    results: List[ItemResult[T, R]] = []
+    results: list[ItemResult[T, R]] = []
 
     for item in items:
         progress.current_item = item
@@ -472,16 +494,16 @@ def _process_sequential(
 
 
 def _process_parallel(
-    items: List[T],
+    items: list[T],
     func: Callable[[T], R],
     options: BatchOptions,
     progress: BatchProgress,
-    progress_callback: Optional[Callable[[BatchProgress], None]],
+    progress_callback: Callable[[BatchProgress], None] | None,
     start_time: float,
     use_threads: bool = False,
 ) -> BatchResult[T, R]:
     """Process items in parallel using processes or threads."""
-    results: List[ItemResult[T, R]] = []
+    results: list[ItemResult[T, R]] = []
 
     # Choose executor
     ExecutorClass = ThreadPoolExecutor if use_threads else ProcessPoolExecutor
@@ -567,11 +589,11 @@ def _process_parallel(
 
 
 def batch_process_files(
-    file_paths: List[Union[str, Path]],
+    file_paths: list[str | Path],
     func: Callable[[Path], R],
-    pattern: Optional[str] = None,
-    max_workers: Optional[int] = None,
-    progress_callback: Optional[Callable[[BatchProgress], None]] = None,
+    pattern: str | None = None,
+    max_workers: int | None = None,
+    progress_callback: Callable[[BatchProgress], None] | None = None,
     **kwargs: Any,
 ) -> BatchResult[Path, R]:
     """Batch process audio files in parallel.
@@ -613,7 +635,7 @@ def batch_process_files(
         ```
     """
     # Convert to Path objects
-    paths: List[Path] = []
+    paths: list[Path] = []
     for path in file_paths:
         p = Path(path)
         if "*" in str(path) or "?" in str(path):
@@ -632,7 +654,9 @@ def batch_process_files(
     valid_paths = [p for p in paths if p.exists()]
     if len(valid_paths) < len(paths):
         missing = len(paths) - len(valid_paths)
-        logger.warning(f"{missing} file(s) not found, processing {len(valid_paths)} files")
+        logger.warning(
+            f"{missing} file(s) not found, processing {len(valid_paths)} files"
+        )
 
     # Build options from kwargs
     options = BatchOptions(**kwargs) if kwargs else None

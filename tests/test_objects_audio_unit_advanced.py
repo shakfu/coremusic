@@ -2,7 +2,8 @@
 """Comprehensive tests for advanced AudioUnit OO API features."""
 
 import pytest
-from coremusic.objects import AudioFormat, AudioUnit, AudioUnitError
+from coremusic.audio import AudioFormat, AudioUnit
+from coremusic.exceptions import AudioUnitError
 
 
 class TestAudioUnitStreamFormat:

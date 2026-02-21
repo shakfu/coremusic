@@ -1,12 +1,11 @@
 """Tests for MusicPlayer, MusicSequence, and MusicTrack OO API."""
 
 import logging
-import os
 import pytest
 import coremusic.capi as capi
-from coremusic.objects import (
+from coremusic.exceptions import MusicPlayerError
+from coremusic.midi import (
     MusicPlayer,
-    MusicPlayerError,
     MusicSequence,
     MusicTrack,
 )
@@ -116,7 +115,7 @@ class TestMusicSequence:
         sequence = MusicSequence()
         try:
             track1 = sequence.new_track()
-            track2 = sequence.new_track()
+            sequence.new_track()
             assert sequence.track_count == 2
 
             sequence.dispose_track(track1)
@@ -129,8 +128,8 @@ class TestMusicSequence:
         """Test getting track by index"""
         sequence = MusicSequence()
         try:
-            track1 = sequence.new_track()
-            track2 = sequence.new_track()
+            sequence.new_track()
+            sequence.new_track()
 
             # Get first track
             retrieved = sequence.get_track(0)

@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from types import FrameType
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import coremusic.capi as capi
 
 from ._formatters import format_duration, output_json, output_table
 from ._utils import EXIT_SUCCESS, CLIError, print_help_default, require_file
+
+logger = logging.getLogger(__name__)
 
 
 def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
@@ -18,80 +21,163 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     midi_sub = parser.add_subparsers(dest="midi_command", metavar="<subcommand>")
 
     # midi list [--verbose]
-    list_parser = midi_sub.add_parser("list", help="List MIDI devices, inputs, and outputs")
-    list_parser.add_argument("--verbose", "-v", action="store_true",
-                             help="Show detailed device information")
+    list_parser = midi_sub.add_parser(
+        "list", help="List MIDI devices, inputs, and outputs"
+    )
+    list_parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Show detailed device information"
+    )
     list_parser.set_defaults(func=cmd_list)
 
     # midi info <file> [--events]
     info_parser = midi_sub.add_parser("info", help="Show MIDI file information")
     info_parser.add_argument("path", help="MIDI file path")
-    info_parser.add_argument("--events", "-e", action="store_true",
-                             help="Show event table instead of summary")
-    info_parser.add_argument("--track", "-t", type=int, default=None,
-                             help="Track index to show (default: all tracks)")
-    info_parser.add_argument("--limit", "-n", type=int, default=100,
-                             help="Maximum events to display (default: 100)")
+    info_parser.add_argument(
+        "--events",
+        "-e",
+        action="store_true",
+        help="Show event table instead of summary",
+    )
+    info_parser.add_argument(
+        "--track",
+        "-t",
+        type=int,
+        default=None,
+        help="Track index to show (default: all tracks)",
+    )
+    info_parser.add_argument(
+        "--limit",
+        "-n",
+        type=int,
+        default=100,
+        help="Maximum events to display (default: 100)",
+    )
     info_parser.set_defaults(func=cmd_info)
 
     # midi play <file>
     play_parser = midi_sub.add_parser("play", help="Play MIDI file to output device")
     play_parser.add_argument("path", help="MIDI file path")
-    play_parser.add_argument("--device", "-d", type=int, default=0,
-                             help="Output device index (default: 0)")
+    play_parser.add_argument(
+        "--device", "-d", type=int, default=0, help="Output device index (default: 0)"
+    )
     play_parser.set_defaults(func=cmd_play)
 
     # midi quantize <file> -o <output>
-    quantize_parser = midi_sub.add_parser("quantize", help="Quantize MIDI note timing to grid")
+    quantize_parser = midi_sub.add_parser(
+        "quantize", help="Quantize MIDI note timing to grid"
+    )
     quantize_parser.add_argument("path", help="Input MIDI file path")
-    quantize_parser.add_argument("-o", "--output", required=True,
-                                 help="Output MIDI file path")
-    quantize_parser.add_argument("--grid", "-g", type=str, default="1/16",
-                                 help="Quantize grid (e.g., 1/4, 1/8, 1/16, 1/32) (default: 1/16)")
-    quantize_parser.add_argument("--strength", "-s", type=float, default=1.0,
-                                 help="Quantize strength 0.0-1.0 (default: 1.0 = full)")
+    quantize_parser.add_argument(
+        "-o", "--output", required=True, help="Output MIDI file path"
+    )
+    quantize_parser.add_argument(
+        "--grid",
+        "-g",
+        type=str,
+        default="1/16",
+        help="Quantize grid (e.g., 1/4, 1/8, 1/16, 1/32) (default: 1/16)",
+    )
+    quantize_parser.add_argument(
+        "--strength",
+        "-s",
+        type=float,
+        default=1.0,
+        help="Quantize strength 0.0-1.0 (default: 1.0 = full)",
+    )
     quantize_parser.set_defaults(func=cmd_quantize)
 
     # midi receive [--device N] [-o file] [--plugin name] [--quiet]
-    receive_parser = midi_sub.add_parser("receive", help="Receive MIDI input (display, record, or route to plugin)")
-    receive_parser.add_argument("--device", "-d", type=int, default=0,
-                                help="Input device index (default: 0)")
-    receive_parser.add_argument("-o", "--output", default=None,
-                                help="Output file (.mid for MIDI, .wav/.aif for audio with --plugin)")
-    receive_parser.add_argument("--plugin", "-p", default=None,
-                                help="Route MIDI to AudioUnit plugin (plays audio)")
-    receive_parser.add_argument("--quiet", "-q", action="store_true",
-                                help="Suppress audio output (only save to file)")
-    receive_parser.add_argument("--duration", type=float, default=None,
-                                help="Recording duration in seconds (default: until Ctrl+C)")
-    receive_parser.add_argument("--tempo", "-t", type=float, default=120.0,
-                                help="Tempo in BPM for MIDI file output (default: 120)")
+    receive_parser = midi_sub.add_parser(
+        "receive", help="Receive MIDI input (display, record, or route to plugin)"
+    )
+    receive_parser.add_argument(
+        "--device", "-d", type=int, default=0, help="Input device index (default: 0)"
+    )
+    receive_parser.add_argument(
+        "-o",
+        "--output",
+        default=None,
+        help="Output file (.mid for MIDI, .wav/.aif for audio with --plugin)",
+    )
+    receive_parser.add_argument(
+        "--plugin",
+        "-p",
+        default=None,
+        help="Route MIDI to AudioUnit plugin (plays audio)",
+    )
+    receive_parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="Suppress audio output (only save to file)",
+    )
+    receive_parser.add_argument(
+        "--duration",
+        type=float,
+        default=None,
+        help="Recording duration in seconds (default: until Ctrl+C)",
+    )
+    receive_parser.add_argument(
+        "--tempo",
+        "-t",
+        type=float,
+        default=120.0,
+        help="Tempo in BPM for MIDI file output (default: 120)",
+    )
     receive_parser.set_defaults(func=cmd_receive)
 
     # midi send <dest> [--note N] [--cc N N] [--program N] [--test]
     send_parser = midi_sub.add_parser("send", help="Send MIDI message to output")
-    send_parser.add_argument("dest", type=int, nargs="?", default=0,
-                             help="Output destination index (default: 0)")
-    send_parser.add_argument("--test", action="store_true",
-                             help="Send test note (middle C) to verify connectivity")
-    send_parser.add_argument("--note", "-n", type=int,
-                             help="Send note on/off (MIDI note number 0-127)")
-    send_parser.add_argument("--velocity", "-v", type=int, default=100,
-                             help="Note velocity (default: 100)")
-    send_parser.add_argument("--channel", "-c", type=int, default=0,
-                             help="MIDI channel 0-15 (default: 0)")
-    send_parser.add_argument("--cc", type=int, nargs=2, metavar=("NUM", "VAL"),
-                             help="Send control change (controller number and value)")
-    send_parser.add_argument("--program", "-p", type=int,
-                             help="Send program change (0-127)")
-    send_parser.add_argument("--duration", type=float, default=0.5,
-                             help="Note duration in seconds (default: 0.5)")
+    send_parser.add_argument(
+        "dest",
+        type=int,
+        nargs="?",
+        default=0,
+        help="Output destination index (default: 0)",
+    )
+    send_parser.add_argument(
+        "--test",
+        action="store_true",
+        help="Send test note (middle C) to verify connectivity",
+    )
+    send_parser.add_argument(
+        "--note", "-n", type=int, help="Send note on/off (MIDI note number 0-127)"
+    )
+    send_parser.add_argument(
+        "--velocity", "-v", type=int, default=100, help="Note velocity (default: 100)"
+    )
+    send_parser.add_argument(
+        "--channel", "-c", type=int, default=0, help="MIDI channel 0-15 (default: 0)"
+    )
+    send_parser.add_argument(
+        "--cc",
+        type=int,
+        nargs=2,
+        metavar=("NUM", "VAL"),
+        help="Send control change (controller number and value)",
+    )
+    send_parser.add_argument(
+        "--program", "-p", type=int, help="Send program change (0-127)"
+    )
+    send_parser.add_argument(
+        "--duration",
+        type=float,
+        default=0.5,
+        help="Note duration in seconds (default: 0.5)",
+    )
     send_parser.set_defaults(func=cmd_send)
 
     # midi panic [<dest>]
-    panic_parser = midi_sub.add_parser("panic", help="Send all-notes-off on all channels")
-    panic_parser.add_argument("dest", type=int, nargs="?", default=None,
-                              help="Output destination index (default: all outputs)")
+    panic_parser = midi_sub.add_parser(
+        "panic", help="Send all-notes-off on all channels"
+    )
+    panic_parser.add_argument(
+        "dest",
+        type=int,
+        nargs="?",
+        default=None,
+        help="Output destination index (default: all outputs)",
+    )
     panic_parser.set_defaults(func=cmd_panic)
 
     parser.set_defaults(func=lambda args: print_help_default(parser))
@@ -105,16 +191,16 @@ def _get_endpoint_name(endpoint_id: int) -> str:
         name = capi.midi_object_get_string_property(endpoint_id, "displayName")
         if name:
             return name
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Failed to get displayName for endpoint %d: %s", endpoint_id, e)
 
     try:
         # Fall back to kMIDIPropertyName
         name = capi.midi_object_get_string_property(endpoint_id, "name")
         if name:
             return name
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Failed to get name for endpoint %d: %s", endpoint_id, e)
 
     return f"Unknown ({endpoint_id})"
 
@@ -122,16 +208,20 @@ def _get_endpoint_name(endpoint_id: int) -> str:
 def _get_device_info(device_id: int) -> dict[str, Any]:
     """Get detailed information about a MIDI device."""
 
-    info: Dict[str, Any] = {"id": device_id}
+    info: dict[str, Any] = {"id": device_id}
 
     # Get device properties
     try:
-        info["name"] = capi.midi_object_get_string_property(device_id, "name") or "Unknown"
+        info["name"] = (
+            capi.midi_object_get_string_property(device_id, "name") or "Unknown"
+        )
     except Exception:
         info["name"] = "Unknown"
 
     try:
-        info["manufacturer"] = capi.midi_object_get_string_property(device_id, "manufacturer") or ""
+        info["manufacturer"] = (
+            capi.midi_object_get_string_property(device_id, "manufacturer") or ""
+        )
     except Exception:
         info["manufacturer"] = ""
 
@@ -190,11 +280,13 @@ def cmd_list(args: argparse.Namespace) -> int:
         outputs.append({"index": i, "id": dest_id, "name": name})
 
     if args.json:
-        output_json({
-            "devices": devices,
-            "inputs": inputs,
-            "outputs": outputs,
-        })
+        output_json(
+            {
+                "devices": devices,
+                "inputs": inputs,
+                "outputs": outputs,
+            }
+        )
         return EXIT_SUCCESS
 
     # Text output
@@ -257,7 +349,7 @@ def cmd_send(args: argparse.Namespace) -> int:
         raise CLIError("No MIDI output destinations available")
 
     if args.dest >= num_dests:
-        raise CLIError(f"Device index {args.dest} out of range (0-{num_dests-1})")
+        raise CLIError(f"Device index {args.dest} out of range (0-{num_dests - 1})")
 
     dest_id = capi.midi_get_destination(args.dest)
     dest_name = _get_endpoint_name(dest_id)
@@ -311,11 +403,13 @@ def cmd_send(args: argparse.Namespace) -> int:
             messages_sent.append(f"Program: {args.program}")
 
         if args.json:
-            output_json({
-                "device": dest_name,
-                "channel": args.channel,
-                "messages": messages_sent,
-            })
+            output_json(
+                {
+                    "device": dest_name,
+                    "channel": args.channel,
+                    "messages": messages_sent,
+                }
+            )
         else:
             print(f"Sent to {dest_name} (ch {args.channel}):")
             for msg in messages_sent:
@@ -348,8 +442,7 @@ def cmd_info(args: argparse.Namespace) -> int:
     # Otherwise show summary (formerly cmd_file)
     total_events = sum(len(t.events) for t in seq.tracks)
     total_notes = sum(
-        len([e for e in t.events if e.status == 0x90])
-        for t in seq.tracks
+        len([e for e in t.events if e.status == 0x90]) for t in seq.tracks
     )
     duration = seq.duration
 
@@ -357,24 +450,28 @@ def cmd_info(args: argparse.Namespace) -> int:
         tracks_info = []
         for i, track in enumerate(seq.tracks):
             note_events = [e for e in track.events if e.status == 0x90]
-            tracks_info.append({
-                "index": i,
-                "name": track.name,
-                "events": len(track.events),
-                "notes": len(note_events),
-                "channel": track.channel,
-            })
+            tracks_info.append(
+                {
+                    "index": i,
+                    "name": track.name,
+                    "events": len(track.events),
+                    "notes": len(note_events),
+                    "channel": track.channel,
+                }
+            )
 
-        output_json({
-            "file": str(path.absolute()),
-            "tempo": seq.tempo,
-            "ppq": seq.ppq,
-            "duration_seconds": duration,
-            "track_count": len(seq.tracks),
-            "total_events": total_events,
-            "total_notes": total_notes,
-            "tracks": tracks_info,
-        })
+        output_json(
+            {
+                "file": str(path.absolute()),
+                "tempo": seq.tempo,
+                "ppq": seq.ppq,
+                "duration_seconds": duration,
+                "track_count": len(seq.tracks),
+                "total_events": total_events,
+                "total_notes": total_notes,
+                "tracks": tracks_info,
+            }
+        )
     else:
         print(f"File:     {path.name}")
         print(f"Path:     {path.absolute()}")
@@ -405,37 +502,41 @@ def _show_events(args: argparse.Namespace, path: Any, seq: Any) -> int:
 
     if args.track is not None:
         if args.track >= len(seq.tracks):
-            raise CLIError(f"Track {args.track} out of range (0-{len(seq.tracks)-1})")
+            raise CLIError(f"Track {args.track} out of range (0-{len(seq.tracks) - 1})")
         tracks_to_dump = [(args.track, seq.tracks[args.track])]
     else:
         tracks_to_dump = list(enumerate(seq.tracks))
 
     for track_idx, track in tracks_to_dump:
         for event in track.events:
-            events_to_show.append({
-                "track": track_idx,
-                "time": event.time,
-                "status": event.status,
-                "channel": event.channel,
-                "data1": event.data1,
-                "data2": event.data2,
-                "bytes": event.to_bytes().hex(),
-            })
+            events_to_show.append(
+                {
+                    "track": track_idx,
+                    "time": event.time,
+                    "status": event.status,
+                    "channel": event.channel,
+                    "data1": event.data1,
+                    "data2": event.data2,
+                    "bytes": event.to_bytes().hex(),
+                }
+            )
 
     # Sort by time
     events_to_show.sort(key=lambda e: (e["time"], e["track"]))
 
     # Limit output
     total_events = len(events_to_show)
-    events_to_show = events_to_show[:args.limit]
+    events_to_show = events_to_show[: args.limit]
 
     if args.json:
-        output_json({
-            "file": str(path.absolute()),
-            "total_events": total_events,
-            "displayed": len(events_to_show),
-            "events": events_to_show,
-        })
+        output_json(
+            {
+                "file": str(path.absolute()),
+                "total_events": total_events,
+                "displayed": len(events_to_show),
+                "events": events_to_show,
+            }
+        )
     else:
         print(f"File: {path.name}")
         print(f"Events: {total_events} total, showing {len(events_to_show)}\n")
@@ -449,19 +550,23 @@ def _show_events(args: argparse.Namespace, path: Any, seq: Any) -> int:
             else:
                 data_str = f"{e['data1']:3d} {e['data2']:3d}"
 
-            rows.append([
-                f"{e['time']:.3f}",
-                str(e["track"]),
-                str(e["channel"]),
-                status_name,
-                data_str,
-                e["bytes"],
-            ])
+            rows.append(
+                [
+                    f"{e['time']:.3f}",
+                    str(e["track"]),
+                    str(e["channel"]),
+                    status_name,
+                    data_str,
+                    e["bytes"],
+                ]
+            )
 
         output_table(headers, rows)
 
         if total_events > args.limit:
-            print(f"\n... and {total_events - args.limit} more events (use --limit to show more)")
+            print(
+                f"\n... and {total_events - args.limit} more events (use --limit to show more)"
+            )
 
     return EXIT_SUCCESS
 
@@ -475,7 +580,7 @@ def cmd_panic(args: argparse.Namespace) -> int:
     # Determine which outputs to send panic to
     if args.dest is not None:
         if args.dest >= num_dests:
-            raise CLIError(f"Output index {args.dest} out of range (0-{num_dests-1})")
+            raise CLIError(f"Output index {args.dest} out of range (0-{num_dests - 1})")
         dest_indices = [args.dest]
     else:
         dest_indices = list(range(num_dests))
@@ -505,11 +610,13 @@ def cmd_panic(args: argparse.Namespace) -> int:
                 print(f"Panic sent to: {dest_name}")
 
         if args.json:
-            output_json({
-                "destinations": results,
-                "channels": 16,
-                "messages": ["All Notes Off (CC 123)", "All Sound Off (CC 120)"],
-            })
+            output_json(
+                {
+                    "destinations": results,
+                    "channels": 16,
+                    "messages": ["All Notes Off (CC 123)", "All Sound Off (CC 120)"],
+                }
+            )
 
     finally:
         try:
@@ -530,9 +637,6 @@ def cmd_receive(args: argparse.Namespace) -> int:
     - --plugin Name -o file.wav: Route to plugin, play audio AND save to file
     - --plugin Name -o file.wav --quiet: Route to plugin, only save to file
     """
-    import signal
-    import threading
-    import time
     from pathlib import Path
 
     # Validate arguments
@@ -540,26 +644,42 @@ def cmd_receive(args: argparse.Namespace) -> int:
         raise CLIError("--quiet requires -o/--output")
 
     if args.quiet and not args.plugin:
-        raise CLIError("--quiet only makes sense with --plugin (no audio to suppress otherwise)")
+        raise CLIError(
+            "--quiet only makes sense with --plugin (no audio to suppress otherwise)"
+        )
 
     num_sources = capi.midi_get_number_of_sources()
     if num_sources == 0:
         raise CLIError("No MIDI input sources available")
 
     if args.device >= num_sources:
-        raise CLIError(f"Input index {args.device} out of range (0-{num_sources-1})")
+        raise CLIError(f"Input index {args.device} out of range (0-{num_sources - 1})")
 
     source_id = capi.midi_get_source(args.device)
     source_name = _get_endpoint_name(source_id)
 
     # Determine output path and type
     output_path = Path(args.output) if args.output else None
-    is_midi_output = output_path and output_path.suffix.lower() in (".mid", ".midi")
-    is_audio_output = output_path and output_path.suffix.lower() in (".wav", ".aif", ".aiff", ".m4a", ".caf")
+    is_midi_output = bool(
+        output_path and output_path.suffix.lower() in (".mid", ".midi")
+    )
+    is_audio_output = bool(
+        output_path
+        and output_path.suffix.lower()
+        in (
+            ".wav",
+            ".aif",
+            ".aiff",
+            ".m4a",
+            ".caf",
+        )
+    )
 
     # Validate output type
     if output_path and args.plugin and is_midi_output:
-        raise CLIError("Cannot save MIDI file when using --plugin (use .wav/.aif for audio)")
+        raise CLIError(
+            "Cannot save MIDI file when using --plugin (use .wav/.aif for audio)"
+        )
     if output_path and not args.plugin and is_audio_output:
         raise CLIError("Audio output requires --plugin")
 
@@ -570,7 +690,9 @@ def cmd_receive(args: argparse.Namespace) -> int:
 
     # Route to appropriate handler
     if args.plugin:
-        return _receive_with_plugin(args, source_id, source_name, output_path, is_audio_output)
+        return _receive_with_plugin(
+            args, source_id, source_name, output_path, is_audio_output
+        )
     elif output_path:
         return _receive_to_midi_file(args, source_id, source_name, output_path)
     else:
@@ -583,10 +705,10 @@ def _receive_display(args: argparse.Namespace, source_id: int, source_name: str)
     import threading
 
     event_count = 0
-    events_list: list[Dict[str, Any]] = []
+    events_list: list[dict[str, Any]] = []
     stop_event = threading.Event()
 
-    def format_midi_message(data: bytes, timestamp: float) -> Dict[str, Any]:
+    def format_midi_message(data: bytes, timestamp: float) -> dict[str, Any]:
         """Format MIDI message for display."""
         if len(data) < 1:
             return {"type": "unknown", "data": data.hex()}
@@ -596,7 +718,7 @@ def _receive_display(args: argparse.Namespace, source_id: int, source_name: str)
         d1 = data[1] if len(data) > 1 else 0
         d2 = data[2] if len(data) > 2 else 0
 
-        msg: Dict[str, Any] = {
+        msg: dict[str, Any] = {
             "channel": channel,
             "timestamp": timestamp,
             "raw": data.hex(),
@@ -632,23 +754,29 @@ def _receive_display(args: argparse.Namespace, source_id: int, source_name: str)
 
         return msg
 
-    def print_midi_message(msg: Dict[str, Any]) -> None:
+    def print_midi_message(msg: dict[str, Any]) -> None:
         """Print formatted MIDI message."""
         ch = msg["channel"]
         ts = msg.get("timestamp", 0)
 
         if msg["type"] == "note_on":
-            print(f"[{ts:10.3f}] ch={ch:2d}  Note On   note={msg['note']:3d}  vel={msg['velocity']:3d}")
+            print(
+                f"[{ts:10.3f}] ch={ch:2d}  Note On   note={msg['note']:3d}  vel={msg['velocity']:3d}"
+            )
         elif msg["type"] == "note_off":
             print(f"[{ts:10.3f}] ch={ch:2d}  Note Off  note={msg['note']:3d}")
         elif msg["type"] == "cc":
-            print(f"[{ts:10.3f}] ch={ch:2d}  CC        cc={msg['controller']:3d}  val={msg['value']:3d}")
+            print(
+                f"[{ts:10.3f}] ch={ch:2d}  CC        cc={msg['controller']:3d}  val={msg['value']:3d}"
+            )
         elif msg["type"] == "program":
             print(f"[{ts:10.3f}] ch={ch:2d}  Program   prog={msg['program']:3d}")
         elif msg["type"] == "pitch_bend":
             print(f"[{ts:10.3f}] ch={ch:2d}  Pitch     val={msg['value']:5d}")
         elif msg["type"] == "poly_aftertouch":
-            print(f"[{ts:10.3f}] ch={ch:2d}  PolyAT    note={msg['note']:3d}  pres={msg['pressure']:3d}")
+            print(
+                f"[{ts:10.3f}] ch={ch:2d}  PolyAT    note={msg['note']:3d}  pres={msg['pressure']:3d}"
+            )
         elif msg["type"] == "channel_aftertouch":
             print(f"[{ts:10.3f}] ch={ch:2d}  ChanAT    pres={msg['pressure']:3d}")
         else:
@@ -688,12 +816,14 @@ def _receive_display(args: argparse.Namespace, source_id: int, source_name: str)
                 pass
 
         if args.json:
-            output_json({
-                "source": source_name,
-                "index": args.device,
-                "event_count": event_count,
-                "events": events_list,
-            })
+            output_json(
+                {
+                    "source": source_name,
+                    "index": args.device,
+                    "event_count": event_count,
+                    "events": events_list,
+                }
+            )
         else:
             print(f"\nStopped. Received {event_count} events.")
 
@@ -703,7 +833,9 @@ def _receive_display(args: argparse.Namespace, source_id: int, source_name: str)
     return EXIT_SUCCESS
 
 
-def _receive_to_midi_file(args: argparse.Namespace, source_id: int, source_name: str, output_path: Any) -> int:
+def _receive_to_midi_file(
+    args: argparse.Namespace, source_id: int, source_name: str, output_path: Any
+) -> int:
     """Save incoming MIDI to file (formerly cmd_record)."""
     import signal
     import threading
@@ -711,7 +843,7 @@ def _receive_to_midi_file(args: argparse.Namespace, source_id: int, source_name:
 
     from coremusic.midi.utilities import MIDIEvent, MIDISequence
 
-    recorded_events: list[Tuple[float, bytes]] = []
+    recorded_events: list[tuple[float, bytes]] = []
     start_time: float = 0.0
     stop_event = threading.Event()
     event_lock = threading.Lock()
@@ -788,18 +920,22 @@ def _receive_to_midi_file(args: argparse.Namespace, source_id: int, source_name:
             raise CLIError(f"Failed to save MIDI file: {e}")
 
         recording_duration = events_copy[-1][0] if events_copy else 0.0
-        note_on_count = sum(1 for _, d in events_copy if len(d) >= 1 and (d[0] & 0xF0) == 0x90)
+        note_on_count = sum(
+            1 for _, d in events_copy if len(d) >= 1 and (d[0] & 0xF0) == 0x90
+        )
 
         if args.json:
-            output_json({
-                "source": source_name,
-                "index": args.device,
-                "output": str(output_path.absolute()),
-                "event_count": len(events_copy),
-                "note_count": note_on_count,
-                "duration_seconds": recording_duration,
-                "tempo": args.tempo,
-            })
+            output_json(
+                {
+                    "source": source_name,
+                    "index": args.device,
+                    "output": str(output_path.absolute()),
+                    "event_count": len(events_copy),
+                    "note_count": note_on_count,
+                    "duration_seconds": recording_duration,
+                    "tempo": args.tempo,
+                }
+            )
         else:
             print(f"\nRecording saved: {output_path}")
             print(f"  Events:   {len(events_copy)}")
@@ -812,8 +948,13 @@ def _receive_to_midi_file(args: argparse.Namespace, source_id: int, source_name:
     return EXIT_SUCCESS
 
 
-def _receive_with_plugin(args: argparse.Namespace, source_id: int, source_name: str,
-                         output_path: Any, is_audio_output: bool) -> int:
+def _receive_with_plugin(
+    args: argparse.Namespace,
+    source_id: int,
+    source_name: str,
+    output_path: Any,
+    is_audio_output: bool,
+) -> int:
     """Route incoming MIDI to AudioUnit plugin with optional audio capture."""
     import signal
     import threading
@@ -834,7 +975,7 @@ def _receive_with_plugin(args: argparse.Namespace, source_id: int, source_name: 
         # Load the AudioUnit plugin
         host = AudioUnitHost()
         try:
-            plugin = host.load_plugin(args.plugin, type='instrument')
+            plugin = host.load_plugin(args.plugin, type="instrument")
         except Exception as e:
             raise CLIError(f"Failed to load plugin '{args.plugin}': {e}")
 
@@ -866,7 +1007,8 @@ def _receive_with_plugin(args: argparse.Namespace, source_id: int, source_name: 
         # Set up audio output queue if not quiet
         output_queue = None
         if not args.quiet:
-            from coremusic.objects import AudioFormat, AudioQueue
+            from coremusic.audio import AudioFormat, AudioQueue
+
             audio_format = AudioFormat(
                 sample_rate=float(sample_rate),
                 format_id="lpcm",
@@ -894,14 +1036,14 @@ def _receive_with_plugin(args: argparse.Namespace, source_id: int, source_name: 
                     try:
                         # Render a small buffer
                         frames = 512
-                        rendered = plugin.render(frames)
+                        rendered = plugin.render(frames)  # type: ignore[attr-defined]
                         if rendered and len(rendered) > 0:
                             if output_path:
                                 audio_chunks.append(rendered)
                             if output_queue:
                                 output_queue.enqueue_buffer(rendered)
-                    except Exception:
-                        pass  # Ignore render errors
+                    except Exception as e:
+                        logger.debug("Plugin render failed: %s", e)
                     last_render_time = current_time
 
                 stop_event.wait(timeout=0.01)
@@ -921,10 +1063,10 @@ def _receive_with_plugin(args: argparse.Namespace, source_id: int, source_name: 
         # Save audio file if requested
         if output_path and audio_chunks:
             try:
-                from coremusic.objects import AudioFormat, ExtendedAudioFile
+                from coremusic.audio import AudioFormat, ExtendedAudioFile
                 from coremusic.constants import AudioFileType
 
-                audio_data = b''.join(audio_chunks)
+                audio_data = b"".join(audio_chunks)
                 audio_format = AudioFormat(
                     sample_rate=float(sample_rate),
                     format_id="lpcm",
@@ -934,15 +1076,19 @@ def _receive_with_plugin(args: argparse.Namespace, source_id: int, source_name: 
 
                 ext = output_path.suffix.lower()
                 file_type = {
-                    '.wav': AudioFileType.WAVE,
-                    '.aif': AudioFileType.AIFF,
-                    '.aiff': AudioFileType.AIFF,
-                    '.m4a': AudioFileType.M4A,
-                    '.caf': AudioFileType.CAF,
+                    ".wav": AudioFileType.WAVE,
+                    ".aif": AudioFileType.AIFF,
+                    ".aiff": AudioFileType.AIFF,
+                    ".m4a": AudioFileType.M4A,
+                    ".caf": AudioFileType.CAF,
                 }.get(ext, AudioFileType.WAVE)
 
-                with ExtendedAudioFile.create(str(output_path), file_type, audio_format) as out_file:
-                    num_frames = len(audio_data) // (channels * 4)  # 4 bytes per float32
+                with ExtendedAudioFile.create(
+                    str(output_path), file_type, audio_format
+                ) as out_file:
+                    num_frames = len(audio_data) // (
+                        channels * 4
+                    )  # 4 bytes per float32
                     out_file.write(num_frames, audio_data)
 
                 if not args.json:
@@ -954,16 +1100,18 @@ def _receive_with_plugin(args: argparse.Namespace, source_id: int, source_name: 
                 raise CLIError(f"Failed to save audio file: {e}")
 
         if args.json:
-            output_json({
-                "source": source_name,
-                "index": args.device,
-                "plugin": args.plugin,
-                "output": str(output_path) if output_path else None,
-                "event_count": event_count,
-                "note_count": note_count,
-            })
+            output_json(
+                {
+                    "source": source_name,
+                    "index": args.device,
+                    "plugin": args.plugin,
+                    "output": str(output_path) if output_path else None,
+                    "event_count": event_count,
+                    "note_count": note_count,
+                }
+            )
         elif not output_path:
-            print(f"\nStopped.")
+            print("\nStopped.")
 
     finally:
         signal.signal(signal.SIGINT, original_handler)
@@ -1004,7 +1152,7 @@ def cmd_play(args: argparse.Namespace) -> int:
         raise CLIError("No MIDI output destinations available")
 
     if args.device >= num_dests:
-        raise CLIError(f"Output index {args.device} out of range (0-{num_dests-1})")
+        raise CLIError(f"Output index {args.device} out of range (0-{num_dests - 1})")
 
     dest_id = capi.midi_get_destination(args.device)
     dest_name = _get_endpoint_name(dest_id)
@@ -1073,13 +1221,15 @@ def cmd_play(args: argparse.Namespace) -> int:
                 capi.midi_send(port_id, dest_id, cc_data, 0)
 
         if args.json:
-            output_json({
-                "file": str(path.absolute()),
-                "device": dest_name,
-                "events_played": events_played,
-                "total_events": len(all_events),
-                "stopped": stop_requested,
-            })
+            output_json(
+                {
+                    "file": str(path.absolute()),
+                    "device": dest_name,
+                    "events_played": events_played,
+                    "total_events": len(all_events),
+                    "stopped": stop_requested,
+                }
+            )
         else:
             if stop_requested:
                 print(f"\nStopped. Played {events_played}/{len(all_events)} events.")
@@ -1109,11 +1259,15 @@ def cmd_quantize(args: argparse.Namespace) -> int:
     try:
         if "/" in args.grid:
             num, denom = args.grid.split("/")
-            grid_beats = float(num) / float(denom) * 4  # Convert to beats (1/4 = 1 beat)
+            grid_beats = (
+                float(num) / float(denom) * 4
+            )  # Convert to beats (1/4 = 1 beat)
         else:
             grid_beats = float(args.grid)
     except ValueError:
-        raise CLIError(f"Invalid grid value: {args.grid}. Use format like 1/4, 1/8, 1/16, or decimal.")
+        raise CLIError(
+            f"Invalid grid value: {args.grid}. Use format like 1/4, 1/8, 1/16, or decimal."
+        )
 
     if grid_beats <= 0:
         raise CLIError("Grid value must be positive")
@@ -1166,17 +1320,19 @@ def cmd_quantize(args: argparse.Namespace) -> int:
         raise CLIError(f"Failed to save MIDI file: {e}")
 
     if args.json:
-        output_json({
-            "input": str(input_path.absolute()),
-            "output": str(output_path.absolute()),
-            "grid": args.grid,
-            "grid_beats": grid_beats,
-            "grid_seconds": grid_seconds,
-            "strength": strength,
-            "tempo": tempo,
-            "total_note_events": total_events,
-            "quantized_events": quantized_events,
-        })
+        output_json(
+            {
+                "input": str(input_path.absolute()),
+                "output": str(output_path.absolute()),
+                "grid": args.grid,
+                "grid_beats": grid_beats,
+                "grid_seconds": grid_seconds,
+                "strength": strength,
+                "tempo": tempo,
+                "total_note_events": total_events,
+                "quantized_events": quantized_events,
+            }
+        )
     else:
         print(f"\nOutput:     {output_path}")
         print(f"Events:     {quantized_events}/{total_events} notes adjusted")

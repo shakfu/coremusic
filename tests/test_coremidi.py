@@ -1,8 +1,6 @@
 """pytest test suite for CoreMIDI wrapper functionality."""
 
-import os
 import pytest
-import time
 import coremusic.capi as capi
 
 
@@ -22,23 +20,36 @@ except Exception:
 # All required MIDI functions that must be exported from capi
 REQUIRED_MIDI_FUNCTIONS = [
     # MIDISetup functions
-    "midi_external_device_create", "midi_device_add_entity",
-    "midi_device_new_entity", "midi_device_remove_entity",
-    "midi_entity_add_or_remove_endpoints", "midi_setup_add_device",
-    "midi_setup_remove_device", "midi_setup_add_external_device",
+    "midi_external_device_create",
+    "midi_device_add_entity",
+    "midi_device_new_entity",
+    "midi_device_remove_entity",
+    "midi_entity_add_or_remove_endpoints",
+    "midi_setup_add_device",
+    "midi_setup_remove_device",
+    "midi_setup_add_external_device",
     "midi_setup_remove_external_device",
     # MIDIDriver functions
-    "midi_device_create", "midi_device_dispose",
-    "midi_device_list_get_number_of_devices", "midi_device_list_get_device",
-    "midi_device_list_add_device", "midi_device_list_dispose",
-    "midi_endpoint_set_ref_cons", "midi_endpoint_get_ref_cons",
-    "midi_get_driver_io_runloop", "midi_get_driver_device_list",
+    "midi_device_create",
+    "midi_device_dispose",
+    "midi_device_list_get_number_of_devices",
+    "midi_device_list_get_device",
+    "midi_device_list_add_device",
+    "midi_device_list_dispose",
+    "midi_endpoint_set_ref_cons",
+    "midi_endpoint_get_ref_cons",
+    "midi_get_driver_io_runloop",
+    "midi_get_driver_device_list",
     "midi_driver_enable_monitoring",
     # MIDIThruConnection functions
-    "midi_thru_connection_params_initialize", "midi_thru_connection_create",
-    "midi_thru_connection_dispose", "midi_thru_connection_get_params",
-    "midi_thru_connection_set_params", "midi_thru_connection_find",
-    "get_midi_transform_none", "get_midi_control_type_7bit",
+    "midi_thru_connection_params_initialize",
+    "midi_thru_connection_create",
+    "midi_thru_connection_dispose",
+    "midi_thru_connection_get_params",
+    "midi_thru_connection_set_params",
+    "midi_thru_connection_find",
+    "get_midi_transform_none",
+    "get_midi_control_type_7bit",
 ]
 
 
@@ -927,7 +938,7 @@ class TestCoreMIDIDriver:
         try:
             dev_list = capi.midi_get_driver_device_list(invalid_driver)
             assert isinstance(dev_list, int)
-        except Exception as e:
+        except Exception:
             pass
 
     def test_midi_driver_enable_monitoring_invalid(self):
@@ -954,7 +965,7 @@ class TestCoreMIDIDriver:
         except Exception:
             pass
         try:
-            device = capi.midi_device_list_get_device(invalid_dev_list, 0)
+            capi.midi_device_list_get_device(invalid_dev_list, 0)
             assert False, "Expected error for invalid device list"
         except (RuntimeError, IndexError):
             pass

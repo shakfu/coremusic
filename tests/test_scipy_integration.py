@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Tests for SciPy signal processing integration."""
 
-import os
 import pytest
 import coremusic.utils.scipy as spu
-from coremusic.objects import AudioFile, NUMPY_AVAILABLE
+from coremusic.audio import AudioFile
+from coremusic.base import NUMPY_AVAILABLE
 
 if not (NUMPY_AVAILABLE and spu.SCIPY_AVAILABLE):
     pytest.skip("NumPy and SciPy are not available", allow_module_level=True)
@@ -503,7 +503,6 @@ class TestAudioSignalProcessor:
 class TestIntegrationWithAudioFile:
     """Test integration with AudioFile class"""
 
-
     def test_read_and_filter_real_audio(self, amen_wav_path):
         """Test reading real audio and applying filter"""
         with AudioFile(amen_wav_path) as af:
@@ -549,7 +548,6 @@ class TestIntegrationWithAudioFile:
 
             assert resampled is not None
             # Check approximate length ratio
-            import numpy as np
 
             expected_ratio = 48000 / sample_rate
             actual_ratio = len(resampled) / len(audio)

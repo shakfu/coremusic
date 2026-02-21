@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Tests for async I/O functionality."""
 
-import os
 import pytest
 import asyncio
 from pathlib import Path
@@ -12,12 +11,12 @@ from coremusic.audio.async_io import (
     create_output_queue_async,
     open_audio_file_async,
 )
-from coremusic.objects import AudioBuffer, AudioFormat, NUMPY_AVAILABLE
+from coremusic.audio import AudioBuffer, AudioFormat
+from coremusic.base import NUMPY_AVAILABLE
 
 
 class TestAsyncAudioFile:
     """Test AsyncAudioFile async wrapper"""
-
 
     @pytest.mark.asyncio
     async def test_async_audio_file_creation(self, amen_wav_path):
@@ -161,7 +160,6 @@ class TestAsyncAudioFile:
 class TestAsyncAudioFileNumPy:
     """Test AsyncAudioFile NumPy integration (if available)"""
 
-
     @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
     @pytest.mark.asyncio
     async def test_async_read_as_numpy(self, amen_wav_path):
@@ -276,7 +274,6 @@ class TestAsyncAudioQueue:
 class TestAsyncIntegration:
     """Integration tests for async I/O"""
 
-
     @pytest.mark.asyncio
     async def test_async_file_read_and_queue_playback(self, amen_wav_path):
         """Test reading file and preparing queue for playback"""
@@ -284,7 +281,7 @@ class TestAsyncIntegration:
             format = audio.format
 
             # Create queue with same format
-            async with await AsyncAudioQueue.new_output_async(format) as queue:
+            async with await AsyncAudioQueue.new_output_async(format):
                 # Read some audio data
                 data, packet_count = await audio.read_packets_async(
                     start_packet=0, packet_count=1024

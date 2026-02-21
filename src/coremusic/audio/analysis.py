@@ -17,10 +17,12 @@ Example:
     >>> print(f"Key: {key} {mode}")
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 # Type checking imports
 if TYPE_CHECKING:
@@ -71,8 +73,8 @@ class BeatInfo:
     """
 
     tempo: float
-    beats: List[float]
-    downbeats: List[float]
+    beats: list[float]
+    downbeats: list[float]
     confidence: float
 
 
@@ -153,7 +155,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
                 "SciPy is required for audio analysis. Install with: pip install scipy"
             )
 
-    def _load_audio(self) -> Tuple["NDArray", float]:
+    def _load_audio(self) -> tuple[NDArray, float]:
         """Load audio file if not already loaded.
 
         Returns:
@@ -170,7 +172,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
 
     def _compute_fft(
         self, audio_data: "NDArray", sample_rate: float
-    ) -> Tuple["NDArray", "NDArray"]:
+    ) -> tuple[NDArray, NDArray]:
         """Compute FFT of audio data.
 
         Args:
@@ -231,7 +233,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
 
     def _find_spectral_peaks(
         self, freqs: "NDArray", mags: "NDArray", num_peaks: int = 10
-    ) -> List[Tuple[float, float]]:
+    ) -> list[tuple[float, float]]:
         """Find spectral peaks.
 
         Args:
@@ -257,9 +259,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
 
         return []
 
-    def analyze_spectrum(
-        self, time: float, window_size: float = 0.1
-    ) -> Dict[str, Any]:
+    def analyze_spectrum(self, time: float, window_size: float = 0.1) -> dict[str, Any]:
         """Analyze spectrum at specific time.
 
         Args:
@@ -303,9 +303,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
     # Onset Detection
     # ========================================================================
 
-    def _detect_onsets(
-        self, audio_data: "NDArray", sample_rate: float
-    ) -> "NDArray":
+    def _detect_onsets(self, audio_data: "NDArray", sample_rate: float) -> "NDArray":
         """Detect onsets in audio.
 
         Args:
@@ -341,9 +339,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
     # Beat Detection
     # ========================================================================
 
-    def _estimate_tempo(
-        self, onsets: "NDArray"
-    ) -> Tuple[float, List[float]]:
+    def _estimate_tempo(self, onsets: "NDArray") -> tuple[float, list[float]]:
         """Estimate tempo from onset times.
 
         Args:
@@ -406,7 +402,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
 
     def _autocorrelation_pitch(
         self, audio_data: "NDArray", sample_rate: float
-    ) -> Optional[float]:
+    ) -> float | None:
         """Detect pitch using autocorrelation.
 
         Args:
@@ -445,7 +441,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
         pitch = sample_rate / peak_lag
         return float(pitch)
 
-    def _freq_to_midi(self, freq: float) -> Tuple[int, float]:
+    def _freq_to_midi(self, freq: float) -> tuple[int, float]:
         """Convert frequency to MIDI note and cents offset.
 
         Args:
@@ -460,8 +456,8 @@ class AudioAnalyzer(AudioFileLoaderMixin):
         return midi_note, float(cents)
 
     def detect_pitch(
-        self, time_range: Optional[Tuple[float, float]] = None
-    ) -> List[PitchInfo]:
+        self, time_range: tuple[float, float] | None = None
+    ) -> list[PitchInfo]:
         """Detect pitch over time.
 
         Args:
@@ -506,9 +502,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
     # MFCC Extraction
     # ========================================================================
 
-    def _mel_filterbank(
-        self, n_fft: int, n_mels: int, sample_rate: float
-    ) -> "NDArray":
+    def _mel_filterbank(self, n_fft: int, n_mels: int, sample_rate: float) -> "NDArray":
         """Create mel filterbank.
 
         Args:
@@ -519,6 +513,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
         Returns:
             Mel filterbank matrix
         """
+
         # Mel scale conversion
         def hz_to_mel(hz: float) -> float:
             return 2595 * np.log10(1 + hz / 700.0)  # type: ignore[no-any-return]
@@ -634,7 +629,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
 
         return chroma  # type: ignore[no-any-return]
 
-    def _estimate_key(self, chroma: "NDArray") -> Tuple[str, str]:
+    def _estimate_key(self, chroma: "NDArray") -> tuple[str, str]:
         """Estimate musical key from chroma features.
 
         Args:
@@ -680,7 +675,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
 
         return best_key, best_mode
 
-    def detect_key(self) -> Tuple[str, str]:
+    def detect_key(self) -> tuple[str, str]:
         """Detect musical key.
 
         Returns:
@@ -700,9 +695,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
     # Audio Fingerprinting
     # ========================================================================
 
-    def _generate_fingerprint(
-        self, audio_data: "NDArray", sample_rate: float
-    ) -> str:
+    def _generate_fingerprint(self, audio_data: "NDArray", sample_rate: float) -> str:
         """Generate audio fingerprint.
 
         Args:
@@ -758,7 +751,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
         audio_file: Any,
         threshold_db: float = -40.0,
         min_duration: float = 0.5,
-    ) -> List[Tuple[float, float]]:
+    ) -> list[tuple[float, float]]:
         """Detect silence regions in an audio file.
 
         Args:
@@ -779,7 +772,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
                 "NumPy is required for silence detection. Install with: pip install numpy"
             )
 
-        from coremusic.objects import AudioFile
+        from coremusic.audio.core import AudioFile
 
         # Open file if path provided
         should_close = False
@@ -863,7 +856,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
                 "NumPy is required for peak detection. Install with: pip install numpy"
             )
 
-        from coremusic.objects import AudioFile
+        from coremusic.audio.core import AudioFile
 
         # Open file if path provided
         should_close = False
@@ -908,7 +901,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
                 "NumPy is required for RMS calculation. Install with: pip install numpy"
             )
 
-        from coremusic.objects import AudioFile
+        from coremusic.audio.core import AudioFile
 
         # Open file if path provided
         should_close = False
@@ -934,7 +927,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
                 audio_file.close()
 
     @staticmethod
-    def get_file_info(audio_file: Union[str, Path]) -> Dict[str, Any]:
+    def get_file_info(audio_file: str | Path) -> dict[str, Any]:
         """Get comprehensive information about an audio file.
 
         Args:
@@ -949,7 +942,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
             >>> print(f"Format: {info['format_id']}")
             >>> print(f"Sample Rate: {info['sample_rate']} Hz")
         """
-        from coremusic.objects import AudioFile
+        from coremusic.audio.core import AudioFile
 
         with AudioFile(str(audio_file)) as af:
             format = af.format
@@ -1011,7 +1004,7 @@ class LivePitchDetector:
         self.buffer_size = buffer_size
         self._buffer: "NDArray" = np.zeros(buffer_size)
 
-    def process(self, audio_chunk: "NDArray") -> Optional[PitchInfo]:
+    def process(self, audio_chunk: "NDArray") -> PitchInfo | None:
         """Process audio chunk and detect pitch.
 
         Args:
@@ -1037,7 +1030,7 @@ class LivePitchDetector:
 
     def _detect_pitch_autocorrelation(
         self, buffer: "NDArray", sr: float
-    ) -> Optional[float]:
+    ) -> float | None:
         """Detect pitch using autocorrelation.
 
         Args:
@@ -1076,7 +1069,7 @@ class LivePitchDetector:
         pitch = sr / peak_lag
         return float(pitch)
 
-    def _freq_to_midi(self, freq: float) -> Tuple[int, float]:
+    def _freq_to_midi(self, freq: float) -> tuple[int, float]:
         """Convert frequency to MIDI note and cents offset.
 
         Args:

@@ -59,7 +59,9 @@ class CustomFormatter(logging.Formatter):
         else:
             log_fmt = self.FORMATS.get(record.levelno, self.fmt)
         if PY_VER_MINOR > 10:
-            duration = datetime.datetime.fromtimestamp(record.relativeCreated / 1000, datetime.UTC)
+            duration = datetime.datetime.fromtimestamp(
+                record.relativeCreated / 1000, datetime.UTC
+            )
         else:
             duration = datetime.datetime.utcfromtimestamp(record.relativeCreated / 1000)
         record.delta = duration.strftime("%H:%M:%S")

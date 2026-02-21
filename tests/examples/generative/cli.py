@@ -23,16 +23,36 @@ AVAILABLE_TRANSFORMS = [
 
 # Scale type choices
 SCALE_TYPES = [
-    "major", "natural_minor", "harmonic_minor", "melodic_minor",
-    "dorian", "phrygian", "lydian", "mixolydian",
-    "aeolian", "locrian", "major_pentatonic", "minor_pentatonic",
-    "blues", "chromatic", "whole_tone"
+    "major",
+    "natural_minor",
+    "harmonic_minor",
+    "melodic_minor",
+    "dorian",
+    "phrygian",
+    "lydian",
+    "mixolydian",
+    "aeolian",
+    "locrian",
+    "major_pentatonic",
+    "minor_pentatonic",
+    "blues",
+    "chromatic",
+    "whole_tone",
 ]
 
 # Chord type choices
 CHORD_TYPES = [
-    "major", "minor", "dim", "aug", "sus2", "sus4",
-    "maj7", "min7", "dom7", "dim7", "m7b5"
+    "major",
+    "minor",
+    "dim",
+    "aug",
+    "sus2",
+    "sus4",
+    "maj7",
+    "min7",
+    "dom7",
+    "dim7",
+    "m7b5",
 ]
 
 
@@ -45,29 +65,39 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     arp_parser = gen_sub.add_parser("arpeggio", help="Generate arpeggio pattern")
     arp_parser.add_argument("output", help="Output MIDI file path")
     arp_parser.add_argument(
-        "--root", "-r", default="C4",
-        help="Root note (e.g., C4, F#3) (default: C4)"
+        "--root", "-r", default="C4", help="Root note (e.g., C4, F#3) (default: C4)"
     )
     arp_parser.add_argument(
-        "--chord", "-c", choices=CHORD_TYPES, default="major",
-        help="Chord type (default: major)"
+        "--chord",
+        "-c",
+        choices=CHORD_TYPES,
+        default="major",
+        help="Chord type (default: major)",
     )
     arp_parser.add_argument(
-        "--pattern", "-p", choices=ARP_PATTERNS, default="up",
-        help="Arpeggio pattern (default: up)"
+        "--pattern",
+        "-p",
+        choices=ARP_PATTERNS,
+        default="up",
+        help="Arpeggio pattern (default: up)",
     )
     arp_parser.add_argument(
-        "--cycles", type=int, default=4,
-        help="Number of cycles (default: 4)"
+        "--cycles", type=int, default=4, help="Number of cycles (default: 4)"
     )
     arp_parser.add_argument(
-        "--bpm", "-b", type=float, default=120.0,
+        "--bpm",
+        "-b",
+        type=float,
+        default=120.0,
         dest="tempo",
-        help="Tempo in BPM (default: 120)"
+        help="Tempo in BPM (default: 120)",
     )
     arp_parser.add_argument(
-        "--velocity", "-v", type=int, default=100,
-        help="Note velocity 0-127 (default: 100)"
+        "--velocity",
+        "-v",
+        type=int,
+        default=100,
+        help="Note velocity 0-127 (default: 100)",
     )
     _add_transform_args(arp_parser)
     arp_parser.set_defaults(func=cmd_arpeggio)
@@ -76,29 +106,34 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     euclid_parser = gen_sub.add_parser("euclidean", help="Generate Euclidean rhythm")
     euclid_parser.add_argument("output", help="Output MIDI file path")
     euclid_parser.add_argument(
-        "--pulses", "-p", type=int, default=5,
-        help="Number of pulses/hits (default: 5)"
+        "--pulses", "-p", type=int, default=5, help="Number of pulses/hits (default: 5)"
     )
     euclid_parser.add_argument(
-        "--steps", "-s", type=int, default=8,
-        help="Total number of steps (default: 8)"
+        "--steps", "-s", type=int, default=8, help="Total number of steps (default: 8)"
     )
     euclid_parser.add_argument(
-        "--pitch", type=int, default=36,
-        help="MIDI pitch for hits (default: 36 = kick drum)"
+        "--pitch",
+        type=int,
+        default=36,
+        help="MIDI pitch for hits (default: 36 = kick drum)",
     )
     euclid_parser.add_argument(
-        "--cycles", type=int, default=4,
-        help="Number of cycles (default: 4)"
+        "--cycles", type=int, default=4, help="Number of cycles (default: 4)"
     )
     euclid_parser.add_argument(
-        "--bpm", "-b", type=float, default=120.0,
+        "--bpm",
+        "-b",
+        type=float,
+        default=120.0,
         dest="tempo",
-        help="Tempo in BPM (default: 120)"
+        help="Tempo in BPM (default: 120)",
     )
     euclid_parser.add_argument(
-        "--velocity", "-v", type=int, default=100,
-        help="Note velocity 0-127 (default: 100)"
+        "--velocity",
+        "-v",
+        type=int,
+        default=100,
+        help="Note velocity 0-127 (default: 100)",
     )
     _add_transform_args(euclid_parser)
     euclid_parser.set_defaults(func=cmd_euclidean)
@@ -107,29 +142,39 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     melody_parser = gen_sub.add_parser("melody", help="Generate melodic pattern")
     melody_parser.add_argument("output", help="Output MIDI file path")
     melody_parser.add_argument(
-        "--root", "-r", default="C4",
-        help="Root note (e.g., C4, F#3) (default: C4)"
+        "--root", "-r", default="C4", help="Root note (e.g., C4, F#3) (default: C4)"
     )
     melody_parser.add_argument(
-        "--scale", "-s", choices=SCALE_TYPES, default="major",
-        help="Scale type (default: major)"
+        "--scale",
+        "-s",
+        choices=SCALE_TYPES,
+        default="major",
+        help="Scale type (default: major)",
     )
     melody_parser.add_argument(
-        "--notes", "-n", type=int, default=32,
-        help="Number of notes to generate (default: 32)"
+        "--notes",
+        "-n",
+        type=int,
+        default=32,
+        help="Number of notes to generate (default: 32)",
     )
     melody_parser.add_argument(
-        "--bpm", "-b", type=float, default=120.0,
+        "--bpm",
+        "-b",
+        type=float,
+        default=120.0,
         dest="tempo",
-        help="Tempo in BPM (default: 120)"
+        help="Tempo in BPM (default: 120)",
     )
     melody_parser.add_argument(
-        "--velocity", "-v", type=int, default=100,
-        help="Note velocity 0-127 (default: 100)"
+        "--velocity",
+        "-v",
+        type=int,
+        default=100,
+        help="Note velocity 0-127 (default: 100)",
     )
     melody_parser.add_argument(
-        "--seed", type=int, default=None,
-        help="Random seed for reproducibility"
+        "--seed", type=int, default=None, help="Random seed for reproducibility"
     )
     _add_transform_args(melody_parser)
     melody_parser.set_defaults(func=cmd_melody)
@@ -223,20 +268,25 @@ def _get_arp_pattern(pattern_name: str):
 def _add_transform_args(parser: argparse.ArgumentParser) -> None:
     """Add transform arguments to a parser."""
     parser.add_argument(
-        "--transform", "-t",
+        "--transform",
+        "-t",
         action="append",
         dest="transforms",
         metavar="NAME",
         choices=AVAILABLE_TRANSFORMS,
         help=f"Apply transform(s) to output. Can be repeated. "
-             f"Available: {', '.join(AVAILABLE_TRANSFORMS)}"
+        f"Available: {', '.join(AVAILABLE_TRANSFORMS)}",
     )
 
 
 def _create_transforms(transform_names: Optional[List[str]]) -> List:
     """Create transform instances from names."""
     from coremusic.midi.transform import (
-        Humanize, Reverse, Arpeggiate, Quantize, VelocityScale
+        Humanize,
+        Reverse,
+        Arpeggiate,
+        Quantize,
+        VelocityScale,
     )
 
     if not transform_names:
@@ -287,14 +337,18 @@ def _save_events_to_midi(
             # Note on - store start time
             key = (event.channel, event.data1)
             note_ons[key] = (event.time, event.data2)
-        elif event.status == MIDIStatus.NOTE_OFF or (event.status == MIDIStatus.NOTE_ON and event.data2 == 0):
+        elif event.status == MIDIStatus.NOTE_OFF or (
+            event.status == MIDIStatus.NOTE_ON and event.data2 == 0
+        ):
             # Note off - find matching note on
             key = (event.channel, event.data1)
             if key in note_ons:
                 start_time, velocity = note_ons.pop(key)
                 duration = event.time - start_time
                 if duration > 0:
-                    track.add_note(start_time, event.data1, velocity, duration, event.channel)
+                    track.add_note(
+                        start_time, event.data1, velocity, duration, event.channel
+                    )
 
     # Apply transforms if any
     if transforms:
@@ -329,20 +383,22 @@ def cmd_arpeggio(args: argparse.Namespace) -> int:
     events = arp.generate(num_cycles=args.cycles)
 
     # Create transforms and save to MIDI
-    transforms = _create_transforms(getattr(args, 'transforms', None))
+    transforms = _create_transforms(getattr(args, "transforms", None))
     _save_events_to_midi(events, output_path, args.tempo, transforms)
 
     if args.json:
-        output_json({
-            "output": str(output_path.absolute()),
-            "root": str(root),
-            "chord": args.chord,
-            "pattern": args.pattern,
-            "cycles": args.cycles,
-            "tempo": args.tempo,
-            "events": len(events),
-            "transforms": args.transforms or [],
-        })
+        output_json(
+            {
+                "output": str(output_path.absolute()),
+                "root": str(root),
+                "chord": args.chord,
+                "pattern": args.pattern,
+                "cycles": args.cycles,
+                "tempo": args.tempo,
+                "events": len(events),
+                "transforms": args.transforms or [],
+            }
+        )
     else:
         print(f"Generated arpeggio: {output_path.name}")
         print(f"  Chord: {root} {args.chord}")
@@ -381,7 +437,7 @@ def cmd_euclidean(args: argparse.Namespace) -> int:
     events = euclid.generate(cycles=args.cycles)
 
     # Create transforms and save to MIDI
-    transforms = _create_transforms(getattr(args, 'transforms', None))
+    transforms = _create_transforms(getattr(args, "transforms", None))
     _save_events_to_midi(events, output_path, args.tempo, transforms)
 
     # Get pattern as string
@@ -389,17 +445,19 @@ def cmd_euclidean(args: argparse.Namespace) -> int:
     pattern_str = "".join("x" if p else "." for p in pattern_list)
 
     if args.json:
-        output_json({
-            "output": str(output_path.absolute()),
-            "pulses": args.pulses,
-            "steps": args.steps,
-            "pattern": pattern_str,
-            "pitch": args.pitch,
-            "cycles": args.cycles,
-            "tempo": args.tempo,
-            "events": len(events),
-            "transforms": args.transforms or [],
-        })
+        output_json(
+            {
+                "output": str(output_path.absolute()),
+                "pulses": args.pulses,
+                "steps": args.steps,
+                "pattern": pattern_str,
+                "pitch": args.pitch,
+                "cycles": args.cycles,
+                "tempo": args.tempo,
+                "events": len(events),
+                "transforms": args.transforms or [],
+            }
+        )
     else:
         print(f"Generated Euclidean rhythm: {output_path.name}")
         print(f"  Pattern: E({args.pulses}, {args.steps}) = [{pattern_str}]")
@@ -437,20 +495,22 @@ def cmd_melody(args: argparse.Namespace) -> int:
     events = melody.generate(num_notes=args.notes)
 
     # Create transforms and save to MIDI
-    transforms = _create_transforms(getattr(args, 'transforms', None))
+    transforms = _create_transforms(getattr(args, "transforms", None))
     _save_events_to_midi(events, output_path, args.tempo, transforms)
 
     if args.json:
-        output_json({
-            "output": str(output_path.absolute()),
-            "root": str(root),
-            "scale": args.scale,
-            "notes": args.notes,
-            "tempo": args.tempo,
-            "seed": args.seed,
-            "events": len(events),
-            "transforms": args.transforms or [],
-        })
+        output_json(
+            {
+                "output": str(output_path.absolute()),
+                "root": str(root),
+                "scale": args.scale,
+                "notes": args.notes,
+                "tempo": args.tempo,
+                "seed": args.seed,
+                "events": len(events),
+                "transforms": args.transforms or [],
+            }
+        )
     else:
         print(f"Generated melody: {output_path.name}")
         print(f"  Scale: {root} {args.scale}")

@@ -4,7 +4,7 @@ Tests for AudioDevice and AudioDeviceManager classes
 """
 
 import pytest
-from coremusic.objects import AudioDevice, AudioDeviceManager
+from coremusic.audio import AudioDevice, AudioDeviceManager
 
 
 class TestAudioDevice:

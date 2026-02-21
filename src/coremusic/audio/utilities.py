@@ -12,15 +12,18 @@ Features:
 - AudioStreamBasicDescription parsing
 """
 
+from __future__ import annotations
+
 import glob
 import logging
 import struct
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable
 
-from ..objects import (NUMPY_AVAILABLE, AudioConverter, AudioFile, AudioFormat,
-                       ExtendedAudioFile)
+from coremusic.base import NUMPY_AVAILABLE
+
 from ..utils.batch import batch_process_files, batch_process_parallel
+from .core import AudioConverter, AudioFile, AudioFormat, ExtendedAudioFile
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +57,7 @@ __all__ = [
 # ============================================================================
 
 
-def parse_audio_stream_basic_description(format_data: bytes) -> Dict[str, Any]:
+def parse_audio_stream_basic_description(format_data: bytes) -> dict[str, Any]:
     """Parse AudioStreamBasicDescription from raw bytes.
 
     AudioStreamBasicDescription (ASBD) is a CoreAudio structure that describes
@@ -170,11 +173,11 @@ def parse_audio_stream_basic_description(format_data: bytes) -> Dict[str, Any]:
 def batch_convert(
     input_pattern: str,
     output_format: AudioFormat,
-    output_dir: Optional[str] = None,
+    output_dir: str | None = None,
     output_extension: str = "wav",
     overwrite: bool = False,
-    progress_callback: Optional[Callable[[str, int, int], None]] = None,
-) -> List[str]:
+    progress_callback: Callable[[str, int, int], None] | None = None,
+) -> list[str]:
     """Batch convert audio files to a specified format.
 
     Args:
@@ -191,7 +194,7 @@ def batch_convert(
     Example:
         ```python
         import coremusic as cm
-        from coremusic.objects import AudioFormat
+        from coremusic.audio.core import AudioFormat
 
         # Convert all MP3 files to 16-bit 44.1kHz WAV
         output_format = AudioFormat(
@@ -272,7 +275,7 @@ def convert_audio_file(
     Example:
         ```python
         from coremusic.audio.utilities import convert_audio_file
-        from coremusic.objects import AudioFormat
+        from coremusic.audio.core import AudioFormat
 
         # Convert to different sample rate
         convert_audio_file(
@@ -429,7 +432,7 @@ def trim_audio(
     input_path: str,
     output_path: str,
     start_time: float = 0.0,
-    end_time: Optional[float] = None,
+    end_time: float | None = None,
 ) -> None:
     """Trim an audio file to a specific time range.
 
@@ -521,7 +524,7 @@ class AudioEffectsChain:
 
     def __init__(self) -> None:
         """Create a new audio effects chain"""
-        from ..objects import AUGraph
+        from .graph import AUGraph
 
         self._graph = AUGraph()
         self._nodes: dict[int, Any] = {}  # Map of node_id -> description
@@ -561,7 +564,7 @@ class AudioEffectsChain:
             dynamics = chain.add_effect('aufx', 'dcmp', 'appl')
             ```
         """
-        from ..objects import AudioComponentDescription
+        from .units import AudioComponentDescription
 
         desc = AudioComponentDescription(
             type=effect_type,
@@ -575,7 +578,7 @@ class AudioEffectsChain:
         self._nodes[node_id] = desc
         return node_id
 
-    def add_effect_by_name(self, name: str) -> Optional[int]:
+    def add_effect_by_name(self, name: str) -> int | None:
         """Add an audio effect to the chain by name.
 
         This searches for an AudioUnit matching the given name and adds it
@@ -732,7 +735,7 @@ class AudioEffectsChain:
 
 
 def create_simple_effect_chain(
-    effect_types: List[Tuple[str, str, str]], auto_connect: bool = True
+    effect_types: list[tuple[str, str, str]], auto_connect: bool = True
 ) -> AudioEffectsChain:
     """Create a simple linear effects chain.
 
@@ -786,7 +789,7 @@ def create_simple_effect_chain(
 # ============================================================================
 
 
-def find_audio_unit_by_name(name: str, case_sensitive: bool = False) -> Optional[Any]:
+def find_audio_unit_by_name(name: str, case_sensitive: bool = False) -> Any | None:
     """Find an AudioUnit by name (searches all available AudioComponents).
 
     This function iterates through all available AudioComponents and matches
@@ -819,7 +822,7 @@ def find_audio_unit_by_name(name: str, case_sensitive: bool = False) -> Optional
         ```
     """
     from .. import capi
-    from ..objects import AudioComponent, AudioComponentDescription
+    from .units import AudioComponent, AudioComponentDescription
 
     # Wildcard description to iterate through all components
     desc_dict = {
@@ -830,7 +833,7 @@ def find_audio_unit_by_name(name: str, case_sensitive: bool = False) -> Optional
         "flags_mask": 0,
     }
 
-    component_id: Optional[int] = 0  # Start with NULL
+    component_id: int | None = 0  # Start with NULL
     search_name = name if case_sensitive else name.lower()
 
     while True:
@@ -874,8 +877,8 @@ def find_audio_unit_by_name(name: str, case_sensitive: bool = False) -> Optional
 
 
 def list_available_audio_units(
-    filter_type: Optional[str] = None,
-) -> List[Dict[str, Any]]:
+    filter_type: str | None = None,
+) -> list[dict[str, Any]]:
     """List all available AudioUnits with their names and FourCC codes.
 
     Args:
@@ -911,7 +914,7 @@ def list_available_audio_units(
     }
 
     # Iterate through all components
-    component_id: Optional[int] = 0  # Start with NULL
+    component_id: int | None = 0  # Start with NULL
 
     while True:
         component_id = capi.audio_component_find_next(desc_dict, component_id or 0)
@@ -936,7 +939,7 @@ def list_available_audio_units(
     return results
 
 
-def get_audiounit_names(filter_type: Optional[str] = None) -> List[str]:
+def get_audiounit_names(filter_type: str | None = None) -> list[str]:
     """Get a list of all available AudioUnit names.
 
     This is a convenience function that returns just the names of AudioUnits,

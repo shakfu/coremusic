@@ -7,7 +7,7 @@ OSStatus error code translation.
 
 from __future__ import annotations
 
-from .. import os_status
+from coremusic import os_status
 
 __all__ = [
     "CoreAudioError",

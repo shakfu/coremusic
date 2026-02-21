@@ -144,7 +144,7 @@ class TestMMapAudioFile:
     def test_file_not_found(self):
         """Test handling of non-existent file."""
         with pytest.raises(FileNotFoundError):
-            with MMapAudioFile("nonexistent.wav") as audio:
+            with MMapAudioFile("nonexistent.wav"):
                 pass
 
     @pytest.mark.skipif(not TEST_FILE.exists(), reason="Test file not found")
@@ -215,5 +215,5 @@ class TestMMapAudioFilePerformance:
             assert isinstance(data, np.ndarray)
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

@@ -9,14 +9,17 @@ Tests complete workflows as specified in CODE_REVIEW.md Medium Priority:
 import os
 import time
 import struct
-import tempfile
 import pytest
 
 import coremusic.capi as capi
 from coremusic import link
 from coremusic.audio.audiounit_host import AudioUnitHost
-from coremusic.audio.utilities import AudioEffectsChain, parse_audio_stream_basic_description
-from coremusic.objects import AudioFile, AudioFormat, AudioPlayer
+from coremusic.audio.utilities import (
+    AudioEffectsChain,
+    parse_audio_stream_basic_description,
+)
+from coremusic.audio import AudioFile, AudioFormat
+from coremusic.base import AudioPlayer
 
 
 # =============================================================================
@@ -50,14 +53,14 @@ class TestAudioProcessSaveWorkflow:
             )
             asbd = parse_audio_stream_basic_description(format_data)
             source_format = AudioFormat(
-                sample_rate=asbd['sample_rate'],
-                format_id=asbd['format_id'],
-                format_flags=asbd['format_flags'],
-                bytes_per_packet=asbd['bytes_per_packet'],
-                frames_per_packet=asbd['frames_per_packet'],
-                bytes_per_frame=asbd['bytes_per_frame'],
-                channels_per_frame=asbd['channels_per_frame'],
-                bits_per_channel=asbd['bits_per_channel'],
+                sample_rate=asbd["sample_rate"],
+                format_id=asbd["format_id"],
+                format_flags=asbd["format_flags"],
+                bytes_per_packet=asbd["bytes_per_packet"],
+                frames_per_packet=asbd["frames_per_packet"],
+                bytes_per_frame=asbd["bytes_per_frame"],
+                channels_per_frame=asbd["channels_per_frame"],
+                bits_per_channel=asbd["bits_per_channel"],
             )
 
             # Read all audio data
@@ -71,11 +74,11 @@ class TestAudioProcessSaveWorkflow:
 
         # Step 2: Discover and configure effect (demonstrates effect integration)
         host = AudioUnitHost()
-        with host.load_plugin("AUDelay", type='effect') as effect:
+        with host.load_plugin("AUDelay", type="effect") as effect:
             # Verify effect is loaded and configured
             assert effect is not None
             assert effect.is_initialized
-            assert effect.type == 'aufx'
+            assert effect.type == "aufx"
 
             # Get effect parameters (demonstrates parameter access)
             param_list = effect.parameters
@@ -97,10 +100,7 @@ class TestAudioProcessSaveWorkflow:
         }
 
         ext_file = capi.extended_audio_file_create_with_url(
-            output_path,
-            capi.get_audio_file_wave_type(),
-            output_format,
-            0
+            output_path, capi.get_audio_file_wave_type(), output_format, 0
         )
         try:
             num_frames = len(audio_data) // source_format.bytes_per_frame
@@ -168,10 +168,7 @@ class TestAudioProcessSaveWorkflow:
 
         # Step 3: Save converted audio
         ext_file = capi.extended_audio_file_create_with_url(
-            output_path,
-            capi.get_audio_file_wave_type(),
-            dest_format_dict,
-            0
+            output_path, capi.get_audio_file_wave_type(), dest_format_dict, 0
         )
         try:
             num_frames = len(converted_audio) // 2  # 2 bytes per frame (mono 16-bit)
@@ -201,14 +198,14 @@ class TestAudioProcessSaveWorkflow:
             )
             asbd = parse_audio_stream_basic_description(format_data)
             source_format = AudioFormat(
-                sample_rate=asbd['sample_rate'],
-                format_id=asbd['format_id'],
-                format_flags=asbd['format_flags'],
-                bytes_per_packet=asbd['bytes_per_packet'],
-                frames_per_packet=asbd['frames_per_packet'],
-                bytes_per_frame=asbd['bytes_per_frame'],
-                channels_per_frame=asbd['channels_per_frame'],
-                bits_per_channel=asbd['bits_per_channel'],
+                sample_rate=asbd["sample_rate"],
+                format_id=asbd["format_id"],
+                format_flags=asbd["format_flags"],
+                bytes_per_packet=asbd["bytes_per_packet"],
+                frames_per_packet=asbd["frames_per_packet"],
+                bytes_per_frame=asbd["bytes_per_frame"],
+                channels_per_frame=asbd["channels_per_frame"],
+                bits_per_channel=asbd["bits_per_channel"],
             )
             audio_data, packets_read = capi.audio_file_read_packets(file_id, 0, 200000)
         finally:
@@ -242,10 +239,7 @@ class TestAudioProcessSaveWorkflow:
         }
 
         ext_file = capi.extended_audio_file_create_with_url(
-            output_path,
-            capi.get_audio_file_wave_type(),
-            output_format,
-            0
+            output_path, capi.get_audio_file_wave_type(), output_format, 0
         )
         try:
             num_frames = len(audio_data) // source_format.bytes_per_frame
@@ -344,11 +338,11 @@ class TestMIDIToAudioUnitWorkflow:
                 capi.music_track_new_midi_note_event(
                     track,
                     beat_time,  # timestamp in beats
-                    0,          # channel
-                    note,       # note number
-                    100,        # velocity
-                    64,         # release velocity
-                    0.4         # duration in beats
+                    0,  # channel
+                    note,  # note number
+                    100,  # velocity
+                    64,  # release velocity
+                    0.4,  # duration in beats
                 )
 
             # Step 2: Create player and configure
@@ -380,7 +374,7 @@ class TestMIDIToAudioUnitWorkflow:
         host = AudioUnitHost()
 
         # Use DLSMusicDevice (Apple's built-in GM synth)
-        with host.load_plugin("DLSMusicDevice", type='instrument') as synth:
+        with host.load_plugin("DLSMusicDevice", type="instrument") as synth:
             assert synth is not None
             assert synth.is_initialized
 
@@ -600,13 +594,13 @@ class TestLinkSessionSynchronization:
             timing = player.get_link_timing(quantum=4.0)
 
             assert timing is not None
-            assert 'tempo' in timing
-            assert 'beat' in timing
-            assert 'phase' in timing
-            assert 'is_playing' in timing
+            assert "tempo" in timing
+            assert "beat" in timing
+            assert "phase" in timing
+            assert "is_playing" in timing
 
             # Verify tempo matches session
-            assert timing['tempo'] == pytest.approx(120.0, abs=0.1)
+            assert timing["tempo"] == pytest.approx(120.0, abs=0.1)
 
             # Change session tempo
             state = session.capture_app_session_state()
@@ -618,7 +612,7 @@ class TestLinkSessionSynchronization:
 
             # Verify player sees new tempo
             new_timing = player.get_link_timing()
-            assert new_timing['tempo'] == pytest.approx(130.0, abs=0.1)
+            assert new_timing["tempo"] == pytest.approx(130.0, abs=0.1)
 
         finally:
             session.enabled = False
@@ -641,8 +635,8 @@ class TestLinkSessionSynchronization:
             timing2 = player2.get_link_timing(quantum=4.0)
 
             # Should have very similar timing
-            assert timing1['tempo'] == pytest.approx(timing2['tempo'], abs=0.01)
-            assert timing1['beat'] == pytest.approx(timing2['beat'], abs=0.05)
+            assert timing1["tempo"] == pytest.approx(timing2["tempo"], abs=0.01)
+            assert timing1["beat"] == pytest.approx(timing2["beat"], abs=0.05)
 
             # Change tempo and verify both see it
             state = session.capture_app_session_state()
@@ -655,8 +649,8 @@ class TestLinkSessionSynchronization:
             new_timing1 = player1.get_link_timing()
             new_timing2 = player2.get_link_timing()
 
-            assert new_timing1['tempo'] == pytest.approx(140.0, abs=0.1)
-            assert new_timing2['tempo'] == pytest.approx(140.0, abs=0.1)
+            assert new_timing1["tempo"] == pytest.approx(140.0, abs=0.1)
+            assert new_timing2["tempo"] == pytest.approx(140.0, abs=0.1)
 
         finally:
             session.enabled = False
@@ -675,10 +669,10 @@ class TestLinkSessionSynchronization:
 
         # Verify times are increasing
         for i in range(1, len(times)):
-            assert times[i] > times[i-1]
+            assert times[i] > times[i - 1]
 
         # Verify reasonable time intervals (~1000us per 1ms)
-        intervals = [times[i] - times[i-1] for i in range(1, len(times))]
+        intervals = [times[i] - times[i - 1] for i in range(1, len(times))]
         avg_interval = sum(intervals) / len(intervals)
 
         # Average should be around 1000 microseconds (1ms)
@@ -743,15 +737,16 @@ class TestCombinedWorkflows:
 
         # Generate simple sine wave as placeholder for rendered audio
         import math
+
         audio_samples = []
         for i in range(num_frames):
             t = i / sample_rate
             # Simple 440Hz sine wave
             sample = int(math.sin(2 * math.pi * 440 * t) * 16000)
             # Stereo: duplicate sample
-            audio_samples.append(struct.pack('<hh', sample, sample))
+            audio_samples.append(struct.pack("<hh", sample, sample))
 
-        audio_data = b''.join(audio_samples)
+        audio_data = b"".join(audio_samples)
 
         # Step 4: Save to file
         output_format = {
@@ -767,10 +762,7 @@ class TestCombinedWorkflows:
         }
 
         ext_file = capi.extended_audio_file_create_with_url(
-            output_path,
-            capi.get_audio_file_wave_type(),
-            output_format,
-            0
+            output_path, capi.get_audio_file_wave_type(), output_format, 0
         )
         try:
             capi.extended_audio_file_write(ext_file, num_frames, audio_data)

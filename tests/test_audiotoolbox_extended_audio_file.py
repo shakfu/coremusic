@@ -1,11 +1,10 @@
 """Tests for ExtendedAudioFile functional API."""
 
 import os
-import tempfile
 import struct
 import pytest
 import coremusic.capi as capi
-from coremusic.objects import CoreAudioError
+from coremusic.exceptions import CoreAudioError
 
 
 class TestExtendedAudioFileAPI:

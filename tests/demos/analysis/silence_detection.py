@@ -8,7 +8,7 @@ Usage:
 import sys
 import os
 from coremusic.audio.analysis import AudioAnalyzer
-from coremusic.objects import NUMPY_AVAILABLE
+from coremusic.base import NUMPY_AVAILABLE
 
 
 def main():

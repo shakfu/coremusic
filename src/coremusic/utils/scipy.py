@@ -12,7 +12,7 @@ Features:
 
 Example:
     ```python
-    from coremusic.objects import AudioFile
+    from coremusic.audio import AudioFile
     import coremusic.scipy_utils as spu
 
     # Load audio file
@@ -31,7 +31,9 @@ Example:
     ```
 """
 
-from typing import Any, Literal, Optional, Tuple, Union
+from __future__ import annotations
+
+from typing import Any, Literal
 
 # Check for NumPy availability
 try:
@@ -101,11 +103,11 @@ __all__ = [
 
 
 def design_butterworth_filter(
-    cutoff: Union[float, Tuple[float, float]],
+    cutoff: float | tuple[float, float],
     sample_rate: float,
     order: int = 5,
     filter_type: Literal["lowpass", "highpass", "bandpass", "bandstop"] = "lowpass",
-) -> Tuple["NDArray[Any]", "NDArray[Any]"]:
+) -> tuple["NDArray[Any]", "NDArray[Any]"]:
     """Design a Butterworth filter.
 
     Args:
@@ -136,7 +138,7 @@ def design_butterworth_filter(
     nyquist = sample_rate / 2.0
 
     if isinstance(cutoff, tuple):
-        normalized_cutoff: Union[float, list[float]] = [f / nyquist for f in cutoff]
+        normalized_cutoff: float | list[float] = [f / nyquist for f in cutoff]
     else:
         normalized_cutoff = cutoff / nyquist
 
@@ -147,12 +149,12 @@ def design_butterworth_filter(
 
 
 def design_chebyshev_filter(
-    cutoff: Union[float, Tuple[float, float]],
+    cutoff: float | tuple[float, float],
     sample_rate: float,
     order: int = 5,
     ripple_db: float = 0.5,
     filter_type: Literal["lowpass", "highpass", "bandpass", "bandstop"] = "lowpass",
-) -> Tuple["NDArray[Any]", "NDArray[Any]"]:
+) -> tuple["NDArray[Any]", "NDArray[Any]"]:
     """Design a Chebyshev Type I filter.
 
     Args:
@@ -173,7 +175,7 @@ def design_chebyshev_filter(
     nyquist = sample_rate / 2.0
 
     if isinstance(cutoff, tuple):
-        normalized_cutoff: Union[float, list[float]] = [f / nyquist for f in cutoff]
+        normalized_cutoff: float | list[float] = [f / nyquist for f in cutoff]
     else:
         normalized_cutoff = cutoff / nyquist
 
@@ -189,7 +191,10 @@ def design_chebyshev_filter(
 
 
 def apply_filter(
-    audio_data: "NDArray[Any]", b: "NDArray[Any]", a: "NDArray[Any]", zero_phase: bool = True
+    audio_data: "NDArray[Any]",
+    b: "NDArray[Any]",
+    a: "NDArray[Any]",
+    zero_phase: bool = True,
 ) -> "NDArray[Any]":
     """Apply a digital filter to audio data.
 
@@ -237,7 +242,7 @@ def apply_filter(
 
 def apply_scipy_filter(
     audio_data: "NDArray[Any]",
-    filter_output: Union[Tuple["NDArray[Any]", "NDArray[Any]"], Any],
+    filter_output: tuple["NDArray[Any]", "NDArray[Any]"] | Any,
     zero_phase: bool = True,
 ) -> "NDArray[Any]":
     """Apply a filter designed by scipy.signal functions directly.
@@ -476,9 +481,9 @@ def resample_audio(
 def compute_spectrum(
     audio_data: "NDArray[Any]",
     sample_rate: float,
-    window: Optional[str] = "hann",
-    nperseg: Optional[int] = None,
-) -> Tuple["NDArray[Any]", "NDArray[Any]"]:
+    window: str | None = "hann",
+    nperseg: int | None = None,
+) -> tuple["NDArray[Any]", "NDArray[Any]"]:
     """Compute the frequency spectrum of audio data.
 
     Args:
@@ -527,8 +532,8 @@ def compute_spectrum(
 
 
 def compute_fft(
-    audio_data: "NDArray[Any]", sample_rate: float, window: Optional[str] = "hann"
-) -> Tuple["NDArray[Any]", "NDArray[Any]"]:
+    audio_data: "NDArray[Any]", sample_rate: float, window: str | None = "hann"
+) -> tuple["NDArray[Any]", "NDArray[Any]"]:
     """Compute the Fast Fourier Transform of audio data.
 
     Args:
@@ -580,8 +585,8 @@ def compute_spectrogram(
     sample_rate: float,
     window: str = "hann",
     nperseg: int = 256,
-    noverlap: Optional[int] = None,
-) -> Tuple["NDArray[Any]", "NDArray[Any]", "NDArray[Any]"]:
+    noverlap: int | None = None,
+) -> tuple["NDArray[Any]", "NDArray[Any]", "NDArray[Any]"]:
     """Compute spectrogram of audio data.
 
     Args:
@@ -639,7 +644,7 @@ class AudioSignalProcessor:
 
     Example:
         ```python
-        from coremusic.objects import AudioFile
+        from coremusic.audio import AudioFile
         import coremusic.scipy_utils as spu
 
         # Load audio
@@ -779,7 +784,7 @@ class AudioSignalProcessor:
         self.audio_data = self._original_data.copy()
         return self
 
-    def spectrum(self, **kwargs: Any) -> Tuple["NDArray[Any]", "NDArray[Any]"]:
+    def spectrum(self, **kwargs: Any) -> tuple["NDArray[Any]", "NDArray[Any]"]:
         """Compute frequency spectrum of current audio.
 
         Args:
@@ -790,7 +795,7 @@ class AudioSignalProcessor:
         """
         return compute_spectrum(self.audio_data, self.sample_rate, **kwargs)
 
-    def fft(self, **kwargs: Any) -> Tuple["NDArray[Any]", "NDArray[Any]"]:
+    def fft(self, **kwargs: Any) -> tuple["NDArray[Any]", "NDArray[Any]"]:
         """Compute FFT of current audio.
 
         Args:
@@ -801,7 +806,9 @@ class AudioSignalProcessor:
         """
         return compute_fft(self.audio_data, self.sample_rate, **kwargs)
 
-    def spectrogram(self, **kwargs: Any) -> Tuple["NDArray[Any]", "NDArray[Any]", "NDArray[Any]"]:
+    def spectrogram(
+        self, **kwargs: Any
+    ) -> tuple["NDArray[Any]", "NDArray[Any]", "NDArray[Any]"]:
         """Compute spectrogram of current audio.
 
         Args:

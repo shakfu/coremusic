@@ -24,66 +24,86 @@ Example:
     >>> chord.get_midi_notes()  # [60, 64, 67, 71]
 """
 
+from __future__ import annotations
+
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import ClassVar, Dict, Iterator, List, Optional, Tuple, Union
+from typing import ClassVar, Iterator
 
 # ============================================================================
 # Constants
 # ============================================================================
 
 # Note names in chromatic order
-NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 # Enharmonic equivalents (uppercase keys for lookup after .upper())
 ENHARMONIC_MAP = {
-    'DB': 'C#', 'EB': 'D#', 'FB': 'E', 'GB': 'F#', 'AB': 'G#', 'BB': 'A#', 'CB': 'B',
-    'B#': 'C', 'E#': 'F', 'C##': 'D', 'D##': 'E', 'F##': 'G', 'G##': 'A', 'A##': 'B',
-    'DBB': 'C', 'EBB': 'D', 'FBB': 'E', 'GBB': 'F', 'ABB': 'G', 'BBB': 'A', 'CBB': 'B',
+    "DB": "C#",
+    "EB": "D#",
+    "FB": "E",
+    "GB": "F#",
+    "AB": "G#",
+    "BB": "A#",
+    "CB": "B",
+    "B#": "C",
+    "E#": "F",
+    "C##": "D",
+    "D##": "E",
+    "F##": "G",
+    "G##": "A",
+    "A##": "B",
+    "DBB": "C",
+    "EBB": "D",
+    "FBB": "E",
+    "GBB": "F",
+    "ABB": "G",
+    "BBB": "A",
+    "CBB": "B",
 }
 
 # Flat note names for display
-FLAT_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+FLAT_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
 
 # Key signatures: key -> (sharps/flats list, is_minor)
-KEY_SIGNATURES: Dict[str, Tuple[List[str], bool]] = {
+KEY_SIGNATURES: dict[str, tuple[list[str], bool]] = {
     # Major keys
-    'C': ([], False),
-    'G': (['F#'], False),
-    'D': (['F#', 'C#'], False),
-    'A': (['F#', 'C#', 'G#'], False),
-    'E': (['F#', 'C#', 'G#', 'D#'], False),
-    'B': (['F#', 'C#', 'G#', 'D#', 'A#'], False),
-    'F#': (['F#', 'C#', 'G#', 'D#', 'A#', 'E#'], False),
-    'C#': (['F#', 'C#', 'G#', 'D#', 'A#', 'E#', 'B#'], False),
-    'F': (['Bb'], False),
-    'Bb': (['Bb', 'Eb'], False),
-    'Eb': (['Bb', 'Eb', 'Ab'], False),
-    'Ab': (['Bb', 'Eb', 'Ab', 'Db'], False),
-    'Db': (['Bb', 'Eb', 'Ab', 'Db', 'Gb'], False),
-    'Gb': (['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'], False),
-    'Cb': (['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Fb'], False),
+    "C": ([], False),
+    "G": (["F#"], False),
+    "D": (["F#", "C#"], False),
+    "A": (["F#", "C#", "G#"], False),
+    "E": (["F#", "C#", "G#", "D#"], False),
+    "B": (["F#", "C#", "G#", "D#", "A#"], False),
+    "F#": (["F#", "C#", "G#", "D#", "A#", "E#"], False),
+    "C#": (["F#", "C#", "G#", "D#", "A#", "E#", "B#"], False),
+    "F": (["Bb"], False),
+    "Bb": (["Bb", "Eb"], False),
+    "Eb": (["Bb", "Eb", "Ab"], False),
+    "Ab": (["Bb", "Eb", "Ab", "Db"], False),
+    "Db": (["Bb", "Eb", "Ab", "Db", "Gb"], False),
+    "Gb": (["Bb", "Eb", "Ab", "Db", "Gb", "Cb"], False),
+    "Cb": (["Bb", "Eb", "Ab", "Db", "Gb", "Cb", "Fb"], False),
     # Minor keys (relative minors)
-    'Am': ([], True),
-    'Em': (['F#'], True),
-    'Bm': (['F#', 'C#'], True),
-    'F#m': (['F#', 'C#', 'G#'], True),
-    'C#m': (['F#', 'C#', 'G#', 'D#'], True),
-    'G#m': (['F#', 'C#', 'G#', 'D#', 'A#'], True),
-    'D#m': (['F#', 'C#', 'G#', 'D#', 'A#', 'E#'], True),
-    'A#m': (['F#', 'C#', 'G#', 'D#', 'A#', 'E#', 'B#'], True),
-    'Dm': (['Bb'], True),
-    'Gm': (['Bb', 'Eb'], True),
-    'Cm': (['Bb', 'Eb', 'Ab'], True),
-    'Fm': (['Bb', 'Eb', 'Ab', 'Db'], True),
-    'Bbm': (['Bb', 'Eb', 'Ab', 'Db', 'Gb'], True),
-    'Ebm': (['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'], True),
-    'Abm': (['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Fb'], True),
+    "Am": ([], True),
+    "Em": (["F#"], True),
+    "Bm": (["F#", "C#"], True),
+    "F#m": (["F#", "C#", "G#"], True),
+    "C#m": (["F#", "C#", "G#", "D#"], True),
+    "G#m": (["F#", "C#", "G#", "D#", "A#"], True),
+    "D#m": (["F#", "C#", "G#", "D#", "A#", "E#"], True),
+    "A#m": (["F#", "C#", "G#", "D#", "A#", "E#", "B#"], True),
+    "Dm": (["Bb"], True),
+    "Gm": (["Bb", "Eb"], True),
+    "Cm": (["Bb", "Eb", "Ab"], True),
+    "Fm": (["Bb", "Eb", "Ab", "Db"], True),
+    "Bbm": (["Bb", "Eb", "Ab", "Db", "Gb"], True),
+    "Ebm": (["Bb", "Eb", "Ab", "Db", "Gb", "Cb"], True),
+    "Abm": (["Bb", "Eb", "Ab", "Db", "Gb", "Cb", "Fb"], True),
 }
 
 # Circle of fifths (clockwise from C)
-CIRCLE_OF_FIFTHS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'Db', 'Ab', 'Eb', 'Bb', 'F']
+CIRCLE_OF_FIFTHS = ["C", "G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb", "Bb", "F"]
 
 
 # ============================================================================
@@ -113,7 +133,7 @@ def note_name_to_midi(name: str, octave: int = 4) -> int:
         61
     """
     # Parse octave from name if present (e.g., "C4", "F#3")
-    match = re.match(r'^([A-Ga-g][#b]*)(-?\d+)?$', name)
+    match = re.match(r"^([A-Ga-g][#b]*)(-?\d+)?$", name)
     if not match:
         raise ValueError(f"Invalid note name: {name}")
 
@@ -173,6 +193,7 @@ def midi_to_note_name(midi: int, use_flats: bool = False) -> str:
 
 class IntervalQuality(Enum):
     """Interval quality (perfect, major, minor, augmented, diminished)."""
+
     PERFECT = "P"
     MAJOR = "M"
     MINOR = "m"
@@ -196,6 +217,7 @@ class Interval:
         >>> Interval.from_semitones(7)
         Interval.PERFECT_FIFTH
     """
+
     semitones: int
     quality: IntervalQuality
     number: int
@@ -229,7 +251,7 @@ class Interval:
         return f"Interval({self.semitones}, {self.name!r})"
 
     @classmethod
-    def from_semitones(cls, semitones: int) -> 'Interval':
+    def from_semitones(cls, semitones: int) -> "Interval":
         """Create interval from semitone count.
 
         Args:
@@ -243,10 +265,12 @@ class Interval:
             if interval.semitones == semitones:
                 return interval
         # Default to chromatic interval
-        return cls(semitones, IntervalQuality.AUGMENTED, semitones, f"{semitones} semitones")
+        return cls(
+            semitones, IntervalQuality.AUGMENTED, semitones, f"{semitones} semitones"
+        )
 
     @classmethod
-    def between(cls, note1: 'Note', note2: 'Note') -> 'Interval':
+    def between(cls, note1: "Note", note2: "Note") -> "Interval":
         """Calculate interval between two notes.
 
         Args:
@@ -280,18 +304,30 @@ Interval.MINOR_NINTH = Interval(13, IntervalQuality.MINOR, 9, "Minor Ninth")
 Interval.MAJOR_NINTH = Interval(14, IntervalQuality.MAJOR, 9, "Major Ninth")
 Interval.MINOR_TENTH = Interval(15, IntervalQuality.MINOR, 10, "Minor Tenth")
 Interval.MAJOR_TENTH = Interval(16, IntervalQuality.MAJOR, 10, "Major Tenth")
-Interval.PERFECT_ELEVENTH = Interval(17, IntervalQuality.PERFECT, 11, "Perfect Eleventh")
-Interval.AUGMENTED_ELEVENTH = Interval(18, IntervalQuality.AUGMENTED, 11, "Augmented Eleventh")
+Interval.PERFECT_ELEVENTH = Interval(
+    17, IntervalQuality.PERFECT, 11, "Perfect Eleventh"
+)
+Interval.AUGMENTED_ELEVENTH = Interval(
+    18, IntervalQuality.AUGMENTED, 11, "Augmented Eleventh"
+)
 Interval.PERFECT_TWELFTH = Interval(19, IntervalQuality.PERFECT, 12, "Perfect Twelfth")
 Interval.MINOR_THIRTEENTH = Interval(20, IntervalQuality.MINOR, 13, "Minor Thirteenth")
 Interval.MAJOR_THIRTEENTH = Interval(21, IntervalQuality.MAJOR, 13, "Major Thirteenth")
 
 # List of standard intervals
 INTERVALS = [
-    Interval.UNISON, Interval.MINOR_SECOND, Interval.MAJOR_SECOND,
-    Interval.MINOR_THIRD, Interval.MAJOR_THIRD, Interval.PERFECT_FOURTH,
-    Interval.TRITONE, Interval.PERFECT_FIFTH, Interval.MINOR_SIXTH,
-    Interval.MAJOR_SIXTH, Interval.MINOR_SEVENTH, Interval.MAJOR_SEVENTH,
+    Interval.UNISON,
+    Interval.MINOR_SECOND,
+    Interval.MAJOR_SECOND,
+    Interval.MINOR_THIRD,
+    Interval.MAJOR_THIRD,
+    Interval.PERFECT_FOURTH,
+    Interval.TRITONE,
+    Interval.PERFECT_FIFTH,
+    Interval.MINOR_SIXTH,
+    Interval.MAJOR_SIXTH,
+    Interval.MINOR_SEVENTH,
+    Interval.MAJOR_SEVENTH,
     Interval.OCTAVE,
 ]
 
@@ -319,6 +355,7 @@ class Note:
         >>> note.transpose(7)  # G4
         Note('G', 4)
     """
+
     name: str
     octave: int = 4
     velocity: int = 100
@@ -353,7 +390,9 @@ class Note:
         return float(440.0 * (2.0 ** ((self.midi - 69) / 12.0)))
 
     @classmethod
-    def from_midi(cls, midi: int, velocity: int = 100, use_flats: bool = False) -> 'Note':
+    def from_midi(
+        cls, midi: int, velocity: int = 100, use_flats: bool = False
+    ) -> "Note":
         """Create Note from MIDI number.
 
         Args:
@@ -372,7 +411,7 @@ class Note:
         names = FLAT_NAMES if use_flats else NOTE_NAMES
         return cls(names[pitch_class], octave, velocity)
 
-    def transpose(self, semitones: Union[int, Interval]) -> 'Note':
+    def transpose(self, semitones: int | Interval) -> "Note":
         """Transpose note by semitones or interval.
 
         Args:
@@ -390,7 +429,7 @@ class Note:
 
         return Note.from_midi(new_midi, self.velocity)
 
-    def interval_to(self, other: 'Note') -> Interval:
+    def interval_to(self, other: "Note") -> Interval:
         """Get interval to another note.
 
         Args:
@@ -409,7 +448,7 @@ class Note:
     def __hash__(self) -> int:
         return hash(self.midi)
 
-    def __lt__(self, other: 'Note') -> bool:
+    def __lt__(self, other: "Note") -> bool:
         return self.midi < other.midi
 
     def __repr__(self) -> str:
@@ -426,6 +465,7 @@ class Note:
 
 class ScaleType(Enum):
     """Common scale types with interval patterns (semitones from root)."""
+
     # Diatonic scales
     MAJOR = (0, 2, 4, 5, 7, 9, 11)
     NATURAL_MINOR = (0, 2, 3, 5, 7, 8, 10)
@@ -469,13 +509,14 @@ class ScaleType(Enum):
 
 class Mode(Enum):
     """Church modes (relative to major scale)."""
-    IONIAN = 0      # I - Major
-    DORIAN = 1      # II
-    PHRYGIAN = 2    # III
-    LYDIAN = 3      # IV
+
+    IONIAN = 0  # I - Major
+    DORIAN = 1  # II
+    PHRYGIAN = 2  # III
+    LYDIAN = 3  # IV
     MIXOLYDIAN = 4  # V
-    AEOLIAN = 5     # VI - Natural minor
-    LOCRIAN = 6     # VII
+    AEOLIAN = 5  # VI - Natural minor
+    LOCRIAN = 6  # VII
 
 
 @dataclass
@@ -498,17 +539,18 @@ class Scale:
         >>> scale.degree(3)  # Third degree
         Note('E', 4)
     """
+
     root: Note
     scale_type: ScaleType
     octaves: int = 1
 
     @property
-    def intervals(self) -> Tuple[int, ...]:
+    def intervals(self) -> tuple[int, ...]:
         """Semitone intervals from root."""
-        result: Tuple[int, ...] = self.scale_type.value
+        result: tuple[int, ...] = self.scale_type.value
         return result
 
-    def get_notes(self, octaves: Optional[int] = None) -> List[Note]:
+    def get_notes(self, octaves: int | None = None) -> list[Note]:
         """Get all notes in the scale.
 
         Args:
@@ -529,7 +571,7 @@ class Scale:
 
         return notes
 
-    def get_midi_notes(self, octaves: Optional[int] = None) -> List[int]:
+    def get_midi_notes(self, octaves: int | None = None) -> list[int]:
         """Get MIDI note numbers in the scale.
 
         Args:
@@ -578,7 +620,7 @@ class Scale:
         relative_pc = (note_pc - root_pc) % 12
         return relative_pc in self.intervals
 
-    def harmonize(self, degree: int, chord_type: Optional['ChordType'] = None) -> 'Chord':
+    def harmonize(self, degree: int, chord_type: "ChordType" | None = None) -> "Chord":
         """Build chord on scale degree.
 
         Args:
@@ -612,7 +654,7 @@ class Scale:
         else:
             return Chord(root, ChordType.MAJOR)  # Default
 
-    def parallel(self, scale_type: ScaleType) -> 'Scale':
+    def parallel(self, scale_type: ScaleType) -> "Scale":
         """Get parallel scale (same root, different type).
 
         Args:
@@ -623,7 +665,7 @@ class Scale:
         """
         return Scale(self.root, scale_type, self.octaves)
 
-    def relative_minor(self) -> 'Scale':
+    def relative_minor(self) -> "Scale":
         """Get relative minor scale.
 
         Returns:
@@ -632,7 +674,7 @@ class Scale:
         minor_root = self.degree(6)
         return Scale(minor_root, ScaleType.NATURAL_MINOR, self.octaves)
 
-    def relative_major(self) -> 'Scale':
+    def relative_major(self) -> "Scale":
         """Get relative major scale.
 
         Returns:
@@ -660,6 +702,7 @@ class Scale:
 
 class ChordType(Enum):
     """Common chord types with interval patterns (semitones from root)."""
+
     # Triads
     MAJOR = (0, 4, 7)
     MINOR = (0, 3, 7)
@@ -713,38 +756,38 @@ class ChordType(Enum):
 
 # Chord symbol mappings for parsing
 CHORD_SYMBOL_MAP = {
-    '': ChordType.MAJOR,
-    'maj': ChordType.MAJOR,
-    'M': ChordType.MAJOR,
-    'm': ChordType.MINOR,
-    'min': ChordType.MINOR,
-    '-': ChordType.MINOR,
-    'dim': ChordType.DIMINISHED,
-    'o': ChordType.DIMINISHED,
-    'aug': ChordType.AUGMENTED,
-    '+': ChordType.AUGMENTED,
-    'sus2': ChordType.SUS2,
-    'sus4': ChordType.SUS4,
-    'sus': ChordType.SUS4,
-    '7': ChordType.DOMINANT_7,
-    'maj7': ChordType.MAJOR_7,
-    'M7': ChordType.MAJOR_7,
-    'm7': ChordType.MINOR_7,
-    'min7': ChordType.MINOR_7,
-    '-7': ChordType.MINOR_7,
-    'dim7': ChordType.DIMINISHED_7,
-    'o7': ChordType.DIMINISHED_7,
-    'm7b5': ChordType.HALF_DIMINISHED_7,
-    'mM7': ChordType.MINOR_MAJOR_7,
-    '6': ChordType.MAJOR_6,
-    'm6': ChordType.MINOR_6,
-    '9': ChordType.DOMINANT_9,
-    'maj9': ChordType.MAJOR_9,
-    'm9': ChordType.MINOR_9,
-    '11': ChordType.DOMINANT_11,
-    '13': ChordType.DOMINANT_13,
-    'add9': ChordType.ADD9,
-    '5': ChordType.POWER,
+    "": ChordType.MAJOR,
+    "maj": ChordType.MAJOR,
+    "M": ChordType.MAJOR,
+    "m": ChordType.MINOR,
+    "min": ChordType.MINOR,
+    "-": ChordType.MINOR,
+    "dim": ChordType.DIMINISHED,
+    "o": ChordType.DIMINISHED,
+    "aug": ChordType.AUGMENTED,
+    "+": ChordType.AUGMENTED,
+    "sus2": ChordType.SUS2,
+    "sus4": ChordType.SUS4,
+    "sus": ChordType.SUS4,
+    "7": ChordType.DOMINANT_7,
+    "maj7": ChordType.MAJOR_7,
+    "M7": ChordType.MAJOR_7,
+    "m7": ChordType.MINOR_7,
+    "min7": ChordType.MINOR_7,
+    "-7": ChordType.MINOR_7,
+    "dim7": ChordType.DIMINISHED_7,
+    "o7": ChordType.DIMINISHED_7,
+    "m7b5": ChordType.HALF_DIMINISHED_7,
+    "mM7": ChordType.MINOR_MAJOR_7,
+    "6": ChordType.MAJOR_6,
+    "m6": ChordType.MINOR_6,
+    "9": ChordType.DOMINANT_9,
+    "maj9": ChordType.MAJOR_9,
+    "m9": ChordType.MINOR_9,
+    "11": ChordType.DOMINANT_11,
+    "13": ChordType.DOMINANT_13,
+    "add9": ChordType.ADD9,
+    "5": ChordType.POWER,
 }
 
 
@@ -764,16 +807,17 @@ class Chord:
         >>> chord.inversion(1)
         Chord with E as bass note
     """
+
     root: Note
     chord_type: ChordType
 
     @property
-    def intervals(self) -> Tuple[int, ...]:
+    def intervals(self) -> tuple[int, ...]:
         """Semitone intervals from root."""
-        result: Tuple[int, ...] = self.chord_type.value
+        result: tuple[int, ...] = self.chord_type.value
         return result
 
-    def get_notes(self) -> List[Note]:
+    def get_notes(self) -> list[Note]:
         """Get all notes in the chord.
 
         Returns:
@@ -786,7 +830,7 @@ class Chord:
                 notes.append(Note.from_midi(midi, self.root.velocity))
         return notes
 
-    def get_midi_notes(self) -> List[int]:
+    def get_midi_notes(self) -> list[int]:
         """Get MIDI note numbers in the chord.
 
         Returns:
@@ -794,7 +838,7 @@ class Chord:
         """
         return [n.midi for n in self.get_notes()]
 
-    def inversion(self, n: int) -> 'Chord':
+    def inversion(self, n: int) -> "Chord":
         """Get chord inversion.
 
         Args:
@@ -817,7 +861,7 @@ class Chord:
         # Create new chord from lowest note
         return Chord(rotated[0], self.chord_type)
 
-    def get_voicing(self, voicing: List[int]) -> List[Note]:
+    def get_voicing(self, voicing: list[int]) -> list[Note]:
         """Get specific voicing of the chord.
 
         Args:
@@ -846,7 +890,7 @@ class Chord:
 
         return notes
 
-    def transpose(self, semitones: int) -> 'Chord':
+    def transpose(self, semitones: int) -> "Chord":
         """Transpose chord by semitones.
 
         Args:
@@ -859,7 +903,7 @@ class Chord:
         return Chord(new_root, self.chord_type)
 
     @classmethod
-    def from_symbol(cls, symbol: str, octave: int = 4) -> 'Chord':
+    def from_symbol(cls, symbol: str, octave: int = 4) -> "Chord":
         """Parse chord from symbol string.
 
         Args:
@@ -876,7 +920,7 @@ class Chord:
             Chord(Note('F#', 4), ChordType.MINOR)
         """
         # Parse root note (handles sharps/flats)
-        match = re.match(r'^([A-Ga-g][#b]?)(.*?)$', symbol)
+        match = re.match(r"^([A-Ga-g][#b]?)(.*?)$", symbol)
         if not match:
             raise ValueError(f"Invalid chord symbol: {symbol}")
 
@@ -939,18 +983,19 @@ class ChordProgression:
         >>> [str(c) for c in prog.chords]
         ['Cmaj', 'Gmaj', 'Am', 'Fmaj']
     """
-    chords: List[Chord]
-    key: Optional[str] = None
+
+    chords: list[Chord]
+    key: str | None = None
     scale_type: ScaleType = ScaleType.MAJOR
 
     @classmethod
     def from_numerals(
         cls,
         key: str,
-        numerals: List[str],
+        numerals: list[str],
         octave: int = 4,
         scale_type: ScaleType = ScaleType.MAJOR,
-    ) -> 'ChordProgression':
+    ) -> "ChordProgression":
         """Create progression from Roman numeral notation.
 
         Args:
@@ -966,8 +1011,20 @@ class ChordProgression:
             >>> ChordProgression.from_numerals('C', ['I', 'V', 'vi', 'IV'])
         """
         numeral_map = {
-            'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5, 'VI': 6, 'VII': 7,
-            'i': 1, 'ii': 2, 'iii': 3, 'iv': 4, 'v': 5, 'vi': 6, 'vii': 7,
+            "I": 1,
+            "II": 2,
+            "III": 3,
+            "IV": 4,
+            "V": 5,
+            "VI": 6,
+            "VII": 7,
+            "i": 1,
+            "ii": 2,
+            "iii": 3,
+            "iv": 4,
+            "v": 5,
+            "vi": 6,
+            "vii": 7,
         }
 
         root = Note(key, octave)
@@ -976,11 +1033,11 @@ class ChordProgression:
 
         for numeral in numerals:
             # Check for additional quality modifiers
-            base_numeral = numeral.rstrip('o+7')
+            base_numeral = numeral.rstrip("o+7")
             is_minor = base_numeral.islower()
-            is_dim = 'o' in numeral
-            is_aug = '+' in numeral
-            has_7th = '7' in numeral
+            is_dim = "o" in numeral
+            is_aug = "+" in numeral
+            has_7th = "7" in numeral
 
             degree = numeral_map.get(base_numeral.upper())
             if degree is None:
@@ -998,7 +1055,9 @@ class ChordProgression:
             else:
                 if has_7th:
                     # V7 is dominant, others are major 7
-                    chord_type = ChordType.DOMINANT_7 if degree == 5 else ChordType.MAJOR_7
+                    chord_type = (
+                        ChordType.DOMINANT_7 if degree == 5 else ChordType.MAJOR_7
+                    )
                 else:
                     chord_type = ChordType.MAJOR
 
@@ -1007,7 +1066,7 @@ class ChordProgression:
         return cls(chords, key, scale_type)
 
     @classmethod
-    def from_symbols(cls, symbols: List[str], octave: int = 4) -> 'ChordProgression':
+    def from_symbols(cls, symbols: list[str], octave: int = 4) -> "ChordProgression":
         """Create progression from chord symbols.
 
         Args:
@@ -1020,7 +1079,7 @@ class ChordProgression:
         chords = [Chord.from_symbol(sym, octave) for sym in symbols]
         return cls(chords)
 
-    def transpose(self, semitones: int) -> 'ChordProgression':
+    def transpose(self, semitones: int) -> "ChordProgression":
         """Transpose entire progression.
 
         Args:
@@ -1066,6 +1125,7 @@ class NoteValue(Enum):
         >>> NoteValue.EIGHTH.beats
         0.125
     """
+
     WHOLE = 1.0
     HALF = 0.5
     QUARTER = 0.25
@@ -1100,7 +1160,7 @@ class NoteValue(Enum):
         Returns:
             Duration as fraction of whole note
         """
-        multiplier = sum(0.5 ** i for i in range(dots + 1))
+        multiplier = sum(0.5**i for i in range(dots + 1))
         return self.value * multiplier
 
     def triplet(self) -> float:
@@ -1108,7 +1168,7 @@ class NoteValue(Enum):
         return self.value * (2 / 3)
 
     @classmethod
-    def from_beats(cls, beats: float, tolerance: float = 0.001) -> 'NoteValue':
+    def from_beats(cls, beats: float, tolerance: float = 0.001) -> "NoteValue":
         """Find closest note value for a beat duration.
 
         Args:
@@ -1129,8 +1189,9 @@ class NoteValue(Enum):
 
 class MeterType(Enum):
     """Meter classification."""
-    SIMPLE_DUPLE = "simple_duple"      # 2/4
-    SIMPLE_TRIPLE = "simple_triple"    # 3/4
+
+    SIMPLE_DUPLE = "simple_duple"  # 2/4
+    SIMPLE_TRIPLE = "simple_triple"  # 3/4
     SIMPLE_QUADRUPLE = "simple_quadruple"  # 4/4
     COMPOUND_DUPLE = "compound_duple"  # 6/8
     COMPOUND_TRIPLE = "compound_triple"  # 9/8
@@ -1164,13 +1225,14 @@ class TimeSignature:
         >>> ts.beat_groups
         2
     """
+
     numerator: int
     denominator: int
 
     # Common time signatures as class constants
-    COMMON_TIME: ClassVar['TimeSignature']
-    CUT_TIME: ClassVar['TimeSignature']
-    WALTZ_TIME: ClassVar['TimeSignature']
+    COMMON_TIME: ClassVar["TimeSignature"]
+    CUT_TIME: ClassVar["TimeSignature"]
+    WALTZ_TIME: ClassVar["TimeSignature"]
 
     def __post_init__(self) -> None:
         if self.numerator < 1:
@@ -1271,8 +1333,9 @@ class TimeSignature:
         quarter_notes = seconds * (tempo / 60)
         return quarter_notes * (self.denominator / 4)
 
-    def quantize_to_grid(self, position: float, grid: NoteValue,
-                         strength: float = 1.0) -> float:
+    def quantize_to_grid(
+        self, position: float, grid: NoteValue, strength: float = 1.0
+    ) -> float:
         """Quantize a position to a rhythmic grid.
 
         Args:
@@ -1288,7 +1351,7 @@ class TimeSignature:
         nearest = round(position / grid_beats) * grid_beats
         return position + (nearest - position) * strength
 
-    def get_beat_positions(self, measures: int = 1) -> List[float]:
+    def get_beat_positions(self, measures: int = 1) -> list[float]:
         """Get beat positions within measures.
 
         Args:
@@ -1300,10 +1363,10 @@ class TimeSignature:
         positions = []
         for m in range(measures):
             for b in range(self.numerator):
-                positions.append(m * self.numerator + b)
+                positions.append(float(m * self.numerator + b))
         return positions
 
-    def get_downbeats(self, measures: int = 1) -> List[float]:
+    def get_downbeats(self, measures: int = 1) -> list[float]:
         """Get downbeat (first beat) positions.
 
         Args:
@@ -1352,9 +1415,10 @@ class Duration:
         >>> d.beats  # 0.125 * (2/3)
         0.0833...
     """
+
     value: NoteValue
     dots: int = 0
-    tuplet: Optional[Tuple[int, int]] = None
+    tuplet: tuple[int, int] | None = None
 
     def __post_init__(self) -> None:
         if self.dots < 0 or self.dots > 3:
@@ -1371,7 +1435,7 @@ class Duration:
 
         # Apply dots
         if self.dots > 0:
-            multiplier = sum(0.5 ** i for i in range(self.dots + 1))
+            multiplier = sum(0.5**i for i in range(self.dots + 1))
             base *= multiplier
 
         # Apply tuplet
@@ -1399,7 +1463,7 @@ class Duration:
         return quarter_notes * (60 / tempo)
 
     @classmethod
-    def triplet(cls, value: NoteValue) -> 'Duration':
+    def triplet(cls, value: NoteValue) -> "Duration":
         """Create a triplet duration.
 
         Args:
@@ -1411,7 +1475,7 @@ class Duration:
         return cls(value, tuplet=(3, 2))
 
     @classmethod
-    def dotted(cls, value: NoteValue, dots: int = 1) -> 'Duration':
+    def dotted(cls, value: NoteValue, dots: int = 1) -> "Duration":
         """Create a dotted duration.
 
         Args:
@@ -1459,8 +1523,9 @@ class RhythmPattern:
         >>> pattern.fits_measure(TimeSignature(4, 4))
         True
     """
-    durations: List[Duration]
-    name: Optional[str] = None
+
+    durations: list[Duration]
+    name: str | None = None
 
     @property
     def total_beats(self) -> float:
@@ -1483,7 +1548,7 @@ class RhythmPattern:
         """
         return abs(self.total_beats - time_sig.measure_duration) < 0.001
 
-    def get_onset_positions(self) -> List[float]:
+    def get_onset_positions(self) -> list[float]:
         """Get onset positions for each duration.
 
         Returns:
@@ -1496,7 +1561,7 @@ class RhythmPattern:
             pos += d.beats
         return positions
 
-    def scale_to_tempo(self, tempo: float) -> List[float]:
+    def scale_to_tempo(self, tempo: float) -> list[float]:
         """Get onset times in seconds at given tempo.
 
         Args:
@@ -1510,7 +1575,7 @@ class RhythmPattern:
         # beats * 4 = quarter notes, * 60/tempo = seconds
         return [p * 4 * (60 / tempo) for p in positions]
 
-    def repeat(self, times: int) -> 'RhythmPattern':
+    def repeat(self, times: int) -> "RhythmPattern":
         """Create a repeated pattern.
 
         Args:
@@ -1521,12 +1586,16 @@ class RhythmPattern:
         """
         return RhythmPattern(
             durations=self.durations * times,
-            name=f"{self.name}_x{times}" if self.name else None
+            name=f"{self.name}_x{times}" if self.name else None,
         )
 
     @classmethod
-    def from_string(cls, pattern: str, base_value: NoteValue = NoteValue.EIGHTH,
-                    name: Optional[str] = None) -> 'RhythmPattern':
+    def from_string(
+        cls,
+        pattern: str,
+        base_value: NoteValue = NoteValue.EIGHTH,
+        name: str | None = None,
+    ) -> "RhythmPattern":
         """Create pattern from string notation.
 
         Uses 'x' for notes and '.' for rests. Each character represents
@@ -1547,14 +1616,14 @@ class RhythmPattern:
         """
         durations = []
         for char in pattern:
-            if char in ('x', 'X', '1'):
+            if char in ("x", "X", "1"):
                 durations.append(Duration(base_value))
-            elif char in ('.', '0', '-'):
+            elif char in (".", "0", "-"):
                 durations.append(Duration(base_value))  # Rest treated as duration
         return cls(durations, name=name)
 
     @classmethod
-    def straight_eighths(cls, count: int = 8) -> 'RhythmPattern':
+    def straight_eighths(cls, count: int = 8) -> "RhythmPattern":
         """Create straight eighth note pattern.
 
         Args:
@@ -1564,12 +1633,13 @@ class RhythmPattern:
             Pattern of straight eighth notes
         """
         return cls(
-            [Duration(NoteValue.EIGHTH) for _ in range(count)],
-            name="straight_eighths"
+            [Duration(NoteValue.EIGHTH) for _ in range(count)], name="straight_eighths"
         )
 
     @classmethod
-    def swing_eighths(cls, count: int = 8, swing_ratio: float = 2/3) -> 'RhythmPattern':
+    def swing_eighths(
+        cls, count: int = 8, swing_ratio: float = 2 / 3
+    ) -> "RhythmPattern":
         """Create swung eighth note pattern.
 
         Args:
@@ -1580,12 +1650,8 @@ class RhythmPattern:
             Pattern with alternating long-short eighths
         """
         durations = []
-        eighth = NoteValue.EIGHTH.beats
         for _ in range(count):
-            long = Duration(NoteValue.EIGHTH)
-            long_beats = eighth * (swing_ratio * 2)
-            short_beats = eighth * ((1 - swing_ratio) * 2)
-            # Approximate with closest values - in practice use tuplets
+            # Approximate swing with closest values - in practice use tuplets
             durations.append(Duration(NoteValue.EIGHTH, tuplet=(3, 2)))
             durations.append(Duration(NoteValue.SIXTEENTH, tuplet=(3, 2)))
         return cls(durations, name="swing_eighths")
@@ -1604,17 +1670,19 @@ class RhythmPattern:
 # Common rhythm patterns
 COMMON_PATTERNS = {
     "four_on_floor": RhythmPattern(
-        [Duration(NoteValue.QUARTER) for _ in range(4)],
-        name="four_on_floor"
+        [Duration(NoteValue.QUARTER) for _ in range(4)], name="four_on_floor"
     ),
     "backbeat": RhythmPattern(
-        [Duration(NoteValue.QUARTER), Duration(NoteValue.QUARTER),
-         Duration(NoteValue.QUARTER), Duration(NoteValue.QUARTER)],
-        name="backbeat"
+        [
+            Duration(NoteValue.QUARTER),
+            Duration(NoteValue.QUARTER),
+            Duration(NoteValue.QUARTER),
+            Duration(NoteValue.QUARTER),
+        ],
+        name="backbeat",
     ),
     "eighth_notes": RhythmPattern.straight_eighths(8),
     "sixteenth_notes": RhythmPattern(
-        [Duration(NoteValue.SIXTEENTH) for _ in range(16)],
-        name="sixteenth_notes"
+        [Duration(NoteValue.SIXTEENTH) for _ in range(16)], name="sixteenth_notes"
     ),
 }

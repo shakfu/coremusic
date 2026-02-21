@@ -8,7 +8,7 @@ buffers.
 import pytest
 
 from coremusic import capi
-from coremusic.objects import CoreAudioError
+from coremusic.exceptions import CoreAudioError
 
 
 class TestAudioFileReadPacketsInto:
@@ -23,7 +23,8 @@ class TestAudioFileReadPacketsInto:
                 file_id, capi.get_audio_file_property_maximum_packet_size()
             )
             import struct
-            max_packet_size = struct.unpack('<I', max_packet_size_bytes)[0]
+
+            max_packet_size = struct.unpack("<I", max_packet_size_bytes)[0]
 
             # Allocate buffer for 100 packets
             num_packets = 100
@@ -51,7 +52,8 @@ class TestAudioFileReadPacketsInto:
                 file_id, capi.get_audio_file_property_maximum_packet_size()
             )
             import struct
-            max_packet_size = struct.unpack('<I', max_packet_size_bytes)[0]
+
+            max_packet_size = struct.unpack("<I", max_packet_size_bytes)[0]
 
             num_packets = 50
 
@@ -97,7 +99,8 @@ class TestAudioFileReadPacketsInto:
                 file_id, capi.get_audio_file_property_maximum_packet_size()
             )
             import struct
-            max_packet_size = struct.unpack('<I', max_packet_size_bytes)[0]
+
+            max_packet_size = struct.unpack("<I", max_packet_size_bytes)[0]
 
             num_packets = 100
 
@@ -125,7 +128,8 @@ class TestAudioFileReadPacketsInto:
                 file_id, capi.get_audio_file_property_maximum_packet_size()
             )
             import struct
-            max_packet_size = struct.unpack('<I', max_packet_size_bytes)[0]
+
+            max_packet_size = struct.unpack("<I", max_packet_size_bytes)[0]
 
             num_packets = 50
             buffer = bytearray(max_packet_size * num_packets)
@@ -157,28 +161,28 @@ class TestAudioConverterConvertBufferInto:
     def source_format(self):
         """44.1kHz stereo 16-bit PCM format"""
         return {
-            'sample_rate': 44100.0,
-            'format_id': capi.fourchar_to_int('lpcm'),
-            'format_flags': 0x0C,  # kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked
-            'bytes_per_packet': 4,
-            'frames_per_packet': 1,
-            'bytes_per_frame': 4,
-            'channels_per_frame': 2,
-            'bits_per_channel': 16,
+            "sample_rate": 44100.0,
+            "format_id": capi.fourchar_to_int("lpcm"),
+            "format_flags": 0x0C,  # kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked
+            "bytes_per_packet": 4,
+            "frames_per_packet": 1,
+            "bytes_per_frame": 4,
+            "channels_per_frame": 2,
+            "bits_per_channel": 16,
         }
 
     @pytest.fixture
     def dest_format_mono(self):
         """44.1kHz mono 16-bit PCM format"""
         return {
-            'sample_rate': 44100.0,
-            'format_id': capi.fourchar_to_int('lpcm'),
-            'format_flags': 0x0C,
-            'bytes_per_packet': 2,
-            'frames_per_packet': 1,
-            'bytes_per_frame': 2,
-            'channels_per_frame': 1,
-            'bits_per_channel': 16,
+            "sample_rate": 44100.0,
+            "format_id": capi.fourchar_to_int("lpcm"),
+            "format_flags": 0x0C,
+            "bytes_per_packet": 2,
+            "frames_per_packet": 1,
+            "bytes_per_frame": 2,
+            "channels_per_frame": 1,
+            "bits_per_channel": 16,
         }
 
     def test_convert_buffer_into_basic(self, source_format, dest_format_mono):
@@ -202,7 +206,9 @@ class TestAudioConverterConvertBufferInto:
         finally:
             capi.audio_converter_dispose(converter_id)
 
-    def test_convert_buffer_into_matches_original(self, source_format, dest_format_mono):
+    def test_convert_buffer_into_matches_original(
+        self, source_format, dest_format_mono
+    ):
         """Verify zero-copy function produces identical results to original"""
         converter_id = capi.audio_converter_new(source_format, dest_format_mono)
         try:
@@ -211,7 +217,9 @@ class TestAudioConverterConvertBufferInto:
             input_bytes = b"\x00\x01" * (num_frames * 2)
 
             # Convert using original function
-            original_result = capi.audio_converter_convert_buffer(converter_id, input_bytes)
+            original_result = capi.audio_converter_convert_buffer(
+                converter_id, input_bytes
+            )
 
             # Reset converter for fair comparison
             capi.audio_converter_reset(converter_id)
@@ -400,11 +408,11 @@ class TestAudioUnitRenderInto:
     def default_output_unit(self):
         """Create a default output AudioUnit"""
         desc = {
-            'component_type': capi.get_audio_unit_type_output(),
-            'component_sub_type': capi.get_audio_unit_subtype_default_output(),
-            'component_manufacturer': capi.get_audio_unit_manufacturer_apple(),
-            'component_flags': 0,
-            'component_flags_mask': 0
+            "component_type": capi.get_audio_unit_type_output(),
+            "component_sub_type": capi.get_audio_unit_subtype_default_output(),
+            "component_manufacturer": capi.get_audio_unit_manufacturer_apple(),
+            "component_flags": 0,
+            "component_flags_mask": 0,
         }
         component = capi.audio_component_find_next(desc)
         if component is None:
@@ -431,7 +439,7 @@ class TestAudioUnitRenderInto:
 
         # Fill input with some data
         for i in range(0, len(input_data), 4):
-            input_data[i:i+4] = b'\x00\x00\x80\x3f'  # 1.0 as float32
+            input_data[i : i + 4] = b"\x00\x00\x80\x3f"  # 1.0 as float32
 
         bytes_written = capi.audio_unit_render_into(
             default_output_unit, input_data, output_buffer, num_frames, num_channels
@@ -470,31 +478,33 @@ class TestAudioConverterFillComplexBufferInto:
     def source_format_44100(self):
         """44.1kHz stereo 16-bit PCM format"""
         return {
-            'sample_rate': 44100.0,
-            'format_id': capi.fourchar_to_int('lpcm'),
-            'format_flags': 0x0C,
-            'bytes_per_packet': 4,
-            'frames_per_packet': 1,
-            'bytes_per_frame': 4,
-            'channels_per_frame': 2,
-            'bits_per_channel': 16,
+            "sample_rate": 44100.0,
+            "format_id": capi.fourchar_to_int("lpcm"),
+            "format_flags": 0x0C,
+            "bytes_per_packet": 4,
+            "frames_per_packet": 1,
+            "bytes_per_frame": 4,
+            "channels_per_frame": 2,
+            "bits_per_channel": 16,
         }
 
     @pytest.fixture
     def dest_format_48000(self):
         """48kHz stereo 16-bit PCM format"""
         return {
-            'sample_rate': 48000.0,
-            'format_id': capi.fourchar_to_int('lpcm'),
-            'format_flags': 0x0C,
-            'bytes_per_packet': 4,
-            'frames_per_packet': 1,
-            'bytes_per_frame': 4,
-            'channels_per_frame': 2,
-            'bits_per_channel': 16,
+            "sample_rate": 48000.0,
+            "format_id": capi.fourchar_to_int("lpcm"),
+            "format_flags": 0x0C,
+            "bytes_per_packet": 4,
+            "frames_per_packet": 1,
+            "bytes_per_frame": 4,
+            "channels_per_frame": 2,
+            "bits_per_channel": 16,
         }
 
-    def test_fill_complex_buffer_into_basic(self, source_format_44100, dest_format_48000):
+    def test_fill_complex_buffer_into_basic(
+        self, source_format_44100, dest_format_48000
+    ):
         """Test basic zero-copy complex buffer conversion"""
         converter_id = capi.audio_converter_new(source_format_44100, dest_format_48000)
         try:
@@ -509,8 +519,12 @@ class TestAudioConverterFillComplexBufferInto:
             expected_output_packets = int(num_packets * 48000 / 44100) + 10
 
             bytes_written, packets_out = capi.audio_converter_fill_complex_buffer_into(
-                converter_id, input_data, output_buffer,
-                num_packets, expected_output_packets, source_format_44100
+                converter_id,
+                input_data,
+                output_buffer,
+                num_packets,
+                expected_output_packets,
+                source_format_44100,
             )
 
             assert bytes_written > 0
@@ -518,7 +532,9 @@ class TestAudioConverterFillComplexBufferInto:
         finally:
             capi.audio_converter_dispose(converter_id)
 
-    def test_fill_complex_buffer_into_matches_original(self, source_format_44100, dest_format_48000):
+    def test_fill_complex_buffer_into_matches_original(
+        self, source_format_44100, dest_format_48000
+    ):
         """Verify zero-copy function produces identical results to original"""
         converter_id = capi.audio_converter_new(source_format_44100, dest_format_48000)
         try:
@@ -527,9 +543,14 @@ class TestAudioConverterFillComplexBufferInto:
             expected_output_packets = int(num_packets * 48000 / 44100) + 10
 
             # Convert using original function
-            original_result, original_packets = capi.audio_converter_fill_complex_buffer(
-                converter_id, input_bytes,
-                num_packets, expected_output_packets, source_format_44100
+            original_result, original_packets = (
+                capi.audio_converter_fill_complex_buffer(
+                    converter_id,
+                    input_bytes,
+                    num_packets,
+                    expected_output_packets,
+                    source_format_44100,
+                )
             )
 
             # Reset converter
@@ -539,8 +560,12 @@ class TestAudioConverterFillComplexBufferInto:
             input_data = bytearray(input_bytes)
             output_buffer = bytearray(len(input_data) * 4)
             bytes_written, packets_out = capi.audio_converter_fill_complex_buffer_into(
-                converter_id, input_data, output_buffer,
-                num_packets, expected_output_packets, source_format_44100
+                converter_id,
+                input_data,
+                output_buffer,
+                num_packets,
+                expected_output_packets,
+                source_format_44100,
             )
 
             # Results should be identical
@@ -550,7 +575,9 @@ class TestAudioConverterFillComplexBufferInto:
         finally:
             capi.audio_converter_dispose(converter_id)
 
-    def test_fill_complex_buffer_into_numpy(self, source_format_44100, dest_format_48000):
+    def test_fill_complex_buffer_into_numpy(
+        self, source_format_44100, dest_format_48000
+    ):
         """Test zero-copy complex buffer conversion with numpy arrays"""
         pytest.importorskip("numpy")
         import numpy as np
@@ -565,8 +592,12 @@ class TestAudioConverterFillComplexBufferInto:
             expected_output_packets = int(num_packets * 48000 / 44100) + 10
 
             bytes_written, packets_out = capi.audio_converter_fill_complex_buffer_into(
-                converter_id, input_data, output_buffer,
-                num_packets, expected_output_packets, source_format_44100
+                converter_id,
+                input_data,
+                output_buffer,
+                num_packets,
+                expected_output_packets,
+                source_format_44100,
             )
 
             assert bytes_written > 0
@@ -622,7 +653,9 @@ class TestAudioFileStreamParseBuffer:
         stream_id = capi.audio_file_stream_open(capi.get_audio_file_wave_type())
         try:
             # Pass bytes directly (immutable)
-            status = capi.audio_file_stream_parse_buffer(stream_id, wav_file_data[:1024])
+            status = capi.audio_file_stream_parse_buffer(
+                stream_id, wav_file_data[:1024]
+            )
             assert status == 0
         finally:
             capi.audio_file_stream_close(stream_id)
@@ -637,13 +670,13 @@ class TestAudioFileStreamParseBuffer:
 
             # Parse first 4KB in chunks
             for i in range(0, min(len(wav_file_data), 4096), chunk_size):
-                chunk = wav_file_data[i:i+chunk_size]
+                chunk = wav_file_data[i : i + chunk_size]
                 if not chunk:
                     break
                 # Copy chunk into reusable buffer
-                buffer[:len(chunk)] = chunk
+                buffer[: len(chunk)] = chunk
                 status = capi.audio_file_stream_parse_buffer(
-                    stream_id, memoryview(buffer)[:len(chunk)]
+                    stream_id, memoryview(buffer)[: len(chunk)]
                 )
                 assert status == 0
         finally:
@@ -678,7 +711,8 @@ class TestMemoryviewPerformance:
                 file_id, capi.get_audio_file_property_maximum_packet_size()
             )
             import struct
-            max_packet_size = struct.unpack('<I', max_packet_size_bytes)[0]
+
+            max_packet_size = struct.unpack("<I", max_packet_size_bytes)[0]
 
             num_packets = 1000
             iterations = 10
@@ -702,10 +736,12 @@ class TestMemoryviewPerformance:
             assert original_time > 0
             assert zerocopy_time > 0
             # Log for informational purposes (not a strict assertion)
-            print(f"\nRead packets ({iterations} iterations, {num_packets} packets each):")
-            print(f"  Original: {original_time*1000:.2f}ms")
-            print(f"  Zero-copy: {zerocopy_time*1000:.2f}ms")
+            print(
+                f"\nRead packets ({iterations} iterations, {num_packets} packets each):"
+            )
+            print(f"  Original: {original_time * 1000:.2f}ms")
+            print(f"  Zero-copy: {zerocopy_time * 1000:.2f}ms")
             if zerocopy_time < original_time:
-                print(f"  Speedup: {original_time/zerocopy_time:.2f}x")
+                print(f"  Speedup: {original_time / zerocopy_time:.2f}x")
         finally:
             capi.audio_file_close(file_id)

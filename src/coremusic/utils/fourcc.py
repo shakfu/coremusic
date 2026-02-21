@@ -10,10 +10,10 @@ This module provides utilities to convert between representations and work
 with FourCC values consistently.
 """
 
-from typing import Union
+from __future__ import annotations
 
 # Type alias for FourCC values
-FourCC = Union[str, int]
+FourCC = str | int
 
 __all__ = [
     "FourCC",
@@ -72,7 +72,9 @@ def ensure_fourcc_str(value: FourCC) -> str:
     """
     if isinstance(value, str):
         if len(value) != 4:
-            raise ValueError(f"FourCC string must be exactly 4 characters, got {len(value)}")
+            raise ValueError(
+                f"FourCC string must be exactly 4 characters, got {len(value)}"
+            )
         return value
     elif isinstance(value, int):
         return fourcc_to_str(value)
@@ -122,10 +124,12 @@ def fourcc_to_int(fourcc_str: str) -> int:
         1633969526
     """
     if len(fourcc_str) != 4:
-        raise ValueError(f"FourCC string must be exactly 4 characters, got {len(fourcc_str)}")
+        raise ValueError(
+            f"FourCC string must be exactly 4 characters, got {len(fourcc_str)}"
+        )
 
     # Convert to big-endian 32-bit integer
-    return int.from_bytes(fourcc_str.encode('latin-1'), byteorder='big')
+    return int.from_bytes(fourcc_str.encode("latin-1"), byteorder="big")
 
 
 def fourcc_to_str(fourcc_int: int) -> str:
@@ -147,10 +151,12 @@ def fourcc_to_str(fourcc_int: int) -> str:
         'aac '
     """
     if fourcc_int < 0 or fourcc_int > 0xFFFFFFFF:
-        raise ValueError(f"FourCC integer must be in range 0-4294967295, got {fourcc_int}")
+        raise ValueError(
+            f"FourCC integer must be in range 0-4294967295, got {fourcc_int}"
+        )
 
     # Convert from big-endian 32-bit integer
-    return fourcc_int.to_bytes(4, byteorder='big').decode('latin-1')
+    return fourcc_int.to_bytes(4, byteorder="big").decode("latin-1")
 
 
 class FourCCValue:
@@ -194,7 +200,9 @@ class FourCCValue:
         """
         if isinstance(value, str):
             if len(value) != 4:
-                raise ValueError(f"FourCC string must be exactly 4 characters, got {len(value)}")
+                raise ValueError(
+                    f"FourCC string must be exactly 4 characters, got {len(value)}"
+                )
             self._str = value
             self._int = fourcc_to_int(value)
         elif isinstance(value, int):
@@ -257,7 +265,7 @@ class FourCCValue:
             >>> f"{fourcc:08X}"
             '6C70636D'
         """
-        if not format_spec or format_spec == 's':
+        if not format_spec or format_spec == "s":
             return self._str
         else:
             # Treat as integer format
@@ -265,7 +273,7 @@ class FourCCValue:
 
 
 # Convenience function for backward compatibility with capi module
-def convert_fourcc(value: FourCC, to_type: type) -> Union[str, int]:
+def convert_fourcc(value: FourCC, to_type: type) -> str | int:
     """Convert FourCC to specified type.
 
     Args:

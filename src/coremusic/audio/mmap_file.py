@@ -4,15 +4,18 @@ This module provides memory-mapped file access for audio files, offering
 significant performance improvements for large file operations.
 """
 
+from __future__ import annotations
+
 import mmap
 import struct
 from io import BufferedReader
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 # Conditional numpy import
 try:
     import numpy as np
+
     NUMPY_AVAILABLE = True
 except ImportError:
     NUMPY_AVAILABLE = False
@@ -55,16 +58,16 @@ class MMapAudioFile:
         - Supports WAV and AIFF formats
     """
 
-    def __init__(self, path: Union[str, Path]):
+    def __init__(self, path: str | Path):
         """Initialize memory-mapped audio file.
 
         Args:
             path: Path to audio file
         """
         self.path = Path(path)
-        self._file: Optional[BufferedReader] = None
-        self._mmap: Optional[mmap.mmap] = None
-        self._format: Optional[AudioStreamBasicDescription] = None
+        self._file: BufferedReader | None = None
+        self._mmap: mmap.mmap | None = None
+        self._format: AudioStreamBasicDescription | None = None
         self._data_offset = 0
         self._data_size = 0
         self._is_open = False
@@ -86,14 +89,10 @@ class MMapAudioFile:
             raise FileNotFoundError(f"File not found: {self.path}")
 
         # Open file for reading
-        self._file = open(self.path, 'rb')
+        self._file = open(self.path, "rb")
 
         # Create memory mapping
-        self._mmap = mmap.mmap(
-            self._file.fileno(),
-            0,
-            access=mmap.ACCESS_READ
-        )
+        self._mmap = mmap.mmap(self._file.fileno(), 0, access=mmap.ACCESS_READ)
 
         # Parse file format
         self._parse_format()
@@ -129,9 +128,9 @@ class MMapAudioFile:
         # Read first 12 bytes to identify format
         header = self._mmap[:12]
 
-        if header[:4] == b'RIFF' and header[8:12] == b'WAVE':
+        if header[:4] == b"RIFF" and header[8:12] == b"WAVE":
             self._parse_wav_format()
-        elif header[:4] == b'FORM' and header[8:12] == b'AIFF':
+        elif header[:4] == b"FORM" and header[8:12] == b"AIFF":
             self._parse_aiff_format()
         else:
             raise ValueError(f"Unsupported format: {header[:4]!r}")
@@ -144,18 +143,18 @@ class MMapAudioFile:
 
         # Find fmt chunk
         while pos < len(self._mmap):
-            chunk_id = self._mmap[pos:pos+4]
-            chunk_size = struct.unpack('<I', self._mmap[pos+4:pos+8])[0]
+            chunk_id = self._mmap[pos : pos + 4]
+            chunk_size = struct.unpack("<I", self._mmap[pos + 4 : pos + 8])[0]
 
-            if chunk_id == b'fmt ':
+            if chunk_id == b"fmt ":
                 # Parse format chunk
-                fmt_data = self._mmap[pos+8:pos+8+chunk_size]
-                audio_format = struct.unpack('<H', fmt_data[0:2])[0]
-                channels = struct.unpack('<H', fmt_data[2:4])[0]
-                sample_rate = struct.unpack('<I', fmt_data[4:8])[0]
-                _ = struct.unpack('<I', fmt_data[8:12])[0]  # byte_rate - not used
-                block_align = struct.unpack('<H', fmt_data[12:14])[0]
-                bits_per_sample = struct.unpack('<H', fmt_data[14:16])[0]
+                fmt_data = self._mmap[pos + 8 : pos + 8 + chunk_size]
+                audio_format = struct.unpack("<H", fmt_data[0:2])[0]
+                channels = struct.unpack("<H", fmt_data[2:4])[0]
+                sample_rate = struct.unpack("<I", fmt_data[4:8])[0]
+                _ = struct.unpack("<I", fmt_data[8:12])[0]  # byte_rate - not used
+                block_align = struct.unpack("<H", fmt_data[12:14])[0]
+                bits_per_sample = struct.unpack("<H", fmt_data[14:16])[0]
 
                 # Determine format flags
                 if audio_format == 1:  # PCM
@@ -167,7 +166,7 @@ class MMapAudioFile:
 
                 self._format = AudioStreamBasicDescription(
                     sample_rate=float(sample_rate),
-                    format_id='lpcm',
+                    format_id="lpcm",
                     format_flags=format_flags,
                     bytes_per_packet=block_align,
                     frames_per_packet=1,
@@ -176,7 +175,7 @@ class MMapAudioFile:
                     bits_per_channel=bits_per_sample,
                 )
 
-            elif chunk_id == b'data':
+            elif chunk_id == b"data":
                 # Found data chunk
                 self._data_offset = pos + 8
                 self._data_size = chunk_size
@@ -198,15 +197,15 @@ class MMapAudioFile:
 
         # Find COMM and SSND chunks
         while pos < len(self._mmap):
-            chunk_id = self._mmap[pos:pos+4]
-            chunk_size = struct.unpack('>I', self._mmap[pos+4:pos+8])[0]
+            chunk_id = self._mmap[pos : pos + 4]
+            chunk_size = struct.unpack(">I", self._mmap[pos + 4 : pos + 8])[0]
 
-            if chunk_id == b'COMM':
+            if chunk_id == b"COMM":
                 # Parse common chunk
-                comm_data = self._mmap[pos+8:pos+8+chunk_size]
-                channels = struct.unpack('>H', comm_data[0:2])[0]
-                _ = struct.unpack('>I', comm_data[2:6])[0]  # num_frames - not used
-                bits_per_sample = struct.unpack('>H', comm_data[6:8])[0]
+                comm_data = self._mmap[pos + 8 : pos + 8 + chunk_size]
+                channels = struct.unpack(">H", comm_data[0:2])[0]
+                _ = struct.unpack(">I", comm_data[2:6])[0]  # num_frames - not used
+                bits_per_sample = struct.unpack(">H", comm_data[6:8])[0]
                 # Extended 80-bit float for sample rate
                 sample_rate = self._parse_extended_float(comm_data[8:18])
 
@@ -214,7 +213,7 @@ class MMapAudioFile:
 
                 self._format = AudioStreamBasicDescription(
                     sample_rate=sample_rate,
-                    format_id='lpcm',
+                    format_id="lpcm",
                     format_flags=0x0E,  # signed integer | packed | big endian
                     bytes_per_packet=block_align,
                     frames_per_packet=1,
@@ -223,10 +222,12 @@ class MMapAudioFile:
                     bits_per_channel=bits_per_sample,
                 )
 
-            elif chunk_id == b'SSND':
+            elif chunk_id == b"SSND":
                 # Found sound data chunk
-                offset = struct.unpack('>I', self._mmap[pos+8:pos+12])[0]
-                self._data_offset = pos + 16 + offset  # 8 (chunk header) + 8 (SSND header) + offset
+                offset = struct.unpack(">I", self._mmap[pos + 8 : pos + 12])[0]
+                self._data_offset = (
+                    pos + 16 + offset
+                )  # 8 (chunk header) + 8 (SSND header) + offset
                 self._data_size = chunk_size - 8 - offset
                 return
 
@@ -243,8 +244,8 @@ class MMapAudioFile:
         """Parse 80-bit extended float (used in AIFF sample rate)."""
         # Simplified conversion for common sample rates
         # Full implementation would decode IEEE 754 extended precision
-        exponent = struct.unpack('>H', data[0:2])[0]
-        mantissa = struct.unpack('>Q', data[2:10])[0]
+        exponent = struct.unpack(">H", data[0:2])[0]
+        mantissa = struct.unpack(">Q", data[2:10])[0]
 
         # Common sample rates
         if exponent == 0x400E:
@@ -257,9 +258,9 @@ class MMapAudioFile:
         # Generic conversion
         sign = 1 if exponent & 0x8000 == 0 else -1
         exp_value = (exponent & 0x7FFF) - 16383
-        mantissa_value = mantissa / (2 ** 63)
+        mantissa_value = mantissa / (2**63)
 
-        return float(sign * mantissa_value * (2 ** exp_value))
+        return float(sign * mantissa_value * (2**exp_value))
 
     @property
     def format(self) -> AudioStreamBasicDescription:
@@ -307,16 +308,16 @@ class MMapAudioFile:
         # Calculate byte offsets
         bytes_per_frame = self.format.bytes_per_frame
         start_offset = self._data_offset + (start_frame * bytes_per_frame)
-        num_bytes = min(num_frames * bytes_per_frame,
-                       self._data_size - (start_frame * bytes_per_frame))
+        num_bytes = min(
+            num_frames * bytes_per_frame,
+            self._data_size - (start_frame * bytes_per_frame),
+        )
 
         # Read from memory map (very fast)
-        return bytes(self._mmap[start_offset:start_offset + num_bytes])
+        return bytes(self._mmap[start_offset : start_offset + num_bytes])
 
     def read_as_numpy(
-        self,
-        start_frame: int = 0,
-        num_frames: Optional[int] = None
+        self, start_frame: int = 0, num_frames: int | None = None
     ) -> "np.ndarray":
         """Read audio data as NumPy array.
 
@@ -339,8 +340,7 @@ class MMapAudioFile:
         """
         if not NUMPY_AVAILABLE:
             raise ImportError(
-                "NumPy is required for read_as_numpy(). "
-                "Install with: pip install numpy"
+                "NumPy is required for read_as_numpy(). Install with: pip install numpy"
             )
 
         if not self._is_open:
@@ -379,7 +379,7 @@ class MMapAudioFile:
 
         return samples
 
-    def __getitem__(self, key: Union[int, slice]) -> "np.ndarray":
+    def __getitem__(self, key: int | slice) -> np.ndarray:
         """Array-like access with slicing support.
 
         Args:

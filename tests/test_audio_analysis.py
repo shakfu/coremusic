@@ -259,9 +259,7 @@ class TestAudioAnalyzer:
         # Downbeats should be subset of beats
         if len(beat_info.downbeats) > 0:
             # First downbeat should align with a beat
-            assert any(
-                abs(beat_info.downbeats[0] - b) < 0.01 for b in beat_info.beats
-            )
+            assert any(abs(beat_info.downbeats[0] - b) < 0.01 for b in beat_info.beats)
 
     # ========================================================================
     # Pitch Detection Tests

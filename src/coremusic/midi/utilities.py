@@ -15,12 +15,14 @@ Example:
     >>> seq.save("output.mid")
 """
 
+from __future__ import annotations
+
 import logging
 import struct
 from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +105,10 @@ class MIDIEvent:
             MIDI message as bytes
         """
         status_byte = (self.status & 0xF0) | (self.channel & 0x0F)
-        if self.status == MIDIStatus.PROGRAM_CHANGE or self.status == MIDIStatus.CHANNEL_AFTERTOUCH:
+        if (
+            self.status == MIDIStatus.PROGRAM_CHANGE
+            or self.status == MIDIStatus.CHANNEL_AFTERTOUCH
+        ):
             return bytes([status_byte, self.data1 & 0x7F])
         else:
             return bytes([status_byte, self.data1 & 0x7F, self.data2 & 0x7F])
@@ -155,7 +160,7 @@ class MIDITrack:
             name: Track name
         """
         self.name = name
-        self.events: List[MIDIEvent] = []
+        self.events: list[MIDIEvent] = []
         self.program: int = 0  # MIDI program/patch
         self.channel: int = 0  # Default channel
 
@@ -165,7 +170,7 @@ class MIDITrack:
         note: int,
         velocity: int,
         duration: float,
-        channel: Optional[int] = None,
+        channel: int | None = None,
     ) -> None:
         """Add note on/off events.
 
@@ -189,14 +194,10 @@ class MIDITrack:
             raise ValueError(f"Duration must be >= 0, got {duration}")
 
         # Note On
-        self.events.append(
-            MIDIEvent(time, MIDIStatus.NOTE_ON, ch, note, velocity)
-        )
+        self.events.append(MIDIEvent(time, MIDIStatus.NOTE_ON, ch, note, velocity))
 
         # Note Off
-        self.events.append(
-            MIDIEvent(time + duration, MIDIStatus.NOTE_OFF, ch, note, 0)
-        )
+        self.events.append(MIDIEvent(time + duration, MIDIStatus.NOTE_OFF, ch, note, 0))
 
         # Keep events sorted by time
         self.events.sort(key=lambda e: e.time)
@@ -206,7 +207,7 @@ class MIDITrack:
         time: float,
         controller: int,
         value: int,
-        channel: Optional[int] = None,
+        channel: int | None = None,
     ) -> None:
         """Add control change event.
 
@@ -234,7 +235,7 @@ class MIDITrack:
         self,
         time: float,
         program: int,
-        channel: Optional[int] = None,
+        channel: int | None = None,
     ) -> None:
         """Add program change event.
 
@@ -250,9 +251,7 @@ class MIDITrack:
         if not 0 <= ch <= 15:
             raise ValueError(f"Channel must be 0-15, got {ch}")
 
-        self.events.append(
-            MIDIEvent(time, MIDIStatus.PROGRAM_CHANGE, ch, program, 0)
-        )
+        self.events.append(MIDIEvent(time, MIDIStatus.PROGRAM_CHANGE, ch, program, 0))
         self.program = program
         self.events.sort(key=lambda e: e.time)
 
@@ -260,7 +259,7 @@ class MIDITrack:
         self,
         time: float,
         value: int,
-        channel: Optional[int] = None,
+        channel: int | None = None,
     ) -> None:
         """Add pitch bend event.
 
@@ -280,9 +279,7 @@ class MIDITrack:
         lsb = value & 0x7F
         msb = (value >> 7) & 0x7F
 
-        self.events.append(
-            MIDIEvent(time, MIDIStatus.PITCH_BEND, ch, lsb, msb)
-        )
+        self.events.append(MIDIEvent(time, MIDIStatus.PITCH_BEND, ch, lsb, msb))
         self.events.sort(key=lambda e: e.time)
 
     @property
@@ -327,7 +324,7 @@ class MIDISequence:
     def __init__(
         self,
         tempo: float = 120.0,
-        time_signature: Tuple[int, int] = (4, 4),
+        time_signature: tuple[int, int] = (4, 4),
     ):
         """Initialize MIDI sequence.
 
@@ -342,7 +339,7 @@ class MIDISequence:
 
         self.tempo = tempo
         self.time_signature = time_signature
-        self.tracks: List[MIDITrack] = []
+        self.tracks: list[MIDITrack] = []
         self.ppq = 480  # Pulses per quarter note (MIDI resolution)
 
     def add_track(self, name: str = "") -> MIDITrack:
@@ -393,7 +390,7 @@ class MIDISequence:
             data.extend(self._write_variable_length(0))  # Delta time
             data.append(0xFF)  # Meta event
             data.append(0x03)  # Track name
-            name_bytes = track.name.encode('utf-8')
+            name_bytes = track.name.encode("utf-8")
             data.extend(self._write_variable_length(len(name_bytes)))
             data.extend(name_bytes)
 
@@ -422,8 +419,8 @@ class MIDISequence:
 
         # Build track chunk
         chunk = bytearray()
-        chunk.extend(b'MTrk')
-        chunk.extend(struct.pack('>I', len(data)))
+        chunk.extend(b"MTrk")
+        chunk.extend(struct.pack(">I", len(data)))
         chunk.extend(data)
 
         return bytes(chunk)
@@ -442,18 +439,18 @@ class MIDISequence:
         path = Path(filename)
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(path, 'wb') as f:
+        with open(path, "wb") as f:
             # Write MThd header
             # For format 1, we add a tempo track, so total is len(tracks) + 1
             num_tracks = len(self.tracks)
             if format == MIDIFileFormat.MULTI_TRACK and self.tracks:
                 num_tracks += 1  # Account for tempo track
 
-            f.write(b'MThd')
-            f.write(struct.pack('>I', 6))  # Header length
-            f.write(struct.pack('>H', int(format)))  # Format
-            f.write(struct.pack('>H', num_tracks))  # Number of tracks
-            f.write(struct.pack('>H', self.ppq))  # Ticks per quarter note
+            f.write(b"MThd")
+            f.write(struct.pack(">I", 6))  # Header length
+            f.write(struct.pack(">H", int(format)))  # Format
+            f.write(struct.pack(">H", num_tracks))  # Number of tracks
+            f.write(struct.pack(">H", self.ppq))  # Ticks per quarter note
 
             # Write tempo track (track 0 for format 1)
             if format == MIDIFileFormat.MULTI_TRACK and self.tracks:
@@ -481,7 +478,7 @@ class MIDISequence:
                 tempo_track_data.append(0x51)  # Tempo
                 tempo_track_data.append(0x03)  # Length
                 microseconds_per_quarter = int(60_000_000 / self.tempo)
-                tempo_track_data.extend(struct.pack('>I', microseconds_per_quarter)[1:])
+                tempo_track_data.extend(struct.pack(">I", microseconds_per_quarter)[1:])
 
                 # End of track
                 tempo_track_data.extend(self._write_variable_length(0))
@@ -490,8 +487,8 @@ class MIDISequence:
                 tempo_track_data.append(0x00)
 
                 # Write tempo track chunk
-                f.write(b'MTrk')
-                f.write(struct.pack('>I', len(tempo_track_data)))
+                f.write(b"MTrk")
+                f.write(struct.pack(">I", len(tempo_track_data)))
                 f.write(tempo_track_data)
 
             # Write tracks
@@ -519,35 +516,39 @@ class MIDISequence:
 
         sequence = cls()
 
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             # Parse MThd header
             chunk_type = f.read(4)
-            if chunk_type != b'MThd':
-                raise ValueError(f"Invalid MIDI file: expected MThd, got {chunk_type!r}")
+            if chunk_type != b"MThd":
+                raise ValueError(
+                    f"Invalid MIDI file: expected MThd, got {chunk_type!r}"
+                )
 
-            header_length = struct.unpack('>I', f.read(4))[0]
+            header_length = struct.unpack(">I", f.read(4))[0]
             if header_length != 6:
                 raise ValueError(f"Invalid header length: {header_length}")
 
-            format_type = struct.unpack('>H', f.read(2))[0]
-            num_tracks = struct.unpack('>H', f.read(2))[0]
-            division = struct.unpack('>H', f.read(2))[0]
+            format_type = struct.unpack(">H", f.read(2))[0]
+            num_tracks = struct.unpack(">H", f.read(2))[0]
+            division = struct.unpack(">H", f.read(2))[0]
 
             # Handle division (we only support ticks per quarter note)
             if division & 0x8000:
                 raise ValueError("SMPTE time division not supported")
             sequence.ppq = division
 
-            logger.info(f"Loading MIDI file: format={format_type}, tracks={num_tracks}, ppq={division}")
+            logger.info(
+                f"Loading MIDI file: format={format_type}, tracks={num_tracks}, ppq={division}"
+            )
 
             # Parse MTrk chunks
             for track_num in range(num_tracks):
                 chunk_type = f.read(4)
-                if chunk_type != b'MTrk':
+                if chunk_type != b"MTrk":
                     logger.warning(f"Expected MTrk, got {chunk_type!r}, skipping")
                     continue
 
-                track_length = struct.unpack('>I', f.read(4))[0]
+                track_length = struct.unpack(">I", f.read(4))[0]
                 track_data = f.read(track_length)
 
                 # Parse track (simplified - just extract note events)
@@ -619,10 +620,14 @@ class MIDISequence:
                 length = read_variable_length()
 
                 if meta_type == 0x51 and length == 3:  # Tempo
-                    microseconds = (data[pos] << 16) | (data[pos + 1] << 8) | data[pos + 2]
+                    microseconds = (
+                        (data[pos] << 16) | (data[pos + 1] << 8) | data[pos + 2]
+                    )
                     self.tempo = 60_000_000 / microseconds
                 elif meta_type == 0x03:  # Track name
-                    track.name = data[pos:pos + length].decode('utf-8', errors='ignore')
+                    track.name = data[pos : pos + length].decode(
+                        "utf-8", errors="ignore"
+                    )
 
                 pos += length
 
@@ -672,9 +677,9 @@ class Route:
 
     source: str  # Source identifier
     destination: str  # Destination identifier
-    channel_map: Dict[int, int] = field(default_factory=dict)
-    transform: Optional[str] = None
-    filter_func: Optional[Callable[[MIDIEvent], bool]] = None
+    channel_map: dict[int, int] = field(default_factory=dict)
+    transform: str | None = None
+    filter_func: Callable[[MIDIEvent], bool] | None = None
 
 
 class MIDIRouter:
@@ -692,16 +697,16 @@ class MIDIRouter:
 
     def __init__(self) -> None:
         """Initialize MIDI router."""
-        self.routes: List[Route] = []
-        self.transforms: Dict[str, Callable[[MIDIEvent], MIDIEvent]] = {}
+        self.routes: list[Route] = []
+        self.transforms: dict[str, Callable[[MIDIEvent], MIDIEvent]] = {}
 
     def add_route(
         self,
         source: str,
         destination: str,
-        channel_map: Optional[Dict[int, int]] = None,
-        transform: Optional[str] = None,
-        filter_func: Optional[Callable[[MIDIEvent], bool]] = None,
+        channel_map: dict[int, int] | None = None,
+        transform: str | None = None,
+        filter_func: Callable[[MIDIEvent], bool] | None = None,
     ) -> None:
         """Add MIDI route.
 
@@ -753,7 +758,9 @@ class MIDIRouter:
                 return True
         return False
 
-    def process_event(self, source: str, event: MIDIEvent) -> List[Tuple[str, MIDIEvent]]:
+    def process_event(
+        self, source: str, event: MIDIEvent
+    ) -> list[tuple[str, MIDIEvent]]:
         """Process MIDI event through routing matrix.
 
         Args:
@@ -801,7 +808,9 @@ class MIDIRouter:
 
     def __repr__(self) -> str:
         """String representation of router."""
-        return f"MIDIRouter(routes={len(self.routes)}, transforms={len(self.transforms)})"
+        return (
+            f"MIDIRouter(routes={len(self.routes)}, transforms={len(self.transforms)})"
+        )
 
 
 # ============================================================================
@@ -845,7 +854,9 @@ def velocity_scale_transform(factor: float) -> Callable[[MIDIEvent], MIDIEvent]:
     return transform
 
 
-def velocity_curve_transform(curve: Callable[[int], int]) -> Callable[[MIDIEvent], MIDIEvent]:
+def velocity_curve_transform(
+    curve: Callable[[int], int],
+) -> Callable[[MIDIEvent], MIDIEvent]:
     """Create velocity curve transform.
 
     Args:
@@ -863,7 +874,9 @@ def velocity_curve_transform(curve: Callable[[int], int]) -> Callable[[MIDIEvent
     return transform
 
 
-def channel_remap_transform(channel_map: Dict[int, int]) -> Callable[[MIDIEvent], MIDIEvent]:
+def channel_remap_transform(
+    channel_map: dict[int, int],
+) -> Callable[[MIDIEvent], MIDIEvent]:
     """Create channel remapping transform.
 
     Args:

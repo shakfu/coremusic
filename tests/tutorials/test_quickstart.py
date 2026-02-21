@@ -6,9 +6,9 @@ All examples are executable doctests.
 
 Run with: pytest tests/tutorials/test_quickstart.py --doctest-modules -v
 """
+
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 # Test data path
@@ -83,7 +83,7 @@ def import_music_theory():
 def open_audio_file():
     """Open and read an audio file.
 
-    >>> from coremusic.objects import AudioFile
+    >>> from coremusic.audio import AudioFile
     >>> path = get_test_audio_path()
     >>> with AudioFile(path) as audio:
     ...     assert audio.duration > 0
@@ -97,7 +97,7 @@ def open_audio_file():
 def get_audio_info():
     """Get comprehensive audio file information.
 
-    >>> from coremusic.objects import AudioFile
+    >>> from coremusic.audio import AudioFile
     >>> path = get_test_audio_path()
     >>> with AudioFile(path) as audio:
     ...     info = {
@@ -117,7 +117,7 @@ def get_audio_info():
 def read_audio_data():
     """Read audio data from a file.
 
-    >>> from coremusic.objects import AudioFile
+    >>> from coremusic.audio import AudioFile
     >>> path = get_test_audio_path()
     >>> with AudioFile(path) as audio:
     ...     # Read first 1000 frames
@@ -153,7 +153,7 @@ def check_midi_devices():
 def create_midi_client():
     """Create a MIDI client.
 
-    >>> from coremusic.objects import MIDIClient
+    >>> from coremusic.midi import MIDIClient
     >>> client = MIDIClient("Quick Start")
     >>> assert client is not None
     >>> client.dispose()
@@ -261,7 +261,8 @@ def create_chord():
 def handle_audio_file_error():
     """Handle errors when opening audio files.
 
-    >>> from coremusic.objects import AudioFile, AudioFileError
+    >>> from coremusic.audio import AudioFile
+    >>> from coremusic.exceptions import AudioFileError
     >>> try:
     ...     with AudioFile("nonexistent.wav") as audio:
     ...         pass
@@ -274,7 +275,7 @@ def handle_audio_file_error():
 def exception_hierarchy():
     """CoreMusic exception hierarchy.
 
-    >>> from coremusic.objects import (
+    >>> from coremusic.exceptions import (
     ...     CoreAudioError, AudioFileError,
     ...     AudioQueueError, AudioUnitError, MIDIError,
     ... )
@@ -297,7 +298,7 @@ def exception_hierarchy():
 def check_numpy_available():
     """Check if NumPy integration is available.
 
-    >>> from coremusic.objects import NUMPY_AVAILABLE
+    >>> from coremusic.base import NUMPY_AVAILABLE
     >>> # NUMPY_AVAILABLE is True if numpy is installed
     >>> assert NUMPY_AVAILABLE is not None
     >>> assert isinstance(NUMPY_AVAILABLE, bool)
@@ -308,7 +309,8 @@ def check_numpy_available():
 def numpy_dtype_from_format():
     """Get NumPy dtype from audio format.
 
-    >>> from coremusic.objects import AudioFile, NUMPY_AVAILABLE
+    >>> from coremusic.audio import AudioFile
+    >>> from coremusic.base import NUMPY_AVAILABLE
     >>> path = get_test_audio_path()
     >>> if NUMPY_AVAILABLE:
     ...     with AudioFile(path) as audio:
@@ -368,4 +370,5 @@ def audiounit_properties():
 # Test runner
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod(verbose=True)

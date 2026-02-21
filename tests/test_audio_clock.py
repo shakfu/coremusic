@@ -3,7 +3,7 @@
 import pytest
 import time
 import coremusic.capi as capi
-from coremusic.objects import AudioClock, ClockTimeFormat
+from coremusic.audio import AudioClock, ClockTimeFormat
 
 
 class TestClockTimeFormat:

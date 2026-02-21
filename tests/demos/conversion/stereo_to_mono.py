@@ -7,7 +7,7 @@ Usage:
 
 import sys
 import os
-from coremusic.objects import AudioFile
+from coremusic.audio import AudioFile
 from coremusic.audio.utilities import AudioFormatPresets
 import coremusic.capi as capi
 
@@ -26,10 +26,14 @@ def main():
 
     with AudioFile(input_file) as audio:
         input_format = audio.format
-        print(f"Input: {input_format.sample_rate:.0f} Hz, {input_format.channels_per_frame} ch")
+        print(
+            f"Input: {input_format.sample_rate:.0f} Hz, {input_format.channels_per_frame} ch"
+        )
 
     output_format = AudioFormatPresets.wav_44100_mono()
-    print(f"Output: {output_format.sample_rate:.0f} Hz, {output_format.channels_per_frame} ch")
+    print(
+        f"Output: {output_format.sample_rate:.0f} Hz, {output_format.channels_per_frame} ch"
+    )
 
     capi.convert_audio_file(input_file, output_file, output_format)
     print(f"Converted: {output_file} ({os.path.getsize(output_file)} bytes)")

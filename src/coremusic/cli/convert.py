@@ -27,34 +27,39 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     file_parser.add_argument("input", help="Input audio file")
     file_parser.add_argument("output", help="Output file path")
     file_parser.add_argument(
-        "--format", "-f",
+        "--format",
+        "-f",
         dest="output_format",
         choices=list(FORMAT_NAMES.keys()),
         help="Output format (e.g., wav, aac, alac, flac)",
     )
     file_parser.add_argument(
-        "--rate", "-r",
+        "--rate",
+        "-r",
         dest="sample_rate",
         type=int,
         choices=[8000, 11025, 16000, 22050, 44100, 48000, 88200, 96000, 176400, 192000],
         help="Output sample rate in Hz",
     )
     file_parser.add_argument(
-        "--channels", "-c",
+        "--channels",
+        "-c",
         dest="channels",
         type=int,
         choices=[1, 2],
         help="Output channels (1=mono, 2=stereo)",
     )
     file_parser.add_argument(
-        "--bits", "-b",
+        "--bits",
+        "-b",
         dest="bit_depth",
         type=int,
         choices=[8, 16, 24, 32],
         help="Output bit depth",
     )
     file_parser.add_argument(
-        "--quality", "-q",
+        "--quality",
+        "-q",
         dest="quality",
         choices=["min", "low", "medium", "high", "max"],
         default="high",
@@ -77,33 +82,38 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
         help="Output directory for converted files",
     )
     batch_parser.add_argument(
-        "--pattern", "-p",
+        "--pattern",
+        "-p",
         default="*.wav",
         help="File pattern to match (default: *.wav)",
     )
     batch_parser.add_argument(
-        "--format", "-f",
+        "--format",
+        "-f",
         dest="output_format",
         choices=list(FORMAT_NAMES.keys()),
         default="wav",
         help="Output format (default: wav)",
     )
     batch_parser.add_argument(
-        "--rate", "-r",
+        "--rate",
+        "-r",
         dest="sample_rate",
         type=int,
         choices=[8000, 11025, 16000, 22050, 44100, 48000, 88200, 96000, 176400, 192000],
         help="Output sample rate in Hz",
     )
     batch_parser.add_argument(
-        "--channels", "-c",
+        "--channels",
+        "-c",
         dest="channels",
         type=int,
         choices=[1, 2],
         help="Output channels (1=mono, 2=stereo)",
     )
     batch_parser.add_argument(
-        "--bits", "-b",
+        "--bits",
+        "-b",
         dest="bit_depth",
         type=int,
         choices=[8, 16, 24, 32],
@@ -125,13 +135,15 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     normalize_parser.add_argument("input", help="Input audio file")
     normalize_parser.add_argument("output", help="Output file path")
     normalize_parser.add_argument(
-        "--target", "-t",
+        "--target",
+        "-t",
         type=float,
         default=-1.0,
         help="Target level in dB (default: -1.0 dBFS for peak)",
     )
     normalize_parser.add_argument(
-        "--mode", "-m",
+        "--mode",
+        "-m",
         choices=["peak", "rms"],
         default="peak",
         help="Normalization mode (default: peak)",
@@ -147,19 +159,22 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     trim_parser.add_argument("input", help="Input audio file")
     trim_parser.add_argument("output", help="Output file path")
     trim_parser.add_argument(
-        "--start", "-s",
+        "--start",
+        "-s",
         type=float,
         default=0.0,
         help="Start time in seconds (default: 0.0)",
     )
     trim_parser.add_argument(
-        "--end", "-e",
+        "--end",
+        "-e",
         type=float,
         default=None,
         help="End time in seconds (default: end of file)",
     )
     trim_parser.add_argument(
-        "--duration", "-d",
+        "--duration",
+        "-d",
         type=float,
         default=None,
         help="Duration in seconds (alternative to --end)",
@@ -203,7 +218,7 @@ def _get_file_type_for_extension(path: Path) -> int:
 
 def cmd_convert(args: argparse.Namespace) -> int:
     """Convert audio file."""
-    from coremusic.objects import AudioConverter, AudioFormat, ExtendedAudioFile
+    from coremusic.audio import AudioConverter, AudioFormat, ExtendedAudioFile
 
     input_path = require_file(args.input)
     output_path = Path(args.output)
@@ -236,14 +251,14 @@ def cmd_convert(args: argparse.Namespace) -> int:
         file_type = _get_file_type_for_extension(output_path)
 
         # Read all source data
-        frame_count = source.frame_count  # type: ignore[attr-defined]
+        frame_count = source.frame_count
         source_data, frames_read = source.read(frame_count)
 
         # Check if conversion is needed
         needs_conversion = (
-            dest_format.sample_rate != source_format.sample_rate or
-            dest_format.channels_per_frame != source_format.channels_per_frame or
-            dest_format.bits_per_channel != source_format.bits_per_channel
+            dest_format.sample_rate != source_format.sample_rate
+            or dest_format.channels_per_frame != source_format.channels_per_frame
+            or dest_format.bits_per_channel != source_format.bits_per_channel
         )
 
         if needs_conversion:
@@ -258,7 +273,9 @@ def cmd_convert(args: argparse.Namespace) -> int:
 
         # Write output file
         try:
-            with ExtendedAudioFile.create(str(output_path), file_type, dest_format) as out_file:
+            with ExtendedAudioFile.create(
+                str(output_path), file_type, dest_format
+            ) as out_file:
                 num_frames = len(converted_data) // dest_format.bytes_per_frame
                 out_file.write(num_frames, converted_data)
         except Exception as e:
@@ -266,32 +283,42 @@ def cmd_convert(args: argparse.Namespace) -> int:
 
     # Output result
     if args.json:
-        output_json({
-            "input": str(input_path.absolute()),
-            "output": str(output_path.absolute()),
-            "source_format": {
-                "sample_rate": source_format.sample_rate,
-                "channels": source_format.channels_per_frame,
-                "bits": source_format.bits_per_channel,
-                "format": get_format_display(source_format.format_id),
-            },
-            "dest_format": {
-                "sample_rate": dest_format.sample_rate,
-                "channels": dest_format.channels_per_frame,
-                "bits": dest_format.bits_per_channel,
-                "format": get_format_display(dest_format.format_id),
-            },
-        })
+        output_json(
+            {
+                "input": str(input_path.absolute()),
+                "output": str(output_path.absolute()),
+                "source_format": {
+                    "sample_rate": source_format.sample_rate,
+                    "channels": source_format.channels_per_frame,
+                    "bits": source_format.bits_per_channel,
+                    "format": get_format_display(source_format.format_id),
+                },
+                "dest_format": {
+                    "sample_rate": dest_format.sample_rate,
+                    "channels": dest_format.channels_per_frame,
+                    "bits": dest_format.bits_per_channel,
+                    "format": get_format_display(dest_format.format_id),
+                },
+            }
+        )
     else:
         print(f"Converted: {input_path.name} -> {output_path.name}")
-        print(f"  Format: {get_format_display(source_format.format_id)} -> {get_format_display(dest_format.format_id)}")
+        print(
+            f"  Format: {get_format_display(source_format.format_id)} -> {get_format_display(dest_format.format_id)}"
+        )
         if dest_sample_rate != source_format.sample_rate:
-            print(f"  Sample rate: {source_format.sample_rate:.0f} Hz -> {dest_sample_rate} Hz")
+            print(
+                f"  Sample rate: {source_format.sample_rate:.0f} Hz -> {dest_sample_rate} Hz"
+            )
         if dest_channels != source_format.channels_per_frame:
             ch_name = "Mono" if dest_channels == 1 else "Stereo"
-            print(f"  Channels: {source_format.channels_per_frame} -> {dest_channels} ({ch_name})")
+            print(
+                f"  Channels: {source_format.channels_per_frame} -> {dest_channels} ({ch_name})"
+            )
         if dest_bits != source_format.bits_per_channel:
-            print(f"  Bit depth: {source_format.bits_per_channel}-bit -> {dest_bits}-bit")
+            print(
+                f"  Bit depth: {source_format.bits_per_channel}-bit -> {dest_bits}-bit"
+            )
 
     return EXIT_SUCCESS
 
@@ -314,7 +341,7 @@ def _get_output_extension(format_name: str) -> str:
 
 def cmd_batch(args: argparse.Namespace) -> int:
     """Batch convert multiple audio files."""
-    from coremusic.objects import AudioConverter, AudioFormat, ExtendedAudioFile
+    from coremusic.audio import AudioConverter, AudioFormat, ExtendedAudioFile
 
     input_dir = Path(args.input_dir)
     output_dir = Path(args.output_dir)
@@ -357,7 +384,11 @@ def cmd_batch(args: argparse.Namespace) -> int:
             bar_width = 30
             filled = int(bar_width * progress)
             bar = "=" * filled + "-" * (bar_width - filled)
-            print(f"\r[{bar}] {i + 1}/{total_files} ({int(progress * 100)}%)", end="", flush=True)
+            print(
+                f"\r[{bar}] {i + 1}/{total_files} ({int(progress * 100)}%)",
+                end="",
+                flush=True,
+            )
 
         # Determine output path
         relative_path = input_path.relative_to(input_dir)
@@ -390,14 +421,15 @@ def cmd_batch(args: argparse.Namespace) -> int:
                 )
 
                 file_type = _get_file_type_for_extension(output_path)
-                frame_count = source.frame_count  # type: ignore[attr-defined]
+                frame_count = source.frame_count
                 source_data, _ = source.read(frame_count)
 
                 # Check if conversion is needed
                 needs_conversion = (
-                    dest_format.sample_rate != source_format.sample_rate or
-                    dest_format.channels_per_frame != source_format.channels_per_frame or
-                    dest_format.bits_per_channel != source_format.bits_per_channel
+                    dest_format.sample_rate != source_format.sample_rate
+                    or dest_format.channels_per_frame
+                    != source_format.channels_per_frame
+                    or dest_format.bits_per_channel != source_format.bits_per_channel
                 )
 
                 if needs_conversion:
@@ -406,7 +438,9 @@ def cmd_batch(args: argparse.Namespace) -> int:
                 else:
                     converted_data = source_data
 
-                with ExtendedAudioFile.create(str(output_path), file_type, dest_format) as out_file:
+                with ExtendedAudioFile.create(
+                    str(output_path), file_type, dest_format
+                ) as out_file:
                     num_frames = len(converted_data) // dest_format.bytes_per_frame
                     out_file.write(num_frames, converted_data)
 
@@ -425,16 +459,18 @@ def cmd_batch(args: argparse.Namespace) -> int:
         print("\r" + " " * 60 + "\r", end="")
 
     if args.json:
-        output_json({
-            "input_dir": str(input_dir.absolute()),
-            "output_dir": str(output_dir.absolute()),
-            "pattern": args.pattern,
-            "format": args.output_format,
-            "total": total_files,
-            "success": success_count,
-            "errors": error_count,
-            "files": results,
-        })
+        output_json(
+            {
+                "input_dir": str(input_dir.absolute()),
+                "output_dir": str(output_dir.absolute()),
+                "pattern": args.pattern,
+                "format": args.output_format,
+                "total": total_files,
+                "success": success_count,
+                "errors": error_count,
+                "files": results,
+            }
+        )
     else:
         print(f"Converted {success_count}/{total_files} files")
         if errors:
@@ -451,7 +487,7 @@ def cmd_normalize(args: argparse.Namespace) -> int:
 
     import numpy as np
 
-    from coremusic.objects import AudioFile, ExtendedAudioFile
+    from coremusic.audio import AudioFile, ExtendedAudioFile
 
     from ._utils import require_numpy
 
@@ -476,7 +512,7 @@ def cmd_normalize(args: argparse.Namespace) -> int:
         if args.mode == "peak":
             current_level = np.max(np.abs(audio_float))
         else:  # rms
-            current_level = np.sqrt(np.mean(audio_float ** 2))
+            current_level = np.sqrt(np.mean(audio_float**2))
 
         if current_level == 0:
             raise CLIError("Audio file is silent, cannot normalize")
@@ -504,7 +540,9 @@ def cmd_normalize(args: argparse.Namespace) -> int:
     # Write output file
     file_type = _get_file_type_for_extension(output_path)
     try:
-        with ExtendedAudioFile.create(str(output_path), file_type, source_format) as out_file:
+        with ExtendedAudioFile.create(
+            str(output_path), file_type, source_format
+        ) as out_file:
             num_frames = len(output_bytes) // source_format.bytes_per_frame
             out_file.write(num_frames, output_bytes)
     except Exception as e:
@@ -515,14 +553,16 @@ def cmd_normalize(args: argparse.Namespace) -> int:
     gain_db = 20 * math.log10(gain) if gain > 0 else 0
 
     if args.json:
-        output_json({
-            "input": str(input_path.absolute()),
-            "output": str(output_path.absolute()),
-            "mode": args.mode,
-            "original_level_db": current_db,
-            "target_level_db": args.target,
-            "gain_applied_db": gain_db,
-        })
+        output_json(
+            {
+                "input": str(input_path.absolute()),
+                "output": str(output_path.absolute()),
+                "mode": args.mode,
+                "original_level_db": current_db,
+                "target_level_db": args.target,
+                "gain_applied_db": gain_db,
+            }
+        )
     else:
         print(f"Normalized: {input_path.name} -> {output_path.name}")
         print(f"  Mode:     {args.mode}")
@@ -536,7 +576,7 @@ def cmd_normalize(args: argparse.Namespace) -> int:
 def cmd_trim(args: argparse.Namespace) -> int:
     """Trim audio to time range."""
 
-    from coremusic.objects import AudioFile, ExtendedAudioFile
+    from coremusic.audio import AudioFile, ExtendedAudioFile
 
     from ._utils import require_numpy
 
@@ -569,7 +609,9 @@ def cmd_trim(args: argparse.Namespace) -> int:
     if end_frame > total_frames:
         end_frame = total_frames
     if start_frame >= end_frame:
-        raise CLIError(f"Invalid time range: start ({args.start}s) >= end ({end_frame / sample_rate:.3f}s)")
+        raise CLIError(
+            f"Invalid time range: start ({args.start}s) >= end ({end_frame / sample_rate:.3f}s)"
+        )
 
     # Extract the trimmed portion
     trimmed_data = audio_data[start_frame:end_frame]
@@ -586,26 +628,33 @@ def cmd_trim(args: argparse.Namespace) -> int:
     # Write output file
     file_type = _get_file_type_for_extension(output_path)
     try:
-        with ExtendedAudioFile.create(str(output_path), file_type, source_format) as out_file:
+        with ExtendedAudioFile.create(
+            str(output_path), file_type, source_format
+        ) as out_file:
             out_file.write(frames_read, trimmed_bytes)
     except Exception as e:
         raise CLIError(f"Failed to write output file: {e}")
 
     if args.json:
-        output_json({
-            "input": str(input_path.absolute()),
-            "output": str(output_path.absolute()),
-            "original_duration": duration,
-            "start_time": actual_start,
-            "end_time": actual_end,
-            "trimmed_duration": actual_duration,
-            "frames_written": frames_read,
-        })
+        output_json(
+            {
+                "input": str(input_path.absolute()),
+                "output": str(output_path.absolute()),
+                "original_duration": duration,
+                "start_time": actual_start,
+                "end_time": actual_end,
+                "trimmed_duration": actual_duration,
+                "frames_written": frames_read,
+            }
+        )
     else:
         from ._formatters import format_duration
+
         print(f"Trimmed: {input_path.name} -> {output_path.name}")
         print(f"  Original: {format_duration(duration)}")
-        print(f"  Range:    {format_duration(actual_start)} - {format_duration(actual_end)}")
+        print(
+            f"  Range:    {format_duration(actual_start)} - {format_duration(actual_end)}"
+        )
         print(f"  Duration: {format_duration(actual_duration)}")
 
     return EXIT_SUCCESS

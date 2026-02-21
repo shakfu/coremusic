@@ -13,13 +13,13 @@ def main():
     plugin_name = sys.argv[1] if len(sys.argv) > 1 else "AUDelay"
 
     # Find plugin
-    components = capi.audio_unit_find_all_components(component_type='aufx')
+    components = capi.audio_unit_find_all_components(component_type="aufx")
     target = None
 
     for comp_id in components:
         try:
             info = capi.audio_unit_get_component_info(comp_id)
-            if plugin_name.lower() in info['name'].lower():
+            if plugin_name.lower() in info["name"].lower():
                 target = (comp_id, info)
                 break
         except Exception:
@@ -44,7 +44,9 @@ def main():
             try:
                 param_info = capi.audio_unit_get_parameter_info(unit_id, param_id)
                 value = capi.audio_unit_get_parameter(unit_id, param_id)
-                print(f"  {param_info['name']}: {value:.3f} [{param_info['min_value']:.1f}-{param_info['max_value']:.1f}]")
+                print(
+                    f"  {param_info['name']}: {value:.3f} [{param_info['min_value']:.1f}-{param_info['max_value']:.1f}]"
+                )
             except Exception:
                 pass
     finally:

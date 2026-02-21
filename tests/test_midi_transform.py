@@ -4,16 +4,13 @@
 Tests cover all transformers and the pipeline API.
 """
 
-import os
-import tempfile
 from pathlib import Path
 
 import pytest
 
-from coremusic.midi.utilities import MIDIEvent, MIDISequence, MIDIStatus, MIDITrack
+from coremusic.midi.utilities import MIDIEvent, MIDISequence, MIDIStatus
 from coremusic.midi.transform import (
     # Base classes
-    MIDITransformer,
     Pipeline,
     # Pitch transformers
     Transpose,
@@ -153,18 +150,24 @@ class TestPipeline:
         pipeline = Pipeline([Transpose(12)])
         result = pipeline.apply(simple_sequence)
         # All notes should be transposed up an octave
-        for orig, trans in zip(simple_sequence.tracks[0].events, result.tracks[0].events):
+        for orig, trans in zip(
+            simple_sequence.tracks[0].events, result.tracks[0].events
+        ):
             if orig.status == MIDIStatus.NOTE_ON:
                 assert trans.data1 == orig.data1 + 12
 
     def test_chained_transformers(self, simple_sequence):
         """Pipeline chains transformers in order."""
-        pipeline = Pipeline([
-            Transpose(12),
-            VelocityScale(factor=0.5),
-        ])
+        pipeline = Pipeline(
+            [
+                Transpose(12),
+                VelocityScale(factor=0.5),
+            ]
+        )
         result = pipeline.apply(simple_sequence)
-        for orig, trans in zip(simple_sequence.tracks[0].events, result.tracks[0].events):
+        for orig, trans in zip(
+            simple_sequence.tracks[0].events, result.tracks[0].events
+        ):
             if orig.is_note_on:
                 assert trans.data1 == orig.data1 + 12
                 assert trans.data2 == orig.data2 // 2
@@ -180,7 +183,10 @@ class TestPipeline:
         """Pipeline can be called directly."""
         pipeline = Pipeline([Transpose(5)])
         result = pipeline(simple_sequence)
-        assert result.tracks[0].events[0].data1 == simple_sequence.tracks[0].events[0].data1 + 5
+        assert (
+            result.tracks[0].events[0].data1
+            == simple_sequence.tracks[0].events[0].data1 + 5
+        )
 
     def test_repr(self):
         """Pipeline repr shows transformer names."""
@@ -201,14 +207,18 @@ class TestTranspose:
     def test_transpose_up(self, simple_sequence):
         """Transpose notes up."""
         result = Transpose(5).transform(simple_sequence)
-        for orig, trans in zip(simple_sequence.tracks[0].events, result.tracks[0].events):
+        for orig, trans in zip(
+            simple_sequence.tracks[0].events, result.tracks[0].events
+        ):
             if orig.status in (MIDIStatus.NOTE_ON, MIDIStatus.NOTE_OFF):
                 assert trans.data1 == orig.data1 + 5
 
     def test_transpose_down(self, simple_sequence):
         """Transpose notes down."""
         result = Transpose(-7).transform(simple_sequence)
-        for orig, trans in zip(simple_sequence.tracks[0].events, result.tracks[0].events):
+        for orig, trans in zip(
+            simple_sequence.tracks[0].events, result.tracks[0].events
+        ):
             if orig.status in (MIDIStatus.NOTE_ON, MIDIStatus.NOTE_OFF):
                 assert trans.data1 == orig.data1 - 7
 
@@ -238,7 +248,9 @@ class TestTranspose:
         track.add_note(0.0, 60, 100, 0.5)
         track.add_control_change(0.25, 7, 100)  # Volume
         result = Transpose(12).transform(seq)
-        cc_events = [e for e in result.tracks[0].events if e.status == MIDIStatus.CONTROL_CHANGE]
+        cc_events = [
+            e for e in result.tracks[0].events if e.status == MIDIStatus.CONTROL_CHANGE
+        ]
         assert len(cc_events) == 1
         assert cc_events[0].data1 == 7  # Controller unchanged
         assert cc_events[0].data2 == 100  # Value unchanged
@@ -297,7 +309,7 @@ class TestHarmonize:
         note_ons = [e for e in result.tracks[0].events if e.is_note_on]
         velocities = [e.data2 for e in note_ons]
         assert 100 in velocities  # Original
-        assert 50 in velocities   # Harmony (50% of 100)
+        assert 50 in velocities  # Harmony (50% of 100)
 
 
 # ============================================================================
@@ -354,13 +366,17 @@ class TestTimeStretch:
     def test_stretch_double(self, simple_sequence):
         """Double the duration."""
         result = TimeStretch(2.0).transform(simple_sequence)
-        for orig, trans in zip(simple_sequence.tracks[0].events, result.tracks[0].events):
+        for orig, trans in zip(
+            simple_sequence.tracks[0].events, result.tracks[0].events
+        ):
             assert trans.time == pytest.approx(orig.time * 2.0)
 
     def test_stretch_half(self, simple_sequence):
         """Halve the duration."""
         result = TimeStretch(0.5).transform(simple_sequence)
-        for orig, trans in zip(simple_sequence.tracks[0].events, result.tracks[0].events):
+        for orig, trans in zip(
+            simple_sequence.tracks[0].events, result.tracks[0].events
+        ):
             assert trans.time == pytest.approx(orig.time * 0.5)
 
     def test_stretch_invalid_factor(self):
@@ -375,7 +391,9 @@ class TestTimeShift:
     def test_shift_forward(self, simple_sequence):
         """Shift events forward in time."""
         result = TimeShift(1.0).transform(simple_sequence)
-        for orig, trans in zip(simple_sequence.tracks[0].events, result.tracks[0].events):
+        for orig, trans in zip(
+            simple_sequence.tracks[0].events, result.tracks[0].events
+        ):
             assert trans.time == pytest.approx(orig.time + 1.0)
 
     def test_shift_backward_clamps(self):
@@ -397,7 +415,9 @@ class TestReverse:
         track.add_note(0.0, 60, 100, 0.5)  # C4 first
         track.add_note(1.0, 64, 100, 0.5)  # E4 second
         result = Reverse().transform(seq)
-        note_ons = sorted([e for e in result.tracks[0].events if e.is_note_on], key=lambda e: e.time)
+        note_ons = sorted(
+            [e for e in result.tracks[0].events if e.is_note_on], key=lambda e: e.time
+        )
         # E4 should now come first (it was at the end)
         assert note_ons[0].data1 == 64
         assert note_ons[1].data1 == 60
@@ -425,7 +445,9 @@ class TestVelocityScale:
     def test_scale_by_factor(self, simple_sequence):
         """Scale velocity by factor."""
         result = VelocityScale(factor=0.5).transform(simple_sequence)
-        for orig, trans in zip(simple_sequence.tracks[0].events, result.tracks[0].events):
+        for orig, trans in zip(
+            simple_sequence.tracks[0].events, result.tracks[0].events
+        ):
             if orig.is_note_on:
                 assert trans.data2 == orig.data2 // 2
 
@@ -433,7 +455,7 @@ class TestVelocityScale:
         """Scale velocity to min/max range."""
         seq = MIDISequence()
         track = seq.add_track("Test")
-        track.add_note(0.0, 60, 50, 0.5)   # Low velocity
+        track.add_note(0.0, 60, 50, 0.5)  # Low velocity
         track.add_note(0.5, 62, 100, 0.5)  # High velocity
         result = VelocityScale(min_vel=60, max_vel=80).transform(seq)
         note_ons = [e for e in result.tracks[0].events if e.is_note_on]
@@ -459,7 +481,7 @@ class TestVelocityCurve:
         seq = MIDISequence()
         track = seq.add_track("Test")
         track.add_note(0.0, 60, 64, 0.5)  # Half velocity
-        result = VelocityCurve(curve='log').transform(seq)
+        result = VelocityCurve(curve="log").transform(seq)
         note_on = [e for e in result.tracks[0].events if e.is_note_on][0]
         # Log curve: sqrt(0.5) * 127 = ~90
         assert note_on.data2 > 64  # Should be higher
@@ -469,14 +491,14 @@ class TestVelocityCurve:
         seq = MIDISequence()
         track = seq.add_track("Test")
         track.add_note(0.0, 60, 64, 0.5)
-        result = VelocityCurve(curve='exp').transform(seq)
+        result = VelocityCurve(curve="exp").transform(seq)
         note_on = [e for e in result.tracks[0].events if e.is_note_on][0]
         # Exp curve: (0.5)^2 * 127 = ~32
         assert note_on.data2 < 64  # Should be lower
 
     def test_custom_curve(self):
         """Custom curve function."""
-        result = VelocityCurve(curve=lambda x: 1.0 - x).transform(
+        VelocityCurve(curve=lambda x: 1.0 - x).transform(
             MIDISequence().add_track("Test") or MIDISequence()
         )
         # Just test it doesn't error
@@ -484,7 +506,7 @@ class TestVelocityCurve:
     def test_invalid_curve_name(self):
         """Raise error for unknown curve name."""
         with pytest.raises(ValueError, match="Unknown curve"):
-            VelocityCurve(curve='invalid')
+            VelocityCurve(curve="invalid")
 
 
 class TestHumanize:
@@ -496,7 +518,9 @@ class TestHumanize:
         # Check that at least some values differ
         timing_differs = False
         velocity_differs = False
-        for orig, trans in zip(simple_sequence.tracks[0].events, result.tracks[0].events):
+        for orig, trans in zip(
+            simple_sequence.tracks[0].events, result.tracks[0].events
+        ):
             if abs(orig.time - trans.time) > 0.001:
                 timing_differs = True
             if orig.is_note_on and orig.data2 != trans.data2:
@@ -537,7 +561,7 @@ class TestNoteFilter:
         """Filter notes by velocity."""
         seq = MIDISequence()
         track = seq.add_track("Test")
-        track.add_note(0.0, 60, 50, 0.5)   # Soft
+        track.add_note(0.0, 60, 50, 0.5)  # Soft
         track.add_note(0.5, 62, 100, 0.5)  # Loud
         result = NoteFilter(min_velocity=80).transform(seq)
         note_ons = [e for e in result.tracks[0].events if e.is_note_on]
@@ -579,7 +603,7 @@ class TestScaleFilter:
         track.add_note(1.5, 63, 100, 0.5)  # D#4 - NOT in scale
         track.add_note(2.0, 64, 100, 0.5)  # E4 - in scale
 
-        c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+        c_major = Scale(Note("C", 4), ScaleType.MAJOR)
         result = ScaleFilter(c_major).transform(seq)
 
         note_ons = [e for e in result.tracks[0].events if e.is_note_on]
@@ -597,7 +621,7 @@ class TestScaleFilter:
         track.add_note(1.5, 61, 100, 0.5)  # C#4 - NOT in scale
         track.add_note(2.0, 62, 100, 0.5)  # D4 - in scale
 
-        a_pent = Scale(Note('A', 3), ScaleType.MINOR_PENTATONIC)
+        a_pent = Scale(Note("A", 3), ScaleType.MINOR_PENTATONIC)
         result = ScaleFilter(a_pent).transform(seq)
 
         note_ons = [e for e in result.tracks[0].events if e.is_note_on]
@@ -611,7 +635,7 @@ class TestScaleFilter:
         track.add_note(0.0, 60, 100, 0.5)  # C4 - in scale
         track.add_note(0.5, 61, 100, 0.5)  # C#4 - NOT in scale
 
-        c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+        c_major = Scale(Note("C", 4), ScaleType.MAJOR)
         result = ScaleFilter(c_major).transform(seq)
 
         # Should have note on and note off for C4 only
@@ -632,11 +656,12 @@ class TestScaleFilter:
         track.add_note(0.5, 61, 100, 0.5)  # C#4 - NOT in scale
         track.add_control_change(0.25, 7, 100)  # Volume CC
 
-        c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+        c_major = Scale(Note("C", 4), ScaleType.MAJOR)
         result = ScaleFilter(c_major).transform(seq)
 
-        cc_events = [e for e in result.tracks[0].events
-                     if e.status == MIDIStatus.CONTROL_CHANGE]
+        cc_events = [
+            e for e in result.tracks[0].events if e.status == MIDIStatus.CONTROL_CHANGE
+        ]
         assert len(cc_events) == 1
 
     def test_filter_across_octaves(self):
@@ -650,7 +675,7 @@ class TestScaleFilter:
         track.add_note(1.5, 61, 100, 0.5)  # C#4 - NOT in scale
         track.add_note(2.0, 72, 100, 0.5)  # C5 - in scale
 
-        c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+        c_major = Scale(Note("C", 4), ScaleType.MAJOR)
         result = ScaleFilter(c_major).transform(seq)
 
         note_ons = [e for e in result.tracks[0].events if e.is_note_on]
@@ -664,7 +689,7 @@ class TestScaleFilter:
         for note in range(60, 72):  # All 12 notes
             track.add_note(note - 60, note, 100, 0.5)
 
-        chromatic = Scale(Note('C', 4), ScaleType.CHROMATIC)
+        chromatic = Scale(Note("C", 4), ScaleType.CHROMATIC)
         result = ScaleFilter(chromatic).transform(seq)
 
         note_ons = [e for e in result.tracks[0].events if e.is_note_on]
@@ -681,7 +706,7 @@ class TestScaleFilter:
         track.add_note(1.5, 64, 100, 0.5)  # E - NOT in scale
         track.add_note(2.0, 65, 100, 0.5)  # F - in scale
 
-        blues = Scale(Note('C', 4), ScaleType.BLUES)
+        blues = Scale(Note("C", 4), ScaleType.BLUES)
         result = ScaleFilter(blues).transform(seq)
 
         note_ons = [e for e in result.tracks[0].events if e.is_note_on]
@@ -700,7 +725,7 @@ class TestScaleFilter:
         track.add_note(0.0, 60, 100, 0.5)  # C4 - in scale
         track.add_note(0.5, 61, 100, 0.5)  # C#4 - NOT in scale
 
-        c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+        c_major = Scale(Note("C", 4), ScaleType.MAJOR)
         result = filter_to_scale(seq, c_major)
 
         note_ons = [e for e in result.tracks[0].events if e.is_note_on]
@@ -709,7 +734,7 @@ class TestScaleFilter:
 
     def test_filter_repr(self):
         """Test string representation."""
-        c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+        c_major = Scale(Note("C", 4), ScaleType.MAJOR)
         filt = ScaleFilter(c_major)
         assert "ScaleFilter" in repr(filt)
 
@@ -725,7 +750,7 @@ class TestScaleFilter:
         track2.add_note(0.0, 62, 100, 0.5)  # D4 - in scale
         track2.add_note(0.5, 63, 100, 0.5)  # D#4 - NOT in scale
 
-        c_major = Scale(Note('C', 4), ScaleType.MAJOR)
+        c_major = Scale(Note("C", 4), ScaleType.MAJOR)
         result = ScaleFilter(c_major).transform(seq)
 
         track1_notes = [e for e in result.tracks[0].events if e.is_note_on]
@@ -746,7 +771,9 @@ class TestEventTypeFilter:
         track = seq.add_track("Test")
         track.add_note(0.0, 60, 100, 0.5)
         track.add_control_change(0.25, 7, 100)
-        result = EventTypeFilter(keep=[MIDIStatus.NOTE_ON, MIDIStatus.NOTE_OFF]).transform(seq)
+        result = EventTypeFilter(
+            keep=[MIDIStatus.NOTE_ON, MIDIStatus.NOTE_OFF]
+        ).transform(seq)
         for event in result.tracks[0].events:
             assert event.status in (MIDIStatus.NOTE_ON, MIDIStatus.NOTE_OFF)
 
@@ -757,7 +784,9 @@ class TestEventTypeFilter:
         track.add_note(0.0, 60, 100, 0.5)
         track.add_control_change(0.25, 7, 100)
         result = EventTypeFilter(remove=[MIDIStatus.CONTROL_CHANGE]).transform(seq)
-        cc_events = [e for e in result.tracks[0].events if e.status == MIDIStatus.CONTROL_CHANGE]
+        cc_events = [
+            e for e in result.tracks[0].events if e.status == MIDIStatus.CONTROL_CHANGE
+        ]
         assert len(cc_events) == 0
 
 
@@ -809,9 +838,11 @@ class TestArpeggiate:
 
     def test_arpeggiate_chord(self, chord_sequence):
         """Arpeggiate chords."""
-        result = Arpeggiate(pattern='up', note_duration=0.1).transform(chord_sequence)
+        result = Arpeggiate(pattern="up", note_duration=0.1).transform(chord_sequence)
         # Check that notes are now sequential, not simultaneous
-        note_ons = sorted([e for e in result.tracks[0].events if e.is_note_on], key=lambda e: e.time)
+        note_ons = sorted(
+            [e for e in result.tracks[0].events if e.is_note_on], key=lambda e: e.time
+        )
         times = [e.time for e in note_ons]
         # First chord should be arpeggiated
         assert times[1] > times[0]
@@ -825,8 +856,10 @@ class TestArpeggiate:
             track.events.append(MIDIEvent(0.0, MIDIStatus.NOTE_ON, 0, note, 100))
         for note in [60, 64, 67]:
             track.events.append(MIDIEvent(1.0, MIDIStatus.NOTE_OFF, 0, note, 0))
-        result = Arpeggiate(pattern='up', note_duration=0.1).transform(seq)
-        note_ons = sorted([e for e in result.tracks[0].events if e.is_note_on], key=lambda e: e.time)
+        result = Arpeggiate(pattern="up", note_duration=0.1).transform(seq)
+        note_ons = sorted(
+            [e for e in result.tracks[0].events if e.is_note_on], key=lambda e: e.time
+        )
         notes = [e.data1 for e in note_ons]
         assert notes == [60, 64, 67]  # Low to high
 
@@ -838,15 +871,17 @@ class TestArpeggiate:
             track.events.append(MIDIEvent(0.0, MIDIStatus.NOTE_ON, 0, note, 100))
         for note in [60, 64, 67]:
             track.events.append(MIDIEvent(1.0, MIDIStatus.NOTE_OFF, 0, note, 0))
-        result = Arpeggiate(pattern='down', note_duration=0.1).transform(seq)
-        note_ons = sorted([e for e in result.tracks[0].events if e.is_note_on], key=lambda e: e.time)
+        result = Arpeggiate(pattern="down", note_duration=0.1).transform(seq)
+        note_ons = sorted(
+            [e for e in result.tracks[0].events if e.is_note_on], key=lambda e: e.time
+        )
         notes = [e.data1 for e in note_ons]
         assert notes == [67, 64, 60]  # High to low
 
     def test_arpeggiate_invalid_pattern(self):
         """Raise error for invalid pattern."""
         with pytest.raises(ValueError, match="Unknown pattern"):
-            Arpeggiate(pattern='invalid')
+            Arpeggiate(pattern="invalid")
 
 
 # ============================================================================
@@ -860,15 +895,19 @@ class TestConvenienceFunctions:
     def test_transpose_function(self, simple_sequence):
         """transpose() convenience function."""
         result = transpose(simple_sequence, 5)
-        assert result.tracks[0].events[0].data1 == simple_sequence.tracks[0].events[0].data1 + 5
+        assert (
+            result.tracks[0].events[0].data1
+            == simple_sequence.tracks[0].events[0].data1 + 5
+        )
 
     def test_quantize_function(self, simple_sequence):
         """quantize() convenience function."""
         result = quantize(simple_sequence, 0.25)
         # All times should be on grid
         for event in result.tracks[0].events:
-            assert event.time % 0.25 == pytest.approx(0.0, abs=0.01) or \
-                   event.time % 0.25 == pytest.approx(0.25, abs=0.01)
+            assert event.time % 0.25 == pytest.approx(
+                0.0, abs=0.01
+            ) or event.time % 0.25 == pytest.approx(0.25, abs=0.01)
 
     def test_humanize_function(self, simple_sequence):
         """humanize() convenience function."""
@@ -884,7 +923,9 @@ class TestConvenienceFunctions:
     def test_scale_velocity_function(self, simple_sequence):
         """scale_velocity() convenience function."""
         result = scale_velocity(simple_sequence, factor=0.5)
-        for orig, trans in zip(simple_sequence.tracks[0].events, result.tracks[0].events):
+        for orig, trans in zip(
+            simple_sequence.tracks[0].events, result.tracks[0].events
+        ):
             if orig.is_note_on:
                 assert trans.data2 == orig.data2 // 2
 
@@ -989,7 +1030,7 @@ class TestMIDIFileGeneration:
         self._save_with_track_name(seq, pre_path)
 
         # Transform and save post-transformed
-        result = Arpeggiate(pattern='up_down', note_duration=0.1).transform(seq)
+        result = Arpeggiate(pattern="up_down", note_duration=0.1).transform(seq)
         post_path = output_dir / "arpeggiated_post.mid"
         self._save_with_track_name(result, post_path)
 
@@ -1005,12 +1046,14 @@ class TestMIDIFileGeneration:
         self._save_with_track_name(seq, pre_path)
 
         # Transform and save post-transformed
-        pipeline = Pipeline([
-            Transpose(5),
-            Quantize(grid=0.25, strength=0.8),
-            VelocityScale(min_vel=50, max_vel=110),
-            Humanize(timing=0.01, velocity=5, seed=42),
-        ])
+        pipeline = Pipeline(
+            [
+                Transpose(5),
+                Quantize(grid=0.25, strength=0.8),
+                VelocityScale(min_vel=50, max_vel=110),
+                Humanize(timing=0.01, velocity=5, seed=42),
+            ]
+        )
         result = pipeline.apply(seq)
         post_path = output_dir / "pipeline_full_post.mid"
         self._save_with_track_name(result, post_path)
@@ -1059,7 +1102,7 @@ class TestMIDIFileGeneration:
         self._save_with_track_name(seq, pre_path)
 
         # Transform and save post-transformed
-        result = VelocityCurve(curve='soft').transform(seq)
+        result = VelocityCurve(curve="soft").transform(seq)
         post_path = output_dir / "velocity_soft_post.mid"
         self._save_with_track_name(result, post_path)
 
@@ -1111,10 +1154,12 @@ class TestLoadAndTransform:
 
         # Load, transform, save post-transformed
         loaded = MIDISequence.load(str(pre_path))
-        transformed = Pipeline([
-            Transpose(12),
-            VelocityScale(factor=0.8),
-        ]).apply(loaded)
+        transformed = Pipeline(
+            [
+                Transpose(12),
+                VelocityScale(factor=0.8),
+            ]
+        ).apply(loaded)
         post_path = output_dir / "loaded_transformed_post.mid"
         self._save_with_track_name(transformed, post_path)
 

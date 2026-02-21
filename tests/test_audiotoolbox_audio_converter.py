@@ -1,10 +1,8 @@
 """Tests for AudioConverter functional API."""
 
-import os
-import struct
 import pytest
 import coremusic.capi as capi
-from coremusic.objects import CoreAudioError
+from coremusic.exceptions import CoreAudioError
 
 
 class TestAudioConverterAPI:
@@ -44,7 +42,7 @@ class TestAudioConverterAPI:
         converter_id = capi.audio_converter_new(source_format, dest_format_mono)
         try:
             input_data = b"\x00\x01" * 200
-            output1 = capi.audio_converter_convert_buffer(converter_id, input_data)
+            capi.audio_converter_convert_buffer(converter_id, input_data)
             capi.audio_converter_reset(converter_id)
             output2 = capi.audio_converter_convert_buffer(converter_id, input_data)
             assert isinstance(output2, bytes)

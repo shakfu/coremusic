@@ -9,7 +9,7 @@ Example usage:
     ```python
     import asyncio
     from coremusic.audio.async_io import AsyncAudioFile, AsyncAudioQueue
-    from coremusic.objects import AudioFormat
+    from coremusic.audio.core import AudioFormat
 
     async def process_audio():
         # Async file reading with chunk streaming
@@ -29,12 +29,15 @@ Example usage:
     ```
 """
 
+from __future__ import annotations
+
 import asyncio
 from pathlib import Path
-from typing import Any, AsyncIterator, Optional, Tuple, Union
+from typing import Any, AsyncIterator
 
-from ..objects import (NUMPY_AVAILABLE, AudioBuffer, AudioFile, AudioFormat,
-                       AudioQueue)
+from coremusic.base import NUMPY_AVAILABLE
+
+from .core import AudioBuffer, AudioFile, AudioFormat, AudioQueue
 
 if NUMPY_AVAILABLE:
     from numpy.typing import NDArray
@@ -73,7 +76,7 @@ class AsyncAudioFile:
         ```
     """
 
-    def __init__(self, path: Union[str, Path]):
+    def __init__(self, path: str | Path):
         """Initialize async audio file.
 
         Args:
@@ -121,7 +124,7 @@ class AsyncAudioFile:
 
     async def read_packets_async(
         self, start_packet: int, packet_count: int
-    ) -> Tuple[bytes, int]:
+    ) -> tuple[bytes, int]:
         """Read audio packets asynchronously.
 
         Args:
@@ -141,7 +144,7 @@ class AsyncAudioFile:
         self,
         chunk_size: int = 4096,
         start_packet: int = 0,
-        total_packets: Optional[int] = None,
+        total_packets: int | None = None,
     ) -> AsyncIterator[bytes]:
         """Stream audio data in chunks asynchronously.
 
@@ -192,7 +195,7 @@ class AsyncAudioFile:
     if NUMPY_AVAILABLE:
 
         async def read_as_numpy_async(
-            self, start_packet: int = 0, packet_count: Optional[int] = None
+            self, start_packet: int = 0, packet_count: int | None = None
         ) -> "NDArray[Any]":
             """Read audio data as NumPy array asynchronously.
 
@@ -213,7 +216,7 @@ class AsyncAudioFile:
             self,
             chunk_size: int = 4096,
             start_packet: int = 0,
-            total_packets: Optional[int] = None,
+            total_packets: int | None = None,
         ) -> AsyncIterator["NDArray[Any]"]:
             """Stream audio data as NumPy arrays asynchronously.
 
@@ -375,7 +378,7 @@ class AsyncAudioQueue:
 # ============================================================================
 
 
-async def open_audio_file_async(path: Union[str, Path]) -> AsyncAudioFile:
+async def open_audio_file_async(path: str | Path) -> AsyncAudioFile:
     """Open an audio file asynchronously.
 
     Convenience function for opening audio files in async context.

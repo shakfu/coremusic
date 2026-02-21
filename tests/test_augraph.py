@@ -1,9 +1,8 @@
 """Tests for AUGraph API (both functional and object-oriented)."""
 
 import pytest
-import time
 import coremusic.capi as capi
-from coremusic.objects import AUGraph, AudioComponentDescription
+from coremusic.audio import AUGraph, AudioComponentDescription
 
 
 class TestAUGraphFunctionalAPI:
@@ -245,7 +244,7 @@ class TestAUGraphIntegration:
             output_desc = AudioComponentDescription(
                 type="auou", subtype="def ", manufacturer="appl"
             )
-            output_node = graph.add_node(output_desc)
+            graph.add_node(output_desc)
             assert graph.update()
             assert graph.node_count == 1
         finally:

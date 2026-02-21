@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 """Tests for Constant Enum classes"""
 
-import pytest
-import tempfile
-import os
-from pathlib import Path
-
 from coremusic import constants
 
 
 # ============================================================================
 # Constant Enum Classes Tests
 # ============================================================================
+
 
 class TestConstantEnums:
     """Test constant Enum classes behavior (not hardcoded values)"""
@@ -52,17 +48,16 @@ class TestConstantEnums:
         from coremusic import capi
 
         # Test a few key constants match between enum and getter
-        assert (constants.AudioFileProperty.DATA_FORMAT ==
-                capi.get_audio_file_property_data_format())
+        assert (
+            constants.AudioFileProperty.DATA_FORMAT
+            == capi.get_audio_file_property_data_format()
+        )
 
-        assert (constants.AudioUnitScope.GLOBAL ==
-                capi.get_audio_unit_scope_global())
+        assert constants.AudioUnitScope.GLOBAL == capi.get_audio_unit_scope_global()
 
-        assert (constants.AudioUnitScope.INPUT ==
-                capi.get_audio_unit_scope_input())
+        assert constants.AudioUnitScope.INPUT == capi.get_audio_unit_scope_input()
 
-        assert (constants.AudioUnitScope.OUTPUT ==
-                capi.get_audio_unit_scope_output())
+        assert constants.AudioUnitScope.OUTPUT == capi.get_audio_unit_scope_output()
 
     def test_enum_iteration(self):
         """Test that enums can be iterated"""
@@ -78,11 +73,11 @@ class TestConstantEnums:
     def test_enum_name_access(self):
         """Test enum member name access"""
         prop = constants.AudioFileProperty.DATA_FORMAT
-        assert prop.name == 'DATA_FORMAT'
+        assert prop.name == "DATA_FORMAT"
         assert prop.value == 1684434292
 
     def test_enum_value_lookup(self):
         """Test looking up enum by value"""
         prop = constants.AudioFileProperty(1684434292)
         assert prop == constants.AudioFileProperty.DATA_FORMAT
-        assert prop.name == 'DATA_FORMAT'
+        assert prop.name == "DATA_FORMAT"

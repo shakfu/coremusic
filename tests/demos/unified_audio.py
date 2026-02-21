@@ -20,9 +20,8 @@ import sys
 import time
 import wave
 import struct
-import threading
 
-from coremusic.objects import AudioPlayer
+from coremusic.base import AudioPlayer
 import coremusic.capi as capi
 
 

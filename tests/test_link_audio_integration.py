@@ -8,7 +8,7 @@ import pytest
 import time
 
 from coremusic import link
-from coremusic.objects import AudioPlayer
+from coremusic.base import AudioPlayer
 
 
 class TestLinkAudioPlayerIntegration:
@@ -45,16 +45,16 @@ class TestLinkAudioPlayerIntegration:
         timing = player.get_link_timing(quantum=4.0)
 
         assert timing is not None
-        assert 'tempo' in timing
-        assert 'beat' in timing
-        assert 'phase' in timing
-        assert 'is_playing' in timing
+        assert "tempo" in timing
+        assert "beat" in timing
+        assert "phase" in timing
+        assert "is_playing" in timing
 
         # Check values are reasonable
-        assert timing['tempo'] == pytest.approx(120.0, abs=0.1)
-        assert timing['beat'] >= 0.0
-        assert 0.0 <= timing['phase'] < 4.0
-        assert timing['is_playing'] == False
+        assert timing["tempo"] == pytest.approx(120.0, abs=0.1)
+        assert timing["beat"] >= 0.0
+        assert 0.0 <= timing["phase"] < 4.0
+        assert not timing["is_playing"]
 
     def test_link_timing_updates(self):
         """Test that Link timing values update over time"""
@@ -65,14 +65,14 @@ class TestLinkAudioPlayerIntegration:
 
         # Get initial timing
         timing1 = player.get_link_timing(quantum=4.0)
-        beat1 = timing1['beat']
+        beat1 = timing1["beat"]
 
         # Wait a bit
         time.sleep(0.1)
 
         # Get updated timing
         timing2 = player.get_link_timing(quantum=4.0)
-        beat2 = timing2['beat']
+        beat2 = timing2["beat"]
 
         # Beat should have advanced
         # At 120 BPM, we have 2 beats per second
@@ -89,7 +89,7 @@ class TestLinkAudioPlayerIntegration:
 
         # Get initial timing
         timing1 = player.get_link_timing()
-        assert timing1['tempo'] == pytest.approx(120.0, abs=0.1)
+        assert timing1["tempo"] == pytest.approx(120.0, abs=0.1)
 
         # Change tempo in Link session
         state = session.capture_app_session_state()
@@ -101,7 +101,7 @@ class TestLinkAudioPlayerIntegration:
 
         # Get updated timing through player
         timing2 = player.get_link_timing()
-        assert timing2['tempo'] == pytest.approx(140.0, abs=0.1)
+        assert timing2["tempo"] == pytest.approx(140.0, abs=0.1)
 
     def test_link_transport_state_visible_in_player(self):
         """Test that transport state changes are visible through AudioPlayer"""
@@ -113,7 +113,7 @@ class TestLinkAudioPlayerIntegration:
 
         # Check initial state
         timing1 = player.get_link_timing()
-        assert timing1['is_playing'] == False
+        assert not timing1["is_playing"]
 
         # Start transport
         state = session.capture_app_session_state()
@@ -125,7 +125,7 @@ class TestLinkAudioPlayerIntegration:
 
         # Check transport is playing
         timing2 = player.get_link_timing()
-        assert timing2['is_playing'] == True
+        assert timing2["is_playing"]
 
         # Stop transport
         state = session.capture_app_session_state()
@@ -137,7 +137,7 @@ class TestLinkAudioPlayerIntegration:
 
         # Check transport stopped
         timing3 = player.get_link_timing()
-        assert timing3['is_playing'] == False
+        assert not timing3["is_playing"]
 
     def test_multiple_players_sharing_link_session(self):
         """Test multiple AudioPlayers can share the same Link session"""
@@ -155,11 +155,12 @@ class TestLinkAudioPlayerIntegration:
         timing2 = player2.get_link_timing(quantum=4.0)
 
         # Should have very similar timing (within a few microseconds)
-        assert timing1['tempo'] == pytest.approx(timing2['tempo'], abs=0.01)
-        assert timing1['beat'] == pytest.approx(timing2['beat'], abs=0.01)
+        assert timing1["tempo"] == pytest.approx(timing2["tempo"], abs=0.01)
+        assert timing1["beat"] == pytest.approx(timing2["beat"], abs=0.01)
 
     def test_link_session_reference_kept_alive(self):
         """Test that AudioPlayer keeps Link session alive"""
+
         def create_player():
             # Create Link session in local scope
             session = link.LinkSession(bpm=120.0)
@@ -171,7 +172,7 @@ class TestLinkAudioPlayerIntegration:
 
         timing = player.get_link_timing()
         assert timing is not None
-        assert timing['tempo'] == pytest.approx(120.0, abs=0.1)
+        assert timing["tempo"] == pytest.approx(120.0, abs=0.1)
 
 
 if __name__ == "__main__":

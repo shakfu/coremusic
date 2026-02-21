@@ -16,14 +16,14 @@ class TestLinkContextManager:
         session = link.LinkSession(bpm=120.0)
 
         # Should start disabled
-        assert session.enabled == False
+        assert not session.enabled
 
         # Enter context - should enable
         with session:
-            assert session.enabled == True
+            assert session.enabled
 
         # Exit context - should disable
-        assert session.enabled == False
+        assert not session.enabled
 
     def test_context_manager_returns_session(self):
         """Test context manager returns the session instance"""
@@ -37,7 +37,7 @@ class TestLinkContextManager:
         """Test performing operations within context manager"""
         with link.LinkSession(bpm=120.0) as session:
             # Should be enabled
-            assert session.enabled == True
+            assert session.enabled
 
             # Should be able to capture state
             state = session.capture_app_session_state()
@@ -55,7 +55,7 @@ class TestLinkContextManager:
             assert state2.tempo == pytest.approx(140.0, abs=0.1)
 
         # After exit, should be disabled
-        assert session.enabled == False
+        assert not session.enabled
 
     def test_context_manager_exception_still_disables(self):
         """Test context manager disables Link even on exception"""
@@ -63,13 +63,13 @@ class TestLinkContextManager:
 
         try:
             with session:
-                assert session.enabled == True
+                assert session.enabled
                 raise ValueError("Test exception")
         except ValueError:
             pass
 
         # Should still be disabled after exception
-        assert session.enabled == False
+        assert not session.enabled
 
     def test_nested_context_managers(self):
         """Test using multiple Link sessions with context managers"""
@@ -77,18 +77,18 @@ class TestLinkContextManager:
         session2 = link.LinkSession(bpm=130.0)
 
         with session1:
-            assert session1.enabled == True
-            assert session2.enabled == False
+            assert session1.enabled
+            assert not session2.enabled
 
             with session2:
-                assert session1.enabled == True
-                assert session2.enabled == True
+                assert session1.enabled
+                assert session2.enabled
 
-            assert session1.enabled == True
-            assert session2.enabled == False
+            assert session1.enabled
+            assert not session2.enabled
 
-        assert session1.enabled == False
-        assert session2.enabled == False
+        assert not session1.enabled
+        assert not session2.enabled
 
 
 class TestLinkModuleExports:
@@ -100,9 +100,9 @@ class TestLinkModuleExports:
 
     def test_link_classes_accessible(self):
         """Test Link classes are accessible from link module"""
-        assert hasattr(link, 'LinkSession')
-        assert hasattr(link, 'SessionState')
-        assert hasattr(link, 'Clock')
+        assert hasattr(link, "LinkSession")
+        assert hasattr(link, "SessionState")
+        assert hasattr(link, "Clock")
 
     def test_can_create_instances_from_main_module(self):
         """Test creating Link instances via main module"""
@@ -115,6 +115,7 @@ class TestLinkModuleExports:
     def test_link_accessible_as_attribute(self):
         """Test link is accessible as lazy attribute"""
         from coremusic import link as _link
+
         assert _link is not None
 
 
@@ -137,30 +138,30 @@ class TestLinkPythonicPatterns:
 
         # enabled property should be writable
         session.enabled = True
-        assert session.enabled == True
+        assert session.enabled
 
         session.enabled = False
-        assert session.enabled == False
+        assert not session.enabled
 
         # start_stop_sync_enabled should be writable
         session.start_stop_sync_enabled = True
-        assert session.start_stop_sync_enabled == True
+        assert session.start_stop_sync_enabled
 
         session.start_stop_sync_enabled = False
-        assert session.start_stop_sync_enabled == False
+        assert not session.start_stop_sync_enabled
 
     def test_repr_is_informative(self):
         """Test __repr__ provides useful information"""
         session = link.LinkSession(bpm=120.0)
 
         repr_str = repr(session)
-        assert 'LinkSession' in repr_str
-        assert 'disabled' in repr_str
-        assert 'peers' in repr_str
+        assert "LinkSession" in repr_str
+        assert "disabled" in repr_str
+        assert "peers" in repr_str
 
         session.enabled = True
         repr_str = repr(session)
-        assert 'enabled' in repr_str
+        assert "enabled" in repr_str
 
     def test_session_state_properties(self):
         """Test SessionState has readable properties"""
@@ -245,7 +246,7 @@ class TestLinkUsagePatterns:
 
             # Verify playing
             state = session.capture_app_session_state()
-            assert state.is_playing == True
+            assert state.is_playing
 
             # Stop transport
             current_time = session.clock.micros()
@@ -256,7 +257,7 @@ class TestLinkUsagePatterns:
 
             # Verify stopped
             state = session.capture_app_session_state()
-            assert state.is_playing == False
+            assert not state.is_playing
 
     def test_tempo_change_pattern(self):
         """Test tempo change pattern"""

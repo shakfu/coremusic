@@ -23,11 +23,12 @@ Example:
     >>> transformed.save("output.mid")
 """
 
+from __future__ import annotations
+
 import random
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import (TYPE_CHECKING, Callable, Dict, List, Optional, Set, Tuple,
-                    Union)
+from typing import TYPE_CHECKING, Callable
 
 from .utilities import MIDIEvent, MIDISequence, MIDIStatus
 
@@ -90,13 +91,13 @@ class Pipeline:
         >>> result = pipeline.apply(sequence)
     """
 
-    def __init__(self, transformers: Optional[List[MIDITransformer]] = None):
+    def __init__(self, transformers: list[MIDITransformer] | None = None):
         """Initialize pipeline.
 
         Args:
             transformers: List of transformers to apply in order
         """
-        self.transformers: List[MIDITransformer] = transformers or []
+        self.transformers: list[MIDITransformer] = transformers or []
 
     def add(self, transformer: MIDITransformer) -> "Pipeline":
         """Add transformer to pipeline.
@@ -216,7 +217,7 @@ class Harmonize(MIDITransformer):
 
     def __init__(
         self,
-        intervals: List[int],
+        intervals: list[int],
         velocity_scale: float = 0.8,
     ):
         """Initialize harmonize transformer.
@@ -241,13 +242,15 @@ class Harmonize(MIDITransformer):
                         if 0 <= new_note <= 127:
                             harmony_velocity = int(event.data2 * self.velocity_scale)
                             harmony_velocity = max(1, min(127, harmony_velocity))
-                            new_events.append(MIDIEvent(
-                                time=event.time,
-                                status=MIDIStatus.NOTE_ON,
-                                channel=event.channel,
-                                data1=new_note,
-                                data2=harmony_velocity,
-                            ))
+                            new_events.append(
+                                MIDIEvent(
+                                    time=event.time,
+                                    status=MIDIStatus.NOTE_ON,
+                                    channel=event.channel,
+                                    data1=new_note,
+                                    data2=harmony_velocity,
+                                )
+                            )
                 elif event.status == MIDIStatus.NOTE_OFF or (
                     event.status == MIDIStatus.NOTE_ON and event.data2 == 0
                 ):
@@ -255,13 +258,15 @@ class Harmonize(MIDITransformer):
                     for interval in self.intervals:
                         new_note = event.data1 + interval
                         if 0 <= new_note <= 127:
-                            new_events.append(MIDIEvent(
-                                time=event.time,
-                                status=MIDIStatus.NOTE_OFF,
-                                channel=event.channel,
-                                data1=new_note,
-                                data2=0,
-                            ))
+                            new_events.append(
+                                MIDIEvent(
+                                    time=event.time,
+                                    status=MIDIStatus.NOTE_OFF,
+                                    channel=event.channel,
+                                    data1=new_note,
+                                    data2=0,
+                                )
+                            )
 
             track.events.extend(new_events)
             track.events.sort(key=lambda e: e.time)
@@ -418,15 +423,17 @@ class Reverse(MIDITransformer):
             max_time = max(e.time for e in track.events)
 
             # Build note pairs (note on -> note off)
-            note_pairs: Dict[Tuple[int, int], List[Tuple[float, float, int]]] = {}
-            other_events: List[MIDIEvent] = []
+            note_pairs: dict[tuple[int, int], list[tuple[float, float, int]]] = {}
+            other_events: list[MIDIEvent] = []
 
-            note_on_times: Dict[Tuple[int, int, int], float] = {}
+            note_on_times: dict[tuple[int, int, int], float] = {}
 
             for event in track.events:
                 key = (event.data1, event.channel)
                 if event.is_note_on:
-                    note_on_times[(event.data1, event.channel, event.data2)] = event.time
+                    note_on_times[(event.data1, event.channel, event.data2)] = (
+                        event.time
+                    )
                 elif event.is_note_off:
                     # Find matching note on
                     for (note, ch, vel), on_time in list(note_on_times.items()):
@@ -449,20 +456,24 @@ class Reverse(MIDITransformer):
                     # Calculate reversed start time
                     reversed_start = max_time - on_time - duration
 
-                    track.events.append(MIDIEvent(
-                        time=max(0.0, reversed_start),
-                        status=MIDIStatus.NOTE_ON,
-                        channel=channel,
-                        data1=note,
-                        data2=velocity,
-                    ))
-                    track.events.append(MIDIEvent(
-                        time=max(0.0, reversed_start + duration),
-                        status=MIDIStatus.NOTE_OFF,
-                        channel=channel,
-                        data1=note,
-                        data2=0,
-                    ))
+                    track.events.append(
+                        MIDIEvent(
+                            time=max(0.0, reversed_start),
+                            status=MIDIStatus.NOTE_ON,
+                            channel=channel,
+                            data1=note,
+                            data2=velocity,
+                        )
+                    )
+                    track.events.append(
+                        MIDIEvent(
+                            time=max(0.0, reversed_start + duration),
+                            status=MIDIStatus.NOTE_OFF,
+                            channel=channel,
+                            data1=note,
+                            data2=0,
+                        )
+                    )
 
             # Reverse other events too
             for event in other_events:
@@ -494,9 +505,9 @@ class VelocityScale(MIDITransformer):
 
     def __init__(
         self,
-        min_vel: Optional[int] = None,
-        max_vel: Optional[int] = None,
-        factor: Optional[float] = None,
+        min_vel: int | None = None,
+        max_vel: int | None = None,
+        factor: float | None = None,
     ):
         """Initialize velocity scale transformer.
 
@@ -567,17 +578,17 @@ class VelocityCurve(MIDITransformer):
         >>> curved = VelocityCurve(curve='exp').transform(sequence)
     """
 
-    CURVES: Dict[str, Callable[[float], float]] = {
-        'linear': lambda x: x,
-        'log': lambda x: (x ** 0.5),  # Square root for softer feel
-        'exp': lambda x: (x ** 2),    # Square for more dynamic
-        'soft': lambda x: (x ** 0.7),
-        'hard': lambda x: (x ** 1.5),
+    CURVES: dict[str, Callable[[float], float]] = {
+        "linear": lambda x: x,
+        "log": lambda x: (x**0.5),  # Square root for softer feel
+        "exp": lambda x: (x**2),  # Square for more dynamic
+        "soft": lambda x: (x**0.7),
+        "hard": lambda x: (x**1.5),
     }
 
     def __init__(
         self,
-        curve: Union[str, Callable[[float], float]] = 'linear',
+        curve: str | Callable[[float], float] = "linear",
     ):
         """Initialize velocity curve transformer.
 
@@ -587,12 +598,14 @@ class VelocityCurve(MIDITransformer):
         """
         if isinstance(curve, str):
             if curve not in self.CURVES:
-                raise ValueError(f"Unknown curve: {curve}. Available: {list(self.CURVES.keys())}")
+                raise ValueError(
+                    f"Unknown curve: {curve}. Available: {list(self.CURVES.keys())}"
+                )
             self.curve_func = self.CURVES[curve]
             self.curve_name = curve
         else:
             self.curve_func = curve
-            self.curve_name = 'custom'
+            self.curve_name = "custom"
 
     def transform(self, sequence: MIDISequence) -> MIDISequence:
         result = self._copy_sequence(sequence)
@@ -627,7 +640,7 @@ class Humanize(MIDITransformer):
         self,
         timing: float = 0.01,
         velocity: int = 5,
-        seed: Optional[int] = None,
+        seed: int | None = None,
     ):
         """Initialize humanize transformer.
 
@@ -651,7 +664,7 @@ class Humanize(MIDITransformer):
         rng = random.Random(self.seed)
 
         # Track note on times to apply same shift to corresponding note offs
-        note_shifts: Dict[Tuple[int, int, float], float] = {}
+        note_shifts: dict[tuple[int, int, float], float] = {}
 
         for track in result.tracks:
             for event in track.events:
@@ -661,7 +674,9 @@ class Humanize(MIDITransformer):
                     event.time = max(0.0, event.time + time_shift)
 
                     # Store shift for matching note off
-                    note_shifts[(event.data1, event.channel, event.time - time_shift)] = time_shift
+                    note_shifts[
+                        (event.data1, event.channel, event.time - time_shift)
+                    ] = time_shift
 
                     # Apply velocity variation
                     vel_shift = rng.randint(-self.velocity, self.velocity)
@@ -700,11 +715,11 @@ class NoteFilter(MIDITransformer):
 
     def __init__(
         self,
-        min_note: Optional[int] = None,
-        max_note: Optional[int] = None,
-        min_velocity: Optional[int] = None,
-        max_velocity: Optional[int] = None,
-        channels: Optional[Set[int]] = None,
+        min_note: int | None = None,
+        max_note: int | None = None,
+        min_velocity: int | None = None,
+        max_velocity: int | None = None,
+        channels: set[int] | None = None,
         invert: bool = False,
     ):
         """Initialize note filter.
@@ -744,8 +759,8 @@ class NoteFilter(MIDITransformer):
 
         for track in result.tracks:
             # Track which notes to filter
-            notes_to_keep: Set[Tuple[int, int]] = set()
-            notes_to_remove: Set[Tuple[int, int]] = set()
+            notes_to_keep: set[tuple[int, int]] = set()
+            notes_to_remove: set[tuple[int, int]] = set()
 
             # First pass: determine which notes pass the filter
             for event in track.events:
@@ -818,12 +833,13 @@ class ScaleFilter(MIDITransformer):
         """
         # Import here to avoid circular imports at module level
         from ..music.theory import Scale as ScaleClass
+
         if not isinstance(scale, ScaleClass):
             raise TypeError(f"Expected Scale, got {type(scale).__name__}")
         self.scale = scale
         # Pre-compute allowed pitch classes for efficiency
         root_pc = scale.root.pitch_class
-        self._allowed_pitch_classes: Set[int] = {
+        self._allowed_pitch_classes: set[int] = {
             (root_pc + interval) % 12 for interval in scale.intervals
         }
 
@@ -837,7 +853,7 @@ class ScaleFilter(MIDITransformer):
 
         for track in result.tracks:
             # Track which notes to keep (those in scale)
-            notes_to_keep: Set[Tuple[int, int]] = set()
+            notes_to_keep: set[tuple[int, int]] = set()
 
             # First pass: determine which notes are in scale
             for event in track.events:
@@ -877,8 +893,8 @@ class EventTypeFilter(MIDITransformer):
 
     def __init__(
         self,
-        keep: Optional[List[int]] = None,
-        remove: Optional[List[int]] = None,
+        keep: list[int] | None = None,
+        remove: list[int] | None = None,
     ):
         """Initialize event type filter.
 
@@ -922,7 +938,7 @@ class ChannelRemap(MIDITransformer):
         >>> remapped = ChannelRemap({0: 9}).transform(sequence)
     """
 
-    def __init__(self, channel_map: Dict[int, int]):
+    def __init__(self, channel_map: dict[int, int]):
         """Initialize channel remap transformer.
 
         Args:
@@ -998,13 +1014,13 @@ class Arpeggiate(MIDITransformer):
         >>> arpeggiated = Arpeggiate(pattern='up', note_duration=0.1).transform(sequence)
     """
 
-    PATTERNS = ['up', 'down', 'up_down', 'down_up', 'random']
+    PATTERNS = ["up", "down", "up_down", "down_up", "random"]
 
     def __init__(
         self,
-        pattern: str = 'up',
+        pattern: str = "up",
         note_duration: float = 0.1,
-        seed: Optional[int] = None,
+        seed: int | None = None,
     ):
         """Initialize arpeggiate transformer.
 
@@ -1020,18 +1036,20 @@ class Arpeggiate(MIDITransformer):
         self.note_duration = note_duration
         self.seed = seed
 
-    def _get_pattern_order(self, notes: List[MIDIEvent], rng: random.Random) -> List[int]:
+    def _get_pattern_order(
+        self, notes: list[MIDIEvent], rng: random.Random
+    ) -> list[int]:
         """Get indices for pattern."""
         n = len(notes)
-        if self.pattern == 'up':
+        if self.pattern == "up":
             return list(range(n))
-        elif self.pattern == 'down':
+        elif self.pattern == "down":
             return list(range(n - 1, -1, -1))
-        elif self.pattern == 'up_down':
+        elif self.pattern == "up_down":
             return list(range(n)) + list(range(n - 2, 0, -1))
-        elif self.pattern == 'down_up':
+        elif self.pattern == "down_up":
             return list(range(n - 1, -1, -1)) + list(range(1, n - 1))
-        elif self.pattern == 'random':
+        elif self.pattern == "random":
             indices = list(range(n))
             rng.shuffle(indices)
             return indices
@@ -1043,9 +1061,9 @@ class Arpeggiate(MIDITransformer):
 
         for track in result.tracks:
             # Group simultaneous note-ons as chords
-            chord_times: Dict[float, List[MIDIEvent]] = {}
-            non_note_events: List[MIDIEvent] = []
-            note_off_times: Dict[Tuple[int, int], float] = {}
+            chord_times: dict[float, list[MIDIEvent]] = {}
+            non_note_events: list[MIDIEvent] = []
+            note_off_times: dict[tuple[int, int], float] = {}
 
             for event in track.events:
                 if event.is_note_on:
@@ -1065,14 +1083,18 @@ class Arpeggiate(MIDITransformer):
                     # Single note, keep as is
                     for event in chord_events:
                         track.events.append(event)
-                        off_time = note_off_times.get((event.data1, event.channel), chord_time + 0.5)
-                        track.events.append(MIDIEvent(
-                            time=off_time,
-                            status=MIDIStatus.NOTE_OFF,
-                            channel=event.channel,
-                            data1=event.data1,
-                            data2=0,
-                        ))
+                        off_time = note_off_times.get(
+                            (event.data1, event.channel), chord_time + 0.5
+                        )
+                        track.events.append(
+                            MIDIEvent(
+                                time=off_time,
+                                status=MIDIStatus.NOTE_OFF,
+                                channel=event.channel,
+                                data1=event.data1,
+                                data2=0,
+                            )
+                        )
                 else:
                     # Arpeggiate the chord
                     sorted_notes = sorted(chord_events, key=lambda e: e.data1)
@@ -1082,27 +1104,33 @@ class Arpeggiate(MIDITransformer):
                         event = sorted_notes[idx]
                         start_time = chord_time + i * self.note_duration
 
-                        track.events.append(MIDIEvent(
-                            time=start_time,
-                            status=MIDIStatus.NOTE_ON,
-                            channel=event.channel,
-                            data1=event.data1,
-                            data2=event.data2,
-                        ))
-                        track.events.append(MIDIEvent(
-                            time=start_time + self.note_duration * 0.9,
-                            status=MIDIStatus.NOTE_OFF,
-                            channel=event.channel,
-                            data1=event.data1,
-                            data2=0,
-                        ))
+                        track.events.append(
+                            MIDIEvent(
+                                time=start_time,
+                                status=MIDIStatus.NOTE_ON,
+                                channel=event.channel,
+                                data1=event.data1,
+                                data2=event.data2,
+                            )
+                        )
+                        track.events.append(
+                            MIDIEvent(
+                                time=start_time + self.note_duration * 0.9,
+                                status=MIDIStatus.NOTE_OFF,
+                                channel=event.channel,
+                                data1=event.data1,
+                                data2=0,
+                            )
+                        )
 
             track.events.sort(key=lambda e: e.time)
 
         return result
 
     def __repr__(self) -> str:
-        return f"Arpeggiate(pattern={self.pattern!r}, note_duration={self.note_duration})"
+        return (
+            f"Arpeggiate(pattern={self.pattern!r}, note_duration={self.note_duration})"
+        )
 
 
 # ============================================================================
@@ -1140,9 +1168,9 @@ def reverse(sequence: MIDISequence) -> MIDISequence:
 
 def scale_velocity(
     sequence: MIDISequence,
-    factor: Optional[float] = None,
-    min_vel: Optional[int] = None,
-    max_vel: Optional[int] = None,
+    factor: float | None = None,
+    min_vel: int | None = None,
+    max_vel: int | None = None,
 ) -> MIDISequence:
     """Convenience function to scale velocity."""
     return VelocityScale(min_vel, max_vel, factor).transform(sequence)

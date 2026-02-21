@@ -8,7 +8,7 @@ Usage:
 import sys
 import os
 from coremusic.audio.analysis import AudioAnalyzer
-from coremusic.objects import NUMPY_AVAILABLE
+from coremusic.base import NUMPY_AVAILABLE
 
 
 def main():
@@ -26,8 +26,9 @@ def main():
     print(f"Channels: {info['channels']} ({'stereo' if info['is_stereo'] else 'mono'})")
     print(f"Bits per channel: {info['bits_per_channel']}")
 
-    if NUMPY_AVAILABLE and 'peak_amplitude' in info:
+    if NUMPY_AVAILABLE and "peak_amplitude" in info:
         import numpy as np
+
         rms_db = 20 * np.log10(info["rms"]) if info["rms"] > 0 else float("-inf")
         print(f"Peak: {info['peak_amplitude']:.4f}")
         print(f"RMS: {info['rms']:.4f} ({rms_db:.2f} dB)")

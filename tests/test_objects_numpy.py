@@ -4,8 +4,8 @@ Tests for NumPy integration in AudioFormat and AudioFile
 """
 
 import pytest
-import os
-from coremusic.objects import AudioFile, AudioFormat, NUMPY_AVAILABLE
+from coremusic.audio import AudioFile, AudioFormat
+from coremusic.base import NUMPY_AVAILABLE
 
 
 if not NUMPY_AVAILABLE:
@@ -251,7 +251,8 @@ class TestAudioFileNumPy:
     def test_read_as_numpy_no_numpy_raises(self, test_audio_file, monkeypatch):
         """Test that read_as_numpy raises if NumPy not available"""
         # Temporarily mock NUMPY_AVAILABLE to False in the audio module
-        import coremusic.objects.audio as audio_module
+        import coremusic.audio.core as audio_module
+
         monkeypatch.setattr(audio_module, "NUMPY_AVAILABLE", False)
 
         with AudioFile(test_audio_file) as audio:
@@ -296,9 +297,10 @@ class TestNumPyAvailabilityFlag:
     """Tests for NUMPY_AVAILABLE flag"""
 
     def test_numpy_available_flag_exists(self):
-        """Test that NUMPY_AVAILABLE flag is defined in coremusic.objects"""
-        import coremusic.objects as objects
-        assert hasattr(objects, "NUMPY_AVAILABLE")
+        """Test that NUMPY_AVAILABLE flag is defined in coremusic.base"""
+        import coremusic.base as base_module
+
+        assert hasattr(base_module, "NUMPY_AVAILABLE")
 
     def test_numpy_available_flag_is_bool(self):
         """Test that NUMPY_AVAILABLE is a boolean"""
@@ -310,6 +312,6 @@ class TestNumPyAvailabilityFlag:
 
     def test_numpy_import_from_module(self):
         """Test importing NUMPY_AVAILABLE from module"""
-        from coremusic.objects import NUMPY_AVAILABLE
+        from coremusic.base import NUMPY_AVAILABLE
 
         assert isinstance(NUMPY_AVAILABLE, bool)

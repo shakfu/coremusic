@@ -1,10 +1,6 @@
 """pytest test suite for coremusic wrapper functionality."""
 
-import os
 import pytest
-import wave
-import struct
-import time
 import coremusic.capi as capi
 
 

@@ -2,11 +2,10 @@
 
 import os
 import time
-import sys
 
 from conftest import AMEN_WAV_PATH
 import coremusic.capi as capi
-from coremusic.objects import AudioPlayer
+from coremusic.base import AudioPlayer
 
 
 def test_audio_playback():

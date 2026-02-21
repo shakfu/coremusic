@@ -1,6 +1,6 @@
 [project]
 name = "coremusic"
-version = "0.1.13"
+version = "0.2.0"
 authors = [
     { name = "Shakeeb Alireza", email = "shakfu@users.noreply.github.com" }
 ]
@@ -107,6 +107,7 @@ omit = [
 ]
 
 [tool.coverage.report]
+fail_under = 60
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",

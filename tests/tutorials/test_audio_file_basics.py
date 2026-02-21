@@ -6,9 +6,9 @@ All examples are executable doctests.
 
 Run with: pytest tests/tutorials/test_audio_file_basics.py --doctest-modules -v
 """
+
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 # Test data path
@@ -31,7 +31,7 @@ def open_audio_file_context_manager():
 
     The AudioFile class supports context managers for automatic cleanup:
 
-    >>> from coremusic.objects import AudioFile
+    >>> from coremusic.audio import AudioFile
     >>> path = get_test_audio_path()
     >>> with AudioFile(path) as audio:
     ...     # File is automatically opened
@@ -47,7 +47,7 @@ def open_audio_file_context_manager():
 def get_audio_duration():
     """Get the duration of an audio file.
 
-    >>> from coremusic.objects import AudioFile
+    >>> from coremusic.audio import AudioFile
     >>> path = get_test_audio_path()
     >>> with AudioFile(path) as audio:
     ...     duration = audio.duration
@@ -62,7 +62,7 @@ def get_audio_duration():
 def get_audio_format():
     """Get detailed format information from an audio file.
 
-    >>> from coremusic.objects import AudioFile
+    >>> from coremusic.audio import AudioFile
     >>> path = get_test_audio_path()
     >>> with AudioFile(path) as audio:
     ...     fmt = audio.format
@@ -81,7 +81,7 @@ def get_audio_format():
 def get_frame_count():
     """Calculate approximate frame count from duration and sample rate.
 
-    >>> from coremusic.objects import AudioFile
+    >>> from coremusic.audio import AudioFile
     >>> path = get_test_audio_path()
     >>> with AudioFile(path) as audio:
     ...     # Calculate frames from duration
@@ -95,7 +95,7 @@ def get_frame_count():
 def read_audio_packets():
     """Read audio data as packets (frames).
 
-    >>> from coremusic.objects import AudioFile
+    >>> from coremusic.audio import AudioFile
     >>> path = get_test_audio_path()
     >>> with AudioFile(path) as audio:
     ...     # Read first 1000 packets starting at packet 0
@@ -111,7 +111,7 @@ def read_audio_packets():
 def read_audio_in_chunks():
     """Read audio file in chunks for memory efficiency.
 
-    >>> from coremusic.objects import AudioFile
+    >>> from coremusic.audio import AudioFile
     >>> path = get_test_audio_path()
     >>> with AudioFile(path) as audio:
     ...     chunk_size = 4096
@@ -135,7 +135,7 @@ def read_audio_in_chunks():
 def detect_audio_format_type():
     """Detect the type of audio format.
 
-    >>> from coremusic.objects import AudioFile
+    >>> from coremusic.audio import AudioFile
     >>> path = get_test_audio_path()
     >>> with AudioFile(path) as audio:
     ...     fmt = audio.format
@@ -149,7 +149,7 @@ def detect_audio_format_type():
 def check_format_properties():
     """Check various format properties.
 
-    >>> from coremusic.objects import AudioFile
+    >>> from coremusic.audio import AudioFile
     >>> path = get_test_audio_path()
     >>> with AudioFile(path) as audio:
     ...     fmt = audio.format
@@ -167,7 +167,8 @@ def check_format_properties():
 def audio_file_error_handling():
     """Handle errors when opening audio files.
 
-    >>> from coremusic.objects import AudioFile, AudioFileError
+    >>> from coremusic.audio import AudioFile
+    >>> from coremusic.exceptions import AudioFileError
     >>> try:
     ...     with AudioFile("nonexistent_file.wav") as audio:
     ...         pass
@@ -180,7 +181,7 @@ def audio_file_error_handling():
 def format_bytes_per_frame():
     """Calculate bytes per frame from format.
 
-    >>> from coremusic.objects import AudioFile
+    >>> from coremusic.audio import AudioFile
     >>> path = get_test_audio_path()
     >>> with AudioFile(path) as audio:
     ...     fmt = audio.format
@@ -196,7 +197,7 @@ def format_bytes_per_frame():
 def calculate_bitrate():
     """Calculate the bitrate of an audio file.
 
-    >>> from coremusic.objects import AudioFile
+    >>> from coremusic.audio import AudioFile
     >>> path = get_test_audio_path()
     >>> with AudioFile(path) as audio:
     ...     fmt = audio.format
@@ -214,4 +215,5 @@ def calculate_bitrate():
 # Test runner
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod(verbose=True)

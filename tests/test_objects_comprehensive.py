@@ -1,26 +1,25 @@
 """Comprehensive tests for the object-oriented coremusic API functionality."""
 
 import pytest
-import os
 import coremusic.capi as capi
-from coremusic.objects import (
+from coremusic.audio import (
     AudioBuffer,
     AudioComponentDescription,
     AudioFile,
-    AudioFileError,
     AudioFileStream,
     AudioFormat,
     AudioQueue,
-    AudioQueueError,
     AudioUnit,
+)
+from coremusic.base import CoreAudioObject
+from coremusic.exceptions import (
+    AudioFileError,
+    AudioQueueError,
     AudioUnitError,
     CoreAudioError,
-    CoreAudioObject,
-    MIDIClient,
     MIDIError,
-    MIDIInputPort,
-    MIDIOutputPort,
 )
+from coremusic.midi import MIDIClient, MIDIInputPort, MIDIOutputPort
 
 
 class TestObjectOrientedAPIFunctionality:
@@ -28,9 +27,7 @@ class TestObjectOrientedAPIFunctionality:
 
     def test_audio_format_functionality(self):
         """Test AudioFormat class functionality"""
-        format = AudioFormat(
-            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
-        )
+        format = AudioFormat(44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16)
         assert format.is_pcm
         assert format.is_stereo
         assert not format.is_mono
@@ -63,7 +60,6 @@ class TestObjectOrientedAPIFunctionality:
         with pytest.raises(RuntimeError, match="has been disposed"):
             obj._ensure_not_disposed()
 
-
     def test_audio_file_functionality(self, amen_wav_path):
         """Test AudioFile functionality with real file"""
         with AudioFile(amen_wav_path) as audio_file:
@@ -89,9 +85,7 @@ class TestObjectOrientedAPIFunctionality:
 
     def test_audio_queue_functionality(self):
         """Test AudioQueue functionality"""
-        format = AudioFormat(
-            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
-        )
+        format = AudioFormat(44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16)
         try:
             queue = AudioQueue.new_output(format)
             assert isinstance(queue, AudioQueue)
@@ -118,9 +112,7 @@ class TestObjectOrientedAPIFunctionality:
 
     def test_audio_component_description_functionality(self):
         """Test AudioComponentDescription functionality"""
-        desc = AudioComponentDescription(
-            "auou", "def ", "appl", flags=1, flags_mask=2
-        )
+        desc = AudioComponentDescription("auou", "def ", "appl", flags=1, flags_mask=2)
         assert desc.type == "auou"
         assert desc.subtype == "def "
         assert desc.manufacturer == "appl"
@@ -211,9 +203,7 @@ class TestObjectOrientedAPIFunctionality:
             audio_file = AudioFile(amen_wav_path)
             audio_file.open()
             objects.append(audio_file)
-        format = AudioFormat(
-            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
-        )
+        format = AudioFormat(44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16)
         for _ in range(3):
             try:
                 queue = AudioQueue.new_output(format)
@@ -237,9 +227,7 @@ class TestObjectOrientedAPIFunctionality:
             AudioFile("/dummy/path"),
             AudioFileStream(),
         ]
-        format = AudioFormat(
-            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
-        )
+        format = AudioFormat(44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16)
         try:
             queue = AudioQueue.new_output(format)
             objects.append(queue)

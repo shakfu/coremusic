@@ -7,11 +7,14 @@ This module provides classes for working with audio hardware:
 
 from __future__ import annotations
 
+import logging
 import struct
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from .. import capi
-from .exceptions import AudioDeviceError
+from coremusic import capi
+from coremusic.exceptions import AudioDeviceError
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "AudioDevice",
@@ -36,14 +39,14 @@ class AudioDevice(capi.CoreAudioObject):
         self._set_object_id(device_id)
 
     def _get_property_string(
-        self, property_id: int, scope: Optional[int] = None, element: int = 0
+        self, property_id: int, scope: int | None = None, element: int = 0
     ) -> str:
         """Get a string property from the device"""
         if scope is None:
             scope = capi.get_audio_object_property_scope_global()
 
         try:
-            data = capi.audio_object_get_property_string(  # type: ignore[attr-defined]
+            data = capi.audio_object_get_property_string(
                 self.object_id, property_id, scope, element
             )
             if data:
@@ -52,11 +55,12 @@ class AudioDevice(capi.CoreAudioObject):
                 result: str = data.decode("utf-8", errors="ignore").strip("\x00")
                 return result
             return ""
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to get property %d: %s", property_id, e)
             return ""
 
     def _get_property_uint32(
-        self, property_id: int, scope: Optional[int] = None, element: int = 0
+        self, property_id: int, scope: int | None = None, element: int = 0
     ) -> int:
         """Get a UInt32 property from the device"""
         if scope is None:
@@ -70,11 +74,12 @@ class AudioDevice(capi.CoreAudioObject):
                 result: int = struct.unpack("<L", data[:4])[0]
                 return result
             return 0
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to get property %d: %s", property_id, e)
             return 0
 
     def _get_property_float64(
-        self, property_id: int, scope: Optional[int] = None, element: int = 0
+        self, property_id: int, scope: int | None = None, element: int = 0
     ) -> float:
         """Get a Float64 property from the device"""
         if scope is None:
@@ -88,7 +93,8 @@ class AudioDevice(capi.CoreAudioObject):
                 result: float = struct.unpack("<d", data[:8])[0]
                 return result
             return 0.0
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to get property %d: %s", property_id, e)
             return 0.0
 
     @property
@@ -145,7 +151,7 @@ class AudioDevice(capi.CoreAudioObject):
         value = self._get_property_uint32(capi.get_audio_device_property_is_hidden())
         return bool(value)
 
-    def get_stream_configuration(self, scope: str = "output") -> Dict[str, Any]:
+    def get_stream_configuration(self, scope: str = "output") -> dict[str, Any]:
         """Get stream configuration (channel layout)
 
         Args:
@@ -175,7 +181,7 @@ class AudioDevice(capi.CoreAudioObject):
         except Exception as e:
             raise AudioDeviceError(f"Failed to get stream configuration: {e}")
 
-    def get_volume(self, scope: str = "output", channel: int = 0) -> Optional[float]:
+    def get_volume(self, scope: str = "output", channel: int = 0) -> float | None:
         """Get volume level for a channel
 
         Args:
@@ -196,7 +202,7 @@ class AudioDevice(capi.CoreAudioObject):
         try:
             data = capi.audio_object_get_property_data(
                 self.object_id,
-                capi.get_audio_device_property_volume_scalar(),  # type: ignore[attr-defined]
+                capi.get_audio_device_property_volume_scalar(),
                 scope_val,
                 channel,
             )
@@ -204,7 +210,8 @@ class AudioDevice(capi.CoreAudioObject):
                 result: float = struct.unpack("<f", data[:4])[0]
                 return result
             return None
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to get volume: %s", e)
             return None
 
     def set_volume(self, level: float, scope: str = "output", channel: int = 0) -> None:
@@ -230,9 +237,9 @@ class AudioDevice(capi.CoreAudioObject):
             raise AudioDeviceError(f"Invalid scope: {scope}")
 
         # Check if property is settable
-        if not capi.audio_object_is_property_settable(  # type: ignore[attr-defined]
+        if not capi.audio_object_is_property_settable(
             self.object_id,
-            capi.get_audio_device_property_volume_scalar(),  # type: ignore[attr-defined]
+            capi.get_audio_device_property_volume_scalar(),
             scope_val,
             channel,
         ):
@@ -240,9 +247,9 @@ class AudioDevice(capi.CoreAudioObject):
 
         try:
             data = struct.pack("<f", level)
-            capi.audio_object_set_property_data(  # type: ignore[attr-defined]
+            capi.audio_object_set_property_data(
                 self.object_id,
-                capi.get_audio_device_property_volume_scalar(),  # type: ignore[attr-defined]
+                capi.get_audio_device_property_volume_scalar(),
                 scope_val,
                 channel,
                 data,
@@ -250,7 +257,7 @@ class AudioDevice(capi.CoreAudioObject):
         except Exception as e:
             raise AudioDeviceError(f"Failed to set volume: {e}")
 
-    def get_mute(self, scope: str = "output", channel: int = 0) -> Optional[bool]:
+    def get_mute(self, scope: str = "output", channel: int = 0) -> bool | None:
         """Get mute state for a channel
 
         Args:
@@ -271,14 +278,15 @@ class AudioDevice(capi.CoreAudioObject):
         try:
             data = capi.audio_object_get_property_data(
                 self.object_id,
-                capi.get_audio_device_property_mute(),  # type: ignore[attr-defined]
+                capi.get_audio_device_property_mute(),
                 scope_val,
                 channel,
             )
             if len(data) >= 4:
                 return bool(struct.unpack("<I", data[:4])[0])
             return None
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to get mute state: %s", e)
             return None
 
     def set_mute(self, muted: bool, scope: str = "output", channel: int = 0) -> None:
@@ -301,9 +309,9 @@ class AudioDevice(capi.CoreAudioObject):
             raise AudioDeviceError(f"Invalid scope: {scope}")
 
         # Check if property is settable
-        if not capi.audio_object_is_property_settable(  # type: ignore[attr-defined]
+        if not capi.audio_object_is_property_settable(
             self.object_id,
-            capi.get_audio_device_property_mute(),  # type: ignore[attr-defined]
+            capi.get_audio_device_property_mute(),
             scope_val,
             channel,
         ):
@@ -311,9 +319,9 @@ class AudioDevice(capi.CoreAudioObject):
 
         try:
             data = struct.pack("<I", 1 if muted else 0)
-            capi.audio_object_set_property_data(  # type: ignore[attr-defined]
+            capi.audio_object_set_property_data(
                 self.object_id,
-                capi.get_audio_device_property_mute(),  # type: ignore[attr-defined]
+                capi.get_audio_device_property_mute(),
                 scope_val,
                 channel,
                 data,
@@ -340,7 +348,7 @@ class AudioDeviceManager:
         return f"AudioDeviceManager({len(devices)} devices)"
 
     @staticmethod
-    def get_all_devices() -> List[AudioDevice]:
+    def get_all_devices() -> list[AudioDevice]:
         """Get all available audio devices (alias for get_devices)
 
         Returns:
@@ -349,7 +357,7 @@ class AudioDeviceManager:
         return AudioDeviceManager.get_devices()
 
     @staticmethod
-    def get_devices() -> List[AudioDevice]:
+    def get_devices() -> list[AudioDevice]:
         """Get all available audio devices
 
         Returns:
@@ -359,7 +367,7 @@ class AudioDeviceManager:
         return [AudioDevice(device_id) for device_id in device_ids]
 
     @staticmethod
-    def get_default_output_device() -> Optional[AudioDevice]:
+    def get_default_output_device() -> AudioDevice | None:
         """Get the default output device
 
         Returns:
@@ -371,7 +379,7 @@ class AudioDeviceManager:
         return AudioDevice(device_id)
 
     @staticmethod
-    def get_default_input_device() -> Optional[AudioDevice]:
+    def get_default_input_device() -> AudioDevice | None:
         """Get the default input device
 
         Returns:
@@ -383,7 +391,7 @@ class AudioDeviceManager:
         return AudioDevice(device_id)
 
     @staticmethod
-    def get_output_devices() -> List[AudioDevice]:
+    def get_output_devices() -> list[AudioDevice]:
         """Get all output devices
 
         Returns:
@@ -394,7 +402,7 @@ class AudioDeviceManager:
         return AudioDeviceManager.get_devices()
 
     @staticmethod
-    def get_input_devices() -> List[AudioDevice]:
+    def get_input_devices() -> list[AudioDevice]:
         """Get all input devices
 
         Returns:
@@ -405,7 +413,7 @@ class AudioDeviceManager:
         return AudioDeviceManager.get_devices()
 
     @staticmethod
-    def find_device_by_name(name: str) -> Optional[AudioDevice]:
+    def find_device_by_name(name: str) -> AudioDevice | None:
         """Find a device by name
 
         Args:
@@ -420,7 +428,7 @@ class AudioDeviceManager:
         return None
 
     @staticmethod
-    def find_device_by_uid(uid: str) -> Optional[AudioDevice]:
+    def find_device_by_uid(uid: str) -> AudioDevice | None:
         """Find a device by UID
 
         Args:
@@ -434,8 +442,8 @@ class AudioDeviceManager:
                 device_uid = device.uid
                 if device_uid and device_uid == uid:
                     return device
-            except Exception:
-                # Some devices may not have UID property accessible
+            except Exception as e:
+                logger.debug("Failed to get UID for device: %s", e)
                 continue
         return None
 
@@ -455,9 +463,9 @@ class AudioDeviceManager:
         """
         try:
             data = struct.pack("<I", device.object_id)
-            capi.audio_object_set_property_data(  # type: ignore[attr-defined]
+            capi.audio_object_set_property_data(
                 1,  # kAudioObjectSystemObject
-                capi.get_audio_hardware_property_default_output_device(),  # type: ignore[attr-defined]
+                capi.get_audio_hardware_property_default_output_device(),
                 capi.get_audio_object_property_scope_global(),
                 0,
                 data,
@@ -481,9 +489,9 @@ class AudioDeviceManager:
         """
         try:
             data = struct.pack("<I", device.object_id)
-            capi.audio_object_set_property_data(  # type: ignore[attr-defined]
+            capi.audio_object_set_property_data(
                 1,  # kAudioObjectSystemObject
-                capi.get_audio_hardware_property_default_input_device(),  # type: ignore[attr-defined]
+                capi.get_audio_hardware_property_default_input_device(),
                 capi.get_audio_object_property_scope_global(),
                 0,
                 data,

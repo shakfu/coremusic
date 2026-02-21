@@ -7,10 +7,13 @@ Convert audio files between different sample rates and formats using coremusic.
 Usage: python audio_converter.py <input_file> <output_file> [--rate RATE]
 """
 
-from coremusic.objects import AudioFile, AudioFileError, AudioFormat
-import sys
 import argparse
+import sys
 from pathlib import Path
+
+import coremusic.capi as capi
+from coremusic.audio import AudioFile, AudioFormat
+from coremusic.exceptions import AudioFileError
 
 
 def convert_audio_file(input_path, output_path, target_sample_rate=None):

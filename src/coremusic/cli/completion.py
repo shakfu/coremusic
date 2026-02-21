@@ -95,7 +95,7 @@ def get_zsh_completion() -> str:
         for cmd, subs in COMMANDS.items()
     )
 
-    return f'''#compdef coremusic
+    return f"""#compdef coremusic
 # Zsh completion for coremusic
 # Add to ~/.zshrc: eval "$(coremusic completion zsh)"
 # Or save to ~/.zfunc/_coremusic and add: fpath=(~/.zfunc $fpath); autoload -Uz compinit; compinit
@@ -137,14 +137,14 @@ zstyle ':completion:*:*:coremusic:*' file-patterns \\
     '*(-/):directories:directories'
 
 _coremusic "$@"
-'''
+"""
 
 
 def get_fish_completion() -> str:
     """Generate fish completion script."""
     lines = [
         "# Fish completion for coremusic",
-        '# Add to ~/.config/fish/config.fish: coremusic completion fish | source',
+        "# Add to ~/.config/fish/config.fish: coremusic completion fish | source",
         "# Or save to ~/.config/fish/completions/coremusic.fish",
         "",
         "# Disable file completion by default",

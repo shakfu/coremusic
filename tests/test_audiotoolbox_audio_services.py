@@ -1,9 +1,7 @@
 """pytest test suite for AudioServices functionality."""
 
 import logging
-import os
 import pytest
-import tempfile
 import coremusic.capi as capi
 
 logger = logging.getLogger(__name__)

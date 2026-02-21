@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from typing import Any
 
 import coremusic.capi as capi
+
 from ._formatters import output_json, output_table
 from ._mappings import PLUGIN_TYPES, get_plugin_type, get_plugin_type_display
 from ._utils import EXIT_SUCCESS, CLIError, print_help_default
+
+logger = logging.getLogger(__name__)
 
 # Parameter unit display names (kAudioUnitParameterUnit_* values)
 # From constants.py / audiotoolbox.pxd
@@ -50,18 +54,27 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
 
     # plugin list
     list_parser = plugin_sub.add_parser("list", help="List available AudioUnit plugins")
-    list_parser.add_argument("--type", dest="plugin_type", choices=list(PLUGIN_TYPES.keys()),
-                             help="Filter by plugin type")
+    list_parser.add_argument(
+        "--type",
+        dest="plugin_type",
+        choices=list(PLUGIN_TYPES.keys()),
+        help="Filter by plugin type",
+    )
     list_parser.add_argument("--manufacturer", help="Filter by manufacturer")
-    list_parser.add_argument("--name-only", action="store_true",
-                             help="Print only unique plugin names")
+    list_parser.add_argument(
+        "--name-only", action="store_true", help="Print only unique plugin names"
+    )
     list_parser.set_defaults(func=cmd_list)
 
     # plugin find
     find_parser = plugin_sub.add_parser("find", help="Search for plugins by name")
     find_parser.add_argument("query", help="Search query")
-    find_parser.add_argument("--type", dest="plugin_type", choices=list(PLUGIN_TYPES.keys()),
-                             help="Filter by plugin type")
+    find_parser.add_argument(
+        "--type",
+        dest="plugin_type",
+        choices=list(PLUGIN_TYPES.keys()),
+        help="Filter by plugin type",
+    )
     find_parser.set_defaults(func=cmd_find)
 
     # plugin info
@@ -75,33 +88,55 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     params_parser.set_defaults(func=cmd_params)
 
     # plugin process
-    process_parser = plugin_sub.add_parser("process", help="Apply effect plugin to audio file")
+    process_parser = plugin_sub.add_parser(
+        "process", help="Apply effect plugin to audio file"
+    )
     process_parser.add_argument("name", help="Plugin name (partial match)")
     process_parser.add_argument("input", help="Input audio file path")
-    process_parser.add_argument("-o", "--output", required=True, help="Output audio file path")
-    process_parser.add_argument("--preset", type=str, default=None,
-                                help="Factory preset name or number to load")
+    process_parser.add_argument(
+        "-o", "--output", required=True, help="Output audio file path"
+    )
+    process_parser.add_argument(
+        "--preset", type=str, default=None, help="Factory preset name or number to load"
+    )
     process_parser.set_defaults(func=cmd_process)
 
     # plugin render
-    render_parser = plugin_sub.add_parser("render", help="Render MIDI through instrument plugin")
+    render_parser = plugin_sub.add_parser(
+        "render", help="Render MIDI through instrument plugin"
+    )
     render_parser.add_argument("name", help="Plugin name (partial match)")
     render_parser.add_argument("midi", help="Input MIDI file path")
-    render_parser.add_argument("-o", "--output", required=True, help="Output audio file path")
-    render_parser.add_argument("--sample-rate", type=int, default=44100,
-                               help="Output sample rate (default: 44100)")
-    render_parser.add_argument("--duration", type=float, default=None,
-                               help="Extra duration in seconds after MIDI ends (default: 1.0)")
-    render_parser.add_argument("--preset", type=str, default=None,
-                               help="Factory preset name or number to load")
+    render_parser.add_argument(
+        "-o", "--output", required=True, help="Output audio file path"
+    )
+    render_parser.add_argument(
+        "--sample-rate",
+        type=int,
+        default=44100,
+        help="Output sample rate (default: 44100)",
+    )
+    render_parser.add_argument(
+        "--duration",
+        type=float,
+        default=None,
+        help="Extra duration in seconds after MIDI ends (default: 1.0)",
+    )
+    render_parser.add_argument(
+        "--preset", type=str, default=None, help="Factory preset name or number to load"
+    )
     render_parser.set_defaults(func=cmd_render)
 
     # plugin preset
     preset_parser = plugin_sub.add_parser("preset", help="Plugin preset management")
-    preset_sub = preset_parser.add_subparsers(dest="preset_command", metavar="<subcommand>")
+    preset_sub = preset_parser.add_subparsers(
+        dest="preset_command", metavar="<subcommand>"
+    )
 
     # plugin preset list
-    preset_list_parser = preset_sub.add_parser("list", help="List factory presets for a plugin")
+    preset_list_parser = preset_sub.add_parser(
+        "list", help="List factory presets for a plugin"
+    )
     preset_list_parser.add_argument("name", help="Plugin name (partial match)")
     preset_list_parser.set_defaults(func=cmd_preset_list)
 
@@ -137,7 +172,11 @@ def cmd_list(args: argparse.Namespace) -> int:
     # Filter by manufacturer if specified
     if args.manufacturer:
         manufacturer_lower = args.manufacturer.lower()
-        components = [c for c in components if manufacturer_lower in c.get("manufacturer", "").lower()]
+        components = [
+            c
+            for c in components
+            if manufacturer_lower in c.get("manufacturer", "").lower()
+        ]
 
     if args.json:
         output_json(components)
@@ -154,11 +193,13 @@ def cmd_list(args: argparse.Namespace) -> int:
         headers = ["Type", "Mfr", "Name"]
         rows = []
         for c in components:
-            rows.append([
-                get_plugin_type_display(c.get("type", "")),
-                c.get("manufacturer", "Unknown"),
-                c.get("name", "Unknown"),
-            ])
+            rows.append(
+                [
+                    get_plugin_type_display(c.get("type", "")),
+                    c.get("manufacturer", "Unknown"),
+                    c.get("name", "Unknown"),
+                ]
+            )
 
         print(f"Found {len(components)} plugins:\n")
         output_table(headers, rows)
@@ -185,7 +226,9 @@ def cmd_find(args: argparse.Namespace) -> int:
         print(f"Found {len(matches)} plugins matching '{args.query}':\n")
         for c in matches:
             plugin_type_display = get_plugin_type_display(c.get("type", ""))
-            print(f"  {c.get('name')} ({plugin_type_display}) - {c.get('manufacturer')}")
+            print(
+                f"  {c.get('name')} ({plugin_type_display}) - {c.get('manufacturer')}"
+            )
 
     return EXIT_SUCCESS
 
@@ -211,8 +254,9 @@ def _get_component_id_for_plugin(plugin_info: dict[str, Any]) -> int:
     for comp_id in component_ids:
         try:
             info = capi.audio_unit_get_component_info(comp_id)
-            if (info.get("name") == plugin_info.get("name") and
-                info.get("manufacturer") == plugin_info.get("manufacturer")):
+            if info.get("name") == plugin_info.get("name") and info.get(
+                "manufacturer"
+            ) == plugin_info.get("manufacturer"):
                 return comp_id
         except RuntimeError:
             pass
@@ -245,7 +289,8 @@ def cmd_info(args: argparse.Namespace) -> int:
             finally:
                 capi.audio_unit_uninitialize(au_id)
                 capi.audio_component_instance_dispose(au_id)
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to query parameter count: %s", e)
             print("Parameters:   (unable to query)")
 
     return EXIT_SUCCESS
@@ -271,25 +316,28 @@ def cmd_params(args: argparse.Namespace) -> int:
             try:
                 info = capi.audio_unit_get_parameter_info(au_id, param_id, scope=0)
                 value = capi.audio_unit_get_parameter(au_id, param_id, scope=0)
-                params.append({
-                    "id": param_id,
-                    "name": info.get("name", f"Param {param_id}"),
-                    "value": value,
-                    "min": info.get("min_value", 0),
-                    "max": info.get("max_value", 1),
-                    "default": info.get("default_value", 0),
-                    "unit": info.get("unit", 0),
-                    "unit_name": PARAM_UNIT_NAMES.get(info.get("unit", 0), ""),
-                })
-            except Exception:
-                # Skip parameters that fail to query
-                pass
+                params.append(
+                    {
+                        "id": param_id,
+                        "name": info.get("name", f"Param {param_id}"),
+                        "value": value,
+                        "min": info.get("min_value", 0),
+                        "max": info.get("max_value", 1),
+                        "default": info.get("default_value", 0),
+                        "unit": info.get("unit", 0),
+                        "unit_name": PARAM_UNIT_NAMES.get(info.get("unit", 0), ""),
+                    }
+                )
+            except Exception as e:
+                logger.debug("Failed to query parameter %d: %s", param_id, e)
 
         if args.json:
-            output_json({
-                "plugin": plugin.get("name"),
-                "parameters": params,
-            })
+            output_json(
+                {
+                    "plugin": plugin.get("name"),
+                    "parameters": params,
+                }
+            )
         else:
             if not params:
                 print(f"No parameters found for '{plugin.get('name')}'")
@@ -300,13 +348,15 @@ def cmd_params(args: argparse.Namespace) -> int:
             rows = []
             for p in params:
                 unit_str = p["unit_name"] if p["unit_name"] else ""
-                rows.append([
-                    str(p["id"]),
-                    p["name"][:30],  # Truncate long names
-                    f"{p['value']:.2f}",
-                    f"{p['min']:.1f} - {p['max']:.1f}",
-                    unit_str,
-                ])
+                rows.append(
+                    [
+                        str(p["id"]),
+                        p["name"][:30],  # Truncate long names
+                        f"{p['value']:.2f}",
+                        f"{p['min']:.1f} - {p['max']:.1f}",
+                        unit_str,
+                    ]
+                )
             output_table(headers, rows)
 
     finally:
@@ -338,10 +388,12 @@ def cmd_preset_list(args: argparse.Namespace) -> int:
         presets = capi.audio_unit_get_factory_presets(au_id)
 
         if args.json:
-            output_json({
-                "plugin": plugin.get("name"),
-                "presets": presets,
-            })
+            output_json(
+                {
+                    "plugin": plugin.get("name"),
+                    "presets": presets,
+                }
+            )
         else:
             if not presets:
                 print(f"No factory presets found for '{plugin.get('name')}'")
@@ -401,7 +453,7 @@ def cmd_process(args: argparse.Namespace) -> int:
     import wave
     from pathlib import Path
 
-    from coremusic.objects import AudioFile
+    from coremusic.audio import AudioFile
 
     from ._utils import require_file
 
@@ -414,7 +466,9 @@ def cmd_process(args: argparse.Namespace) -> int:
 
     # Check if it's an effect plugin
     if plugin_type != "aufx":
-        raise CLIError(f"Plugin '{plugin.get('name')}' is not an effect plugin (type: {plugin_type})")
+        raise CLIError(
+            f"Plugin '{plugin.get('name')}' is not an effect plugin (type: {plugin_type})"
+        )
 
     # Load input audio file
     try:
@@ -456,15 +510,15 @@ def cmd_process(args: argparse.Namespace) -> int:
         if fmt.bits_per_channel == 16:
             # Convert int16 to float32
             num_samples = len(audio_data) // 2
-            samples = struct.unpack(f'<{num_samples}h', audio_data)
+            samples = struct.unpack(f"<{num_samples}h", audio_data)
             float_samples = [s / 32768.0 for s in samples]
-            audio_data = struct.pack(f'{len(float_samples)}f', *float_samples)
+            audio_data = struct.pack(f"{len(float_samples)}f", *float_samples)
         elif fmt.bits_per_channel == 32 and fmt.format_flags & 0x1 == 0:
             # Already int32, convert to float32
             num_samples = len(audio_data) // 4
-            samples = struct.unpack(f'<{num_samples}i', audio_data)
+            samples = struct.unpack(f"<{num_samples}i", audio_data)
             float_samples = [s / 2147483648.0 for s in samples]
-            audio_data = struct.pack(f'{len(float_samples)}f', *float_samples)
+            audio_data = struct.pack(f"{len(float_samples)}f", *float_samples)
 
         # Process audio through plugin in chunks
         chunk_size = 4096
@@ -478,43 +532,46 @@ def cmd_process(args: argparse.Namespace) -> int:
             chunk = audio_data[start_byte:end_byte]
 
             processed = capi.audio_unit_render(
-                au_id, chunk, frames_to_process,
-                fmt.sample_rate, fmt.channels_per_frame
+                au_id, chunk, frames_to_process, fmt.sample_rate, fmt.channels_per_frame
             )
             processed_chunks.append(processed)
 
             if not args.json:
-                progress = min(100, int((offset + frames_to_process) / num_frames * 100))
+                progress = min(
+                    100, int((offset + frames_to_process) / num_frames * 100)
+                )
                 print(f"\rProcessing: {progress}%", end="", flush=True)
 
-        processed_data = b''.join(processed_chunks)
+        processed_data = b"".join(processed_chunks)
 
         if not args.json:
             print("\rProcessing: 100%")
 
         # Convert back to int16 for WAV output
         num_samples = len(processed_data) // 4
-        float_samples = list(struct.unpack(f'{num_samples}f', processed_data))
+        float_samples = list(struct.unpack(f"{num_samples}f", processed_data))
         int_samples = [int(max(-32768, min(32767, s * 32768))) for s in float_samples]
-        output_data = struct.pack(f'<{len(int_samples)}h', *int_samples)
+        output_data = struct.pack(f"<{len(int_samples)}h", *int_samples)
 
         # Write output WAV file
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        with wave.open(str(output_path), 'wb') as wav_out:
+        with wave.open(str(output_path), "wb") as wav_out:
             wav_out.setnchannels(fmt.channels_per_frame)
             wav_out.setsampwidth(2)  # 16-bit
             wav_out.setframerate(int(fmt.sample_rate))
             wav_out.writeframes(output_data)
 
         if args.json:
-            output_json({
-                "input": str(input_path.absolute()),
-                "output": str(output_path.absolute()),
-                "plugin": plugin.get("name"),
-                "duration": duration,
-                "sample_rate": fmt.sample_rate,
-                "channels": fmt.channels_per_frame,
-            })
+            output_json(
+                {
+                    "input": str(input_path.absolute()),
+                    "output": str(output_path.absolute()),
+                    "plugin": plugin.get("name"),
+                    "duration": duration,
+                    "sample_rate": fmt.sample_rate,
+                    "channels": fmt.channels_per_frame,
+                }
+            )
         else:
             print(f"Output:     {output_path}")
 
@@ -556,7 +613,9 @@ def cmd_render(args: argparse.Namespace) -> int:
 
     # Check if it's an instrument plugin
     if plugin_type != "aumu":
-        raise CLIError(f"Plugin '{plugin.get('name')}' is not an instrument plugin (type: {plugin_type})")
+        raise CLIError(
+            f"Plugin '{plugin.get('name')}' is not an instrument plugin (type: {plugin_type})"
+        )
 
     sample_rate = args.sample_rate
     num_channels = 2
@@ -620,8 +679,12 @@ def cmd_render(args: argparse.Namespace) -> int:
                     capi.music_device_midi_event(
                         au_id, status_byte, event.data1, event.data2, offset_samples
                     )
-                except Exception:
-                    pass  # Skip events that fail
+                except Exception as e:
+                    logger.debug(
+                        "Failed to send MIDI event at sample offset %d: %s",
+                        offset_samples,
+                        e,
+                    )
 
                 event_index += 1
 
@@ -633,44 +696,48 @@ def cmd_render(args: argparse.Namespace) -> int:
                     au_id, silence, frames_to_render, sample_rate, num_channels
                 )
                 rendered_chunks.append(rendered)
-            except Exception:
-                # If render fails, add silence
+            except Exception as e:
+                logger.debug("Render failed at frame offset %d: %s", frame_offset, e)
                 rendered_chunks.append(silence)
 
             if not args.json:
-                progress = min(100, int((frame_offset + frames_to_render) / total_frames * 100))
+                progress = min(
+                    100, int((frame_offset + frames_to_render) / total_frames * 100)
+                )
                 print(f"\rRendering: {progress}%", end="", flush=True)
 
-        rendered_data = b''.join(rendered_chunks)
+        rendered_data = b"".join(rendered_chunks)
 
         if not args.json:
             print("\rRendering: 100%")
 
         # Convert float32 to int16 for WAV output
         num_samples = len(rendered_data) // 4
-        float_samples = struct.unpack(f'{num_samples}f', rendered_data)
+        float_samples = struct.unpack(f"{num_samples}f", rendered_data)
         int_samples = [int(max(-32768, min(32767, s * 32768))) for s in float_samples]
-        output_data = struct.pack(f'<{len(int_samples)}h', *int_samples)
+        output_data = struct.pack(f"<{len(int_samples)}h", *int_samples)
 
         # Write output WAV file
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        with wave.open(str(output_path), 'wb') as wav_out:
+        with wave.open(str(output_path), "wb") as wav_out:
             wav_out.setnchannels(num_channels)
             wav_out.setsampwidth(2)  # 16-bit
             wav_out.setframerate(sample_rate)
             wav_out.writeframes(output_data)
 
         if args.json:
-            output_json({
-                "input": str(midi_path.absolute()),
-                "output": str(output_path.absolute()),
-                "plugin": plugin.get("name"),
-                "midi_duration": seq.duration,
-                "total_duration": total_duration,
-                "sample_rate": sample_rate,
-                "channels": num_channels,
-                "events": len(all_events),
-            })
+            output_json(
+                {
+                    "input": str(midi_path.absolute()),
+                    "output": str(output_path.absolute()),
+                    "plugin": plugin.get("name"),
+                    "midi_duration": seq.duration,
+                    "total_duration": total_duration,
+                    "sample_rate": sample_rate,
+                    "channels": num_channels,
+                    "events": len(all_events),
+                }
+            )
         else:
             print(f"Output:     {output_path}")
             print(f"Events:     {len(all_events)}")

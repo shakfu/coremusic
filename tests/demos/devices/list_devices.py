@@ -5,7 +5,7 @@ Usage:
     python list_devices.py
 """
 
-from coremusic.objects import AudioDeviceManager
+from coremusic.audio import AudioDeviceManager
 
 
 def main():

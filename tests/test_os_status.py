@@ -1,8 +1,7 @@
 """Tests for OSStatus error code translation utilities."""
 
-import pytest
 from coremusic import os_status
-from coremusic.objects import AudioFileError, AudioQueueError, CoreAudioError
+from coremusic.exceptions import AudioFileError, AudioQueueError, CoreAudioError
 
 
 class TestOSStatusTranslation:

@@ -7,9 +7,9 @@ This module provides classes for audio/MIDI synchronization and timing:
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
-from .. import capi
+from coremusic import capi
 
 __all__ = [
     "ClockTimeFormat",
@@ -19,11 +19,12 @@ __all__ = [
 
 class ClockTimeFormat:
     """Time format constants for CoreAudioClock"""
-    HOST_TIME = capi.get_ca_clock_time_format_host_time()  # type: ignore[attr-defined]
-    SAMPLES = capi.get_ca_clock_time_format_samples()  # type: ignore[attr-defined]
-    BEATS = capi.get_ca_clock_time_format_beats()  # type: ignore[attr-defined]
-    SECONDS = capi.get_ca_clock_time_format_seconds()  # type: ignore[attr-defined]
-    SMPTE_TIME = capi.get_ca_clock_time_format_smpte_time()  # type: ignore[attr-defined]
+
+    HOST_TIME = capi.get_ca_clock_time_format_host_time()
+    SAMPLES = capi.get_ca_clock_time_format_samples()
+    BEATS = capi.get_ca_clock_time_format_beats()
+    SECONDS = capi.get_ca_clock_time_format_seconds()
+    SMPTE_TIME = capi.get_ca_clock_time_format_smpte_time()
 
 
 class AudioClock(capi.CoreAudioObject):
@@ -82,7 +83,7 @@ class AudioClock(capi.CoreAudioObject):
         """
         if not self._is_created:
             try:
-                clock_id = capi.ca_clock_new()  # type: ignore[attr-defined]
+                clock_id = capi.ca_clock_new()
                 self._set_object_id(clock_id)
                 self._is_created = True
             except Exception as e:
@@ -100,7 +101,7 @@ class AudioClock(capi.CoreAudioObject):
             self.create()
 
         try:
-            capi.ca_clock_start(self.object_id)  # type: ignore[attr-defined]
+            capi.ca_clock_start(self.object_id)
             self._is_running = True
         except Exception as e:
             raise RuntimeError(f"Failed to start clock: {e}")
@@ -113,7 +114,7 @@ class AudioClock(capi.CoreAudioObject):
         """
         if self._is_running:
             try:
-                capi.ca_clock_stop(self.object_id)  # type: ignore[attr-defined]
+                capi.ca_clock_stop(self.object_id)
                 self._is_running = False
             except Exception as e:
                 raise RuntimeError(f"Failed to stop clock: {e}")
@@ -131,7 +132,7 @@ class AudioClock(capi.CoreAudioObject):
             self.create()
 
         try:
-            return capi.ca_clock_get_play_rate(self.object_id)  # type: ignore[attr-defined, no-any-return]
+            return capi.ca_clock_get_play_rate(self.object_id)
         except Exception as e:
             raise RuntimeError(f"Failed to get play rate: {e}")
 
@@ -143,11 +144,11 @@ class AudioClock(capi.CoreAudioObject):
             self.create()
 
         try:
-            capi.ca_clock_set_play_rate(self.object_id, rate)  # type: ignore[attr-defined]
+            capi.ca_clock_set_play_rate(self.object_id, rate)
         except Exception as e:
             raise RuntimeError(f"Failed to set play rate: {e}")
 
-    def get_current_time(self, time_format: int) -> Dict[str, Any]:
+    def get_current_time(self, time_format: int) -> dict[str, Any]:
         """Get current time in specified format
 
         Args:
@@ -164,7 +165,7 @@ class AudioClock(capi.CoreAudioObject):
             self.create()
 
         try:
-            return capi.ca_clock_get_current_time(self.object_id, time_format)  # type: ignore[attr-defined, no-any-return]
+            return capi.ca_clock_get_current_time(self.object_id, time_format)
         except Exception as e:
             raise RuntimeError(f"Failed to get current time: {e}")
 
@@ -204,7 +205,7 @@ class AudioClock(capi.CoreAudioObject):
         time_info = self.get_current_time(ClockTimeFormat.HOST_TIME)
         return int(time_info.get("value", 0))
 
-    def get_smpte_time(self) -> Dict[str, int]:
+    def get_smpte_time(self) -> dict[str, int]:
         """Get current time as SMPTE timecode
 
         Returns:
@@ -225,7 +226,7 @@ class AudioClock(capi.CoreAudioObject):
             try:
                 if self._is_running:
                     self.stop()
-                capi.ca_clock_dispose(self.object_id)  # type: ignore[attr-defined]
+                capi.ca_clock_dispose(self.object_id)
             except Exception:
                 pass  # Best effort cleanup
             finally:

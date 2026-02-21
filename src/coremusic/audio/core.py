@@ -14,10 +14,10 @@ from __future__ import annotations
 
 import struct
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
-from .. import capi
-from .exceptions import AudioConverterError, AudioFileError, AudioQueueError
+from coremusic import capi
+from coremusic.exceptions import AudioConverterError, AudioFileError, AudioQueueError
 
 # Check if NumPy is available
 try:
@@ -65,6 +65,81 @@ class AudioFormat:
         self.channels_per_frame = channels_per_frame
         self.bits_per_channel = bits_per_channel
 
+    @classmethod
+    def from_asbd_bytes(cls, data: bytes) -> "AudioFormat":
+        """Parse an AudioStreamBasicDescription (40 bytes) into an AudioFormat.
+
+        Args:
+            data: Raw ASBD bytes (at least 40 bytes)
+
+        Returns:
+            AudioFormat with parsed fields
+
+        Raises:
+            ValueError: If data is too short
+        """
+        if len(data) < 40:
+            raise ValueError(f"ASBD data too short: {len(data)} bytes (need 40)")
+        (
+            sample_rate,
+            format_id_int,
+            format_flags,
+            bytes_per_packet,
+            frames_per_packet,
+            bytes_per_frame,
+            channels_per_frame,
+            bits_per_channel,
+            _reserved,
+        ) = struct.unpack("<dLLLLLLLL", data[:40])
+        format_id = capi.int_to_fourchar(format_id_int)
+        return cls(
+            sample_rate=sample_rate,
+            format_id=format_id,
+            format_flags=format_flags,
+            bytes_per_packet=bytes_per_packet,
+            frames_per_packet=frames_per_packet,
+            bytes_per_frame=bytes_per_frame,
+            channels_per_frame=channels_per_frame,
+            bits_per_channel=bits_per_channel,
+        )
+
+    @classmethod
+    def pcm(
+        cls,
+        sample_rate: float = 44100.0,
+        channels: int = 2,
+        bits: int = 16,
+        is_float: bool = False,
+    ) -> "AudioFormat":
+        """Create a PCM AudioFormat with correctly computed derived fields.
+
+        Args:
+            sample_rate: Sample rate in Hz (default: 44100.0)
+            channels: Number of channels (default: 2)
+            bits: Bits per sample (default: 16)
+            is_float: If True, create float format; otherwise signed integer
+
+        Returns:
+            AudioFormat with all ASBD fields correctly computed
+        """
+        bytes_per_sample = bits // 8
+        bytes_per_frame = bytes_per_sample * channels
+        flags = 0
+        if is_float:
+            flags |= 1  # kAudioFormatFlagIsFloat
+        else:
+            flags |= 4 | 2  # kAudioFormatFlagIsPacked | kAudioFormatFlagIsSignedInteger
+        return cls(
+            sample_rate=sample_rate,
+            format_id="lpcm",
+            format_flags=flags,
+            bytes_per_packet=bytes_per_frame,
+            frames_per_packet=1,
+            bytes_per_frame=bytes_per_frame,
+            channels_per_frame=channels,
+            bits_per_channel=bits,
+        )
+
     @property
     def is_pcm(self) -> bool:
         """Check if this is a PCM format"""
@@ -80,7 +155,7 @@ class AudioFormat:
         """Check if this is mono (1 channel)"""
         return self.channels_per_frame == 1
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary format for functional API"""
         format_id_int = (
             capi.fourchar_to_int(self.format_id)
@@ -162,10 +237,10 @@ class AudioFormat:
 class AudioFile(capi.CoreAudioObject):
     """High-level audio file operations with automatic resource management"""
 
-    def __init__(self, path: Union[str, Path]):
+    def __init__(self, path: str | Path):
         super().__init__()
         self._path = str(path)
-        self._format: Optional[AudioFormat] = None
+        self._format: AudioFormat | None = None
         self._is_open = False
 
     def open(self) -> "AudioFile":
@@ -210,45 +285,13 @@ class AudioFile(capi.CoreAudioObject):
                 format_data = capi.audio_file_get_property(
                     self.object_id, capi.get_audio_file_property_data_format()
                 )
-                # Parse AudioStreamBasicDescription (40 bytes)
-                # struct: double + 8 x UInt32
-                if len(format_data) >= 40:
-                    asbd = struct.unpack("<dLLLLLLLL", format_data[:40])
-                    (
-                        sample_rate,
-                        format_id_int,
-                        format_flags,
-                        bytes_per_packet,
-                        frames_per_packet,
-                        bytes_per_frame,
-                        channels_per_frame,
-                        bits_per_channel,
-                        reserved,
-                    ) = asbd
-
-                    # Convert format_id from integer to fourcc string
-                    format_id = capi.int_to_fourchar(format_id_int)
-
-                    self._format = AudioFormat(
-                        sample_rate=sample_rate,
-                        format_id=format_id,
-                        format_flags=format_flags,
-                        bytes_per_packet=bytes_per_packet,
-                        frames_per_packet=frames_per_packet,
-                        bytes_per_frame=bytes_per_frame,
-                        channels_per_frame=channels_per_frame,
-                        bits_per_channel=bits_per_channel,
-                    )
-                else:
-                    raise AudioFileError(
-                        f"Invalid format data size: {len(format_data)} bytes"
-                    )
+                self._format = AudioFormat.from_asbd_bytes(format_data)
             except Exception as e:
                 raise AudioFileError(f"Failed to get format: {e}")
 
         return self._format
 
-    def read_packets(self, start_packet: int, packet_count: int) -> Tuple[bytes, int]:
+    def read_packets(self, start_packet: int, packet_count: int) -> tuple[bytes, int]:
         """Read audio packets from the file.
 
         Args:
@@ -264,7 +307,7 @@ class AudioFile(capi.CoreAudioObject):
 
         Example::
 
-            from coremusic.objects import AudioFile
+            from coremusic.audio import AudioFile
 
             # Read audio data in chunks
             with AudioFile("audio.wav") as audio:
@@ -295,7 +338,7 @@ class AudioFile(capi.CoreAudioObject):
             raise AudioFileError(f"Failed to read packets: {e}")
 
     def read_as_numpy(
-        self, start_packet: int = 0, packet_count: Optional[int] = None
+        self, start_packet: int = 0, packet_count: int | None = None
     ) -> "NDArray[Any]":
         """
         Read audio data from the file as a NumPy array.
@@ -639,7 +682,7 @@ class AudioConverter(capi.CoreAudioObject):
         self,
         input_data: bytes,
         input_packet_count: int,
-        output_packet_count: Optional[int] = None,
+        output_packet_count: int | None = None,
     ) -> bytes:
         """Convert audio using callback-based API for complex conversions
 
@@ -680,11 +723,17 @@ class AudioConverter(capi.CoreAudioObject):
                     out.write(num_frames, output_data)
         """
         if input_packet_count <= 0:
-            raise ValueError(f"input_packet_count must be positive, got {input_packet_count}")
+            raise ValueError(
+                f"input_packet_count must be positive, got {input_packet_count}"
+            )
         if output_packet_count is not None and output_packet_count <= 0:
-            raise ValueError(f"output_packet_count must be positive, got {output_packet_count}")
+            raise ValueError(
+                f"output_packet_count must be positive, got {output_packet_count}"
+            )
         if not isinstance(input_data, (bytes, bytearray)):
-            raise TypeError(f"input_data must be bytes or bytearray, got {type(input_data).__name__}")
+            raise TypeError(
+                f"input_data must be bytes or bytearray, got {type(input_data).__name__}"
+            )
         if len(input_data) == 0:
             raise ValueError("input_data cannot be empty")
 
@@ -796,7 +845,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
     Easier to use than AudioFile for common operations.
     """
 
-    def __init__(self, path: Union[str, Path]):
+    def __init__(self, path: str | Path):
         """Create an ExtendedAudioFile
 
         Args:
@@ -808,8 +857,8 @@ class ExtendedAudioFile(capi.CoreAudioObject):
         super().__init__()
         self._path = str(path)
         self._is_open = False
-        self._file_format: Optional[AudioFormat] = None
-        self._client_format: Optional[AudioFormat] = None
+        self._file_format: AudioFormat | None = None
+        self._client_format: AudioFormat | None = None
 
     def open(self) -> "ExtendedAudioFile":
         """Open the audio file for reading
@@ -832,7 +881,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
 
     @classmethod
     def create(
-        cls, path: Union[str, Path], file_type: int, format: AudioFormat
+        cls, path: str | Path, file_type: int, format: AudioFormat
     ) -> "ExtendedAudioFile":
         """Create a new audio file for writing
 
@@ -898,44 +947,14 @@ class ExtendedAudioFile(capi.CoreAudioObject):
                     self.object_id,
                     capi.get_extended_audio_file_property_file_data_format(),
                 )
-                # Parse AudioStreamBasicDescription (40 bytes)
-                if len(format_data) >= 40:
-                    asbd = struct.unpack("<dLLLLLLLL", format_data[:40])
-                    (
-                        sample_rate,
-                        format_id_int,
-                        format_flags,
-                        bytes_per_packet,
-                        frames_per_packet,
-                        bytes_per_frame,
-                        channels_per_frame,
-                        bits_per_channel,
-                        reserved,
-                    ) = asbd
-
-                    format_id = capi.int_to_fourchar(format_id_int)
-
-                    self._file_format = AudioFormat(
-                        sample_rate=sample_rate,
-                        format_id=format_id,
-                        format_flags=format_flags,
-                        bytes_per_packet=bytes_per_packet,
-                        frames_per_packet=frames_per_packet,
-                        bytes_per_frame=bytes_per_frame,
-                        channels_per_frame=channels_per_frame,
-                        bits_per_channel=bits_per_channel,
-                    )
-                else:
-                    raise AudioFileError(
-                        f"Invalid format data size: {len(format_data)} bytes"
-                    )
+                self._file_format = AudioFormat.from_asbd_bytes(format_data)
             except Exception as e:
                 raise AudioFileError(f"Failed to get file format: {e}")
 
         return self._file_format
 
     @property
-    def client_format(self) -> Optional[AudioFormat]:
+    def client_format(self) -> AudioFormat | None:
         """Get the client audio format (for automatic conversion)
 
         Returns:
@@ -979,7 +998,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
         except Exception as e:
             raise AudioFileError(f"Failed to set client format: {e}")
 
-    def read(self, num_frames: int) -> Tuple[bytes, int]:
+    def read(self, num_frames: int) -> tuple[bytes, int]:
         """Read audio frames from the file
 
         Automatically converts to client format if set.
@@ -1021,7 +1040,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
         Example::
 
             import struct
-            from coremusic.objects import AudioFormat, ExtendedAudioFile
+            from coremusic.audio import AudioFormat, ExtendedAudioFile
 
             # Create output file for stereo 16-bit PCM
             file_format = AudioFormat(
@@ -1044,7 +1063,9 @@ class ExtendedAudioFile(capi.CoreAudioObject):
         if num_frames <= 0:
             raise ValueError(f"num_frames must be positive, got {num_frames}")
         if not isinstance(audio_data, (bytes, bytearray)):
-            raise TypeError(f"audio_data must be bytes or bytearray, got {type(audio_data).__name__}")
+            raise TypeError(
+                f"audio_data must be bytes or bytearray, got {type(audio_data).__name__}"
+            )
         if len(audio_data) == 0:
             raise ValueError("audio_data cannot be empty")
 
@@ -1056,6 +1077,34 @@ class ExtendedAudioFile(capi.CoreAudioObject):
             capi.extended_audio_file_write(self.object_id, num_frames, audio_data)
         except Exception as e:
             raise AudioFileError(f"Failed to write frames: {e}")
+
+    @property
+    def frame_count(self) -> int:
+        """Get the total number of frames in the file.
+
+        Returns:
+            Total frame count
+
+        Raises:
+            AudioFileError: If getting frame count fails
+        """
+        self._ensure_not_disposed()
+        if not self._is_open:
+            self.open()
+
+        try:
+            data = capi.extended_audio_file_get_property(
+                self.object_id,
+                capi.get_extended_audio_file_property_file_length_frames(),
+            )
+            if len(data) >= 8:
+                count: int = struct.unpack("<q", data[:8])[0]
+                return count
+            raise AudioFileError("Invalid frame count data")
+        except Exception as e:
+            if isinstance(e, AudioFileError):
+                raise
+            raise AudioFileError(f"Failed to get frame count: {e}")
 
     def __repr__(self) -> str:
         status = "open" if self._is_open else "closed"
@@ -1096,7 +1145,7 @@ class AudioQueue(capi.CoreAudioObject):
     def __init__(self, audio_format: AudioFormat):
         super().__init__()
         self._format = audio_format
-        self._buffers: List[AudioBuffer] = []
+        self._buffers: list[AudioBuffer] = []
 
     @classmethod
     def new_output(cls, audio_format: AudioFormat) -> "AudioQueue":

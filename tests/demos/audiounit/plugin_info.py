@@ -57,7 +57,9 @@ def main():
                 param_info = capi.audio_unit_get_parameter_info(unit_id, param_id)
                 value = capi.audio_unit_get_parameter(unit_id, param_id)
                 print(f"  {param_info['name']}: {value:.3f}")
-                print(f"    Range: {param_info['min_value']:.3f} - {param_info['max_value']:.3f}")
+                print(
+                    f"    Range: {param_info['min_value']:.3f} - {param_info['max_value']:.3f}"
+                )
             except Exception:
                 pass
 

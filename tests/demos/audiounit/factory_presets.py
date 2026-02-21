@@ -13,12 +13,12 @@ def main():
     plugin_name = sys.argv[1] if len(sys.argv) > 1 else "AUReverb"
 
     # Find plugin
-    for type_code in ['aufx', 'aumu', 'augn']:
+    for type_code in ["aufx", "aumu", "augn"]:
         components = capi.audio_unit_find_all_components(component_type=type_code)
         for comp_id in components:
             try:
                 info = capi.audio_unit_get_component_info(comp_id)
-                if plugin_name.lower() in info['name'].lower():
+                if plugin_name.lower() in info["name"].lower():
                     print(f"Plugin: {info['name']}")
 
                     unit_id = capi.audio_component_instance_new(comp_id)

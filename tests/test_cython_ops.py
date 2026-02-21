@@ -6,13 +6,16 @@ import numpy as np
 # Import from capi directly
 try:
     from coremusic import capi as cython_ops
+
     CYTHON_OPS_AVAILABLE = True
 except (ImportError, AttributeError):
     CYTHON_OPS_AVAILABLE = False
 
 
 # Skip all tests if Cython ops not available
-pytestmark = pytest.mark.skipif(not CYTHON_OPS_AVAILABLE, reason="Cython ops not available")
+pytestmark = pytest.mark.skipif(
+    not CYTHON_OPS_AVAILABLE, reason="Cython ops not available"
+)
 
 
 class TestNormalization:
@@ -152,7 +155,7 @@ class TestConversions:
 
         # Should average the two channels
         assert abs(mono[0] - 0.75) < 0.001  # (0.5 + 1.0) / 2
-        assert abs(mono[1] - 0.5) < 0.001   # (0.2 + 0.8) / 2
+        assert abs(mono[1] - 0.5) < 0.001  # (0.2 + 0.8) / 2
 
     def test_mono_to_stereo(self):
         """Test mono to stereo conversion."""
@@ -269,5 +272,5 @@ class TestPerformance:
         assert normalized.shape == audio.shape
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

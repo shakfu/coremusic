@@ -1,21 +1,15 @@
 """Tests for AudioFile and AudioFileStream object-oriented classes."""
 
-import os
 import pytest
 from pathlib import Path
 import coremusic.capi as capi
-from coremusic.objects import (
-    AudioFile,
-    AudioFileError,
-    AudioFileStream,
-    AudioFormat,
-    CoreAudioObject,
-)
+from coremusic.audio import AudioFile, AudioFileStream, AudioFormat
+from coremusic.base import CoreAudioObject
+from coremusic.exceptions import AudioFileError
 
 
 class TestAudioFile:
     """Test AudioFile object-oriented wrapper"""
-
 
     def test_audio_file_creation(self, amen_wav_path):
         """Test AudioFile object creation"""
@@ -110,7 +104,6 @@ class TestAudioFile:
         """Test AudioFile automatic disposal on object deletion"""
         audio_file = AudioFile(amen_wav_path)
         audio_file.open()
-        object_id = audio_file.object_id
         del audio_file
 
 
@@ -229,7 +222,6 @@ class TestAudioFileStream:
 
 class TestAudioFileIntegration:
     """Integration tests for AudioFile with real audio data"""
-
 
     def test_audio_file_vs_functional_api_consistency(self, amen_wav_path):
         """Test that OO API produces consistent results with functional API"""

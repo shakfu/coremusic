@@ -9,6 +9,7 @@ import sys
 
 try:
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from coremusic.audio.visualization import WaveformPlotter

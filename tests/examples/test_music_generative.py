@@ -11,7 +11,6 @@ import pytest
 
 from coremusic.music.theory import Note, Chord, ChordType, Scale, ScaleType
 from generative.generative import (
-    Generator,
     GeneratorConfig,
     Arpeggiator,
     ArpPattern,
@@ -74,7 +73,7 @@ class TestArpeggiator:
 
     def test_create_arpeggiator(self):
         """Test creating arpeggiator."""
-        chord = Chord(Note('C', 4), ChordType.MAJOR)
+        chord = Chord(Note("C", 4), ChordType.MAJOR)
         arp = Arpeggiator(chord, ArpPattern.UP)
 
         assert arp.chord == chord
@@ -82,7 +81,7 @@ class TestArpeggiator:
 
     def test_arp_pattern_up(self):
         """Test ascending arpeggio pattern."""
-        chord = Chord(Note('C', 4), ChordType.MAJOR)
+        chord = Chord(Note("C", 4), ChordType.MAJOR)
         arp = Arpeggiator(chord, ArpPattern.UP)
         events = arp.generate(num_cycles=1)
 
@@ -95,7 +94,7 @@ class TestArpeggiator:
 
     def test_arp_pattern_down(self):
         """Test descending arpeggio pattern."""
-        chord = Chord(Note('C', 4), ChordType.MAJOR)
+        chord = Chord(Note("C", 4), ChordType.MAJOR)
         arp = Arpeggiator(chord, ArpPattern.DOWN)
         events = arp.generate(num_cycles=1)
 
@@ -107,7 +106,7 @@ class TestArpeggiator:
 
     def test_arp_pattern_up_down(self):
         """Test up-down arpeggio pattern."""
-        chord = Chord(Note('C', 4), ChordType.MAJOR)
+        chord = Chord(Note("C", 4), ChordType.MAJOR)
         arp = Arpeggiator(chord, ArpPattern.UP_DOWN)
         events = arp.generate(num_cycles=1)
 
@@ -119,7 +118,7 @@ class TestArpeggiator:
 
     def test_arp_pattern_up_down_inclusive(self):
         """Test up-down inclusive pattern."""
-        chord = Chord(Note('C', 4), ChordType.MAJOR)
+        chord = Chord(Note("C", 4), ChordType.MAJOR)
         arp = Arpeggiator(chord, ArpPattern.UP_DOWN_INCLUSIVE)
         events = arp.generate(num_cycles=1)
 
@@ -131,7 +130,7 @@ class TestArpeggiator:
 
     def test_arp_multiple_octaves(self):
         """Test arpeggio across multiple octaves."""
-        chord = Chord(Note('C', 4), ChordType.MAJOR)
+        chord = Chord(Note("C", 4), ChordType.MAJOR)
         config = ArpConfig(octave_range=2)
         arp = Arpeggiator(chord, ArpPattern.UP, config)
         events = arp.generate(num_cycles=1)
@@ -145,7 +144,7 @@ class TestArpeggiator:
 
     def test_arp_generate_with_duration(self):
         """Test generating for specific duration."""
-        chord = Chord(Note('C', 4), ChordType.MAJOR)
+        chord = Chord(Note("C", 4), ChordType.MAJOR)
         config = ArpConfig(tempo=120.0, rate=0.25)
         arp = Arpeggiator(chord, ArpPattern.UP, config)
 
@@ -159,8 +158,8 @@ class TestArpeggiator:
     def test_arp_set_chord(self):
         """Test changing chord dynamically."""
         arp = Arpeggiator(pattern=ArpPattern.UP)
-        chord1 = Chord(Note('C', 4), ChordType.MAJOR)
-        chord2 = Chord(Note('A', 4), ChordType.MINOR)
+        chord1 = Chord(Note("C", 4), ChordType.MAJOR)
+        chord2 = Chord(Note("A", 4), ChordType.MINOR)
 
         arp.set_chord(chord1)
         events1 = arp.generate(num_cycles=1)
@@ -174,7 +173,7 @@ class TestArpeggiator:
 
     def test_arp_velocity_pattern(self):
         """Test velocity pattern."""
-        chord = Chord(Note('C', 4), ChordType.MAJOR)
+        chord = Chord(Note("C", 4), ChordType.MAJOR)
         config = ArpConfig(velocity_pattern=[100, 80, 60])
         arp = Arpeggiator(chord, ArpPattern.UP, config)
         events = arp.generate(num_cycles=1)
@@ -186,7 +185,7 @@ class TestArpeggiator:
 
     def test_arp_random_pattern(self):
         """Test random pattern produces valid notes."""
-        chord = Chord(Note('C', 4), ChordType.MAJOR)
+        chord = Chord(Note("C", 4), ChordType.MAJOR)
         config = ArpConfig(seed=42)  # Fixed seed for reproducibility
         arp = Arpeggiator(chord, ArpPattern.RANDOM, config)
         events = arp.generate(num_cycles=1)
@@ -274,7 +273,7 @@ class TestEuclideanGenerator:
 
     def test_euclidean_with_note(self):
         """Test creating with Note object."""
-        note = Note('C', 2)
+        note = Note("C", 2)
         euclid = EuclideanGenerator(pulses=4, steps=8, pitch=note)
 
         assert euclid.pitch == 36  # C2
@@ -306,11 +305,13 @@ class TestMarkovGenerator:
     def test_markov_set_transitions(self):
         """Test setting transitions manually."""
         markov = MarkovGenerator()
-        markov.set_transitions({
-            60: {62: 0.5, 64: 0.5},
-            62: {60: 1.0},
-            64: {60: 1.0},
-        })
+        markov.set_transitions(
+            {
+                60: {62: 0.5, 64: 0.5},
+                62: {60: 1.0},
+                64: {60: 1.0},
+            }
+        )
 
         assert 60 in markov.transitions
         assert sum(markov.transitions[60].values()) == pytest.approx(1.0)
@@ -318,11 +319,13 @@ class TestMarkovGenerator:
     def test_markov_generate(self):
         """Test generating melody."""
         markov = MarkovGenerator()
-        markov.set_transitions({
-            60: {62: 0.5, 64: 0.5},
-            62: {60: 0.5, 64: 0.5},
-            64: {60: 0.5, 62: 0.5},
-        })
+        markov.set_transitions(
+            {
+                60: {62: 0.5, 64: 0.5},
+                62: {60: 0.5, 64: 0.5},
+                64: {60: 0.5, 62: 0.5},
+            }
+        )
 
         config = MarkovConfig(seed=42)
         markov.config = config
@@ -333,7 +336,7 @@ class TestMarkovGenerator:
 
     def test_markov_with_scale_constraint(self):
         """Test constraining to scale."""
-        scale = Scale(Note('C', 4), ScaleType.MAJOR)
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
         markov = MarkovGenerator(scale=scale)
 
         # Train with chromatic sequence
@@ -359,7 +362,7 @@ class TestMarkovGenerator:
     def test_markov_with_note_objects(self):
         """Test training with Note objects."""
         markov = MarkovGenerator()
-        notes = [Note('C', 4), Note('D', 4), Note('E', 4), Note('D', 4)]
+        notes = [Note("C", 4), Note("D", 4), Note("E", 4), Note("D", 4)]
         markov.train(notes)
 
         assert 60 in markov.transitions
@@ -370,7 +373,7 @@ class TestProbabilisticGenerator:
 
     def test_probabilistic_with_scale(self):
         """Test generating from scale."""
-        scale = Scale(Note('C', 4), ScaleType.MAJOR)
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
         prob = ProbabilisticGenerator(scale)
         events = prob.generate(num_notes=10)
 
@@ -398,7 +401,7 @@ class TestProbabilisticGenerator:
 
     def test_probabilistic_with_rests(self):
         """Test generating with rest probability."""
-        scale = Scale(Note('C', 4), ScaleType.MAJOR)
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
         config = ProbabilisticConfig(rest_probability=0.5, seed=42)
         prob = ProbabilisticGenerator(scale, config=config)
 
@@ -521,14 +524,14 @@ class TestMelodyGenerator:
 
     def test_melody_create(self):
         """Test creating melody generator."""
-        scale = Scale(Note('C', 4), ScaleType.MAJOR)
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
         melody = MelodyGenerator(scale)
 
         assert melody.scale == scale
 
     def test_melody_generate_basic(self):
         """Test basic melody generation."""
-        scale = Scale(Note('C', 4), ScaleType.MAJOR)
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
         melody = MelodyGenerator(scale)
         events = melody.generate(num_notes=16)
 
@@ -543,9 +546,9 @@ class TestMelodyGenerator:
 
     def test_melody_start_note(self):
         """Test specifying start note."""
-        scale = Scale(Note('C', 4), ScaleType.MAJOR)
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
         melody = MelodyGenerator(scale)
-        events = melody.generate(num_notes=5, start_note=Note('G', 4))
+        events = melody.generate(num_notes=5, start_note=Note("G", 4))
 
         note_ons = [e for e in events if e.status == MIDIStatus.NOTE_ON]
 
@@ -554,7 +557,7 @@ class TestMelodyGenerator:
 
     def test_melody_max_jump(self):
         """Test max interval jump."""
-        scale = Scale(Note('C', 4), ScaleType.MAJOR)
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
         config = MelodyConfig(max_jump=2, seed=42)  # Only seconds
         melody = MelodyGenerator(scale, config)
         events = melody.generate(num_notes=20)
@@ -563,13 +566,13 @@ class TestMelodyGenerator:
 
         # Check consecutive intervals
         for i in range(1, len(note_ons)):
-            interval = abs(note_ons[i].data1 - note_ons[i-1].data1)
+            interval = abs(note_ons[i].data1 - note_ons[i - 1].data1)
             # Allow small intervals (may be 0 if same note)
             assert interval <= 5  # Account for scale steps, not semitones
 
     def test_melody_with_rests(self):
         """Test melody with phrase rests."""
-        scale = Scale(Note('C', 4), ScaleType.MAJOR)
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
         config = MelodyConfig(
             phrase_length=4,
             rest_probability=1.0,  # Always rest between phrases
@@ -607,8 +610,12 @@ class TestPolyrhythmGenerator:
 
         events = poly.generate(cycles=1)
 
-        kick_notes = [e for e in events if e.status == MIDIStatus.NOTE_ON and e.data1 == 36]
-        snare_notes = [e for e in events if e.status == MIDIStatus.NOTE_ON and e.data1 == 38]
+        kick_notes = [
+            e for e in events if e.status == MIDIStatus.NOTE_ON and e.data1 == 36
+        ]
+        snare_notes = [
+            e for e in events if e.status == MIDIStatus.NOTE_ON and e.data1 == 38
+        ]
 
         assert len(kick_notes) == 3
         assert len(snare_notes) == 4
@@ -631,10 +638,14 @@ class TestPolyrhythmGenerator:
 
         events = poly.generate(cycles=1)
 
-        kicks = sorted([e for e in events if e.status == MIDIStatus.NOTE_ON and e.data1 == 36],
-                       key=lambda e: e.time)
-        snares = sorted([e for e in events if e.status == MIDIStatus.NOTE_ON and e.data1 == 38],
-                        key=lambda e: e.time)
+        kicks = sorted(
+            [e for e in events if e.status == MIDIStatus.NOTE_ON and e.data1 == 36],
+            key=lambda e: e.time,
+        )
+        snares = sorted(
+            [e for e in events if e.status == MIDIStatus.NOTE_ON and e.data1 == 38],
+            key=lambda e: e.time,
+        )
 
         # Snares should be offset from kicks
         assert snares[0].time > kicks[0].time
@@ -654,12 +665,14 @@ class TestUtilityFunctions:
     def test_create_arp_from_progression(self):
         """Test creating arpeggiated progression."""
         progression = [
-            Chord(Note('C', 4), ChordType.MAJOR),
-            Chord(Note('F', 4), ChordType.MAJOR),
-            Chord(Note('G', 4), ChordType.MAJOR),
+            Chord(Note("C", 4), ChordType.MAJOR),
+            Chord(Note("F", 4), ChordType.MAJOR),
+            Chord(Note("G", 4), ChordType.MAJOR),
         ]
 
-        events = create_arp_from_progression(progression, ArpPattern.UP, beats_per_chord=2)
+        events = create_arp_from_progression(
+            progression, ArpPattern.UP, beats_per_chord=2
+        )
 
         note_ons = [e for e in events if e.status == MIDIStatus.NOTE_ON]
 
@@ -674,14 +687,14 @@ class TestUtilityFunctions:
 
     def test_combine_generators(self):
         """Test combining multiple generators."""
-        chord = Chord(Note('C', 4), ChordType.MAJOR)
+        chord = Chord(Note("C", 4), ChordType.MAJOR)
         arp = Arpeggiator(chord, ArpPattern.UP)
 
         euclid = EuclideanGenerator(pulses=4, steps=8, pitch=36)
 
         generators = [
-            (arp, {'num_cycles': 2}),
-            (euclid, {'cycles': 2}),
+            (arp, {"num_cycles": 2}),
+            (euclid, {"cycles": 2}),
         ]
 
         events = combine_generators(generators)
@@ -701,13 +714,14 @@ class TestSwingAndHumanization:
 
     def test_swing_application(self):
         """Test that swing delays odd-numbered steps."""
-        chord = Chord(Note('C', 4), ChordType.MAJOR)
+        chord = Chord(Note("C", 4), ChordType.MAJOR)
         config = ArpConfig(tempo=120.0, swing=0.5, rate=0.5)  # 8th notes
         arp = Arpeggiator(chord, ArpPattern.UP, config)
 
         events = arp.generate(num_cycles=2)
-        note_ons = sorted([e for e in events if e.status == MIDIStatus.NOTE_ON],
-                          key=lambda e: e.time)
+        note_ons = sorted(
+            [e for e in events if e.status == MIDIStatus.NOTE_ON], key=lambda e: e.time
+        )
 
         # With swing, intervals between even->odd should be longer than odd->even
         if len(note_ons) >= 3:
@@ -719,7 +733,7 @@ class TestSwingAndHumanization:
 
     def test_humanize_timing(self):
         """Test timing humanization adds variation."""
-        scale = Scale(Note('C', 4), ScaleType.MAJOR)
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
         config = ProbabilisticConfig(
             humanize_timing=0.01,  # 10ms variation
             seed=42,
@@ -739,7 +753,7 @@ class TestSwingAndHumanization:
 
     def test_humanize_velocity(self):
         """Test velocity humanization adds variation."""
-        scale = Scale(Note('C', 4), ScaleType.MAJOR)
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
         config = ProbabilisticConfig(
             velocity=100,
             humanize_velocity=10,
@@ -763,13 +777,15 @@ class TestReproducibility:
 
     def test_arpeggiator_reproducibility(self):
         """Test arpeggiator produces same output with same seed."""
-        chord = Chord(Note('C', 4), ChordType.MAJOR)
+        chord = Chord(Note("C", 4), ChordType.MAJOR)
         config = ArpConfig(seed=12345, humanize_timing=0.01)
 
         arp1 = Arpeggiator(chord, ArpPattern.RANDOM, config)
         events1 = arp1.generate(num_cycles=4)
 
-        arp2 = Arpeggiator(chord, ArpPattern.RANDOM, ArpConfig(seed=12345, humanize_timing=0.01))
+        arp2 = Arpeggiator(
+            chord, ArpPattern.RANDOM, ArpConfig(seed=12345, humanize_timing=0.01)
+        )
         events2 = arp2.generate(num_cycles=4)
 
         pitches1 = [e.data1 for e in events1 if e.status == MIDIStatus.NOTE_ON]
@@ -782,11 +798,15 @@ class TestReproducibility:
         config = MarkovConfig(seed=12345)
 
         markov1 = MarkovGenerator(config=config)
-        markov1.set_transitions({60: {62: 0.5, 64: 0.5}, 62: {60: 0.5, 64: 0.5}, 64: {60: 0.5, 62: 0.5}})
+        markov1.set_transitions(
+            {60: {62: 0.5, 64: 0.5}, 62: {60: 0.5, 64: 0.5}, 64: {60: 0.5, 62: 0.5}}
+        )
         events1 = markov1.generate(num_notes=20, start_note=60)
 
         markov2 = MarkovGenerator(config=MarkovConfig(seed=12345))
-        markov2.set_transitions({60: {62: 0.5, 64: 0.5}, 62: {60: 0.5, 64: 0.5}, 64: {60: 0.5, 62: 0.5}})
+        markov2.set_transitions(
+            {60: {62: 0.5, 64: 0.5}, 62: {60: 0.5, 64: 0.5}, 64: {60: 0.5, 62: 0.5}}
+        )
         events2 = markov2.generate(num_notes=20, start_note=60)
 
         pitches1 = [e.data1 for e in events1 if e.status == MIDIStatus.NOTE_ON]
@@ -798,6 +818,7 @@ class TestReproducibility:
 # ============================================================================
 # MIDI File Generation Tests
 # ============================================================================
+
 
 class TestMIDIFileGeneration:
     """Tests that generate actual MIDI files demonstrating each algorithm.
@@ -820,19 +841,27 @@ class TestMIDIFileGeneration:
     def _events_to_track(self, events, track):
         """Helper to convert generator events to MIDITrack."""
         from coremusic.midi.utilities import MIDIStatus as MS
+
         # Group note on/off pairs
         note_ons = {}
         for event in sorted(events, key=lambda e: e.time):
             if event.status == MS.NOTE_ON and event.data2 > 0:
                 key = (event.data1, event.channel)
                 note_ons[key] = event
-            elif event.status == MS.NOTE_OFF or (event.status == MS.NOTE_ON and event.data2 == 0):
+            elif event.status == MS.NOTE_OFF or (
+                event.status == MS.NOTE_ON and event.data2 == 0
+            ):
                 key = (event.data1, event.channel)
                 if key in note_ons:
                     on_event = note_ons.pop(key)
                     duration = event.time - on_event.time
-                    track.add_note(on_event.time, on_event.data1, on_event.data2,
-                                   duration, on_event.channel)
+                    track.add_note(
+                        on_event.time,
+                        on_event.data1,
+                        on_event.data2,
+                        duration,
+                        on_event.channel,
+                    )
 
     def test_generate_arpeggiator_up(self):
         """Generate MIDI file with ascending arpeggio."""
@@ -841,7 +870,7 @@ class TestMIDIFileGeneration:
         seq = MIDISequence(tempo=120.0)
         track = seq.add_track("Arpeggiator Up")
 
-        chord = Chord(Note('C', 4), ChordType.MAJOR_7)
+        chord = Chord(Note("C", 4), ChordType.MAJOR_7)
         config = ArpConfig(tempo=120.0, octave_range=2, rate=0.25)
         arp = Arpeggiator(chord, ArpPattern.UP, config)
         events = arp.generate(num_cycles=4)
@@ -861,7 +890,7 @@ class TestMIDIFileGeneration:
         seq = MIDISequence(tempo=130.0)
         track = seq.add_track("Arpeggiator Up-Down")
 
-        chord = Chord(Note('A', 3), ChordType.MINOR_7)
+        chord = Chord(Note("A", 3), ChordType.MINOR_7)
         config = ArpConfig(tempo=130.0, octave_range=2, rate=0.125, swing=0.3)
         arp = Arpeggiator(chord, ArpPattern.UP_DOWN, config)
         events = arp.generate(num_cycles=4)
@@ -880,7 +909,7 @@ class TestMIDIFileGeneration:
         seq = MIDISequence(tempo=110.0)
         track = seq.add_track("Arpeggiator Random")
 
-        chord = Chord(Note('D', 4), ChordType.DOMINANT_9)
+        chord = Chord(Note("D", 4), ChordType.DOMINANT_9)
         config = ArpConfig(tempo=110.0, octave_range=2, rate=0.25, seed=42)
         arp = Arpeggiator(chord, ArpPattern.RANDOM, config)
         events = arp.generate(num_cycles=8)
@@ -900,7 +929,9 @@ class TestMIDIFileGeneration:
         track = seq.add_track("Euclidean Tresillo E(3,8)")
 
         config = EuclideanConfig(tempo=100.0, note_duration=0.25)
-        euclid = EuclideanGenerator(pulses=3, steps=8, pitch=Note('C', 2), config=config)
+        euclid = EuclideanGenerator(
+            pulses=3, steps=8, pitch=Note("C", 2), config=config
+        )
         events = euclid.generate(cycles=8)
 
         self._events_to_track(events, track)
@@ -918,7 +949,9 @@ class TestMIDIFileGeneration:
         track = seq.add_track("Euclidean Cinquillo E(5,8)")
 
         config = EuclideanConfig(tempo=100.0, note_duration=0.25)
-        euclid = EuclideanGenerator(pulses=5, steps=8, pitch=Note('D', 2), config=config)
+        euclid = EuclideanGenerator(
+            pulses=5, steps=8, pitch=Note("D", 2), config=config
+        )
         events = euclid.generate(cycles=8)
 
         self._events_to_track(events, track)
@@ -936,7 +969,9 @@ class TestMIDIFileGeneration:
         track = seq.add_track("Euclidean E(7,12)")
 
         config = EuclideanConfig(tempo=120.0, note_duration=0.25)
-        euclid = EuclideanGenerator(pulses=7, steps=12, pitch=Note('E', 2), config=config)
+        euclid = EuclideanGenerator(
+            pulses=7, steps=12, pitch=Note("E", 2), config=config
+        )
         events = euclid.generate(cycles=8)
 
         self._events_to_track(events, track)
@@ -955,10 +990,34 @@ class TestMIDIFileGeneration:
 
         # Train on a simple melodic pattern
         training_melody = [
-            60, 62, 64, 65, 67, 65, 64, 62,  # C major ascending/descending
-            60, 64, 67, 72, 67, 64, 60,      # Arpeggiated
-            60, 62, 64, 62, 60, 59, 57, 55,  # Descending phrase
-            60, 65, 64, 62, 60,              # Simple phrase
+            60,
+            62,
+            64,
+            65,
+            67,
+            65,
+            64,
+            62,  # C major ascending/descending
+            60,
+            64,
+            67,
+            72,
+            67,
+            64,
+            60,  # Arpeggiated
+            60,
+            62,
+            64,
+            62,
+            60,
+            59,
+            57,
+            55,  # Descending phrase
+            60,
+            65,
+            64,
+            62,
+            60,  # Simple phrase
         ]
 
         config = MarkovConfig(tempo=90.0, note_duration=0.5, seed=42)
@@ -980,22 +1039,24 @@ class TestMIDIFileGeneration:
         seq = MIDISequence(tempo=100.0)
         track = seq.add_track("Markov Pentatonic")
 
-        scale = Scale(Note('A', 4), ScaleType.MINOR_PENTATONIC)
+        scale = Scale(Note("A", 4), ScaleType.MINOR_PENTATONIC)
 
         config = MarkovConfig(tempo=100.0, note_duration=0.375, seed=123)
         markov = MarkovGenerator(scale=scale, config=config)
 
         # Train with pentatonic intervals
-        markov.set_transitions({
-            69: {72: 0.4, 67: 0.3, 64: 0.2, 60: 0.1},  # A4
-            72: {69: 0.3, 74: 0.4, 67: 0.3},          # C5
-            74: {72: 0.5, 76: 0.3, 69: 0.2},          # D5
-            76: {74: 0.4, 79: 0.3, 72: 0.3},          # E5
-            79: {76: 0.5, 74: 0.3, 72: 0.2},          # G5
-            67: {69: 0.5, 64: 0.3, 72: 0.2},          # G4
-            64: {67: 0.4, 69: 0.4, 60: 0.2},          # E4
-            60: {64: 0.5, 67: 0.3, 69: 0.2},          # C4
-        })
+        markov.set_transitions(
+            {
+                69: {72: 0.4, 67: 0.3, 64: 0.2, 60: 0.1},  # A4
+                72: {69: 0.3, 74: 0.4, 67: 0.3},  # C5
+                74: {72: 0.5, 76: 0.3, 69: 0.2},  # D5
+                76: {74: 0.4, 79: 0.3, 72: 0.3},  # E5
+                79: {76: 0.5, 74: 0.3, 72: 0.2},  # G5
+                67: {69: 0.5, 64: 0.3, 72: 0.2},  # G4
+                64: {67: 0.4, 69: 0.4, 60: 0.2},  # E4
+                60: {64: 0.5, 67: 0.3, 69: 0.2},  # C4
+            }
+        )
 
         events = markov.generate(num_notes=48, start_note=69)
         self._events_to_track(events, track)
@@ -1012,7 +1073,7 @@ class TestMIDIFileGeneration:
         seq = MIDISequence(tempo=120.0)
         track = seq.add_track("Probabilistic Scale")
 
-        scale = Scale(Note('C', 4), ScaleType.DORIAN)
+        scale = Scale(Note("C", 4), ScaleType.DORIAN)
         config = ProbabilisticConfig(tempo=120.0, note_duration=0.25, seed=42)
         prob = ProbabilisticGenerator(scale, config=config)
         events = prob.generate(num_notes=64)
@@ -1033,24 +1094,27 @@ class TestMIDIFileGeneration:
 
         # Weight toward chord tones with passing tones
         weights = {
-            60: 5,   # C - root (high weight)
-            62: 1,   # D - passing
-            64: 4,   # E - third (high weight)
-            65: 1,   # F - passing
-            67: 4,   # G - fifth (high weight)
-            69: 1,   # A - passing
-            71: 3,   # B - seventh
-            72: 3,   # C octave
+            60: 5,  # C - root (high weight)
+            62: 1,  # D - passing
+            64: 4,  # E - third (high weight)
+            65: 1,  # F - passing
+            67: 4,  # G - fifth (high weight)
+            69: 1,  # A - passing
+            71: 3,  # B - seventh
+            72: 3,  # C octave
         }
 
-        config = ProbabilisticConfig(tempo=100.0, note_duration=0.375,
-                                      rest_probability=0.1, seed=42)
+        config = ProbabilisticConfig(
+            tempo=100.0, note_duration=0.375, rest_probability=0.1, seed=42
+        )
         prob = ProbabilisticGenerator(weights=weights, config=config)
         events = prob.generate(num_notes=48)
 
         self._events_to_track(events, track)
 
-        output_path = self._get_output_dir("probabilistic") / "probabilistic_weighted.mid"
+        output_path = (
+            self._get_output_dir("probabilistic") / "probabilistic_weighted.mid"
+        )
         seq.save(str(output_path))
 
         assert output_path.exists()
@@ -1067,18 +1131,18 @@ class TestMIDIFileGeneration:
 
         # Classic synth bass pattern
         pattern = [
-            Step(pitch=36, velocity=120),   # Kick
+            Step(pitch=36, velocity=120),  # Kick
             None,
             Step(pitch=36, velocity=80),
             None,
-            Step(pitch=38, velocity=110),   # Snare
+            Step(pitch=38, velocity=110),  # Snare
             None,
             Step(pitch=36, velocity=90),
             Step(pitch=36, velocity=70),
             Step(pitch=36, velocity=120),
             None,
             Step(pitch=36, velocity=80),
-            Step(pitch=42, velocity=60),    # Hi-hat
+            Step(pitch=42, velocity=60),  # Hi-hat
             Step(pitch=38, velocity=110),
             Step(pitch=42, velocity=50),
             Step(pitch=36, velocity=90),
@@ -1108,10 +1172,25 @@ class TestMIDIFileGeneration:
         sequencer = SequenceGenerator(steps=16, config=config)
 
         # Synth lead pattern
-        pitches = [60, 63, 67, 72, 70, 67, 63, 60,
-                   58, 60, 63, 67, 70, 72, 75, 72]
-        velocities = [100, 90, 110, 120, 100, 90, 80, 70,
-                      80, 90, 100, 110, 120, 110, 127, 100]
+        pitches = [60, 63, 67, 72, 70, 67, 63, 60, 58, 60, 63, 67, 70, 72, 75, 72]
+        velocities = [
+            100,
+            90,
+            110,
+            120,
+            100,
+            90,
+            80,
+            70,
+            80,
+            90,
+            100,
+            110,
+            120,
+            110,
+            127,
+            100,
+        ]
 
         for i, (pitch, vel) in enumerate(zip(pitches, velocities)):
             sequencer.set_step(i, Step(pitch=pitch, velocity=vel))
@@ -1131,11 +1210,17 @@ class TestMIDIFileGeneration:
         seq = MIDISequence(tempo=100.0)
         track = seq.add_track("Melody Major")
 
-        scale = Scale(Note('C', 4), ScaleType.MAJOR)
-        config = MelodyConfig(tempo=100.0, note_duration=0.5, max_jump=5,
-                              phrase_length=8, rest_probability=0.15, seed=42)
+        scale = Scale(Note("C", 4), ScaleType.MAJOR)
+        config = MelodyConfig(
+            tempo=100.0,
+            note_duration=0.5,
+            max_jump=5,
+            phrase_length=8,
+            rest_probability=0.15,
+            seed=42,
+        )
         melody = MelodyGenerator(scale, config)
-        events = melody.generate(num_notes=48, start_note=Note('C', 4))
+        events = melody.generate(num_notes=48, start_note=Note("C", 4))
 
         self._events_to_track(events, track)
 
@@ -1151,12 +1236,19 @@ class TestMIDIFileGeneration:
         seq = MIDISequence(tempo=80.0)
         track = seq.add_track("Melody Blues")
 
-        scale = Scale(Note('A', 3), ScaleType.BLUES)
-        config = MelodyConfig(tempo=80.0, note_duration=0.375, max_jump=4,
-                              phrase_length=6, rest_probability=0.2, seed=123,
-                              humanize_timing=0.02, humanize_velocity=15)
+        scale = Scale(Note("A", 3), ScaleType.BLUES)
+        config = MelodyConfig(
+            tempo=80.0,
+            note_duration=0.375,
+            max_jump=4,
+            phrase_length=6,
+            rest_probability=0.2,
+            seed=123,
+            humanize_timing=0.02,
+            humanize_velocity=15,
+        )
         melody = MelodyGenerator(scale, config)
-        events = melody.generate(num_notes=64, start_note=Note('A', 3))
+        events = melody.generate(num_notes=64, start_note=Note("A", 3))
 
         self._events_to_track(events, track)
 
@@ -1175,7 +1267,7 @@ class TestMIDIFileGeneration:
         config = PolyrhythmConfig(tempo=120.0, note_duration=0.25)
         poly = PolyrhythmGenerator(cycle_beats=4, config=config)
         poly.add_layer(RhythmLayer(pulses=3, pitch=60, velocity=100))  # C4
-        poly.add_layer(RhythmLayer(pulses=4, pitch=67, velocity=90))   # G4
+        poly.add_layer(RhythmLayer(pulses=4, pitch=67, velocity=90))  # G4
 
         events = poly.generate(cycles=8)
         self._events_to_track(events, track)
@@ -1195,7 +1287,7 @@ class TestMIDIFileGeneration:
         config = PolyrhythmConfig(tempo=100.0, note_duration=0.2)
         poly = PolyrhythmGenerator(cycle_beats=4, config=config)
         poly.add_layer(RhythmLayer(pulses=5, pitch=36, velocity=120))  # Kick
-        poly.add_layer(RhythmLayer(pulses=4, pitch=42, velocity=80))   # Hi-hat
+        poly.add_layer(RhythmLayer(pulses=4, pitch=42, velocity=80))  # Hi-hat
         poly.add_layer(RhythmLayer(pulses=3, pitch=38, velocity=100))  # Snare
 
         events = poly.generate(cycles=8)
@@ -1214,7 +1306,7 @@ class TestMIDIFileGeneration:
 
         # Arpeggio track
         arp_track = seq.add_track("Arpeggio")
-        chord = Chord(Note('A', 3), ChordType.MINOR_7)
+        chord = Chord(Note("A", 3), ChordType.MINOR_7)
         arp_config = ArpConfig(tempo=120.0, octave_range=2, rate=0.25, channel=0)
         arp = Arpeggiator(chord, ArpPattern.UP_DOWN, arp_config)
         arp_events = arp.generate(num_cycles=8)
@@ -1230,7 +1322,9 @@ class TestMIDIFileGeneration:
         self._events_to_track(kick_events, drum_track)
 
         # Snare E(4,16) with rotation
-        snare_config = EuclideanConfig(tempo=120.0, note_duration=0.25, channel=9, rotation=4)
+        snare_config = EuclideanConfig(
+            tempo=120.0, note_duration=0.25, channel=9, rotation=4
+        )
         snare = EuclideanGenerator(pulses=4, steps=16, pitch=38, config=snare_config)
         snare_events = snare.generate(cycles=4)
         self._events_to_track(snare_events, drum_track)
@@ -1255,11 +1349,12 @@ class TestMIDIFileGeneration:
         track = seq.add_track("Chord Progression")
 
         # ii-V-I-VI progression in C major
-        prog = ChordProgression.from_numerals('C', ['ii', 'V', 'I', 'vi'])
+        prog = ChordProgression.from_numerals("C", ["ii", "V", "I", "vi"])
 
         arp_config = ArpConfig(tempo=90.0, octave_range=1, rate=0.25)
-        events = create_arp_from_progression(prog.chords, ArpPattern.UP,
-                                              beats_per_chord=4, config=arp_config)
+        events = create_arp_from_progression(
+            prog.chords, ArpPattern.UP, beats_per_chord=4, config=arp_config
+        )
         self._events_to_track(events, track)
 
         output_path = self._get_output_dir("progression") / "progression_ii_V_I_vi.mid"
@@ -1276,28 +1371,34 @@ class TestMIDIFileGeneration:
         # Bass track - Euclidean pattern
         bass_track = seq.add_track("Bass")
         bass_config = EuclideanConfig(tempo=110.0, note_duration=0.4, channel=1)
-        bass = EuclideanGenerator(pulses=5, steps=16, pitch=Note('A', 1), config=bass_config)
+        bass = EuclideanGenerator(
+            pulses=5, steps=16, pitch=Note("A", 1), config=bass_config
+        )
         bass_events = bass.generate(cycles=8)
         self._events_to_track(bass_events, bass_track)
 
         # Pad track - Chord progression
         pad_track = seq.add_track("Pad")
         chords = [
-            Chord(Note('A', 3), ChordType.MINOR_7),
-            Chord(Note('D', 4), ChordType.MINOR_7),
-            Chord(Note('G', 3), ChordType.MAJOR_7),
-            Chord(Note('C', 4), ChordType.MAJOR_7),
+            Chord(Note("A", 3), ChordType.MINOR_7),
+            Chord(Note("D", 4), ChordType.MINOR_7),
+            Chord(Note("G", 3), ChordType.MAJOR_7),
+            Chord(Note("C", 4), ChordType.MAJOR_7),
         ]
         beat_duration = 60.0 / 110.0
         for i, chord in enumerate(chords * 2):  # 8 bars
             start_time = i * 4 * beat_duration
             for note in chord.get_notes():
-                pad_track.add_note(start_time, note.midi, 70, 3.8 * beat_duration, channel=2)
+                pad_track.add_note(
+                    start_time, note.midi, 70, 3.8 * beat_duration, channel=2
+                )
 
         # Lead track - Markov melody
         lead_track = seq.add_track("Lead")
-        scale = Scale(Note('A', 4), ScaleType.NATURAL_MINOR)
-        markov_config = MarkovConfig(tempo=110.0, note_duration=0.25, seed=42, channel=3)
+        scale = Scale(Note("A", 4), ScaleType.NATURAL_MINOR)
+        markov_config = MarkovConfig(
+            tempo=110.0, note_duration=0.25, seed=42, channel=3
+        )
         markov = MarkovGenerator(scale=scale, config=markov_config)
         markov.train([69, 71, 72, 74, 76, 74, 72, 71, 69, 67, 65, 64, 65, 67, 69])
         lead_events = markov.generate(num_notes=64, start_note=69)
@@ -1305,9 +1406,10 @@ class TestMIDIFileGeneration:
 
         # Arpeggio track
         arp_track = seq.add_track("Arpeggio")
-        arp_chord = Chord(Note('A', 4), ChordType.MINOR)
-        arp_config = ArpConfig(tempo=110.0, octave_range=2, rate=0.125,
-                               swing=0.2, channel=4)
+        arp_chord = Chord(Note("A", 4), ChordType.MINOR)
+        arp_config = ArpConfig(
+            tempo=110.0, octave_range=2, rate=0.125, swing=0.2, channel=4
+        )
         arp = Arpeggiator(arp_chord, ArpPattern.RANDOM_WALK, arp_config)
         arp_events = arp.generate(duration=16 * beat_duration * 4)
         self._events_to_track(arp_events, arp_track)
@@ -1466,15 +1568,15 @@ class TestBitShiftRegister:
             note = notes[note_index]
 
             if out_gate == 1:
-                results.append((step + 1, note, 'play'))
+                results.append((step + 1, note, "play"))
             else:
-                results.append((step + 1, note, 'rest'))
+                results.append((step + 1, note, "rest"))
 
         # First 4 steps should all be rests (register filling up)
-        assert all(r[2] == 'rest' for r in results[:4])
+        assert all(r[2] == "rest" for r in results[:4])
 
         # After step 4, some plays should occur
-        plays = [r for r in results[4:] if r[2] == 'play']
+        plays = [r for r in results[4:] if r[2] == "play"]
         assert len(plays) > 0
 
 
@@ -1487,21 +1589,21 @@ class TestBitShiftRegisterConfig:
 
         assert config.step_duration == 0.25
         assert config.gate == 0.8
-        assert config.velocity_mode == 'fixed'
+        assert config.velocity_mode == "fixed"
         assert config.velocity == 100
         assert config.velocity_min == 64
         assert config.velocity_max == 127
-        assert config.duration_mode == 'fixed'
+        assert config.duration_mode == "fixed"
 
     def test_velocity_mode_validation(self):
         """Test velocity_mode validation."""
         with pytest.raises(ValueError, match="velocity_mode"):
-            BitShiftRegisterConfig(velocity_mode='invalid')
+            BitShiftRegisterConfig(velocity_mode="invalid")
 
     def test_duration_mode_validation(self):
         """Test duration_mode validation."""
         with pytest.raises(ValueError, match="duration_mode"):
-            BitShiftRegisterConfig(duration_mode='invalid')
+            BitShiftRegisterConfig(duration_mode="invalid")
 
     def test_velocity_range_validation(self):
         """Test velocity range validation."""
@@ -1531,8 +1633,7 @@ class TestBitShiftRegisterGenerator:
     def test_create_with_note_objects(self):
         """Test creating with Note objects."""
         gen = BitShiftRegisterGenerator(
-            size=4,
-            pitches=[Note('C', 4), Note('E', 4), Note('G', 4)]
+            size=4, pitches=[Note("C", 4), Note("E", 4), Note("G", 4)]
         )
 
         assert gen.pitches == [60, 64, 67]
@@ -1642,7 +1743,7 @@ class TestBitShiftRegisterGenerator:
 
     def test_velocity_mode_fixed(self):
         """Test fixed velocity mode."""
-        config = BitShiftRegisterConfig(velocity=100, velocity_mode='fixed')
+        config = BitShiftRegisterConfig(velocity=100, velocity_mode="fixed")
         gen = BitShiftRegisterGenerator(size=1, pitches=[60], config=config)
 
         gen.reset([1])  # Immediate output
@@ -1654,16 +1755,10 @@ class TestBitShiftRegisterGenerator:
     def test_velocity_mode_random(self):
         """Test random velocity mode."""
         config = BitShiftRegisterConfig(
-            velocity_mode='random',
-            velocity_min=80,
-            velocity_max=120,
-            seed=42
+            velocity_mode="random", velocity_min=80, velocity_max=120, seed=42
         )
         gen = BitShiftRegisterGenerator(
-            size=1,
-            pitches=[60],
-            initial_state=[1],
-            config=config
+            size=1, pitches=[60], initial_state=[1], config=config
         )
 
         velocities = []
@@ -1680,14 +1775,10 @@ class TestBitShiftRegisterGenerator:
     def test_velocity_mode_pattern(self):
         """Test pattern velocity mode."""
         config = BitShiftRegisterConfig(
-            velocity_mode='pattern',
-            velocity_pattern=[100, 80, 60, 120]
+            velocity_mode="pattern", velocity_pattern=[100, 80, 60, 120]
         )
         gen = BitShiftRegisterGenerator(
-            size=1,
-            pitches=[60],
-            initial_state=[1],
-            config=config
+            size=1, pitches=[60], initial_state=[1], config=config
         )
 
         velocities = []
@@ -1703,23 +1794,22 @@ class TestBitShiftRegisterGenerator:
     def test_duration_mode_pattern(self):
         """Test pattern duration mode."""
         config = BitShiftRegisterConfig(
-            duration_mode='pattern',
+            duration_mode="pattern",
             duration_pattern=[1.0, 0.5, 0.25],
             step_duration=0.5,
             gate=1.0,  # Full gate for easier testing
-            tempo=120.0
+            tempo=120.0,
         )
         gen = BitShiftRegisterGenerator(
-            size=1,
-            pitches=[60],
-            initial_state=[1],
-            config=config
+            size=1, pitches=[60], initial_state=[1], config=config
         )
 
         # Generate three notes
         durations = []
         beat_duration = 60.0 / 120.0  # 0.5 seconds per beat
-        base_duration = 0.5 * beat_duration * 1.0  # step_duration * beat_duration * gate
+        base_duration = (
+            0.5 * beat_duration * 1.0
+        )  # step_duration * beat_duration * gate
 
         for i in range(3):
             gen.register.set_state([1])
@@ -1744,24 +1834,20 @@ class TestBitShiftRegisterGenerator:
 
         # Check trace structure
         for entry in trace:
-            assert 'step' in entry
-            assert 'input_gate' in entry
-            assert 'register_state' in entry
-            assert 'output_gate' in entry
-            assert 'pitch' in entry
-            assert 'velocity' in entry
-            assert 'action' in entry
+            assert "step" in entry
+            assert "input_gate" in entry
+            assert "register_state" in entry
+            assert "output_gate" in entry
+            assert "pitch" in entry
+            assert "velocity" in entry
+            assert "action" in entry
 
         # First 4 steps should be rests (register filling up)
-        assert all(t['action'] == 'rest' for t in trace[:4])
+        assert all(t["action"] == "rest" for t in trace[:4])
 
     def test_pitches_cycle(self):
         """Test that pitches cycle through the sequence."""
-        gen = BitShiftRegisterGenerator(
-            size=1,
-            pitches=[60, 62, 64],
-            initial_state=[1]
-        )
+        gen = BitShiftRegisterGenerator(size=1, pitches=[60, 62, 64], initial_state=[1])
 
         pitches_played = []
         for i in range(6):
@@ -1781,16 +1867,9 @@ class TestBitShiftRegisterGenerator:
 
     def test_swing_applied(self):
         """Test that swing is applied."""
-        config = BitShiftRegisterConfig(
-            tempo=120.0,
-            swing=0.5,
-            step_duration=0.5
-        )
+        config = BitShiftRegisterConfig(tempo=120.0, swing=0.5, step_duration=0.5)
         gen = BitShiftRegisterGenerator(
-            size=1,
-            pitches=[60],
-            initial_state=[1],
-            config=config
+            size=1, pitches=[60], initial_state=[1], config=config
         )
 
         # Collect times for a few steps
@@ -1830,7 +1909,9 @@ class TestBitShiftRegisterMIDIFileGeneration:
     @pytest.fixture(autouse=True)
     def setup_output_dir(self):
         """Create output directory for MIDI files."""
-        self.output_dir = Path(__file__).parent.parent / "build" / "midi_files" / "shift_register"
+        self.output_dir = (
+            Path(__file__).parent.parent / "build" / "midi_files" / "shift_register"
+        )
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def _events_to_track(self, events, track):
@@ -1840,13 +1921,20 @@ class TestBitShiftRegisterMIDIFileGeneration:
             if event.status == MIDIStatus.NOTE_ON and event.data2 > 0:
                 key = (event.data1, event.channel)
                 note_ons[key] = event
-            elif event.status == MIDIStatus.NOTE_OFF or (event.status == MIDIStatus.NOTE_ON and event.data2 == 0):
+            elif event.status == MIDIStatus.NOTE_OFF or (
+                event.status == MIDIStatus.NOTE_ON and event.data2 == 0
+            ):
                 key = (event.data1, event.channel)
                 if key in note_ons:
                     on_event = note_ons.pop(key)
                     duration = event.time - on_event.time
-                    track.add_note(on_event.time, on_event.data1, on_event.data2,
-                                   duration, on_event.channel)
+                    track.add_note(
+                        on_event.time,
+                        on_event.data1,
+                        on_event.data2,
+                        duration,
+                        on_event.channel,
+                    )
 
     def test_generate_shift_register_basic(self):
         """Generate MIDI file with basic shift register pattern."""
@@ -1859,7 +1947,7 @@ class TestBitShiftRegisterMIDIFileGeneration:
         gen = BitShiftRegisterGenerator(
             size=4,
             pitches=[60, 62, 64, 67],  # C, D, E, G
-            config=config
+            config=config,
         )
 
         # Use a repeating gate pattern
@@ -1883,13 +1971,13 @@ class TestBitShiftRegisterMIDIFileGeneration:
         config = BitShiftRegisterConfig(
             tempo=100.0,
             step_duration=0.25,
-            velocity_mode='pattern',
-            velocity_pattern=[120, 80, 100, 60, 110, 70, 90, 50]
+            velocity_mode="pattern",
+            velocity_pattern=[120, 80, 100, 60, 110, 70, 90, 50],
         )
         gen = BitShiftRegisterGenerator(
             size=4,
             pitches=[48, 52, 55, 60],  # C3, E3, G3, C4
-            config=config
+            config=config,
         )
 
         gate_pattern = [1, 1, 0, 1, 0, 1, 1, 0] * 8
@@ -1912,13 +2000,13 @@ class TestBitShiftRegisterMIDIFileGeneration:
         config = BitShiftRegisterConfig(
             tempo=110.0,
             step_duration=0.25,
-            duration_mode='pattern',
-            duration_pattern=[1.0, 0.5, 0.75, 0.25, 1.0, 0.5]
+            duration_mode="pattern",
+            duration_pattern=[1.0, 0.5, 0.75, 0.25, 1.0, 0.5],
         )
         gen = BitShiftRegisterGenerator(
             size=6,
             pitches=[36, 38, 42, 46, 49, 51],  # Drum-like pattern
-            config=config
+            config=config,
         )
 
         gate_pattern = [1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1] * 6
@@ -1941,15 +2029,15 @@ class TestBitShiftRegisterMIDIFileGeneration:
         config = BitShiftRegisterConfig(
             tempo=130.0,
             step_duration=0.125,
-            velocity_mode='random',
+            velocity_mode="random",
             velocity_min=70,
             velocity_max=127,
-            seed=42
+            seed=42,
         )
         gen = BitShiftRegisterGenerator(
             size=8,
             pitches=[60, 63, 67, 70, 72, 75, 79, 82],  # Cm7 extended
-            config=config
+            config=config,
         )
 
         events = gen.generate(num_steps=128, gate_probability=0.6)
@@ -1972,13 +2060,13 @@ class TestBitShiftRegisterMIDIFileGeneration:
             tempo=95.0,
             step_duration=0.25,
             swing=0.4,
-            velocity_mode='pattern',
-            velocity_pattern=[110, 70, 90, 60]
+            velocity_mode="pattern",
+            velocity_pattern=[110, 70, 90, 60],
         )
         gen = BitShiftRegisterGenerator(
             size=4,
             pitches=[60, 64, 67, 72],  # C major arpeggio
-            config=config
+            config=config,
         )
 
         gate_pattern = [1, 1, 1, 1, 0, 1, 0, 1] * 8
@@ -2009,14 +2097,14 @@ class TestBitShiftRegisterMIDIFileGeneration:
         lead_config = BitShiftRegisterConfig(
             tempo=120.0,
             step_duration=0.125,
-            velocity_mode='pattern',
+            velocity_mode="pattern",
             velocity_pattern=[100, 80, 90, 70, 110, 75, 95, 65],
-            channel=0
+            channel=0,
         )
         lead = BitShiftRegisterGenerator(
             size=8,
             pitches=[60, 62, 64, 65, 67, 69, 71, 72],  # C major scale
-            config=lead_config
+            config=lead_config,
         )
         gate_pattern = [1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0] * 8
         lead_events = lead.generate(gate_inputs=gate_pattern)
@@ -2025,7 +2113,7 @@ class TestBitShiftRegisterMIDIFileGeneration:
         # Arp track
         arp_track = seq.add_track("Arp")
         arp_config = ArpConfig(tempo=120.0, rate=0.25, channel=2)
-        chord = Chord(Note('C', 4), ChordType.MAJOR_7)
+        chord = Chord(Note("C", 4), ChordType.MAJOR_7)
         arp = Arpeggiator(chord, ArpPattern.UP_DOWN, arp_config)
         arp_events = arp.generate(num_cycles=16)
         self._events_to_track(arp_events, arp_track)

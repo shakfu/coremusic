@@ -3,10 +3,10 @@
 import os
 import pytest
 import tempfile
-from pathlib import Path
 import coremusic.capi as capi
 from coremusic.audio.analysis import AudioAnalyzer
-from coremusic.objects import AudioComponent, AudioFile, AudioFormat, NUMPY_AVAILABLE
+from coremusic.audio import AudioComponent, AudioFile, AudioFormat
+from coremusic.base import NUMPY_AVAILABLE
 from coremusic.audio.utilities import (
     AudioEffectsChain,
     AudioFormatPresets,
@@ -368,7 +368,7 @@ class TestAudioEffectsChain:
     def test_chain_lifecycle(self):
         """Test complete chain lifecycle (open, initialize, start, stop)"""
         chain = AudioEffectsChain()
-        output_node = chain.add_output()
+        chain.add_output()
         chain.open()
         assert chain.is_open is True
         chain.initialize()
@@ -386,7 +386,7 @@ class TestAudioEffectsChain:
     def test_context_manager(self):
         """Test using AudioEffectsChain as context manager"""
         with AudioEffectsChain() as chain:
-            output_node = chain.add_output()
+            chain.add_output()
             assert chain.node_count == 1
 
     def test_create_simple_effect_chain(self):
@@ -433,7 +433,7 @@ class TestAudioUnitDiscovery:
         """Test finding AUDelay by name"""
         component = find_audio_unit_by_name("AUDelay")
         assert component is not None
-        from coremusic.objects import AudioComponent
+        from coremusic.audio import AudioComponent
 
         assert isinstance(component, AudioComponent)
         desc = component._description

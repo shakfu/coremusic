@@ -16,12 +16,13 @@ Example:
     >>> recombinator.export("shuffled.wav", method="random")
 """
 
+from __future__ import annotations
+
 import logging
 import random
 from dataclasses import dataclass
 from pathlib import Path
-from typing import (TYPE_CHECKING, Any, Callable, List, Literal, Optional,
-                    Tuple, Union)
+from typing import TYPE_CHECKING, Any, Callable, Literal
 
 # Type checking imports
 if TYPE_CHECKING:
@@ -148,18 +149,18 @@ class AudioSlicer:
         self.audio_file = audio_file
         self.method = method
         self.sensitivity = sensitivity
-        self._audio_data: Optional["NDArray"] = None
-        self._sample_rate: Optional[float] = None
-        self._slices: Optional[List[Slice]] = None
+        self._audio_data: NDArray | None = None
+        self._sample_rate: float | None = None
+        self._slices: list[Slice] | None = None
 
-    def _load_audio(self) -> Tuple["NDArray", float]:
+    def _load_audio(self) -> tuple[NDArray, float]:
         """Load audio file if not already loaded.
 
         Returns:
             Tuple of (audio_data, sample_rate)
         """
         if self._audio_data is None:
-            from coremusic.objects import AudioFile
+            from coremusic.audio.core import AudioFile
 
             with AudioFile(self.audio_file) as af:
                 self._audio_data = af.read_as_numpy()
@@ -171,7 +172,7 @@ class AudioSlicer:
 
         return self._audio_data, self._sample_rate  # type: ignore[return-value]
 
-    def detect_slices(self, **kwargs: Any) -> List[Slice]:
+    def detect_slices(self, **kwargs: Any) -> list[Slice]:
         """Detect slice points using configured method.
 
         Returns:
@@ -198,8 +199,8 @@ class AudioSlicer:
     # ========================================================================
 
     def _detect_onset_slices(
-        self, min_slice_duration: float = 0.05, max_slices: Optional[int] = None
-    ) -> List[Slice]:
+        self, min_slice_duration: float = 0.05, max_slices: int | None = None
+    ) -> list[Slice]:
         """Detect slices based on onset detection.
 
         Args:
@@ -234,7 +235,7 @@ class AudioSlicer:
 
     def _detect_onsets(
         self, data: "NDArray", sr: float, sensitivity: float
-    ) -> List[float]:
+    ) -> list[float]:
         """Detect onset times in audio.
 
         Args:
@@ -281,9 +282,7 @@ class AudioSlicer:
 
         return onset_times.tolist()  # type: ignore[no-any-return]
 
-    def _filter_onsets(
-        self, onsets: List[float], min_duration: float
-    ) -> List[float]:
+    def _filter_onsets(self, onsets: list[float], min_duration: float) -> list[float]:
         """Filter onsets by minimum duration.
 
         Args:
@@ -305,8 +304,8 @@ class AudioSlicer:
         return filtered
 
     def _select_prominent_onsets(
-        self, onsets: List[float], data: "NDArray", sr: float, max_slices: int
-    ) -> List[float]:
+        self, onsets: list[float], data: "NDArray", sr: float, max_slices: int
+    ) -> list[float]:
         """Select most prominent onsets.
 
         Args:
@@ -346,7 +345,7 @@ class AudioSlicer:
 
     def _detect_transient_slices(
         self, window_size: float = 0.02, threshold_db: float = -40.0
-    ) -> List[Slice]:
+    ) -> list[Slice]:
         """Detect slices based on transient detection.
 
         Args:
@@ -392,7 +391,7 @@ class AudioSlicer:
 
     def _detect_zero_crossing_slices(
         self, target_slices: int = 16, snap_to_zero: bool = True
-    ) -> List[Slice]:
+    ) -> list[Slice]:
         """Detect slices at zero-crossings (for glitch-free slicing).
 
         Args:
@@ -467,9 +466,9 @@ class AudioSlicer:
     def _detect_grid_slices(
         self,
         divisions: int = 16,
-        tempo: Optional[float] = None,
-        time_signature: Tuple[int, int] = (4, 4),
-    ) -> List[Slice]:
+        tempo: float | None = None,
+        time_signature: tuple[int, int] = (4, 4),
+    ) -> list[Slice]:
         """Slice audio on a regular grid.
 
         Args:
@@ -529,7 +528,7 @@ class AudioSlicer:
     # Manual Slicing
     # ========================================================================
 
-    def _detect_manual_slices(self, slice_points: List[float]) -> List[Slice]:
+    def _detect_manual_slices(self, slice_points: list[float]) -> list[Slice]:
         """Create slices at manually specified time points.
 
         Args:
@@ -562,11 +561,11 @@ class AudioSlicer:
 
     def _create_slices_from_times(
         self,
-        slice_times: List[float],
+        slice_times: list[float],
         data: "NDArray",
         sr: float,
         confidence: float = 1.0,
-    ) -> List[Slice]:
+    ) -> list[Slice]:
         """Create Slice objects from time points.
 
         Args:
@@ -622,7 +621,7 @@ class AudioSlicer:
         return slices
 
     @property
-    def slices(self) -> List[Slice]:
+    def slices(self) -> list[Slice]:
         """Get current slices (detect if not already done).
 
         Returns:
@@ -637,7 +636,7 @@ class AudioSlicer:
         output_dir: str,
         name_template: str = "slice_{index:03d}.wav",
         format: str = "wav",
-    ) -> List[str]:
+    ) -> list[str]:
         """Export all slices as individual files.
 
         Args:
@@ -678,7 +677,7 @@ class SliceCollection:
         >>> pattern = collection.apply_pattern([0, 1, 2, 1, 0])
     """
 
-    def __init__(self, slices: List[Slice]):
+    def __init__(self, slices: list[Slice]):
         """Initialize slice collection.
 
         Args:
@@ -736,12 +735,10 @@ class SliceCollection:
         Returns:
             New SliceCollection with sorted slices
         """
-        sorted_slices = sorted(
-            self.slices, key=lambda s: s.duration, reverse=reverse
-        )
+        sorted_slices = sorted(self.slices, key=lambda s: s.duration, reverse=reverse)
         return SliceCollection(sorted_slices)
 
-    def select(self, indices: List[int]) -> "SliceCollection":
+    def select(self, indices: list[int]) -> "SliceCollection":
         """Select specific slices by index.
 
         Args:
@@ -750,12 +747,10 @@ class SliceCollection:
         Returns:
             New SliceCollection with selected slices
         """
-        selected = [
-            self.slices[i] for i in indices if 0 <= i < len(self.slices)
-        ]
+        selected = [self.slices[i] for i in indices if 0 <= i < len(self.slices)]
         return SliceCollection(selected)
 
-    def apply_pattern(self, pattern: List[int]) -> "SliceCollection":
+    def apply_pattern(self, pattern: list[int]) -> "SliceCollection":
         """Apply pattern (e.g., [0, 1, 2, 1] to repeat certain slices).
 
         Args:
@@ -792,7 +787,7 @@ class SliceRecombinator:
         >>> recombinator.export("output.wav", method="reverse")
     """
 
-    def __init__(self, slices: Union[List[Slice], SliceCollection]):
+    def __init__(self, slices: list[Slice] | SliceCollection):
         """Initialize recombinator.
 
         Args:
@@ -847,7 +842,7 @@ class SliceRecombinator:
         self,
         crossfade_duration: float,
         normalize: bool,
-        num_slices: Optional[int] = None,
+        num_slices: int | None = None,
     ) -> "NDArray":
         """Recombine in random order.
 
@@ -872,7 +867,7 @@ class SliceRecombinator:
         self,
         crossfade_duration: float,
         normalize: bool,
-        pattern: Optional[List[int]] = None,
+        pattern: list[int] | None = None,
     ) -> "NDArray":
         """Recombine using pattern.
 
@@ -892,7 +887,7 @@ class SliceRecombinator:
         self,
         crossfade_duration: float,
         normalize: bool,
-        order_func: Optional[Callable[[List[Slice]], List[Slice]]] = None,
+        order_func: Callable[[list[Slice]], list[Slice]] | None = None,
     ) -> "NDArray":
         """Recombine using custom ordering function.
 
@@ -909,7 +904,7 @@ class SliceRecombinator:
         return self._concatenate_slices(ordered_slices, crossfade_duration, normalize)
 
     def _concatenate_slices(
-        self, slices: List[Slice], crossfade_duration: float, normalize: bool
+        self, slices: list[Slice], crossfade_duration: float, normalize: bool
     ) -> "NDArray":
         """Concatenate slices with crossfading.
 

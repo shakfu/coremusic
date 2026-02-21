@@ -16,8 +16,10 @@ Example:
     >>> spec.plot(cmap='magma')
 """
 
+from __future__ import annotations
+
 import logging
-from typing import TYPE_CHECKING, Any, Optional, Tuple
+from typing import TYPE_CHECKING, Any
 
 # Type checking imports
 if TYPE_CHECKING:
@@ -102,14 +104,14 @@ class WaveformPlotter(AudioFileLoaderMixin):
 
     def plot(
         self,
-        time_range: Optional[Tuple[float, float]] = None,
+        time_range: tuple[float, float] | None = None,
         show_rms: bool = False,
         show_peaks: bool = False,
         rms_window: float = 0.1,
         peak_window: float = 0.05,
-        figsize: Tuple[int, int] = (12, 4),
-        title: Optional[str] = None,
-    ) -> Tuple[Figure, Axes]:
+        figsize: tuple[int, int] = (12, 4),
+        title: str | None = None,
+    ) -> tuple[Figure, Axes]:
         """Plot waveform.
 
         Args:
@@ -183,7 +185,7 @@ class WaveformPlotter(AudioFileLoaderMixin):
     def save(
         self,
         output_path: str,
-        time_range: Optional[Tuple[float, float]] = None,
+        time_range: tuple[float, float] | None = None,
         show_rms: bool = False,
         show_peaks: bool = False,
         dpi: int = 150,
@@ -206,9 +208,7 @@ class WaveformPlotter(AudioFileLoaderMixin):
         plt.close(fig)
         logger.info(f"Saved waveform plot to {output_path}")
 
-    def _calculate_rms_envelope(
-        self, data: "NDArray", window_size: int
-    ) -> "NDArray":
+    def _calculate_rms_envelope(self, data: "NDArray", window_size: int) -> "NDArray":
         """Calculate RMS envelope.
 
         Args:
@@ -225,7 +225,7 @@ class WaveformPlotter(AudioFileLoaderMixin):
 
     def _calculate_peak_envelope(
         self, data: "NDArray", window_size: int
-    ) -> Tuple["NDArray", "NDArray"]:
+    ) -> tuple[NDArray, NDArray]:
         """Calculate peak envelope.
 
         Args:
@@ -236,9 +236,7 @@ class WaveformPlotter(AudioFileLoaderMixin):
             Tuple of (positive_peaks, negative_peaks)
         """
         # Use maximum filter for positive peaks
-        peak_pos = np.maximum.accumulate(
-            data[: window_size // 2]
-        )
+        peak_pos = np.maximum.accumulate(data[: window_size // 2])
         for i in range(window_size // 2, len(data) - window_size // 2):
             window = data[i - window_size // 2 : i + window_size // 2]
             peak_pos = np.append(peak_pos, np.max(window))
@@ -249,9 +247,7 @@ class WaveformPlotter(AudioFileLoaderMixin):
         )
 
         # Use minimum filter for negative peaks
-        peak_neg = np.minimum.accumulate(
-            data[: window_size // 2]
-        )
+        peak_neg = np.minimum.accumulate(data[: window_size // 2])
         for i in range(window_size // 2, len(data) - window_size // 2):
             window = data[i - window_size // 2 : i + window_size // 2]
             peak_neg = np.append(peak_neg, np.min(window))
@@ -310,10 +306,10 @@ class SpectrogramPlotter(AudioFileLoaderMixin):
         window: str = "hann",
         cmap: str = "viridis",
         min_db: float = -80.0,
-        max_db: Optional[float] = None,
-        figsize: Tuple[int, int] = (12, 6),
-        title: Optional[str] = None,
-    ) -> Tuple[Figure, Axes]:
+        max_db: float | None = None,
+        figsize: tuple[int, int] = (12, 6),
+        title: str | None = None,
+    ) -> tuple[Figure, Axes]:
         """Plot spectrogram.
 
         Args:
@@ -394,7 +390,7 @@ class SpectrogramPlotter(AudioFileLoaderMixin):
         window_size: int,
         hop_size: int,
         window_type: str,
-    ) -> Tuple["NDArray", "NDArray", "NDArray"]:
+    ) -> tuple[NDArray, NDArray, NDArray]:
         """Compute spectrogram using STFT.
 
         Args:
@@ -483,11 +479,11 @@ class FrequencySpectrumPlotter(AudioFileLoaderMixin):
         window_size: int = 4096,
         window: str = "hann",
         min_freq: float = 20.0,
-        max_freq: Optional[float] = None,
+        max_freq: float | None = None,
         min_db: float = -80.0,
-        figsize: Tuple[int, int] = (12, 4),
-        title: Optional[str] = None,
-    ) -> Tuple[Figure, Axes]:
+        figsize: tuple[int, int] = (12, 4),
+        title: str | None = None,
+    ) -> tuple[Figure, Axes]:
         """Plot frequency spectrum at specific time.
 
         Args:
@@ -561,9 +557,7 @@ class FrequencySpectrumPlotter(AudioFileLoaderMixin):
         if title:
             ax.set_title(title)
         else:
-            ax.set_title(
-                f"Frequency Spectrum: {self.audio_file.name} @ {time:.2f}s"
-            )
+            ax.set_title(f"Frequency Spectrum: {self.audio_file.name} @ {time:.2f}s")
 
         ax.grid(True, alpha=0.3)
         ax.set_xscale("log")
@@ -573,15 +567,15 @@ class FrequencySpectrumPlotter(AudioFileLoaderMixin):
 
     def plot_average(
         self,
-        time_range: Optional[Tuple[float, float]] = None,
+        time_range: tuple[float, float] | None = None,
         window_size: int = 4096,
         hop_size: int = 1024,
         min_freq: float = 20.0,
-        max_freq: Optional[float] = None,
+        max_freq: float | None = None,
         min_db: float = -80.0,
-        figsize: Tuple[int, int] = (12, 4),
-        title: Optional[str] = None,
-    ) -> Tuple[Figure, Axes]:
+        figsize: tuple[int, int] = (12, 4),
+        title: str | None = None,
+    ) -> tuple[Figure, Axes]:
         """Plot average frequency spectrum over time range.
 
         Args:
@@ -657,9 +651,7 @@ class FrequencySpectrumPlotter(AudioFileLoaderMixin):
                     f"({time_range[0]:.2f}s - {time_range[1]:.2f}s)"
                 )
             else:
-                ax.set_title(
-                    f"Average Spectrum: {self.audio_file.name}"
-                )
+                ax.set_title(f"Average Spectrum: {self.audio_file.name}")
 
         ax.grid(True, alpha=0.3)
         ax.set_xscale("log")

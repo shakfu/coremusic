@@ -4,8 +4,10 @@ This module provides buffer pooling to reduce memory allocation overhead
 in audio processing applications.
 """
 
+from __future__ import annotations
+
 from threading import Lock
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 
 class BufferPool:
@@ -52,7 +54,7 @@ class BufferPool:
             max_buffers_per_size: Maximum buffers to cache per size
         """
         self.max_buffers_per_size = max_buffers_per_size
-        self._pools: Dict[int, List[bytearray]] = {}
+        self._pools: dict[int, list[bytearray]] = {}
         self._lock = Lock()
         self._total_allocated = 0
         self._cache_hits = 0
@@ -173,7 +175,7 @@ class BufferPool:
             return self._cache_hits / total
 
     @property
-    def stats(self) -> Dict[str, Union[int, float]]:
+    def stats(self) -> dict[str, int | float]:
         """Get pool statistics.
 
         Returns:
@@ -189,13 +191,13 @@ class BufferPool:
             total_requests = self._cache_hits + self._cache_misses
             hit_rate = self._cache_hits / total_requests if total_requests > 0 else 0.0
             return {
-                'total_allocated': self._total_allocated,
-                'cache_hits': self._cache_hits,
-                'cache_misses': self._cache_misses,
-                'total_requests': total_requests,
-                'hit_rate': hit_rate,
-                'cached_buffers': sum(len(buffers) for buffers in self._pools.values()),
-                'pool_sizes': len(self._pools),
+                "total_allocated": self._total_allocated,
+                "cache_hits": self._cache_hits,
+                "cache_misses": self._cache_misses,
+                "total_requests": total_requests,
+                "hit_rate": hit_rate,
+                "cached_buffers": sum(len(buffers) for buffers in self._pools.values()),
+                "pool_sizes": len(self._pools),
             }
 
     def __repr__(self) -> str:
@@ -210,7 +212,7 @@ class BufferPool:
 
 
 # Global buffer pool instance
-_global_pool: Optional[BufferPool] = None
+_global_pool: BufferPool | None = None
 _global_pool_lock = Lock()
 
 
@@ -281,7 +283,7 @@ class PooledBuffer:
             pass
     """
 
-    def __init__(self, size: int, pool: Optional[BufferPool] = None):
+    def __init__(self, size: int, pool: BufferPool | None = None):
         """Initialize pooled buffer context manager.
 
         Args:
@@ -290,7 +292,7 @@ class PooledBuffer:
         """
         self.size = size
         self.pool = pool or get_global_pool()
-        self.buffer: Optional[bytearray] = None
+        self.buffer: bytearray | None = None
 
     def __enter__(self) -> bytearray:
         """Acquire buffer from pool."""
@@ -328,7 +330,7 @@ class BufferPoolStats:
         """Initialize statistics tracker."""
         self._acquisitions = 0
         self._releases = 0
-        self._size_distribution: Dict[int, int] = {}
+        self._size_distribution: dict[int, int] = {}
         self._lock = Lock()
 
     def track_acquisition(self, size: int) -> None:
@@ -387,7 +389,7 @@ class BufferPoolStats:
             for size, count in sorted(self._size_distribution.items()):
                 lines.append(f"    {size:6d} bytes: {count:6d} times")
 
-            return '\n'.join(lines)
+            return "\n".join(lines)
 
     def reset(self) -> None:
         """Reset statistics."""

@@ -7,7 +7,8 @@ Usage:
 
 import sys
 import os
-from coremusic.objects import AudioFile, NUMPY_AVAILABLE
+from coremusic.audio import AudioFile
+from coremusic.base import NUMPY_AVAILABLE
 
 
 def main():

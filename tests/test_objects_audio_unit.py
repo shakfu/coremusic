@@ -3,13 +3,9 @@
 import pytest
 import time
 import coremusic.capi as capi
-from coremusic.objects import (
-    AudioComponent,
-    AudioComponentDescription,
-    AudioUnit,
-    AudioUnitError,
-    CoreAudioObject,
-)
+from coremusic.audio import AudioComponent, AudioComponentDescription, AudioUnit
+from coremusic.base import CoreAudioObject
+from coremusic.exceptions import AudioUnitError
 
 
 class TestAudioComponentDescription:

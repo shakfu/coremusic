@@ -7,7 +7,8 @@ A comprehensive tool to inspect and display audio file information using coremus
 Usage: python audio_inspector.py <audio_file>
 """
 
-from coremusic.objects import AudioFile, AudioFileError
+from coremusic.audio import AudioFile
+from coremusic.exceptions import AudioFileError
 import sys
 from pathlib import Path
 
@@ -61,7 +62,7 @@ def inspect_audio_file(filepath):
         return False
 
     print("=" * 70)
-    print(f"Audio File Inspector")
+    print("Audio File Inspector")
     print("=" * 70)
     print()
 
@@ -120,7 +121,7 @@ def inspect_audio_file(filepath):
             print("FORMAT DETAILS")
             print("-" * 70)
             if fmt.format_id == "lpcm":
-                print(f"  Format Type:  Linear PCM (Uncompressed)")
+                print("  Format Type:  Linear PCM (Uncompressed)")
                 is_float = fmt.format_flags & 0x01
                 is_big_endian = fmt.format_flags & 0x02
                 is_signed = fmt.format_flags & 0x04

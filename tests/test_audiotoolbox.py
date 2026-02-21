@@ -1,8 +1,6 @@
 import logging
-import os
 import struct
 import time
-import wave
 import pytest
 import coremusic.capi as capi
 

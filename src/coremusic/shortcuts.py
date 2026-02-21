@@ -21,12 +21,15 @@ Example:
 
 from __future__ import annotations
 
+import logging
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from .objects.audio import AudioFormat
+    from .base import AudioPlayer
 
 __all__ = [
     "play",
@@ -43,12 +46,12 @@ __all__ = [
 
 
 def play(
-    path: Union[str, Path],
+    path: str | Path,
     *,
     loop: bool = False,
     volume: float = 1.0,
     block: bool = True,
-) -> Optional["AudioPlayerHandle"]:
+) -> AudioPlayerHandle | None:
     """Play an audio file.
 
     Args:
@@ -67,14 +70,14 @@ def play(
         >>> cm.play("song.wav", loop=True, block=False)  # Background loop
         <AudioPlayerHandle playing="song.wav">
     """
-    from .objects import AudioPlayer
+    from .base import AudioPlayer
 
     player = AudioPlayer()
     player.load_file(str(path))
     player.setup_output()
 
     if volume != 1.0:
-        player.set_volume(volume)  # type: ignore[attr-defined]
+        player.set_volume(volume)
 
     if loop:
         player.set_looping(True)
@@ -98,7 +101,7 @@ class AudioPlayerHandle:
     Returned by play() when block=False.
     """
 
-    def __init__(self, player: Any, path: str):
+    def __init__(self, player: "AudioPlayer", path: str):
         self._player = player
         self._path = path
 
@@ -140,7 +143,7 @@ class AudioPlayerHandle:
 
 
 def play_async(
-    path: Union[str, Path],
+    path: str | Path,
     *,
     loop: bool = False,
     volume: float = 1.0,
@@ -168,12 +171,12 @@ def play_async(
 
 
 def convert(
-    input_path: Union[str, Path],
-    output_path: Union[str, Path],
+    input_path: str | Path,
+    output_path: str | Path,
     *,
-    sample_rate: Optional[float] = None,
-    channels: Optional[int] = None,
-    bit_depth: Optional[int] = None,
+    sample_rate: float | None = None,
+    channels: int | None = None,
+    bit_depth: int | None = None,
 ) -> None:
     """Convert an audio file to another format.
 
@@ -191,14 +194,14 @@ def convert(
         >>> cm.convert("stereo.wav", "mono.wav", channels=1)
         >>> cm.convert("hires.wav", "cd.wav", sample_rate=44100, bit_depth=16)
     """
+    from .audio.core import AudioFormat
     from .audio.utilities import convert_audio_file
-    from .objects.audio import AudioFormat
 
     # Build output format if any parameters specified
     output_format = None
     if sample_rate is not None or channels is not None or bit_depth is not None:
         # Read input format as base
-        from .objects import AudioFile
+        from .audio import AudioFile
 
         with AudioFile(str(input_path)) as f:
             src = f.format
@@ -217,7 +220,7 @@ def convert(
     convert_audio_file(str(input_path), str(output_path), output_format)  # type: ignore[arg-type]
 
 
-def analyze_tempo(path: Union[str, Path]) -> float:
+def analyze_tempo(path: str | Path) -> float:
     """Detect the tempo (BPM) of an audio file.
 
     Args:
@@ -238,7 +241,7 @@ def analyze_tempo(path: Union[str, Path]) -> float:
     return beat_info.tempo
 
 
-def analyze_key(path: Union[str, Path]) -> Tuple[str, str]:
+def analyze_key(path: str | Path) -> tuple[str, str]:
     """Detect the musical key of an audio file.
 
     Args:
@@ -258,7 +261,7 @@ def analyze_key(path: Union[str, Path]) -> Tuple[str, str]:
     return analyzer.detect_key()
 
 
-def analyze_loudness(path: Union[str, Path]) -> float:
+def analyze_loudness(path: str | Path) -> float:
     """Measure the integrated loudness of an audio file in LUFS.
 
     Args:
@@ -278,7 +281,7 @@ def analyze_loudness(path: Union[str, Path]) -> float:
     return analyzer.calculate_loudness()  # type: ignore[attr-defined, no-any-return]
 
 
-def get_duration(path: Union[str, Path]) -> float:
+def get_duration(path: str | Path) -> float:
     """Get the duration of an audio file in seconds.
 
     Args:
@@ -292,13 +295,13 @@ def get_duration(path: Union[str, Path]) -> float:
         >>> print(f"Duration: {duration:.2f}s")
         Duration: 180.50s
     """
-    from .objects import AudioFile
+    from .audio import AudioFile
 
     with AudioFile(str(path)) as f:
         return f.duration
 
 
-def get_info(path: Union[str, Path]) -> dict[str, Any]:
+def get_info(path: str | Path) -> dict[str, Any]:
     """Get information about an audio file.
 
     Args:
@@ -317,7 +320,7 @@ def get_info(path: Union[str, Path]) -> dict[str, Any]:
         >>> print(info)
         {'duration': 180.5, 'sample_rate': 44100.0, 'channels': 2, ...}
     """
-    from .objects import AudioFile
+    from .audio import AudioFile
 
     with AudioFile(str(path)) as f:
         fmt = f.format
@@ -331,7 +334,9 @@ def get_info(path: Union[str, Path]) -> dict[str, Any]:
         }
 
 
-def list_devices(*, input_only: bool = False, output_only: bool = False) -> list[dict[str, Any]]:
+def list_devices(
+    *, input_only: bool = False, output_only: bool = False
+) -> list[dict[str, Any]]:
     """List available audio devices.
 
     Args:
@@ -346,7 +351,7 @@ def list_devices(*, input_only: bool = False, output_only: bool = False) -> list
         >>> for d in devices:
         ...     print(d['name'])
     """
-    from .objects import AudioDeviceManager
+    from .audio import AudioDeviceManager
 
     manager = AudioDeviceManager()
 
@@ -360,18 +365,19 @@ def list_devices(*, input_only: bool = False, output_only: bool = False) -> list
     result = []
     for d in devices:
         try:
-            result.append({
-                "name": d.name,
-                "uid": d.uid,
-                "manufacturer": d.manufacturer,
-            })
-        except Exception:
-            # Skip devices that can't be queried
-            pass
+            result.append(
+                {
+                    "name": d.name,
+                    "uid": d.uid,
+                    "manufacturer": d.manufacturer,
+                }
+            )
+        except Exception as e:
+            logger.debug("Failed to query device properties: %s", e)
     return result
 
 
-def list_plugins(*, type: Optional[str] = None) -> list[dict[str, Any]]:
+def list_plugins(*, type: str | None = None) -> list[dict[str, Any]]:
     """List available AudioUnit plugins.
 
     Args:

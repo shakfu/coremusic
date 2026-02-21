@@ -9,10 +9,10 @@ This module provides classes for MIDI sequencing and playback:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any
 
-from .. import capi
-from .exceptions import MusicPlayerError
+from coremusic import capi
+from coremusic.exceptions import MusicPlayerError
 
 __all__ = [
     "MusicTrack",
@@ -50,7 +50,7 @@ class MusicTrack(capi.CoreAudioObject):
         note: int,
         velocity: int,
         release_velocity: int = 64,
-        duration: float = 1.0
+        duration: float = 1.0,
     ) -> None:
         """Add a MIDI note event to the track
 
@@ -86,18 +86,20 @@ class MusicTrack(capi.CoreAudioObject):
 
         self._ensure_not_disposed()
         try:
-            capi.music_track_new_midi_note_event(  # type: ignore[call-arg]
-                self.object_id, time, channel, note, velocity, release_velocity, duration  # type: ignore[arg-type]
+            capi.music_track_new_midi_note_event(
+                self.object_id,
+                time,
+                channel,
+                note,
+                velocity,
+                release_velocity,
+                duration,
             )
         except Exception as e:
             raise MusicPlayerError(f"Failed to add MIDI note: {e}")
 
     def add_midi_channel_event(
-        self,
-        time: float,
-        status: int,
-        data1: int,
-        data2: int = 0
+        self, time: float, status: int, data1: int, data2: int = 0
     ) -> None:
         """Add a MIDI channel event to the track
 
@@ -122,7 +124,9 @@ class MusicTrack(capi.CoreAudioObject):
         if time < 0:
             raise ValueError(f"time must be non-negative, got {time}")
         if not 0x80 <= status <= 0xEF:
-            raise ValueError(f"status must be 0x80-0xEF (channel message), got {hex(status)}")
+            raise ValueError(
+                f"status must be 0x80-0xEF (channel message), got {hex(status)}"
+            )
         if not 0 <= data1 <= 127:
             raise ValueError(f"data1 must be 0-127, got {data1}")
         if not 0 <= data2 <= 127:
@@ -130,8 +134,8 @@ class MusicTrack(capi.CoreAudioObject):
 
         self._ensure_not_disposed()
         try:
-            capi.music_track_new_midi_channel_event(  # type: ignore[call-arg]
-                self.object_id, time, status, data1, data2  # type: ignore[arg-type]
+            capi.music_track_new_midi_channel_event(
+                self.object_id, time, status, data1, data2
             )
         except Exception as e:
             raise MusicPlayerError(f"Failed to add MIDI channel event: {e}")
@@ -191,8 +195,8 @@ class MusicSequence(capi.CoreAudioObject):
         try:
             sequence_id = capi.new_music_sequence()
             self._set_object_id(sequence_id)
-            self._tracks: List[MusicTrack] = []
-            self._tempo_track: Optional[MusicTrack] = None
+            self._tracks: list[MusicTrack] = []
+            self._tempo_track: MusicTrack | None = None
         except Exception as e:
             raise MusicPlayerError(f"Failed to create music sequence: {e}")
 
@@ -271,8 +275,10 @@ class MusicSequence(capi.CoreAudioObject):
         count = self.track_count
         if index >= count:
             if count == 0:
-                raise IndexError(f"track index {index} out of range (sequence has no tracks)")
-            raise IndexError(f"track index {index} out of range (0-{count-1})")
+                raise IndexError(
+                    f"track index {index} out of range (sequence has no tracks)"
+                )
+            raise IndexError(f"track index {index} out of range (0-{count - 1})")
 
         try:
             track_id = capi.music_sequence_get_ind_track(self.object_id, index)
@@ -350,7 +356,7 @@ class MusicSequence(capi.CoreAudioObject):
         except Exception as e:
             raise MusicPlayerError(f"Failed to set sequence type: {e}")
 
-    def load_from_file(self, file_path: Union[str, Path]) -> None:
+    def load_from_file(self, file_path: str | Path) -> None:
         """Load sequence from a MIDI file
 
         Args:
@@ -367,8 +373,9 @@ class MusicSequence(capi.CoreAudioObject):
         """
         self._ensure_not_disposed()
         try:
-            capi.music_sequence_file_load(self.object_id, str(file_path))  # type: ignore[call-arg]
-            # Clear track cache since file load may change tracks
+            capi.music_sequence_file_load(
+                self.object_id, str(file_path)
+            )  # Clear track cache since file load may change tracks
             self._tracks = []
             self._tempo_track = None
         except Exception as e:
@@ -434,12 +441,12 @@ class MusicPlayer(capi.CoreAudioObject):
         try:
             player_id = capi.new_music_player()
             self._set_object_id(player_id)
-            self._sequence: Optional[MusicSequence] = None
+            self._sequence: MusicSequence | None = None
         except Exception as e:
             raise MusicPlayerError(f"Failed to create music player: {e}")
 
     @property
-    def sequence(self) -> Optional[MusicSequence]:
+    def sequence(self) -> MusicSequence | None:
         """Get the currently assigned sequence
 
         Returns:
@@ -448,7 +455,7 @@ class MusicPlayer(capi.CoreAudioObject):
         return self._sequence
 
     @sequence.setter
-    def sequence(self, sequence: Optional[MusicSequence]) -> None:
+    def sequence(self, sequence: MusicSequence | None) -> None:
         """Set the sequence to play
 
         Args:

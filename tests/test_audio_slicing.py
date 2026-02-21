@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Tests for audio slicing and recombination module."""
+
 from __future__ import annotations
 
 import sys
@@ -19,7 +20,7 @@ except ImportError:
     NUMPY_AVAILABLE = False
 
 try:
-    from scipy import signal
+    from scipy import signal  # noqa: F401
 
     SCIPY_AVAILABLE = True
 except ImportError:
@@ -31,8 +32,6 @@ if NUMPY_AVAILABLE and SCIPY_AVAILABLE:
         AudioSlicer,
         SliceCollection,
         SliceRecombinator,
-        SliceMethod,
-        RecombineMethod,
     )
 
 pytestmark = pytest.mark.skipif(
@@ -66,18 +65,14 @@ class TestSliceDataclass:
     def test_slice_duration_property(self):
         """Test duration property calculation."""
         data = np.random.randn(8820)  # 0.2 seconds at 48000 Hz
-        slice_obj = Slice(
-            start=1.0, end=1.2, data=data, sample_rate=48000.0, index=1
-        )
+        slice_obj = Slice(start=1.0, end=1.2, data=data, sample_rate=48000.0, index=1)
 
         assert abs(slice_obj.duration - 0.2) < 0.001
 
     def test_slice_num_samples_property(self):
         """Test num_samples property."""
         data = np.random.randn(2048)
-        slice_obj = Slice(
-            start=0.0, end=0.046, data=data, sample_rate=48000.0, index=0
-        )
+        slice_obj = Slice(start=0.0, end=0.046, data=data, sample_rate=48000.0, index=0)
 
         assert slice_obj.num_samples == 2048
 
@@ -241,7 +236,7 @@ class TestAudioSlicer:
     def test_export_slices(self):
         """Test exporting slices (placeholder)."""
         slicer = AudioSlicer(AMEN_WAV_PATH, method="grid")
-        slices = slicer.detect_slices(divisions=4)
+        slicer.detect_slices(divisions=4)
 
         # Should not raise an error
         output_paths = slicer.export_slices(
@@ -881,6 +876,7 @@ class TestAudioFileGeneration:
         import warnings
         from scipy.io import wavfile
         from scipy.io.wavfile import WavFileWarning
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", WavFileWarning)
             sample_rate, data = wavfile.read(AMEN_WAV_PATH)
@@ -894,6 +890,7 @@ class TestAudioFileGeneration:
     def _save_audio(self, path: Path, sample_rate: int, data: np.ndarray) -> None:
         """Save audio data to WAV file."""
         from scipy.io import wavfile
+
         # Convert back to int16 for saving
         if data.dtype == np.float32 or data.dtype == np.float64:
             data_int16 = np.clip(data * 32767, -32768, 32767).astype(np.int16)

@@ -6,8 +6,10 @@ This module provides utilities for working with audio buffers, including:
 - Format conversion helpers
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any, Tuple, Union
+from typing import Any
 
 
 @dataclass
@@ -51,7 +53,7 @@ class AudioStreamBasicDescription:
     """
 
     sample_rate: float
-    format_id: Union[str, int]
+    format_id: str | int
     format_flags: int
     bytes_per_packet: int
     frames_per_packet: int
@@ -81,7 +83,7 @@ class AudioStreamBasicDescription:
     @property
     def is_pcm(self) -> bool:
         """Check if format is Linear PCM."""
-        lpcm = fourcc_to_int('lpcm')
+        lpcm = fourcc_to_int("lpcm")
         return self.format_id == lpcm
 
     @property
@@ -102,7 +104,9 @@ class AudioStreamBasicDescription:
     @property
     def is_interleaved(self) -> bool:
         """Check if format is interleaved (channels mixed in each frame)."""
-        return not bool(self.format_flags & 0x20)  # NOT kAudioFormatFlagIsNonInterleaved
+        return not bool(
+            self.format_flags & 0x20
+        )  # NOT kAudioFormatFlagIsNonInterleaved
 
     @property
     def is_non_interleaved(self) -> bool:
@@ -156,18 +160,18 @@ class AudioStreamBasicDescription:
             Dictionary with all format fields
         """
         return {
-            'sample_rate': self.sample_rate,
-            'format_id': self.format_id,
-            'format_flags': self.format_flags,
-            'bytes_per_packet': self.bytes_per_packet,
-            'frames_per_packet': self.frames_per_packet,
-            'bytes_per_frame': self.bytes_per_frame,
-            'channels_per_frame': self.channels_per_frame,
-            'bits_per_channel': self.bits_per_channel,
+            "sample_rate": self.sample_rate,
+            "format_id": self.format_id,
+            "format_flags": self.format_flags,
+            "bytes_per_packet": self.bytes_per_packet,
+            "frames_per_packet": self.frames_per_packet,
+            "bytes_per_frame": self.bytes_per_frame,
+            "channels_per_frame": self.channels_per_frame,
+            "bits_per_channel": self.bits_per_channel,
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'AudioStreamBasicDescription':
+    def from_dict(cls, data: dict[str, Any]) -> "AudioStreamBasicDescription":
         """Create from dictionary.
 
         Args:
@@ -177,18 +181,20 @@ class AudioStreamBasicDescription:
             New AudioStreamBasicDescription instance
         """
         return cls(
-            sample_rate=data['sample_rate'],
-            format_id=data.get('format_id', 'lpcm'),
-            format_flags=data.get('format_flags', 0),
-            bytes_per_packet=data.get('bytes_per_packet', 0),
-            frames_per_packet=data.get('frames_per_packet', 1),
-            bytes_per_frame=data.get('bytes_per_frame', 0),
-            channels_per_frame=data['channels_per_frame'],
-            bits_per_channel=data.get('bits_per_channel', 16),
+            sample_rate=data["sample_rate"],
+            format_id=data.get("format_id", "lpcm"),
+            format_flags=data.get("format_flags", 0),
+            bytes_per_packet=data.get("bytes_per_packet", 0),
+            frames_per_packet=data.get("frames_per_packet", 1),
+            bytes_per_frame=data.get("bytes_per_frame", 0),
+            channels_per_frame=data["channels_per_frame"],
+            bits_per_channel=data.get("bits_per_channel", 16),
         )
 
     @classmethod
-    def pcm_float32_stereo(cls, sample_rate: float = 44100.0) -> 'AudioStreamBasicDescription':
+    def pcm_float32_stereo(
+        cls, sample_rate: float = 44100.0
+    ) -> "AudioStreamBasicDescription":
         """Create standard stereo float32 PCM format.
 
         Args:
@@ -199,17 +205,19 @@ class AudioStreamBasicDescription:
         """
         return cls(
             sample_rate=sample_rate,
-            format_id='lpcm',
+            format_id="lpcm",
             format_flags=0x09,  # float | packed
             bytes_per_packet=8,
             frames_per_packet=1,
             bytes_per_frame=8,
             channels_per_frame=2,
-            bits_per_channel=32
+            bits_per_channel=32,
         )
 
     @classmethod
-    def pcm_int16_stereo(cls, sample_rate: float = 44100.0) -> 'AudioStreamBasicDescription':
+    def pcm_int16_stereo(
+        cls, sample_rate: float = 44100.0
+    ) -> "AudioStreamBasicDescription":
         """Create standard stereo int16 PCM format.
 
         Args:
@@ -220,18 +228,22 @@ class AudioStreamBasicDescription:
         """
         return cls(
             sample_rate=sample_rate,
-            format_id='lpcm',
+            format_id="lpcm",
             format_flags=0x0C,  # signed int | packed
             bytes_per_packet=4,
             frames_per_packet=1,
             bytes_per_frame=4,
             channels_per_frame=2,
-            bits_per_channel=16
+            bits_per_channel=16,
         )
 
     def __str__(self) -> str:
         """Human-readable string representation."""
-        format_name = int_to_fourcc(self.format_id) if isinstance(self.format_id, int) else self.format_id
+        format_name = (
+            int_to_fourcc(self.format_id)
+            if isinstance(self.format_id, int)
+            else self.format_id
+        )
         type_str = "float" if self.is_float else "int"
         layout = "non-interleaved" if self.is_non_interleaved else "interleaved"
 
@@ -261,10 +273,10 @@ def fourcc_to_int(fourcc: str) -> int:
         raise ValueError(f"FourCC must be exactly 4 characters, got {len(fourcc)}")
 
     return (
-        (ord(fourcc[0]) << 24) |
-        (ord(fourcc[1]) << 16) |
-        (ord(fourcc[2]) << 8) |
-        ord(fourcc[3])
+        (ord(fourcc[0]) << 24)
+        | (ord(fourcc[1]) << 16)
+        | (ord(fourcc[2]) << 8)
+        | ord(fourcc[3])
     )
 
 
@@ -277,19 +289,14 @@ def int_to_fourcc(value: int) -> str:
     Returns:
         Four-character code string
     """
-    return bytes([
-        (value >> 24) & 0xFF,
-        (value >> 16) & 0xFF,
-        (value >> 8) & 0xFF,
-        value & 0xFF
-    ]).decode('ascii', errors='replace')
+    return bytes(
+        [(value >> 24) & 0xFF, (value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF]
+    ).decode("ascii", errors="replace")
 
 
 def pack_audio_buffer(
-    data: bytes,
-    format: AudioStreamBasicDescription,
-    num_frames: int
-) -> Tuple[bytes, int]:
+    data: bytes, format: AudioStreamBasicDescription, num_frames: int
+) -> tuple[bytes, int]:
     """Pack audio data into buffer suitable for CoreAudio.
 
     Args:
@@ -312,7 +319,7 @@ def pack_audio_buffer(
         # Calculate actual frames from original data before padding
         actual_frames = format.frames_for_bytes(original_len)
         # Pad with zeros to requested size
-        data = data + b'\x00' * (expected_bytes - len(data))
+        data = data + b"\x00" * (expected_bytes - len(data))
     elif len(data) > expected_bytes:
         # Truncate
         data = data[:expected_bytes]
@@ -324,9 +331,8 @@ def pack_audio_buffer(
 
 
 def unpack_audio_buffer(
-    data: bytes,
-    format: AudioStreamBasicDescription
-) -> Tuple[bytes, int]:
+    data: bytes, format: AudioStreamBasicDescription
+) -> tuple[bytes, int]:
     """Unpack CoreAudio buffer data.
 
     Args:
@@ -348,7 +354,7 @@ def unpack_audio_buffer(
 def convert_buffer_format(
     data: bytes,
     from_format: AudioStreamBasicDescription,
-    to_format: AudioStreamBasicDescription
+    to_format: AudioStreamBasicDescription,
 ) -> bytes:
     """Convert audio buffer between formats (simplified).
 
@@ -415,8 +421,7 @@ def convert_buffer_format(
 
 
 def calculate_buffer_size(
-    duration_seconds: float,
-    format: AudioStreamBasicDescription
+    duration_seconds: float, format: AudioStreamBasicDescription
 ) -> int:
     """Calculate buffer size in bytes for given duration.
 
@@ -438,9 +443,8 @@ def calculate_buffer_size(
 
 
 def optimal_buffer_size(
-    format: AudioStreamBasicDescription,
-    latency_ms: float = 10.0
-) -> Tuple[int, int]:
+    format: AudioStreamBasicDescription, latency_ms: float = 10.0
+) -> tuple[int, int]:
     """Calculate optimal buffer size for given latency target.
 
     Args:
@@ -461,6 +465,7 @@ def optimal_buffer_size(
 
     # Round to power of 2 for efficiency
     import math
+
     num_frames = 2 ** math.ceil(math.log2(num_frames))
 
     num_bytes = format.bytes_for_frames(num_frames)

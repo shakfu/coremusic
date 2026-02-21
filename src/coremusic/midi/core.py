@@ -9,10 +9,10 @@ This module provides classes for working with MIDI:
 
 from __future__ import annotations
 
-from typing import Any, List, Optional
+from typing import Any
 
-from .. import capi
-from .exceptions import MIDIError
+from coremusic import capi
+from coremusic.exceptions import MIDIError
 
 __all__ = [
     "MIDIPort",
@@ -28,7 +28,7 @@ class MIDIPort(capi.CoreAudioObject):
     def __init__(self, name: str):
         super().__init__()
         self._name = name
-        self._client: Optional["MIDIClient"] = None  # Reference to parent MIDIClient
+        self._client: MIDIClient | None = None  # Reference to parent MIDIClient
 
     @property
     def name(self) -> str:
@@ -92,7 +92,7 @@ class MIDIOutputPort(MIDIPort):
 
         Example::
 
-            from coremusic.objects import MIDIClient
+            from coremusic.midi import MIDIClient
 
             client = MIDIClient("MyApp")
             output_port = client.create_output_port("Output")
@@ -125,7 +125,7 @@ class MIDIClient(capi.CoreAudioObject):
     def __init__(self, name: str):
         super().__init__()
         self._name = name
-        self._ports: List[MIDIPort] = []
+        self._ports: list[MIDIPort] = []
         try:
             client_id = capi.midi_client_create(name)
             self._set_object_id(client_id)

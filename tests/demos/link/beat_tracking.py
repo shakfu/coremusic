@@ -25,7 +25,7 @@ def main():
             beat = state.beat_at_time(current_time, quantum=4.0)
             phase = state.phase_at_time(current_time, quantum=4.0)
             indicator = "*" if int(beat) % 4 == 0 else "."
-            print(f"  {indicator} Beat: {beat:7.2f} | Phase: {phase:4.2f}/4", end='\r')
+            print(f"  {indicator} Beat: {beat:7.2f} | Phase: {phase:4.2f}/4", end="\r")
             time.sleep(0.1)
 
         print("\nDone")

@@ -1,16 +1,17 @@
 """Tests for the base infrastructure of the object-oriented coremusic API."""
 
 import pytest
-import weakref
 import gc
 import coremusic.capi as capi
-from coremusic.objects import (
+from coremusic.audio import AudioFormat
+from coremusic.base import CoreAudioObject
+from coremusic.exceptions import (
+    AUGraphError,
+    AudioDeviceError,
     AudioFileError,
-    AudioFormat,
     AudioQueueError,
     AudioUnitError,
     CoreAudioError,
-    CoreAudioObject,
     MIDIError,
     MusicPlayerError,
 )
@@ -93,9 +94,7 @@ class TestAudioFormat:
 
     def test_audio_format_repr(self):
         """Test AudioFormat string representation"""
-        format = AudioFormat(
-            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
-        )
+        format = AudioFormat(44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16)
         repr_str = repr(format)
         assert "AudioFormat" in repr_str
         assert "44100.0" in repr_str
@@ -152,6 +151,20 @@ class TestExceptionHierarchy:
         assert str(error) == "Player error"
         assert isinstance(error, CoreAudioError)
 
+    def test_audio_device_error(self):
+        """Test AudioDeviceError"""
+        error = AudioDeviceError("Device error", -66687)
+        assert str(error) == "Device error"
+        assert error.status_code == -66687
+        assert isinstance(error, CoreAudioError)
+
+    def test_au_graph_error(self):
+        """Test AUGraphError"""
+        error = AUGraphError("Graph error", -10860)
+        assert str(error) == "Graph error"
+        assert error.status_code == -10860
+        assert isinstance(error, CoreAudioError)
+
     def test_exception_raising_and_catching(self):
         """Test raising and catching various exceptions"""
         with pytest.raises(AudioFileError):
@@ -163,30 +176,81 @@ class TestExceptionHierarchy:
 
 
 class TestObjectOrientedAPIAvailability:
-    """Test that all OO API classes are available through coremusic.objects"""
+    """Test that all OO API classes are available through domain subpackages"""
 
-    # All required classes that must be exported from coremusic.objects
-    REQUIRED_CLASSES = [
-        # Base classes
-        "CoreAudioObject", "AudioFormat",
-        # Exception classes
-        "CoreAudioError", "AudioFileError", "AudioQueueError",
-        "AudioUnitError", "MIDIError", "MusicPlayerError",
-        # Audio file classes
-        "AudioFile", "AudioFileStream",
-        # Audio queue classes
-        "AudioBuffer", "AudioQueue",
-        # Audio unit classes
-        "AudioComponentDescription", "AudioComponent", "AudioUnit",
-        # MIDI classes
-        "MIDIClient", "MIDIPort", "MIDIInputPort", "MIDIOutputPort",
+    AUDIO_CLASSES = [
+        "AudioFormat",
+        "AudioFile",
+        "AudioFileStream",
+        "AudioBuffer",
+        "AudioQueue",
+        "AudioComponentDescription",
+        "AudioComponent",
+        "AudioUnit",
+        "AudioConverter",
+        "ExtendedAudioFile",
+        "AudioDevice",
+        "AudioDeviceManager",
+        "AUGraph",
+        "AudioClock",
+        "ClockTimeFormat",
     ]
 
-    @pytest.mark.parametrize("class_name", REQUIRED_CLASSES)
-    def test_class_available(self, class_name):
-        """Test that required class is available via coremusic.objects"""
-        import coremusic.objects as objects
-        assert hasattr(objects, class_name), f"Missing class: {class_name}"
+    MIDI_CLASSES = [
+        "MIDIClient",
+        "MIDIPort",
+        "MIDIInputPort",
+        "MIDIOutputPort",
+        "MusicPlayer",
+        "MusicSequence",
+        "MusicTrack",
+    ]
+
+    EXCEPTION_CLASSES = [
+        "CoreAudioError",
+        "AudioFileError",
+        "AudioQueueError",
+        "AudioUnitError",
+        "AudioConverterError",
+        "MIDIError",
+        "MusicPlayerError",
+        "AudioDeviceError",
+        "AUGraphError",
+    ]
+
+    BASE_CLASSES = [
+        "CoreAudioObject",
+        "AudioPlayer",
+        "NUMPY_AVAILABLE",
+    ]
+
+    @pytest.mark.parametrize("class_name", AUDIO_CLASSES)
+    def test_audio_class_available(self, class_name):
+        """Test that required class is available via coremusic.audio"""
+        import coremusic.audio as audio
+
+        assert hasattr(audio, class_name), f"Missing class: {class_name}"
+
+    @pytest.mark.parametrize("class_name", MIDI_CLASSES)
+    def test_midi_class_available(self, class_name):
+        """Test that required class is available via coremusic.midi"""
+        import coremusic.midi as midi
+
+        assert hasattr(midi, class_name), f"Missing class: {class_name}"
+
+    @pytest.mark.parametrize("class_name", EXCEPTION_CLASSES)
+    def test_exception_class_available(self, class_name):
+        """Test that required class is available via coremusic.exceptions"""
+        import coremusic.exceptions as exceptions
+
+        assert hasattr(exceptions, class_name), f"Missing class: {class_name}"
+
+    @pytest.mark.parametrize("class_name", BASE_CLASSES)
+    def test_base_class_available(self, class_name):
+        """Test that required class is available via coremusic.base"""
+        import coremusic.base as base
+
+        assert hasattr(base, class_name), f"Missing class: {class_name}"
 
     def test_functional_api_available_via_capi(self):
         """Test that functional API is available via capi submodule"""
@@ -210,9 +274,7 @@ class TestDualAPIInteraction:
 
     def test_oo_api_uses_functional_api_internally(self):
         """Test that OO API correctly uses functional API internally"""
-        format = AudioFormat(
-            44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16
-        )
+        format = AudioFormat(44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16)
         assert format.is_pcm
         assert format.is_stereo
         assert repr(format)

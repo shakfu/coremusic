@@ -1,19 +1,12 @@
 """Tests for AudioConverter and ExtendedAudioFile object-oriented classes."""
 
 import os
-import tempfile
 import pytest
 from pathlib import Path
 import coremusic.capi as capi
-from coremusic.objects import (
-    AudioConverter,
-    AudioConverterError,
-    AudioFile,
-    AudioFileError,
-    AudioFormat,
-    CoreAudioObject,
-    ExtendedAudioFile,
-)
+from coremusic.audio import AudioConverter, AudioFile, AudioFormat, ExtendedAudioFile
+from coremusic.base import CoreAudioObject
+from coremusic.exceptions import AudioConverterError, AudioFileError
 
 
 class TestAudioConverter:
@@ -62,13 +55,15 @@ class TestAudioConverter:
         """Test AudioConverter reset"""
         converter = AudioConverter(source_format_obj, dest_format_mono_obj)
         input_data = b"\x00\x01" * 200
-        output1 = converter.convert(input_data)
+        converter.convert(input_data)
         converter.reset()
         output2 = converter.convert(input_data)
         assert isinstance(output2, bytes)
         assert len(output2) > 0
 
-    def test_audio_converter_context_manager(self, source_format_obj, dest_format_mono_obj):
+    def test_audio_converter_context_manager(
+        self, source_format_obj, dest_format_mono_obj
+    ):
         """Test AudioConverter as context manager"""
         with AudioConverter(source_format_obj, dest_format_mono_obj) as converter:
             assert isinstance(converter, AudioConverter)
@@ -78,7 +73,9 @@ class TestAudioConverter:
             assert len(output_data) > 0
         assert converter.is_disposed
 
-    def test_audio_converter_manual_disposal(self, source_format_obj, dest_format_mono_obj):
+    def test_audio_converter_manual_disposal(
+        self, source_format_obj, dest_format_mono_obj
+    ):
         """Test AudioConverter manual disposal"""
         converter = AudioConverter(source_format_obj, dest_format_mono_obj)
         assert not converter.is_disposed

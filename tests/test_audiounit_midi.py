@@ -16,7 +16,7 @@ class TestAudioUnitMIDI:
         """Create and initialize an instrument plugin for testing"""
         # Use DLSMusicDevice (Apple's built-in General MIDI synthesizer)
         # This is guaranteed to exist on all macOS systems
-        plugin = AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu')
+        plugin = AudioUnitPlugin.from_name("DLSMusicDevice", component_type="aumu")
         plugin.instantiate()
         plugin.initialize()
         yield plugin
@@ -25,23 +25,23 @@ class TestAudioUnitMIDI:
     def test_discover_instruments(self):
         """Test discovering instrument plugins"""
         host = AudioUnitHost()
-        instruments = host.discover_plugins(type='instrument')
+        instruments = host.discover_plugins(type="instrument")
 
         print(f"\nFound {len(instruments)} instrument plugins")
         assert len(instruments) > 0
         assert isinstance(instruments, list)
 
         # Should have at least DLSMusicDevice
-        dls_found = any('DLS' in inst['name'] for inst in instruments)
+        dls_found = any("DLS" in inst["name"] for inst in instruments)
         assert dls_found, "DLSMusicDevice not found"
 
     def test_load_instrument_plugin(self):
         """Test loading an instrument plugin"""
         host = AudioUnitHost()
 
-        with host.load_plugin("DLSMusicDevice", type='instrument') as synth:
+        with host.load_plugin("DLSMusicDevice", type="instrument") as synth:
             assert synth is not None
-            assert synth.type == 'aumu'
+            assert synth.type == "aumu"
             assert synth.is_initialized
             print(f"\nLoaded: {synth.name}")
 
@@ -104,8 +104,8 @@ class TestAudioUnitMIDI:
         synth = instrument_plugin
 
         # Test common controllers
-        synth.control_change(channel=0, controller=7, value=100)   # Volume
-        synth.control_change(channel=0, controller=10, value=64)   # Pan center
+        synth.control_change(channel=0, controller=7, value=100)  # Volume
+        synth.control_change(channel=0, controller=10, value=64)  # Pan center
         synth.control_change(channel=0, controller=11, value=127)  # Expression
 
         print("\n✓ Control change messages successful")
@@ -130,11 +130,11 @@ class TestAudioUnitMIDI:
         synth.note_on(channel=0, note=60, velocity=100)
 
         # Bend pitch
-        synth.pitch_bend(channel=0, value=8192)   # Center (no bend)
+        synth.pitch_bend(channel=0, value=8192)  # Center (no bend)
         time.sleep(0.05)
         synth.pitch_bend(channel=0, value=12288)  # Bend up
         time.sleep(0.05)
-        synth.pitch_bend(channel=0, value=8192)   # Back to center
+        synth.pitch_bend(channel=0, value=8192)  # Back to center
 
         synth.note_off(channel=0, note=60)
 
@@ -181,8 +181,8 @@ class TestAudioUnitMIDI:
         """Test that MIDI methods raise error on effect plugins"""
         host = AudioUnitHost()
 
-        with host.load_plugin("Bandpass", type='effect') as effect:
-            assert effect.type == 'aufx'
+        with host.load_plugin("Bandpass", type="effect") as effect:
+            assert effect.type == "aufx"
 
             # Should raise ValueError
             with pytest.raises(ValueError, match="MIDI only supported for instrument"):
@@ -196,8 +196,12 @@ class TestAudioUnitMIDI:
 
         # Schedule notes at different sample offsets
         synth.note_on(channel=0, note=60, velocity=100, offset_frames=0)
-        synth.note_on(channel=0, note=64, velocity=100, offset_frames=441)   # ~10ms at 44.1kHz
-        synth.note_on(channel=0, note=67, velocity=100, offset_frames=882)   # ~20ms at 44.1kHz
+        synth.note_on(
+            channel=0, note=64, velocity=100, offset_frames=441
+        )  # ~10ms at 44.1kHz
+        synth.note_on(
+            channel=0, note=67, velocity=100, offset_frames=882
+        )  # ~20ms at 44.1kHz
 
         time.sleep(0.1)
 
@@ -228,7 +232,7 @@ class TestAudioUnitMIDIIntegration:
         """Test a complete musical performance"""
         host = AudioUnitHost()
 
-        with host.load_plugin("DLSMusicDevice", type='instrument') as synth:
+        with host.load_plugin("DLSMusicDevice", type="instrument") as synth:
             print(f"\n♪ Playing on: {synth.name}")
 
             # Set to Acoustic Grand Piano
@@ -253,7 +257,7 @@ class TestAudioUnitMIDIIntegration:
         """Test using multiple MIDI channels"""
         host = AudioUnitHost()
 
-        with host.load_plugin("DLSMusicDevice", type='instrument') as synth:
+        with host.load_plugin("DLSMusicDevice", type="instrument") as synth:
             # Channel 0: Piano
             synth.program_change(channel=0, program=0)
 
@@ -280,7 +284,7 @@ class TestAudioUnitMIDIErrors:
 
     def test_midi_before_initialize(self):
         """Test MIDI on uninitialized plugin"""
-        plugin = AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu')
+        plugin = AudioUnitPlugin.from_name("DLSMusicDevice", component_type="aumu")
         plugin.instantiate()
         # Don't initialize
 
@@ -291,7 +295,7 @@ class TestAudioUnitMIDIErrors:
 
     def test_invalid_channel(self):
         """Test that invalid channels are clamped"""
-        plugin = AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu')
+        plugin = AudioUnitPlugin.from_name("DLSMusicDevice", component_type="aumu")
         plugin.instantiate()
         plugin.initialize()
 

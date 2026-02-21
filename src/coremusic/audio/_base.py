@@ -5,8 +5,10 @@ This module provides shared functionality to reduce code duplication across
 audio processing classes that need to load audio files.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, Tuple
+from typing import TYPE_CHECKING, Any
 
 # Type checking imports
 if TYPE_CHECKING:
@@ -35,8 +37,8 @@ class AudioFileLoaderMixin:
     """
 
     audio_file: Path
-    _audio_data: Optional["NDArray"]
-    _sample_rate: Optional[float]
+    _audio_data: NDArray | None
+    _sample_rate: float | None
 
     def _init_audio_loader(self, audio_file: str) -> None:
         """Initialize audio loader state.
@@ -62,7 +64,7 @@ class AudioFileLoaderMixin:
         """
         pass  # Default: no dependencies required
 
-    def _load_audio(self) -> Tuple["NDArray", float]:
+    def _load_audio(self) -> tuple[NDArray, float]:
         """Load audio data from file.
 
         Returns:
@@ -72,7 +74,7 @@ class AudioFileLoaderMixin:
             Audio data is cached after first load.
         """
         if self._audio_data is None:
-            from coremusic.objects import AudioFile
+            from coremusic.audio.core import AudioFile
 
             with AudioFile(str(self.audio_file)) as af:
                 self._audio_data = af.read_as_numpy()
@@ -82,7 +84,7 @@ class AudioFileLoaderMixin:
         assert self._sample_rate is not None
         return self._audio_data, self._sample_rate
 
-    def _load_audio_mono(self) -> Tuple["NDArray", float]:
+    def _load_audio_mono(self) -> tuple[NDArray, float]:
         """Load audio data and convert to mono if stereo.
 
         Returns:
@@ -113,9 +115,7 @@ def check_numpy_available() -> None:
     try:
         import numpy as np  # noqa: F401
     except ImportError:
-        raise ImportError(
-            "NumPy is required. Install with: pip install numpy"
-        )
+        raise ImportError("NumPy is required. Install with: pip install numpy")
 
 
 def check_matplotlib_available() -> None:

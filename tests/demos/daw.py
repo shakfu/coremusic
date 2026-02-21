@@ -11,16 +11,11 @@ This script demonstrates the coremusic.daw module capabilities:
 
 from pathlib import Path
 
-BUILD_DIR = Path.cwd() / "build"
-
 from coremusic.daw import (
     Timeline,
     Track,
     Clip,
     MIDIClip,
-    MIDINote,
-    AudioUnitPlugin,
-    TimelineMarker,
     TimeRange,
     AutomationLane,
 )
@@ -33,8 +28,11 @@ from coremusic.capi import (
     get_linear_pcm_format_flag_is_packed,
 )
 
+BUILD_DIR = Path.cwd() / "build"
+
 try:
     import numpy as np
+
     NUMPY_AVAILABLE = True
 except ImportError:
     NUMPY_AVAILABLE = False
@@ -48,6 +46,7 @@ OUTPUT_DIR = BUILD_DIR / "daw_output"
 # Audio Generation Helpers
 # ============================================================================
 
+
 def generate_drum_pattern(duration, sample_rate=48000, tempo=128.0):
     """Generate a punchy electronic drum pattern"""
     if not NUMPY_AVAILABLE:
@@ -57,7 +56,7 @@ def generate_drum_pattern(duration, sample_rate=48000, tempo=128.0):
     audio = np.zeros(num_samples, dtype=np.float32)
 
     beat_interval = int((60.0 / tempo) * sample_rate)
-    sixteenth = beat_interval // 4
+    beat_interval // 4
 
     # Number of bars to fill
     num_beats = int(duration * tempo / 60)
@@ -74,7 +73,7 @@ def generate_drum_pattern(duration, sample_rate=48000, tempo=128.0):
                 freq = 150 * np.exp(-t * 30) + 50
                 phase = np.cumsum(2 * np.pi * freq / sample_rate)
                 kick = np.sin(phase) * np.exp(-t * 15) * 0.9
-                audio[pos:pos + kick_len] += kick
+                audio[pos : pos + kick_len] += kick
 
         # Snare on 2 and 4 (layered noise + tone)
         if beat % 4 in [1, 3]:
@@ -86,7 +85,7 @@ def generate_drum_pattern(duration, sample_rate=48000, tempo=128.0):
                 # Noise snap
                 noise = np.random.randn(snare_len) * np.exp(-t * 35)
                 snare = (body * 0.4 + noise * 0.3) * 0.7
-                audio[pos:pos + snare_len] += snare
+                audio[pos : pos + snare_len] += snare
 
         # Hi-hat on every eighth note
         for eighth in [0, 2]:
@@ -97,7 +96,7 @@ def generate_drum_pattern(duration, sample_rate=48000, tempo=128.0):
                 # Filtered noise for hi-hat
                 noise = np.random.randn(hat_len)
                 hat = noise * np.exp(-t * 80) * 0.25
-                audio[hat_pos:hat_pos + hat_len] += hat
+                audio[hat_pos : hat_pos + hat_len] += hat
 
     return audio
 
@@ -115,11 +114,11 @@ def generate_bass_line(duration, sample_rate=48000, tempo=128.0):
     # A minor bass pattern (A-E-F-G progression, musically pleasing)
     # MIDI notes: A1=33, E2=40, F2=41, G2=43
     pattern = [
-        (33, 0.0, 0.9),   # A1 - root
-        (33, 1.0, 0.4),   # A1 - octave hit
-        (40, 1.5, 0.9),   # E2 - fifth
-        (41, 2.5, 0.9),   # F2 - minor sixth
-        (43, 3.5, 0.4),   # G2 - minor seventh
+        (33, 0.0, 0.9),  # A1 - root
+        (33, 1.0, 0.4),  # A1 - octave hit
+        (40, 1.5, 0.9),  # E2 - fifth
+        (41, 2.5, 0.9),  # F2 - minor sixth
+        (43, 3.5, 0.4),  # G2 - minor seventh
     ]
 
     # Repeat pattern for duration
@@ -162,17 +161,17 @@ def generate_synth_pad(duration, sample_rate=48000):
 
     num_samples = int(duration * sample_rate)
     audio = np.zeros(num_samples, dtype=np.float32)
-    t = np.arange(num_samples) / sample_rate
+    np.arange(num_samples) / sample_rate
 
     # A minor chord progression: Am - F - C - G (each 2 beats at ~60 BPM for ambient)
     # Using longer, overlapping chords for pad feel
     chord_duration = duration / 4
 
     chords = [
-        [57, 60, 64],      # Am (A3, C4, E4)
-        [53, 57, 60],      # F (F3, A3, C4)
+        [57, 60, 64],  # Am (A3, C4, E4)
+        [53, 57, 60],  # F (F3, A3, C4)
         [48, 52, 55, 60],  # C (C3, E3, G3, C4)
-        [55, 59, 62],      # G (G3, B3, D4)
+        [55, 59, 62],  # G (G3, B3, D4)
     ]
 
     for chord_idx, chord_notes in enumerate(chords):
@@ -235,25 +234,25 @@ def generate_vocal_melody(duration, sample_rate=48000, tempo=128.0):
     # (MIDI note, beat start, beat duration)
     melody = [
         # Phrase 1: Rising
-        (64, 0.0, 1.0),    # E4
-        (67, 1.0, 0.5),    # G4
-        (69, 1.5, 1.5),    # A4
-        (72, 3.0, 1.0),    # C5
+        (64, 0.0, 1.0),  # E4
+        (67, 1.0, 0.5),  # G4
+        (69, 1.5, 1.5),  # A4
+        (72, 3.0, 1.0),  # C5
         # Phrase 2: Falling resolution
-        (71, 4.0, 0.5),    # B4
-        (69, 4.5, 0.5),    # A4
-        (67, 5.0, 1.0),    # G4
-        (64, 6.0, 2.0),    # E4 (held)
+        (71, 4.0, 0.5),  # B4
+        (69, 4.5, 0.5),  # A4
+        (67, 5.0, 1.0),  # G4
+        (64, 6.0, 2.0),  # E4 (held)
         # Phrase 3: Variation
-        (69, 8.0, 0.75),   # A4
+        (69, 8.0, 0.75),  # A4
         (71, 8.75, 0.25),  # B4
-        (72, 9.0, 1.0),    # C5
-        (74, 10.0, 0.5),   # D5
-        (72, 10.5, 0.5),   # C5
-        (69, 11.0, 1.0),   # A4
+        (72, 9.0, 1.0),  # C5
+        (74, 10.0, 0.5),  # D5
+        (72, 10.5, 0.5),  # C5
+        (69, 11.0, 1.0),  # A4
         # Phrase 4: Resolution
-        (67, 12.0, 1.0),   # G4
-        (69, 13.0, 3.0),   # A4 (final, held)
+        (67, 12.0, 1.0),  # G4
+        (69, 13.0, 3.0),  # A4 (final, held)
     ]
 
     pattern_beats = 16
@@ -304,7 +303,9 @@ def generate_vocal_melody(duration, sample_rate=48000, tempo=128.0):
     return audio
 
 
-def render_midi_to_audio(midi_clip, duration, sample_rate=48000, instrument_type="piano"):
+def render_midi_to_audio(
+    midi_clip, duration, sample_rate=48000, instrument_type="piano"
+):
     """Render MIDI clip to audio using synthesized instrument.
 
     Args:
@@ -347,7 +348,9 @@ def render_midi_to_audio(midi_clip, duration, sample_rate=48000, instrument_type
             harmonic2 = 0.3 * np.sin(2 * np.pi * freq * 2 * t)
             harmonic3 = 0.15 * np.sin(2 * np.pi * freq * 3 * t)
             envelope = np.exp(-t * 3.0)  # Fast decay
-            note_audio = (fundamental + harmonic2 + harmonic3) * envelope * vel_scale * 0.5
+            note_audio = (
+                (fundamental + harmonic2 + harmonic3) * envelope * vel_scale * 0.5
+            )
 
         elif instrument_type == "synth":
             # Synth pad with slower envelope
@@ -433,7 +436,7 @@ def apply_reverb_effect(audio, sample_rate, room_size=0.5, damping=0.5, mix=0.3)
             # Apply simple lowpass (damping)
             if damping > 0:
                 for i in range(1, len(delayed)):
-                    delayed[i] = delayed[i] * (1 - damping) + delayed[i-1] * damping
+                    delayed[i] = delayed[i] * (1 - damping) + delayed[i - 1] * damping
 
             output += delayed
 
@@ -462,20 +465,20 @@ def write_audio_file(audio_data, sample_rate, file_path, num_channels=2):
 
     # Create Extended Audio File for writing
     asbd = {
-        'sample_rate': float(sample_rate),
-        'format_id': fourchar_to_int('lpcm'),
-        'format_flags': (
-            get_linear_pcm_format_flag_is_signed_integer() |
-            get_linear_pcm_format_flag_is_packed()
+        "sample_rate": float(sample_rate),
+        "format_id": fourchar_to_int("lpcm"),
+        "format_flags": (
+            get_linear_pcm_format_flag_is_signed_integer()
+            | get_linear_pcm_format_flag_is_packed()
         ),
-        'bytes_per_packet': num_channels * 2,
-        'frames_per_packet': 1,
-        'bytes_per_frame': num_channels * 2,
-        'channels_per_frame': num_channels,
-        'bits_per_channel': 16
+        "bytes_per_packet": num_channels * 2,
+        "frames_per_packet": 1,
+        "bytes_per_frame": num_channels * 2,
+        "channels_per_frame": num_channels,
+        "bits_per_channel": 16,
     }
 
-    file_type = fourchar_to_int('WAVE')
+    file_type = fourchar_to_int("WAVE")
     ext_audio_file_id = extended_audio_file_create_with_url(
         str(file_path), file_type, asbd
     )
@@ -508,14 +511,20 @@ def render_timeline_to_audio(timeline, sample_rate=48000):
             source = str(clip.source)
             clip_duration = clip.duration
 
-            if 'drum' in source.lower():
-                clip_audio = generate_drum_pattern(clip_duration, sample_rate, timeline.tempo)
-            elif 'bass' in source.lower():
-                clip_audio = generate_bass_line(clip_duration, sample_rate, timeline.tempo)
-            elif 'synth' in source.lower():
+            if "drum" in source.lower():
+                clip_audio = generate_drum_pattern(
+                    clip_duration, sample_rate, timeline.tempo
+                )
+            elif "bass" in source.lower():
+                clip_audio = generate_bass_line(
+                    clip_duration, sample_rate, timeline.tempo
+                )
+            elif "synth" in source.lower():
                 clip_audio = generate_synth_pad(clip_duration, sample_rate)
-            elif 'vocal' in source.lower():
-                clip_audio = generate_vocal_melody(clip_duration, sample_rate, timeline.tempo)
+            elif "vocal" in source.lower():
+                clip_audio = generate_vocal_melody(
+                    clip_duration, sample_rate, timeline.tempo
+                )
             else:
                 # Generic tone
                 t = np.arange(int(clip_duration * sample_rate)) / sample_rate
@@ -531,12 +540,12 @@ def render_timeline_to_audio(timeline, sample_rate=48000):
             if clip.fade_in > 0:
                 fade_samples = int(clip.fade_in * sample_rate)
                 fade_in_curve = np.linspace(0, 1, min(fade_samples, len(clip_audio)))
-                clip_audio[:len(fade_in_curve)] *= fade_in_curve
+                clip_audio[: len(fade_in_curve)] *= fade_in_curve
 
             if clip.fade_out > 0:
                 fade_samples = int(clip.fade_out * sample_rate)
                 fade_out_curve = np.linspace(1, 0, min(fade_samples, len(clip_audio)))
-                clip_audio[-len(fade_out_curve):] *= fade_out_curve
+                clip_audio[-len(fade_out_curve) :] *= fade_out_curve
 
             # Place clip in track timeline
             start_sample = int(start_time * sample_rate)
@@ -548,8 +557,8 @@ def render_timeline_to_audio(timeline, sample_rate=48000):
         track_audio = track_audio * track.volume
 
         # Apply volume automation if present
-        if 'volume' in track.automation:
-            volume_auto = track.automation['volume']
+        if "volume" in track.automation:
+            volume_auto = track.automation["volume"]
             for i in range(num_samples):
                 time = i / sample_rate
                 auto_value = volume_auto.get_value(time)
@@ -573,6 +582,7 @@ def render_timeline_to_audio(timeline, sample_rate=48000):
 # Demo Functions
 # ============================================================================
 
+
 def demo_midi_clip():
     """Demo 0a: MIDI clip with piano rendering"""
     print("\n" + "=" * 60)
@@ -589,38 +599,42 @@ def demo_midi_clip():
     # Expressive melody in Db major - gentle, flowing
     melody = [
         # Opening phrase
-        (61, 0.0, 0.8, 70),    # Db4
-        (63, 0.8, 0.4, 65),    # Eb4
-        (65, 1.2, 0.6, 75),    # F4
-        (68, 1.8, 1.0, 80),    # Ab4
-        (66, 2.8, 0.6, 70),    # Gb4
-        (65, 3.4, 0.8, 65),    # F4
+        (61, 0.0, 0.8, 70),  # Db4
+        (63, 0.8, 0.4, 65),  # Eb4
+        (65, 1.2, 0.6, 75),  # F4
+        (68, 1.8, 1.0, 80),  # Ab4
+        (66, 2.8, 0.6, 70),  # Gb4
+        (65, 3.4, 0.8, 65),  # F4
         # Second phrase - rising
-        (63, 4.2, 0.4, 60),    # Eb4
-        (65, 4.6, 0.4, 70),    # F4
-        (68, 5.0, 0.8, 85),    # Ab4
-        (70, 5.8, 1.2, 90),    # Bb4
-        (68, 7.0, 0.6, 75),    # Ab4
+        (63, 4.2, 0.4, 60),  # Eb4
+        (65, 4.6, 0.4, 70),  # F4
+        (68, 5.0, 0.8, 85),  # Ab4
+        (70, 5.8, 1.2, 90),  # Bb4
+        (68, 7.0, 0.6, 75),  # Ab4
         # Resolution
-        (66, 7.6, 0.8, 70),    # Gb4
-        (65, 8.4, 1.6, 65),    # F4 (held)
+        (66, 7.6, 0.8, 70),  # Gb4
+        (65, 8.4, 1.6, 65),  # F4 (held)
     ]
 
     for note, start, dur, vel in melody:
         midi_clip.add_note(note, vel, start, dur)
 
     print(f"Created MIDI clip with {len(midi_clip.notes)} notes (expressive melody)")
-    print(f"  Duration: 10 seconds")
-    print(f"  Key: Db major")
-    print(f"  First 4 notes:")
+    print("  Duration: 10 seconds")
+    print("  Key: Db major")
+    print("  First 4 notes:")
     for i, note in enumerate(midi_clip.notes[:4], 1):
-        note_name = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'][note.note % 12]
+        note_name = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"][
+            note.note % 12
+        ]
         octave = note.note // 12 - 1
-        print(f"    {i}. {note_name}{octave} (MIDI {note.note}), "
-              f"t={note.start_time:.1f}s, vel={note.velocity}")
+        print(
+            f"    {i}. {note_name}{octave} (MIDI {note.note}), "
+            f"t={note.start_time:.1f}s, vel={note.velocity}"
+        )
 
     # Render to audio with piano sound
-    print(f"\n  Rendering MIDI to audio with piano instrument...")
+    print("\n  Rendering MIDI to audio with piano instrument...")
     audio = render_midi_to_audio(midi_clip, duration=10.5, instrument_type="piano")
 
     if audio is not None:
@@ -660,7 +674,7 @@ def demo_midi_instruments():
         midi_clip.add_note(note, 70, 6.0, 2.5)
 
     print(f"Created jazz chord progression with {len(midi_clip.notes)} notes")
-    print(f"  Progression: Dm9 - G7 - Cmaj7 - Am7 (ii-V-I-vi)")
+    print("  Progression: Dm9 - G7 - Cmaj7 - Am7 (ii-V-I-vi)")
 
     # Render with different instruments
     instruments = [
@@ -696,24 +710,21 @@ def demo_audio_effects():
     # E minor arpeggio pattern (great for delay/reverb demos)
     # MIDI notes with timing for rhythmic interest
     notes = [
-        (64, 0.0, 0.3),    # E4
-        (67, 0.25, 0.3),   # G4
-        (71, 0.5, 0.3),    # B4
-        (76, 0.75, 0.5),   # E5
-
-        (64, 1.5, 0.3),    # E4
-        (69, 1.75, 0.3),   # A4
-        (72, 2.0, 0.3),    # C5
-        (76, 2.25, 0.5),   # E5
-
-        (62, 3.0, 0.3),    # D4
-        (67, 3.25, 0.3),   # G4
-        (71, 3.5, 0.3),    # B4
-        (74, 3.75, 0.5),   # D5
-
-        (64, 4.5, 0.3),    # E4
-        (67, 4.75, 0.3),   # G4
-        (71, 5.0, 0.8),    # B4 (held)
+        (64, 0.0, 0.3),  # E4
+        (67, 0.25, 0.3),  # G4
+        (71, 0.5, 0.3),  # B4
+        (76, 0.75, 0.5),  # E5
+        (64, 1.5, 0.3),  # E4
+        (69, 1.75, 0.3),  # A4
+        (72, 2.0, 0.3),  # C5
+        (76, 2.25, 0.5),  # E5
+        (62, 3.0, 0.3),  # D4
+        (67, 3.25, 0.3),  # G4
+        (71, 3.5, 0.3),  # B4
+        (74, 3.75, 0.5),  # D5
+        (64, 4.5, 0.3),  # E4
+        (67, 4.75, 0.3),  # G4
+        (71, 5.0, 0.8),  # B4 (held)
     ]
 
     audio = np.zeros(int(duration * sample_rate), dtype=np.float32)
@@ -743,23 +754,31 @@ def demo_audio_effects():
     print(f"  Saved original: {output_path.name}")
 
     # Apply delay effect
-    print(f"\n  Applying delay effect (250ms, 40% feedback)...")
-    delay_audio = apply_delay_effect(audio, sample_rate, delay_time=0.25, feedback=0.4, mix=0.4)
+    print("\n  Applying delay effect (250ms, 40% feedback)...")
+    delay_audio = apply_delay_effect(
+        audio, sample_rate, delay_time=0.25, feedback=0.4, mix=0.4
+    )
     output_path = OUTPUT_DIR / "effects_with_delay.wav"
     write_audio_file(delay_audio, sample_rate, output_path)
     print(f"    Saved: {output_path.name}")
 
     # Apply reverb effect
-    print(f"\n  Applying reverb effect (medium room)...")
-    reverb_audio = apply_reverb_effect(audio, sample_rate, room_size=0.6, damping=0.4, mix=0.4)
+    print("\n  Applying reverb effect (medium room)...")
+    reverb_audio = apply_reverb_effect(
+        audio, sample_rate, room_size=0.6, damping=0.4, mix=0.4
+    )
     output_path = OUTPUT_DIR / "effects_with_reverb.wav"
     write_audio_file(reverb_audio, sample_rate, output_path)
     print(f"    Saved: {output_path.name}")
 
     # Apply both effects
-    print(f"\n  Applying delay + reverb...")
-    combo_audio = apply_delay_effect(audio, sample_rate, delay_time=0.25, feedback=0.3, mix=0.3)
-    combo_audio = apply_reverb_effect(combo_audio, sample_rate, room_size=0.5, damping=0.5, mix=0.3)
+    print("\n  Applying delay + reverb...")
+    combo_audio = apply_delay_effect(
+        audio, sample_rate, delay_time=0.25, feedback=0.3, mix=0.3
+    )
+    combo_audio = apply_reverb_effect(
+        combo_audio, sample_rate, room_size=0.5, damping=0.5, mix=0.3
+    )
     output_path = OUTPUT_DIR / "effects_delay_reverb.wav"
     write_audio_file(combo_audio, sample_rate, output_path)
     print(f"    Saved: {output_path.name}")
@@ -777,7 +796,7 @@ def demo_basic_timeline():
 
     # Add tracks
     drums = timeline.add_track("Drums", "audio")
-    bass = timeline.add_track("Bass", "audio")
+    timeline.add_track("Bass", "audio")
     vocals = timeline.add_track("Vocals", "audio")
 
     print(f"\nAdded {len(timeline.tracks)} tracks:")
@@ -830,10 +849,10 @@ def demo_automation():
     volume_automation = track.automate("volume")
 
     # Add automation points for fade in/out
-    volume_automation.add_point(0.0, 0.0)    # Silent at start
-    volume_automation.add_point(2.0, 1.0)    # Fade in over 2s
-    volume_automation.add_point(58.0, 1.0)   # Hold
-    volume_automation.add_point(60.0, 0.0)   # Fade out over 2s
+    volume_automation.add_point(0.0, 0.0)  # Silent at start
+    volume_automation.add_point(2.0, 1.0)  # Fade in over 2s
+    volume_automation.add_point(58.0, 1.0)  # Hold
+    volume_automation.add_point(60.0, 0.0)  # Fade out over 2s
 
     print(f"Created automation lane: {volume_automation}")
     print(f"Automation points: {len(volume_automation.points)}")
@@ -878,7 +897,7 @@ def demo_markers_and_loops():
 
     # Get markers in a range
     markers_in_range = timeline.get_markers_in_range(30.0, 50.0)
-    print(f"\nMarkers between 30s and 50s:")
+    print("\nMarkers between 30s and 50s:")
     for marker in markers_in_range:
         print(f"  {marker}")
 
@@ -892,7 +911,9 @@ def demo_transport_control():
     timeline = Timeline()
 
     # Play
-    print(f"Initial state: playing={timeline.is_playing}, playhead={timeline.playhead}s")
+    print(
+        f"Initial state: playing={timeline.is_playing}, playhead={timeline.playhead}s"
+    )
 
     timeline.play()
     print(f"After play(): playing={timeline.is_playing}, playhead={timeline.playhead}s")
@@ -903,7 +924,9 @@ def demo_transport_control():
 
     # Pause
     timeline.pause()
-    print(f"After pause(): playing={timeline.is_playing}, playhead={timeline.playhead}s")
+    print(
+        f"After pause(): playing={timeline.is_playing}, playhead={timeline.playhead}s"
+    )
 
     # Resume from current position
     timeline.play()
@@ -929,7 +952,7 @@ def demo_recording():
     # Add tracks
     vocals = timeline.add_track("Vocals", "audio")
     guitar = timeline.add_track("Guitar", "audio")
-    bass = timeline.add_track("Bass", "audio")
+    timeline.add_track("Bass", "audio")
 
     print(f"Created {len(timeline.tracks)} tracks")
 
@@ -970,23 +993,16 @@ def demo_complete_workflow():
     vocals = timeline.add_track("Vocals", "audio")
 
     # Add clips with trimming
-    drums.add_clip(
-        Clip("drums.wav").trim(0.0, 32.0),
-        start_time=0.0
-    )
+    drums.add_clip(Clip("drums.wav").trim(0.0, 32.0), start_time=0.0)
 
-    bass.add_clip(
-        Clip("bass.wav").trim(0.0, 16.0),
-        start_time=0.0
-    )
+    bass.add_clip(Clip("bass.wav").trim(0.0, 16.0), start_time=0.0)
 
     synth_clip = Clip("synth.wav")
     synth_clip.duration = 32.0
     synth.add_clip(synth_clip, start_time=0.0)
 
     vocals.add_clip(
-        Clip("vocals.wav").trim(2.0, 26.0).set_fades(0.5, 1.0),
-        start_time=8.0
+        Clip("vocals.wav").trim(2.0, 26.0).set_fades(0.5, 1.0), start_time=8.0
     )
 
     # Add markers for song structure
@@ -1006,8 +1022,8 @@ def demo_complete_workflow():
     volume_auto.add_point(32.0, 0.0)
 
     pan_auto = synth.automate("pan")
-    pan_auto.add_point(0.0, -1.0)   # Start left
-    pan_auto.add_point(16.0, 1.0)   # Move to right
+    pan_auto.add_point(0.0, -1.0)  # Start left
+    pan_auto.add_point(16.0, 1.0)  # Move to right
     pan_auto.add_point(32.0, -1.0)  # Back to left
 
     # Set track parameters
@@ -1017,7 +1033,7 @@ def demo_complete_workflow():
     vocals.volume = 1.0
 
     # Print session summary
-    print(f"\nSession Summary:")
+    print("\nSession Summary:")
     print(f"  Tempo: {timeline.tempo} BPM")
     print(f"  Sample Rate: {timeline.sample_rate} Hz")
     print(f"  Tracks: {len(timeline.tracks)}")
@@ -1025,19 +1041,19 @@ def demo_complete_workflow():
     print(f"  Markers: {len(timeline.markers)}")
     print(f"  Loop Region: {timeline.loop_region}")
 
-    print(f"\nTracks:")
+    print("\nTracks:")
     for track in timeline.tracks:
         print(f"  {track.name}:")
         print(f"    Volume: {track.volume:.2f}")
         print(f"    Clips: {len(track.clips)}")
         print(f"    Automation: {list(track.automation.keys())}")
 
-    print(f"\nMarkers:")
+    print("\nMarkers:")
     for marker in timeline.markers:
         print(f"  {marker}")
 
     # Render timeline to audio
-    print(f"\nRendering timeline to audio...")
+    print("\nRendering timeline to audio...")
     mixed_audio = render_timeline_to_audio(timeline, sample_rate=48000)
 
     if mixed_audio is not None:
@@ -1048,7 +1064,7 @@ def demo_complete_workflow():
         print(f"  File size: {output_path.stat().st_size / 1024:.1f} KB")
 
         # Also save individual track stems
-        print(f"\nRendering individual track stems...")
+        print("\nRendering individual track stems...")
         for track in timeline.tracks:
             # Create a temporary timeline with just this track
             temp_timeline = Timeline(sample_rate=48000, tempo=128.0)
@@ -1075,7 +1091,7 @@ def demo_track_operations():
 
     # Add multiple clips
     for i in range(4):
-        clip = Clip(f"take_{i+1}.wav")
+        clip = Clip(f"take_{i + 1}.wav")
         clip.duration = 5.0
         track.add_clip(clip, start_time=i * 10.0)
 
@@ -1146,6 +1162,7 @@ def main():
     # Clean output directory
     if NUMPY_AVAILABLE:
         import shutil
+
         if OUTPUT_DIR.exists():
             shutil.rmtree(OUTPUT_DIR)
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -1172,6 +1189,7 @@ def main():
         except Exception as e:
             print(f"\nError in {demo_func.__name__}: {e}")
             import traceback
+
             traceback.print_exc()
 
     print("\n" + "=" * 60)
@@ -1191,11 +1209,15 @@ def main():
                 size_kb = wav_file.stat().st_size / 1024
                 print(f"  - {wav_file.name} ({size_kb:.1f} KB)")
             print(f"\nTotal audio files created: {len(wav_files)}")
-            print("\nYou can now listen to these files to hear the DAW workflow results!")
+            print(
+                "\nYou can now listen to these files to hear the DAW workflow results!"
+            )
         else:
             print("\nNo audio files were generated.")
     elif not NUMPY_AVAILABLE:
-        print("\nNote: Audio generation requires NumPy. Install with: pip install numpy")
+        print(
+            "\nNote: Audio generation requires NumPy. Install with: pip install numpy"
+        )
 
 
 if __name__ == "__main__":

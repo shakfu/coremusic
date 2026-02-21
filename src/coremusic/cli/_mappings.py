@@ -6,10 +6,8 @@ and internal CoreAudio FourCC codes / constants.
 
 from __future__ import annotations
 
-from typing import Dict
-
 # Audio format mappings (user input -> format_id)
-FORMAT_NAMES: Dict[str, str] = {
+FORMAT_NAMES: dict[str, str] = {
     # Uncompressed
     "pcm": "lpcm",
     "linear-pcm": "lpcm",
@@ -25,7 +23,7 @@ FORMAT_NAMES: Dict[str, str] = {
 }
 
 # Reverse mapping for display
-FORMAT_DISPLAY: Dict[str, str] = {
+FORMAT_DISPLAY: dict[str, str] = {
     "lpcm": "Linear PCM",
     "aac ": "AAC",
     ".mp3": "MP3",
@@ -36,7 +34,7 @@ FORMAT_DISPLAY: Dict[str, str] = {
 }
 
 # AudioUnit plugin type mappings
-PLUGIN_TYPES: Dict[str, str] = {
+PLUGIN_TYPES: dict[str, str] = {
     "effect": "aufx",
     "effects": "aufx",
     "fx": "aufx",
@@ -51,7 +49,7 @@ PLUGIN_TYPES: Dict[str, str] = {
 }
 
 # Reverse mapping for display
-PLUGIN_TYPE_DISPLAY: Dict[str, str] = {
+PLUGIN_TYPE_DISPLAY: dict[str, str] = {
     "aufx": "Effect",
     "aumu": "Instrument",
     "augn": "Generator",
@@ -60,7 +58,7 @@ PLUGIN_TYPE_DISPLAY: Dict[str, str] = {
 }
 
 # Channel configuration display
-CHANNEL_NAMES: Dict[int, str] = {
+CHANNEL_NAMES: dict[int, str] = {
     1: "Mono",
     2: "Stereo",
     4: "Quadraphonic",

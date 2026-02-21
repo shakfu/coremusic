@@ -19,15 +19,19 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     info_parser.set_defaults(func=cmd_info)
 
     # sequence play
-    play_parser = seq_sub.add_parser("play", help="Play MIDI file (requires output device)")
+    play_parser = seq_sub.add_parser(
+        "play", help="Play MIDI file (requires output device)"
+    )
     play_parser.add_argument("file", help="MIDI file path")
     play_parser.add_argument(
-        "--device", "-d", type=int, default=0,
-        help="MIDI output device index (default: 0)"
+        "--device",
+        "-d",
+        type=int,
+        default=0,
+        help="MIDI output device index (default: 0)",
     )
     play_parser.add_argument(
-        "--tempo", "-t", type=float, default=None,
-        help="Override tempo (BPM)"
+        "--tempo", "-t", type=float, default=None, help="Override tempo (BPM)"
     )
     play_parser.set_defaults(func=cmd_play)
 
@@ -57,22 +61,26 @@ def cmd_info(args: argparse.Namespace) -> int:
     if args.json:
         tracks_info = []
         for i, track in enumerate(seq.tracks):
-            tracks_info.append({
-                "index": i,
-                "name": track.name,
-                "events": len(track.events),
-                "notes": len([e for e in track.events if e.status == 0x90]),
-            })
+            tracks_info.append(
+                {
+                    "index": i,
+                    "name": track.name,
+                    "events": len(track.events),
+                    "notes": len([e for e in track.events if e.status == 0x90]),
+                }
+            )
 
-        output_json({
-            "file": str(path.absolute()),
-            "tempo": seq.tempo,
-            "ppq": seq.ppq,
-            "duration_seconds": duration,
-            "track_count": len(seq.tracks),
-            "total_events": total_events,
-            "tracks": tracks_info,
-        })
+        output_json(
+            {
+                "file": str(path.absolute()),
+                "tempo": seq.tempo,
+                "ppq": seq.ppq,
+                "duration_seconds": duration,
+                "track_count": len(seq.tracks),
+                "total_events": total_events,
+                "tracks": tracks_info,
+            }
+        )
     else:
         print(f"File: {path.name}")
         print(f"Path: {path.absolute()}")
@@ -101,13 +109,15 @@ def cmd_tracks(args: argparse.Namespace) -> int:
         tracks_info = []
         for i, track in enumerate(seq.tracks):
             note_on_events = [e for e in track.events if e.status == 0x90]
-            tracks_info.append({
-                "index": i,
-                "name": track.name,
-                "events": len(track.events),
-                "notes": len(note_on_events),
-                "channel": track.channel,
-            })
+            tracks_info.append(
+                {
+                    "index": i,
+                    "name": track.name,
+                    "events": len(track.events),
+                    "notes": len(note_on_events),
+                    "channel": track.channel,
+                }
+            )
         output_json(tracks_info)
     else:
         if not seq.tracks:
@@ -119,13 +129,15 @@ def cmd_tracks(args: argparse.Namespace) -> int:
         rows = []
         for i, track in enumerate(seq.tracks):
             note_on_events = [e for e in track.events if e.status == 0x90]
-            rows.append([
-                str(i),
-                track.name[:30] if track.name else "(unnamed)",
-                str(len(track.events)),
-                str(len(note_on_events)),
-                str(track.channel),
-            ])
+            rows.append(
+                [
+                    str(i),
+                    track.name[:30] if track.name else "(unnamed)",
+                    str(len(track.events)),
+                    str(len(note_on_events)),
+                    str(track.channel),
+                ]
+            )
         output_table(headers, rows)
 
     return EXIT_SUCCESS
@@ -155,7 +167,7 @@ def cmd_play(args: argparse.Namespace) -> int:
         raise CLIError("No MIDI output destinations available")
 
     if args.device >= num_dests:
-        raise CLIError(f"Device index {args.device} out of range (0-{num_dests-1})")
+        raise CLIError(f"Device index {args.device} out of range (0-{num_dests - 1})")
 
     dest_id = capi.midi_get_destination(args.device)
 
@@ -201,7 +213,9 @@ def cmd_play(args: argparse.Namespace) -> int:
                     # Send MIDI message
                     if event.status in (0x80, 0x90):  # Note on/off
                         try:
-                            midi_data = bytes([event.status | event.channel, event.data1, event.data2])
+                            midi_data = bytes(
+                                [event.status | event.channel, event.data1, event.data2]
+                            )
                             capi.midi_send(port_id, dest_id, midi_data, 0)
                         except Exception:
                             pass  # Continue on send errors
@@ -230,13 +244,15 @@ def cmd_play(args: argparse.Namespace) -> int:
             pass
 
     if args.json:
-        output_json({
-            "file": str(path.absolute()),
-            "device": dest_name,
-            "tempo": seq.tempo,
-            "events_played": event_index,
-            "total_events": len(all_events),
-        })
+        output_json(
+            {
+                "file": str(path.absolute()),
+                "device": dest_name,
+                "tempo": seq.tempo,
+                "events_played": event_index,
+                "total_events": len(all_events),
+            }
+        )
     else:
         print(f"\nFinished ({event_index}/{len(all_events)} events)")
 

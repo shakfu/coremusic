@@ -7,7 +7,6 @@ Tests the integration between Ableton Link and CoreMIDI including:
 """
 
 import pytest
-import time
 import coremusic.capi as capi
 from coremusic import link
 from coremusic.midi import link as link_midi
@@ -35,22 +34,18 @@ class TestMIDIEvent:
         """Test creating MIDI event"""
         event = link_midi.MIDIEvent(
             beat=1.0,
-            message=b'\x90\x3C\x64'  # Note On C4
+            message=b"\x90\x3c\x64",  # Note On C4
         )
 
         assert event.beat == 1.0
-        assert event.message == b'\x90\x3C\x64'
-        assert event.sent == False
+        assert event.message == b"\x90\x3c\x64"
+        assert not event.sent
 
     def test_midi_event_sent_flag(self):
         """Test MIDI event sent flag"""
-        event = link_midi.MIDIEvent(
-            beat=1.0,
-            message=b'\x90\x3C\x64',
-            sent=True
-        )
+        event = link_midi.MIDIEvent(beat=1.0, message=b"\x90\x3c\x64", sent=True)
 
-        assert event.sent == True
+        assert event.sent
 
 
 class TestLinkMIDIClockCreation:
@@ -90,7 +85,7 @@ class TestLinkMIDIClockCreation:
         assert clock.midi_port == port
         assert clock.midi_destination == dest
         assert clock.quantum == 4.0
-        assert clock.running == False
+        assert not clock.running
 
     def test_clock_with_custom_quantum(self, midi_setup):
         """Test clock with custom quantum"""
@@ -123,17 +118,17 @@ class TestLinkMIDIClockOperation:
         clock = link_midi.LinkMIDIClock(session, port, dest)
 
         # Start clock
-        assert clock.running == False
+        assert not clock.running
         # Note: start() will try to send MIDI, may fail with dummy IDs
         # clock.start()
         # assert clock.running == True
 
         # For now just test the state management
         clock.running = True
-        assert clock.running == True
+        assert clock.running
 
         clock.running = False
-        assert clock.running == False
+        assert not clock.running
 
 
 class TestLinkMIDISequencer:
@@ -158,7 +153,7 @@ class TestLinkMIDISequencer:
         assert seq.midi_port == port
         assert seq.midi_destination == dest
         assert seq.quantum == 4.0
-        assert seq.running == False
+        assert not seq.running
         assert len(seq.events) == 0
 
     def test_schedule_event(self, mock_midi_setup):
@@ -169,13 +164,13 @@ class TestLinkMIDISequencer:
         seq = link_midi.LinkMIDISequencer(session, port, dest)
 
         # Schedule event
-        message = b'\x90\x3C\x64'  # Note On
+        message = b"\x90\x3c\x64"  # Note On
         seq.schedule_event(beat=1.0, message=message)
 
         assert len(seq.events) == 1
         assert seq.events[0].beat == 1.0
         assert seq.events[0].message == message
-        assert seq.events[0].sent == False
+        assert not seq.events[0].sent
 
     def test_schedule_multiple_events_sorted(self, mock_midi_setup):
         """Test events are kept sorted by beat"""
@@ -185,9 +180,9 @@ class TestLinkMIDISequencer:
         seq = link_midi.LinkMIDISequencer(session, port, dest)
 
         # Schedule events out of order
-        seq.schedule_event(beat=2.0, message=b'\x90\x40\x64')
-        seq.schedule_event(beat=1.0, message=b'\x90\x3C\x64')
-        seq.schedule_event(beat=3.0, message=b'\x90\x44\x64')
+        seq.schedule_event(beat=2.0, message=b"\x90\x40\x64")
+        seq.schedule_event(beat=1.0, message=b"\x90\x3c\x64")
+        seq.schedule_event(beat=3.0, message=b"\x90\x44\x64")
 
         assert len(seq.events) == 3
         assert seq.events[0].beat == 1.0
@@ -202,13 +197,7 @@ class TestLinkMIDISequencer:
         seq = link_midi.LinkMIDISequencer(session, port, dest)
 
         # Schedule note
-        seq.schedule_note(
-            beat=1.0,
-            channel=0,
-            note=60,
-            velocity=100,
-            duration=0.5
-        )
+        seq.schedule_note(beat=1.0, channel=0, note=60, velocity=100, duration=0.5)
 
         # Should have note-on and note-off
         assert len(seq.events) == 2
@@ -236,8 +225,8 @@ class TestLinkMIDISequencer:
         seq = link_midi.LinkMIDISequencer(session, port, dest)
 
         # Schedule events
-        seq.schedule_event(beat=1.0, message=b'\x90\x3C\x64')
-        seq.schedule_event(beat=2.0, message=b'\x90\x40\x64')
+        seq.schedule_event(beat=1.0, message=b"\x90\x3c\x64")
+        seq.schedule_event(beat=2.0, message=b"\x90\x40\x64")
 
         assert len(seq.events) == 2
 
@@ -285,8 +274,12 @@ class TestTimeConversion:
         original_beat = 4.0
 
         # Convert to host time and back
-        host_time = link_midi.link_beat_to_host_time(session, original_beat, quantum=4.0)
-        converted_beat = link_midi.host_time_to_link_beat(session, host_time, quantum=4.0)
+        host_time = link_midi.link_beat_to_host_time(
+            session, original_beat, quantum=4.0
+        )
+        converted_beat = link_midi.host_time_to_link_beat(
+            session, host_time, quantum=4.0
+        )
 
         # Should be approximately equal (within small margin)
         assert abs(converted_beat - original_beat) < 0.01
@@ -301,21 +294,21 @@ class TestModuleExports:
 
     def test_classes_accessible(self):
         """Test Link + MIDI classes are accessible"""
-        assert hasattr(link_midi, 'LinkMIDIClock')
-        assert hasattr(link_midi, 'LinkMIDISequencer')
-        assert hasattr(link_midi, 'MIDIEvent')
+        assert hasattr(link_midi, "LinkMIDIClock")
+        assert hasattr(link_midi, "LinkMIDISequencer")
+        assert hasattr(link_midi, "MIDIEvent")
 
     def test_functions_accessible(self):
         """Test utility functions are accessible"""
-        assert hasattr(link_midi, 'link_beat_to_host_time')
-        assert hasattr(link_midi, 'host_time_to_link_beat')
+        assert hasattr(link_midi, "link_beat_to_host_time")
+        assert hasattr(link_midi, "host_time_to_link_beat")
 
     def test_constants_accessible(self):
         """Test MIDI constants are accessible"""
-        assert hasattr(link_midi, 'MIDI_CLOCK')
-        assert hasattr(link_midi, 'MIDI_START')
-        assert hasattr(link_midi, 'MIDI_STOP')
-        assert hasattr(link_midi, 'MIDI_CLOCKS_PER_QUARTER_NOTE')
+        assert hasattr(link_midi, "MIDI_CLOCK")
+        assert hasattr(link_midi, "MIDI_START")
+        assert hasattr(link_midi, "MIDI_STOP")
+        assert hasattr(link_midi, "MIDI_CLOCKS_PER_QUARTER_NOTE")
 
 
 if __name__ == "__main__":

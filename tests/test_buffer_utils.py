@@ -19,26 +19,26 @@ class TestFourCCConversion:
 
     def test_fourcc_to_int(self):
         """Test FourCC string to integer conversion."""
-        result = fourcc_to_int('lpcm')
+        result = fourcc_to_int("lpcm")
         assert isinstance(result, int)
         assert result == 0x6C70636D
 
     def test_fourcc_to_int_invalid_length(self):
         """Test FourCC conversion rejects invalid length."""
         with pytest.raises(ValueError):
-            fourcc_to_int('abc')  # Too short
+            fourcc_to_int("abc")  # Too short
 
         with pytest.raises(ValueError):
-            fourcc_to_int('abcde')  # Too long
+            fourcc_to_int("abcde")  # Too long
 
     def test_int_to_fourcc(self):
         """Test integer to FourCC string conversion."""
         result = int_to_fourcc(0x6C70636D)
-        assert result == 'lpcm'
+        assert result == "lpcm"
 
     def test_fourcc_roundtrip(self):
         """Test FourCC conversion roundtrip."""
-        original = 'WAVE'
+        original = "WAVE"
         converted = fourcc_to_int(original)
         back = int_to_fourcc(converted)
         assert back == original
@@ -51,13 +51,13 @@ class TestAudioStreamBasicDescription:
         """Test creating ASBD from parameters."""
         asbd = AudioStreamBasicDescription(
             sample_rate=44100.0,
-            format_id='lpcm',
+            format_id="lpcm",
             format_flags=0x09,  # float | packed
             bytes_per_packet=8,
             frames_per_packet=1,
             bytes_per_frame=8,
             channels_per_frame=2,
-            bits_per_channel=32
+            bits_per_channel=32,
         )
 
         assert asbd.sample_rate == 44100.0
@@ -69,13 +69,13 @@ class TestAudioStreamBasicDescription:
         with pytest.raises(ValueError):
             AudioStreamBasicDescription(
                 sample_rate=0,  # Invalid
-                format_id='lpcm',
+                format_id="lpcm",
                 format_flags=0,
                 bytes_per_packet=8,
                 frames_per_packet=1,
                 bytes_per_frame=8,
                 channels_per_frame=2,
-                bits_per_channel=32
+                bits_per_channel=32,
             )
 
     def test_create_invalid_channels(self):
@@ -83,13 +83,13 @@ class TestAudioStreamBasicDescription:
         with pytest.raises(ValueError):
             AudioStreamBasicDescription(
                 sample_rate=44100.0,
-                format_id='lpcm',
+                format_id="lpcm",
                 format_flags=0,
                 bytes_per_packet=8,
                 frames_per_packet=1,
                 bytes_per_frame=8,
                 channels_per_frame=0,  # Invalid
-                bits_per_channel=32
+                bits_per_channel=32,
             )
 
     def test_is_pcm_property(self):
@@ -141,22 +141,22 @@ class TestAudioStreamBasicDescription:
         asbd = AudioStreamBasicDescription.pcm_float32_stereo(44100.0)
         d = asbd.to_dict()
 
-        assert d['sample_rate'] == 44100.0
-        assert d['channels_per_frame'] == 2
-        assert d['bits_per_channel'] == 32
-        assert isinstance(d['format_id'], int)
+        assert d["sample_rate"] == 44100.0
+        assert d["channels_per_frame"] == 2
+        assert d["bits_per_channel"] == 32
+        assert isinstance(d["format_id"], int)
 
     def test_from_dict(self):
         """Test creation from dictionary."""
         data = {
-            'sample_rate': 48000.0,
-            'format_id': 'lpcm',
-            'format_flags': 0x09,
-            'bytes_per_packet': 8,
-            'frames_per_packet': 1,
-            'bytes_per_frame': 8,
-            'channels_per_frame': 2,
-            'bits_per_channel': 32,
+            "sample_rate": 48000.0,
+            "format_id": "lpcm",
+            "format_flags": 0x09,
+            "bytes_per_packet": 8,
+            "frames_per_packet": 1,
+            "bytes_per_frame": 8,
+            "channels_per_frame": 2,
+            "bits_per_channel": 32,
         }
 
         asbd = AudioStreamBasicDescription.from_dict(data)
@@ -200,7 +200,7 @@ class TestBufferPacking:
         format = AudioStreamBasicDescription.pcm_float32_stereo(44100.0)
         num_frames = 1024
         expected_bytes = format.bytes_for_frames(num_frames)
-        data = b'\x00' * expected_bytes
+        data = b"\x00" * expected_bytes
 
         packed, actual_frames = pack_audio_buffer(data, format, num_frames)
 
@@ -212,7 +212,7 @@ class TestBufferPacking:
         format = AudioStreamBasicDescription.pcm_float32_stereo(44100.0)
         num_frames = 1024
         expected_bytes = format.bytes_for_frames(num_frames)
-        data = b'\x00' * (expected_bytes // 2)  # Half size
+        data = b"\x00" * (expected_bytes // 2)  # Half size
 
         packed, actual_frames = pack_audio_buffer(data, format, num_frames)
 
@@ -225,7 +225,7 @@ class TestBufferPacking:
         format = AudioStreamBasicDescription.pcm_float32_stereo(44100.0)
         num_frames = 1024
         expected_bytes = format.bytes_for_frames(num_frames)
-        data = b'\x00' * (expected_bytes * 2)  # Double size
+        data = b"\x00" * (expected_bytes * 2)  # Double size
 
         packed, actual_frames = pack_audio_buffer(data, format, num_frames)
 
@@ -236,7 +236,7 @@ class TestBufferPacking:
         """Test unpacking audio buffer."""
         format = AudioStreamBasicDescription.pcm_float32_stereo(44100.0)
         num_frames = 1024
-        data = b'\x00' * format.bytes_for_frames(num_frames)
+        data = b"\x00" * format.bytes_for_frames(num_frames)
 
         unpacked, frames = unpack_audio_buffer(data, format)
 
@@ -287,13 +287,13 @@ class TestBufferConversion:
         """Test converting mono to stereo (duplication)."""
         from_format = AudioStreamBasicDescription(
             sample_rate=44100.0,
-            format_id='lpcm',
+            format_id="lpcm",
             format_flags=0x09,
             bytes_per_packet=4,
             frames_per_packet=1,
             bytes_per_frame=4,
             channels_per_frame=1,  # Mono
-            bits_per_channel=32
+            bits_per_channel=32,
         )
         to_format = AudioStreamBasicDescription.pcm_float32_stereo(44100.0)
 
@@ -315,13 +315,13 @@ class TestBufferConversion:
         from_format = AudioStreamBasicDescription.pcm_float32_stereo(44100.0)
         to_format = AudioStreamBasicDescription(
             sample_rate=44100.0,
-            format_id='lpcm',
+            format_id="lpcm",
             format_flags=0x09,
             bytes_per_packet=4,
             frames_per_packet=1,
             bytes_per_frame=4,
             channels_per_frame=1,  # Mono
-            bits_per_channel=32
+            bits_per_channel=32,
         )
 
         # Create stereo data (L, R, L, R)
@@ -367,6 +367,7 @@ class TestBufferCalculations:
 
         # Check it's a power of 2
         import math
+
         assert frames == 2 ** math.ceil(math.log2(frames))
 
         # Check bytes match frames
@@ -396,9 +397,9 @@ class TestASBDIntegration:
         format_dict = asbd.to_dict()
 
         # Should have all required fields for AudioFormat
-        assert 'sample_rate' in format_dict
-        assert 'format_id' in format_dict
-        assert 'channels_per_frame' in format_dict
+        assert "sample_rate" in format_dict
+        assert "format_id" in format_dict
+        assert "channels_per_frame" in format_dict
 
     def test_asbd_roundtrip_with_dict(self):
         """Test ASBD can roundtrip through dict."""
@@ -411,5 +412,5 @@ class TestASBDIntegration:
         assert restored.bits_per_channel == original.bits_per_channel
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

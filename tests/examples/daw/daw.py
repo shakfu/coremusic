@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from coremusic.objects import AudioFile
+from coremusic.audio import AudioFile
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +40,9 @@ class AudioUnitPlugin:
         >>> plugin.process_audio(audio_buffer, sample_rate)
     """
 
-    def __init__(self, name: str, plugin_type: str = "effect",
-                 manufacturer: str = "appl"):
+    def __init__(
+        self, name: str, plugin_type: str = "effect", manufacturer: str = "appl"
+    ):
         """Initialize AudioUnit plugin.
 
         Args:
@@ -65,26 +66,31 @@ class AudioUnitPlugin:
             import struct
 
             from coremusic.capi import (
-                audio_component_find_next, audio_component_instance_new,
-                audio_unit_initialize, audio_unit_set_property,
-                fourchar_to_int, get_audio_unit_property_stream_format,
-                get_audio_unit_scope_input, get_audio_unit_scope_output,
+                audio_component_find_next,
+                audio_component_instance_new,
+                audio_unit_initialize,
+                audio_unit_set_property,
+                fourchar_to_int,
+                get_audio_unit_property_stream_format,
+                get_audio_unit_scope_input,
+                get_audio_unit_scope_output,
                 get_linear_pcm_format_flag_is_packed,
-                get_linear_pcm_format_flag_is_signed_integer)
+                get_linear_pcm_format_flag_is_signed_integer,
+            )
 
             # Determine component type
             if self.plugin_type == "instrument":
-                comp_type = fourchar_to_int('aumu')  # kAudioUnitType_MusicDevice
+                comp_type = fourchar_to_int("aumu")  # kAudioUnitType_MusicDevice
             else:
-                comp_type = fourchar_to_int('aufx')  # kAudioUnitType_Effect
+                comp_type = fourchar_to_int("aufx")  # kAudioUnitType_Effect
 
             # Find component
             desc = {
-                'type': comp_type,
-                'subtype': fourchar_to_int(self.name) if len(self.name) == 4 else 0,
-                'manufacturer': fourchar_to_int(self.manufacturer),
-                'flags': 0,
-                'flags_mask': 0
+                "type": comp_type,
+                "subtype": fourchar_to_int(self.name) if len(self.name) == 4 else 0,
+                "manufacturer": fourchar_to_int(self.manufacturer),
+                "flags": 0,
+                "flags_mask": 0,
             }
 
             component_id = audio_component_find_next(desc)
@@ -97,15 +103,16 @@ class AudioUnitPlugin:
             # Set up stream format
             self._sample_rate = sample_rate
             asbd_data = struct.pack(
-                '<dIIIIIII',
+                "<dIIIIIII",
                 sample_rate,  # mSampleRate
-                fourchar_to_int('lpcm'),  # mFormatID
-                get_linear_pcm_format_flag_is_signed_integer() | get_linear_pcm_format_flag_is_packed(),
+                fourchar_to_int("lpcm"),  # mFormatID
+                get_linear_pcm_format_flag_is_signed_integer()
+                | get_linear_pcm_format_flag_is_packed(),
                 4,  # mBytesPerPacket (stereo 16-bit)
                 1,  # mFramesPerPacket
                 4,  # mBytesPerFrame
                 2,  # mChannelsPerFrame
-                16  # mBitsPerChannel
+                16,  # mBitsPerChannel
             )
 
             # Set format on input and output
@@ -114,7 +121,7 @@ class AudioUnitPlugin:
                 get_audio_unit_property_stream_format(),
                 get_audio_unit_scope_output(),
                 0,
-                asbd_data
+                asbd_data,
             )
 
             audio_unit_set_property(
@@ -122,7 +129,7 @@ class AudioUnitPlugin:
                 get_audio_unit_property_stream_format(),
                 get_audio_unit_scope_input(),
                 0,
-                asbd_data
+                asbd_data,
             )
 
             # Initialize unit
@@ -133,8 +140,9 @@ class AudioUnitPlugin:
             logger.error(f"Failed to initialize AudioUnit '{self.name}': {e}")
             raise
 
-    def send_midi(self, note: int, velocity: int, note_on: bool = True,
-                  channel: int = 0) -> None:
+    def send_midi(
+        self, note: int, velocity: int, note_on: bool = True, channel: int = 0
+    ) -> None:
         """Send MIDI note to instrument plugin.
 
         Args:
@@ -153,7 +161,7 @@ class AudioUnitPlugin:
 
             # Create MIDI packet (status, note, velocity)
             status = (0x90 if note_on else 0x80) | (channel & 0x0F)
-            midi_data = struct.pack('BBB', status, note & 0x7F, velocity & 0x7F)
+            midi_data = struct.pack("BBB", status, note & 0x7F, velocity & 0x7F)
 
             # Send via kAudioUnitProperty_MIDIEvent (property ID 0x1012)
             audio_unit_set_property(
@@ -161,7 +169,7 @@ class AudioUnitPlugin:
                 0x1012,  # kAudioUnitProperty_MIDIEvent
                 0,  # global scope
                 0,
-                midi_data
+                midi_data,
             )
         except Exception as e:
             logger.warning(f"Failed to send MIDI: {e}")
@@ -187,7 +195,7 @@ class AudioUnitPlugin:
                 audio_data,
                 num_frames,
                 self._sample_rate,
-                2  # stereo
+                2,  # stereo
             )
             return output
         except Exception as e:
@@ -198,8 +206,11 @@ class AudioUnitPlugin:
         """Clean up the AudioUnit."""
         if self._initialized and self.unit_id is not None:
             try:
-                from coremusic.capi import (audio_component_instance_dispose,
-                                            audio_unit_uninitialize)
+                from coremusic.capi import (
+                    audio_component_instance_dispose,
+                    audio_unit_uninitialize,
+                )
+
                 audio_unit_uninitialize(self.unit_id)
                 audio_component_instance_dispose(self.unit_id)
             except Exception as e:
@@ -278,6 +289,7 @@ class MIDINote:
         duration: Note duration in seconds
         channel: MIDI channel (0-15)
     """
+
     note: int
     velocity: int
     start_time: float
@@ -298,16 +310,25 @@ class MIDIClip:
         """Initialize MIDI clip."""
         self.notes: List[MIDINote] = []
 
-    def add_note(self, note: int, velocity: int, start_time: float,
-                 duration: float, channel: int = 0) -> None:
+    def add_note(
+        self,
+        note: int,
+        velocity: int,
+        start_time: float,
+        duration: float,
+        channel: int = 0,
+    ) -> None:
         """Add a MIDI note to the clip."""
         self.notes.append(MIDINote(note, velocity, start_time, duration, channel))
         self.notes.sort(key=lambda n: n.start_time)
 
     def get_notes_in_range(self, start: float, end: float) -> List[MIDINote]:
         """Get all notes that occur within a time range."""
-        return [n for n in self.notes
-                if n.start_time < end and (n.start_time + n.duration) > start]
+        return [
+            n
+            for n in self.notes
+            if n.start_time < end and (n.start_time + n.duration) > start
+        ]
 
 
 class Clip:
@@ -320,7 +341,9 @@ class Clip:
         >>> midi_clip = Clip(MIDIClip(), clip_type="midi")  # MIDI clip
     """
 
-    def __init__(self, source: Union[str, Path, MIDIClip, Any], clip_type: str = "audio"):
+    def __init__(
+        self, source: Union[str, Path, MIDIClip, Any], clip_type: str = "audio"
+    ):
         """Initialize clip.
 
         Args:
@@ -549,8 +572,13 @@ class Track:
         """Enable/disable recording on this track."""
         self.armed = enabled
 
-    def add_plugin(self, plugin_name: str, plugin_type: str = "effect",
-                   manufacturer: str = "appl", **config: Any) -> AudioUnitPlugin:
+    def add_plugin(
+        self,
+        plugin_name: str,
+        plugin_type: str = "effect",
+        manufacturer: str = "appl",
+        **config: Any,
+    ) -> AudioUnitPlugin:
         """Add AudioUnit plugin to track's effect chain.
 
         Args:
@@ -574,7 +602,9 @@ class Track:
             logger.error(f"Could not add plugin {plugin_name}: {e}")
             raise
 
-    def set_instrument(self, instrument_name: str, manufacturer: str = "appl") -> AudioUnitPlugin:
+    def set_instrument(
+        self, instrument_name: str, manufacturer: str = "appl"
+    ) -> AudioUnitPlugin:
         """Set the instrument plugin for this MIDI track.
 
         Args:
@@ -752,7 +782,9 @@ class Timeline:
         logger.info(f"Recording started on {len(armed_tracks)} track(s)")
         self.play()
 
-    def add_marker(self, position: float, name: str, color: Optional[str] = None) -> TimelineMarker:
+    def add_marker(
+        self, position: float, name: str, color: Optional[str] = None
+    ) -> TimelineMarker:
         """Add marker/cue point at position.
 
         Args:
@@ -823,7 +855,9 @@ class Timeline:
         # 3. Mix all tracks together
         # 4. Write to output file
 
-        raise NotImplementedError("Export functionality requires audio rendering engine")
+        raise NotImplementedError(
+            "Export functionality requires audio rendering engine"
+        )
 
     def get_duration(self) -> float:
         """Get total timeline duration (end of last clip).

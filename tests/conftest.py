@@ -13,6 +13,37 @@ import pytest
 
 
 # ============================================================================
+# Hardware Detection Markers
+# ============================================================================
+
+
+def _has_audio_output() -> bool:
+    try:
+        from coremusic.audio import AudioDeviceManager
+
+        return len(AudioDeviceManager.get_output_devices()) > 0
+    except Exception:
+        return False
+
+
+def _has_audio_input() -> bool:
+    try:
+        from coremusic.audio import AudioDeviceManager
+
+        return len(AudioDeviceManager.get_input_devices()) > 0
+    except Exception:
+        return False
+
+
+has_audio_output = pytest.mark.skipif(
+    not _has_audio_output(), reason="No audio output device"
+)
+has_audio_input = pytest.mark.skipif(
+    not _has_audio_input(), reason="No audio input device"
+)
+
+
+# ============================================================================
 # Test Ordering Hook - Run MIDI tests first
 # ============================================================================
 # MIDI services can become temporarily unavailable after long-running audio
@@ -27,13 +58,16 @@ def pytest_collection_modifyitems(session, config, items):
     other_tests = []
 
     for item in items:
-        if "test_objects_midi" in str(item.fspath) or "test_coremidi" in str(item.fspath):
+        if "test_objects_midi" in str(item.fspath) or "test_coremidi" in str(
+            item.fspath
+        ):
             midi_tests.append(item)
         else:
             other_tests.append(item)
 
     # Put MIDI tests first
     items[:] = midi_tests + other_tests
+
 
 # Base paths for test data
 TEST_DIR = os.path.dirname(__file__)
@@ -216,13 +250,9 @@ def sample_midi_events():
 
     for i, note in enumerate(notes):
         # Note on
-        events.append(
-            MIDIEvent(i * 0.25, MIDIStatus.NOTE_ON, 0, note, 100)
-        )
+        events.append(MIDIEvent(i * 0.25, MIDIStatus.NOTE_ON, 0, note, 100))
         # Note off
-        events.append(
-            MIDIEvent((i + 1) * 0.25, MIDIStatus.NOTE_OFF, 0, note, 0)
-        )
+        events.append(MIDIEvent((i + 1) * 0.25, MIDIStatus.NOTE_OFF, 0, note, 0))
 
     return events
 
@@ -238,7 +268,7 @@ def audio_format():
 
     Returns an AudioFormat for 44.1kHz, stereo, 16-bit PCM.
     """
-    from coremusic.objects import AudioFormat
+    from coremusic.audio import AudioFormat
 
     return AudioFormat(
         sample_rate=44100.0,
@@ -318,7 +348,7 @@ def dest_format_48k():
 @pytest.fixture
 def pcm_format():
     """Fixture providing PCM audio format as AudioFormat object."""
-    from coremusic.objects import AudioFormat
+    from coremusic.audio import AudioFormat
 
     return AudioFormat(
         sample_rate=44100.0,
@@ -343,7 +373,7 @@ def source_format_obj():
 
     Used by OO API tests that expect AudioFormat objects.
     """
-    from coremusic.objects import AudioFormat
+    from coremusic.audio import AudioFormat
 
     return AudioFormat(
         sample_rate=44100.0,
@@ -363,7 +393,7 @@ def dest_format_mono_obj():
 
     Used by OO API tests that expect AudioFormat objects.
     """
-    from coremusic.objects import AudioFormat
+    from coremusic.audio import AudioFormat
 
     return AudioFormat(
         sample_rate=44100.0,
@@ -383,7 +413,7 @@ def dest_format_48k_obj():
 
     Used by OO API tests that expect AudioFormat objects.
     """
-    from coremusic.objects import AudioFormat
+    from coremusic.audio import AudioFormat
 
     return AudioFormat(
         sample_rate=48000.0,
@@ -423,7 +453,6 @@ def pcm_format_dict():
 @pytest.fixture
 def temp_audio_file(tmp_path):
     """Fixture providing temporary audio file path."""
-    import tempfile
 
     path = tmp_path / "test_audio.wav"
     yield str(path)

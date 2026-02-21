@@ -20,10 +20,18 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
 
     # device default
     default_parser = device_sub.add_parser("default", help="Show default audio devices")
-    default_parser.add_argument("--input", dest="input_device", action="store_true",
-                                help="Show default input device only")
-    default_parser.add_argument("--output", dest="output_device", action="store_true",
-                                help="Show default output device only")
+    default_parser.add_argument(
+        "--input",
+        dest="input_device",
+        action="store_true",
+        help="Show default input device only",
+    )
+    default_parser.add_argument(
+        "--output",
+        dest="output_device",
+        action="store_true",
+        help="Show default output device only",
+    )
     default_parser.set_defaults(func=cmd_default)
 
     # device info
@@ -34,32 +42,72 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     # device volume
     volume_parser = device_sub.add_parser("volume", help="Get or set device volume")
     volume_parser.add_argument("device", help="Device name or UID")
-    volume_parser.add_argument("level", nargs="?", type=float, default=None,
-                               help="Volume level (0.0-1.0) to set, or omit to get current")
-    volume_parser.add_argument("--scope", "-s", choices=["input", "output"], default="output",
-                               help="Scope: input or output (default: output)")
-    volume_parser.add_argument("--channel", "-c", type=int, default=0,
-                               help="Channel index (default: 0 for main)")
+    volume_parser.add_argument(
+        "level",
+        nargs="?",
+        type=float,
+        default=None,
+        help="Volume level (0.0-1.0) to set, or omit to get current",
+    )
+    volume_parser.add_argument(
+        "--scope",
+        "-s",
+        choices=["input", "output"],
+        default="output",
+        help="Scope: input or output (default: output)",
+    )
+    volume_parser.add_argument(
+        "--channel",
+        "-c",
+        type=int,
+        default=0,
+        help="Channel index (default: 0 for main)",
+    )
     volume_parser.set_defaults(func=cmd_volume)
 
     # device set-default
-    setdefault_parser = device_sub.add_parser("set-default", help="Set default audio device")
+    setdefault_parser = device_sub.add_parser(
+        "set-default", help="Set default audio device"
+    )
     setdefault_parser.add_argument("device", help="Device name or UID")
-    setdefault_parser.add_argument("--input", dest="input_device", action="store_true",
-                                   help="Set as default input device")
-    setdefault_parser.add_argument("--output", dest="output_device", action="store_true",
-                                   help="Set as default output device")
+    setdefault_parser.add_argument(
+        "--input",
+        dest="input_device",
+        action="store_true",
+        help="Set as default input device",
+    )
+    setdefault_parser.add_argument(
+        "--output",
+        dest="output_device",
+        action="store_true",
+        help="Set as default output device",
+    )
     setdefault_parser.set_defaults(func=cmd_set_default)
 
     # device mute
     mute_parser = device_sub.add_parser("mute", help="Get or set device mute state")
     mute_parser.add_argument("device", help="Device name or UID")
-    mute_parser.add_argument("state", nargs="?", choices=["on", "off"], default=None,
-                             help="Mute state: on or off, or omit to get current")
-    mute_parser.add_argument("--scope", "-s", choices=["input", "output"], default="output",
-                             help="Scope: input or output (default: output)")
-    mute_parser.add_argument("--channel", "-c", type=int, default=0,
-                             help="Channel index (default: 0 for main)")
+    mute_parser.add_argument(
+        "state",
+        nargs="?",
+        choices=["on", "off"],
+        default=None,
+        help="Mute state: on or off, or omit to get current",
+    )
+    mute_parser.add_argument(
+        "--scope",
+        "-s",
+        choices=["input", "output"],
+        default="output",
+        help="Scope: input or output (default: output)",
+    )
+    mute_parser.add_argument(
+        "--channel",
+        "-c",
+        type=int,
+        default=0,
+        help="Channel index (default: 0 for main)",
+    )
     mute_parser.set_defaults(func=cmd_mute)
 
     parser.set_defaults(func=lambda args: print_help_default(parser))
@@ -67,7 +115,7 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
 
 def cmd_list(args: argparse.Namespace) -> int:
     """List available audio devices."""
-    from coremusic.objects import AudioDeviceManager
+    from coremusic.audio import AudioDeviceManager
 
     devices = AudioDeviceManager.get_devices()
 
@@ -91,11 +139,13 @@ def cmd_list(args: argparse.Namespace) -> int:
         headers = ["Name", "Manufacturer", "Sample Rate"]
         rows = []
         for d in devices:
-            rows.append([
-                d.name or "(unknown)",
-                d.manufacturer or "(unknown)",
-                f"{d.sample_rate:.0f} Hz" if d.sample_rate else "N/A",
-            ])
+            rows.append(
+                [
+                    d.name or "(unknown)",
+                    d.manufacturer or "(unknown)",
+                    f"{d.sample_rate:.0f} Hz" if d.sample_rate else "N/A",
+                ]
+            )
 
         output_table(headers, rows)
 
@@ -104,11 +154,10 @@ def cmd_list(args: argparse.Namespace) -> int:
 
 def cmd_default(args: argparse.Namespace) -> int:
     """Show default audio devices."""
-    from typing import Any, Dict, Optional
+    from coremusic.audio import AudioDeviceManager
+    from coremusic.exceptions import AudioDeviceError
 
-    from coremusic.objects import AudioDeviceError, AudioDeviceManager
-
-    result: Dict[str, Optional[Dict[str, Any]]] = {}
+    result: dict[str, dict[str, Any] | None] = {}
     show_input = args.input_device
     show_output = args.output_device
 
@@ -163,7 +212,7 @@ def cmd_default(args: argparse.Namespace) -> int:
 
 def cmd_info(args: argparse.Namespace) -> int:
     """Show detailed device information."""
-    from coremusic.objects import AudioDeviceManager
+    from coremusic.audio import AudioDeviceManager
 
     # Find device by name or UID
     all_devices = AudioDeviceManager.get_devices()
@@ -201,7 +250,7 @@ def cmd_info(args: argparse.Namespace) -> int:
 
 def _find_device(device_name: str) -> Any:
     """Find device by name or UID."""
-    from coremusic.objects import AudioDeviceManager
+    from coremusic.audio import AudioDeviceManager
 
     all_devices = AudioDeviceManager.get_devices()
     for d in all_devices:
@@ -219,7 +268,7 @@ def _find_device(device_name: str) -> Any:
 
 def cmd_volume(args: argparse.Namespace) -> int:
     """Get or set device volume."""
-    from coremusic.objects import AudioDeviceError
+    from coremusic.exceptions import AudioDeviceError
 
     device = _find_device(args.device)
 
@@ -227,22 +276,26 @@ def cmd_volume(args: argparse.Namespace) -> int:
         # Set volume
         if not 0.0 <= args.level <= 1.0:
             from ._utils import CLIError
+
             raise CLIError("Volume level must be between 0.0 and 1.0")
 
         try:
             device.set_volume(args.level, scope=args.scope, channel=args.channel)
         except AudioDeviceError as e:
             from ._utils import CLIError
+
             raise CLIError(str(e))
 
         if args.json:
-            output_json({
-                "device": device.name,
-                "volume": args.level,
-                "scope": args.scope,
-                "channel": args.channel,
-                "action": "set",
-            })
+            output_json(
+                {
+                    "device": device.name,
+                    "volume": args.level,
+                    "scope": args.scope,
+                    "channel": args.channel,
+                    "action": "set",
+                }
+            )
         else:
             print(f"Volume set to {args.level:.0%} on {device.name}")
     else:
@@ -250,12 +303,14 @@ def cmd_volume(args: argparse.Namespace) -> int:
         volume = device.get_volume(scope=args.scope, channel=args.channel)
 
         if args.json:
-            output_json({
-                "device": device.name,
-                "volume": volume,
-                "scope": args.scope,
-                "channel": args.channel,
-            })
+            output_json(
+                {
+                    "device": device.name,
+                    "volume": volume,
+                    "scope": args.scope,
+                    "channel": args.channel,
+                }
+            )
         else:
             if volume is not None:
                 print(f"{device.name}: {volume:.0%}")
@@ -267,7 +322,8 @@ def cmd_volume(args: argparse.Namespace) -> int:
 
 def cmd_set_default(args: argparse.Namespace) -> int:
     """Set default audio device."""
-    from coremusic.objects import AudioDeviceError, AudioDeviceManager
+    from coremusic.audio import AudioDeviceManager
+    from coremusic.exceptions import AudioDeviceError
 
     device = _find_device(args.device)
 
@@ -309,7 +365,7 @@ def cmd_set_default(args: argparse.Namespace) -> int:
 
 def cmd_mute(args: argparse.Namespace) -> int:
     """Get or set device mute state."""
-    from coremusic.objects import AudioDeviceError
+    from coremusic.exceptions import AudioDeviceError
 
     device = _find_device(args.device)
 
@@ -320,16 +376,19 @@ def cmd_mute(args: argparse.Namespace) -> int:
             device.set_mute(muted, scope=args.scope, channel=args.channel)
         except AudioDeviceError as e:
             from ._utils import CLIError
+
             raise CLIError(str(e))
 
         if args.json:
-            output_json({
-                "device": device.name,
-                "muted": muted,
-                "scope": args.scope,
-                "channel": args.channel,
-                "action": "set",
-            })
+            output_json(
+                {
+                    "device": device.name,
+                    "muted": muted,
+                    "scope": args.scope,
+                    "channel": args.channel,
+                    "action": "set",
+                }
+            )
         else:
             state_str = "muted" if muted else "unmuted"
             print(f"{device.name}: {state_str}")
@@ -338,17 +397,21 @@ def cmd_mute(args: argparse.Namespace) -> int:
         muted = device.get_mute(scope=args.scope, channel=args.channel)
 
         if args.json:
-            output_json({
-                "device": device.name,
-                "muted": muted,
-                "scope": args.scope,
-                "channel": args.channel,
-            })
+            output_json(
+                {
+                    "device": device.name,
+                    "muted": muted,
+                    "scope": args.scope,
+                    "channel": args.channel,
+                }
+            )
         else:
             if muted is not None:
                 state_str = "muted" if muted else "not muted"
                 print(f"{device.name}: {state_str}")
             else:
-                print(f"{device.name}: Mute state not available for this device/channel")
+                print(
+                    f"{device.name}: Mute state not available for this device/channel"
+                )
 
     return EXIT_SUCCESS

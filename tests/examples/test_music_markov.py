@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Tests for Markov chain MIDI analysis and generation module."""
 
-import json
 import sys
 import tempfile
 from pathlib import Path
@@ -17,14 +16,13 @@ from generative.markov import (
     ModelingMode,
     RhythmMode,
     NoteData,
-    TransitionEdge,
     MIDIMarkovAnalyzer,
     MIDIMarkovGenerator,
     analyze_and_generate,
     merge_chains,
     chain_statistics,
 )
-from coremusic.midi.utilities import MIDISequence, MIDITrack
+from coremusic.midi.utilities import MIDISequence
 
 
 # ============================================================================
@@ -394,7 +392,7 @@ class TestMarkovChainAdjustments:
 
         # 67 should appear more often with gravity
         count_67 = samples.count(67)
-        count_62 = samples.count(62)
+        samples.count(62)
 
         # With gravity toward 67, it should appear at least as often as others
         # (may not be strictly greater due to randomness, so test weaker condition)
@@ -425,12 +423,37 @@ class TestMarkovChainAdjustments:
         chain = MarkovChain()
         # Create chain with varied probabilities - need many more low-prob transitions
         # 60 goes to: 62 (6 times), 64 (1 time), 67 (1 time), 69 (1 time), 71 (1 time)
-        chain.train([60, 62, 60, 62, 60, 62, 60, 62, 60, 62, 60, 62, 60, 64, 60, 67, 60, 69, 60, 71, 60, 62])
+        chain.train(
+            [
+                60,
+                62,
+                60,
+                62,
+                60,
+                62,
+                60,
+                62,
+                60,
+                62,
+                60,
+                62,
+                60,
+                64,
+                60,
+                67,
+                60,
+                69,
+                60,
+                71,
+                60,
+                62,
+            ]
+        )
 
         # Check transitions from 60
         transitions = chain.get_transitions_from(60)
         # Some transitions should have low probability
-        low_prob_transitions = [n for n, p in transitions.items() if p < 0.15]
+        [n for n, p in transitions.items() if p < 0.15]
 
         initial_count = chain.get_transition_count()
 
@@ -809,12 +832,12 @@ class TestUtilityFunctions:
 
         stats = chain_statistics(chain)
 
-        assert stats['order'] == 2
-        assert stats['state_count'] > 0
-        assert stats['transition_count'] > 0
-        assert stats['unique_notes'] > 0
-        assert stats['track_name'] == "Test"
-        assert stats['source_file'] == "test.mid"
+        assert stats["order"] == 2
+        assert stats["state_count"] > 0
+        assert stats["transition_count"] > 0
+        assert stats["unique_notes"] > 0
+        assert stats["track_name"] == "Test"
+        assert stats["source_file"] == "test.mid"
 
 
 # ============================================================================
@@ -907,7 +930,9 @@ class TestMIDIFileGeneration:
     @pytest.fixture(autouse=True)
     def setup_output_dir(self):
         """Create output directory."""
-        self.output_dir = Path(__file__).parent.parent / "build" / "midi_files" / "markov"
+        self.output_dir = (
+            Path(__file__).parent.parent / "build" / "midi_files" / "markov"
+        )
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def test_generate_variation_basic(self):

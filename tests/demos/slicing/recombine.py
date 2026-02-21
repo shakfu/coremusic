@@ -8,7 +8,7 @@ Usage:
 import sys
 
 try:
-    import numpy as np
+    import numpy as np  # noqa: F401
     from coremusic.audio.slicing import AudioSlicer, SliceCollection, SliceRecombinator
 except ImportError:
     print("Requires NumPy and SciPy")

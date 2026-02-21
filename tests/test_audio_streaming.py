@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Tests for real-time audio streaming module."""
 
-import time
 import pytest
-from coremusic.objects import NUMPY_AVAILABLE
+from coremusic.base import NUMPY_AVAILABLE
 from coremusic.audio.streaming import (
     AudioInputStream,
     AudioOutputStream,
@@ -189,7 +188,9 @@ class TestAudioProcessor:
         def passthrough(audio_in):
             return audio_in
 
-        processor = AudioProcessor(passthrough, channels=2, sample_rate=44100.0, buffer_size=512)
+        processor = AudioProcessor(
+            passthrough, channels=2, sample_rate=44100.0, buffer_size=512
+        )
 
         assert processor.channels == 2
         assert processor.sample_rate == 44100.0
@@ -569,7 +570,7 @@ class TestIntegration:
         def gain_effect(audio_in):
             """Apply 0.5 gain."""
             try:
-                import numpy as np
+                import numpy as np  # noqa: F401
 
                 return audio_in * 0.5
             except ImportError:

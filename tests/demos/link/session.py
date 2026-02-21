@@ -14,7 +14,7 @@ def main():
 
     with link.LinkSession(bpm=bpm) as session:
         state = session.capture_app_session_state()
-        print(f"Link Session:")
+        print("Link Session:")
         print(f"  Tempo: {state.tempo:.1f} BPM")
         print(f"  Peers: {session.num_peers}")
         print(f"  Enabled: {session.enabled}")

@@ -22,10 +22,12 @@ Example:
         clock.stop()
 """
 
+from __future__ import annotations
+
 import threading
 import time
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 from .. import capi
 
@@ -58,6 +60,7 @@ class MIDIEvent:
         message: MIDI message bytes
         sent: Whether event has been sent
     """
+
     beat: float
     message: bytes
     sent: bool = False
@@ -94,10 +97,10 @@ class LinkMIDIClock:
 
     def __init__(
         self,
-        session: 'link_module.LinkSession',
+        session: "link_module.LinkSession",
         midi_port: int,
         midi_destination: int,
-        quantum: float = 4.0
+        quantum: float = 4.0,
     ):
         """Initialize MIDI clock
 
@@ -112,7 +115,7 @@ class LinkMIDIClock:
         self.midi_destination = midi_destination
         self.quantum = quantum
         self.running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
         self._last_beat = 0.0
 
@@ -162,7 +165,7 @@ class LinkMIDIClock:
                 self.midi_port,
                 self.midi_destination,
                 message,
-                timestamp=0  # Send immediately
+                timestamp=0,  # Send immediately
             )
         except Exception as e:
             print(f"Error sending MIDI message: {e}")
@@ -238,10 +241,10 @@ class LinkMIDISequencer:
 
     def __init__(
         self,
-        session: 'link_module.LinkSession',
+        session: "link_module.LinkSession",
         midi_port: int,
         midi_destination: int,
-        quantum: float = 4.0
+        quantum: float = 4.0,
     ):
         """Initialize MIDI sequencer
 
@@ -255,9 +258,9 @@ class LinkMIDISequencer:
         self.midi_port = midi_port
         self.midi_destination = midi_destination
         self.quantum = quantum
-        self.events: List[MIDIEvent] = []
+        self.events: list[MIDIEvent] = []
         self.running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
         self._lock = threading.Lock()
 
@@ -274,12 +277,7 @@ class LinkMIDISequencer:
             self.events.sort(key=lambda e: e.beat)
 
     def schedule_note(
-        self,
-        beat: float,
-        channel: int,
-        note: int,
-        velocity: int,
-        duration: float
+        self, beat: float, channel: int, note: int, velocity: int, duration: float
     ) -> None:
         """Schedule a MIDI note with automatic note-off
 
@@ -298,7 +296,9 @@ class LinkMIDISequencer:
         status, data1, data2 = capi.midi_note_off(channel, note, velocity=0)
         self.schedule_event(beat + duration, bytes([status, data1, data2]))
 
-    def schedule_cc(self, beat: float, channel: int, controller: int, value: int) -> None:
+    def schedule_cc(
+        self, beat: float, channel: int, controller: int, value: int
+    ) -> None:
         """Schedule a MIDI CC message
 
         Args:
@@ -365,7 +365,7 @@ class LinkMIDISequencer:
                                     self.midi_port,
                                     self.midi_destination,
                                     event.message,
-                                    timestamp=0
+                                    timestamp=0,
                                 )
                                 event.sent = True
                             except Exception as e:
@@ -378,9 +378,7 @@ class LinkMIDISequencer:
 
 
 def link_beat_to_host_time(
-    session: 'link_module.LinkSession',
-    beat: float,
-    quantum: float = 4.0
+    session: "link_module.LinkSession", beat: float, quantum: float = 4.0
 ) -> int:
     """Convert Link beat position to host time (mach_absolute_time)
 
@@ -401,9 +399,7 @@ def link_beat_to_host_time(
 
 
 def host_time_to_link_beat(
-    session: 'link_module.LinkSession',
-    host_time_ticks: int,
-    quantum: float = 4.0
+    session: "link_module.LinkSession", host_time_ticks: int, quantum: float = 4.0
 ) -> float:
     """Convert host time to Link beat position
 
@@ -422,14 +418,14 @@ def host_time_to_link_beat(
 
 
 __all__ = [
-    'LinkMIDIClock',
-    'LinkMIDISequencer',
-    'MIDIEvent',
-    'link_beat_to_host_time',
-    'host_time_to_link_beat',
-    'MIDI_CLOCK',
-    'MIDI_START',
-    'MIDI_CONTINUE',
-    'MIDI_STOP',
-    'MIDI_CLOCKS_PER_QUARTER_NOTE',
+    "LinkMIDIClock",
+    "LinkMIDISequencer",
+    "MIDIEvent",
+    "link_beat_to_host_time",
+    "host_time_to_link_beat",
+    "MIDI_CLOCK",
+    "MIDI_START",
+    "MIDI_CONTINUE",
+    "MIDI_STOP",
+    "MIDI_CLOCKS_PER_QUARTER_NOTE",
 ]

@@ -25,16 +25,17 @@ Example:
     processor.stop()
 """
 
+from __future__ import annotations
+
 import logging
 import threading
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable
 
 from .. import capi
-from ..objects import AudioDevice, AudioDeviceManager
+from .devices import AudioDevice, AudioDeviceManager
 
 if TYPE_CHECKING:
-
     try:
         from numpy.typing import NDArray as NDArray_
     except ImportError:
@@ -67,7 +68,7 @@ class AudioInputStream:
 
     def __init__(
         self,
-        device: Optional[AudioDevice] = None,
+        device: AudioDevice | None = None,
         channels: int = 2,
         sample_rate: float = 44100.0,
         buffer_size: int = 512,
@@ -84,9 +85,9 @@ class AudioInputStream:
         self.channels = channels
         self.sample_rate = sample_rate
         self.buffer_size = buffer_size
-        self._callbacks: List[Callable[[Any, int], None]] = []
+        self._callbacks: list[Callable[[Any, int], None]] = []
         self._is_active = False
-        self._audio_unit_id: Optional[int] = None
+        self._audio_unit_id: int | None = None
         self._lock = threading.Lock()
 
         # Validate NumPy availability if needed
@@ -102,9 +103,7 @@ class AudioInputStream:
         except ImportError:
             self._np = None  # type: ignore[assignment]
             self._has_numpy = False
-            logger.warning(
-                "NumPy not available - audio data will be provided as bytes"
-            )
+            logger.warning("NumPy not available - audio data will be provided as bytes")
 
     def add_callback(self, callback: Callable[[Any, int], None]) -> None:
         """Add callback for audio data.
@@ -257,7 +256,7 @@ class AudioOutputStream:
 
     def __init__(
         self,
-        device: Optional[AudioDevice] = None,
+        device: AudioDevice | None = None,
         channels: int = 2,
         sample_rate: float = 44100.0,
         buffer_size: int = 512,
@@ -274,9 +273,9 @@ class AudioOutputStream:
         self.channels = channels
         self.sample_rate = sample_rate
         self.buffer_size = buffer_size
-        self._generator: Optional[Callable[[int], Any]] = None
+        self._generator: Callable[[int], Any] | None = None
         self._is_active = False
-        self._audio_unit_id: Optional[int] = None
+        self._audio_unit_id: int | None = None
         self._lock = threading.Lock()
 
         # Validate NumPy availability if needed
@@ -292,9 +291,7 @@ class AudioOutputStream:
         except ImportError:
             self._np = None  # type: ignore[assignment]
             self._has_numpy = False
-            logger.warning(
-                "NumPy not available - generator must return bytes"
-            )
+            logger.warning("NumPy not available - generator must return bytes")
 
     def set_generator(self, generator: Callable[[int], Any]) -> None:
         """Set audio generator function.
@@ -445,8 +442,8 @@ class AudioProcessor:
         channels: int = 2,
         sample_rate: float = 44100.0,
         buffer_size: int = 512,
-        input_device: Optional[AudioDevice] = None,
-        output_device: Optional[AudioDevice] = None,
+        input_device: AudioDevice | None = None,
+        output_device: AudioDevice | None = None,
     ):
         """Initialize real-time processor.
 
@@ -481,7 +478,7 @@ class AudioProcessor:
         )
 
         # Connect input → process → output
-        self._input_buffer: Optional[Any] = None
+        self._input_buffer: Any | None = None
         self._buffer_lock = threading.Lock()
         self.input_stream.add_callback(self._on_input)
         self.output_stream.set_generator(self._generate_output)
@@ -578,8 +575,8 @@ class StreamNode:
 
     name: str
     processor: Callable[[Any], Any]
-    inputs: List[str] = field(default_factory=list)
-    outputs: List[str] = field(default_factory=list)
+    inputs: list[str] = field(default_factory=list)
+    outputs: list[str] = field(default_factory=list)
 
     def process(self, input_data: Any) -> Any:
         """Process input data through this node.
@@ -622,10 +619,10 @@ class StreamGraph:
         """
         self.sample_rate = sample_rate
         self.buffer_size = buffer_size
-        self.nodes: Dict[str, StreamNode] = {}
-        self.connections: List[Tuple[str, str]] = []
+        self.nodes: dict[str, StreamNode] = {}
+        self.connections: list[tuple[str, str]] = []
         self._is_active = False
-        self._processor: Optional[AudioProcessor] = None
+        self._processor: AudioProcessor | None = None
 
     def add_node(self, name: str, processor: Callable[[Any], Any]) -> StreamNode:
         """Add processing node to graph.
@@ -666,7 +663,7 @@ class StreamGraph:
         self.nodes[source].outputs.append(destination)
         self.nodes[destination].inputs.append(source)
 
-    def _topological_sort(self) -> List[str]:
+    def _topological_sort(self) -> list[str]:
         """Topologically sort nodes for processing order.
 
         Returns:
@@ -710,7 +707,7 @@ class StreamGraph:
         def combined_process(input_data: Any) -> Any:
             """Process data through all nodes in order."""
             # Initialize node outputs
-            node_outputs: Dict[str, Any] = {}
+            node_outputs: dict[str, Any] = {}
 
             # Process each node in topological order
             for node_name in processing_order:

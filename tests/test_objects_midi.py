@@ -1,16 +1,10 @@
 """Tests for MIDI object-oriented classes."""
 
 import pytest
-import time
 import coremusic.capi as capi
-from coremusic.objects import (
-    CoreAudioObject,
-    MIDIClient,
-    MIDIError,
-    MIDIInputPort,
-    MIDIOutputPort,
-    MIDIPort,
-)
+from coremusic.base import CoreAudioObject
+from coremusic.exceptions import MIDIError
+from coremusic.midi import MIDIClient, MIDIInputPort, MIDIOutputPort, MIDIPort
 
 
 # Check MIDI availability at module load time
@@ -26,7 +20,7 @@ except Exception:
 # Skip all MIDI tests if MIDI hardware/services not available
 pytestmark = pytest.mark.skipif(
     not _MIDI_AVAILABLE,
-    reason="MIDI services not available (requires macOS audio infrastructure)"
+    reason="MIDI services not available (requires macOS audio infrastructure)",
 )
 
 
@@ -391,9 +385,9 @@ class TestMIDIPortPolymorphism:
         """Test MIDI client port list management"""
         client = MIDIClient("List Test")
         try:
-            port1 = client.create_input_port("Input 1")
+            client.create_input_port("Input 1")
             port2 = client.create_output_port("Output 1")
-            port3 = client.create_input_port("Input 2")
+            client.create_input_port("Input 2")
             assert len(client._ports) == 3
             assert all(isinstance(port, MIDIPort) for port in client._ports)
             port2.dispose()

@@ -8,7 +8,7 @@ Usage:
 import sys
 import os
 from coremusic.audio.analysis import AudioAnalyzer
-from coremusic.objects import NUMPY_AVAILABLE
+from coremusic.base import NUMPY_AVAILABLE
 
 
 def main():
@@ -32,7 +32,7 @@ def main():
     print(f"File: {audio_path}")
     print(f"Peak: {peak:.4f} ({peak_db:.2f} dB)")
     print(f"RMS: {rms:.4f} ({rms_db:.2f} dB)")
-    print(f"Crest Factor: {peak/rms:.2f}" if rms > 0 else "Crest Factor: N/A")
+    print(f"Crest Factor: {peak / rms:.2f}" if rms > 0 else "Crest Factor: N/A")
 
 
 if __name__ == "__main__":

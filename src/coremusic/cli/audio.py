@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from typing import Any
 
-from ._formatters import (format_bytes, format_duration, format_sample_rate,
-                          output_json)
+from ._formatters import format_bytes, format_duration, format_sample_rate, output_json
 from ._mappings import get_channel_display, get_format_display
 from ._utils import EXIT_SUCCESS, print_help_default, require_file
+
+logger = logging.getLogger(__name__)
 
 
 def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
@@ -25,8 +27,11 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     dur_parser = audio_sub.add_parser("duration", help="Get audio file duration")
     dur_parser.add_argument("file", help="Audio file path")
     dur_parser.add_argument(
-        "--format", dest="fmt", choices=["seconds", "mm:ss", "samples"],
-        default="seconds", help="Output format (default: seconds)"
+        "--format",
+        dest="fmt",
+        choices=["seconds", "mm:ss", "samples"],
+        default="seconds",
+        help="Output format (default: seconds)",
     )
     dur_parser.set_defaults(func=cmd_duration)
 
@@ -38,22 +43,44 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     # audio play
     play_parser = audio_sub.add_parser("play", help="Play audio file to default output")
     play_parser.add_argument("file", help="Audio file path")
-    play_parser.add_argument("--loop", "-l", action="store_true",
-                             help="Loop playback")
+    play_parser.add_argument("--loop", "-l", action="store_true", help="Loop playback")
     play_parser.set_defaults(func=cmd_play)
 
     # audio record
-    record_parser = audio_sub.add_parser("record", help="Record audio from input device")
-    record_parser.add_argument("-o", "--output", required=True,
-                               help="Output audio file path (WAV format)")
-    record_parser.add_argument("--duration", "-d", type=float, default=None,
-                               help="Recording duration in seconds (default: until Ctrl+C, max 300s)")
-    record_parser.add_argument("--device", type=int, default=None,
-                               help="Input device index (default: system default)")
-    record_parser.add_argument("--sample-rate", "-r", type=int, default=44100,
-                               help="Sample rate in Hz (default: 44100)")
-    record_parser.add_argument("--channels", "-c", type=int, default=2,
-                               choices=[1, 2], help="Number of channels (default: 2)")
+    record_parser = audio_sub.add_parser(
+        "record", help="Record audio from input device"
+    )
+    record_parser.add_argument(
+        "-o", "--output", required=True, help="Output audio file path (WAV format)"
+    )
+    record_parser.add_argument(
+        "--duration",
+        "-d",
+        type=float,
+        default=None,
+        help="Recording duration in seconds (default: until Ctrl+C, max 300s)",
+    )
+    record_parser.add_argument(
+        "--device",
+        type=int,
+        default=None,
+        help="Input device index (default: system default)",
+    )
+    record_parser.add_argument(
+        "--sample-rate",
+        "-r",
+        type=int,
+        default=44100,
+        help="Sample rate in Hz (default: 44100)",
+    )
+    record_parser.add_argument(
+        "--channels",
+        "-c",
+        type=int,
+        default=2,
+        choices=[1, 2],
+        help="Number of channels (default: 2)",
+    )
     record_parser.set_defaults(func=cmd_record)
 
     parser.set_defaults(func=lambda args: print_help_default(parser))
@@ -61,7 +88,7 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
 
 def cmd_info(args: argparse.Namespace) -> int:
     """Display comprehensive audio file information."""
-    from coremusic.objects import AudioFile
+    from coremusic.audio import AudioFile
 
     path = require_file(args.file)
 
@@ -95,7 +122,9 @@ def cmd_info(args: argparse.Namespace) -> int:
             print()
             print(f"Format:      {get_format_display(fmt.format_id)}")
             print(f"Sample Rate: {format_sample_rate(fmt.sample_rate)}")
-            print(f"Channels:    {fmt.channels_per_frame} ({get_channel_display(fmt.channels_per_frame)})")
+            print(
+                f"Channels:    {fmt.channels_per_frame} ({get_channel_display(fmt.channels_per_frame)})"
+            )
             print(f"Bit Depth:   {fmt.bits_per_channel}-bit")
             print()
             print(f"Duration:    {format_duration(duration)} ({duration:.3f}s)")
@@ -106,7 +135,7 @@ def cmd_info(args: argparse.Namespace) -> int:
 
 def cmd_duration(args: argparse.Namespace) -> int:
     """Get audio file duration."""
-    from coremusic.objects import AudioFile
+    from coremusic.audio import AudioFile
 
     require_file(args.file)
 
@@ -115,11 +144,13 @@ def cmd_duration(args: argparse.Namespace) -> int:
         sample_rate = audio_file.format.sample_rate
 
         if args.json:
-            output_json({
-                "duration_seconds": dur,
-                "duration_samples": int(dur * sample_rate),
-                "sample_rate": sample_rate,
-            })
+            output_json(
+                {
+                    "duration_seconds": dur,
+                    "duration_samples": int(dur * sample_rate),
+                    "sample_rate": sample_rate,
+                }
+            )
         elif args.fmt == "mm:ss":
             print(format_duration(dur))
         elif args.fmt == "samples":
@@ -132,14 +163,12 @@ def cmd_duration(args: argparse.Namespace) -> int:
 
 def cmd_metadata(args: argparse.Namespace) -> int:
     """Show audio file metadata/tags."""
-    from typing import Any, Dict
-
+    from coremusic.audio import AudioFile
     from coremusic.constants import AudioFileProperty
-    from coremusic.objects import AudioFile
 
     path = require_file(args.file)
 
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
     with AudioFile(str(path)) as audio_file:
         fmt = audio_file.format
@@ -161,13 +190,15 @@ def cmd_metadata(args: argparse.Namespace) -> int:
         # Note: For some properties, audio_file_get_property might return a dict
         try:
             import coremusic.capi as capi
+
             info_dict_prop = AudioFileProperty.INFO_DICTIONARY
-            info_data = capi.audio_file_get_property(audio_file.object_id, info_dict_prop)
+            info_data = capi.audio_file_get_property(
+                audio_file.object_id, info_dict_prop
+            )
             if info_data and isinstance(info_data, dict):
                 metadata["tags"] = info_data
-        except Exception:
-            # Info dictionary not available for this format
-            pass
+        except Exception as e:
+            logger.debug("Info dictionary not available for %s: %s", path.name, e)
 
         # File info
         metadata["file"] = {
@@ -186,7 +217,9 @@ def cmd_metadata(args: argparse.Namespace) -> int:
         print()
         print(f"Format:      {get_format_display(str(fmt_info['format_id']))}")
         print(f"Sample Rate: {format_sample_rate(float(fmt_info['sample_rate']))}")
-        print(f"Channels:    {fmt_info['channels']} ({get_channel_display(int(fmt_info['channels']))})")
+        print(
+            f"Channels:    {fmt_info['channels']} ({get_channel_display(int(fmt_info['channels']))})"
+        )
         print(f"Bit Depth:   {fmt_info['bits_per_channel']}-bit")
         print()
         print(f"Duration:    {format_duration(float(metadata['duration_seconds']))}")
@@ -206,7 +239,7 @@ def cmd_play(args: argparse.Namespace) -> int:
     import signal
     import time
 
-    from coremusic.objects import AudioFile
+    from coremusic.audio import AudioFile
     from coremusic.capi import AudioPlayer
 
     from ._utils import CLIError
@@ -251,18 +284,22 @@ def cmd_play(args: argparse.Namespace) -> int:
 
             player.stop()
 
-            output_json({
-                "file": str(path.absolute()),
-                "duration": duration,
-                "sample_rate": fmt.sample_rate,
-                "channels": fmt.channels_per_frame,
-                "looped": args.loop,
-                "stopped": stop_requested,
-            })
+            output_json(
+                {
+                    "file": str(path.absolute()),
+                    "duration": duration,
+                    "sample_rate": fmt.sample_rate,
+                    "channels": fmt.channels_per_frame,
+                    "looped": args.loop,
+                    "stopped": stop_requested,
+                }
+            )
         else:
             print(f"Playing: {path.name}")
             print(f"Duration: {format_duration(duration)}")
-            print(f"Format:  {get_format_display(fmt.format_id)} {fmt.sample_rate:.0f}Hz {fmt.channels_per_frame}ch")
+            print(
+                f"Format:  {get_format_display(fmt.format_id)} {fmt.sample_rate:.0f}Hz {fmt.channels_per_frame}ch"
+            )
             if args.loop:
                 print("Looping: Yes")
             print("Press Ctrl+C to stop...\n")
@@ -277,7 +314,11 @@ def cmd_play(args: argparse.Namespace) -> int:
                     bar_width = 40
                     filled = int(bar_width * progress)
                     bar = "=" * filled + "-" * (bar_width - filled)
-                    print(f"\r[{bar}] {format_duration(elapsed)} / {format_duration(duration)}", end="", flush=True)
+                    print(
+                        f"\r[{bar}] {format_duration(elapsed)} / {format_duration(duration)}",
+                        end="",
+                        flush=True,
+                    )
                     time.sleep(0.1)
             except KeyboardInterrupt:
                 stop_requested = True
@@ -319,10 +360,7 @@ def cmd_record(args: argparse.Namespace) -> int:
 
     # Create recorder
     try:
-        recorder = AudioRecorder(
-            sample_rate=args.sample_rate,
-            channels=args.channels
-        )
+        recorder = AudioRecorder(sample_rate=args.sample_rate, channels=args.channels)
         recorder.setup_input(duration)
     except Exception as e:
         raise CLIError(f"Failed to initialize audio recorder: {e}")
@@ -347,21 +385,25 @@ def cmd_record(args: argparse.Namespace) -> int:
             recorder.stop()
             recorder.save_to_file(str(output_path))
 
-            output_json({
-                "output": str(output_path.absolute()),
-                "duration": recorder.get_recorded_duration(),
-                "sample_rate": recorder.sample_rate,
-                "channels": recorder.channels,
-                "frames": recorder.get_recorded_frames(),
-                "stopped": stop_requested,
-            })
+            output_json(
+                {
+                    "output": str(output_path.absolute()),
+                    "duration": recorder.get_recorded_duration(),
+                    "sample_rate": recorder.sample_rate,
+                    "channels": recorder.channels,
+                    "frames": recorder.get_recorded_frames(),
+                    "stopped": stop_requested,
+                }
+            )
         else:
             print(f"Recording to: {output_path.name}")
             print(f"Format:       WAV {args.sample_rate}Hz {args.channels}ch")
             if args.duration:
                 print(f"Duration:     {format_duration(duration)} (max)")
             else:
-                print(f"Duration:     Until Ctrl+C (max {format_duration(max_duration)})")
+                print(
+                    f"Duration:     Until Ctrl+C (max {format_duration(max_duration)})"
+                )
             print("Press Ctrl+C to stop...\n")
 
             recorder.start()
@@ -377,7 +419,11 @@ def cmd_record(args: argparse.Namespace) -> int:
                     bar_width = 40
                     filled = int(bar_width * progress)
                     bar = "=" * filled + "-" * (bar_width - filled)
-                    print(f"\r[{bar}] {format_duration(recorded)} / {format_duration(duration)}", end="", flush=True)
+                    print(
+                        f"\r[{bar}] {format_duration(recorded)} / {format_duration(duration)}",
+                        end="",
+                        flush=True,
+                    )
             except KeyboardInterrupt:
                 stop_requested = True
 
@@ -389,15 +435,21 @@ def cmd_record(args: argparse.Namespace) -> int:
                 recorded_duration = recorder.get_recorded_duration()
 
                 if stop_requested:
-                    print(f"\n\nStopped. Saved {format_duration(recorded_duration)} to {output_path.name}")
+                    print(
+                        f"\n\nStopped. Saved {format_duration(recorded_duration)} to {output_path.name}"
+                    )
                 else:
-                    print(f"\n\nFinished. Saved {format_duration(recorded_duration)} to {output_path.name}")
+                    print(
+                        f"\n\nFinished. Saved {format_duration(recorded_duration)} to {output_path.name}"
+                    )
 
                 # Check for silent recording (permissions issue)
                 if not recorder.has_audio_content():
                     print("\nWarning: Recording appears to be silent.")
                     print("This usually means microphone permission was not granted.")
-                    print("Grant permission in: System Preferences > Security & Privacy > Privacy > Microphone")
+                    print(
+                        "Grant permission in: System Preferences > Security & Privacy > Privacy > Microphone"
+                    )
             except Exception as e:
                 raise CLIError(f"Failed to save recording: {e}")
 

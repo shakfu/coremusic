@@ -1,4 +1,3 @@
-import os
 import struct
 import time
 import wave
@@ -8,7 +7,6 @@ import coremusic.capi as capi
 
 class TestAudioFileOperations:
     """Test audio file operations"""
-
 
     def test_audio_file_open_close(self, amen_wav_path):
         """Test opening and closing audio files"""
@@ -85,7 +83,6 @@ class TestAudioFileOperations:
 
 class TestAudioPlayerIntegration:
     """Test integrated audio player functionality"""
-
 
     def test_audio_file_loading_and_analysis(self, amen_wav_path):
         """Test loading and analyzing audio file with both Python and CoreAudio"""

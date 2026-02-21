@@ -1,9 +1,7 @@
 """pytest test suite for MusicPlayer functionality."""
 
 import logging
-import os
 import pytest
-import tempfile
 import coremusic.capi as capi
 
 logger = logging.getLogger(__name__)
@@ -163,7 +161,7 @@ class TestMusicPlayerBasicOperations:
                 else:
                     is_playing = capi.music_player_is_playing(player)
                     assert is_playing is False
-            except RuntimeError as e:
+            except RuntimeError:
                 is_playing = capi.music_player_is_playing(player)
                 assert is_playing is False
         finally:

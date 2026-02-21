@@ -33,6 +33,9 @@ class AudioPlayer:
     def reset_playback(self) -> None: ...
     def is_playing(self) -> bool: ...
     def get_progress(self) -> float: ...
+    def get_time(self) -> float: ...
+    def set_volume(self, volume: float) -> None: ...
+    def pause(self) -> None: ...
     @property
     def link_session(self) -> Any: ...
     def get_link_timing(self, quantum: float = 4.0) -> Optional[Dict[str, Any]]: ...
@@ -186,7 +189,9 @@ def audio_queue_dispose(queue_id: int, immediate: bool) -> None:
 # Audio Component & AudioUnit Operations
 # ============================================================================
 
-def audio_component_find_next(description: Dict[str, Any], previous_component_id: int = 0) -> Optional[int]:
+def audio_component_find_next(
+    description: Dict[str, Any], previous_component_id: int = 0
+) -> Optional[int]:
     """Find next matching audio component."""
     ...
 
@@ -237,7 +242,7 @@ def audio_output_unit_stop(unit_id: int) -> None:
 def audio_unit_find_all_components(
     component_type: Optional[str] = None,
     component_subtype: Optional[str] = None,
-    manufacturer: Optional[str] = None
+    manufacturer: Optional[str] = None,
 ) -> List[int]:
     """Find all AudioComponent IDs matching criteria."""
     ...
@@ -283,7 +288,7 @@ def audio_unit_render(
     input_data: bytes,
     num_frames: int,
     sample_rate: float,
-    num_channels: int
+    num_channels: int,
 ) -> bytes:
     """Render audio through the AudioUnit."""
     ...
@@ -293,7 +298,7 @@ def audio_unit_render_into(
     input_data: Union[bytes, bytearray],
     output_buffer: bytearray,
     num_frames: int,
-    num_channels: int = 2
+    num_channels: int = 2,
 ) -> int:
     """Process audio through an AudioUnit directly into provided buffers (zero-copy).
 
@@ -343,6 +348,24 @@ def audio_object_show(object_id: int) -> None:
     """Display information about an AudioObject."""
     ...
 
+def audio_object_get_property_string(
+    object_id: int, property_selector: int, scope: int, element: int
+) -> bytes | None:
+    """Get a string property from an AudioObject."""
+    ...
+
+def audio_object_is_property_settable(
+    object_id: int, property_selector: int, scope: int, element: int
+) -> bool:
+    """Check if a property is settable on an AudioObject."""
+    ...
+
+def audio_object_set_property_data(
+    object_id: int, property_selector: int, scope: int, element: int, data: bytes
+) -> None:
+    """Set property data on an AudioObject."""
+    ...
+
 # ============================================================================
 # Audio Services Operations
 # ============================================================================
@@ -373,6 +396,110 @@ def audio_services_set_property(
     property_id: int, specifier_size: int, specifier: bytes, data: bytes
 ) -> None:
     """Set an AudioServices property."""
+    ...
+
+# ============================================================================
+# CoreAudioClock Operations
+# ============================================================================
+
+def ca_clock_new() -> int:
+    """Create a new CoreAudioClock."""
+    ...
+
+def ca_clock_dispose(clock_id: int) -> None:
+    """Dispose of a CoreAudioClock."""
+    ...
+
+def ca_clock_start(clock_id: int) -> None:
+    """Start a CoreAudioClock."""
+    ...
+
+def ca_clock_stop(clock_id: int) -> None:
+    """Stop a CoreAudioClock."""
+    ...
+
+def ca_clock_get_play_rate(clock_id: int) -> float:
+    """Get the play rate of a CoreAudioClock."""
+    ...
+
+def ca_clock_set_play_rate(clock_id: int, rate: float) -> None:
+    """Set the play rate of a CoreAudioClock."""
+    ...
+
+def ca_clock_get_current_time(clock_id: int, time_format: int) -> dict[str, Any]:
+    """Get current time from a CoreAudioClock."""
+    ...
+
+def get_ca_clock_time_format_host_time() -> int: ...
+def get_ca_clock_time_format_samples() -> int: ...
+def get_ca_clock_time_format_beats() -> int: ...
+def get_ca_clock_time_format_seconds() -> int: ...
+def get_ca_clock_time_format_smpte_time() -> int: ...
+
+# ============================================================================
+# Cython Buffer Processing Operations
+# ============================================================================
+
+def normalize_audio(audio_data: Any, target_peak: float = 0.9) -> Any:
+    """Normalize audio data to target peak level."""
+    ...
+
+def normalize_audio_float32(audio_data: Any, target_peak: float = 0.9) -> Any:
+    """Normalize float32 audio data to target peak level."""
+    ...
+
+def apply_gain(audio_data: Any, gain_db: float) -> Any:
+    """Apply gain in dB to audio data."""
+    ...
+
+def apply_gain_float32(audio_data: Any, gain_db: float) -> Any:
+    """Apply gain in dB to float32 audio data."""
+    ...
+
+def mix_audio_float32(
+    output: Any, input1: Any, input2: Any, gain1: float = 1.0, gain2: float = 1.0
+) -> Any:
+    """Mix two float32 audio buffers with gain."""
+    ...
+
+def convert_float32_to_int16(float_data: Any, int_data: Any) -> None:
+    """Convert float32 audio data to int16."""
+    ...
+
+def convert_int16_to_float32(int_data: Any, float_data: Any) -> None:
+    """Convert int16 audio data to float32."""
+    ...
+
+def stereo_to_mono_float32(stereo_data: Any, mono_data: Any) -> None:
+    """Convert stereo float32 audio to mono."""
+    ...
+
+def mono_to_stereo_float32(mono_data: Any, stereo_data: Any) -> None:
+    """Convert mono float32 audio to stereo."""
+    ...
+
+def apply_fade_in_float32(audio_data: Any, fade_frames: int) -> None:
+    """Apply fade-in to float32 audio data."""
+    ...
+
+def apply_fade_out_float32(audio_data: Any, fade_frames: int) -> None:
+    """Apply fade-out to float32 audio data."""
+    ...
+
+def calculate_rms(audio_data: Any) -> float:
+    """Calculate RMS level of audio data."""
+    ...
+
+def calculate_rms_float32(audio_data: Any) -> float:
+    """Calculate RMS level of float32 audio data."""
+    ...
+
+def calculate_peak(audio_data: Any) -> float:
+    """Calculate peak level of audio data."""
+    ...
+
+def calculate_peak_float32(audio_data: Any) -> float:
+    """Calculate peak level of float32 audio data."""
     ...
 
 # ============================================================================
@@ -533,6 +660,10 @@ def get_audio_object_property_element_main() -> int: ...
 def get_audio_object_property_scope_global() -> int: ...
 def get_audio_object_property_scope_input() -> int: ...
 def get_audio_object_property_scope_output() -> int: ...
+def get_audio_device_property_volume_scalar() -> int: ...
+def get_audio_device_property_mute() -> int: ...
+def get_audio_hardware_property_default_output_device() -> int: ...
+def get_audio_hardware_property_default_input_device() -> int: ...
 
 # ============================================================================
 # Format & Type Getters
@@ -597,7 +728,7 @@ def audio_converter_fill_complex_buffer(
     input_data: bytes,
     input_packet_count: int,
     output_packet_count: int,
-    source_format_dict: Dict[str, Any]
+    source_format_dict: Dict[str, Any],
 ) -> Tuple[bytes, int]:
     """Convert audio using callback-based API for complex conversions."""
     ...
@@ -608,7 +739,7 @@ def audio_converter_fill_complex_buffer_into(
     output_buffer: bytearray,
     input_packet_count: int,
     output_packet_count: int,
-    source_format_dict: Dict[str, Any]
+    source_format_dict: Dict[str, Any],
 ) -> Tuple[int, int]:
     """Convert audio using callback-based API directly into provided buffers (zero-copy).
 
@@ -860,19 +991,32 @@ def music_sequence_get_sequence_type(sequence_id: int) -> int:
     ...
 
 def music_sequence_file_load(
-    sequence_id: int, file_path: str, file_type_hint: int, flags: int
+    sequence_id: int,
+    file_path: str,
+    file_type_hint: int = 0,
+    flags: int = 0,
 ) -> None:
     """Load sequence from file."""
     ...
 
 def music_track_new_midi_note_event(
-    track_id: int, timestamp: float, note_message: bytes
+    track_id: int,
+    timestamp: float,
+    channel: int,
+    note: int,
+    velocity: int,
+    release_velocity: int,
+    duration: float,
 ) -> None:
     """Add MIDI note event to track."""
     ...
 
 def music_track_new_midi_channel_event(
-    track_id: int, timestamp: float, channel_message: bytes
+    track_id: int,
+    timestamp: float,
+    status: int,
+    data1: int,
+    data2: int,
 ) -> None:
     """Add MIDI channel event to track."""
     ...
@@ -1009,7 +1153,9 @@ def midi_note_off(channel: int, note: int, velocity: int = 0) -> Tuple[int, int,
     """Create MIDI note off message. Returns (status, data1, data2)."""
     ...
 
-def midi_control_change(channel: int, controller: int, value: int) -> Tuple[int, int, int]:
+def midi_control_change(
+    channel: int, controller: int, value: int
+) -> Tuple[int, int, int]:
     """Create MIDI control change message. Returns (status, data1, data2)."""
     ...
 

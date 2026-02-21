@@ -90,15 +90,15 @@ class TestLinkSession:
         session = link.LinkSession(bpm=120.0)
 
         # Should start disabled
-        assert session.enabled == False
+        assert not session.enabled
 
         # Enable
         session.enabled = True
-        assert session.enabled == True
+        assert session.enabled
 
         # Disable
         session.enabled = False
-        assert session.enabled == False
+        assert not session.enabled
 
     def test_link_num_peers_initially_zero(self):
         """Test that num_peers is initially zero"""
@@ -110,15 +110,15 @@ class TestLinkSession:
         session = link.LinkSession(bpm=120.0)
 
         # Should start disabled
-        assert session.start_stop_sync_enabled == False
+        assert not session.start_stop_sync_enabled
 
         # Enable
         session.start_stop_sync_enabled = True
-        assert session.start_stop_sync_enabled == True
+        assert session.start_stop_sync_enabled
 
         # Disable
         session.start_stop_sync_enabled = False
-        assert session.start_stop_sync_enabled == False
+        assert not session.start_stop_sync_enabled
 
     def test_link_clock_access(self):
         """Test accessing Link's clock"""
@@ -223,7 +223,7 @@ class TestSessionState:
         state = session.capture_app_session_state()
 
         # Should start as not playing
-        assert state.is_playing == False
+        assert not state.is_playing
 
     def test_session_state_set_is_playing(self):
         """Test setting transport playing state"""
@@ -240,7 +240,7 @@ class TestSessionState:
         # Verify
         time.sleep(0.1)
         state2 = session.capture_app_session_state()
-        assert state2.is_playing == True
+        assert state2.is_playing
 
         # Stop playing
         current_time2 = session.clock.micros()
@@ -250,7 +250,7 @@ class TestSessionState:
         # Verify
         time.sleep(0.1)
         state3 = session.capture_app_session_state()
-        assert state3.is_playing == False
+        assert not state3.is_playing
 
     def test_session_state_time_for_is_playing(self):
         """Test getting time when transport state changed"""

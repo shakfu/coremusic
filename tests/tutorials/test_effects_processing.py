@@ -6,6 +6,7 @@ All examples are executable doctests.
 
 Run with: pytest tests/tutorials/test_effects_processing.py --doctest-modules -v
 """
+
 from __future__ import annotations
 
 
@@ -99,7 +100,7 @@ def audio_unit_types():
 def create_audio_component_description():
     """Create an AudioComponentDescription.
 
-    >>> from coremusic.objects import AudioComponentDescription
+    >>> from coremusic.audio import AudioComponentDescription
     >>> # Create description for Apple's Delay effect
     >>> desc = AudioComponentDescription(
     ...     type='aufx',        # Effect
@@ -314,4 +315,5 @@ def calculate_tempo_synced_delay():
 # Test runner
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod(verbose=True)

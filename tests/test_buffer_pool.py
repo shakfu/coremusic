@@ -2,7 +2,6 @@
 
 import pytest
 import threading
-from pathlib import Path
 
 from coremusic.audio.buffer_pool import (
     BufferPool,
@@ -73,8 +72,8 @@ class TestBufferPool:
 
         # Each size should have its own pool
         stats = pool.stats
-        assert stats['pool_sizes'] == 2
-        assert stats['cached_buffers'] == 2
+        assert stats["pool_sizes"] == 2
+        assert stats["cached_buffers"] == 2
 
     def test_max_buffers_per_size(self):
         """Test maximum buffers per size limit."""
@@ -89,7 +88,7 @@ class TestBufferPool:
 
         # Should only cache up to max_buffers
         stats = pool.stats
-        assert stats['cached_buffers'] <= max_buffers
+        assert stats["cached_buffers"] <= max_buffers
 
     def test_clear(self):
         """Test clearing all cached buffers."""
@@ -101,14 +100,14 @@ class TestBufferPool:
             pool.release(buffer)
 
         # Verify buffers are cached
-        assert pool.stats['cached_buffers'] > 0
+        assert pool.stats["cached_buffers"] > 0
 
         # Clear pool
         pool.clear()
 
         # Should be empty
-        assert pool.stats['cached_buffers'] == 0
-        assert pool.stats['pool_sizes'] == 0
+        assert pool.stats["cached_buffers"] == 0
+        assert pool.stats["pool_sizes"] == 0
 
     def test_clear_size(self):
         """Test clearing buffers of specific size."""
@@ -125,7 +124,7 @@ class TestBufferPool:
 
         # 2048 should still be cached
         stats = pool.stats
-        assert stats['pool_sizes'] == 1
+        assert stats["pool_sizes"] == 1
 
         # Acquiring 1024 should be cache miss
         old_misses = pool.cache_misses
@@ -156,7 +155,7 @@ class TestBufferPool:
         pool.release(buffer2)
 
         # Third acquire - cache hit
-        buffer3 = pool.acquire(size)
+        pool.acquire(size)
         assert pool.cache_hits == 2
         assert pool.hit_rate == 2.0 / 3.0
 
@@ -170,15 +169,15 @@ class TestBufferPool:
         pool.acquire(1024)
 
         stats = pool.stats
-        assert 'total_allocated' in stats
-        assert 'cache_hits' in stats
-        assert 'cache_misses' in stats
-        assert 'total_requests' in stats
-        assert 'hit_rate' in stats
-        assert 'cached_buffers' in stats
-        assert 'pool_sizes' in stats
+        assert "total_allocated" in stats
+        assert "cache_hits" in stats
+        assert "cache_misses" in stats
+        assert "total_requests" in stats
+        assert "hit_rate" in stats
+        assert "cached_buffers" in stats
+        assert "pool_sizes" in stats
 
-        assert stats['total_requests'] == stats['cache_hits'] + stats['cache_misses']
+        assert stats["total_requests"] == stats["cache_hits"] + stats["cache_misses"]
 
     def test_hit_rate_zero_requests(self):
         """Test hit rate with no requests."""
@@ -189,10 +188,10 @@ class TestBufferPool:
         """Test string representation."""
         pool = BufferPool()
         repr_str = repr(pool)
-        assert 'BufferPool' in repr_str
-        assert 'allocated=' in repr_str
-        assert 'cached=' in repr_str
-        assert 'hit_rate=' in repr_str
+        assert "BufferPool" in repr_str
+        assert "allocated=" in repr_str
+        assert "cached=" in repr_str
+        assert "hit_rate=" in repr_str
 
 
 class TestThreadSafety:
@@ -209,7 +208,7 @@ class TestThreadSafety:
             for _ in range(operations_per_thread):
                 buffer = pool.acquire(size)
                 # Simulate some work
-                buffer[:10] = b'\xFF' * 10
+                buffer[:10] = b"\xff" * 10
                 pool.release(buffer)
 
         threads = [threading.Thread(target=worker) for _ in range(num_threads)]
@@ -223,7 +222,7 @@ class TestThreadSafety:
         # All operations should have completed
         total_ops = num_threads * operations_per_thread
         stats = pool.stats
-        assert stats['total_requests'] == total_ops
+        assert stats["total_requests"] == total_ops
 
 
 class TestPooledBuffer:
@@ -241,7 +240,7 @@ class TestPooledBuffer:
             assert pool.cache_misses == 1
 
         # Buffer should be released after context
-        assert pool.stats['cached_buffers'] == 1
+        assert pool.stats["cached_buffers"] == 1
 
     def test_automatic_release_on_exception(self):
         """Test buffer is released even if exception occurs."""
@@ -249,12 +248,12 @@ class TestPooledBuffer:
         size = 1024
 
         with pytest.raises(ValueError):
-            with PooledBuffer(size, pool=pool) as buffer:
+            with PooledBuffer(size, pool=pool):
                 # Simulate error during processing
                 raise ValueError("Processing error")
 
         # Buffer should still be released
-        assert pool.stats['cached_buffers'] == 1
+        assert pool.stats["cached_buffers"] == 1
 
     def test_default_global_pool(self):
         """Test using default global pool."""
@@ -267,7 +266,7 @@ class TestPooledBuffer:
 
         # Should have used global pool
         global_pool = get_global_pool()
-        assert global_pool.stats['cached_buffers'] == 1
+        assert global_pool.stats["cached_buffers"] == 1
 
     def test_buffer_usage(self):
         """Test actual buffer usage within context."""
@@ -275,10 +274,10 @@ class TestPooledBuffer:
 
         with PooledBuffer(size) as buffer:
             # Write data
-            buffer[:100] = b'\xAB' * 100
+            buffer[:100] = b"\xab" * 100
 
             # Verify data
-            assert buffer[:100] == b'\xAB' * 100
+            assert buffer[:100] == b"\xab" * 100
 
 
 class TestGlobalPool:
@@ -304,7 +303,7 @@ class TestGlobalPool:
 
         # Get pool again
         pool2 = get_global_pool()
-        assert pool2.stats['cached_buffers'] == 1
+        assert pool2.stats["cached_buffers"] == 1
 
     def test_reset_global_pool(self):
         """Test resetting global pool."""
@@ -314,14 +313,14 @@ class TestGlobalPool:
         buffer = pool1.acquire(1024)
         pool1.release(buffer)
 
-        assert pool1.stats['cached_buffers'] == 1
+        assert pool1.stats["cached_buffers"] == 1
 
         # Reset
         reset_global_pool()
 
         # New instance
         pool2 = get_global_pool()
-        assert pool2.stats['cached_buffers'] == 0
+        assert pool2.stats["cached_buffers"] == 0
 
 
 class TestBufferPoolStats:
@@ -370,12 +369,12 @@ class TestBufferPoolStats:
         stats.track_release(1024)
 
         summary = stats.summary()
-        assert 'Acquisitions:' in summary
-        assert 'Releases:' in summary
-        assert 'Outstanding:' in summary
-        assert 'Size Distribution:' in summary
-        assert '1024' in summary
-        assert '2048' in summary
+        assert "Acquisitions:" in summary
+        assert "Releases:" in summary
+        assert "Outstanding:" in summary
+        assert "Size Distribution:" in summary
+        assert "1024" in summary
+        assert "2048" in summary
 
     def test_reset(self):
         """Test resetting statistics."""
@@ -392,5 +391,5 @@ class TestBufferPoolStats:
         assert stats.outstanding == 0
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

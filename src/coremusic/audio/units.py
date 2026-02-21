@@ -8,12 +8,16 @@ This module provides classes for working with Audio Units:
 
 from __future__ import annotations
 
+import logging
 import struct
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from .. import capi
-from .audio import AudioFormat
-from .exceptions import AudioUnitError
+from coremusic import capi
+from coremusic.exceptions import AudioUnitError
+
+from .core import AudioFormat
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "AudioComponentDescription",
@@ -39,7 +43,7 @@ class AudioComponentDescription:
         self.flags = flags
         self.flags_mask = flags_mask
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary format for functional API"""
         type_int = (
             capi.fourchar_to_int(self.type) if isinstance(self.type, str) else self.type
@@ -77,7 +81,7 @@ class AudioComponent(capi.CoreAudioObject):
     @classmethod
     def find_next(
         cls, description: AudioComponentDescription
-    ) -> Optional["AudioComponent"]:
+    ) -> "AudioComponent | None":
         """Find the next matching audio component"""
         try:
             result = capi.audio_component_find_next(description.to_dict())
@@ -87,8 +91,8 @@ class AudioComponent(capi.CoreAudioObject):
             # Set the object_id using the Cython method
             component._set_object_id(result)
             return component
-        except Exception:
-            # If lookup fails, component doesn't exist
+        except Exception as e:
+            logger.debug("Component lookup failed: %s", e)
             return None
 
     def create_instance(self) -> "AudioUnit":
@@ -103,7 +107,9 @@ class AudioComponent(capi.CoreAudioObject):
             raise AudioUnitError(f"Failed to create instance: {e}")
 
     def __repr__(self) -> str:
-        return f"AudioComponent({self._description.type!r}, {self._description.subtype!r})"
+        return (
+            f"AudioComponent({self._description.type!r}, {self._description.subtype!r})"
+        )
 
 
 class AudioUnit(capi.CoreAudioObject):
@@ -229,35 +235,9 @@ class AudioUnit(capi.CoreAudioObject):
             asbd_data = self.get_property(
                 capi.get_audio_unit_property_stream_format(), scope_val, element
             )
-
-            if len(asbd_data) >= 40:
-                asbd = struct.unpack("<dLLLLLLLL", asbd_data[:40])
-                (
-                    sample_rate,
-                    format_id_int,
-                    format_flags,
-                    bytes_per_packet,
-                    frames_per_packet,
-                    bytes_per_frame,
-                    channels_per_frame,
-                    bits_per_channel,
-                    reserved,
-                ) = asbd
-
-                format_id = capi.int_to_fourchar(format_id_int)
-
-                return AudioFormat(
-                    sample_rate=sample_rate,
-                    format_id=format_id,
-                    format_flags=format_flags,
-                    bytes_per_packet=bytes_per_packet,
-                    frames_per_packet=frames_per_packet,
-                    bytes_per_frame=bytes_per_frame,
-                    channels_per_frame=channels_per_frame,
-                    bits_per_channel=bits_per_channel,
-                )
-            else:
-                raise AudioUnitError(f"Invalid ASBD data size: {len(asbd_data)}")
+            return AudioFormat.from_asbd_bytes(asbd_data)
+        except ValueError as e:
+            raise AudioUnitError(f"Invalid ASBD data: {e}")
         except Exception as e:
             raise AudioUnitError(f"Failed to get stream format: {e}")
 
@@ -278,7 +258,7 @@ class AudioUnit(capi.CoreAudioObject):
 
         Example::
 
-            from coremusic.objects import AudioFormat, AudioUnit
+            from coremusic.audio import AudioFormat, AudioUnit
 
             # Create a stereo 44.1kHz 16-bit PCM format
             format = AudioFormat(
@@ -376,18 +356,14 @@ class AudioUnit(capi.CoreAudioObject):
 
         # Try output scope (may work after initialization)
         try:
-            self.set_property(
-                2, capi.get_audio_unit_scope_output(), 0, data
-            )
+            self.set_property(2, capi.get_audio_unit_scope_output(), 0, data)
             return
         except Exception:
             pass
 
         # Try global scope as fallback
         try:
-            self.set_property(
-                2, capi.get_audio_unit_scope_global(), 0, data
-            )
+            self.set_property(2, capi.get_audio_unit_scope_global(), 0, data)
             return
         except Exception:
             pass
@@ -457,7 +433,7 @@ class AudioUnit(capi.CoreAudioObject):
         except Exception as e:
             raise AudioUnitError(f"Failed to set max frames per slice: {e}")
 
-    def get_parameter_list(self, scope: str = "global") -> List[int]:
+    def get_parameter_list(self, scope: str = "global") -> list[int]:
         """Get list of available parameter IDs (kAudioUnitProperty_ParameterList)
 
         Args:
@@ -489,7 +465,7 @@ class AudioUnit(capi.CoreAudioObject):
         except Exception:
             return []
 
-    def render(self, num_frames: int, timestamp: Optional[int] = None) -> bytes:
+    def render(self, num_frames: int, timestamp: int | None = None) -> bytes:
         """Render audio frames (for offline processing)
 
         Args:

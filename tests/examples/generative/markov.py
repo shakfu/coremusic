@@ -53,16 +53,18 @@ from coremusic.midi.utilities import MIDIEvent, MIDISequence, MIDITrack
 
 class ModelingMode(Enum):
     """What properties to model in the Markov chain."""
-    PITCH_ONLY = auto()           # Just pitch, constant duration/velocity
-    PITCH_DURATION = auto()       # Pitch and duration, constant velocity
+
+    PITCH_ONLY = auto()  # Just pitch, constant duration/velocity
+    PITCH_DURATION = auto()  # Pitch and duration, constant velocity
     PITCH_DURATION_VELOCITY = auto()  # Full note modeling
 
 
 class RhythmMode(Enum):
     """How to handle rhythm (inter-onset intervals)."""
-    CONSTANT = auto()         # Fixed rhythm
-    MARKOV = auto()           # Separate Markov chain for IOI
-    FROM_GENERATOR = auto()   # Use external generator (e.g., Euclidean)
+
+    CONSTANT = auto()  # Fixed rhythm
+    MARKOV = auto()  # Separate Markov chain for IOI
+    FROM_GENERATOR = auto()  # Use external generator (e.g., Euclidean)
 
 
 # State type for Markov chains - tuple of values for higher-order chains
@@ -84,6 +86,7 @@ class NoteData:
         velocity: Note velocity (0-127)
         time: Onset time in beats (for context)
     """
+
     pitch: int
     duration: float
     velocity: int
@@ -92,20 +95,20 @@ class NoteData:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
-            'pitch': self.pitch,
-            'duration': self.duration,
-            'velocity': self.velocity,
-            'time': self.time,
+            "pitch": self.pitch,
+            "duration": self.duration,
+            "velocity": self.velocity,
+            "time": self.time,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'NoteData':
+    def from_dict(cls, data: Dict[str, Any]) -> "NoteData":
         """Create from dictionary."""
         return cls(
-            pitch=data['pitch'],
-            duration=data['duration'],
-            velocity=data['velocity'],
-            time=data.get('time', 0.0),
+            pitch=data["pitch"],
+            duration=data["duration"],
+            velocity=data["velocity"],
+            time=data.get("time", 0.0),
         )
 
 
@@ -120,6 +123,7 @@ class TransitionEdge:
         probability: Transition probability (computed from count)
         metadata: Optional additional data (duration, velocity distributions)
     """
+
     from_state: StateKey
     to_state: int
     count: int = 1
@@ -129,25 +133,27 @@ class TransitionEdge:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
-            'from_state': list(self.from_state) if isinstance(self.from_state, tuple) else self.from_state,
-            'to_state': self.to_state,
-            'count': self.count,
-            'probability': self.probability,
-            'metadata': self.metadata,
+            "from_state": list(self.from_state)
+            if isinstance(self.from_state, tuple)
+            else self.from_state,
+            "to_state": self.to_state,
+            "count": self.count,
+            "probability": self.probability,
+            "metadata": self.metadata,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'TransitionEdge':
+    def from_dict(cls, data: Dict[str, Any]) -> "TransitionEdge":
         """Create from dictionary."""
-        from_state = data['from_state']
+        from_state = data["from_state"]
         if isinstance(from_state, list):
             from_state = tuple(from_state)
         return cls(
             from_state=from_state,
-            to_state=data['to_state'],
-            count=data.get('count', 1),
-            probability=data.get('probability', 0.0),
-            metadata=data.get('metadata', {}),
+            to_state=data["to_state"],
+            count=data.get("count", 1),
+            probability=data.get("probability", 0.0),
+            metadata=data.get("metadata", {}),
         )
 
 
@@ -169,6 +175,7 @@ class ChainConfig:
         default_velocity: Default velocity (for modes without velocity)
         seed: Random seed for reproducibility
     """
+
     order: int = 1
     modeling_mode: ModelingMode = ModelingMode.PITCH_ONLY
     rhythm_mode: RhythmMode = RhythmMode.CONSTANT
@@ -194,43 +201,47 @@ class ChainConfig:
         if self.note_min > self.note_max:
             raise ValueError(f"note_min ({self.note_min}) > note_max ({self.note_max})")
         if not 0 <= self.gravity_strength <= 1:
-            raise ValueError(f"gravity_strength must be 0-1, got {self.gravity_strength}")
+            raise ValueError(
+                f"gravity_strength must be 0-1, got {self.gravity_strength}"
+            )
         if self.smoothing_alpha < 0:
-            raise ValueError(f"smoothing_alpha must be >= 0, got {self.smoothing_alpha}")
+            raise ValueError(
+                f"smoothing_alpha must be >= 0, got {self.smoothing_alpha}"
+            )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
-            'order': self.order,
-            'modeling_mode': self.modeling_mode.name,
-            'rhythm_mode': self.rhythm_mode.name,
-            'temperature': self.temperature,
-            'note_min': self.note_min,
-            'note_max': self.note_max,
-            'gravity_notes': {str(k): v for k, v in self.gravity_notes.items()},
-            'gravity_strength': self.gravity_strength,
-            'smoothing_alpha': self.smoothing_alpha,
-            'default_duration': self.default_duration,
-            'default_velocity': self.default_velocity,
-            'seed': self.seed,
+            "order": self.order,
+            "modeling_mode": self.modeling_mode.name,
+            "rhythm_mode": self.rhythm_mode.name,
+            "temperature": self.temperature,
+            "note_min": self.note_min,
+            "note_max": self.note_max,
+            "gravity_notes": {str(k): v for k, v in self.gravity_notes.items()},
+            "gravity_strength": self.gravity_strength,
+            "smoothing_alpha": self.smoothing_alpha,
+            "default_duration": self.default_duration,
+            "default_velocity": self.default_velocity,
+            "seed": self.seed,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ChainConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> "ChainConfig":
         """Create from dictionary."""
         return cls(
-            order=data.get('order', 1),
-            modeling_mode=ModelingMode[data.get('modeling_mode', 'PITCH_ONLY')],
-            rhythm_mode=RhythmMode[data.get('rhythm_mode', 'CONSTANT')],
-            temperature=data.get('temperature', 1.0),
-            note_min=data.get('note_min', 0),
-            note_max=data.get('note_max', 127),
-            gravity_notes={int(k): v for k, v in data.get('gravity_notes', {}).items()},
-            gravity_strength=data.get('gravity_strength', 0.0),
-            smoothing_alpha=data.get('smoothing_alpha', 0.0),
-            default_duration=data.get('default_duration', 0.5),
-            default_velocity=data.get('default_velocity', 100),
-            seed=data.get('seed'),
+            order=data.get("order", 1),
+            modeling_mode=ModelingMode[data.get("modeling_mode", "PITCH_ONLY")],
+            rhythm_mode=RhythmMode[data.get("rhythm_mode", "CONSTANT")],
+            temperature=data.get("temperature", 1.0),
+            note_min=data.get("note_min", 0),
+            note_max=data.get("note_max", 127),
+            gravity_notes={int(k): v for k, v in data.get("gravity_notes", {}).items()},
+            gravity_strength=data.get("gravity_strength", 0.0),
+            smoothing_alpha=data.get("smoothing_alpha", 0.0),
+            default_duration=data.get("default_duration", 0.5),
+            default_velocity=data.get("default_velocity", 100),
+            seed=data.get("seed"),
         )
 
 
@@ -280,11 +291,11 @@ class MarkovChain:
         self._transitions: Dict[StateKey, Dict[int, TransitionEdge]] = {}
 
         # Duration and velocity distributions (for PITCH_DURATION and PITCH_DURATION_VELOCITY modes)
-        self._duration_chain: Optional['MarkovChain'] = None
-        self._velocity_chain: Optional['MarkovChain'] = None
+        self._duration_chain: Optional["MarkovChain"] = None
+        self._velocity_chain: Optional["MarkovChain"] = None
 
         # Rhythm chain (IOI)
-        self._rhythm_chain: Optional['MarkovChain'] = None
+        self._rhythm_chain: Optional["MarkovChain"] = None
 
         # Track metadata
         self._track_name: str = ""
@@ -304,10 +315,7 @@ class MarkovChain:
             return
 
         # Extract pitches
-        pitches = [
-            n.pitch if isinstance(n, NoteData) else n
-            for n in notes
-        ]
+        pitches = [n.pitch if isinstance(n, NoteData) else n for n in notes]
 
         # Build transition counts
         self._transitions.clear()
@@ -317,7 +325,7 @@ class MarkovChain:
             if self.config.order == 1:
                 state: StateKey = pitches[i]
             else:
-                state = tuple(pitches[i:i + self.config.order])
+                state = tuple(pitches[i : i + self.config.order])
 
             next_pitch = pitches[i + self.config.order]
 
@@ -338,13 +346,20 @@ class MarkovChain:
         self._recompute_probabilities()
 
         # Train duration/velocity chains if using extended modes
-        if self.config.modeling_mode in (ModelingMode.PITCH_DURATION, ModelingMode.PITCH_DURATION_VELOCITY):
+        if self.config.modeling_mode in (
+            ModelingMode.PITCH_DURATION,
+            ModelingMode.PITCH_DURATION_VELOCITY,
+        ):
             if all(isinstance(n, NoteData) for n in notes):
-                self._train_duration_chain([n for n in notes if isinstance(n, NoteData)])
+                self._train_duration_chain(
+                    [n for n in notes if isinstance(n, NoteData)]
+                )
 
         if self.config.modeling_mode == ModelingMode.PITCH_DURATION_VELOCITY:
             if all(isinstance(n, NoteData) for n in notes):
-                self._train_velocity_chain([n for n in notes if isinstance(n, NoteData)])
+                self._train_velocity_chain(
+                    [n for n in notes if isinstance(n, NoteData)]
+                )
 
     def _train_duration_chain(self, notes: List[NoteData]) -> None:
         """Train duration sub-chain from NoteData sequence."""
@@ -374,7 +389,7 @@ class MarkovChain:
             if self.config.order == 1:
                 state: StateKey = values[i]
             else:
-                state = tuple(values[i:i + self.config.order])
+                state = tuple(values[i : i + self.config.order])
 
             next_val = values[i + self.config.order]
 
@@ -521,7 +536,7 @@ class MarkovChain:
             # Pad history if needed
             if len(history) < self.config.order:
                 history = [history[0]] * (self.config.order - len(history)) + history
-            return tuple(history[-self.config.order:])
+            return tuple(history[-self.config.order :])
 
     def _get_adjusted_probabilities(
         self,
@@ -543,8 +558,8 @@ class MarkovChain:
                 if self.config.smoothing_alpha > 0:
                     total_states = len(self._get_all_notes())
                     prob = (edge.count + self.config.smoothing_alpha) / (
-                        sum(e.count for e in edges.values()) +
-                        self.config.smoothing_alpha * total_states
+                        sum(e.count for e in edges.values())
+                        + self.config.smoothing_alpha * total_states
                     )
 
                 # Apply temperature
@@ -555,7 +570,9 @@ class MarkovChain:
                 if self.config.gravity_strength > 0 and self.config.gravity_notes:
                     if note in self.config.gravity_notes:
                         gravity_weight = self.config.gravity_notes[note]
-                        prob = prob * (1 + self.config.gravity_strength * gravity_weight)
+                        prob = prob * (
+                            1 + self.config.gravity_strength * gravity_weight
+                        )
 
                 # Apply clamping
                 if not (self.config.note_min <= note <= self.config.note_max):
@@ -729,7 +746,9 @@ class MarkovChain:
         """
         if state not in self._transitions:
             return {}
-        return {note: edge.probability for note, edge in self._transitions[state].items()}
+        return {
+            note: edge.probability for note, edge in self._transitions[state].items()
+        }
 
     def get_transitions_to(self, note: int) -> Dict[StateKey, float]:
         """Get all transitions to a note.
@@ -824,7 +843,9 @@ class MarkovChain:
 
         for state in states_to_check:
             edges = self._transitions[state]
-            to_remove = [note for note, edge in edges.items() if edge.probability < threshold]
+            to_remove = [
+                note for note, edge in edges.items() if edge.probability < threshold
+            ]
 
             for note in to_remove:
                 del edges[note]
@@ -948,46 +969,46 @@ class MarkovChain:
                 transitions_list.append(edge.to_dict())
 
         result = {
-            'version': '1.0',
-            'config': self.config.to_dict(),
-            'transitions': transitions_list,
-            'track_name': self._track_name,
-            'source_file': self._source_file,
+            "version": "1.0",
+            "config": self.config.to_dict(),
+            "transitions": transitions_list,
+            "track_name": self._track_name,
+            "source_file": self._source_file,
         }
 
         # Include sub-chains if present
         if self._duration_chain:
-            result['duration_chain'] = self._duration_chain.to_dict()
+            result["duration_chain"] = self._duration_chain.to_dict()
         if self._velocity_chain:
-            result['velocity_chain'] = self._velocity_chain.to_dict()
+            result["velocity_chain"] = self._velocity_chain.to_dict()
         if self._rhythm_chain:
-            result['rhythm_chain'] = self._rhythm_chain.to_dict()
+            result["rhythm_chain"] = self._rhythm_chain.to_dict()
 
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'MarkovChain':
+    def from_dict(cls, data: Dict[str, Any]) -> "MarkovChain":
         """Create chain from dictionary."""
-        config = ChainConfig.from_dict(data.get('config', {}))
+        config = ChainConfig.from_dict(data.get("config", {}))
         chain = cls(config)
 
         # Load transitions
-        for edge_data in data.get('transitions', []):
+        for edge_data in data.get("transitions", []):
             edge = TransitionEdge.from_dict(edge_data)
             if edge.from_state not in chain._transitions:
                 chain._transitions[edge.from_state] = {}
             chain._transitions[edge.from_state][edge.to_state] = edge
 
-        chain._track_name = data.get('track_name', '')
-        chain._source_file = data.get('source_file', '')
+        chain._track_name = data.get("track_name", "")
+        chain._source_file = data.get("source_file", "")
 
         # Load sub-chains
-        if 'duration_chain' in data:
-            chain._duration_chain = cls.from_dict(data['duration_chain'])
-        if 'velocity_chain' in data:
-            chain._velocity_chain = cls.from_dict(data['velocity_chain'])
-        if 'rhythm_chain' in data:
-            chain._rhythm_chain = cls.from_dict(data['rhythm_chain'])
+        if "duration_chain" in data:
+            chain._duration_chain = cls.from_dict(data["duration_chain"])
+        if "velocity_chain" in data:
+            chain._velocity_chain = cls.from_dict(data["velocity_chain"])
+        if "rhythm_chain" in data:
+            chain._rhythm_chain = cls.from_dict(data["rhythm_chain"])
 
         return chain
 
@@ -996,7 +1017,7 @@ class MarkovChain:
         return json.dumps(self.to_dict(), indent=indent)
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'MarkovChain':
+    def from_json(cls, json_str: str) -> "MarkovChain":
         """Create chain from JSON string."""
         return cls.from_dict(json.loads(json_str))
 
@@ -1011,7 +1032,7 @@ class MarkovChain:
         path.write_text(self.to_json())
 
     @classmethod
-    def load(cls, filepath: Union[str, Path]) -> 'MarkovChain':
+    def load(cls, filepath: Union[str, Path]) -> "MarkovChain":
         """Load chain from JSON file.
 
         Args:
@@ -1141,7 +1162,9 @@ class MIDIMarkovAnalyzer:
             Trained MarkovChain
         """
         if track_index >= len(sequence.tracks):
-            raise ValueError(f"Track index {track_index} out of range (have {len(sequence.tracks)} tracks)")
+            raise ValueError(
+                f"Track index {track_index} out of range (have {len(sequence.tracks)} tracks)"
+            )
 
         track = sequence.tracks[track_index]
         return self._analyze_track_impl(track, sequence.tempo, source_file)
@@ -1185,11 +1208,13 @@ class MIDIMarkovAnalyzer:
             return chain
 
         # Create and train chain
-        chain = MarkovChain(ChainConfig(
-            order=self.config.order,
-            modeling_mode=self.config.modeling_mode,
-            rhythm_mode=self.config.rhythm_mode,
-        ))
+        chain = MarkovChain(
+            ChainConfig(
+                order=self.config.order,
+                modeling_mode=self.config.modeling_mode,
+                rhythm_mode=self.config.rhythm_mode,
+            )
+        )
 
         chain._track_name = track.name
         chain._source_file = source_file
@@ -1225,12 +1250,14 @@ class MIDIMarkovAnalyzer:
                     time_beats = on_event.time / beat_duration
                     duration_beats = (event.time - on_event.time) / beat_duration
 
-                    notes.append(NoteData(
-                        pitch=event.data1,
-                        duration=max(0.001, duration_beats),  # Minimum duration
-                        velocity=on_event.data2,
-                        time=time_beats,
-                    ))
+                    notes.append(
+                        NoteData(
+                            pitch=event.data1,
+                            duration=max(0.001, duration_beats),  # Minimum duration
+                            velocity=on_event.data2,
+                            time=time_beats,
+                        )
+                    )
 
         # Sort by time
         notes.sort(key=lambda n: n.time)
@@ -1301,7 +1328,9 @@ class MIDIMarkovGenerator:
             Generated MIDISequence
         """
         sequence = MIDISequence(tempo=tempo)
-        track = sequence.add_track(f"Generated from {self.chain._track_name or 'chain'}")
+        track = sequence.add_track(
+            f"Generated from {self.chain._track_name or 'chain'}"
+        )
         track.channel = channel
 
         if self.chain.get_state_count() == 0:
@@ -1353,7 +1382,7 @@ class MIDIMarkovGenerator:
             # Update state
             history.append(pitch)
             if len(history) > self.chain.config.order:
-                history = history[-self.chain.config.order:]
+                history = history[-self.chain.config.order :]
 
             ioi_history.append(ioi)
             if len(ioi_history) > 4:
@@ -1424,7 +1453,7 @@ class MIDIMarkovGenerator:
 
             history.append(pitch)
             if len(history) > self.chain.config.order:
-                history = history[-self.chain.config.order:]
+                history = history[-self.chain.config.order :]
 
             ioi_history.append(ioi)
             if len(ioi_history) > 4:
@@ -1530,7 +1559,9 @@ def merge_chains(
         weights = [1.0] * len(chains)
 
     if len(weights) != len(chains):
-        raise ValueError(f"Weights length {len(weights)} != chains length {len(chains)}")
+        raise ValueError(
+            f"Weights length {len(weights)} != chains length {len(chains)}"
+        )
 
     # Use config from first chain
     merged = MarkovChain(chains[0].config)
@@ -1576,13 +1607,13 @@ def chain_statistics(chain: MarkovChain) -> Dict[str, Any]:
     notes = chain._get_all_notes()
 
     return {
-        'order': chain.config.order,
-        'modeling_mode': chain.config.modeling_mode.name,
-        'state_count': chain.get_state_count(),
-        'transition_count': chain.get_transition_count(),
-        'unique_notes': len(notes),
-        'note_range': (min(notes), max(notes)) if notes else (0, 0),
-        'average_entropy': chain.get_average_entropy(),
-        'track_name': chain._track_name,
-        'source_file': chain._source_file,
+        "order": chain.config.order,
+        "modeling_mode": chain.config.modeling_mode.name,
+        "state_count": chain.get_state_count(),
+        "transition_count": chain.get_transition_count(),
+        "unique_notes": len(notes),
+        "note_range": (min(notes), max(notes)) if notes else (0, 0),
+        "average_entropy": chain.get_average_entropy(),
+        "track_name": chain._track_name,
+        "source_file": chain._source_file,
     }

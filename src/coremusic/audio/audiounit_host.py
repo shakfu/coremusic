@@ -3,10 +3,12 @@
 Provides Pythonic object-oriented wrapper for AudioUnit plugin hosting.
 """
 
+from __future__ import annotations
+
 import json
 import struct
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from .. import capi
 
@@ -14,16 +16,22 @@ from .. import capi
 # Audio Format Support
 # ============================================================================
 
+
 class PluginAudioFormat:
     """Represents an audio format with support for multiple sample formats"""
 
-    FLOAT32 = 'float32'
-    FLOAT64 = 'float64'
-    INT16 = 'int16'
-    INT32 = 'int32'
+    FLOAT32 = "float32"
+    FLOAT64 = "float64"
+    INT16 = "int16"
+    INT32 = "int32"
 
-    def __init__(self, sample_rate: float = 44100.0, channels: int = 2,
-                 sample_format: str = FLOAT32, interleaved: bool = True):
+    def __init__(
+        self,
+        sample_rate: float = 44100.0,
+        channels: int = 2,
+        sample_format: str = FLOAT32,
+        interleaved: bool = True,
+    ):
         """Initialize audio format
 
         Args:
@@ -59,43 +67,51 @@ class PluginAudioFormat:
     def struct_format(self) -> str:
         """Struct format string for this sample format"""
         return {
-            self.FLOAT32: 'f',
-            self.FLOAT64: 'd',
-            self.INT16: 'h',
-            self.INT32: 'i',
+            self.FLOAT32: "f",
+            self.FLOAT64: "d",
+            self.INT16: "h",
+            self.INT32: "i",
         }[self.sample_format]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'sample_rate': self.sample_rate,
-            'channels': self.channels,
-            'sample_format': self.sample_format,
-            'interleaved': self.interleaved,
-            'bytes_per_sample': self.bytes_per_sample,
-            'bytes_per_frame': self.bytes_per_frame,
+            "sample_rate": self.sample_rate,
+            "channels": self.channels,
+            "sample_format": self.sample_format,
+            "interleaved": self.interleaved,
+            "bytes_per_sample": self.bytes_per_sample,
+            "bytes_per_frame": self.bytes_per_frame,
         }
 
     def __repr__(self) -> str:
         interleaved_str = "interleaved" if self.interleaved else "non-interleaved"
-        return (f"PluginAudioFormat({self.sample_rate}Hz, {self.channels}ch, "
-                f"{self.sample_format}, {interleaved_str})")
+        return (
+            f"PluginAudioFormat({self.sample_rate}Hz, {self.channels}ch, "
+            f"{self.sample_format}, {interleaved_str})"
+        )
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, PluginAudioFormat):
             return False
-        return bool(self.sample_rate == other.sample_rate and
-                self.channels == other.channels and
-                self.sample_format == other.sample_format and
-                self.interleaved == other.interleaved)
+        return bool(
+            self.sample_rate == other.sample_rate
+            and self.channels == other.channels
+            and self.sample_format == other.sample_format
+            and self.interleaved == other.interleaved
+        )
 
 
 class AudioFormatConverter:
     """Convert between different audio formats"""
 
     @staticmethod
-    def convert(input_data: bytes, num_frames: int,
-                source_format: PluginAudioFormat, dest_format: PluginAudioFormat) -> bytes:
+    def convert(
+        input_data: bytes,
+        num_frames: int,
+        source_format: PluginAudioFormat,
+        dest_format: PluginAudioFormat,
+    ) -> bytes:
         """Convert audio data from one format to another
 
         Args:
@@ -123,11 +139,14 @@ class AudioFormatConverter:
         return output_data
 
     @staticmethod
-    def _to_float32_interleaved(input_data: bytes, num_frames: int,
-                                 source_format: PluginAudioFormat) -> bytes:
+    def _to_float32_interleaved(
+        input_data: bytes, num_frames: int, source_format: PluginAudioFormat
+    ) -> bytes:
         """Convert any format to float32 interleaved"""
-        if (source_format.sample_format == PluginAudioFormat.FLOAT32 and
-            source_format.interleaved):
+        if (
+            source_format.sample_format == PluginAudioFormat.FLOAT32
+            and source_format.interleaved
+        ):
             return input_data
 
         channels = source_format.channels
@@ -138,8 +157,8 @@ class AudioFormatConverter:
         if source_format.interleaved:
             # Interleaved -> interleaved (format conversion only)
             samples = struct.unpack(
-                f'{num_frames * channels}{struct_fmt}',
-                input_data[:num_frames * channels * bytes_per_sample]
+                f"{num_frames * channels}{struct_fmt}",
+                input_data[: num_frames * channels * bytes_per_sample],
             )
 
             # Convert to float32
@@ -147,7 +166,7 @@ class AudioFormatConverter:
                 samples, source_format.sample_format
             )
 
-            return struct.pack(f'{len(float_samples)}f', *float_samples)
+            return struct.pack(f"{len(float_samples)}f", *float_samples)
         else:
             # Non-interleaved -> interleaved
             # Input is: [Ch0_F0, Ch0_F1, ..., Ch0_FN, Ch1_F0, Ch1_F1, ..., Ch1_FN, ...]
@@ -156,7 +175,9 @@ class AudioFormatConverter:
             for frame_idx in range(num_frames):
                 for ch_idx in range(channels):
                     sample_offset = (ch_idx * num_frames + frame_idx) * bytes_per_sample
-                    sample_bytes = input_data[sample_offset:sample_offset + bytes_per_sample]
+                    sample_bytes = input_data[
+                        sample_offset : sample_offset + bytes_per_sample
+                    ]
                     sample = struct.unpack(struct_fmt, sample_bytes)[0]
                     float_samples.append(
                         AudioFormatConverter._normalize_sample(
@@ -164,28 +185,33 @@ class AudioFormatConverter:
                         )
                     )
 
-            return struct.pack(f'{len(float_samples)}f', *float_samples)
+            return struct.pack(f"{len(float_samples)}f", *float_samples)
 
     @staticmethod
-    def _from_float32_interleaved(float_data: bytes, num_frames: int,
-                                    dest_format: PluginAudioFormat) -> bytes:
+    def _from_float32_interleaved(
+        float_data: bytes, num_frames: int, dest_format: PluginAudioFormat
+    ) -> bytes:
         """Convert float32 interleaved to any format"""
-        if (dest_format.sample_format == PluginAudioFormat.FLOAT32 and
-            dest_format.interleaved):
+        if (
+            dest_format.sample_format == PluginAudioFormat.FLOAT32
+            and dest_format.interleaved
+        ):
             return float_data
 
         channels = dest_format.channels
         struct_fmt = dest_format.struct_format
 
         # Parse float32 data
-        float_samples = struct.unpack(f'{num_frames * channels}f', float_data)
+        float_samples = struct.unpack(f"{num_frames * channels}f", float_data)
 
         if dest_format.interleaved:
             # Interleaved -> interleaved (format conversion only)
             converted_samples = AudioFormatConverter._denormalize_from_float(
                 float_samples, dest_format.sample_format
             )
-            return struct.pack(f'{len(converted_samples)}{struct_fmt}', *converted_samples)
+            return struct.pack(
+                f"{len(converted_samples)}{struct_fmt}", *converted_samples
+            )
         else:
             # Interleaved -> non-interleaved
             # Input (float32 interleaved): [Ch0_F0, Ch1_F0, ..., ChN_F0, Ch0_F1, Ch1_F1, ..., ChN_F1, ...]
@@ -202,7 +228,7 @@ class AudioFormatConverter:
                     )
                     output_samples.append(converted_sample)
 
-            return struct.pack(f'{len(output_samples)}{struct_fmt}', *output_samples)
+            return struct.pack(f"{len(output_samples)}{struct_fmt}", *output_samples)
 
     @staticmethod
     def _normalize_sample(sample: Any, sample_format: str) -> float:
@@ -219,9 +245,13 @@ class AudioFormatConverter:
             raise ValueError(f"Unknown sample format: {sample_format}")
 
     @staticmethod
-    def _normalize_to_float(samples: Tuple[Any, ...], sample_format: str) -> List[float]:
+    def _normalize_to_float(
+        samples: tuple[Any, ...], sample_format: str
+    ) -> list[float]:
         """Normalize all samples to float32"""
-        return [AudioFormatConverter._normalize_sample(s, sample_format) for s in samples]
+        return [
+            AudioFormatConverter._normalize_sample(s, sample_format) for s in samples
+        ]
 
     @staticmethod
     def _denormalize_sample(float_sample: float, sample_format: str) -> Any:
@@ -248,15 +278,20 @@ class AudioFormatConverter:
             raise ValueError(f"Unknown sample format: {sample_format}")
 
     @staticmethod
-    def _denormalize_from_float(float_samples: Tuple[float, ...], sample_format: str) -> List[Any]:
+    def _denormalize_from_float(
+        float_samples: tuple[float, ...], sample_format: str
+    ) -> list[Any]:
         """Denormalize all samples from float32"""
-        return [AudioFormatConverter._denormalize_sample(s, sample_format) for s in float_samples]
+        return [
+            AudioFormatConverter._denormalize_sample(s, sample_format)
+            for s in float_samples
+        ]
 
 
 class AudioUnitParameter:
     """Represents a single AudioUnit parameter with metadata and control"""
 
-    def __init__(self, plugin: 'AudioUnitPlugin', param_id: int, info: Dict[str, Any]):
+    def __init__(self, plugin: "AudioUnitPlugin", param_id: int, info: dict[str, Any]):
         self._plugin = plugin
         self._param_id = param_id
         self._info = info
@@ -269,37 +304,37 @@ class AudioUnitParameter:
     @property
     def name(self) -> str:
         """Parameter name"""
-        result: str = self._info['name']
+        result: str = self._info["name"]
         return result
 
     @property
     def unit(self) -> int:
         """Parameter unit type"""
-        result: int = self._info['unit']
+        result: int = self._info["unit"]
         return result
 
     @property
     def unit_name(self) -> str:
         """Parameter unit name (e.g., 'Hz', 'dB')"""
-        result: str = self._info.get('unit_name', '')
+        result: str = self._info.get("unit_name", "")
         return result
 
     @property
     def min_value(self) -> float:
         """Minimum parameter value"""
-        result: float = self._info['min_value']
+        result: float = self._info["min_value"]
         return result
 
     @property
     def max_value(self) -> float:
         """Maximum parameter value"""
-        result: float = self._info['max_value']
+        result: float = self._info["max_value"]
         return result
 
     @property
     def default_value(self) -> float:
         """Default parameter value"""
-        result: float = self._info['default_value']
+        result: float = self._info["default_value"]
         return result
 
     @property
@@ -308,10 +343,7 @@ class AudioUnitParameter:
         if self._plugin._unit_id is None:
             raise RuntimeError("Plugin not instantiated")
         return capi.audio_unit_get_parameter(
-            self._plugin._unit_id,
-            self._param_id,
-            scope=0,
-            element=0
+            self._plugin._unit_id, self._param_id, scope=0, element=0
         )
 
     @value.setter
@@ -322,17 +354,15 @@ class AudioUnitParameter:
         # Clamp to valid range
         clamped = max(self.min_value, min(self.max_value, new_value))
         capi.audio_unit_set_parameter(
-            self._plugin._unit_id,
-            self._param_id,
-            clamped,
-            scope=0,
-            element=0
+            self._plugin._unit_id, self._param_id, clamped, scope=0, element=0
         )
 
     def __repr__(self) -> str:
         unit_str = f" {self.unit_name}" if self.unit_name else ""
-        return (f"AudioUnitParameter('{self.name}', value={self.value:.3f}{unit_str}, "
-                f"range={self.min_value:.3f}-{self.max_value:.3f})")
+        return (
+            f"AudioUnitParameter('{self.name}', value={self.value:.3f}{unit_str}, "
+            f"range={self.min_value:.3f}-{self.max_value:.3f})"
+        )
 
 
 class AudioUnitPreset:
@@ -355,7 +385,7 @@ class PresetManager:
     (simplified version of Apple's .aupreset format).
     """
 
-    def __init__(self, preset_dir: Optional[Path] = None):
+    def __init__(self, preset_dir: Path | None = None):
         """Initialize preset manager
 
         Args:
@@ -369,8 +399,9 @@ class PresetManager:
 
         self.preset_dir.mkdir(parents=True, exist_ok=True)
 
-    def save_preset(self, plugin: 'AudioUnitPlugin', preset_name: str,
-                    description: str = "") -> Path:
+    def save_preset(
+        self, plugin: "AudioUnitPlugin", preset_name: str, description: str = ""
+    ) -> Path:
         """Save current plugin state as a user preset
 
         Args:
@@ -385,7 +416,7 @@ class PresetManager:
             raise RuntimeError("Plugin not initialized")
 
         # Create directory for this plugin
-        plugin_dir = self.preset_dir / plugin.name.replace(' ', '_')
+        plugin_dir = self.preset_dir / plugin.name.replace(" ", "_")
         plugin_dir.mkdir(parents=True, exist_ok=True)
 
         # Get all parameter values
@@ -394,38 +425,40 @@ class PresetManager:
             for param in plugin._parameters:
                 try:
                     parameters[param.name] = {
-                        'id': param.id,
-                        'value': param.value,
-                        'default': param.default_value,
-                        'min': param.min_value,
-                        'max': param.max_value,
+                        "id": param.id,
+                        "value": param.value,
+                        "default": param.default_value,
+                        "min": param.min_value,
+                        "max": param.max_value,
                     }
                 except Exception:
                     pass  # Skip parameters that can't be read
 
         # Create preset data
         preset_data = {
-            'name': preset_name,
-            'description': description,
-            'plugin': {
-                'name': plugin.name,
-                'manufacturer': plugin.manufacturer,
-                'type': plugin.type,
-                'subtype': plugin.subtype,
-                'version': plugin.version,
+            "name": preset_name,
+            "description": description,
+            "plugin": {
+                "name": plugin.name,
+                "manufacturer": plugin.manufacturer,
+                "type": plugin.type,
+                "subtype": plugin.subtype,
+                "version": plugin.version,
             },
-            'parameters': parameters,
-            'format_version': '1.0',
+            "parameters": parameters,
+            "format_version": "1.0",
         }
 
         # Save to file
         preset_file = plugin_dir / f"{preset_name.replace(' ', '_')}.json"
-        with open(preset_file, 'w') as f:
+        with open(preset_file, "w") as f:
             json.dump(preset_data, f, indent=2)
 
         return preset_file
 
-    def load_preset(self, plugin: 'AudioUnitPlugin', preset_name: str) -> Dict[str, Any]:
+    def load_preset(
+        self, plugin: "AudioUnitPlugin", preset_name: str
+    ) -> dict[str, Any]:
         """Load a user preset and apply it to the plugin
 
         Args:
@@ -439,33 +472,35 @@ class PresetManager:
             raise RuntimeError("Plugin not initialized")
 
         # Find preset file
-        plugin_dir = self.preset_dir / plugin.name.replace(' ', '_')
+        plugin_dir = self.preset_dir / plugin.name.replace(" ", "_")
         preset_file = plugin_dir / f"{preset_name.replace(' ', '_')}.json"
 
         if not preset_file.exists():
-            raise FileNotFoundError(f"Preset '{preset_name}' not found for {plugin.name}")
+            raise FileNotFoundError(
+                f"Preset '{preset_name}' not found for {plugin.name}"
+            )
 
         # Load preset data
-        with open(preset_file, 'r') as f:
-            preset_data: Dict[str, Any] = json.load(f)
+        with open(preset_file, "r") as f:
+            preset_data: dict[str, Any] = json.load(f)
 
         # Verify plugin compatibility
-        if preset_data['plugin']['name'] != plugin.name:
+        if preset_data["plugin"]["name"] != plugin.name:
             raise ValueError(
                 f"Preset is for {preset_data['plugin']['name']}, not {plugin.name}"
             )
 
         # Apply parameters
-        parameters = preset_data.get('parameters', {})
+        parameters = preset_data.get("parameters", {})
         for param_name, param_data in parameters.items():
             try:
-                plugin.set_parameter(param_name, param_data['value'])
+                plugin.set_parameter(param_name, param_data["value"])
             except Exception:
                 pass  # Skip parameters that can't be set
 
         return preset_data
 
-    def list_presets(self, plugin_name: str) -> List[str]:
+    def list_presets(self, plugin_name: str) -> list[str]:
         """List available user presets for a plugin
 
         Args:
@@ -474,13 +509,13 @@ class PresetManager:
         Returns:
             List of preset names
         """
-        plugin_dir = self.preset_dir / plugin_name.replace(' ', '_')
+        plugin_dir = self.preset_dir / plugin_name.replace(" ", "_")
         if not plugin_dir.exists():
             return []
 
         presets = []
         for preset_file in plugin_dir.glob("*.json"):
-            presets.append(preset_file.stem.replace('_', ' '))
+            presets.append(preset_file.stem.replace("_", " "))
 
         return sorted(presets)
 
@@ -491,13 +526,15 @@ class PresetManager:
             plugin_name: Name of the plugin
             preset_name: Name of preset to delete
         """
-        plugin_dir = self.preset_dir / plugin_name.replace(' ', '_')
+        plugin_dir = self.preset_dir / plugin_name.replace(" ", "_")
         preset_file = plugin_dir / f"{preset_name.replace(' ', '_')}.json"
 
         if preset_file.exists():
             preset_file.unlink()
 
-    def export_preset(self, plugin_name: str, preset_name: str, output_path: Path) -> None:
+    def export_preset(
+        self, plugin_name: str, preset_name: str, output_path: Path
+    ) -> None:
         """Export a preset to a custom location
 
         Args:
@@ -505,17 +542,17 @@ class PresetManager:
             preset_name: Name of preset to export
             output_path: Destination file path
         """
-        plugin_dir = self.preset_dir / plugin_name.replace(' ', '_')
+        plugin_dir = self.preset_dir / plugin_name.replace(" ", "_")
         preset_file = plugin_dir / f"{preset_name.replace(' ', '_')}.json"
 
         if not preset_file.exists():
             raise FileNotFoundError(f"Preset '{preset_name}' not found")
 
         # Copy preset file
-        with open(preset_file, 'r') as f:
+        with open(preset_file, "r") as f:
             preset_data = json.load(f)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(preset_data, f, indent=2)
 
     def import_preset(self, plugin_name: str, preset_path: Path) -> str:
@@ -529,17 +566,17 @@ class PresetManager:
             Name of imported preset
         """
         # Load preset data
-        with open(preset_path, 'r') as f:
-            preset_data: Dict[str, Any] = json.load(f)
+        with open(preset_path, "r") as f:
+            preset_data: dict[str, Any] = json.load(f)
 
-        preset_name: str = preset_data['name']
+        preset_name: str = preset_data["name"]
 
         # Copy to presets directory
-        plugin_dir = self.preset_dir / plugin_name.replace(' ', '_')
+        plugin_dir = self.preset_dir / plugin_name.replace(" ", "_")
         plugin_dir.mkdir(parents=True, exist_ok=True)
 
         preset_file = plugin_dir / f"{preset_name.replace(' ', '_')}.json"
-        with open(preset_file, 'w') as f:
+        with open(preset_file, "w") as f:
             json.dump(preset_data, f, indent=2)
 
         return preset_name
@@ -574,7 +611,7 @@ class AudioUnitPlugin:
         plugin.cleanup()
     """
 
-    def __init__(self, component_id: int, component_info: Optional[Dict[str, Any]] = None):
+    def __init__(self, component_id: int, component_info: dict[str, Any] | None = None):
         """Initialize plugin from component ID
 
         Args:
@@ -582,12 +619,12 @@ class AudioUnitPlugin:
             component_info: Optional pre-fetched component info
         """
         self._component_id = component_id
-        self._unit_id: Optional[int] = None
+        self._unit_id: int | None = None
         self._initialized = False
-        self._parameters: Optional[List[AudioUnitParameter]] = None
-        self._parameter_map: Optional[Dict[str, AudioUnitParameter]] = None
-        self._presets: Optional[List[AudioUnitPreset]] = None
-        self._preset_manager: Optional[PresetManager] = None
+        self._parameters: list[AudioUnitParameter] | None = None
+        self._parameter_map: dict[str, AudioUnitParameter] | None = None
+        self._presets: list[AudioUnitPreset] | None = None
+        self._preset_manager: PresetManager | None = None
         self._audio_format = PluginAudioFormat()  # Default format
 
         # Get component info
@@ -597,7 +634,9 @@ class AudioUnitPlugin:
             self._info = component_info
 
     @classmethod
-    def from_name(cls, name: str, component_type: Optional[str] = None) -> 'AudioUnitPlugin':
+    def from_name(
+        cls, name: str, component_type: str | None = None
+    ) -> "AudioUnitPlugin":
         """Create plugin by name
 
         Args:
@@ -617,44 +656,44 @@ class AudioUnitPlugin:
         name_lower = name.lower()
         for comp_id in components:
             info = capi.audio_unit_get_component_info(comp_id)
-            if name_lower in info['name'].lower():
+            if name_lower in info["name"].lower():
                 return cls(comp_id, info)
 
         raise ValueError(f"Plugin '{name}' not found")
 
     @classmethod
-    def from_component_id(cls, component_id: int) -> 'AudioUnitPlugin':
+    def from_component_id(cls, component_id: int) -> "AudioUnitPlugin":
         """Create plugin from component ID"""
         return cls(component_id)
 
     @property
     def name(self) -> str:
         """Plugin name"""
-        result: str = self._info['name']
+        result: str = self._info["name"]
         return result
 
     @property
     def manufacturer(self) -> str:
         """Plugin manufacturer"""
-        result: str = self._info['manufacturer']
+        result: str = self._info["manufacturer"]
         return result
 
     @property
     def version(self) -> int:
         """Plugin version"""
-        result: int = self._info['version']
+        result: int = self._info["version"]
         return result
 
     @property
     def type(self) -> str:
         """Plugin type (e.g., 'aufx', 'aumu')"""
-        result: str = self._info['type']
+        result: str = self._info["type"]
         return result
 
     @property
     def subtype(self) -> str:
         """Plugin subtype"""
-        result: str = self._info['subtype']
+        result: str = self._info["subtype"]
         return result
 
     @property
@@ -662,7 +701,7 @@ class AudioUnitPlugin:
         """Check if plugin is initialized"""
         return self._initialized
 
-    def instantiate(self) -> 'AudioUnitPlugin':
+    def instantiate(self) -> "AudioUnitPlugin":
         """Instantiate the AudioUnit
 
         Returns:
@@ -674,7 +713,7 @@ class AudioUnitPlugin:
         self._unit_id = capi.audio_component_instance_new(self._component_id)
         return self
 
-    def initialize(self) -> 'AudioUnitPlugin':
+    def initialize(self) -> "AudioUnitPlugin":
         """Initialize the AudioUnit
 
         Returns:
@@ -697,7 +736,7 @@ class AudioUnitPlugin:
 
         return self
 
-    def uninitialize(self) -> 'AudioUnitPlugin':
+    def uninitialize(self) -> "AudioUnitPlugin":
         """Uninitialize the AudioUnit
 
         Returns:
@@ -747,13 +786,10 @@ class AudioUnitPlugin:
         if self._unit_id is None:
             return
         preset_list = capi.audio_unit_get_factory_presets(self._unit_id)
-        self._presets = [
-            AudioUnitPreset(p['number'], p['name'])
-            for p in preset_list
-        ]
+        self._presets = [AudioUnitPreset(p["number"], p["name"]) for p in preset_list]
 
     @property
-    def parameters(self) -> List[AudioUnitParameter]:
+    def parameters(self) -> list[AudioUnitParameter]:
         """List of all parameters"""
         if not self._initialized:
             raise RuntimeError("Plugin not initialized")
@@ -762,7 +798,7 @@ class AudioUnitPlugin:
         return self._parameters
 
     @property
-    def factory_presets(self) -> List[AudioUnitPreset]:
+    def factory_presets(self) -> list[AudioUnitPreset]:
         """List of factory presets"""
         if not self._initialized:
             raise RuntimeError("Plugin not initialized")
@@ -770,7 +806,7 @@ class AudioUnitPlugin:
             return []
         return self._presets
 
-    def get_parameter(self, name_or_id: Any) -> Optional[AudioUnitParameter]:
+    def get_parameter(self, name_or_id: Any) -> AudioUnitParameter | None:
         """Get parameter by name or ID"""
         if not self._initialized:
             raise RuntimeError("Plugin not initialized")
@@ -823,7 +859,7 @@ class AudioUnitPlugin:
             self._preset_manager = PresetManager()
         return self._preset_manager.save_preset(self, preset_name, description)
 
-    def list_user_presets(self) -> List[str]:
+    def list_user_presets(self) -> list[str]:
         """List available user presets for this plugin
 
         Returns:
@@ -867,8 +903,12 @@ class AudioUnitPlugin:
             self._preset_manager = PresetManager()
         return self._preset_manager.import_preset(self.name, preset_path)
 
-    def process(self, input_data: bytes, num_frames: Optional[int] = None,
-                audio_format: Optional[PluginAudioFormat] = None) -> bytes:
+    def process(
+        self,
+        input_data: bytes,
+        num_frames: int | None = None,
+        audio_format: PluginAudioFormat | None = None,
+    ) -> bytes:
         """Process audio through the plugin with automatic format conversion
 
         Args:
@@ -899,7 +939,7 @@ class AudioUnitPlugin:
             sample_rate=audio_format.sample_rate,
             channels=audio_format.channels,
             sample_format=PluginAudioFormat.FLOAT32,
-            interleaved=True
+            interleaved=True,
         )
 
         if audio_format != plugin_format:
@@ -915,7 +955,7 @@ class AudioUnitPlugin:
             converted_input,
             num_frames,
             audio_format.sample_rate,
-            audio_format.channels
+            audio_format.channels,
         )
 
         # Convert back to original format if needed
@@ -941,7 +981,9 @@ class AudioUnitPlugin:
         """Get the current audio format"""
         return self._audio_format
 
-    def send_midi(self, status: int, data1: int, data2: int, offset_frames: int = 0) -> None:
+    def send_midi(
+        self, status: int, data1: int, data2: int, offset_frames: int = 0
+    ) -> None:
         """Send MIDI message to instrument plugin
 
         Args:
@@ -956,12 +998,16 @@ class AudioUnitPlugin:
         """
         if not self._initialized or self._unit_id is None:
             raise RuntimeError("Plugin not initialized")
-        if self.type != 'aumu':  # kAudioUnitType_MusicDevice
-            raise ValueError(f"MIDI only supported for instrument plugins (type 'aumu'), not '{self.type}'")
+        if self.type != "aumu":  # kAudioUnitType_MusicDevice
+            raise ValueError(
+                f"MIDI only supported for instrument plugins (type 'aumu'), not '{self.type}'"
+            )
 
         capi.music_device_midi_event(self._unit_id, status, data1, data2, offset_frames)
 
-    def note_on(self, channel: int, note: int, velocity: int, offset_frames: int = 0) -> None:
+    def note_on(
+        self, channel: int, note: int, velocity: int, offset_frames: int = 0
+    ) -> None:
         """Send MIDI Note On message
 
         Args:
@@ -976,7 +1022,9 @@ class AudioUnitPlugin:
         status, data1, data2 = capi.midi_note_on(channel, note, velocity)
         self.send_midi(status, data1, data2, offset_frames)
 
-    def note_off(self, channel: int, note: int, velocity: int = 0, offset_frames: int = 0) -> None:
+    def note_off(
+        self, channel: int, note: int, velocity: int = 0, offset_frames: int = 0
+    ) -> None:
         """Send MIDI Note Off message
 
         Args:
@@ -991,7 +1039,9 @@ class AudioUnitPlugin:
         status, data1, data2 = capi.midi_note_off(channel, note, velocity)
         self.send_midi(status, data1, data2, offset_frames)
 
-    def control_change(self, channel: int, controller: int, value: int, offset_frames: int = 0) -> None:
+    def control_change(
+        self, channel: int, controller: int, value: int, offset_frames: int = 0
+    ) -> None:
         """Send MIDI Control Change message
 
         Args:
@@ -1007,7 +1057,9 @@ class AudioUnitPlugin:
         status, data1, data2 = capi.midi_control_change(channel, controller, value)
         self.send_midi(status, data1, data2, offset_frames)
 
-    def program_change(self, channel: int, program: int, offset_frames: int = 0) -> None:
+    def program_change(
+        self, channel: int, program: int, offset_frames: int = 0
+    ) -> None:
         """Send MIDI Program Change message
 
         Args:
@@ -1059,7 +1111,7 @@ class AudioUnitPlugin:
         """Set parameter value by name"""
         self.set_parameter(key, value)
 
-    def __enter__(self) -> 'AudioUnitPlugin':
+    def __enter__(self) -> "AudioUnitPlugin":
         """Context manager entry"""
         self.instantiate()
         self.initialize()
@@ -1092,20 +1144,23 @@ class AudioUnitHost:
     """
 
     TYPE_MAP = {
-        'output': 'auou',
-        'effect': 'aufx',
-        'instrument': 'aumu',
-        'generator': 'augn',
-        'mixer': 'aumx',
+        "output": "auou",
+        "effect": "aufx",
+        "instrument": "aumu",
+        "generator": "augn",
+        "mixer": "aumx",
     }
 
     def __init__(self) -> None:
         """Initialize the AudioUnit host"""
-        self._plugin_cache: Optional[List[Dict[str, Any]]] = None
+        self._plugin_cache: list[dict[str, Any]] | None = None
 
-    def discover_plugins(self, type: Optional[str] = None,
-                        manufacturer: Optional[str] = None,
-                        refresh: bool = False) -> List[Dict[str, Any]]:
+    def discover_plugins(
+        self,
+        type: str | None = None,
+        manufacturer: str | None = None,
+        refresh: bool = False,
+    ) -> list[dict[str, Any]]:
         """Discover available AudioUnit plugins
 
         Args:
@@ -1123,8 +1178,7 @@ class AudioUnitHost:
 
         # Find components
         components = capi.audio_unit_find_all_components(
-            component_type=component_type,
-            manufacturer=manufacturer
+            component_type=component_type, manufacturer=manufacturer
         )
 
         # Get info for each
@@ -1138,7 +1192,7 @@ class AudioUnitHost:
 
         return plugins
 
-    def load_plugin(self, name_or_id: Any, type: Optional[str] = None) -> AudioUnitPlugin:
+    def load_plugin(self, name_or_id: Any, type: str | None = None) -> AudioUnitPlugin:
         """Load a plugin by name or component ID
 
         Args:
@@ -1156,7 +1210,7 @@ class AudioUnitHost:
                 component_type = self.TYPE_MAP.get(type.lower(), type)
             return AudioUnitPlugin.from_name(name_or_id, component_type)
 
-    def get_plugin_count(self) -> Dict[str, int]:
+    def get_plugin_count(self) -> dict[str, int]:
         """Get count of plugins by type
 
         Returns:
@@ -1177,6 +1231,7 @@ class AudioUnitHost:
 # ============================================================================
 # AudioUnit Chain - Simplified Plugin Routing
 # ============================================================================
+
 
 class AudioUnitChain:
     """Chain multiple AudioUnit plugins for sequential processing
@@ -1202,14 +1257,14 @@ class AudioUnitChain:
         chain.dispose()
     """
 
-    def __init__(self, audio_format: Optional[PluginAudioFormat] = None):
+    def __init__(self, audio_format: PluginAudioFormat | None = None):
         """Initialize an empty plugin chain
 
         Args:
             audio_format: Default audio format for chain (default: 44.1kHz, stereo, float32)
         """
-        self._plugins: List[AudioUnitPlugin] = []
-        self._plugin_names: List[str] = []
+        self._plugins: list[AudioUnitPlugin] = []
+        self._plugin_names: list[str] = []
         self._initialized = False
         self._audio_format = audio_format or PluginAudioFormat()
 
@@ -1225,7 +1280,7 @@ class AudioUnitChain:
         """
         # Create or use provided plugin
         if isinstance(name_or_plugin, str):
-            plugin = AudioUnitPlugin.from_name(name_or_plugin, component_type='aufx')
+            plugin = AudioUnitPlugin.from_name(name_or_plugin, component_type="aufx")
             self._plugin_names.append(name_or_plugin)
         elif isinstance(name_or_plugin, AudioUnitPlugin):
             plugin = name_or_plugin
@@ -1244,7 +1299,9 @@ class AudioUnitChain:
         self._plugins.append(plugin)
         return len(self._plugins) - 1
 
-    def insert_plugin(self, index: int, name_or_plugin: Any, auto_initialize: bool = True) -> int:
+    def insert_plugin(
+        self, index: int, name_or_plugin: Any, auto_initialize: bool = True
+    ) -> int:
         """Insert a plugin at a specific position in the chain
 
         Args:
@@ -1257,7 +1314,7 @@ class AudioUnitChain:
         """
         # Create or use provided plugin
         if isinstance(name_or_plugin, str):
-            plugin = AudioUnitPlugin.from_name(name_or_plugin, component_type='aufx')
+            plugin = AudioUnitPlugin.from_name(name_or_plugin, component_type="aufx")
             plugin_name = name_or_plugin
         elif isinstance(name_or_plugin, AudioUnitPlugin):
             plugin = name_or_plugin
@@ -1299,9 +1356,11 @@ class AudioUnitChain:
         """
         if 0 <= index < len(self._plugins):
             return self._plugins[index]
-        raise IndexError(f"Plugin index {index} out of range (0-{len(self._plugins)-1})")
+        raise IndexError(
+            f"Plugin index {index} out of range (0-{len(self._plugins) - 1})"
+        )
 
-    def configure_plugin(self, index: int, parameters: Dict[str, float]) -> None:
+    def configure_plugin(self, index: int, parameters: dict[str, float]) -> None:
         """Configure a plugin's parameters
 
         Args:
@@ -1315,9 +1374,13 @@ class AudioUnitChain:
             except ValueError:
                 print(f"Warning: Parameter '{param_name}' not found in {plugin.name}")
 
-    def process(self, input_data: bytes, num_frames: Optional[int] = None,
-                audio_format: Optional[PluginAudioFormat] = None,
-                wet_dry_mix: float = 1.0) -> bytes:
+    def process(
+        self,
+        input_data: bytes,
+        num_frames: int | None = None,
+        audio_format: PluginAudioFormat | None = None,
+        wet_dry_mix: float = 1.0,
+    ) -> bytes:
         """Process audio through the entire plugin chain
 
         Args:
@@ -1356,8 +1419,14 @@ class AudioUnitChain:
 
         return current_data
 
-    def _apply_wet_dry_mix(self, dry_data: bytes, wet_data: bytes, num_frames: int,
-                           audio_format: PluginAudioFormat, mix: float) -> bytes:
+    def _apply_wet_dry_mix(
+        self,
+        dry_data: bytes,
+        wet_data: bytes,
+        num_frames: int,
+        audio_format: PluginAudioFormat,
+        mix: float,
+    ) -> bytes:
         """Apply wet/dry mixing to audio data
 
         Args:
@@ -1375,29 +1444,32 @@ class AudioUnitChain:
             sample_rate=audio_format.sample_rate,
             channels=audio_format.channels,
             sample_format=PluginAudioFormat.FLOAT32,
-            interleaved=True
+            interleaved=True,
         )
 
         if audio_format != plugin_format:
-            dry_float = AudioFormatConverter.convert(dry_data, num_frames, audio_format, plugin_format)
-            wet_float = AudioFormatConverter.convert(wet_data, num_frames, audio_format, plugin_format)
+            dry_float = AudioFormatConverter.convert(
+                dry_data, num_frames, audio_format, plugin_format
+            )
+            wet_float = AudioFormatConverter.convert(
+                wet_data, num_frames, audio_format, plugin_format
+            )
         else:
             dry_float = dry_data
             wet_float = wet_data
 
         # Parse samples
         num_samples = num_frames * audio_format.channels
-        dry_samples = struct.unpack(f'{num_samples}f', dry_float)
-        wet_samples = struct.unpack(f'{num_samples}f', wet_float)
+        dry_samples = struct.unpack(f"{num_samples}f", dry_float)
+        wet_samples = struct.unpack(f"{num_samples}f", wet_float)
 
         # Mix
         mixed_samples = [
-            dry * (1.0 - mix) + wet * mix
-            for dry, wet in zip(dry_samples, wet_samples)
+            dry * (1.0 - mix) + wet * mix for dry, wet in zip(dry_samples, wet_samples)
         ]
 
         # Pack back
-        mixed_data = struct.pack(f'{len(mixed_samples)}f', *mixed_samples)
+        mixed_data = struct.pack(f"{len(mixed_samples)}f", *mixed_samples)
 
         # Convert back to original format if needed
         if audio_format != plugin_format:
@@ -1428,7 +1500,7 @@ class AudioUnitChain:
         self._plugins.clear()
         self._plugin_names.clear()
 
-    def __enter__(self) -> 'AudioUnitChain':
+    def __enter__(self) -> "AudioUnitChain":
         """Context manager entry"""
         return self
 

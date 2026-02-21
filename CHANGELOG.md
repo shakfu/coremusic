@@ -17,9 +17,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
-## [0.1.13]
+## [0.2.0]
+
+### Fixed
+
+- **Silent exception logging** - ~15 bare `except: pass` blocks across `os_status.py`, `shortcuts.py`, `audio/devices.py`, `audio/units.py`, `cli/plugins.py`, `cli/audio.py`, `cli/midi.py` now log with `logger.debug()` instead of silently swallowing errors
+- **CLI CoreAudioError handling** - Top-level exception handler in `cli/main.py` now catches `CoreAudioError` and prints user-friendly messages with `os_status.get_error_suggestion()` hints
+- **`capi.pyi` type stubs** - Added ~40 missing function stubs (clock, device properties, buffer processing) and fixed signatures for `music_track_new_midi_note_event`, `music_track_new_midi_channel_event`, `music_sequence_file_load`; eliminated ~47 `type: ignore[attr-defined]` comments
+
+- **CLI version fallback** - `cli/main.py` now falls back to `coremusic.__version__` instead of a hardcoded `"0.1.12"` string
+- **`AudioPlayerHandle` typing** - `_player` parameter typed as `AudioPlayer` instead of `Any`
+- **Coverage regression gate** - Added `fail_under = 60` to `[tool.coverage.report]` in pyproject.toml
+- **`os_status.py` precedence documented** - Documented `ALL_ERRORS` dict merge order and all overlapping FourCC keys with their final resolution
 
 ### Added
+
+- **`AudioFormat.from_asbd_bytes()`** - Classmethod to parse 40-byte AudioStreamBasicDescription into `AudioFormat`, replacing 3 duplicated `struct.unpack` call sites
+- **`AudioFormat.pcm()` factory** - Convenience factory that computes derived ASBD fields (`bytes_per_frame`, `bytes_per_packet`, `format_flags`) from sample rate, channels, bits, and float/int selection
+- **Hardware detection test fixtures** - `has_audio_output` and `has_audio_input` pytest markers in `conftest.py` for skipping hardware-dependent tests in CI
+- **Exception subclass test coverage** - Added tests for `AudioDeviceError` and `AUGraphError` in `test_objects_base.py`
 
 - **Batch Convert Progress Bar** - Added progress indicator for `coremusic convert batch`
   - Shows ASCII progress bar with file count and percentage during conversion
@@ -66,6 +82,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Changed
 
+- **PEP 604/585 typing modernization** - All source files use modern `X | None`, `list[X]`, `dict[K, V]` syntax instead of `Optional`, `List`, `Dict` from `typing`
+- **`constants.py` split into subpackage** - Split monolithic `constants.py` (489 lines) into `constants/audio.py`, `constants/audiounit.py`, `constants/queue.py`, `constants/device.py`, `constants/midi.py` with backward-compatible re-exports
+
+- **Domain-oriented import paths (BREAKING)** - Dissolved `coremusic.objects` into domain subpackages
+  - `coremusic.audio` - Audio file, format, queue, unit, graph, device, and clock classes
+  - `coremusic.midi` - MIDI client/port classes and music player/sequence/track classes
+  - `coremusic.exceptions` - Exception hierarchy (`CoreAudioError`, `AudioFileError`, etc.)
+  - `coremusic.base` - Base classes (`CoreAudioObject`, `AudioPlayer`, `NUMPY_AVAILABLE`)
+  - Example: `from coremusic.audio import AudioFile, AudioFormat`
+  - Example: `from coremusic.midi import MIDIClient, MusicPlayer`
+  - Example: `from coremusic.exceptions import AudioFileError`
+
 - **MIDI CLI Restructured** - Flattened command hierarchy from 3 levels to 2 levels
   - `midi list` - Combined device/input/output listing (was `midi device list`, `midi input list`, `midi output list`)
   - `midi info <file>` - File metadata with `--events` flag for event table (was `midi file info`, `midi file dump`)
@@ -89,16 +117,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - Fixes version mismatch between CLI and package metadata
   - Falls back gracefully during development
 
-- **Objects Module Refactored** - Split monolithic `objects.py` (3700+ lines) into `objects/` subpackage
-  - `objects/audio.py` - AudioFormat, AudioFile, AudioFileStream, AudioConverter, ExtendedAudioFile, AudioBuffer, AudioQueue
-  - `objects/audiounit.py` - AudioComponentDescription, AudioComponent, AudioUnit
-  - `objects/midi.py` - MIDIPort, MIDIInputPort, MIDIOutputPort, MIDIClient
-  - `objects/devices.py` - AudioDevice, AudioDeviceManager
-  - `objects/augraph.py` - AUGraph
-  - `objects/clock.py` - ClockTimeFormat, AudioClock
-  - `objects/music.py` - MusicTrack, MusicSequence, MusicPlayer
-  - `objects/exceptions.py` - All exception classes
-  - Backward compatible: all existing imports continue to work
+### Removed
+
+- **`coremusic.objects` package** - Removed entirely (no backwards-compat shim)
+  - All imports from `coremusic.objects` must be updated to the new domain paths above
+  - `objects.pyi` type stub also removed
 
 ## [0.1.12]
 

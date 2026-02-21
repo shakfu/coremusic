@@ -1,9 +1,7 @@
 """pytest test suite for MusicDevice functionality."""
 
 import logging
-import os
 import pytest
-import tempfile
 import coremusic.capi as capi
 
 logger = logging.getLogger(__name__)
@@ -140,10 +138,13 @@ class TestMusicDeviceBasicOperations:
         except RuntimeError as e:
             # Check for userCanceledErr (-128) or kAudioUnitErr_InvalidFile (-10863)
             error_str = str(e)
-            if "userCanceledErr" in error_str or "security restriction" in error_str.lower() or "-10863" in error_str or "InvalidFile" in error_str:
-                pytest.skip(
-                    f"Music device component cannot be instantiated: {e}"
-                )
+            if (
+                "userCanceledErr" in error_str
+                or "security restriction" in error_str.lower()
+                or "-10863" in error_str
+                or "InvalidFile" in error_str
+            ):
+                pytest.skip(f"Music device component cannot be instantiated: {e}")
             raise
         yield unit
         try:
@@ -235,6 +236,7 @@ class TestMusicDeviceErrorHandling:
         with pytest.raises(RuntimeError):
             capi.music_device_start_note(invalid_unit, 0, 999999, 60.0, 100.0)
 
+
 @pytest.mark.slow
 class TestMusicDeviceIntegration:
     """Test MusicDevice integration scenarios"""
@@ -310,6 +312,7 @@ class TestMusicDeviceIntegration:
                 assert result == 0
         except RuntimeError as e:
             print(f"MIDI sequence test skipped: {e}")
+
 
 @pytest.mark.slow
 class TestMusicDeviceResourceManagement:
