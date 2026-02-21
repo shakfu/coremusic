@@ -122,7 +122,7 @@ class TestMusicDeviceBasicOperations:
 
     @pytest.fixture
     def music_device_unit(self):
-        """Create a music device audio unit for testing"""
+        """Create and initialize a music device audio unit for testing"""
         desc = {
             "type": capi.get_audio_component_type_music_device(),
             "subtype": 0,
@@ -146,7 +146,16 @@ class TestMusicDeviceBasicOperations:
             ):
                 pytest.skip(f"Music device component cannot be instantiated: {e}")
             raise
+        try:
+            capi.audio_unit_initialize(unit)
+        except RuntimeError as e:
+            capi.audio_component_instance_dispose(unit)
+            pytest.skip(f"Music device unit could not be initialized: {e}")
         yield unit
+        try:
+            capi.audio_unit_uninitialize(unit)
+        except Exception as e:
+            logger.warning(f"Cleanup failed (uninitialize unit): {e}")
         try:
             capi.audio_component_instance_dispose(unit)
         except Exception as e:

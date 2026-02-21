@@ -19,7 +19,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Fixed
 
-- **MusicDevice segfault in `music_device_start_note`** - Fixed `size_t` underflow in heap allocation for `MusicDeviceNoteParams` when no controls are provided. `(num_controls - 1)` with `num_controls=0` produced `-1`, which wrapped to `SIZE_MAX` when promoted to unsigned `size_t`, causing `malloc` to return an undersized buffer. Writing struct fields overflowed the allocation, corrupting the heap and crashing in `MusicDeviceStartNote`. The fix computes the base size from `sizeof(MusicDeviceNoteParams)` (which already includes `mControls[1]`) and only adds extra space when `num_controls > 1`.
+- **MusicDevice segfault in `music_device_start_note`** - Two fixes for a segfault in `MusicDeviceStartNote` that crashed CI on all macOS/Python versions:
+  1. Fixed `size_t` underflow in `capi.pyx` heap allocation for `MusicDeviceNoteParams` when no controls are provided. `(num_controls - 1)` with `num_controls=0` produced `-1`, which wrapped to `SIZE_MAX` when promoted to unsigned `size_t`, causing `malloc` to return an undersized buffer.
+  2. Fixed `music_device_unit` test fixture to call `audio_unit_initialize()` before use. `MusicDeviceStartNote` segfaults on uninitialized audio units (unlike `MusicDeviceMIDIEvent`/`MusicDeviceSysEx` which return errors gracefully). Fixture now properly initializes/uninitializes the unit and skips if initialization fails.
 
 ## [0.2.0]
 
