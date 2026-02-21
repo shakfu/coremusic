@@ -779,12 +779,12 @@ class AudioAnalyzer(AudioFileLoaderMixin):
                 "NumPy is required for silence detection. Install with: pip install numpy"
             )
 
-        import coremusic as cm
+        from coremusic.objects import AudioFile
 
         # Open file if path provided
         should_close = False
         if isinstance(audio_file, (str, Path)):
-            audio_file = cm.AudioFile(str(audio_file))
+            audio_file = AudioFile(str(audio_file))
             audio_file.open()
             should_close = True
 
@@ -863,12 +863,12 @@ class AudioAnalyzer(AudioFileLoaderMixin):
                 "NumPy is required for peak detection. Install with: pip install numpy"
             )
 
-        import coremusic as cm
+        from coremusic.objects import AudioFile
 
         # Open file if path provided
         should_close = False
         if isinstance(audio_file, (str, Path)):
-            audio_file = cm.AudioFile(str(audio_file))
+            audio_file = AudioFile(str(audio_file))
             audio_file.open()
             should_close = True
 
@@ -908,12 +908,12 @@ class AudioAnalyzer(AudioFileLoaderMixin):
                 "NumPy is required for RMS calculation. Install with: pip install numpy"
             )
 
-        import coremusic as cm
+        from coremusic.objects import AudioFile
 
         # Open file if path provided
         should_close = False
         if isinstance(audio_file, (str, Path)):
-            audio_file = cm.AudioFile(str(audio_file))
+            audio_file = AudioFile(str(audio_file))
             audio_file.open()
             should_close = True
 
@@ -949,9 +949,9 @@ class AudioAnalyzer(AudioFileLoaderMixin):
             >>> print(f"Format: {info['format_id']}")
             >>> print(f"Sample Rate: {info['sample_rate']} Hz")
         """
-        import coremusic as cm
+        from coremusic.objects import AudioFile
 
-        with cm.AudioFile(str(audio_file)) as af:
+        with AudioFile(str(audio_file)) as af:
             format = af.format
 
             info = {

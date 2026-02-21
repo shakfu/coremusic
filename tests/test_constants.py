@@ -6,7 +6,6 @@ import tempfile
 import os
 from pathlib import Path
 
-import coremusic as cm
 from coremusic import constants
 
 

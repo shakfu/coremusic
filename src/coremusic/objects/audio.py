@@ -264,10 +264,10 @@ class AudioFile(capi.CoreAudioObject):
 
         Example::
 
-            import coremusic as cm
+            from coremusic.objects import AudioFile
 
             # Read audio data in chunks
-            with cm.AudioFile("audio.wav") as audio:
+            with AudioFile("audio.wav") as audio:
                 chunk_size = 4096
                 offset = 0
 
@@ -1021,17 +1021,17 @@ class ExtendedAudioFile(capi.CoreAudioObject):
         Example::
 
             import struct
-            import coremusic as cm
+            from coremusic.objects import AudioFormat, ExtendedAudioFile
 
             # Create output file for stereo 16-bit PCM
-            file_format = cm.AudioFormat(
+            file_format = AudioFormat(
                 sample_rate=44100.0,
                 format_id='lpcm',
                 channels_per_frame=2,
                 bits_per_channel=16
             )
 
-            with cm.ExtendedAudioFile.create("output.wav", 'WAVE', file_format) as out_file:
+            with ExtendedAudioFile.create("output.wav", 'WAVE', file_format) as out_file:
                 # Generate 1 second of 440Hz sine wave (stereo)
                 samples = []
                 for i in range(44100):

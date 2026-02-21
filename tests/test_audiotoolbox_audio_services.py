@@ -4,7 +4,6 @@ import logging
 import os
 import pytest
 import tempfile
-import coremusic as cm
 import coremusic.capi as capi
 
 logger = logging.getLogger(__name__)

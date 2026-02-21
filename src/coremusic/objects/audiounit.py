@@ -278,10 +278,10 @@ class AudioUnit(capi.CoreAudioObject):
 
         Example::
 
-            import coremusic as cm
+            from coremusic.objects import AudioFormat, AudioUnit
 
             # Create a stereo 44.1kHz 16-bit PCM format
-            format = cm.AudioFormat(
+            format = AudioFormat(
                 sample_rate=44100.0,
                 format_id='lpcm',
                 channels_per_frame=2,
@@ -289,7 +289,7 @@ class AudioUnit(capi.CoreAudioObject):
             )
 
             # Set the input format on an effect unit
-            with cm.AudioUnit(effect_component) as effect:
+            with AudioUnit(effect_component) as effect:
                 effect.set_stream_format(format, 'input', 0)
         """
         if not isinstance(format, AudioFormat):

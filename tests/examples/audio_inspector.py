@@ -7,7 +7,7 @@ A comprehensive tool to inspect and display audio file information using coremus
 Usage: python audio_inspector.py <audio_file>
 """
 
-import coremusic as cm
+from coremusic.objects import AudioFile, AudioFileError
 import sys
 from pathlib import Path
 
@@ -74,7 +74,7 @@ def inspect_audio_file(filepath):
     print()
 
     try:
-        with cm.AudioFile(str(filepath)) as audio:
+        with AudioFile(str(filepath)) as audio:
             fmt = audio.format
 
             # Format information
@@ -172,7 +172,7 @@ def inspect_audio_file(filepath):
 
             return True
 
-    except cm.AudioFileError as e:
+    except AudioFileError as e:
         print(f"\nError opening audio file: {e}")
         return False
     except Exception as e:

@@ -9,10 +9,3 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "doctest: mark test as a doctest"
     )
-
-
-@pytest.fixture(autouse=True)
-def add_doctest_namespace(doctest_namespace):
-    """Add common imports to doctest namespace."""
-    import coremusic as cm
-    doctest_namespace["cm"] = cm

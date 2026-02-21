@@ -6,7 +6,7 @@ Usage:
 """
 
 import sys
-import coremusic as cm
+from coremusic.objects import AudioDeviceManager
 
 
 def main():
@@ -17,7 +17,7 @@ def main():
     query = sys.argv[1]
 
     # Try by name first
-    device = cm.AudioDeviceManager.find_device_by_name(query)
+    device = AudioDeviceManager.find_device_by_name(query)
     if device:
         print(f"Found by name: {device.name}")
         print(f"  UID: {device.uid}")
@@ -25,7 +25,7 @@ def main():
         return
 
     # Try by UID
-    device = cm.AudioDeviceManager.find_device_by_uid(query)
+    device = AudioDeviceManager.find_device_by_uid(query)
     if device:
         print(f"Found by UID: {device.name}")
         print(f"  UID: {device.uid}")

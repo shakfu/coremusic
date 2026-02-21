@@ -8,7 +8,7 @@ import pytest
 import time
 
 from coremusic import link
-from coremusic import AudioPlayer
+from coremusic.objects import AudioPlayer
 
 
 class TestLinkAudioPlayerIntegration:

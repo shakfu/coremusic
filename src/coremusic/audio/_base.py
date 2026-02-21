@@ -72,9 +72,9 @@ class AudioFileLoaderMixin:
             Audio data is cached after first load.
         """
         if self._audio_data is None:
-            import coremusic as cm
+            from coremusic.objects import AudioFile
 
-            with cm.AudioFile(str(self.audio_file)) as af:
+            with AudioFile(str(self.audio_file)) as af:
                 self._audio_data = af.read_as_numpy()
                 self._sample_rate = af.format.sample_rate
 

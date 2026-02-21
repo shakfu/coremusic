@@ -6,7 +6,13 @@ import pytest
 import asyncio
 from pathlib import Path
 
-import coremusic as cm
+from coremusic.audio.async_io import (
+    AsyncAudioFile,
+    AsyncAudioQueue,
+    create_output_queue_async,
+    open_audio_file_async,
+)
+from coremusic.objects import AudioBuffer, AudioFormat, NUMPY_AVAILABLE
 
 
 class TestAsyncAudioFile:
@@ -17,19 +23,19 @@ class TestAsyncAudioFile:
     async def test_async_audio_file_creation(self, amen_wav_path):
         """Test AsyncAudioFile object creation"""
         # Test with string path
-        audio_file = cm.AsyncAudioFile(amen_wav_path)
-        assert isinstance(audio_file, cm.AsyncAudioFile)
+        audio_file = AsyncAudioFile(amen_wav_path)
+        assert isinstance(audio_file, AsyncAudioFile)
         assert audio_file.path == amen_wav_path
 
         # Test with Path object
-        audio_file_path = cm.AsyncAudioFile(Path(amen_wav_path))
-        assert isinstance(audio_file_path, cm.AsyncAudioFile)
+        audio_file_path = AsyncAudioFile(Path(amen_wav_path))
+        assert isinstance(audio_file_path, AsyncAudioFile)
         assert audio_file_path.path == str(Path(amen_wav_path))
 
     @pytest.mark.asyncio
     async def test_async_audio_file_open_close(self, amen_wav_path):
         """Test AsyncAudioFile opening and closing"""
-        audio_file = cm.AsyncAudioFile(amen_wav_path)
+        audio_file = AsyncAudioFile(amen_wav_path)
 
         # Test opening
         result = await audio_file.open_async()
@@ -41,16 +47,16 @@ class TestAsyncAudioFile:
     @pytest.mark.asyncio
     async def test_async_audio_file_context_manager(self, amen_wav_path):
         """Test AsyncAudioFile as async context manager"""
-        async with cm.AsyncAudioFile(amen_wav_path) as audio_file:
-            assert isinstance(audio_file, cm.AsyncAudioFile)
+        async with AsyncAudioFile(amen_wav_path) as audio_file:
+            assert isinstance(audio_file, AsyncAudioFile)
             assert audio_file.format is not None
 
     @pytest.mark.asyncio
     async def test_async_audio_file_format_property(self, amen_wav_path):
         """Test AsyncAudioFile format property"""
-        async with cm.AsyncAudioFile(amen_wav_path) as audio_file:
+        async with AsyncAudioFile(amen_wav_path) as audio_file:
             format = audio_file.format
-            assert isinstance(format, cm.AudioFormat)
+            assert isinstance(format, AudioFormat)
 
             # Verify it's the expected WAV format
             assert format.format_id == "lpcm"
@@ -62,7 +68,7 @@ class TestAsyncAudioFile:
     @pytest.mark.asyncio
     async def test_async_audio_file_duration(self, amen_wav_path):
         """Test AsyncAudioFile duration property"""
-        async with cm.AsyncAudioFile(amen_wav_path) as audio_file:
+        async with AsyncAudioFile(amen_wav_path) as audio_file:
             duration = audio_file.duration
             assert isinstance(duration, float)
             assert duration > 0
@@ -72,7 +78,7 @@ class TestAsyncAudioFile:
     @pytest.mark.asyncio
     async def test_async_read_packets(self, amen_wav_path):
         """Test async packet reading"""
-        async with cm.AsyncAudioFile(amen_wav_path) as audio_file:
+        async with AsyncAudioFile(amen_wav_path) as audio_file:
             # Read first 100 packets
             data, packet_count = await audio_file.read_packets_async(
                 start_packet=0, packet_count=100
@@ -85,7 +91,7 @@ class TestAsyncAudioFile:
     @pytest.mark.asyncio
     async def test_async_read_chunks(self, amen_wav_path):
         """Test async chunk streaming"""
-        async with cm.AsyncAudioFile(amen_wav_path) as audio_file:
+        async with AsyncAudioFile(amen_wav_path) as audio_file:
             chunks = []
             chunk_size = 1024
 
@@ -104,7 +110,7 @@ class TestAsyncAudioFile:
     @pytest.mark.asyncio
     async def test_async_read_chunks_with_range(self, amen_wav_path):
         """Test async chunk streaming with range specification"""
-        async with cm.AsyncAudioFile(amen_wav_path) as audio_file:
+        async with AsyncAudioFile(amen_wav_path) as audio_file:
             chunks = []
             start_packet = 100
             total_packets = 500
@@ -125,7 +131,7 @@ class TestAsyncAudioFile:
         """Test concurrent async file reads"""
 
         async def read_file():
-            async with cm.AsyncAudioFile(amen_wav_path) as audio:
+            async with AsyncAudioFile(amen_wav_path) as audio:
                 return await audio.read_packets_async(start_packet=0, packet_count=100)
 
         # Read same file concurrently
@@ -140,9 +146,9 @@ class TestAsyncAudioFile:
     @pytest.mark.asyncio
     async def test_open_audio_file_async_convenience(self, amen_wav_path):
         """Test open_audio_file_async convenience function"""
-        audio = await cm.open_audio_file_async(amen_wav_path)
+        audio = await open_audio_file_async(amen_wav_path)
         try:
-            assert isinstance(audio, cm.AsyncAudioFile)
+            assert isinstance(audio, AsyncAudioFile)
             assert audio.format is not None
             data, packet_count = await audio.read_packets_async(
                 start_packet=0, packet_count=100
@@ -156,13 +162,13 @@ class TestAsyncAudioFileNumPy:
     """Test AsyncAudioFile NumPy integration (if available)"""
 
 
-    @pytest.mark.skipif(not cm.NUMPY_AVAILABLE, reason="NumPy not available")
+    @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
     @pytest.mark.asyncio
     async def test_async_read_as_numpy(self, amen_wav_path):
         """Test async NumPy array reading"""
         import numpy as np
 
-        async with cm.AsyncAudioFile(amen_wav_path) as audio_file:
+        async with AsyncAudioFile(amen_wav_path) as audio_file:
             # Read as NumPy array
             data = await audio_file.read_as_numpy_async(
                 start_packet=0, packet_count=100
@@ -171,13 +177,13 @@ class TestAsyncAudioFileNumPy:
             assert data.ndim == 2  # Should be 2D (frames, channels)
             assert data.shape[1] == 2  # Stereo
 
-    @pytest.mark.skipif(not cm.NUMPY_AVAILABLE, reason="NumPy not available")
+    @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
     @pytest.mark.asyncio
     async def test_async_read_chunks_numpy(self, amen_wav_path):
         """Test async NumPy chunk streaming"""
         import numpy as np
 
-        async with cm.AsyncAudioFile(amen_wav_path) as audio_file:
+        async with AsyncAudioFile(amen_wav_path) as audio_file:
             chunks = []
             chunk_size = 1024
 
@@ -202,8 +208,8 @@ class TestAsyncAudioQueue:
     @pytest.mark.asyncio
     async def test_async_audio_queue_creation(self, audio_format):
         """Test AsyncAudioQueue creation"""
-        queue = await cm.AsyncAudioQueue.new_output_async(audio_format)
-        assert isinstance(queue, cm.AsyncAudioQueue)
+        queue = await AsyncAudioQueue.new_output_async(audio_format)
+        assert isinstance(queue, AsyncAudioQueue)
         assert queue.format.sample_rate == 44100.0
 
         # Clean up
@@ -212,17 +218,17 @@ class TestAsyncAudioQueue:
     @pytest.mark.asyncio
     async def test_async_audio_queue_context_manager(self, audio_format):
         """Test AsyncAudioQueue as async context manager"""
-        async with await cm.AsyncAudioQueue.new_output_async(audio_format) as queue:
-            assert isinstance(queue, cm.AsyncAudioQueue)
+        async with await AsyncAudioQueue.new_output_async(audio_format) as queue:
+            assert isinstance(queue, AsyncAudioQueue)
             assert queue.format is not None
 
     @pytest.mark.asyncio
     async def test_async_audio_queue_buffer_operations(self, audio_format):
         """Test async buffer allocation and enqueueing"""
-        async with await cm.AsyncAudioQueue.new_output_async(audio_format) as queue:
+        async with await AsyncAudioQueue.new_output_async(audio_format) as queue:
             # Allocate buffer
             buffer = await queue.allocate_buffer_async(4096)
-            assert isinstance(buffer, cm.AudioBuffer)
+            assert isinstance(buffer, AudioBuffer)
 
             # Enqueue buffer (may require actual audio data in real usage)
             # await queue.enqueue_buffer_async(buffer)
@@ -230,7 +236,7 @@ class TestAsyncAudioQueue:
     @pytest.mark.asyncio
     async def test_async_audio_queue_start_stop(self, audio_format):
         """Test async queue start/stop operations"""
-        async with await cm.AsyncAudioQueue.new_output_async(audio_format) as queue:
+        async with await AsyncAudioQueue.new_output_async(audio_format) as queue:
             # Start queue
             await queue.start_async()
 
@@ -243,9 +249,9 @@ class TestAsyncAudioQueue:
     @pytest.mark.asyncio
     async def test_create_output_queue_async_convenience(self, audio_format):
         """Test create_output_queue_async convenience function"""
-        queue = await cm.create_output_queue_async(audio_format)
+        queue = await create_output_queue_async(audio_format)
         try:
-            assert isinstance(queue, cm.AsyncAudioQueue)
+            assert isinstance(queue, AsyncAudioQueue)
             assert queue.format.sample_rate == 44100.0
         finally:
             await queue.dispose_async()
@@ -255,7 +261,7 @@ class TestAsyncAudioQueue:
         """Test concurrent async queue operations"""
 
         async def create_and_dispose_queue():
-            queue = await cm.AsyncAudioQueue.new_output_async(audio_format)
+            queue = await AsyncAudioQueue.new_output_async(audio_format)
             await asyncio.sleep(0.05)
             await queue.dispose_async()
 
@@ -274,11 +280,11 @@ class TestAsyncIntegration:
     @pytest.mark.asyncio
     async def test_async_file_read_and_queue_playback(self, amen_wav_path):
         """Test reading file and preparing queue for playback"""
-        async with cm.AsyncAudioFile(amen_wav_path) as audio:
+        async with AsyncAudioFile(amen_wav_path) as audio:
             format = audio.format
 
             # Create queue with same format
-            async with await cm.AsyncAudioQueue.new_output_async(format) as queue:
+            async with await AsyncAudioQueue.new_output_async(format) as queue:
                 # Read some audio data
                 data, packet_count = await audio.read_packets_async(
                     start_packet=0, packet_count=1024
@@ -296,7 +302,7 @@ class TestAsyncIntegration:
             await asyncio.sleep(0.001)  # Simulate async work
             return len(chunk)
 
-        async with cm.AsyncAudioFile(amen_wav_path) as audio:
+        async with AsyncAudioFile(amen_wav_path) as audio:
             async for chunk in audio.read_chunks_async(chunk_size=1024):
                 size = await process_chunk(chunk)
                 processed_chunks.append(size)
@@ -305,7 +311,7 @@ class TestAsyncIntegration:
         assert len(processed_chunks) > 1
         assert all(size > 0 for size in processed_chunks)
 
-    @pytest.mark.skipif(not cm.NUMPY_AVAILABLE, reason="NumPy not available")
+    @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
     @pytest.mark.asyncio
     async def test_async_numpy_processing_pipeline(self, amen_wav_path):
         """Test async NumPy processing pipeline"""
@@ -318,7 +324,7 @@ class TestAsyncIntegration:
             await asyncio.sleep(0.001)
             return float(np.max(np.abs(chunk)))
 
-        async with cm.AsyncAudioFile(amen_wav_path) as audio:
+        async with AsyncAudioFile(amen_wav_path) as audio:
             async for chunk in audio.read_chunks_numpy_async(chunk_size=1024):
                 max_amp = await compute_max_amplitude(chunk)
                 max_amplitudes.append(max_amp)
@@ -336,7 +342,7 @@ class TestAsyncIntegration:
 
         async def get_file_info(path: str):
             """Get file info asynchronously"""
-            async with cm.AsyncAudioFile(path) as audio:
+            async with AsyncAudioFile(path) as audio:
                 return {
                     "path": path,
                     "duration": audio.duration,

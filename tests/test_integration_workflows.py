@@ -12,9 +12,11 @@ import struct
 import tempfile
 import pytest
 
-import coremusic as cm
 import coremusic.capi as capi
 from coremusic import link
+from coremusic.audio.audiounit_host import AudioUnitHost
+from coremusic.audio.utilities import AudioEffectsChain, parse_audio_stream_basic_description
+from coremusic.objects import AudioFile, AudioFormat, AudioPlayer
 
 
 # =============================================================================
@@ -46,8 +48,8 @@ class TestAudioProcessSaveWorkflow:
             format_data = capi.audio_file_get_property(
                 file_id, capi.get_audio_file_property_data_format()
             )
-            asbd = cm.parse_audio_stream_basic_description(format_data)
-            source_format = cm.AudioFormat(
+            asbd = parse_audio_stream_basic_description(format_data)
+            source_format = AudioFormat(
                 sample_rate=asbd['sample_rate'],
                 format_id=asbd['format_id'],
                 format_flags=asbd['format_flags'],
@@ -68,7 +70,7 @@ class TestAudioProcessSaveWorkflow:
         assert source_format.channels_per_frame == 2
 
         # Step 2: Discover and configure effect (demonstrates effect integration)
-        host = cm.AudioUnitHost()
+        host = AudioUnitHost()
         with host.load_plugin("AUDelay", type='effect') as effect:
             # Verify effect is loaded and configured
             assert effect is not None
@@ -111,7 +113,7 @@ class TestAudioProcessSaveWorkflow:
         assert os.path.getsize(output_path) > 0
 
         # Verify output can be read back
-        with cm.AudioFile(output_path) as output:
+        with AudioFile(output_path) as output:
             assert output.format.sample_rate == source_format.sample_rate
             assert output.format.channels_per_frame == source_format.channels_per_frame
             assert output.duration > 0
@@ -180,7 +182,7 @@ class TestAudioProcessSaveWorkflow:
         # Verify output
         assert os.path.exists(output_path)
 
-        with cm.AudioFile(output_path) as output:
+        with AudioFile(output_path) as output:
             assert output.format.sample_rate == 44100.0
             assert output.format.channels_per_frame == 1
             # Duration should be approximately the same
@@ -197,8 +199,8 @@ class TestAudioProcessSaveWorkflow:
             format_data = capi.audio_file_get_property(
                 file_id, capi.get_audio_file_property_data_format()
             )
-            asbd = cm.parse_audio_stream_basic_description(format_data)
-            source_format = cm.AudioFormat(
+            asbd = parse_audio_stream_basic_description(format_data)
+            source_format = AudioFormat(
                 sample_rate=asbd['sample_rate'],
                 format_id=asbd['format_id'],
                 format_flags=asbd['format_flags'],
@@ -213,7 +215,7 @@ class TestAudioProcessSaveWorkflow:
             capi.audio_file_close(file_id)
 
         # Create effect chain with multiple effects
-        chain = cm.AudioEffectsChain()
+        chain = AudioEffectsChain()
 
         # Add effects to chain
         mixer_node = chain.add_effect("aumi", "3dem", "appl")  # 3DMixer
@@ -255,7 +257,7 @@ class TestAudioProcessSaveWorkflow:
 
         # Verify output
         assert os.path.exists(output_path)
-        with cm.AudioFile(output_path) as output:
+        with AudioFile(output_path) as output:
             assert output.duration > 0
 
 
@@ -375,7 +377,7 @@ class TestMIDIToAudioUnitWorkflow:
 
     def test_midi_instrument_direct_control(self):
         """Test: Direct MIDI control of instrument AudioUnit"""
-        host = cm.AudioUnitHost()
+        host = AudioUnitHost()
 
         # Use DLSMusicDevice (Apple's built-in GM synth)
         with host.load_plugin("DLSMusicDevice", type='instrument') as synth:
@@ -590,7 +592,7 @@ class TestLinkSessionSynchronization:
 
         try:
             # Create AudioPlayer with Link session
-            player = cm.AudioPlayer(link_session=session)
+            player = AudioPlayer(link_session=session)
 
             assert player.link_session is session
 
@@ -628,8 +630,8 @@ class TestLinkSessionSynchronization:
 
         try:
             # Create multiple players sharing session
-            player1 = cm.AudioPlayer(link_session=session)
-            player2 = cm.AudioPlayer(link_session=session)
+            player1 = AudioPlayer(link_session=session)
+            player2 = AudioPlayer(link_session=session)
 
             # Both should see same Link session
             assert player1.link_session is player2.link_session
@@ -777,7 +779,7 @@ class TestCombinedWorkflows:
 
         # Verify output
         assert os.path.exists(output_path)
-        with cm.AudioFile(output_path) as output:
+        with AudioFile(output_path) as output:
             assert output.duration > 0
             assert output.format.sample_rate == sample_rate
 

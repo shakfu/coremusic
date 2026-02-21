@@ -246,11 +246,11 @@ def cmd_spectrum(args: argparse.Namespace) -> int:
     require_scipy()
     require_file(args.file)
 
-    import coremusic as cm
+    from coremusic.objects import AudioFile
     from coremusic.audio.analysis import AudioAnalyzer
 
     # Get duration to determine analysis time
-    with cm.AudioFile(args.file) as af:
+    with AudioFile(args.file) as af:
         duration = af.duration
 
     # Default to middle of file
@@ -313,11 +313,11 @@ def cmd_mfcc(args: argparse.Namespace) -> int:
     require_scipy()
     require_file(args.file)
 
-    import coremusic as cm
+    from coremusic.objects import AudioFile
     from coremusic.audio.analysis import AudioAnalyzer
 
     # Get duration to determine analysis time
-    with cm.AudioFile(args.file) as af:
+    with AudioFile(args.file) as af:
         duration = af.duration
 
     # Default to middle of file
@@ -364,10 +364,10 @@ def cmd_loudness(args: argparse.Namespace) -> int:
 
     import numpy as np
 
-    import coremusic as cm
+    from coremusic.objects import AudioFile
 
     # Open audio file and read data
-    with cm.AudioFile(args.file) as af:
+    with AudioFile(args.file) as af:
         fmt = af.format
         sample_rate = fmt.sample_rate
         duration = af.duration
@@ -465,10 +465,10 @@ def cmd_onsets(args: argparse.Namespace) -> int:
     import numpy as np
     from scipy import signal as sp_signal
 
-    import coremusic as cm
+    from coremusic.objects import AudioFile
 
     # Open audio file and read data
-    with cm.AudioFile(args.file) as af:
+    with AudioFile(args.file) as af:
         fmt = af.format
         sample_rate = fmt.sample_rate
         duration = af.duration

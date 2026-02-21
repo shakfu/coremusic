@@ -159,9 +159,9 @@ class AudioSlicer:
             Tuple of (audio_data, sample_rate)
         """
         if self._audio_data is None:
-            import coremusic as cm
+            from coremusic.objects import AudioFile
 
-            with cm.AudioFile(self.audio_file) as af:
+            with AudioFile(self.audio_file) as af:
                 self._audio_data = af.read_as_numpy()
                 self._sample_rate = af.format.sample_rate
 

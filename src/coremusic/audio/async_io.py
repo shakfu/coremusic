@@ -8,18 +8,19 @@ async frameworks.
 Example usage:
     ```python
     import asyncio
-    import coremusic as cm
+    from coremusic.audio.async_io import AsyncAudioFile, AsyncAudioQueue
+    from coremusic.objects import AudioFormat
 
     async def process_audio():
         # Async file reading with chunk streaming
-        async with cm.AsyncAudioFile("large_file.wav") as audio:
+        async with AsyncAudioFile("large_file.wav") as audio:
             print(f"Duration: {audio.duration:.2f}s")
             async for chunk in audio.read_chunks_async(chunk_size=4096):
                 await process_audio_chunk(chunk)
 
         # Async AudioQueue playback
-        format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
-        queue = await cm.AsyncAudioQueue.new_output_async(format)
+        format = AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
+        queue = await AsyncAudioQueue.new_output_async(format)
         await queue.start_async()
         await asyncio.sleep(1.0)
         await queue.stop_async()

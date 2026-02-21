@@ -13,7 +13,6 @@ from pathlib import Path
 
 BUILD_DIR = Path.cwd() / "build"
 
-import coremusic as cm
 from coremusic.daw import (
     Timeline,
     Track,

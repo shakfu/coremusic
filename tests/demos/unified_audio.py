@@ -22,7 +22,7 @@ import wave
 import struct
 import threading
 
-import coremusic as cm
+from coremusic.objects import AudioPlayer
 import coremusic.capi as capi
 
 
@@ -246,7 +246,7 @@ class UnifiedAudioDemo:
         """Demonstrate actual audio playback using AudioPlayer"""
         self.print_section("AudioPlayer Playback Demo")
         try:
-            self.player = cm.AudioPlayer()
+            self.player = AudioPlayer()
             self.print_success("Created AudioPlayer instance")
             result = self.player.load_file(self.wav_path)
             self.print_success(f"Loaded audio file (result: {result})")

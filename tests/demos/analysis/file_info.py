@@ -7,7 +7,8 @@ Usage:
 
 import sys
 import os
-import coremusic as cm
+from coremusic.audio.analysis import AudioAnalyzer
+from coremusic.objects import NUMPY_AVAILABLE
 
 
 def main():
@@ -16,7 +17,7 @@ def main():
         print(f"File not found: {audio_path}")
         sys.exit(1)
 
-    info = cm.AudioAnalyzer.get_file_info(audio_path)
+    info = AudioAnalyzer.get_file_info(audio_path)
 
     print(f"File: {info['path']}")
     print(f"Duration: {info['duration']:.2f} seconds")
@@ -25,7 +26,7 @@ def main():
     print(f"Channels: {info['channels']} ({'stereo' if info['is_stereo'] else 'mono'})")
     print(f"Bits per channel: {info['bits_per_channel']}")
 
-    if cm.NUMPY_AVAILABLE and 'peak_amplitude' in info:
+    if NUMPY_AVAILABLE and 'peak_amplitude' in info:
         import numpy as np
         rms_db = 20 * np.log10(info["rms"]) if info["rms"] > 0 else float("-inf")
         print(f"Peak: {info['peak_amplitude']:.4f}")

@@ -1,7 +1,7 @@
 """Tests for error handling decorators and OSStatus utilities."""
 
 import pytest
-import coremusic as cm
+from coremusic.objects import AudioFileError
 from coremusic.os_status import (
     check_os_status,
     check_return_status,
@@ -296,7 +296,7 @@ class TestDecoratorIntegration:
 
     def test_combined_decorators(self):
         """Test multiple decorators on same function."""
-        @handle_exceptions("outer operation", reraise_as=cm.AudioFileError)
+        @handle_exceptions("outer operation", reraise_as=AudioFileError)
         @check_return_status("inner operation", ValueError, status_index=1)
         def test_func(status_code):
             return ("data", status_code)
@@ -306,12 +306,12 @@ class TestDecoratorIntegration:
         assert result == "data"
 
         # Error case - should raise AudioFileError
-        with pytest.raises(cm.AudioFileError):
+        with pytest.raises(AudioFileError):
             test_func(-43)
 
     def test_decorator_with_capi_style_function(self):
         """Test decorator with capi-style return."""
-        @check_return_status("read data", cm.AudioFileError, status_index=0)
+        @check_return_status("read data", AudioFileError, status_index=0)
         def mock_capi_read():
             # Simulates capi.audio_file_read_packets return
             return (0, b'data', 1024)

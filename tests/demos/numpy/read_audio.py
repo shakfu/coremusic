@@ -7,11 +7,11 @@ Usage:
 
 import sys
 import os
-import coremusic as cm
+from coremusic.objects import AudioFile, NUMPY_AVAILABLE
 
 
 def main():
-    if not cm.NUMPY_AVAILABLE:
+    if not NUMPY_AVAILABLE:
         print("NumPy not installed. Install with: pip install numpy")
         sys.exit(1)
 
@@ -20,7 +20,7 @@ def main():
         print(f"File not found: {audio_path}")
         sys.exit(1)
 
-    with cm.AudioFile(audio_path) as audio:
+    with AudioFile(audio_path) as audio:
         format = audio.format
         data = audio.read_as_numpy()
 

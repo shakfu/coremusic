@@ -5,11 +5,11 @@ Usage:
     python list_devices.py
 """
 
-import coremusic as cm
+from coremusic.objects import AudioDeviceManager
 
 
 def main():
-    devices = cm.AudioDeviceManager.get_devices()
+    devices = AudioDeviceManager.get_devices()
 
     print(f"Found {len(devices)} audio device(s)\n")
 

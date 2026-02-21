@@ -2,8 +2,8 @@
 
 import pytest
 import time
-import coremusic as cm
 import coremusic.capi as capi
+from coremusic.objects import AUGraph, AudioComponentDescription
 
 
 class TestAUGraphFunctionalAPI:
@@ -80,15 +80,15 @@ class TestAUGraphOO:
 
     def test_au_graph_creation(self):
         """Test AUGraph object creation"""
-        graph = cm.AUGraph()
-        assert isinstance(graph, cm.AUGraph)
-        assert isinstance(graph, cm.capi.CoreAudioObject)
+        graph = AUGraph()
+        assert isinstance(graph, AUGraph)
+        assert isinstance(graph, capi.CoreAudioObject)
         assert not graph.is_disposed
         assert graph.object_id != 0
 
     def test_au_graph_lifecycle(self):
         """Test AUGraph lifecycle with OO API"""
-        graph = cm.AUGraph()
+        graph = AUGraph()
         assert not graph.is_open
         assert not graph.is_initialized
         assert not graph.is_running
@@ -106,7 +106,7 @@ class TestAUGraphOO:
 
     def test_au_graph_method_chaining(self):
         """Test method chaining for open() and initialize()"""
-        graph = cm.AUGraph()
+        graph = AUGraph()
         result = graph.open().initialize()
         assert result is graph
         assert graph.is_open
@@ -115,8 +115,8 @@ class TestAUGraphOO:
 
     def test_au_graph_context_manager(self):
         """Test AUGraph as context manager"""
-        with cm.AUGraph() as graph:
-            assert isinstance(graph, cm.AUGraph)
+        with AUGraph() as graph:
+            assert isinstance(graph, AUGraph)
             assert not graph.is_disposed
             graph.open()
             assert graph.is_open
@@ -124,10 +124,10 @@ class TestAUGraphOO:
 
     def test_au_graph_add_remove_nodes(self):
         """Test adding and removing nodes with OO API"""
-        graph = cm.AUGraph()
+        graph = AUGraph()
         try:
             assert graph.node_count == 0
-            desc = cm.AudioComponentDescription(
+            desc = AudioComponentDescription(
                 type="auou", subtype="def ", manufacturer="appl"
             )
             node_id = graph.add_node(desc)
@@ -136,7 +136,7 @@ class TestAUGraphOO:
             retrieved_node = graph.get_node_at_index(0)
             assert retrieved_node == node_id
             node_desc, audio_unit_id = graph.get_node_info(node_id)
-            assert isinstance(node_desc, cm.AudioComponentDescription)
+            assert isinstance(node_desc, AudioComponentDescription)
             assert node_desc.type == desc.type
             assert node_desc.subtype == desc.subtype
             assert audio_unit_id >= 0
@@ -147,14 +147,14 @@ class TestAUGraphOO:
 
     def test_au_graph_connections(self):
         """Test connecting nodes"""
-        graph = cm.AUGraph()
+        graph = AUGraph()
         try:
             graph.open()
-            generator_desc = cm.AudioComponentDescription(
+            generator_desc = AudioComponentDescription(
                 type="aumu", subtype="dls ", manufacturer="appl"
             )
             generator_node = graph.add_node(generator_desc)
-            output_desc = cm.AudioComponentDescription(
+            output_desc = AudioComponentDescription(
                 type="auou", subtype="def ", manufacturer="appl"
             )
             output_node = graph.add_node(output_desc)
@@ -174,7 +174,7 @@ class TestAUGraphOO:
 
     def test_au_graph_cpu_load_properties(self):
         """Test CPU load properties"""
-        graph = cm.AUGraph()
+        graph = AUGraph()
         try:
             cpu_load = graph.cpu_load
             assert isinstance(cpu_load, float)
@@ -187,7 +187,7 @@ class TestAUGraphOO:
 
     def test_au_graph_repr(self):
         """Test AUGraph string representation"""
-        graph = cm.AUGraph()
+        graph = AUGraph()
         repr_str = repr(graph)
         assert "AUGraph" in repr_str
         assert "nodes=0" in repr_str
@@ -203,7 +203,7 @@ class TestAUGraphOO:
 
     def test_au_graph_operations_after_disposal(self):
         """Test that operations on disposed graph raise errors"""
-        graph = cm.AUGraph()
+        graph = AUGraph()
         graph.dispose()
         with pytest.raises(RuntimeError, match="has been disposed"):
             graph.open()
@@ -214,7 +214,7 @@ class TestAUGraphOO:
 
     def test_au_graph_error_handling(self):
         """Test AUGraph error handling"""
-        graph = cm.AUGraph()
+        graph = AUGraph()
         try:
             # Out-of-range index raises IndexError
             with pytest.raises(IndexError):
@@ -228,7 +228,7 @@ class TestAUGraphOO:
 
     def test_au_graph_double_dispose(self):
         """Test that double dispose is safe"""
-        graph = cm.AUGraph()
+        graph = AUGraph()
         graph.dispose()
         graph.dispose()
         assert graph.is_disposed
@@ -239,10 +239,10 @@ class TestAUGraphIntegration:
 
     def test_au_graph_simple_playback_setup(self):
         """Test setting up a simple playback graph"""
-        graph = cm.AUGraph()
+        graph = AUGraph()
         try:
             graph.open().initialize()
-            output_desc = cm.AudioComponentDescription(
+            output_desc = AudioComponentDescription(
                 type="auou", subtype="def ", manufacturer="appl"
             )
             output_node = graph.add_node(output_desc)

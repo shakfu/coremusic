@@ -5,7 +5,6 @@ import pytest
 import wave
 import struct
 import time
-import coremusic as cm
 import coremusic.capi as capi
 
 

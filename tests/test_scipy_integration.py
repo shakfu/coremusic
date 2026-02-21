@@ -3,10 +3,10 @@
 
 import os
 import pytest
-import coremusic as cm
 import coremusic.utils.scipy as spu
+from coremusic.objects import AudioFile, NUMPY_AVAILABLE
 
-if not (cm.NUMPY_AVAILABLE and spu.SCIPY_AVAILABLE):
+if not (NUMPY_AVAILABLE and spu.SCIPY_AVAILABLE):
     pytest.skip("NumPy and SciPy are not available", allow_module_level=True)
 
 import numpy as np
@@ -251,7 +251,7 @@ class TestScipyFilterConvenience:
 
 
 @pytest.mark.skipif(
-    not spu.SCIPY_AVAILABLE or not cm.NUMPY_AVAILABLE, reason="SciPy and NumPy required"
+    not spu.SCIPY_AVAILABLE or not NUMPY_AVAILABLE, reason="SciPy and NumPy required"
 )
 class TestResampling:
     """Test resampling functions"""
@@ -506,7 +506,7 @@ class TestIntegrationWithAudioFile:
 
     def test_read_and_filter_real_audio(self, amen_wav_path):
         """Test reading real audio and applying filter"""
-        with cm.AudioFile(amen_wav_path) as af:
+        with AudioFile(amen_wav_path) as af:
             audio = af.read_as_numpy()
             sample_rate = af.format.sample_rate
 
@@ -520,7 +520,7 @@ class TestIntegrationWithAudioFile:
 
     def test_signal_processor_with_real_audio(self, amen_wav_path):
         """Test AudioSignalProcessor with real audio file"""
-        with cm.AudioFile(amen_wav_path) as af:
+        with AudioFile(amen_wav_path) as af:
             audio = af.read_as_numpy()
             sample_rate = af.format.sample_rate
 
@@ -538,7 +538,7 @@ class TestIntegrationWithAudioFile:
 
     def test_resample_real_audio(self, amen_wav_path):
         """Test resampling real audio file"""
-        with cm.AudioFile(amen_wav_path) as af:
+        with AudioFile(amen_wav_path) as af:
             audio = af.read_as_numpy()
             sample_rate = af.format.sample_rate
 
@@ -557,7 +557,7 @@ class TestIntegrationWithAudioFile:
 
     def test_spectrum_analysis_real_audio(self, amen_wav_path):
         """Test spectrum analysis on real audio"""
-        with cm.AudioFile(amen_wav_path) as af:
+        with AudioFile(amen_wav_path) as af:
             audio = af.read_as_numpy()
             sample_rate = af.format.sample_rate
 

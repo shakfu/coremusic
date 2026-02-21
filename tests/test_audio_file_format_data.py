@@ -1,6 +1,6 @@
 from conftest import AMEN_WAV_PATH
 import coremusic.capi as capi
-import coremusic as cm
+from coremusic.audio.utilities import parse_audio_stream_basic_description
 
 
 def test_format_data_parsing():
@@ -14,7 +14,7 @@ def test_format_data_parsing():
     )
 
     # use parse_audio_stream_basic_description() to parse the binary format data
-    assert cm.parse_audio_stream_basic_description(format_data) == {
+    assert parse_audio_stream_basic_description(format_data) == {
         'sample_rate': 44100.0, 
         'format_id': 'lpcm', 
         'format_flags': 12, 

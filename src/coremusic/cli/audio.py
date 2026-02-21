@@ -61,11 +61,11 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
 
 def cmd_info(args: argparse.Namespace) -> int:
     """Display comprehensive audio file information."""
-    import coremusic as cm
+    from coremusic.objects import AudioFile
 
     path = require_file(args.file)
 
-    with cm.AudioFile(str(path)) as audio_file:
+    with AudioFile(str(path)) as audio_file:
         fmt = audio_file.format
         duration = audio_file.duration
         total_frames = int(duration * fmt.sample_rate)
@@ -106,11 +106,11 @@ def cmd_info(args: argparse.Namespace) -> int:
 
 def cmd_duration(args: argparse.Namespace) -> int:
     """Get audio file duration."""
-    import coremusic as cm
+    from coremusic.objects import AudioFile
 
     require_file(args.file)
 
-    with cm.AudioFile(args.file) as audio_file:
+    with AudioFile(args.file) as audio_file:
         dur = audio_file.duration
         sample_rate = audio_file.format.sample_rate
 
@@ -134,13 +134,14 @@ def cmd_metadata(args: argparse.Namespace) -> int:
     """Show audio file metadata/tags."""
     from typing import Any, Dict
 
-    import coremusic as cm
+    from coremusic.constants import AudioFileProperty
+    from coremusic.objects import AudioFile
 
     path = require_file(args.file)
 
     metadata: Dict[str, Any] = {}
 
-    with cm.AudioFile(str(path)) as audio_file:
+    with AudioFile(str(path)) as audio_file:
         fmt = audio_file.format
 
         # Basic format info
@@ -159,12 +160,11 @@ def cmd_metadata(args: argparse.Namespace) -> int:
         # Try to get info dictionary (may not be available for all formats)
         # Note: For some properties, audio_file_get_property might return a dict
         try:
-            if hasattr(cm, 'AudioFileProperty'):
-                import coremusic.capi as capi
-                info_dict_prop = cm.AudioFileProperty.INFO_DICTIONARY
-                info_data = capi.audio_file_get_property(audio_file.object_id, info_dict_prop)
-                if info_data and isinstance(info_data, dict):
-                    metadata["tags"] = info_data
+            import coremusic.capi as capi
+            info_dict_prop = AudioFileProperty.INFO_DICTIONARY
+            info_data = capi.audio_file_get_property(audio_file.object_id, info_dict_prop)
+            if info_data and isinstance(info_data, dict):
+                metadata["tags"] = info_data
         except Exception:
             # Info dictionary not available for this format
             pass
@@ -206,7 +206,7 @@ def cmd_play(args: argparse.Namespace) -> int:
     import signal
     import time
 
-    import coremusic as cm
+    from coremusic.objects import AudioFile
     from coremusic.capi import AudioPlayer
 
     from ._utils import CLIError
@@ -215,7 +215,7 @@ def cmd_play(args: argparse.Namespace) -> int:
 
     # Get file info for display
     try:
-        with cm.AudioFile(str(path)) as audio_file:
+        with AudioFile(str(path)) as audio_file:
             duration = audio_file.duration
             fmt = audio_file.format
     except Exception as e:

@@ -33,8 +33,8 @@ def get_midi_device_counts():
 def create_midi_client():
     """Create a MIDI client.
 
-    >>> import coremusic as cm
-    >>> client = cm.MIDIClient("Test Client")
+    >>> from coremusic.objects import MIDIClient
+    >>> client = MIDIClient("Test Client")
     >>> assert client is not None
     >>> # Always dispose when done
     >>> client.dispose()
@@ -45,8 +45,8 @@ def create_midi_client():
 def create_midi_output_port():
     """Create a MIDI output port.
 
-    >>> import coremusic as cm
-    >>> client = cm.MIDIClient("Test Client")
+    >>> from coremusic.objects import MIDIClient
+    >>> client = MIDIClient("Test Client")
     >>> try:
     ...     output_port = client.create_output_port("Test Output")
     ...     assert output_port is not None
@@ -59,8 +59,8 @@ def create_midi_output_port():
 def create_midi_input_port():
     """Create a MIDI input port.
 
-    >>> import coremusic as cm
-    >>> client = cm.MIDIClient("Test Client")
+    >>> from coremusic.objects import MIDIClient
+    >>> client = MIDIClient("Test Client")
     >>> try:
     ...     input_port = client.create_input_port("Test Input")
     ...     assert input_port is not None
@@ -271,9 +271,9 @@ def build_midi_melody():
 def midi_client_lifecycle():
     """Demonstrate proper MIDI client lifecycle.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import MIDIClient
     >>> # Create client
-    >>> client = cm.MIDIClient("Lifecycle Test")
+    >>> client = MIDIClient("Lifecycle Test")
     >>> # Create ports
     >>> output = client.create_output_port("Out")
     >>> input_port = client.create_input_port("In")

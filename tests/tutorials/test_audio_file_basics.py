@@ -31,9 +31,9 @@ def open_audio_file_context_manager():
 
     The AudioFile class supports context managers for automatic cleanup:
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile
     >>> path = get_test_audio_path()
-    >>> with cm.AudioFile(path) as audio:
+    >>> with AudioFile(path) as audio:
     ...     # File is automatically opened
     ...     assert audio.duration > 0
     ...     # Access format info
@@ -47,9 +47,9 @@ def open_audio_file_context_manager():
 def get_audio_duration():
     """Get the duration of an audio file.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile
     >>> path = get_test_audio_path()
-    >>> with cm.AudioFile(path) as audio:
+    >>> with AudioFile(path) as audio:
     ...     duration = audio.duration
     ...     assert isinstance(duration, float)
     ...     assert duration > 0
@@ -62,9 +62,9 @@ def get_audio_duration():
 def get_audio_format():
     """Get detailed format information from an audio file.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile
     >>> path = get_test_audio_path()
-    >>> with cm.AudioFile(path) as audio:
+    >>> with AudioFile(path) as audio:
     ...     fmt = audio.format
     ...     # Sample rate
     ...     assert fmt.sample_rate > 0
@@ -81,9 +81,9 @@ def get_audio_format():
 def get_frame_count():
     """Calculate approximate frame count from duration and sample rate.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile
     >>> path = get_test_audio_path()
-    >>> with cm.AudioFile(path) as audio:
+    >>> with AudioFile(path) as audio:
     ...     # Calculate frames from duration
     ...     frames = int(audio.duration * audio.format.sample_rate)
     ...     assert isinstance(frames, int)
@@ -95,9 +95,9 @@ def get_frame_count():
 def read_audio_packets():
     """Read audio data as packets (frames).
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile
     >>> path = get_test_audio_path()
-    >>> with cm.AudioFile(path) as audio:
+    >>> with AudioFile(path) as audio:
     ...     # Read first 1000 packets starting at packet 0
     ...     data, packets_read = audio.read_packets(0, 1000)
     ...     assert isinstance(data, bytes)
@@ -111,9 +111,9 @@ def read_audio_packets():
 def read_audio_in_chunks():
     """Read audio file in chunks for memory efficiency.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile
     >>> path = get_test_audio_path()
-    >>> with cm.AudioFile(path) as audio:
+    >>> with AudioFile(path) as audio:
     ...     chunk_size = 4096
     ...     # Calculate total frames from duration
     ...     total_frames = int(audio.duration * audio.format.sample_rate)
@@ -135,9 +135,9 @@ def read_audio_in_chunks():
 def detect_audio_format_type():
     """Detect the type of audio format.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile
     >>> path = get_test_audio_path()
-    >>> with cm.AudioFile(path) as audio:
+    >>> with AudioFile(path) as audio:
     ...     fmt = audio.format
     ...     format_id = fmt.format_id
     ...     # WAV files are typically Linear PCM
@@ -149,9 +149,9 @@ def detect_audio_format_type():
 def check_format_properties():
     """Check various format properties.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile
     >>> path = get_test_audio_path()
-    >>> with cm.AudioFile(path) as audio:
+    >>> with AudioFile(path) as audio:
     ...     fmt = audio.format
     ...     # Check if PCM
     ...     is_pcm = fmt.format_id == 'lpcm'
@@ -167,11 +167,11 @@ def check_format_properties():
 def audio_file_error_handling():
     """Handle errors when opening audio files.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile, AudioFileError
     >>> try:
-    ...     with cm.AudioFile("nonexistent_file.wav") as audio:
+    ...     with AudioFile("nonexistent_file.wav") as audio:
     ...         pass
-    ... except (cm.AudioFileError, FileNotFoundError, OSError):
+    ... except (AudioFileError, FileNotFoundError, OSError):
     ...     pass  # Expected error
     """
     pass
@@ -180,9 +180,9 @@ def audio_file_error_handling():
 def format_bytes_per_frame():
     """Calculate bytes per frame from format.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile
     >>> path = get_test_audio_path()
-    >>> with cm.AudioFile(path) as audio:
+    >>> with AudioFile(path) as audio:
     ...     fmt = audio.format
     ...     bytes_per_frame = fmt.bytes_per_frame
     ...     # For 16-bit stereo: 2 bytes * 2 channels = 4
@@ -196,9 +196,9 @@ def format_bytes_per_frame():
 def calculate_bitrate():
     """Calculate the bitrate of an audio file.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile
     >>> path = get_test_audio_path()
-    >>> with cm.AudioFile(path) as audio:
+    >>> with AudioFile(path) as audio:
     ...     fmt = audio.format
     ...     # Bitrate = sample_rate * bytes_per_frame * 8 bits/byte
     ...     bitrate_bps = fmt.sample_rate * fmt.bytes_per_frame * 8

@@ -22,6 +22,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from coremusic.objects import AudioFile
+
 logger = logging.getLogger(__name__)
 
 # ============================================================================
@@ -381,9 +383,7 @@ class Clip:
         if isinstance(self.source, (str, Path)):
             if self._cached_duration is None:
                 try:
-                    import coremusic as cm
-
-                    with cm.AudioFile(str(self.source)) as af:
+                    with AudioFile(str(self.source)) as af:
                         self._cached_duration = af.duration
                 except Exception as e:
                     logger.warning(f"Could not determine clip duration: {e}")
@@ -692,9 +692,9 @@ class Timeline:
         """
         if enabled and not self._link_session:
             try:
-                import coremusic as cm
+                from coremusic import link  # noqa: lazy import for optional Link support
 
-                self._link_session = cm.link.LinkSession(bpm=self.tempo)  # type: ignore[attr-defined]
+                self._link_session = link.LinkSession(bpm=self.tempo)
                 logger.info("Ableton Link enabled")
             except Exception as e:
                 logger.error(f"Could not enable Link: {e}")

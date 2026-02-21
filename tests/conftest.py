@@ -238,9 +238,9 @@ def audio_format():
 
     Returns an AudioFormat for 44.1kHz, stereo, 16-bit PCM.
     """
-    import coremusic as cm
+    from coremusic.objects import AudioFormat
 
-    return cm.AudioFormat(
+    return AudioFormat(
         sample_rate=44100.0,
         format_id="lpcm",
         format_flags=12,  # kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked
@@ -318,9 +318,9 @@ def dest_format_48k():
 @pytest.fixture
 def pcm_format():
     """Fixture providing PCM audio format as AudioFormat object."""
-    import coremusic as cm
+    from coremusic.objects import AudioFormat
 
-    return cm.AudioFormat(
+    return AudioFormat(
         sample_rate=44100.0,
         format_id="lpcm",
         format_flags=12,
@@ -343,9 +343,9 @@ def source_format_obj():
 
     Used by OO API tests that expect AudioFormat objects.
     """
-    import coremusic as cm
+    from coremusic.objects import AudioFormat
 
-    return cm.AudioFormat(
+    return AudioFormat(
         sample_rate=44100.0,
         format_id="lpcm",
         format_flags=12,
@@ -363,9 +363,9 @@ def dest_format_mono_obj():
 
     Used by OO API tests that expect AudioFormat objects.
     """
-    import coremusic as cm
+    from coremusic.objects import AudioFormat
 
-    return cm.AudioFormat(
+    return AudioFormat(
         sample_rate=44100.0,
         format_id="lpcm",
         format_flags=12,
@@ -383,9 +383,9 @@ def dest_format_48k_obj():
 
     Used by OO API tests that expect AudioFormat objects.
     """
-    import coremusic as cm
+    from coremusic.objects import AudioFormat
 
-    return cm.AudioFormat(
+    return AudioFormat(
         sample_rate=48000.0,
         format_id="lpcm",
         format_flags=12,

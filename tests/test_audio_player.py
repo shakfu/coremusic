@@ -5,8 +5,8 @@ import time
 import sys
 
 from conftest import AMEN_WAV_PATH
-import coremusic as cm
 import coremusic.capi as capi
+from coremusic.objects import AudioPlayer
 
 
 def test_audio_playback():
@@ -20,7 +20,7 @@ def test_audio_playback():
 
     try:
         # Create AudioPlayer instance
-        player = cm.AudioPlayer()
+        player = AudioPlayer()
         print("Created AudioPlayer instance")
 
         # Load the audio file
@@ -76,7 +76,7 @@ def test_audio_player_play_method():
 
     try:
         # Create AudioPlayer instance
-        player = cm.AudioPlayer()
+        player = AudioPlayer()
         print("Created AudioPlayer instance")
 
         # Load and setup

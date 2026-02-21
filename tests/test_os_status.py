@@ -1,8 +1,8 @@
 """Tests for OSStatus error code translation utilities."""
 
 import pytest
-import coremusic as cm
 from coremusic import os_status
+from coremusic.objects import AudioFileError, AudioQueueError, CoreAudioError
 
 
 class TestOSStatusTranslation:
@@ -160,8 +160,8 @@ class TestCoreAudioErrorFromOSStatus:
 
     def test_from_os_status_with_operation(self):
         """Test creating exception from OSStatus with operation"""
-        exc = cm.CoreAudioError.from_os_status(-43, "open audio file")
-        assert isinstance(exc, cm.CoreAudioError)
+        exc = CoreAudioError.from_os_status(-43, "open audio file")
+        assert isinstance(exc, CoreAudioError)
         assert exc.status_code == -43
         assert "Failed to open audio file" in str(exc)
         assert "kAudioFileFileNotFoundError" in str(exc)
@@ -169,15 +169,15 @@ class TestCoreAudioErrorFromOSStatus:
 
     def test_from_os_status_without_operation(self):
         """Test creating exception from OSStatus without operation"""
-        exc = cm.CoreAudioError.from_os_status(-50)
-        assert isinstance(exc, cm.CoreAudioError)
+        exc = CoreAudioError.from_os_status(-50)
+        assert isinstance(exc, CoreAudioError)
         assert exc.status_code == -50
         assert "paramErr" in str(exc)
         assert "Invalid parameter" in str(exc)
 
     def test_from_os_status_with_suggestion(self):
         """Test that suggestion is included in message"""
-        exc = cm.CoreAudioError.from_os_status(-43, "load file")
+        exc = CoreAudioError.from_os_status(-43, "load file")
         message = str(exc)
         assert "Failed to load file" in message
         assert "kAudioFileFileNotFoundError" in message
@@ -186,15 +186,15 @@ class TestCoreAudioErrorFromOSStatus:
 
     def test_from_os_status_subclass(self):
         """Test that subclasses can use from_os_status"""
-        exc = cm.AudioFileError.from_os_status(-43, "open file")
-        assert isinstance(exc, cm.AudioFileError)
-        assert isinstance(exc, cm.CoreAudioError)
+        exc = AudioFileError.from_os_status(-43, "open file")
+        assert isinstance(exc, AudioFileError)
+        assert isinstance(exc, CoreAudioError)
         assert exc.status_code == -43
 
     def test_from_os_status_audio_queue_error(self):
         """Test AudioQueueError with OSStatus"""
-        exc = cm.AudioQueueError.from_os_status(-50, "create audio queue")
-        assert isinstance(exc, cm.AudioQueueError)
+        exc = AudioQueueError.from_os_status(-50, "create audio queue")
+        assert isinstance(exc, AudioQueueError)
         assert exc.status_code == -50
         assert "create audio queue" in str(exc)
 

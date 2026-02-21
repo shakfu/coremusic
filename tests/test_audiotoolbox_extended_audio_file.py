@@ -4,8 +4,8 @@ import os
 import tempfile
 import struct
 import pytest
-import coremusic as cm
 import coremusic.capi as capi
+from coremusic.objects import CoreAudioError
 
 
 class TestExtendedAudioFileAPI:
@@ -185,9 +185,9 @@ class TestExtendedAudioFileAPI:
 
     def test_extended_audio_file_error_handling(self):
         """Test ExtendedAudioFile error handling"""
-        with pytest.raises((RuntimeError, cm.CoreAudioError)):
+        with pytest.raises((RuntimeError, CoreAudioError)):
             capi.extended_audio_file_open_url("/nonexistent/path/to/file.wav")
-        with pytest.raises((RuntimeError, cm.CoreAudioError)):
+        with pytest.raises((RuntimeError, CoreAudioError)):
             capi.extended_audio_file_read(999999, 100)
 
     def test_extended_audio_file_write_then_read(

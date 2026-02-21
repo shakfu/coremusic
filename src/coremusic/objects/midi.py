@@ -92,9 +92,9 @@ class MIDIOutputPort(MIDIPort):
 
         Example::
 
-            import coremusic as cm
+            from coremusic.objects import MIDIClient
 
-            client = cm.MIDIClient("MyApp")
+            client = MIDIClient("MyApp")
             output_port = client.create_output_port("Output")
 
             # Get destination (e.g., virtual destination or hardware endpoint)

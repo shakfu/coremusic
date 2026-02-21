@@ -4,7 +4,6 @@ import struct
 import time
 import wave
 import pytest
-import coremusic as cm
 import coremusic.capi as capi
 
 logger = logging.getLogger(__name__)

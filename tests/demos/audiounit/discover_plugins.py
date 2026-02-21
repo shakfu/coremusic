@@ -8,13 +8,13 @@ Where type is: effect, instrument, generator, mixer, output
 """
 
 import sys
-import coremusic as cm
+from coremusic.audio.audiounit_host import AudioUnitHost
 
 
 def main():
     plugin_type = sys.argv[1] if len(sys.argv) > 1 else "effect"
 
-    host = cm.AudioUnitHost()
+    host = AudioUnitHost()
     counts = host.get_plugin_count()
 
     print(f"Plugin counts: {counts}")

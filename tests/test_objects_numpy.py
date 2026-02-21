@@ -4,11 +4,11 @@ Tests for NumPy integration in AudioFormat and AudioFile
 """
 
 import pytest
-import coremusic as cm
 import os
+from coremusic.objects import AudioFile, AudioFormat, NUMPY_AVAILABLE
 
 
-if not cm.NUMPY_AVAILABLE:
+if not NUMPY_AVAILABLE:
     pytest.skip("NumPy is not available", allow_module_level=True)
 
 import numpy as np
@@ -19,7 +19,7 @@ class TestAudioFormatNumPy:
 
     def test_to_numpy_dtype_16bit_pcm(self):
         """Test converting 16-bit PCM format to NumPy dtype"""
-        format = cm.AudioFormat(
+        format = AudioFormat(
             sample_rate=44100.0,
             format_id="lpcm",
             channels_per_frame=2,
@@ -31,7 +31,7 @@ class TestAudioFormatNumPy:
 
     def test_to_numpy_dtype_8bit_signed_pcm(self):
         """Test converting 8-bit signed PCM format to NumPy dtype"""
-        format = cm.AudioFormat(
+        format = AudioFormat(
             sample_rate=44100.0,
             format_id="lpcm",
             format_flags=0,  # Signed
@@ -44,7 +44,7 @@ class TestAudioFormatNumPy:
 
     def test_to_numpy_dtype_8bit_unsigned_pcm(self):
         """Test converting 8-bit unsigned PCM format to NumPy dtype"""
-        format = cm.AudioFormat(
+        format = AudioFormat(
             sample_rate=44100.0,
             format_id="lpcm",
             format_flags=2,  # kAudioFormatFlagIsSignedInteger = 2 (inverted)
@@ -57,7 +57,7 @@ class TestAudioFormatNumPy:
 
     def test_to_numpy_dtype_24bit_pcm(self):
         """Test converting 24-bit PCM format to NumPy dtype"""
-        format = cm.AudioFormat(
+        format = AudioFormat(
             sample_rate=44100.0,
             format_id="lpcm",
             channels_per_frame=2,
@@ -69,7 +69,7 @@ class TestAudioFormatNumPy:
 
     def test_to_numpy_dtype_32bit_int_pcm(self):
         """Test converting 32-bit integer PCM format to NumPy dtype"""
-        format = cm.AudioFormat(
+        format = AudioFormat(
             sample_rate=44100.0,
             format_id="lpcm",
             format_flags=0,  # Not float
@@ -82,7 +82,7 @@ class TestAudioFormatNumPy:
 
     def test_to_numpy_dtype_32bit_float_pcm(self):
         """Test converting 32-bit float PCM format to NumPy dtype"""
-        format = cm.AudioFormat(
+        format = AudioFormat(
             sample_rate=44100.0,
             format_id="lpcm",
             format_flags=1,  # kAudioFormatFlagIsFloat = 1
@@ -95,7 +95,7 @@ class TestAudioFormatNumPy:
 
     def test_to_numpy_dtype_64bit_float_pcm(self):
         """Test converting 64-bit float PCM format to NumPy dtype"""
-        format = cm.AudioFormat(
+        format = AudioFormat(
             sample_rate=44100.0,
             format_id="lpcm",
             format_flags=1,  # kAudioFormatFlagIsFloat = 1
@@ -108,7 +108,7 @@ class TestAudioFormatNumPy:
 
     def test_to_numpy_dtype_non_pcm_raises(self):
         """Test that non-PCM formats raise ValueError"""
-        format = cm.AudioFormat(
+        format = AudioFormat(
             sample_rate=44100.0,
             format_id="aac ",  # AAC format
             channels_per_frame=2,
@@ -120,7 +120,7 @@ class TestAudioFormatNumPy:
 
     def test_to_numpy_dtype_unsupported_float_depth_raises(self):
         """Test that unsupported float bit depths raise ValueError"""
-        format = cm.AudioFormat(
+        format = AudioFormat(
             sample_rate=44100.0,
             format_id="lpcm",
             format_flags=1,  # kAudioFormatFlagIsFloat = 1
@@ -133,7 +133,7 @@ class TestAudioFormatNumPy:
 
     def test_to_numpy_dtype_unsupported_int_depth_raises(self):
         """Test that unsupported integer bit depths raise ValueError"""
-        format = cm.AudioFormat(
+        format = AudioFormat(
             sample_rate=44100.0,
             format_id="lpcm",
             format_flags=0,
@@ -155,7 +155,7 @@ class TestAudioFileNumPy:
 
     def test_read_as_numpy_full_file(self, test_audio_file):
         """Test reading entire audio file as NumPy array"""
-        with cm.AudioFile(test_audio_file) as audio:
+        with AudioFile(test_audio_file) as audio:
             data = audio.read_as_numpy()
 
             # Check it's a NumPy array
@@ -175,7 +175,7 @@ class TestAudioFileNumPy:
 
     def test_read_as_numpy_partial_file(self, test_audio_file):
         """Test reading partial audio file as NumPy array"""
-        with cm.AudioFile(test_audio_file) as audio:
+        with AudioFile(test_audio_file) as audio:
             # Read first 1000 packets
             data = audio.read_as_numpy(start_packet=0, packet_count=1000)
 
@@ -194,7 +194,7 @@ class TestAudioFileNumPy:
 
     def test_read_as_numpy_with_offset(self, test_audio_file):
         """Test reading audio from offset"""
-        with cm.AudioFile(test_audio_file) as audio:
+        with AudioFile(test_audio_file) as audio:
             # Read 500 packets starting from packet 1000
             data = audio.read_as_numpy(start_packet=1000, packet_count=500)
 
@@ -208,7 +208,7 @@ class TestAudioFileNumPy:
 
     def test_read_as_numpy_data_validity(self, test_audio_file):
         """Test that read NumPy data is valid audio data"""
-        with cm.AudioFile(test_audio_file) as audio:
+        with AudioFile(test_audio_file) as audio:
             data = audio.read_as_numpy(start_packet=0, packet_count=1000)
 
             # Audio data should be in valid range for int16
@@ -220,7 +220,7 @@ class TestAudioFileNumPy:
 
     def test_read_as_numpy_matches_read_packets(self, test_audio_file):
         """Test that read_as_numpy matches read_packets"""
-        with cm.AudioFile(test_audio_file) as audio:
+        with AudioFile(test_audio_file) as audio:
             # Read using both methods
             numpy_data = audio.read_as_numpy(start_packet=0, packet_count=100)
             bytes_data, count = audio.read_packets(start_packet=0, packet_count=100)
@@ -237,7 +237,7 @@ class TestAudioFileNumPy:
 
     def test_read_as_numpy_format_consistency(self, test_audio_file):
         """Test that NumPy dtype matches AudioFormat"""
-        with cm.AudioFile(test_audio_file) as audio:
+        with AudioFile(test_audio_file) as audio:
             format = audio.format
             data = audio.read_as_numpy(start_packet=0, packet_count=100)
 
@@ -254,13 +254,13 @@ class TestAudioFileNumPy:
         import coremusic.objects.audio as audio_module
         monkeypatch.setattr(audio_module, "NUMPY_AVAILABLE", False)
 
-        with cm.AudioFile(test_audio_file) as audio:
+        with AudioFile(test_audio_file) as audio:
             with pytest.raises(ImportError, match="NumPy is not available"):
                 audio.read_as_numpy()
 
     def test_read_as_numpy_sequential_reads(self, test_audio_file):
         """Test sequential reads produce correct data"""
-        with cm.AudioFile(test_audio_file) as audio:
+        with AudioFile(test_audio_file) as audio:
             # Read first chunk
             chunk1 = audio.read_as_numpy(start_packet=0, packet_count=500)
 
@@ -276,7 +276,7 @@ class TestAudioFileNumPy:
 
     def test_read_as_numpy_channel_separation(self, test_audio_file):
         """Test that stereo channels are properly separated"""
-        with cm.AudioFile(test_audio_file) as audio:
+        with AudioFile(test_audio_file) as audio:
             data = audio.read_as_numpy(start_packet=0, packet_count=1000)
 
             # Extract left and right channels
@@ -296,19 +296,20 @@ class TestNumPyAvailabilityFlag:
     """Tests for NUMPY_AVAILABLE flag"""
 
     def test_numpy_available_flag_exists(self):
-        """Test that NUMPY_AVAILABLE flag is defined"""
-        assert hasattr(cm, "NUMPY_AVAILABLE")
+        """Test that NUMPY_AVAILABLE flag is defined in coremusic.objects"""
+        import coremusic.objects as objects
+        assert hasattr(objects, "NUMPY_AVAILABLE")
 
     def test_numpy_available_flag_is_bool(self):
         """Test that NUMPY_AVAILABLE is a boolean"""
-        assert isinstance(cm.NUMPY_AVAILABLE, bool)
+        assert isinstance(NUMPY_AVAILABLE, bool)
 
     def test_numpy_available_when_installed(self):
         """Test that flag is True when NumPy is installed"""
-        assert cm.NUMPY_AVAILABLE is True
+        assert NUMPY_AVAILABLE is True
 
     def test_numpy_import_from_module(self):
         """Test importing NUMPY_AVAILABLE from module"""
-        from coremusic import NUMPY_AVAILABLE
+        from coremusic.objects import NUMPY_AVAILABLE
 
         assert isinstance(NUMPY_AVAILABLE, bool)

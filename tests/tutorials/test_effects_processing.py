@@ -12,8 +12,8 @@ from __future__ import annotations
 def list_available_audio_units():
     """List all available AudioUnits.
 
-    >>> import coremusic as cm
-    >>> units = cm.list_available_audio_units()
+    >>> from coremusic.audio.utilities import list_available_audio_units
+    >>> units = list_available_audio_units()
     >>> assert isinstance(units, list)
     >>> assert len(units) > 0  # macOS has built-in AudioUnits
     >>> # Each unit should have name and type
@@ -27,8 +27,8 @@ def list_available_audio_units():
 def get_effect_names():
     """Get names of effect AudioUnits only.
 
-    >>> import coremusic as cm
-    >>> effects = cm.get_audiounit_names(filter_type='aufx')
+    >>> from coremusic.audio.utilities import get_audiounit_names
+    >>> effects = get_audiounit_names(filter_type='aufx')
     >>> assert isinstance(effects, list)
     >>> # macOS includes built-in effects like AUDelay, AUReverb2
     >>> # Check for at least one effect
@@ -40,8 +40,8 @@ def get_effect_names():
 def get_instrument_names():
     """Get names of instrument AudioUnits.
 
-    >>> import coremusic as cm
-    >>> instruments = cm.get_audiounit_names(filter_type='aumu')
+    >>> from coremusic.audio.utilities import get_audiounit_names
+    >>> instruments = get_audiounit_names(filter_type='aumu')
     >>> assert isinstance(instruments, list)
     >>> # macOS includes DLSMusicDevice
     >>> assert len(instruments) >= 0  # May be 0 if no instruments installed
@@ -52,9 +52,9 @@ def get_instrument_names():
 def find_audio_unit_by_name():
     """Find an AudioUnit by name.
 
-    >>> import coremusic as cm
+    >>> from coremusic.audio.utilities import find_audio_unit_by_name
     >>> # AUDelay is a built-in macOS effect
-    >>> component = cm.find_audio_unit_by_name("AUDelay")
+    >>> component = find_audio_unit_by_name("AUDelay")
     >>> assert component is not None
     """
     pass
@@ -63,9 +63,9 @@ def find_audio_unit_by_name():
 def find_audio_unit_partial_match():
     """Find AudioUnit with partial name match.
 
-    >>> import coremusic as cm
+    >>> from coremusic.audio.utilities import find_audio_unit_by_name
     >>> # Search for "Reverb" should find AUReverb2
-    >>> component = cm.find_audio_unit_by_name("Reverb")
+    >>> component = find_audio_unit_by_name("Reverb")
     >>> assert component is not None
     """
     pass
@@ -99,9 +99,9 @@ def audio_unit_types():
 def create_audio_component_description():
     """Create an AudioComponentDescription.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioComponentDescription
     >>> # Create description for Apple's Delay effect
-    >>> desc = cm.AudioComponentDescription(
+    >>> desc = AudioComponentDescription(
     ...     type='aufx',        # Effect
     ...     subtype='dely',     # Delay
     ...     manufacturer='appl' # Apple
@@ -117,9 +117,9 @@ def find_component_by_description():
     The preferred way is to use find_audio_unit_by_name or
     list_available_audio_units.
 
-    >>> import coremusic as cm
+    >>> from coremusic.audio.utilities import find_audio_unit_by_name
     >>> # Find Apple's Reverb effect by name
-    >>> component = cm.find_audio_unit_by_name("AUReverb2")
+    >>> component = find_audio_unit_by_name("AUReverb2")
     >>> assert component is not None
     """
     pass
@@ -128,8 +128,8 @@ def find_component_by_description():
 def create_effects_chain():
     """Create an audio effects chain.
 
-    >>> import coremusic as cm
-    >>> chain = cm.AudioEffectsChain()
+    >>> from coremusic.audio.utilities import AudioEffectsChain
+    >>> chain = AudioEffectsChain()
     >>> assert chain is not None
     >>> chain.dispose()
     """
@@ -139,8 +139,8 @@ def create_effects_chain():
 def add_effect_to_chain_by_name():
     """Add an effect to a chain by name.
 
-    >>> import coremusic as cm
-    >>> chain = cm.AudioEffectsChain()
+    >>> from coremusic.audio.utilities import AudioEffectsChain
+    >>> chain = AudioEffectsChain()
     >>> try:
     ...     # Add delay effect
     ...     delay_node = chain.add_effect_by_name("AUDelay")
@@ -154,8 +154,8 @@ def add_effect_to_chain_by_name():
 def add_effect_to_chain_by_descriptor():
     """Add an effect to a chain using type/subtype/manufacturer.
 
-    >>> import coremusic as cm
-    >>> chain = cm.AudioEffectsChain()
+    >>> from coremusic.audio.utilities import AudioEffectsChain
+    >>> chain = AudioEffectsChain()
     >>> try:
     ...     # Add Apple's Reverb
     ...     reverb_node = chain.add_effect("aufx", "rvb2", "appl")
@@ -169,8 +169,8 @@ def add_effect_to_chain_by_descriptor():
 def add_output_to_chain():
     """Add an output node to a chain.
 
-    >>> import coremusic as cm
-    >>> chain = cm.AudioEffectsChain()
+    >>> from coremusic.audio.utilities import AudioEffectsChain
+    >>> chain = AudioEffectsChain()
     >>> try:
     ...     output_node = chain.add_output()
     ...     assert output_node is not None
@@ -183,8 +183,8 @@ def add_output_to_chain():
 def connect_chain_nodes():
     """Connect nodes in an effects chain.
 
-    >>> import coremusic as cm
-    >>> chain = cm.AudioEffectsChain()
+    >>> from coremusic.audio.utilities import AudioEffectsChain
+    >>> chain = AudioEffectsChain()
     >>> try:
     ...     # Add effect and output
     ...     delay = chain.add_effect_by_name("AUDelay")
@@ -200,8 +200,8 @@ def connect_chain_nodes():
 def create_multi_effect_chain():
     """Create a chain with multiple effects in series.
 
-    >>> import coremusic as cm
-    >>> chain = cm.AudioEffectsChain()
+    >>> from coremusic.audio.utilities import AudioEffectsChain
+    >>> chain = AudioEffectsChain()
     >>> try:
     ...     # Add effects: EQ -> Delay -> Reverb -> Output
     ...     eq = chain.add_effect_by_name("AUParametricEQ")
@@ -224,8 +224,8 @@ def create_multi_effect_chain():
 def initialize_effects_chain():
     """Initialize an effects chain for processing.
 
-    >>> import coremusic as cm
-    >>> chain = cm.AudioEffectsChain()
+    >>> from coremusic.audio.utilities import AudioEffectsChain
+    >>> chain = AudioEffectsChain()
     >>> reverb = chain.add_effect_by_name("AUReverb2")
     >>> output = chain.add_output()
     >>> _ = chain.connect(reverb, output)

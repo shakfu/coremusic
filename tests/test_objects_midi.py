@@ -2,8 +2,15 @@
 
 import pytest
 import time
-import coremusic as cm
 import coremusic.capi as capi
+from coremusic.objects import (
+    CoreAudioObject,
+    MIDIClient,
+    MIDIError,
+    MIDIInputPort,
+    MIDIOutputPort,
+    MIDIPort,
+)
 
 
 # Check MIDI availability at module load time
@@ -38,9 +45,9 @@ class TestMIDIClient:
 
     def test_midi_client_creation(self):
         """Test MIDIClient creation"""
-        client = cm.MIDIClient("Test Client")
-        assert isinstance(client, cm.MIDIClient)
-        assert isinstance(client, cm.CoreAudioObject)
+        client = MIDIClient("Test Client")
+        assert isinstance(client, MIDIClient)
+        assert isinstance(client, CoreAudioObject)
         assert client.name == "Test Client"
         assert client.object_id != 0
         assert len(client._ports) == 0
@@ -49,12 +56,12 @@ class TestMIDIClient:
 
     def test_midi_client_create_input_port(self):
         """Test MIDIClient input port creation"""
-        client = cm.MIDIClient("Test Client")
+        client = MIDIClient("Test Client")
         try:
             port = client.create_input_port("Test Input Port")
-            assert isinstance(port, cm.MIDIInputPort)
-            assert isinstance(port, cm.MIDIPort)
-            assert isinstance(port, cm.CoreAudioObject)
+            assert isinstance(port, MIDIInputPort)
+            assert isinstance(port, MIDIPort)
+            assert isinstance(port, CoreAudioObject)
             assert port.name == "Test Input Port"
             assert port.object_id != 0
             assert port._client is client
@@ -65,11 +72,11 @@ class TestMIDIClient:
 
     def test_midi_client_create_output_port(self):
         """Test MIDIClient output port creation"""
-        client = cm.MIDIClient("Test Client")
+        client = MIDIClient("Test Client")
         try:
             port = client.create_output_port("Test Output Port")
-            assert isinstance(port, cm.MIDIOutputPort)
-            assert isinstance(port, cm.MIDIPort)
+            assert isinstance(port, MIDIOutputPort)
+            assert isinstance(port, MIDIPort)
             assert port.name == "Test Output Port"
             assert port.object_id != 0
             assert port._client is client
@@ -80,7 +87,7 @@ class TestMIDIClient:
 
     def test_midi_client_multiple_ports(self):
         """Test MIDIClient with multiple ports"""
-        client = cm.MIDIClient("Multi Port Client")
+        client = MIDIClient("Multi Port Client")
         try:
             input_port1 = client.create_input_port("Input 1")
             input_port2 = client.create_input_port("Input 2")
@@ -97,7 +104,7 @@ class TestMIDIClient:
 
     def test_midi_client_disposal(self):
         """Test MIDIClient disposal"""
-        client = cm.MIDIClient("Disposal Test Client")
+        client = MIDIClient("Disposal Test Client")
         input_port = client.create_input_port("Test Port")
         assert not client.is_disposed
         assert not input_port.is_disposed
@@ -109,7 +116,7 @@ class TestMIDIClient:
 
     def test_midi_client_operations_on_disposed_object(self):
         """Test operations on disposed MIDIClient"""
-        client = cm.MIDIClient("Test Client")
+        client = MIDIClient("Test Client")
         client.dispose()
         with pytest.raises(RuntimeError, match="has been disposed"):
             client.create_input_port("Test Port")
@@ -122,15 +129,15 @@ class TestMIDIPort:
 
     def test_midi_port_creation(self):
         """Test MIDIPort creation"""
-        port = cm.MIDIPort("Test Port")
-        assert isinstance(port, cm.MIDIPort)
-        assert isinstance(port, cm.CoreAudioObject)
+        port = MIDIPort("Test Port")
+        assert isinstance(port, MIDIPort)
+        assert isinstance(port, CoreAudioObject)
         assert port.name == "Test Port"
         assert port._client is None
 
     def test_midi_port_disposal(self):
         """Test MIDIPort disposal"""
-        client = cm.MIDIClient("Test Client")
+        client = MIDIClient("Test Client")
         try:
             port = client.create_input_port("Test Port")
             assert not port.is_disposed
@@ -145,18 +152,18 @@ class TestMIDIInputPort:
 
     def test_midi_input_port_creation(self):
         """Test MIDIInputPort creation through client"""
-        client = cm.MIDIClient("Test Client")
+        client = MIDIClient("Test Client")
         try:
             port = client.create_input_port("Input Port")
-            assert isinstance(port, cm.MIDIInputPort)
-            assert isinstance(port, cm.MIDIPort)
+            assert isinstance(port, MIDIInputPort)
+            assert isinstance(port, MIDIPort)
             assert port.name == "Input Port"
         finally:
             client.dispose()
 
     def test_midi_input_port_connect_source(self):
         """Test MIDIInputPort source connection"""
-        client = cm.MIDIClient("Test Client")
+        client = MIDIClient("Test Client")
         try:
             port = client.create_input_port("Input Port")
 
@@ -167,14 +174,14 @@ class TestMIDIInputPort:
             mock_source = MockEndpoint()
             try:
                 port.connect_source(mock_source)
-            except cm.MIDIError:
+            except MIDIError:
                 pass
         finally:
             client.dispose()
 
     def test_midi_input_port_disconnect_source(self):
         """Test MIDIInputPort source disconnection"""
-        client = cm.MIDIClient("Test Client")
+        client = MIDIClient("Test Client")
         try:
             port = client.create_input_port("Input Port")
 
@@ -185,14 +192,14 @@ class TestMIDIInputPort:
             mock_source = MockEndpoint()
             try:
                 port.disconnect_source(mock_source)
-            except cm.MIDIError:
+            except MIDIError:
                 pass
         finally:
             client.dispose()
 
     def test_midi_input_port_operations_on_disposed_object(self):
         """Test operations on disposed MIDIInputPort"""
-        client = cm.MIDIClient("Test Client")
+        client = MIDIClient("Test Client")
         port = client.create_input_port("Test Port")
         client.dispose()
 
@@ -212,18 +219,18 @@ class TestMIDIOutputPort:
 
     def test_midi_output_port_creation(self):
         """Test MIDIOutputPort creation through client"""
-        client = cm.MIDIClient("Test Client")
+        client = MIDIClient("Test Client")
         try:
             port = client.create_output_port("Output Port")
-            assert isinstance(port, cm.MIDIOutputPort)
-            assert isinstance(port, cm.MIDIPort)
+            assert isinstance(port, MIDIOutputPort)
+            assert isinstance(port, MIDIPort)
             assert port.name == "Output Port"
         finally:
             client.dispose()
 
     def test_midi_output_port_send_data(self):
         """Test MIDIOutputPort data sending"""
-        client = cm.MIDIClient("Test Client")
+        client = MIDIClient("Test Client")
         try:
             port = client.create_output_port("Output Port")
 
@@ -236,14 +243,14 @@ class TestMIDIOutputPort:
             try:
                 port.send_data(mock_destination, test_data)
                 port.send_data(mock_destination, test_data, timestamp=1000)
-            except cm.MIDIError:
+            except MIDIError:
                 pass
         finally:
             client.dispose()
 
     def test_midi_output_port_operations_on_disposed_object(self):
         """Test operations on disposed MIDIOutputPort"""
-        client = cm.MIDIClient("Test Client")
+        client = MIDIClient("Test Client")
         port = client.create_output_port("Test Port")
         client.dispose()
 
@@ -274,7 +281,7 @@ class TestMIDIIntegration:
             capi.midi_port_dispose(func_output_port_id)
         finally:
             capi.midi_client_dispose(func_client_id)
-        oo_client = cm.MIDIClient("OO Client")
+        oo_client = MIDIClient("OO Client")
         try:
             oo_input_port = oo_client.create_input_port("OO Input")
             oo_output_port = oo_client.create_output_port("OO Output")
@@ -289,7 +296,7 @@ class TestMIDIIntegration:
 
     def test_midi_client_full_workflow(self):
         """Test complete MIDI workflow"""
-        client = cm.MIDIClient("Workflow Client")
+        client = MIDIClient("Workflow Client")
         try:
             input_port = client.create_input_port("Workflow Input")
             output_port = client.create_output_port("Workflow Output")
@@ -305,15 +312,15 @@ class TestMIDIIntegration:
                 input_port.connect_source(mock_source)
                 output_port.send_data(mock_destination, b"\x90@\x7f")
                 input_port.disconnect_source(mock_source)
-            except cm.MIDIError:
+            except MIDIError:
                 pass
         finally:
             client.dispose()
 
     def test_midi_multiple_clients(self):
         """Test multiple MIDI clients"""
-        client1 = cm.MIDIClient("Client 1")
-        client2 = cm.MIDIClient("Client 2")
+        client1 = MIDIClient("Client 1")
+        client2 = MIDIClient("Client 2")
         try:
             assert client1.object_id != client2.object_id
             assert client1.name != client2.name
@@ -329,7 +336,7 @@ class TestMIDIIntegration:
     def test_midi_resource_management(self):
         """Test MIDI resource management"""
         for i in range(3):
-            client = cm.MIDIClient(f"Resource Test Client {i}")
+            client = MIDIClient(f"Resource Test Client {i}")
             for j in range(2):
                 client.create_input_port(f"Input {j}")
                 client.create_output_port(f"Output {j}")
@@ -340,16 +347,16 @@ class TestMIDIIntegration:
     def test_midi_error_handling(self):
         """Test MIDI error handling"""
         try:
-            empty_client = cm.MIDIClient("")
+            empty_client = MIDIClient("")
             empty_client.dispose()
-        except cm.MIDIError:
+        except MIDIError:
             pass
         clients = []
         try:
             for i in range(10):
-                client = cm.MIDIClient(f"Stress Test Client {i}")
+                client = MIDIClient(f"Stress Test Client {i}")
                 clients.append(client)
-        except cm.MIDIError:
+        except MIDIError:
             pass
         finally:
             for client in clients:
@@ -362,16 +369,16 @@ class TestMIDIPortPolymorphism:
 
     def test_midi_port_inheritance(self):
         """Test MIDI port class inheritance"""
-        client = cm.MIDIClient("Inheritance Test")
+        client = MIDIClient("Inheritance Test")
         try:
             input_port = client.create_input_port("Input")
             output_port = client.create_output_port("Output")
-            assert isinstance(input_port, cm.MIDIInputPort)
-            assert isinstance(input_port, cm.MIDIPort)
-            assert isinstance(input_port, cm.CoreAudioObject)
-            assert isinstance(output_port, cm.MIDIOutputPort)
-            assert isinstance(output_port, cm.MIDIPort)
-            assert isinstance(output_port, cm.CoreAudioObject)
+            assert isinstance(input_port, MIDIInputPort)
+            assert isinstance(input_port, MIDIPort)
+            assert isinstance(input_port, CoreAudioObject)
+            assert isinstance(output_port, MIDIOutputPort)
+            assert isinstance(output_port, MIDIPort)
+            assert isinstance(output_port, CoreAudioObject)
             ports = [input_port, output_port]
             for port in ports:
                 assert hasattr(port, "name")
@@ -382,13 +389,13 @@ class TestMIDIPortPolymorphism:
 
     def test_midi_port_list_management(self):
         """Test MIDI client port list management"""
-        client = cm.MIDIClient("List Test")
+        client = MIDIClient("List Test")
         try:
             port1 = client.create_input_port("Input 1")
             port2 = client.create_output_port("Output 1")
             port3 = client.create_input_port("Input 2")
             assert len(client._ports) == 3
-            assert all(isinstance(port, cm.MIDIPort) for port in client._ports)
+            assert all(isinstance(port, MIDIPort) for port in client._ports)
             port2.dispose()
             assert port2.is_disposed
             assert len(client._ports) == 2

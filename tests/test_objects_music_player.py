@@ -3,7 +3,13 @@
 import logging
 import os
 import pytest
-import coremusic as cm
+import coremusic.capi as capi
+from coremusic.objects import (
+    MusicPlayer,
+    MusicPlayerError,
+    MusicSequence,
+    MusicTrack,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +19,7 @@ class TestMusicTrack:
 
     def test_add_midi_note(self):
         """Test adding MIDI notes to track"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         try:
             track = sequence.new_track()
 
@@ -32,7 +38,7 @@ class TestMusicTrack:
 
     def test_add_midi_channel_event(self):
         """Test adding MIDI channel events"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         try:
             track = sequence.new_track()
 
@@ -48,7 +54,7 @@ class TestMusicTrack:
 
     def test_add_tempo_event(self):
         """Test adding tempo events"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         try:
             tempo_track = sequence.tempo_track
 
@@ -64,7 +70,7 @@ class TestMusicTrack:
 
     def test_repr(self):
         """Test track string representation"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         try:
             track = sequence.new_track()
             repr_str = repr(track)
@@ -79,7 +85,7 @@ class TestMusicSequence:
 
     def test_creation(self):
         """Test sequence creation"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         try:
             assert not sequence.is_disposed
             assert sequence.track_count == 0
@@ -88,16 +94,16 @@ class TestMusicSequence:
 
     def test_new_track(self):
         """Test creating new tracks"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         try:
             assert sequence.track_count == 0
 
             track1 = sequence.new_track()
-            assert isinstance(track1, cm.MusicTrack)
+            assert isinstance(track1, MusicTrack)
             assert sequence.track_count == 1
 
             track2 = sequence.new_track()
-            assert isinstance(track2, cm.MusicTrack)
+            assert isinstance(track2, MusicTrack)
             assert sequence.track_count == 2
 
             # Tracks should be different
@@ -107,7 +113,7 @@ class TestMusicSequence:
 
     def test_dispose_track(self):
         """Test removing tracks"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         try:
             track1 = sequence.new_track()
             track2 = sequence.new_track()
@@ -121,24 +127,24 @@ class TestMusicSequence:
 
     def test_get_track(self):
         """Test getting track by index"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         try:
             track1 = sequence.new_track()
             track2 = sequence.new_track()
 
             # Get first track
             retrieved = sequence.get_track(0)
-            assert isinstance(retrieved, cm.MusicTrack)
+            assert isinstance(retrieved, MusicTrack)
 
             # Get second track
             retrieved = sequence.get_track(1)
-            assert isinstance(retrieved, cm.MusicTrack)
+            assert isinstance(retrieved, MusicTrack)
         finally:
             sequence.dispose()
 
     def test_get_track_invalid_index(self):
         """Test getting track with invalid index"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         try:
             sequence.new_track()
 
@@ -155,10 +161,10 @@ class TestMusicSequence:
 
     def test_tempo_track(self):
         """Test getting tempo track"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         try:
             tempo_track = sequence.tempo_track
-            assert isinstance(tempo_track, cm.MusicTrack)
+            assert isinstance(tempo_track, MusicTrack)
 
             # Should be the same object if accessed again
             tempo_track2 = sequence.tempo_track
@@ -171,34 +177,34 @@ class TestMusicSequence:
 
     def test_sequence_type(self):
         """Test getting and setting sequence type"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         try:
             # Default should be beats
             seq_type = sequence.sequence_type
-            assert seq_type == cm.capi.get_music_sequence_type_beats()
+            assert seq_type == capi.get_music_sequence_type_beats()
 
             # Change to seconds
-            sequence.sequence_type = cm.capi.get_music_sequence_type_seconds()
-            assert sequence.sequence_type == cm.capi.get_music_sequence_type_seconds()
+            sequence.sequence_type = capi.get_music_sequence_type_seconds()
+            assert sequence.sequence_type == capi.get_music_sequence_type_seconds()
 
             # Change back to beats
-            sequence.sequence_type = cm.capi.get_music_sequence_type_beats()
-            assert sequence.sequence_type == cm.capi.get_music_sequence_type_beats()
+            sequence.sequence_type = capi.get_music_sequence_type_beats()
+            assert sequence.sequence_type == capi.get_music_sequence_type_beats()
         finally:
             sequence.dispose()
 
     def test_load_from_file_invalid(self):
         """Test loading from nonexistent file"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         try:
-            with pytest.raises(cm.MusicPlayerError):
+            with pytest.raises(MusicPlayerError):
                 sequence.load_from_file("/nonexistent/file.mid")
         finally:
             sequence.dispose()
 
     def test_dispose(self):
         """Test sequence disposal"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         track1 = sequence.new_track()
         track2 = sequence.new_track()
 
@@ -213,7 +219,7 @@ class TestMusicSequence:
 
     def test_repr(self):
         """Test sequence string representation"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         try:
             repr_str = repr(sequence)
             assert "MusicSequence" in repr_str
@@ -227,7 +233,7 @@ class TestMusicSequence:
 
     def test_repr_disposed(self):
         """Test repr of disposed sequence"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         sequence.dispose()
         repr_str = repr(sequence)
         assert "disposed" in repr_str
@@ -238,7 +244,7 @@ class TestMusicPlayer:
 
     def test_creation(self):
         """Test player creation"""
-        player = cm.MusicPlayer()
+        player = MusicPlayer()
         try:
             assert not player.is_disposed
             assert player.sequence is None
@@ -248,8 +254,8 @@ class TestMusicPlayer:
 
     def test_sequence_assignment(self):
         """Test assigning sequence to player"""
-        player = cm.MusicPlayer()
-        sequence = cm.MusicSequence()
+        player = MusicPlayer()
+        sequence = MusicSequence()
         try:
             # Assign sequence
             player.sequence = sequence
@@ -264,8 +270,8 @@ class TestMusicPlayer:
 
     def test_time_operations(self):
         """Test getting and setting time"""
-        player = cm.MusicPlayer()
-        sequence = cm.MusicSequence()
+        player = MusicPlayer()
+        sequence = MusicSequence()
         try:
             player.sequence = sequence
 
@@ -283,7 +289,7 @@ class TestMusicPlayer:
 
     def test_play_rate(self):
         """Test getting and setting play rate"""
-        player = cm.MusicPlayer()
+        player = MusicPlayer()
         try:
             # Default rate should be 1.0
             assert player.play_rate == 1.0
@@ -300,7 +306,7 @@ class TestMusicPlayer:
 
     def test_play_rate_invalid(self):
         """Test that invalid play rates are rejected"""
-        player = cm.MusicPlayer()
+        player = MusicPlayer()
         try:
             with pytest.raises(ValueError):
                 player.play_rate = -1.0
@@ -312,8 +318,8 @@ class TestMusicPlayer:
 
     def test_playback_control(self):
         """Test start/stop playback"""
-        player = cm.MusicPlayer()
-        sequence = cm.MusicSequence()
+        player = MusicPlayer()
+        sequence = MusicSequence()
         try:
             # Create a simple sequence
             track = sequence.new_track()
@@ -346,7 +352,7 @@ class TestMusicPlayer:
 
     def test_context_manager(self):
         """Test player as context manager"""
-        with cm.MusicPlayer() as player:
+        with MusicPlayer() as player:
             assert not player.is_disposed
             assert player.sequence is None
 
@@ -355,8 +361,8 @@ class TestMusicPlayer:
 
     def test_dispose(self):
         """Test player disposal"""
-        player = cm.MusicPlayer()
-        sequence = cm.MusicSequence()
+        player = MusicPlayer()
+        sequence = MusicSequence()
 
         player.sequence = sequence
         assert not player.is_disposed
@@ -368,7 +374,7 @@ class TestMusicPlayer:
 
     def test_repr(self):
         """Test player string representation"""
-        player = cm.MusicPlayer()
+        player = MusicPlayer()
         try:
             repr_str = repr(player)
             assert "MusicPlayer" in repr_str
@@ -378,7 +384,7 @@ class TestMusicPlayer:
 
     def test_repr_disposed(self):
         """Test repr of disposed player"""
-        player = cm.MusicPlayer()
+        player = MusicPlayer()
         player.dispose()
         repr_str = repr(player)
         assert "disposed" in repr_str
@@ -389,8 +395,8 @@ class TestMusicPlayerIntegration:
 
     def test_complete_workflow(self):
         """Test complete sequence creation and playback setup"""
-        player = cm.MusicPlayer()
-        sequence = cm.MusicSequence()
+        player = MusicPlayer()
+        sequence = MusicSequence()
         try:
             # Create melody track
             melody = sequence.new_track()
@@ -434,7 +440,7 @@ class TestMusicPlayerIntegration:
 
     def test_multiple_tracks(self):
         """Test creating multiple tracks with different parts"""
-        sequence = cm.MusicSequence()
+        sequence = MusicSequence()
         try:
             # Melody track
             melody = sequence.new_track()
@@ -458,9 +464,9 @@ class TestMusicPlayerIntegration:
 
     def test_switching_sequences(self):
         """Test switching between sequences on a player"""
-        player = cm.MusicPlayer()
-        sequence1 = cm.MusicSequence()
-        sequence2 = cm.MusicSequence()
+        player = MusicPlayer()
+        sequence1 = MusicSequence()
+        sequence2 = MusicSequence()
         try:
             # Add content to both sequences
             track1 = sequence1.new_track()

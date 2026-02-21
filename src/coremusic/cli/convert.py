@@ -203,13 +203,13 @@ def _get_file_type_for_extension(path: Path) -> int:
 
 def cmd_convert(args: argparse.Namespace) -> int:
     """Convert audio file."""
-    import coremusic as cm
+    from coremusic.objects import AudioConverter, AudioFormat, ExtendedAudioFile
 
     input_path = require_file(args.input)
     output_path = Path(args.output)
 
     # Open source file using ExtendedAudioFile for reading
-    with cm.ExtendedAudioFile(str(input_path)) as source:
+    with ExtendedAudioFile(str(input_path)) as source:
         source.open()
         source_format = source.file_format
 
@@ -225,7 +225,7 @@ def cmd_convert(args: argparse.Namespace) -> int:
         dest_bits = args.bit_depth or source_format.bits_per_channel
 
         # Create destination AudioFormat
-        dest_format = cm.AudioFormat(
+        dest_format = AudioFormat(
             sample_rate=float(dest_sample_rate),
             format_id=dest_format_id,
             channels_per_frame=dest_channels,
@@ -249,7 +249,7 @@ def cmd_convert(args: argparse.Namespace) -> int:
         if needs_conversion:
             # Use AudioConverter for format conversion
             try:
-                with cm.AudioConverter(source_format, dest_format) as converter:
+                with AudioConverter(source_format, dest_format) as converter:
                     converted_data = converter.convert(source_data)
             except Exception as e:
                 raise CLIError(f"Conversion failed: {e}")
@@ -258,7 +258,7 @@ def cmd_convert(args: argparse.Namespace) -> int:
 
         # Write output file
         try:
-            with cm.ExtendedAudioFile.create(str(output_path), file_type, dest_format) as out_file:
+            with ExtendedAudioFile.create(str(output_path), file_type, dest_format) as out_file:
                 num_frames = len(converted_data) // dest_format.bytes_per_frame
                 out_file.write(num_frames, converted_data)
         except Exception as e:
@@ -314,7 +314,7 @@ def _get_output_extension(format_name: str) -> str:
 
 def cmd_batch(args: argparse.Namespace) -> int:
     """Batch convert multiple audio files."""
-    import coremusic as cm
+    from coremusic.objects import AudioConverter, AudioFormat, ExtendedAudioFile
 
     input_dir = Path(args.input_dir)
     output_dir = Path(args.output_dir)
@@ -373,7 +373,7 @@ def cmd_batch(args: argparse.Namespace) -> int:
         }
 
         try:
-            with cm.ExtendedAudioFile(str(input_path)) as source:
+            with ExtendedAudioFile(str(input_path)) as source:
                 source.open()
                 source_format = source.file_format
 
@@ -382,7 +382,7 @@ def cmd_batch(args: argparse.Namespace) -> int:
                 dest_channels = args.channels or source_format.channels_per_frame
                 dest_bits = args.bit_depth or source_format.bits_per_channel
 
-                dest_format = cm.AudioFormat(
+                dest_format = AudioFormat(
                     sample_rate=float(dest_sample_rate),
                     format_id=dest_format_id,
                     channels_per_frame=dest_channels,
@@ -401,12 +401,12 @@ def cmd_batch(args: argparse.Namespace) -> int:
                 )
 
                 if needs_conversion:
-                    with cm.AudioConverter(source_format, dest_format) as converter:
+                    with AudioConverter(source_format, dest_format) as converter:
                         converted_data = converter.convert(source_data)
                 else:
                     converted_data = source_data
 
-                with cm.ExtendedAudioFile.create(str(output_path), file_type, dest_format) as out_file:
+                with ExtendedAudioFile.create(str(output_path), file_type, dest_format) as out_file:
                     num_frames = len(converted_data) // dest_format.bytes_per_frame
                     out_file.write(num_frames, converted_data)
 
@@ -451,7 +451,7 @@ def cmd_normalize(args: argparse.Namespace) -> int:
 
     import numpy as np
 
-    import coremusic as cm
+    from coremusic.objects import AudioFile, ExtendedAudioFile
 
     from ._utils import require_numpy
 
@@ -461,7 +461,7 @@ def cmd_normalize(args: argparse.Namespace) -> int:
     output_path = Path(args.output)
 
     # Open source file
-    with cm.AudioFile(str(input_path)) as source:
+    with AudioFile(str(input_path)) as source:
         source_format = source.format
         audio_data = source.read_as_numpy()
 
@@ -504,7 +504,7 @@ def cmd_normalize(args: argparse.Namespace) -> int:
     # Write output file
     file_type = _get_file_type_for_extension(output_path)
     try:
-        with cm.ExtendedAudioFile.create(str(output_path), file_type, source_format) as out_file:
+        with ExtendedAudioFile.create(str(output_path), file_type, source_format) as out_file:
             num_frames = len(output_bytes) // source_format.bytes_per_frame
             out_file.write(num_frames, output_bytes)
     except Exception as e:
@@ -536,7 +536,7 @@ def cmd_normalize(args: argparse.Namespace) -> int:
 def cmd_trim(args: argparse.Namespace) -> int:
     """Trim audio to time range."""
 
-    import coremusic as cm
+    from coremusic.objects import AudioFile, ExtendedAudioFile
 
     from ._utils import require_numpy
 
@@ -546,7 +546,7 @@ def cmd_trim(args: argparse.Namespace) -> int:
     output_path = Path(args.output)
 
     # Open source file and read all data
-    with cm.AudioFile(str(input_path)) as source:
+    with AudioFile(str(input_path)) as source:
         source_format = source.format
         duration = source.duration
         sample_rate = source_format.sample_rate
@@ -586,7 +586,7 @@ def cmd_trim(args: argparse.Namespace) -> int:
     # Write output file
     file_type = _get_file_type_for_extension(output_path)
     try:
-        with cm.ExtendedAudioFile.create(str(output_path), file_type, source_format) as out_file:
+        with ExtendedAudioFile.create(str(output_path), file_type, source_format) as out_file:
             out_file.write(frames_read, trimmed_bytes)
     except Exception as e:
         raise CLIError(f"Failed to write output file: {e}")

@@ -2,8 +2,8 @@
 
 import pytest
 import time
-import coremusic as cm
 import coremusic.capi as capi
+from coremusic.objects import AudioClock, ClockTimeFormat
 
 
 class TestClockTimeFormat:
@@ -11,17 +11,17 @@ class TestClockTimeFormat:
 
     def test_time_format_constants_exist(self):
         """Test that all time format constants are defined"""
-        assert hasattr(cm.ClockTimeFormat, "HOST_TIME")
-        assert hasattr(cm.ClockTimeFormat, "SAMPLES")
-        assert hasattr(cm.ClockTimeFormat, "BEATS")
-        assert hasattr(cm.ClockTimeFormat, "SECONDS")
-        assert hasattr(cm.ClockTimeFormat, "SMPTE_TIME")
+        assert hasattr(ClockTimeFormat, "HOST_TIME")
+        assert hasattr(ClockTimeFormat, "SAMPLES")
+        assert hasattr(ClockTimeFormat, "BEATS")
+        assert hasattr(ClockTimeFormat, "SECONDS")
+        assert hasattr(ClockTimeFormat, "SMPTE_TIME")
 
     def test_time_format_values(self):
         """Test that time format constants are valid integers"""
-        assert isinstance(cm.ClockTimeFormat.HOST_TIME, int)
-        assert isinstance(cm.ClockTimeFormat.BEATS, int)
-        assert isinstance(cm.ClockTimeFormat.SECONDS, int)
+        assert isinstance(ClockTimeFormat.HOST_TIME, int)
+        assert isinstance(ClockTimeFormat.BEATS, int)
+        assert isinstance(ClockTimeFormat.SECONDS, int)
 
 
 class TestAudioClockLowLevel:
@@ -93,7 +93,7 @@ class TestAudioClockHighLevel:
 
     def test_clock_creation(self):
         """Test AudioClock creation"""
-        clock = cm.AudioClock()
+        clock = AudioClock()
         clock.create()
         assert not clock.is_disposed
         clock.dispose()
@@ -101,13 +101,13 @@ class TestAudioClockHighLevel:
 
     def test_clock_context_manager(self):
         """Test AudioClock as context manager"""
-        with cm.AudioClock() as clock:
+        with AudioClock() as clock:
             assert not clock.is_disposed
         # Should be disposed after exiting context
 
     def test_clock_start_stop(self):
         """Test starting and stopping clock"""
-        with cm.AudioClock() as clock:
+        with AudioClock() as clock:
             assert not clock.is_running
             clock.start()
             assert clock.is_running
@@ -116,7 +116,7 @@ class TestAudioClockHighLevel:
 
     def test_clock_play_rate_property(self):
         """Test play rate property"""
-        with cm.AudioClock() as clock:
+        with AudioClock() as clock:
             # Default should be around 1.0
             initial_rate = clock.play_rate
             assert isinstance(initial_rate, float)
@@ -130,33 +130,33 @@ class TestAudioClockHighLevel:
 
     def test_get_time_seconds(self):
         """Test getting time in seconds"""
-        with cm.AudioClock() as clock:
+        with AudioClock() as clock:
             seconds = clock.get_time_seconds()
             assert isinstance(seconds, float)
             assert seconds >= 0.0
 
     def test_get_time_beats(self):
         """Test getting time in beats"""
-        with cm.AudioClock() as clock:
+        with AudioClock() as clock:
             beats = clock.get_time_beats()
             assert isinstance(beats, float)
             assert beats >= 0.0
 
     def test_get_time_samples(self):
         """Test getting time in samples"""
-        with cm.AudioClock() as clock:
+        with AudioClock() as clock:
             samples = clock.get_time_samples()
             assert isinstance(samples, float)
 
     def test_get_time_host(self):
         """Test getting host time"""
-        with cm.AudioClock() as clock:
+        with AudioClock() as clock:
             host_time = clock.get_time_host()
             assert isinstance(host_time, int)
 
     def test_clock_advances_at_normal_speed(self):
         """Test that clock advances at approximately 1:1 with real time"""
-        with cm.AudioClock() as clock:
+        with AudioClock() as clock:
             clock.play_rate = 1.0
             clock.start()
 
@@ -172,7 +172,7 @@ class TestAudioClockHighLevel:
 
     def test_clock_advances_at_half_speed(self):
         """Test that clock advances at half speed"""
-        with cm.AudioClock() as clock:
+        with AudioClock() as clock:
             clock.play_rate = 0.5
             clock.start()
 
@@ -188,7 +188,7 @@ class TestAudioClockHighLevel:
 
     def test_clock_repr(self):
         """Test string representation"""
-        clock = cm.AudioClock()
+        clock = AudioClock()
         repr_str = repr(clock)
         assert "AudioClock" in repr_str
 
@@ -206,8 +206,8 @@ class TestAudioClockHighLevel:
 
     def test_multiple_clocks(self):
         """Test creating multiple clocks simultaneously"""
-        clock1 = cm.AudioClock()
-        clock2 = cm.AudioClock()
+        clock1 = AudioClock()
+        clock2 = AudioClock()
 
         try:
             clock1.create()
@@ -228,7 +228,7 @@ class TestAudioClockErrorHandling:
 
     def test_operations_on_disposed_clock(self):
         """Test that operations on disposed clock raise errors"""
-        clock = cm.AudioClock()
+        clock = AudioClock()
         clock.create()
         clock.dispose()
 
@@ -237,14 +237,14 @@ class TestAudioClockErrorHandling:
 
     def test_get_time_formats(self):
         """Test get_current_time with different formats"""
-        with cm.AudioClock() as clock:
+        with AudioClock() as clock:
             # Test seconds format
-            time_info = clock.get_current_time(cm.ClockTimeFormat.SECONDS)
+            time_info = clock.get_current_time(ClockTimeFormat.SECONDS)
             assert isinstance(time_info, dict)
             assert "value" in time_info
 
             # Test beats format
-            time_info = clock.get_current_time(cm.ClockTimeFormat.BEATS)
+            time_info = clock.get_current_time(ClockTimeFormat.BEATS)
             assert isinstance(time_info, dict)
             assert "value" in time_info
 

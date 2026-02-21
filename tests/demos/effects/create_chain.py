@@ -5,11 +5,11 @@ Usage:
     python create_chain.py
 """
 
-import coremusic as cm
+from coremusic.audio.utilities import AudioEffectsChain
 
 
 def main():
-    with cm.AudioEffectsChain() as chain:
+    with AudioEffectsChain() as chain:
         # Add 3D mixer effect
         mixer_node = chain.add_effect("aumi", "3dem", "appl")
         print(f"Added 3D Mixer: node {mixer_node}")

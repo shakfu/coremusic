@@ -5,11 +5,11 @@ Usage:
     python stream_format.py
 """
 
-import coremusic as cm
+from coremusic.objects import AudioUnit
 
 
 def main():
-    unit = cm.AudioUnit.default_output()
+    unit = AudioUnit.default_output()
     try:
         unit.initialize()
 

@@ -3,7 +3,6 @@
 import os
 import pytest
 import time
-import coremusic as cm
 import coremusic.capi as capi
 
 

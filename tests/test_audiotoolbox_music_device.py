@@ -4,7 +4,6 @@ import logging
 import os
 import pytest
 import tempfile
-import coremusic as cm
 import coremusic.capi as capi
 
 logger = logging.getLogger(__name__)
@@ -292,7 +291,7 @@ class TestMusicDeviceIntegration:
         try:
             midi_events = [
                 capi.midi_program_change(0, 0),
-                cm.midi_control_change(0, 7, 100),
+                capi.midi_control_change(0, 7, 100),
                 capi.midi_control_change(0, 1, 0),
                 capi.midi_note_on(0, 60, 100),
                 capi.midi_note_on(0, 64, 100),

@@ -7,7 +7,7 @@ Convert audio files between different sample rates and formats using coremusic.
 Usage: python audio_converter.py <input_file> <output_file> [--rate RATE]
 """
 
-import coremusic as cm
+from coremusic.objects import AudioFile, AudioFileError, AudioFormat
 import sys
 import argparse
 from pathlib import Path
@@ -31,7 +31,7 @@ def convert_audio_file(input_path, output_path, target_sample_rate=None):
 
     try:
         # Open input file
-        with cm.AudioFile(input_path) as input_audio:
+        with AudioFile(input_path) as input_audio:
             src_fmt = input_audio.format
 
             print("Source Format:")
@@ -47,7 +47,7 @@ def convert_audio_file(input_path, output_path, target_sample_rate=None):
                 target_sample_rate = src_fmt.sample_rate
 
             # Create target format (same as source but different sample rate)
-            dst_fmt = cm.AudioFormat(
+            dst_fmt = AudioFormat(
                 sample_rate=float(target_sample_rate),
                 format_id=src_fmt.format_id,
                 format_flags=src_fmt.format_flags,
@@ -80,7 +80,7 @@ def convert_audio_file(input_path, output_path, target_sample_rate=None):
 
                 # Verify output
                 print("Verifying output...")
-                with cm.AudioFile(output_path) as output_audio:
+                with AudioFile(output_path) as output_audio:
                     out_fmt = output_audio.format
                     print(f"  Output Sample Rate: {out_fmt.sample_rate} Hz")
                     print(f"  Output Duration:    {output_audio.duration:.2f}s")
@@ -98,7 +98,7 @@ def convert_audio_file(input_path, output_path, target_sample_rate=None):
                 print(f"Error during conversion: {e}")
                 return False
 
-    except cm.AudioFileError as e:
+    except AudioFileError as e:
         print(f"Audio file error: {e}")
         return False
     except Exception as e:

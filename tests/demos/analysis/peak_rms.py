@@ -7,11 +7,12 @@ Usage:
 
 import sys
 import os
-import coremusic as cm
+from coremusic.audio.analysis import AudioAnalyzer
+from coremusic.objects import NUMPY_AVAILABLE
 
 
 def main():
-    if not cm.NUMPY_AVAILABLE:
+    if not NUMPY_AVAILABLE:
         print("NumPy required for analysis")
         sys.exit(1)
 
@@ -22,8 +23,8 @@ def main():
         print(f"File not found: {audio_path}")
         sys.exit(1)
 
-    peak = cm.AudioAnalyzer.get_peak_amplitude(audio_path)
-    rms = cm.AudioAnalyzer.calculate_rms(audio_path)
+    peak = AudioAnalyzer.get_peak_amplitude(audio_path)
+    rms = AudioAnalyzer.calculate_rms(audio_path)
 
     peak_db = 20 * np.log10(peak) if peak > 0 else float("-inf")
     rms_db = 20 * np.log10(rms) if rms > 0 else float("-inf")

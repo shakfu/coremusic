@@ -5,15 +5,15 @@ Usage:
     python format_presets.py
 """
 
-import coremusic as cm
+from coremusic.audio.utilities import AudioFormatPresets
 
 
 def main():
     presets = [
-        ("CD Quality WAV", cm.AudioFormatPresets.wav_44100_stereo()),
-        ("WAV 44.1kHz mono", cm.AudioFormatPresets.wav_44100_mono()),
-        ("Pro Audio WAV", cm.AudioFormatPresets.wav_48000_stereo()),
-        ("High-Res WAV", cm.AudioFormatPresets.wav_96000_stereo()),
+        ("CD Quality WAV", AudioFormatPresets.wav_44100_stereo()),
+        ("WAV 44.1kHz mono", AudioFormatPresets.wav_44100_mono()),
+        ("Pro Audio WAV", AudioFormatPresets.wav_48000_stereo()),
+        ("High-Res WAV", AudioFormatPresets.wav_96000_stereo()),
     ]
 
     print("Available Format Presets:\n")

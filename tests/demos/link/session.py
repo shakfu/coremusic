@@ -6,13 +6,13 @@ Usage:
 """
 
 import sys
-import coremusic as cm
+from coremusic import link
 
 
 def main():
     bpm = float(sys.argv[1]) if len(sys.argv) > 1 else 120.0
 
-    with cm.link.LinkSession(bpm=bpm) as session:
+    with link.LinkSession(bpm=bpm) as session:
         state = session.capture_app_session_state()
         print(f"Link Session:")
         print(f"  Tempo: {state.tempo:.1f} BPM")

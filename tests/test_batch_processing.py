@@ -6,7 +6,7 @@ import time
 import tempfile
 from pathlib import Path
 import pytest
-import coremusic as cm
+from coremusic.objects import AudioFile
 from coremusic.utils.batch import (
     batch_process_parallel,
     batch_process_files,
@@ -85,7 +85,7 @@ def slow_func_with_timeout(x):
 
 def process_audio_file_info(path):
     """Extract audio file information."""
-    with cm.AudioFile(str(path)) as audio:
+    with AudioFile(str(path)) as audio:
         return {
             "path": str(path),
             "duration": audio.duration,
@@ -95,19 +95,19 @@ def process_audio_file_info(path):
 
 def get_duration(path):
     """Get audio file duration."""
-    with cm.AudioFile(str(path)) as audio:
+    with AudioFile(str(path)) as audio:
         return audio.duration
 
 
 def count_channels(path):
     """Count channels in audio file."""
-    with cm.AudioFile(str(path)) as audio:
+    with AudioFile(str(path)) as audio:
         return audio.format.channels_per_frame
 
 
 def get_sample_rate(path):
     """Get sample rate from audio file."""
-    with cm.AudioFile(str(path)) as audio:
+    with AudioFile(str(path)) as audio:
         return audio.format.sample_rate
 
 
@@ -131,7 +131,7 @@ def reverse_index(x):
 
 def analyze_audio(path):
     """Analyze audio file and return metadata."""
-    with cm.AudioFile(str(path)) as audio:
+    with AudioFile(str(path)) as audio:
         return {
             "path": path.name,
             "duration": audio.duration,

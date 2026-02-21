@@ -153,11 +153,12 @@ class AUGraph(capi.CoreAudioObject):
         Example::
 
             import coremusic as cm
+            from coremusic.objects import AudioComponentDescription
 
             # Create a graph with an effect and output node
             with cm.AUGraph() as graph:
                 # Add a reverb effect
-                reverb_desc = cm.AudioComponentDescription(
+                reverb_desc = AudioComponentDescription(
                     type='aufx',
                     subtype='rvb2',
                     manufacturer='appl'
@@ -165,7 +166,7 @@ class AUGraph(capi.CoreAudioObject):
                 reverb_node = graph.add_node(reverb_desc)
 
                 # Add default output
-                output_desc = cm.AudioComponentDescription(
+                output_desc = AudioComponentDescription(
                     type='auou',
                     subtype='def ',
                     manufacturer='appl'

@@ -8,8 +8,9 @@ Tests the integration between Ableton Link and CoreMIDI including:
 
 import pytest
 import time
-import coremusic as cm
-from coremusic import link_midi
+import coremusic.capi as capi
+from coremusic import link
+from coremusic.midi import link as link_midi
 
 
 class TestLinkMIDIConstants:
@@ -59,29 +60,29 @@ class TestLinkMIDIClockCreation:
     def midi_setup(self):
         """Setup MIDI client and port"""
         try:
-            client = cm.capi.midi_client_create("Test Client")
-            port = cm.capi.midi_output_port_create(client, "Test Port")
+            client = capi.midi_client_create("Test Client")
+            port = capi.midi_output_port_create(client, "Test Port")
 
             # Try to get a MIDI destination
-            num_destinations = cm.capi.midi_get_number_of_destinations()
+            num_destinations = capi.midi_get_number_of_destinations()
             if num_destinations > 0:
-                destination = cm.capi.midi_get_destination(0)
+                destination = capi.midi_get_destination(0)
             else:
                 # Create a virtual destination for testing
-                destination = cm.capi.midi_destination_create(client, "Test Dest")
+                destination = capi.midi_destination_create(client, "Test Dest")
 
             yield client, port, destination
 
             # Cleanup
-            cm.capi.midi_port_dispose(port)
-            cm.capi.midi_client_dispose(client)
+            capi.midi_port_dispose(port)
+            capi.midi_client_dispose(client)
         except Exception as e:
             pytest.skip(f"MIDI setup failed: {e}")
 
     def test_clock_creation(self, midi_setup):
         """Test creating LinkMIDIClock"""
         client, port, dest = midi_setup
-        session = cm.link.LinkSession(bpm=120.0)
+        session = link.LinkSession(bpm=120.0)
 
         clock = link_midi.LinkMIDIClock(session, port, dest)
 
@@ -94,7 +95,7 @@ class TestLinkMIDIClockCreation:
     def test_clock_with_custom_quantum(self, midi_setup):
         """Test clock with custom quantum"""
         client, port, dest = midi_setup
-        session = cm.link.LinkSession(bpm=120.0)
+        session = link.LinkSession(bpm=120.0)
 
         clock = link_midi.LinkMIDIClock(session, port, dest, quantum=8.0)
 
@@ -116,7 +117,7 @@ class TestLinkMIDIClockOperation:
     def test_clock_start_stop(self, mock_midi_setup):
         """Test starting and stopping clock"""
         client, port, dest = mock_midi_setup
-        session = cm.link.LinkSession(bpm=120.0)
+        session = link.LinkSession(bpm=120.0)
         session.enabled = True
 
         clock = link_midi.LinkMIDIClock(session, port, dest)
@@ -149,7 +150,7 @@ class TestLinkMIDISequencer:
     def test_sequencer_creation(self, mock_midi_setup):
         """Test creating LinkMIDISequencer"""
         client, port, dest = mock_midi_setup
-        session = cm.link.LinkSession(bpm=120.0)
+        session = link.LinkSession(bpm=120.0)
 
         seq = link_midi.LinkMIDISequencer(session, port, dest)
 
@@ -163,7 +164,7 @@ class TestLinkMIDISequencer:
     def test_schedule_event(self, mock_midi_setup):
         """Test scheduling MIDI event"""
         client, port, dest = mock_midi_setup
-        session = cm.link.LinkSession(bpm=120.0)
+        session = link.LinkSession(bpm=120.0)
 
         seq = link_midi.LinkMIDISequencer(session, port, dest)
 
@@ -179,7 +180,7 @@ class TestLinkMIDISequencer:
     def test_schedule_multiple_events_sorted(self, mock_midi_setup):
         """Test events are kept sorted by beat"""
         client, port, dest = mock_midi_setup
-        session = cm.link.LinkSession(bpm=120.0)
+        session = link.LinkSession(bpm=120.0)
 
         seq = link_midi.LinkMIDISequencer(session, port, dest)
 
@@ -196,7 +197,7 @@ class TestLinkMIDISequencer:
     def test_schedule_note(self, mock_midi_setup):
         """Test scheduling note with automatic note-off"""
         client, port, dest = mock_midi_setup
-        session = cm.link.LinkSession(bpm=120.0)
+        session = link.LinkSession(bpm=120.0)
 
         seq = link_midi.LinkMIDISequencer(session, port, dest)
 
@@ -217,7 +218,7 @@ class TestLinkMIDISequencer:
     def test_schedule_cc(self, mock_midi_setup):
         """Test scheduling CC message"""
         client, port, dest = mock_midi_setup
-        session = cm.link.LinkSession(bpm=120.0)
+        session = link.LinkSession(bpm=120.0)
 
         seq = link_midi.LinkMIDISequencer(session, port, dest)
 
@@ -230,7 +231,7 @@ class TestLinkMIDISequencer:
     def test_clear_events(self, mock_midi_setup):
         """Test clearing all events"""
         client, port, dest = mock_midi_setup
-        session = cm.link.LinkSession(bpm=120.0)
+        session = link.LinkSession(bpm=120.0)
 
         seq = link_midi.LinkMIDISequencer(session, port, dest)
 
@@ -251,7 +252,7 @@ class TestTimeConversion:
 
     def test_link_beat_to_host_time(self):
         """Test converting Link beat to host time"""
-        session = cm.link.LinkSession(bpm=120.0)
+        session = link.LinkSession(bpm=120.0)
         session.enabled = True
 
         # Get host time for beat 0
@@ -262,7 +263,7 @@ class TestTimeConversion:
 
     def test_host_time_to_link_beat(self):
         """Test converting host time to Link beat"""
-        session = cm.link.LinkSession(bpm=120.0)
+        session = link.LinkSession(bpm=120.0)
         session.enabled = True
 
         # Get current host time
@@ -277,7 +278,7 @@ class TestTimeConversion:
 
     def test_round_trip_conversion(self):
         """Test round-trip beat <-> host time conversion"""
-        session = cm.link.LinkSession(bpm=120.0)
+        session = link.LinkSession(bpm=120.0)
         session.enabled = True
 
         # Start with a beat
@@ -292,30 +293,29 @@ class TestTimeConversion:
 
 
 class TestModuleExports:
-    """Test link_midi module is properly exported"""
+    """Test link_midi module is properly exported from coremusic.midi"""
 
     def test_module_accessible(self):
-        """Test link_midi module is accessible"""
-        assert hasattr(cm, 'link_midi')
-        assert cm.link_midi is not None
+        """Test link_midi module is accessible via coremusic.midi.link"""
+        assert link_midi is not None
 
     def test_classes_accessible(self):
         """Test Link + MIDI classes are accessible"""
-        assert hasattr(cm.link_midi, 'LinkMIDIClock')
-        assert hasattr(cm.link_midi, 'LinkMIDISequencer')
-        assert hasattr(cm.link_midi, 'MIDIEvent')
+        assert hasattr(link_midi, 'LinkMIDIClock')
+        assert hasattr(link_midi, 'LinkMIDISequencer')
+        assert hasattr(link_midi, 'MIDIEvent')
 
     def test_functions_accessible(self):
         """Test utility functions are accessible"""
-        assert hasattr(cm.link_midi, 'link_beat_to_host_time')
-        assert hasattr(cm.link_midi, 'host_time_to_link_beat')
+        assert hasattr(link_midi, 'link_beat_to_host_time')
+        assert hasattr(link_midi, 'host_time_to_link_beat')
 
     def test_constants_accessible(self):
         """Test MIDI constants are accessible"""
-        assert hasattr(cm.link_midi, 'MIDI_CLOCK')
-        assert hasattr(cm.link_midi, 'MIDI_START')
-        assert hasattr(cm.link_midi, 'MIDI_STOP')
-        assert hasattr(cm.link_midi, 'MIDI_CLOCKS_PER_QUARTER_NOTE')
+        assert hasattr(link_midi, 'MIDI_CLOCK')
+        assert hasattr(link_midi, 'MIDI_START')
+        assert hasattr(link_midi, 'MIDI_STOP')
+        assert hasattr(link_midi, 'MIDI_CLOCKS_PER_QUARTER_NOTE')
 
 
 if __name__ == "__main__":

@@ -67,9 +67,9 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
 
 def cmd_list(args: argparse.Namespace) -> int:
     """List available audio devices."""
-    import coremusic as cm
+    from coremusic.objects import AudioDeviceManager
 
-    devices = cm.AudioDeviceManager.get_devices()
+    devices = AudioDeviceManager.get_devices()
 
     if args.json:
         data = [
@@ -106,7 +106,7 @@ def cmd_default(args: argparse.Namespace) -> int:
     """Show default audio devices."""
     from typing import Any, Dict, Optional
 
-    import coremusic as cm
+    from coremusic.objects import AudioDeviceError, AudioDeviceManager
 
     result: Dict[str, Optional[Dict[str, Any]]] = {}
     show_input = args.input_device
@@ -118,7 +118,7 @@ def cmd_default(args: argparse.Namespace) -> int:
 
     if show_output:
         try:
-            output_dev = cm.AudioDeviceManager.get_default_output_device()
+            output_dev = AudioDeviceManager.get_default_output_device()
             if output_dev:
                 result["output"] = {
                     "name": output_dev.name,
@@ -127,12 +127,12 @@ def cmd_default(args: argparse.Namespace) -> int:
                 }
             else:
                 result["output"] = None
-        except (cm.AudioDeviceError, Exception):
+        except (AudioDeviceError, Exception):
             result["output"] = None
 
     if show_input:
         try:
-            input_dev = cm.AudioDeviceManager.get_default_input_device()
+            input_dev = AudioDeviceManager.get_default_input_device()
             if input_dev:
                 result["input"] = {
                     "name": input_dev.name,
@@ -141,7 +141,7 @@ def cmd_default(args: argparse.Namespace) -> int:
                 }
             else:
                 result["input"] = None
-        except (cm.AudioDeviceError, Exception):
+        except (AudioDeviceError, Exception):
             result["input"] = None
 
     if args.json:
@@ -163,10 +163,10 @@ def cmd_default(args: argparse.Namespace) -> int:
 
 def cmd_info(args: argparse.Namespace) -> int:
     """Show detailed device information."""
-    import coremusic as cm
+    from coremusic.objects import AudioDeviceManager
 
     # Find device by name or UID
-    all_devices = cm.AudioDeviceManager.get_devices()
+    all_devices = AudioDeviceManager.get_devices()
     found = None
 
     for d in all_devices:
@@ -201,9 +201,9 @@ def cmd_info(args: argparse.Namespace) -> int:
 
 def _find_device(device_name: str) -> Any:
     """Find device by name or UID."""
-    import coremusic as cm
+    from coremusic.objects import AudioDeviceManager
 
-    all_devices = cm.AudioDeviceManager.get_devices()
+    all_devices = AudioDeviceManager.get_devices()
     for d in all_devices:
         if d.name == device_name or d.uid == device_name:
             return d
@@ -219,7 +219,7 @@ def _find_device(device_name: str) -> Any:
 
 def cmd_volume(args: argparse.Namespace) -> int:
     """Get or set device volume."""
-    import coremusic as cm
+    from coremusic.objects import AudioDeviceError
 
     device = _find_device(args.device)
 
@@ -231,7 +231,7 @@ def cmd_volume(args: argparse.Namespace) -> int:
 
         try:
             device.set_volume(args.level, scope=args.scope, channel=args.channel)
-        except cm.AudioDeviceError as e:
+        except AudioDeviceError as e:
             from ._utils import CLIError
             raise CLIError(str(e))
 
@@ -267,7 +267,7 @@ def cmd_volume(args: argparse.Namespace) -> int:
 
 def cmd_set_default(args: argparse.Namespace) -> int:
     """Set default audio device."""
-    import coremusic as cm
+    from coremusic.objects import AudioDeviceError, AudioDeviceManager
 
     device = _find_device(args.device)
 
@@ -281,22 +281,22 @@ def cmd_set_default(args: argparse.Namespace) -> int:
 
     if set_output:
         try:
-            cm.AudioDeviceManager.set_default_output_device(device)
+            AudioDeviceManager.set_default_output_device(device)
             results["output"] = {"success": True, "device": device.name}
             if not args.json:
                 print(f"Default output device set to: {device.name}")
-        except cm.AudioDeviceError as e:
+        except AudioDeviceError as e:
             results["output"] = {"success": False, "error": str(e)}
             if not args.json:
                 print(f"Failed to set default output: {e}")
 
     if set_input:
         try:
-            cm.AudioDeviceManager.set_default_input_device(device)
+            AudioDeviceManager.set_default_input_device(device)
             results["input"] = {"success": True, "device": device.name}
             if not args.json:
                 print(f"Default input device set to: {device.name}")
-        except cm.AudioDeviceError as e:
+        except AudioDeviceError as e:
             results["input"] = {"success": False, "error": str(e)}
             if not args.json:
                 print(f"Failed to set default input: {e}")
@@ -309,7 +309,7 @@ def cmd_set_default(args: argparse.Namespace) -> int:
 
 def cmd_mute(args: argparse.Namespace) -> int:
     """Get or set device mute state."""
-    import coremusic as cm
+    from coremusic.objects import AudioDeviceError
 
     device = _find_device(args.device)
 
@@ -318,7 +318,7 @@ def cmd_mute(args: argparse.Namespace) -> int:
         muted = args.state == "on"
         try:
             device.set_mute(muted, scope=args.scope, channel=args.channel)
-        except cm.AudioDeviceError as e:
+        except AudioDeviceError as e:
             from ._utils import CLIError
             raise CLIError(str(e))
 

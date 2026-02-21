@@ -866,14 +866,14 @@ def _receive_with_plugin(args: argparse.Namespace, source_id: int, source_name: 
         # Set up audio output queue if not quiet
         output_queue = None
         if not args.quiet:
-            import coremusic as cm
-            audio_format = cm.AudioFormat(
+            from coremusic.objects import AudioFormat, AudioQueue
+            audio_format = AudioFormat(
                 sample_rate=float(sample_rate),
                 format_id="lpcm",
                 channels_per_frame=channels,
                 bits_per_channel=32,
             )
-            output_queue = cm.AudioQueue.new_output(audio_format)
+            output_queue = AudioQueue.new_output(audio_format)
 
         # Create MIDI client
         client_id = capi.midi_client_create("coremusic-receive")
@@ -921,11 +921,11 @@ def _receive_with_plugin(args: argparse.Namespace, source_id: int, source_name: 
         # Save audio file if requested
         if output_path and audio_chunks:
             try:
-                import coremusic as cm
+                from coremusic.objects import AudioFormat, ExtendedAudioFile
                 from coremusic.constants import AudioFileType
 
                 audio_data = b''.join(audio_chunks)
-                audio_format = cm.AudioFormat(
+                audio_format = AudioFormat(
                     sample_rate=float(sample_rate),
                     format_id="lpcm",
                     channels_per_frame=channels,
@@ -941,7 +941,7 @@ def _receive_with_plugin(args: argparse.Namespace, source_id: int, source_name: 
                     '.caf': AudioFileType.CAF,
                 }.get(ext, AudioFileType.WAVE)
 
-                with cm.ExtendedAudioFile.create(str(output_path), file_type, audio_format) as out_file:
+                with ExtendedAudioFile.create(str(output_path), file_type, audio_format) as out_file:
                     num_frames = len(audio_data) // (channels * 4)  # 4 bytes per float32
                     out_file.write(num_frames, audio_data)
 

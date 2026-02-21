@@ -3,7 +3,7 @@
 
 import time
 import pytest
-import coremusic as cm
+from coremusic.objects import NUMPY_AVAILABLE
 from coremusic.audio.streaming import (
     AudioInputStream,
     AudioOutputStream,
@@ -599,7 +599,7 @@ class TestIntegration:
         result = combined(10)
         assert result == pytest.approx(4.0)
 
-    @pytest.mark.skipif(not cm.NUMPY_AVAILABLE, reason="NumPy not available")
+    @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
     def test_numpy_processing(self):
         """Test processing with NumPy arrays."""
         import numpy as np

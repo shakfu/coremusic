@@ -12,11 +12,11 @@ Features:
 
 Example:
     ```python
-    import coremusic as cm
+    from coremusic.objects import AudioFile
     import coremusic.scipy_utils as spu
 
     # Load audio file
-    with cm.AudioFile("audio.wav") as af:
+    with AudioFile("audio.wav") as af:
         # Read as NumPy array
         data, sr = af.read_frames_numpy()
 
@@ -639,11 +639,11 @@ class AudioSignalProcessor:
 
     Example:
         ```python
-        import coremusic as cm
+        from coremusic.objects import AudioFile
         import coremusic.scipy_utils as spu
 
         # Load audio
-        with cm.AudioFile("audio.wav") as af:
+        with AudioFile("audio.wav") as af:
             data, sr = af.read_frames_numpy()
 
         # Create processor

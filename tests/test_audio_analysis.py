@@ -3,7 +3,6 @@
 
 import pytest
 from conftest import AMEN_WAV_PATH
-import coremusic as cm
 from coremusic.audio.analysis import (
     AudioAnalyzer,
     BeatInfo,

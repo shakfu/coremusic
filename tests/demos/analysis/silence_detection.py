@@ -7,11 +7,12 @@ Usage:
 
 import sys
 import os
-import coremusic as cm
+from coremusic.audio.analysis import AudioAnalyzer
+from coremusic.objects import NUMPY_AVAILABLE
 
 
 def main():
-    if not cm.NUMPY_AVAILABLE:
+    if not NUMPY_AVAILABLE:
         print("NumPy required for silence detection")
         sys.exit(1)
 
@@ -26,7 +27,7 @@ def main():
     print(f"File: {audio_path}")
     print(f"Threshold: {threshold_db} dB, Min duration: {min_duration}s\n")
 
-    silence_regions = cm.AudioAnalyzer.detect_silence(
+    silence_regions = AudioAnalyzer.detect_silence(
         audio_path, threshold_db=threshold_db, min_duration=min_duration
     )
 

@@ -2,7 +2,6 @@
 
 import pytest
 import numpy as np
-import coremusic as cm
 from coremusic.buffer_utils import (
     AudioStreamBasicDescription,
     fourcc_to_int,

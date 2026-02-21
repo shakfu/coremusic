@@ -7,14 +7,14 @@ Usage:
 
 import sys
 import time
-import coremusic as cm
+from coremusic import link
 
 
 def main():
     bpm = float(sys.argv[1]) if len(sys.argv) > 1 else 120.0
     duration = float(sys.argv[2]) if len(sys.argv) > 2 else 5.0
 
-    with cm.link.LinkSession(bpm=bpm) as session:
+    with link.LinkSession(bpm=bpm) as session:
         clock = session.clock
         end_time = time.time() + duration
 

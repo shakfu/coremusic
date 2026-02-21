@@ -47,15 +47,17 @@ pip install coremusic[all]
 Check feature availability at runtime:
 
 ```python
-import coremusic as cm
+from coremusic.objects import NUMPY_AVAILABLE
+from coremusic.audio.analysis import AudioAnalyzer
+import coremusic.utils.scipy as spu
 
-if cm.NUMPY_AVAILABLE:
+if NUMPY_AVAILABLE:
     # NumPy-based features available
     data = audio.read_as_numpy()
 
-if cm.audio.analysis.SCIPY_AVAILABLE:
+if spu.SCIPY_AVAILABLE:
     # SciPy-based analysis available
-    analyzer = cm.audio.analysis.AudioAnalyzer("song.wav")
+    analyzer = AudioAnalyzer("song.wav")
     tempo = analyzer.detect_beats().tempo
 ```
 
@@ -157,32 +159,34 @@ coremusic --json plugin list --type instrument
 ### One-Liner Convenience Functions
 
 ```python
-import coremusic as cm
+from coremusic.shortcuts import play, play_async, convert
+from coremusic.shortcuts import analyze_tempo, analyze_key, get_info
+from coremusic.shortcuts import list_devices, list_plugins
 
 # Quick playback
-cm.play("song.wav")                    # Blocking playback
-handle = cm.play_async("song.wav")     # Non-blocking, returns control handle
+play("song.wav")                       # Blocking playback
+handle = play_async("song.wav")        # Non-blocking, returns control handle
 handle.stop()                          # Stop when done
 
 # Quick analysis
-tempo = cm.analyze_tempo("song.wav")   # Get BPM
-key, mode = cm.analyze_key("song.wav") # Get musical key
-info = cm.get_info("song.wav")         # Get file metadata
+tempo = analyze_tempo("song.wav")      # Get BPM
+key, mode = analyze_key("song.wav")    # Get musical key
+info = get_info("song.wav")            # Get file metadata
 
 # Quick conversion
-cm.convert("input.wav", "output.mp3")
+convert("input.wav", "output.mp3")
 
 # List resources
-devices = cm.list_devices()
-plugins = cm.list_plugins(type='effect')
+devices = list_devices()
+plugins = list_plugins(type='effect')
 ```
 
 ### Audio Files
 
 ```python
-import coremusic as cm
+from coremusic.objects import AudioFile
 
-with cm.AudioFile("audio.wav") as f:
+with AudioFile("audio.wav") as f:
     print(f"Duration: {f.duration:.2f}s, Rate: {f.format.sample_rate}Hz")
     data, count = f.read_packets(0, 1000)
 ```
@@ -190,9 +194,9 @@ with cm.AudioFile("audio.wav") as f:
 ### Audio Playback
 
 ```python
-import coremusic as cm
+from coremusic.objects import AudioPlayer
 
-player = cm.AudioPlayer()
+player = AudioPlayer()
 player.load_file("audio.wav")
 player.setup_output()
 player.play()
@@ -204,10 +208,10 @@ player.stop()
 ### AudioUnit Plugins
 
 ```python
-import coremusic as cm
+from coremusic.audio.audiounit_host import AudioUnitHost
 
 # Discover and use plugins
-host = cm.AudioUnitHost()
+host = AudioUnitHost()
 effects = host.discover_plugins(type='effect')
 
 with host.load_plugin("DLSMusicDevice", type='instrument') as synth:
@@ -219,9 +223,9 @@ with host.load_plugin("DLSMusicDevice", type='instrument') as synth:
 ### MIDI
 
 ```python
-import coremusic as cm
+from coremusic.objects import MIDIClient
 
-client = cm.MIDIClient("My App")
+client = MIDIClient("My App")
 output_port = client.create_output_port("Output")
 output_port.send_data(destination, b'\x90\x3C\x7F')  # Note On
 client.dispose()
@@ -268,9 +272,9 @@ onset_times = pattern.scale_to_tempo(120)  # At 120 BPM
 ### Ableton Link
 
 ```python
-import coremusic as cm
+from coremusic import link
 
-with cm.link.LinkSession(bpm=120.0) as session:
+with link.LinkSession(bpm=120.0) as session:
     state = session.capture_app_session_state()
     current_time = session.clock.micros()
     beat = state.beat_at_time(current_time, quantum=4.0)
@@ -289,7 +293,8 @@ Pythonic wrappers with automatic resource management:
 - IDE autocompletion and type hints
 
 ```python
-import coremusic as cm
+from coremusic.objects import AudioFile, AudioFormat, MIDIClient
+from coremusic.constants import AudioFileProperty, AudioFormatID
 ```
 
 ### Functional API (Advanced)

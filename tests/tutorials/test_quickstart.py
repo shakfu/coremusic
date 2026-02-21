@@ -55,7 +55,7 @@ def import_functional_api():
 def import_constants():
     """Import constants for property IDs and format IDs.
 
-    >>> from coremusic import AudioFileProperty, AudioFormatID
+    >>> from coremusic.constants import AudioFileProperty, AudioFormatID
     >>> # These are enum-like classes with integer values
     >>> assert AudioFileProperty.DATA_FORMAT is not None
     >>> assert AudioFormatID.LINEAR_PCM is not None
@@ -83,9 +83,9 @@ def import_music_theory():
 def open_audio_file():
     """Open and read an audio file.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile
     >>> path = get_test_audio_path()
-    >>> with cm.AudioFile(path) as audio:
+    >>> with AudioFile(path) as audio:
     ...     assert audio.duration > 0
     ...     fmt = audio.format
     ...     assert fmt.sample_rate > 0
@@ -97,9 +97,9 @@ def open_audio_file():
 def get_audio_info():
     """Get comprehensive audio file information.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile
     >>> path = get_test_audio_path()
-    >>> with cm.AudioFile(path) as audio:
+    >>> with AudioFile(path) as audio:
     ...     info = {
     ...         'duration': audio.duration,
     ...         'sample_rate': audio.format.sample_rate,
@@ -117,9 +117,9 @@ def get_audio_info():
 def read_audio_data():
     """Read audio data from a file.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile
     >>> path = get_test_audio_path()
-    >>> with cm.AudioFile(path) as audio:
+    >>> with AudioFile(path) as audio:
     ...     # Read first 1000 frames
     ...     data, count = audio.read_packets(0, 1000)
     ...     assert isinstance(data, bytes)
@@ -153,8 +153,8 @@ def check_midi_devices():
 def create_midi_client():
     """Create a MIDI client.
 
-    >>> import coremusic as cm
-    >>> client = cm.MIDIClient("Quick Start")
+    >>> from coremusic.objects import MIDIClient
+    >>> client = MIDIClient("Quick Start")
     >>> assert client is not None
     >>> client.dispose()
     """
@@ -182,8 +182,8 @@ def build_midi_note():
 def list_audio_units():
     """List available AudioUnits.
 
-    >>> import coremusic as cm
-    >>> units = cm.list_available_audio_units()
+    >>> from coremusic.audio.utilities import list_available_audio_units
+    >>> units = list_available_audio_units()
     >>> assert isinstance(units, list)
     >>> assert len(units) > 0  # macOS has built-in AudioUnits
     """
@@ -193,9 +193,9 @@ def list_audio_units():
 def find_effect_by_name():
     """Find an AudioUnit effect by name.
 
-    >>> import coremusic as cm
+    >>> from coremusic.audio.utilities import find_audio_unit_by_name
     >>> # AUDelay is built into macOS
-    >>> component = cm.find_audio_unit_by_name("AUDelay")
+    >>> component = find_audio_unit_by_name("AUDelay")
     >>> assert component is not None
     """
     pass
@@ -204,8 +204,8 @@ def find_effect_by_name():
 def create_effects_chain():
     """Create an audio effects chain.
 
-    >>> import coremusic as cm
-    >>> chain = cm.AudioEffectsChain()
+    >>> from coremusic.audio.utilities import AudioEffectsChain
+    >>> chain = AudioEffectsChain()
     >>> delay = chain.add_effect_by_name("AUDelay")
     >>> output = chain.add_output()
     >>> chain.connect(delay, output)
@@ -261,11 +261,11 @@ def create_chord():
 def handle_audio_file_error():
     """Handle errors when opening audio files.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile, AudioFileError
     >>> try:
-    ...     with cm.AudioFile("nonexistent.wav") as audio:
+    ...     with AudioFile("nonexistent.wav") as audio:
     ...         pass
-    ... except (cm.AudioFileError, FileNotFoundError, OSError):
+    ... except (AudioFileError, FileNotFoundError, OSError):
     ...     pass  # Expected
     """
     pass
@@ -274,14 +274,17 @@ def handle_audio_file_error():
 def exception_hierarchy():
     """CoreMusic exception hierarchy.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import (
+    ...     CoreAudioError, AudioFileError,
+    ...     AudioQueueError, AudioUnitError, MIDIError,
+    ... )
     >>> # Base exception
-    >>> assert hasattr(cm, 'CoreAudioError')
+    >>> assert CoreAudioError is not None
     >>> # Specific exceptions
-    >>> assert hasattr(cm, 'AudioFileError')
-    >>> assert hasattr(cm, 'AudioQueueError')
-    >>> assert hasattr(cm, 'AudioUnitError')
-    >>> assert hasattr(cm, 'MIDIError')
+    >>> assert AudioFileError is not None
+    >>> assert AudioQueueError is not None
+    >>> assert AudioUnitError is not None
+    >>> assert MIDIError is not None
     """
     pass
 
@@ -294,10 +297,10 @@ def exception_hierarchy():
 def check_numpy_available():
     """Check if NumPy integration is available.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import NUMPY_AVAILABLE
     >>> # NUMPY_AVAILABLE is True if numpy is installed
-    >>> assert hasattr(cm, 'NUMPY_AVAILABLE')
-    >>> assert isinstance(cm.NUMPY_AVAILABLE, bool)
+    >>> assert NUMPY_AVAILABLE is not None
+    >>> assert isinstance(NUMPY_AVAILABLE, bool)
     """
     pass
 
@@ -305,10 +308,10 @@ def check_numpy_available():
 def numpy_dtype_from_format():
     """Get NumPy dtype from audio format.
 
-    >>> import coremusic as cm
+    >>> from coremusic.objects import AudioFile, NUMPY_AVAILABLE
     >>> path = get_test_audio_path()
-    >>> if cm.NUMPY_AVAILABLE:
-    ...     with cm.AudioFile(path) as audio:
+    >>> if NUMPY_AVAILABLE:
+    ...     with AudioFile(path) as audio:
     ...         dtype = audio.format.to_numpy_dtype()
     ...         assert dtype is not None
     """
@@ -323,7 +326,7 @@ def numpy_dtype_from_format():
 def audio_file_properties():
     """Audio file property constants.
 
-    >>> from coremusic import AudioFileProperty
+    >>> from coremusic.constants import AudioFileProperty
     >>> # Common properties
     >>> _ = AudioFileProperty.DATA_FORMAT
     >>> _ = AudioFileProperty.ESTIMATED_DURATION
@@ -336,7 +339,7 @@ def audio_file_properties():
 def audio_format_ids():
     """Audio format ID constants.
 
-    >>> from coremusic import AudioFormatID
+    >>> from coremusic.constants import AudioFormatID
     >>> # Common formats
     >>> _ = AudioFormatID.LINEAR_PCM
     >>> _ = AudioFormatID.APPLE_LOSSLESS
@@ -349,7 +352,7 @@ def audio_format_ids():
 def audiounit_properties():
     """AudioUnit property constants.
 
-    >>> from coremusic import AudioUnitProperty, AudioUnitScope
+    >>> from coremusic.constants import AudioUnitProperty, AudioUnitScope
     >>> # Common properties
     >>> _ = AudioUnitProperty.STREAM_FORMAT
     >>> _ = AudioUnitProperty.SAMPLE_RATE

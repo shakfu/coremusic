@@ -4,7 +4,7 @@ Tests the MIDI support for instrument AudioUnit plugins.
 """
 
 import pytest
-import coremusic as cm
+from coremusic.audio.audiounit_host import AudioUnitHost, AudioUnitPlugin
 import time
 
 
@@ -16,7 +16,7 @@ class TestAudioUnitMIDI:
         """Create and initialize an instrument plugin for testing"""
         # Use DLSMusicDevice (Apple's built-in General MIDI synthesizer)
         # This is guaranteed to exist on all macOS systems
-        plugin = cm.AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu')
+        plugin = AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu')
         plugin.instantiate()
         plugin.initialize()
         yield plugin
@@ -24,7 +24,7 @@ class TestAudioUnitMIDI:
 
     def test_discover_instruments(self):
         """Test discovering instrument plugins"""
-        host = cm.AudioUnitHost()
+        host = AudioUnitHost()
         instruments = host.discover_plugins(type='instrument')
 
         print(f"\nFound {len(instruments)} instrument plugins")
@@ -37,7 +37,7 @@ class TestAudioUnitMIDI:
 
     def test_load_instrument_plugin(self):
         """Test loading an instrument plugin"""
-        host = cm.AudioUnitHost()
+        host = AudioUnitHost()
 
         with host.load_plugin("DLSMusicDevice", type='instrument') as synth:
             assert synth is not None
@@ -179,7 +179,7 @@ class TestAudioUnitMIDI:
 
     def test_midi_on_effect_plugin_fails(self):
         """Test that MIDI methods raise error on effect plugins"""
-        host = cm.AudioUnitHost()
+        host = AudioUnitHost()
 
         with host.load_plugin("Bandpass", type='effect') as effect:
             assert effect.type == 'aufx'
@@ -226,7 +226,7 @@ class TestAudioUnitMIDIIntegration:
 
     def test_complete_performance(self):
         """Test a complete musical performance"""
-        host = cm.AudioUnitHost()
+        host = AudioUnitHost()
 
         with host.load_plugin("DLSMusicDevice", type='instrument') as synth:
             print(f"\n♪ Playing on: {synth.name}")
@@ -251,7 +251,7 @@ class TestAudioUnitMIDIIntegration:
 
     def test_multi_channel_performance(self):
         """Test using multiple MIDI channels"""
-        host = cm.AudioUnitHost()
+        host = AudioUnitHost()
 
         with host.load_plugin("DLSMusicDevice", type='instrument') as synth:
             # Channel 0: Piano
@@ -280,7 +280,7 @@ class TestAudioUnitMIDIErrors:
 
     def test_midi_before_initialize(self):
         """Test MIDI on uninitialized plugin"""
-        plugin = cm.AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu')
+        plugin = AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu')
         plugin.instantiate()
         # Don't initialize
 
@@ -291,7 +291,7 @@ class TestAudioUnitMIDIErrors:
 
     def test_invalid_channel(self):
         """Test that invalid channels are clamped"""
-        plugin = cm.AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu')
+        plugin = AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu')
         plugin.instantiate()
         plugin.initialize()
 

@@ -401,7 +401,7 @@ def cmd_process(args: argparse.Namespace) -> int:
     import wave
     from pathlib import Path
 
-    import coremusic as cm
+    from coremusic.objects import AudioFile
 
     from ._utils import require_file
 
@@ -418,7 +418,7 @@ def cmd_process(args: argparse.Namespace) -> int:
 
     # Load input audio file
     try:
-        with cm.AudioFile(str(input_path)) as audio_file:
+        with AudioFile(str(input_path)) as audio_file:
             fmt = audio_file.format
             duration = audio_file.duration
             total_frames = int(duration * fmt.sample_rate)

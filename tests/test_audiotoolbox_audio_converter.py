@@ -3,8 +3,8 @@
 import os
 import struct
 import pytest
-import coremusic as cm
 import coremusic.capi as capi
+from coremusic.objects import CoreAudioError
 
 
 class TestAudioConverterAPI:
@@ -100,7 +100,7 @@ class TestAudioConverterAPI:
 
     def test_audio_converter_error_handling(self):
         """Test AudioConverter error handling"""
-        with pytest.raises((RuntimeError, cm.CoreAudioError)):
+        with pytest.raises((RuntimeError, CoreAudioError)):
             capi.audio_converter_convert_buffer(999999, b"\x00\x01")
 
     def test_audio_converter_empty_buffer(self, source_format, dest_format_mono):
@@ -110,7 +110,7 @@ class TestAudioConverterAPI:
             try:
                 output_data = capi.audio_converter_convert_buffer(converter_id, b"")
                 assert isinstance(output_data, bytes)
-            except (RuntimeError, cm.CoreAudioError):
+            except (RuntimeError, CoreAudioError):
                 pass
         finally:
             capi.audio_converter_dispose(converter_id)

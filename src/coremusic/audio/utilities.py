@@ -82,7 +82,7 @@ def parse_audio_stream_basic_description(format_data: bytes) -> Dict[str, Any]:
 
     Example::
 
-        import coremusic as cm
+        from coremusic.audio.utilities import parse_audio_stream_basic_description
         import coremusic.capi as capi
 
         # Using functional API
@@ -91,7 +91,7 @@ def parse_audio_stream_basic_description(format_data: bytes) -> Dict[str, Any]:
             file_id,
             capi.get_audio_file_property_data_format()
         )
-        asbd = cm.parse_audio_stream_basic_description(format_data)
+        asbd = parse_audio_stream_basic_description(format_data)
         print(f"Sample rate: {asbd['sample_rate']} Hz")
         print(f"Channels: {asbd['channels_per_frame']}")
         capi.audio_file_close(file_id)
@@ -191,9 +191,10 @@ def batch_convert(
     Example:
         ```python
         import coremusic as cm
+        from coremusic.objects import AudioFormat
 
         # Convert all MP3 files to 16-bit 44.1kHz WAV
-        output_format = cm.AudioFormat(
+        output_format = AudioFormat(
             sample_rate=44100.0,
             format_id='lpcm',
             format_flags=12,
@@ -270,20 +271,21 @@ def convert_audio_file(
 
     Example:
         ```python
-        import coremusic as cm
+        from coremusic.audio.utilities import convert_audio_file
+        from coremusic.objects import AudioFormat
 
         # Convert to different sample rate
-        cm.convert_audio_file(
+        convert_audio_file(
             "input_44100.wav",
             "output_48000.wav",
-            cm.AudioFormat(48000.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
+            AudioFormat(48000.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
         )
 
         # Convert to mono AND change sample rate
-        cm.convert_audio_file(
+        convert_audio_file(
             "stereo_44100.wav",
             "mono_48000.wav",
-            cm.AudioFormat(48000.0, 'lpcm', channels_per_frame=1, bits_per_channel=16)
+            AudioFormat(48000.0, 'lpcm', channels_per_frame=1, bits_per_channel=16)
         )
         ```
     """
@@ -353,11 +355,11 @@ class AudioFormatPresets:
 
     Example:
         ```python
-        import coremusic as cm
+        from coremusic.audio.utilities import AudioFormatPresets, convert_audio_file
 
         # Use predefined formats
-        cm.convert_audio_file("input.mp3", "output.wav", cm.AudioFormatPresets.wav_44100_stereo())
-        cm.convert_audio_file("input.wav", "output_mono.wav", cm.AudioFormatPresets.wav_44100_mono())
+        convert_audio_file("input.mp3", "output.wav", AudioFormatPresets.wav_44100_stereo())
+        convert_audio_file("input.wav", "output_mono.wav", AudioFormatPresets.wav_44100_mono())
         ```
     """
 
@@ -491,10 +493,10 @@ class AudioEffectsChain:
 
     Example:
         ```python
-        import coremusic as cm
+        from coremusic.audio.utilities import AudioEffectsChain
 
         # Create an effects chain
-        chain = cm.AudioEffectsChain()
+        chain = AudioEffectsChain()
 
         # Add effects (example effect types)
         reverb_node = chain.add_effect('aumu', 'rvb2', 'appl')  # Reverb
@@ -800,10 +802,10 @@ def find_audio_unit_by_name(name: str, case_sensitive: bool = False) -> Optional
 
     Example:
         ```python
-        import coremusic as cm
+        from coremusic.audio.utilities import find_audio_unit_by_name
 
         # Find AUDelay and create an instance
-        component = cm.find_audio_unit_by_name('AUDelay')
+        component = find_audio_unit_by_name('AUDelay')
         if component:
             audio_unit = component.create_instance()
             audio_unit.initialize()
@@ -884,15 +886,15 @@ def list_available_audio_units(
 
     Example:
         ```python
-        import coremusic as cm
+        from coremusic.audio.utilities import list_available_audio_units
 
         # List all AudioUnits
-        units = cm.list_available_audio_units()
+        units = list_available_audio_units()
         for unit in units:
             print(f"{unit['name']}: {unit['type']}/{unit['subtype']}/{unit['manufacturer']}")
 
         # List only music effects
-        effects = cm.list_available_audio_units(filter_type='aumu')
+        effects = list_available_audio_units(filter_type='aumu')
         ```
     """
     from .. import capi

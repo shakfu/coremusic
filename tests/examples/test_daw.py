@@ -8,7 +8,6 @@ from pathlib import Path
 # Add tests/examples to path for local module imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-import coremusic as cm
 from daw.daw import (
     TimelineMarker,
     TimeRange,

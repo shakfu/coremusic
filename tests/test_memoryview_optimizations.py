@@ -7,8 +7,8 @@ buffers.
 
 import pytest
 
-import coremusic as cm
 from coremusic import capi
+from coremusic.objects import CoreAudioError
 
 
 class TestAudioFileReadPacketsInto:
@@ -301,7 +301,7 @@ class TestAudioConverterConvertBufferInto:
         input_data = bytearray(b"\x00\x01" * 100)
         output_buffer = bytearray(400)
 
-        with pytest.raises((RuntimeError, cm.CoreAudioError)):
+        with pytest.raises((RuntimeError, CoreAudioError)):
             capi.audio_converter_convert_buffer_into(999999, input_data, output_buffer)
 
 
