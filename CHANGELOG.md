@@ -22,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **MusicDevice segfault in `music_device_start_note`** - Two fixes for a segfault in `MusicDeviceStartNote` that crashed CI on all macOS/Python versions:
   1. Fixed `size_t` underflow in `capi.pyx` heap allocation for `MusicDeviceNoteParams` when no controls are provided. `(num_controls - 1)` with `num_controls=0` produced `-1`, which wrapped to `SIZE_MAX` when promoted to unsigned `size_t`, causing `malloc` to return an undersized buffer.
   2. Fixed `music_device_unit` test fixture to call `audio_unit_initialize()` before use. `MusicDeviceStartNote` segfaults on uninitialized audio units (unlike `MusicDeviceMIDIEvent`/`MusicDeviceSysEx` which return errors gracefully). Fixture now properly initializes/uninitializes the unit and skips if initialization fails.
+- **CI timing test flakiness** - Fixed two tests that assumed precise `time.sleep()` behavior, which fails on loaded CI runners (2-10x sleep overshoot):
+  - `test_clock_advances_at_half_speed`: Replaced absolute clock-time assertion with a clock-to-wall-time ratio check, decoupling correctness from sleep precision.
+  - `test_link_clock_precision`: Widened upper bound from 5ms to 50ms to accommodate CI scheduler jitter.
 
 ## [0.2.0]
 

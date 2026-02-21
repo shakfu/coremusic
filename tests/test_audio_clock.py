@@ -176,15 +176,18 @@ class TestAudioClockHighLevel:
             clock.play_rate = 0.5
             clock.start()
 
+            wall_start = time.monotonic()
             time1 = clock.get_time_seconds()
             time.sleep(0.1)  # Wait 100ms
             time2 = clock.get_time_seconds()
+            wall_elapsed = time.monotonic() - wall_start
 
             clock.stop()
 
-            # Clock should have advanced approximately 0.05 seconds (half of real time)
+            # Clock should advance at ~0.5x wall-clock rate
             delta = time2 - time1
-            assert 0.04 < delta < 0.06, f"Expected ~0.05s at 0.5x, got {delta:.4f}s"
+            ratio = delta / wall_elapsed
+            assert 0.35 < ratio < 0.65, f"Expected ~0.5x ratio, got {ratio:.4f} (clock={delta:.4f}s, wall={wall_elapsed:.4f}s)"
 
     def test_clock_repr(self):
         """Test string representation"""
