@@ -388,11 +388,9 @@ class TestCoreMIDIIntegration:
                     assert description == "Test source"
             except RuntimeError:
                 pass
-            try:
-                note_data = bytes([144, 60, 127])
-                capi.midi_send_data(output_port, virtual_destination, note_data, 0)
-            except RuntimeError:
-                pass
+            # Note: We do NOT send data to virtual_destination here because it was
+            # created with a NULL read proc callback. MIDISend to such an endpoint
+            # causes a segfault in CoreMIDI when it tries to invoke the callback.
             capi.midi_endpoint_dispose(virtual_destination)
             capi.midi_endpoint_dispose(virtual_source)
             capi.midi_port_dispose(output_port)

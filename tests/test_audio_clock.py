@@ -171,7 +171,9 @@ class TestAudioClockHighLevel:
             # Clock should advance at ~1.0x wall-clock rate
             delta = time2 - time1
             ratio = delta / wall_elapsed
-            assert 0.8 < ratio < 1.2, f"Expected ~1.0x ratio, got {ratio:.4f} (clock={delta:.4f}s, wall={wall_elapsed:.4f}s)"
+            assert 0.8 < ratio < 1.2, (
+                f"Expected ~1.0x ratio, got {ratio:.4f} (clock={delta:.4f}s, wall={wall_elapsed:.4f}s)"
+            )
 
     def test_clock_advances_at_half_speed(self):
         """Test that clock advances at half speed"""
@@ -190,7 +192,9 @@ class TestAudioClockHighLevel:
             # Clock should advance at ~0.5x wall-clock rate
             delta = time2 - time1
             ratio = delta / wall_elapsed
-            assert 0.35 < ratio < 0.65, f"Expected ~0.5x ratio, got {ratio:.4f} (clock={delta:.4f}s, wall={wall_elapsed:.4f}s)"
+            assert 0.35 < ratio < 0.65, (
+                f"Expected ~0.5x ratio, got {ratio:.4f} (clock={delta:.4f}s, wall={wall_elapsed:.4f}s)"
+            )
 
     def test_clock_repr(self):
         """Test string representation"""
