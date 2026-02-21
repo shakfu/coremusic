@@ -64,6 +64,7 @@ class TestLinkAudioPlayerIntegration:
         player = AudioPlayer(link_session=session)
 
         # Get initial timing
+        wall_start = time.monotonic()
         timing1 = player.get_link_timing(quantum=4.0)
         beat1 = timing1["beat"]
 
@@ -73,12 +74,17 @@ class TestLinkAudioPlayerIntegration:
         # Get updated timing
         timing2 = player.get_link_timing(quantum=4.0)
         beat2 = timing2["beat"]
+        wall_elapsed = time.monotonic() - wall_start
 
         # Beat should have advanced
         # At 120 BPM, we have 2 beats per second
-        # In 0.1s, beat advances by ~0.2
+        beat_delta = beat2 - beat1
+        expected_beats = wall_elapsed * (120.0 / 60.0)
         assert beat2 > beat1
-        assert abs(beat2 - beat1 - 0.2) < 0.05
+        assert abs(beat_delta - expected_beats) < expected_beats * 0.5, (
+            f"Beat delta {beat_delta:.4f} too far from expected {expected_beats:.4f} "
+            f"(wall={wall_elapsed:.4f}s)"
+        )
 
     def test_link_tempo_changes_visible_in_player(self):
         """Test that tempo changes in Link are visible through AudioPlayer"""

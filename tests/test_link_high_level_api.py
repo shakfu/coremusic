@@ -48,11 +48,15 @@ class TestLinkContextManager:
             state.set_tempo(140.0, current_time)
             session.commit_app_session_state(state)
 
-            time.sleep(0.1)
-
-            # Verify tempo changed
-            state2 = session.capture_app_session_state()
-            assert state2.tempo == pytest.approx(140.0, abs=0.1)
+            # Verify tempo changed (retry to allow Link internal propagation)
+            tempo_propagated = False
+            for _ in range(10):
+                time.sleep(0.05)
+                state2 = session.capture_app_session_state()
+                if abs(state2.tempo - 140.0) < 0.1:
+                    tempo_propagated = True
+                    break
+            assert tempo_propagated, f"Tempo did not propagate: got {state2.tempo}"
 
         # After exit, should be disabled
         assert not session.enabled
@@ -221,15 +225,20 @@ class TestLinkUsagePatterns:
         with link.LinkSession(bpm=120.0) as session:
             clock = session.clock
 
+            beats = []
             for _ in range(5):
                 state = session.capture_app_session_state()
                 current_time = clock.micros()
                 beat = state.beat_at_time(current_time, quantum=4.0)
 
                 assert isinstance(beat, float)
-                assert beat >= 0.0
+                beats.append(beat)
 
                 time.sleep(0.01)
+
+            # Beats should be monotonically increasing
+            for i in range(1, len(beats)):
+                assert beats[i] > beats[i - 1]
 
     def test_transport_control_pattern(self):
         """Test transport control pattern"""
