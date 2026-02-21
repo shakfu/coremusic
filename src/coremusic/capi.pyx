@@ -3860,7 +3860,11 @@ def music_device_start_note(long unit, int instrument_id, int group_id, float pi
         arg_count += num_controls
 
     # Allocate memory for note parameters
-    cdef size_t params_size = sizeof(at.MusicDeviceNoteParams) + (num_controls - 1) * sizeof(at.NoteParamsControlValue)
+    # MusicDeviceNoteParams already includes mControls[1], so sizeof covers 0 or 1 controls.
+    # Only allocate extra space when num_controls > 1 to avoid size_t underflow.
+    cdef size_t params_size = sizeof(at.MusicDeviceNoteParams)
+    if num_controls > 1:
+        params_size += (num_controls - 1) * sizeof(at.NoteParamsControlValue)
     params = <at.MusicDeviceNoteParams*>malloc(params_size)
     if not params:
         raise MemoryError("Could not allocate memory for note parameters")

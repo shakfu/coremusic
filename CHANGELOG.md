@@ -17,6 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Fixed
+
+- **MusicDevice segfault in `music_device_start_note`** - Fixed `size_t` underflow in heap allocation for `MusicDeviceNoteParams` when no controls are provided. `(num_controls - 1)` with `num_controls=0` produced `-1`, which wrapped to `SIZE_MAX` when promoted to unsigned `size_t`, causing `malloc` to return an undersized buffer. Writing struct fields overflowed the allocation, corrupting the heap and crashing in `MusicDeviceStartNote`. The fix computes the base size from `sizeof(MusicDeviceNoteParams)` (which already includes `mControls[1]`) and only adds extra space when `num_controls > 1`.
+
 ## [0.2.0]
 
 ### Fixed
