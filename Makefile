@@ -124,6 +124,7 @@ docs-linkcheck:
 release:
 	@rm -rf dist
 	@uv build --sdist
+	@uv build --wheel --python 3.10
 	@uv build --wheel --python 3.11
 	@uv build --wheel --python 3.12
 	@uv build --wheel --python 3.13
