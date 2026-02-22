@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.2.1]
+
 ### Fixed
 
 - **MusicDevice segfault in `music_device_start_note`** - Two fixes for a segfault in `MusicDeviceStartNote` that crashed CI on all macOS/Python versions:
@@ -30,6 +32,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   - `test_beat_tracking_pattern`: Replaced `beat >= 0.0` assertion with monotonicity check; `beat_at_time` can return negative values before the session timeline origin.
 - **CoreMIDI segfault in `test_full_midi_workflow`** - Removed `midi_send_data` call to a virtual destination created with a NULL read proc callback. `MIDIDestinationCreate` is called with `NULL` as the read proc in `midi_destination_create`, so `MIDISend` to that endpoint invokes a NULL function pointer, causing a segfault on CI.
 - **CI smoke test import path** - Updated `ci.yml` smoke test to import `audio_file_open_url` from `coremusic.capi` instead of the top-level `coremusic` namespace, which was cleaned up during the v0.2.0 restructure.
+
+### Added
+
+- **Python 3.10 support** - Lowered `requires-python` from `>=3.11` to `>=3.10`. No 3.11+ language features were in use (all `X | Y` annotations are guarded by `from __future__ import annotations`). Dev dependency floors lowered to 3.10-compatible versions (numpy>=2.0, scipy>=1.10, sphinx>=7.0, etc.); on 3.11+ uv still resolves the latest. Added 3.10 to CI test matrix.
 
 ## [0.2.0]
 
