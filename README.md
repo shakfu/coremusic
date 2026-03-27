@@ -352,6 +352,8 @@ make test-all       # All tests (1600+)
 
 ## Documentation
 
+- [CoreMusic Documentation Site](https://shakfu.github.io/coremusic/)
+
 ### Getting Started
 
 - **[Quick Start Guide](https://shakfu.github.io/coremusic/quickstart/)**: 5-minute introduction to coremusic
