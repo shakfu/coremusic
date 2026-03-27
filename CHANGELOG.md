@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.2.2]
+
 ### Changed
 
 - **License changed from MIT to GPLv3** - The project is now licensed under the GNU General Public License v3.0. This aligns with the Ableton Link dependency (GPLv2+) and ensures license compatibility across all distributed components.
