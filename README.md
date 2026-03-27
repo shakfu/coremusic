@@ -353,35 +353,21 @@ make test-all       # All tests (1600+)
 
 ### Getting Started
 
-- **[Quick Start Guide](docs/quickstart.rst)**: 5-minute introduction to coremusic
+- **[Quick Start Guide](https://shakfu.github.io/coremusic/quickstart/)**: 5-minute introduction to coremusic
 
 ### Tutorials
 
 Step-by-step guides for common tasks:
 
-- **[Audio Playback](docs/tutorials/audio_playback.rst)**: Simple to advanced playback, looping, streaming, effects
-- **[Audio Recording](docs/tutorials/audio_recording.rst)**: Recording from input devices, monitoring, formats
-- **[MIDI Basics](docs/tutorials/midi_basics.rst)**: Devices, messages, sending/receiving MIDI
-- **[Effects Processing](docs/tutorials/effects_processing.rst)**: AudioUnit effects chains, parameters, presets
+- **[Audio Playback](https://shakfu.github.io/coremusic/tutorials/audio_playback/)**: Simple to advanced playback, looping, streaming, effects
+- **[Audio Recording](https://shakfu.github.io/coremusic/tutorials/audio_recording/)**: Recording from input devices, monitoring, formats
+- **[MIDI Basics](https://shakfu.github.io/coremusic/tutorials/midi_basics/)**: Devices, messages, sending/receiving MIDI
+- **[Effects Processing](https://shakfu.github.io/coremusic/tutorials/effects_processing/)**: AudioUnit effects chains, parameters, presets
 
 ### Reference
 
-- **[Link Integration Guide](docs/link_integration.md)**: Ableton Link with CoreAudio/CoreMIDI
-- **[Error Handling Guide](docs/ERROR_DECORATOR.md)**: OSStatus codes, exceptions
-
-### Executable Examples
-
-The `tests/tutorials/` directory contains doctest-based tutorials that serve as both documentation and tests:
-
-```bash
-# Run all tutorial doctests
-pytest tests/tutorials/ --doctest-modules -v
-
-# Run specific tutorial
-pytest tests/tutorials/test_audio_file_basics.py --doctest-modules -v
-```
-
-Available tutorials: `test_quickstart.py`, `test_audio_file_basics.py`, `test_midi_basics.py`, `test_effects_processing.py`, `test_music_theory.py`
+- **[CLI Reference](https://shakfu.github.io/coremusic/guides/cli/)**: Full command-line interface documentation
+- **[Link Integration Guide](https://shakfu.github.io/coremusic/link_integration/)**: Ableton Link with CoreAudio/CoreMIDI
 
 ## Resources
 
