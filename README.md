@@ -2,6 +2,7 @@
 
 [![PyPI version](https://badge.fury.io/py/coremusic.svg)](https://badge.fury.io/py/coremusic)
 [![License](https://img.shields.io/github/license/shakfu/coremusic.svg)](https://github.com/shakfu/coremusic/blob/main/LICENSE)
+[![Documentation](https://img.shields.io/badge/docs-shakfu.github.io%2Fcoremusic-blue)](https://shakfu.github.io/coremusic/)
 
 A zero-dependency music development toolkit for macOS providing Python access to Apple's CoreAudio and CoreMIDI frameworks via Cython. Offers both functional (C-style) and object-oriented (Pythonic) APIs with automatic resource management.
 
