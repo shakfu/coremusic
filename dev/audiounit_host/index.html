@@ -1,0 +1,3213 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Python bindings for Apple CoreAudio">
+      
+      
+      
+        <link rel="canonical" href="https://shakfu.github.io/coremusic/dev/audiounit_host/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>AudioUnit Host Implementation Plan - CoreMusic</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#audiounit-host-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="CoreMusic" class="md-header__button md-logo" aria-label="CoreMusic" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CoreMusic
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              AudioUnit Host Implementation Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/shakfu/coremusic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    shakfu/coremusic
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../quickstart/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guides/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cookbook/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Cookbook
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../examples/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../link_integration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Link Integration
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="CoreMusic" class="md-nav__button md-logo" aria-label="CoreMusic" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    CoreMusic
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/shakfu/coremusic" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    shakfu/coremusic
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../guides/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/imports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../tutorials/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/audio_file_basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audio File Basics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/audio_playback/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audio Playback
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/audio_recording/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audio Recording
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/effects_processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Effects Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/midi_basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIDI Basics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/midi_transform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIDI Transforms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/async_audio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Async Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/music_theory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Music Theory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../cookbook/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Cookbook
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/common_patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Common Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/file_operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    File Operations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/audio_processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audio Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/real_time_audio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Real-Time Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/audiounit_hosting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AudioUnit Hosting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/link_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Link Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/midi_processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIDI Processing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../examples/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/audio_inspector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audio Inspector
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/audio_file/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audio File
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../link_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Link Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#component-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Hierarchy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#core-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-audiounithost-main-host-controller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. AudioUnitHost - Main host controller
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-audiounitplugin-individual-plugin-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. AudioUnitPlugin - Individual plugin instance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-audiounitparameter-plugin-parameter-wrapper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. AudioUnitParameter - Plugin parameter wrapper
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-audiounitpreset-preset-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. AudioUnitPreset - Preset management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-presetmanager-user-preset-lifecycle-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. PresetManager - User preset lifecycle management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-audioformat-audio-format-specification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. AudioFormat - Audio format specification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-audioformatconverter-automatic-format-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. AudioFormatConverter - Automatic format conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-audiounitchain-multi-plugin-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. AudioUnitChain - Multi-plugin routing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Phases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Phases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-foundation-days-1-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Foundation (Days 1-2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-plugin-instantiation-lifecycle-days-3-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Plugin Instantiation &amp; Lifecycle (Days 3-4)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-parameter-discovery-control-days-5-7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Parameter Discovery &amp; Control (Days 5-7)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-preset-management-days-8-9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Preset Management (Days 8-9)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-audio-routing-days-10-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: Audio Routing (Days 10-12)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-link-integration-days-13-14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6: Link Integration (Days 13-14)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-7-high-level-api-documentation-days-15-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 7: High-Level API &amp; Documentation (Days 15-16)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#low-level-functional-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Low-Level Functional API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#high-level-object-oriented-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-Level Object-Oriented API
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#required-coreaudio-structures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required CoreAudio Structures
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Required CoreAudio Structures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#audiounitparameterinfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AudioUnitParameterInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aupreset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AUPreset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hostcallbackinfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HostCallbackInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Strategy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#demo-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Demo Applications
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Demo Applications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-plugin-browser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Plugin Browser
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-simple-plugin-host" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Simple Plugin Host
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-effects-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Effects Chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-link-synced-delay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Link-Synced Delay
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Documentation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#user-guides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Guides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#success-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Criteria
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#completed-enhancements-phase-8-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Completed Enhancements (Phase 8-10)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Completed Enhancements (Phase 8-10)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-8-audio-format-support-x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 8: Audio Format Support [x]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 8: Audio Format Support [x]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#audioformat-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AudioFormat Class
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audioformatconverter-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AudioFormatConverter Class
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-9-user-preset-management-x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 9: User Preset Management [x]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 9: User Preset Management [x]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#presetmanager-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PresetManager Class
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-10-audiounitchain-class-x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 10: AudioUnitChain Class [x]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 10: AudioUnitChain Class [x]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#audiounitchain-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AudioUnitChain Class
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enhanced-audiounitplugin-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enhanced AudioUnitPlugin Methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementation-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Statistics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#future-enhancement-opportunities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future Enhancement Opportunities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="audiounit-host-implementation-plan">AudioUnit Host Implementation Plan<a class="headerlink" href="#audiounit-host-implementation-plan" title="Permanent link">&para;</a></h1>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>Implement comprehensive AudioUnit plugin hosting capabilities in CoreMusic, enabling users to:</p>
+<ul>
+<li>Discover and enumerate available AudioUnit plugins</li>
+<li>Instantiate and manage plugin instances</li>
+<li>Control plugin parameters with full automation</li>
+<li>Save and load plugin presets</li>
+<li>Route audio through plugin chains</li>
+<li>Integrate with Ableton Link for tempo synchronization</li>
+</ul>
+<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
+<h3 id="component-hierarchy">Component Hierarchy<a class="headerlink" href="#component-hierarchy" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>AudioUnitHost (Python high-level API)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── AudioUnitPlugin (per-plugin instance)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│   ├── Parameters (discovery and control)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│   ├── Presets (save/load)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│   └── Audio I/O (routing)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>└── AudioUnitChain (multi-plugin routing)
+</code></pre></div>
+<h3 id="core-classes">Core Classes<a class="headerlink" href="#core-classes" title="Permanent link">&para;</a></h3>
+<h4 id="1-audiounithost-main-host-controller">1. <strong>AudioUnitHost</strong> - Main host controller<a class="headerlink" href="#1-audiounithost-main-host-controller" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Plugin discovery and enumeration</li>
+<li>System-wide plugin scanning</li>
+<li>Category-based filtering</li>
+<li>Manufacturer filtering</li>
+</ul>
+<h4 id="2-audiounitplugin-individual-plugin-instance">2. <strong>AudioUnitPlugin</strong> - Individual plugin instance<a class="headerlink" href="#2-audiounitplugin-individual-plugin-instance" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Plugin lifecycle (instantiate, initialize, uninitialize, dispose)</li>
+<li>Parameter discovery and control</li>
+<li>Preset management</li>
+<li>Stream format configuration</li>
+<li>Real-time audio processing</li>
+</ul>
+<h4 id="3-audiounitparameter-plugin-parameter-wrapper">3. <strong>AudioUnitParameter</strong> - Plugin parameter wrapper<a class="headerlink" href="#3-audiounitparameter-plugin-parameter-wrapper" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Parameter metadata (name, unit, min/max, default)</li>
+<li>Value get/set with validation</li>
+<li>String value formatting</li>
+<li>Automation support</li>
+</ul>
+<h4 id="4-audiounitpreset-preset-management">4. <strong>AudioUnitPreset</strong> - Preset management<a class="headerlink" href="#4-audiounitpreset-preset-management" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Factory presets enumeration</li>
+<li>User preset save/load</li>
+<li>ClassInfo serialization/deserialization</li>
+<li>Preset import/export</li>
+</ul>
+<h4 id="5-presetmanager-user-preset-lifecycle-management">5. <strong>PresetManager</strong> - User preset lifecycle management<a class="headerlink" href="#5-presetmanager-user-preset-lifecycle-management" title="Permanent link">&para;</a></h4>
+<ul>
+<li>JSON-based preset storage in <code>~/Library/Audio/Presets/coremusic/</code></li>
+<li>Save/load presets with metadata</li>
+<li>Export/import for preset sharing</li>
+<li>List and delete operations</li>
+<li>Parameter state capture and restoration</li>
+</ul>
+<h4 id="6-audioformat-audio-format-specification">6. <strong>AudioFormat</strong> - Audio format specification<a class="headerlink" href="#6-audioformat-audio-format-specification" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Support for multiple sample formats: <code>float32</code>, <code>float64</code>, <code>int16</code>, <code>int32</code></li>
+<li>Interleaved and non-interleaved buffer layouts</li>
+<li>Format comparison and validation</li>
+<li>Bytes per sample/frame calculations</li>
+</ul>
+<h4 id="7-audioformatconverter-automatic-format-conversion">7. <strong>AudioFormatConverter</strong> - Automatic format conversion<a class="headerlink" href="#7-audioformatconverter-automatic-format-conversion" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Two-stage conversion pipeline: source → float32 → destination</li>
+<li>Support for all format combinations</li>
+<li>Proper audio normalization to [-1.0, 1.0]</li>
+<li>Symmetric rounding for integer formats</li>
+</ul>
+<h4 id="8-audiounitchain-multi-plugin-routing">8. <strong>AudioUnitChain</strong> - Multi-plugin routing<a class="headerlink" href="#8-audiounitchain-multi-plugin-routing" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Serial plugin chains with automatic routing</li>
+<li>Dynamic chain building: add, insert, remove plugins</li>
+<li>Automatic format conversion between plugins</li>
+<li>Wet/dry mixing support</li>
+<li>Context manager support</li>
+<li>Plugin configuration by index</li>
+</ul>
+<h2 id="implementation-phases">Implementation Phases<a class="headerlink" href="#implementation-phases" title="Permanent link">&para;</a></h2>
+<h3 id="phase-1-foundation-days-1-2">Phase 1: Foundation (Days 1-2)<a class="headerlink" href="#phase-1-foundation-days-1-2" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong>: Add missing C API declarations and basic plugin discovery</p>
+<p><strong>Tasks</strong>:</p>
+<ol>
+<li>Add AudioUnitParameterInfo structure to <code>audiotoolbox.pxd</code></li>
+<li>Add AUPreset structure</li>
+<li>Add missing property constants</li>
+<li>Implement plugin discovery functions in <code>capi.pyx</code></li>
+<li>Create basic test for plugin enumeration</li>
+</ol>
+<p><strong>Deliverables</strong>:</p>
+<ul>
+<li>Extended <code>audiotoolbox.pxd</code> with parameter structures</li>
+<li>Python functions: <code>audio_unit_get_plugins()</code>, <code>audio_unit_get_plugin_info()</code></li>
+<li>Test: List all available AudioUnit plugins</li>
+</ul>
+<h3 id="phase-2-plugin-instantiation-lifecycle-days-3-4">Phase 2: Plugin Instantiation &amp; Lifecycle (Days 3-4)<a class="headerlink" href="#phase-2-plugin-instantiation-lifecycle-days-3-4" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong>: Manage plugin instances with proper lifecycle</p>
+<p><strong>Tasks</strong>:</p>
+<ol>
+<li>Create <code>AudioUnitPlugin</code> class in <code>audiounit_host.py</code></li>
+<li>Implement instantiation from component description</li>
+<li>Implement initialization/uninitialization</li>
+<li>Add stream format configuration</li>
+<li>Add proper cleanup and disposal</li>
+<li>Create tests for plugin lifecycle</li>
+</ol>
+<p><strong>Deliverables</strong>:</p>
+<ul>
+<li><code>AudioUnitPlugin</code> class with context manager support</li>
+<li>Proper resource management</li>
+<li>Tests for plugin creation and disposal</li>
+</ul>
+<h3 id="phase-3-parameter-discovery-control-days-5-7">Phase 3: Parameter Discovery &amp; Control (Days 5-7)<a class="headerlink" href="#phase-3-parameter-discovery-control-days-5-7" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong>: Full parameter automation support</p>
+<p><strong>Tasks</strong>:</p>
+<ol>
+<li>Implement parameter list enumeration</li>
+<li>Implement parameter info retrieval</li>
+<li>Create <code>AudioUnitParameter</code> class</li>
+<li>Add parameter get/set functions</li>
+<li>Add parameter value string formatting</li>
+<li>Add parameter value validation</li>
+<li>Create comprehensive parameter tests</li>
+</ol>
+<p><strong>Deliverables</strong>:</p>
+<ul>
+<li>Complete parameter discovery API</li>
+<li>Parameter automation with validation</li>
+<li>Tests for parameter control</li>
+</ul>
+<h3 id="phase-4-preset-management-days-8-9">Phase 4: Preset Management (Days 8-9)<a class="headerlink" href="#phase-4-preset-management-days-8-9" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong>: Save and load plugin presets</p>
+<p><strong>Tasks</strong>:</p>
+<ol>
+<li>Implement factory preset enumeration</li>
+<li>Implement preset selection</li>
+<li>Implement ClassInfo get/set for user presets</li>
+<li>Add preset file I/O</li>
+<li>Create preset management tests</li>
+</ol>
+<p><strong>Deliverables</strong>:</p>
+<ul>
+<li>Factory preset browsing</li>
+<li>User preset save/load</li>
+<li>Preset import/export</li>
+<li>Tests for preset functionality</li>
+</ul>
+<h3 id="phase-5-audio-routing-days-10-12">Phase 5: Audio Routing (Days 10-12)<a class="headerlink" href="#phase-5-audio-routing-days-10-12" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong>: Process audio through plugins</p>
+<p><strong>Tasks</strong>:</p>
+<ol>
+<li>Implement audio buffer allocation</li>
+<li>Implement render callback setup</li>
+<li>Create <code>AudioUnitChain</code> class</li>
+<li>Implement serial routing</li>
+<li>Add bypass functionality</li>
+<li>Create audio processing tests</li>
+</ol>
+<p><strong>Deliverables</strong>:</p>
+<ul>
+<li>Audio processing through plugins</li>
+<li>Multi-plugin chains</li>
+<li>Tests with actual audio processing</li>
+</ul>
+<h3 id="phase-6-link-integration-days-13-14">Phase 6: Link Integration (Days 13-14)<a class="headerlink" href="#phase-6-link-integration-days-13-14" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong>: Tempo-synchronized plugins</p>
+<p><strong>Tasks</strong>:</p>
+<ol>
+<li>Add tempo sync callbacks</li>
+<li>Implement beat/time conversion for plugins</li>
+<li>Add host callback structure</li>
+<li>Test with tempo-dependent plugins (delays, LFOs)</li>
+</ol>
+<p><strong>Deliverables</strong>:</p>
+<ul>
+<li>Link tempo synchronization</li>
+<li>Host callbacks for tempo info</li>
+<li>Tests with tempo-synced plugins</li>
+</ul>
+<h3 id="phase-7-high-level-api-documentation-days-15-16">Phase 7: High-Level API &amp; Documentation (Days 15-16)<a class="headerlink" href="#phase-7-high-level-api-documentation-days-15-16" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong>: Pythonic API and comprehensive docs</p>
+<p><strong>Tasks</strong>:</p>
+<ol>
+<li>Create high-level Python API</li>
+<li>Add convenience methods</li>
+<li>Create demo applications</li>
+<li>Write comprehensive documentation</li>
+<li>Create tutorial examples</li>
+</ol>
+<p><strong>Deliverables</strong>:</p>
+<ul>
+<li>Pythonic <code>AudioUnitHost</code> API</li>
+<li>Multiple demo applications</li>
+<li>Complete documentation</li>
+<li>Tutorial examples</li>
+</ul>
+<h2 id="api-design">API Design<a class="headerlink" href="#api-design" title="Permanent link">&para;</a></h2>
+<h3 id="low-level-functional-api">Low-Level Functional API<a class="headerlink" href="#low-level-functional-api" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic.capi</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">capi</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Discover plugins</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">plugins</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">audio_unit_get_plugins</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;aufx&#39;</span><span class="p">)</span>  <span class="c1"># Effects</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="k">for</span> <span class="n">plugin</span> <span class="ow">in</span> <span class="n">plugins</span><span class="p">:</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">info</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">audio_unit_get_plugin_info</span><span class="p">(</span><span class="n">plugin</span><span class="p">)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> by </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;manufacturer&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># Create plugin instance</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="n">component</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">audio_component_find_next</span><span class="p">(</span><span class="n">description</span><span class="p">)</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="n">unit</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">audio_component_instance_new</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="n">capi</span><span class="o">.</span><span class="n">audio_unit_initialize</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="c1"># Get parameters</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="n">param_list</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">audio_unit_get_parameter_list</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="k">for</span> <span class="n">param_id</span> <span class="ow">in</span> <span class="n">param_list</span><span class="p">:</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    <span class="n">info</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">audio_unit_get_parameter_info</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">param_id</span><span class="p">)</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter: </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, Range: </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;min&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;max&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="c1"># Set parameter</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="n">capi</span><span class="o">.</span><span class="n">audio_unit_set_parameter</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">param_id</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">element</span><span class="p">)</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="c1"># Get factory presets</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="n">presets</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">audio_unit_get_factory_presets</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="n">capi</span><span class="o">.</span><span class="n">audio_unit_set_current_preset</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">presets</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="c1"># Cleanup</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="n">capi</span><span class="o">.</span><span class="n">audio_unit_uninitialize</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="n">capi</span><span class="o">.</span><span class="n">audio_component_instance_dispose</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="high-level-object-oriented-api">High-Level Object-Oriented API<a class="headerlink" href="#high-level-object-oriented-api" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># Discover plugins</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">host</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioUnitHost</span><span class="p">()</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">effects</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">discover_plugins</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;effect&#39;</span><span class="p">)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">effects</span><span class="p">)</span><span class="si">}</span><span class="s2"> effect plugins:&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="k">for</span> <span class="n">plugin_info</span> <span class="ow">in</span> <span class="n">effects</span><span class="p">[:</span><span class="mi">10</span><span class="p">]:</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">plugin_info</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">plugin_info</span><span class="o">.</span><span class="n">manufacturer</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1"># Load a plugin</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioUnitPlugin</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="s2">&quot;AUDelay&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">plugin</span><span class="p">:</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded: </span><span class="si">{</span><span class="n">plugin</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Manufacturer: </span><span class="si">{</span><span class="n">plugin</span><span class="o">.</span><span class="n">manufacturer</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Version: </span><span class="si">{</span><span class="n">plugin</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    <span class="c1"># List parameters</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Parameters (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">plugin</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span><span class="si">}</span><span class="s2">):&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>    <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">plugin</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">unit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    Range: </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">min</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">max</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>    <span class="c1"># Set parameter by name</span>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>    <span class="n">plugin</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;Delay Time&quot;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># 500ms</span>
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>    <span class="n">plugin</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;Feedback&quot;</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">)</span>
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>    <span class="n">plugin</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;Wet/Dry Mix&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>
+<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a>    <span class="c1"># Or use dictionary access</span>
+<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a>    <span class="n">plugin</span><span class="p">[</span><span class="s1">&#39;Delay Time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.25</span>
+<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Delay: </span><span class="si">{</span><span class="n">plugin</span><span class="p">[</span><span class="s1">&#39;Delay Time&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>
+<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a>    <span class="c1"># List factory presets</span>
+<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Factory Presets (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">plugin</span><span class="o">.</span><span class="n">factory_presets</span><span class="p">)</span><span class="si">}</span><span class="s2">):&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>    <span class="k">for</span> <span class="n">preset</span> <span class="ow">in</span> <span class="n">plugin</span><span class="o">.</span><span class="n">factory_presets</span><span class="p">:</span>
+<a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">preset</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a>
+<a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a>    <span class="c1"># Apply factory preset</span>
+<a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a>    <span class="n">plugin</span><span class="o">.</span><span class="n">load_preset</span><span class="p">(</span><span class="n">plugin</span><span class="o">.</span><span class="n">factory_presets</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a>
+<a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a>    <span class="c1"># Save user preset with metadata</span>
+<a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a>    <span class="n">plugin</span><span class="o">.</span><span class="n">save_preset</span><span class="p">(</span><span class="s2">&quot;My Delay Setting&quot;</span><span class="p">,</span> <span class="s2">&quot;500ms with light feedback&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a>
+<a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a>    <span class="c1"># Load user preset</span>
+<a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a>    <span class="n">plugin</span><span class="o">.</span><span class="n">load_preset</span><span class="p">(</span><span class="s2">&quot;My Delay Setting&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a>
+<a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a>    <span class="c1"># List all user presets</span>
+<a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a>    <span class="n">user_presets</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">list_user_presets</span><span class="p">()</span>
+<a id="__codelineno-2-48" name="__codelineno-2-48" href="#__codelineno-2-48"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;User presets: </span><span class="si">{</span><span class="n">user_presets</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-49" name="__codelineno-2-49" href="#__codelineno-2-49"></a>
+<a id="__codelineno-2-50" name="__codelineno-2-50" href="#__codelineno-2-50"></a>    <span class="c1"># Export preset for sharing</span>
+<a id="__codelineno-2-51" name="__codelineno-2-51" href="#__codelineno-2-51"></a>    <span class="n">plugin</span><span class="o">.</span><span class="n">export_preset</span><span class="p">(</span><span class="s2">&quot;My Delay Setting&quot;</span><span class="p">,</span> <span class="s2">&quot;/path/to/export.json&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-52" name="__codelineno-2-52" href="#__codelineno-2-52"></a>
+<a id="__codelineno-2-53" name="__codelineno-2-53" href="#__codelineno-2-53"></a>    <span class="c1"># Import preset</span>
+<a id="__codelineno-2-54" name="__codelineno-2-54" href="#__codelineno-2-54"></a>    <span class="n">plugin</span><span class="o">.</span><span class="n">import_preset</span><span class="p">(</span><span class="s2">&quot;/path/to/preset.json&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-55" name="__codelineno-2-55" href="#__codelineno-2-55"></a>
+<a id="__codelineno-2-56" name="__codelineno-2-56" href="#__codelineno-2-56"></a>    <span class="c1"># Configure audio format</span>
+<a id="__codelineno-2-57" name="__codelineno-2-57" href="#__codelineno-2-57"></a>    <span class="n">fmt</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormat</span><span class="p">(</span><span class="mf">44100.0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormat</span><span class="o">.</span><span class="n">INT16</span><span class="p">,</span> <span class="n">interleaved</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-2-58" name="__codelineno-2-58" href="#__codelineno-2-58"></a>    <span class="n">plugin</span><span class="o">.</span><span class="n">set_audio_format</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
+<a id="__codelineno-2-59" name="__codelineno-2-59" href="#__codelineno-2-59"></a>
+<a id="__codelineno-2-60" name="__codelineno-2-60" href="#__codelineno-2-60"></a>    <span class="c1"># Process audio with automatic format conversion</span>
+<a id="__codelineno-2-61" name="__codelineno-2-61" href="#__codelineno-2-61"></a>    <span class="n">output</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">input_audio</span><span class="p">,</span> <span class="n">num_frames</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">audio_format</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+<a id="__codelineno-2-62" name="__codelineno-2-62" href="#__codelineno-2-62"></a>
+<a id="__codelineno-2-63" name="__codelineno-2-63" href="#__codelineno-2-63"></a><span class="c1"># Create plugin chain with automatic routing</span>
+<a id="__codelineno-2-64" name="__codelineno-2-64" href="#__codelineno-2-64"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioUnitChain</span><span class="p">()</span> <span class="k">as</span> <span class="n">chain</span><span class="p">:</span>
+<a id="__codelineno-2-65" name="__codelineno-2-65" href="#__codelineno-2-65"></a>    <span class="c1"># Add plugins to chain</span>
+<a id="__codelineno-2-66" name="__codelineno-2-66" href="#__codelineno-2-66"></a>    <span class="n">chain</span><span class="o">.</span><span class="n">add_plugin</span><span class="p">(</span><span class="s2">&quot;AUHighpass&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-67" name="__codelineno-2-67" href="#__codelineno-2-67"></a>    <span class="n">chain</span><span class="o">.</span><span class="n">add_plugin</span><span class="p">(</span><span class="s2">&quot;AUDelay&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-68" name="__codelineno-2-68" href="#__codelineno-2-68"></a>    <span class="n">chain</span><span class="o">.</span><span class="n">add_plugin</span><span class="p">(</span><span class="s2">&quot;AUReverb&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-69" name="__codelineno-2-69" href="#__codelineno-2-69"></a>
+<a id="__codelineno-2-70" name="__codelineno-2-70" href="#__codelineno-2-70"></a>    <span class="c1"># Configure plugins by index</span>
+<a id="__codelineno-2-71" name="__codelineno-2-71" href="#__codelineno-2-71"></a>    <span class="n">chain</span><span class="o">.</span><span class="n">configure_plugin</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Cutoff Frequency&#39;</span><span class="p">:</span> <span class="mf">200.0</span><span class="p">})</span>
+<a id="__codelineno-2-72" name="__codelineno-2-72" href="#__codelineno-2-72"></a>    <span class="n">chain</span><span class="o">.</span><span class="n">configure_plugin</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Delay Time&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;Feedback&#39;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">})</span>
+<a id="__codelineno-2-73" name="__codelineno-2-73" href="#__codelineno-2-73"></a>    <span class="n">chain</span><span class="o">.</span><span class="n">configure_plugin</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Room Size&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">})</span>
+<a id="__codelineno-2-74" name="__codelineno-2-74" href="#__codelineno-2-74"></a>
+<a id="__codelineno-2-75" name="__codelineno-2-75" href="#__codelineno-2-75"></a>    <span class="c1"># Process audio through entire chain with wet/dry mix</span>
+<a id="__codelineno-2-76" name="__codelineno-2-76" href="#__codelineno-2-76"></a>    <span class="n">output</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">input_audio</span><span class="p">,</span> <span class="n">wet_dry_mix</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<a id="__codelineno-2-77" name="__codelineno-2-77" href="#__codelineno-2-77"></a>
+<a id="__codelineno-2-78" name="__codelineno-2-78" href="#__codelineno-2-78"></a>    <span class="c1"># Get plugin by index</span>
+<a id="__codelineno-2-79" name="__codelineno-2-79" href="#__codelineno-2-79"></a>    <span class="n">reverb</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">get_plugin</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<a id="__codelineno-2-80" name="__codelineno-2-80" href="#__codelineno-2-80"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reverb: </span><span class="si">{</span><span class="n">reverb</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-81" name="__codelineno-2-81" href="#__codelineno-2-81"></a>
+<a id="__codelineno-2-82" name="__codelineno-2-82" href="#__codelineno-2-82"></a><span class="c1"># Custom audio format with automatic conversion</span>
+<a id="__codelineno-2-83" name="__codelineno-2-83" href="#__codelineno-2-83"></a><span class="n">fmt</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormat</span><span class="p">(</span>
+<a id="__codelineno-2-84" name="__codelineno-2-84" href="#__codelineno-2-84"></a>    <span class="n">sample_rate</span><span class="o">=</span><span class="mf">48000.0</span><span class="p">,</span>
+<a id="__codelineno-2-85" name="__codelineno-2-85" href="#__codelineno-2-85"></a>    <span class="n">channels</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<a id="__codelineno-2-86" name="__codelineno-2-86" href="#__codelineno-2-86"></a>    <span class="n">sample_format</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormat</span><span class="o">.</span><span class="n">FLOAT64</span><span class="p">,</span>
+<a id="__codelineno-2-87" name="__codelineno-2-87" href="#__codelineno-2-87"></a>    <span class="n">interleaved</span><span class="o">=</span><span class="kc">False</span>
+<a id="__codelineno-2-88" name="__codelineno-2-88" href="#__codelineno-2-88"></a><span class="p">)</span>
+<a id="__codelineno-2-89" name="__codelineno-2-89" href="#__codelineno-2-89"></a>
+<a id="__codelineno-2-90" name="__codelineno-2-90" href="#__codelineno-2-90"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioUnitPlugin</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="s2">&quot;AUDelay&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">plugin</span><span class="p">:</span>
+<a id="__codelineno-2-91" name="__codelineno-2-91" href="#__codelineno-2-91"></a>    <span class="n">plugin</span><span class="o">.</span><span class="n">set_audio_format</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
+<a id="__codelineno-2-92" name="__codelineno-2-92" href="#__codelineno-2-92"></a>    <span class="c1"># Plugin automatically converts to/from float32 internally</span>
+<a id="__codelineno-2-93" name="__codelineno-2-93" href="#__codelineno-2-93"></a>    <span class="n">output</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">num_frames</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
+<a id="__codelineno-2-94" name="__codelineno-2-94" href="#__codelineno-2-94"></a>
+<a id="__codelineno-2-95" name="__codelineno-2-95" href="#__codelineno-2-95"></a><span class="c1"># Link integration</span>
+<a id="__codelineno-2-96" name="__codelineno-2-96" href="#__codelineno-2-96"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">link</span><span class="o">.</span><span class="n">LinkSession</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mf">120.0</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+<a id="__codelineno-2-97" name="__codelineno-2-97" href="#__codelineno-2-97"></a>    <span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioUnitPlugin</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="s2">&quot;AUDelay&quot;</span><span class="p">,</span> <span class="n">link_session</span><span class="o">=</span><span class="n">session</span><span class="p">)</span> <span class="k">as</span> <span class="n">delay</span><span class="p">:</span>
+<a id="__codelineno-2-98" name="__codelineno-2-98" href="#__codelineno-2-98"></a>        <span class="c1"># Delay automatically syncs to Link tempo</span>
+<a id="__codelineno-2-99" name="__codelineno-2-99" href="#__codelineno-2-99"></a>        <span class="n">delay</span><span class="p">[</span><span class="s1">&#39;Delay Time (Beats)&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.25</span>  <span class="c1"># Quarter note delay</span>
+<a id="__codelineno-2-100" name="__codelineno-2-100" href="#__codelineno-2-100"></a>
+<a id="__codelineno-2-101" name="__codelineno-2-101" href="#__codelineno-2-101"></a>        <span class="c1"># Plugin receives tempo changes from Link</span>
+<a id="__codelineno-2-102" name="__codelineno-2-102" href="#__codelineno-2-102"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Plugin tempo: </span><span class="si">{</span><span class="n">delay</span><span class="o">.</span><span class="n">tempo</span><span class="si">}</span><span class="s2"> BPM&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="required-coreaudio-structures">Required CoreAudio Structures<a class="headerlink" href="#required-coreaudio-structures" title="Permanent link">&para;</a></h2>
+<h3 id="audiounitparameterinfo">AudioUnitParameterInfo<a class="headerlink" href="#audiounitparameterinfo" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">AudioUnitParameterInfo</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">name</span><span class="p">[</span><span class="mi">52</span><span class="p">];</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="n">CFStringRef</span><span class="w"> </span><span class="n">unitName</span><span class="p">;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="n">UInt32</span><span class="w"> </span><span class="n">clumpID</span><span class="p">;</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="n">CFStringRef</span><span class="w"> </span><span class="n">cfNameString</span><span class="p">;</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="n">AudioUnitParameterUnit</span><span class="w"> </span><span class="n">unit</span><span class="p">;</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="n">AudioUnitParameterValue</span><span class="w"> </span><span class="n">minValue</span><span class="p">;</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="n">AudioUnitParameterValue</span><span class="w"> </span><span class="n">maxValue</span><span class="p">;</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="n">AudioUnitParameterValue</span><span class="w"> </span><span class="n">defaultValue</span><span class="p">;</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="n">UInt32</span><span class="w"> </span><span class="n">flags</span><span class="p">;</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="p">}</span><span class="w"> </span><span class="n">AudioUnitParameterInfo</span><span class="p">;</span>
+</code></pre></div>
+<h3 id="aupreset">AUPreset<a class="headerlink" href="#aupreset" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">AUPreset</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="n">SInt32</span><span class="w"> </span><span class="n">presetNumber</span><span class="p">;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">CFStringRef</span><span class="w"> </span><span class="n">presetName</span><span class="p">;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="p">}</span><span class="w"> </span><span class="n">AUPreset</span><span class="p">;</span>
+</code></pre></div>
+<h3 id="hostcallbackinfo">HostCallbackInfo<a class="headerlink" href="#hostcallbackinfo" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">HostCallbackInfo</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="kt">void</span><span class="o">*</span><span class="w"> </span><span class="n">hostUserData</span><span class="p">;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="n">OSStatus</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">beatAndTempoProc</span><span class="p">)(</span><span class="kt">void</span><span class="o">*</span><span class="w"> </span><span class="n">inHostUserData</span><span class="p">,</span><span class="w"> </span><span class="n">Float64</span><span class="o">*</span><span class="w"> </span><span class="n">outCurrentBeat</span><span class="p">,</span><span class="w"> </span><span class="n">Float64</span><span class="o">*</span><span class="w"> </span><span class="n">outCurrentTempo</span><span class="p">);</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="n">OSStatus</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">musicalTimeLocationProc</span><span class="p">)(</span><span class="kt">void</span><span class="o">*</span><span class="w"> </span><span class="n">inHostUserData</span><span class="p">,</span><span class="w"> </span><span class="n">UInt32</span><span class="o">*</span><span class="w"> </span><span class="n">outDeltaSampleOffsetToNextBeat</span><span class="p">,</span><span class="w"> </span><span class="n">Float32</span><span class="o">*</span><span class="w"> </span><span class="n">outTimeSig_Numerator</span><span class="p">,</span><span class="w"> </span><span class="n">UInt32</span><span class="o">*</span><span class="w"> </span><span class="n">outTimeSig_Denominator</span><span class="p">,</span><span class="w"> </span><span class="n">Float64</span><span class="o">*</span><span class="w"> </span><span class="n">outCurrentMeasureDownBeat</span><span class="p">);</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="n">OSStatus</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">transportStateProc</span><span class="p">)(</span><span class="kt">void</span><span class="o">*</span><span class="w"> </span><span class="n">inHostUserData</span><span class="p">,</span><span class="w"> </span><span class="n">Boolean</span><span class="o">*</span><span class="w"> </span><span class="n">outIsPlaying</span><span class="p">,</span><span class="w"> </span><span class="n">Boolean</span><span class="o">*</span><span class="w"> </span><span class="n">outIsRecording</span><span class="p">,</span><span class="w"> </span><span class="n">Float64</span><span class="o">*</span><span class="w"> </span><span class="n">outCurrentSampleInTimeLine</span><span class="p">,</span><span class="w"> </span><span class="n">Boolean</span><span class="o">*</span><span class="w"> </span><span class="n">outIsCycling</span><span class="p">,</span><span class="w"> </span><span class="n">Float64</span><span class="o">*</span><span class="w"> </span><span class="n">outCycleStartBeat</span><span class="p">,</span><span class="w"> </span><span class="n">Float64</span><span class="o">*</span><span class="w"> </span><span class="n">outCycleEndBeat</span><span class="p">);</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">}</span><span class="w"> </span><span class="n">HostCallbackInfo</span><span class="p">;</span>
+</code></pre></div>
+<h2 id="testing-strategy">Testing Strategy<a class="headerlink" href="#testing-strategy" title="Permanent link">&para;</a></h2>
+<h3 id="unit-tests">Unit Tests<a class="headerlink" href="#unit-tests" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Plugin Discovery</strong></li>
+<li>Test plugin enumeration</li>
+<li>Test filtering by type</li>
+<li>
+<p>Test filtering by manufacturer</p>
+</li>
+<li>
+<p><strong>Plugin Lifecycle</strong></p>
+</li>
+<li>Test instantiation</li>
+<li>Test initialization</li>
+<li>
+<p>Test proper cleanup</p>
+</li>
+<li>
+<p><strong>Parameters</strong></p>
+</li>
+<li>Test parameter discovery</li>
+<li>Test parameter get/set</li>
+<li>Test parameter validation</li>
+<li>
+<p>Test parameter strings</p>
+</li>
+<li>
+<p><strong>Presets</strong></p>
+</li>
+<li>Test factory preset listing</li>
+<li>Test preset application</li>
+<li>
+<p>Test preset save/load</p>
+</li>
+<li>
+<p><strong>Audio Processing</strong></p>
+</li>
+<li>Test audio routing</li>
+<li>Test buffer management</li>
+<li>
+<p>Test plugin chains</p>
+</li>
+<li>
+<p><strong>Link Integration</strong></p>
+</li>
+<li>Test tempo synchronization</li>
+<li>Test beat callbacks</li>
+<li>Test transport state</li>
+</ol>
+<h3 id="integration-tests">Integration Tests<a class="headerlink" href="#integration-tests" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Complete Plugin Hosting</strong></li>
+<li>Load plugin, set parameters, process audio</li>
+<li>Save preset, load preset, verify state</li>
+<li>
+<p>Chain multiple plugins</p>
+</li>
+<li>
+<p><strong>Real-World Scenarios</strong></p>
+</li>
+<li>Reverb + delay chain</li>
+<li>EQ + compressor + limiter chain</li>
+<li>Instrument plugin with effects</li>
+</ol>
+<h2 id="demo-applications">Demo Applications<a class="headerlink" href="#demo-applications" title="Permanent link">&para;</a></h2>
+<h3 id="1-plugin-browser">1. Plugin Browser<a class="headerlink" href="#1-plugin-browser" title="Permanent link">&para;</a></h3>
+<ul>
+<li>List all available plugins</li>
+<li>Show plugin information</li>
+<li>Test plugin instantiation</li>
+</ul>
+<h3 id="2-simple-plugin-host">2. Simple Plugin Host<a class="headerlink" href="#2-simple-plugin-host" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Load a single plugin</li>
+<li>Control parameters interactively</li>
+<li>Process audio file</li>
+</ul>
+<h3 id="3-effects-chain">3. Effects Chain<a class="headerlink" href="#3-effects-chain" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Build multi-plugin chain</li>
+<li>Process audio through chain</li>
+<li>Save/load chain configuration</li>
+</ul>
+<h3 id="4-link-synced-delay">4. Link-Synced Delay<a class="headerlink" href="#4-link-synced-delay" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Tempo-synced delay effect</li>
+<li>Synchronize with Link session</li>
+<li>Demonstrate host callbacks</li>
+</ul>
+<h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
+<h3 id="user-guides">User Guides<a class="headerlink" href="#user-guides" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>AudioUnit Host Basics</strong></li>
+<li>Introduction to AudioUnit hosting</li>
+<li>Plugin discovery</li>
+<li>
+<p>Basic plugin usage</p>
+</li>
+<li>
+<p><strong>Parameter Control</strong></p>
+</li>
+<li>Parameter discovery</li>
+<li>Parameter automation</li>
+<li>
+<p>Parameter value types</p>
+</li>
+<li>
+<p><strong>Preset Management</strong></p>
+</li>
+<li>Factory presets</li>
+<li>User presets</li>
+<li>
+<p>Preset import/export</p>
+</li>
+<li>
+<p><strong>Audio Routing</strong></p>
+</li>
+<li>Single plugin processing</li>
+<li>Plugin chains</li>
+<li>
+<p>Buffer management</p>
+</li>
+<li>
+<p><strong>Link Integration</strong></p>
+</li>
+<li>Tempo synchronization</li>
+<li>Beat callbacks</li>
+<li>Transport state</li>
+</ol>
+<h3 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Complete class and method documentation</li>
+<li>Parameter types and ranges</li>
+<li>Error handling</li>
+<li>Best practices</li>
+</ul>
+<h2 id="success-criteria">Success Criteria<a class="headerlink" href="#success-criteria" title="Permanent link">&para;</a></h2>
+<p>[x] <strong>Phase 1 Complete</strong>: Can discover and list all AudioUnit plugins
+[x] <strong>Phase 2 Complete</strong>: Can instantiate and manage plugin lifecycle
+[x] <strong>Phase 3 Complete</strong>: Can discover and control all plugin parameters
+[x] <strong>Phase 4 Complete</strong>: Can save and load presets
+[x] <strong>Phase 5 Complete</strong>: Can process audio through plugins and chains
+[x] <strong>Phase 6 Complete</strong>: Plugins sync to Link tempo
+[x] <strong>Phase 7 Complete</strong>: Full documentation and demos available
+[x] <strong>Phase 8 Complete</strong>: Audio format support and conversion (float32/64, int16/32, interleaved/non-interleaved)
+[x] <strong>Phase 9 Complete</strong>: User preset management with JSON storage
+[x] <strong>Phase 10 Complete</strong>: AudioUnitChain with automatic routing and format conversion</p>
+<h2 id="timeline">Timeline<a class="headerlink" href="#timeline" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Week 1</strong> (Days 1-7): Foundation, instantiation, parameters</li>
+<li><strong>Week 2</strong> (Days 8-14): Presets, routing, Link integration</li>
+<li><strong>Week 3</strong> (Days 15-16): Documentation and polish</li>
+</ul>
+<p><strong>Total estimated time</strong>: 16 days (~2-3 weeks with testing and refinement)</p>
+<h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Prioritize stability and proper resource management</li>
+<li>Test with both Apple and third-party AudioUnits</li>
+<li>Ensure all memory is properly allocated/deallocated</li>
+<li>Handle all error cases gracefully</li>
+<li>Provide comprehensive examples for common use cases</li>
+</ul>
+<hr />
+<h2 id="completed-enhancements-phase-8-10">Completed Enhancements (Phase 8-10)<a class="headerlink" href="#completed-enhancements-phase-8-10" title="Permanent link">&para;</a></h2>
+<h3 id="phase-8-audio-format-support-x">Phase 8: Audio Format Support [x]<a class="headerlink" href="#phase-8-audio-format-support-x" title="Permanent link">&para;</a></h3>
+<p><strong>Implementation</strong>: <code>src/coremusic/audiounit_host.py:18-243</code></p>
+<h4 id="audioformat-class">AudioFormat Class<a class="headerlink" href="#audioformat-class" title="Permanent link">&para;</a></h4>
+<p>Comprehensive audio format specification supporting multiple sample formats and buffer layouts.</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Multiple sample formats: <code>FLOAT32</code>, <code>FLOAT64</code>, <code>INT16</code>, <code>INT32</code></li>
+<li>Interleaved and non-interleaved buffer layouts</li>
+<li>Format comparison and equality checking</li>
+<li>Dictionary serialization for storage</li>
+<li>Bytes per sample/frame calculations</li>
+</ul>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># Create format</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">fmt</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormat</span><span class="p">(</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">sample_rate</span><span class="o">=</span><span class="mf">44100.0</span><span class="p">,</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">channels</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">sample_format</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormat</span><span class="o">.</span><span class="n">INT16</span><span class="p">,</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="n">interleaved</span><span class="o">=</span><span class="kc">True</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="p">)</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1"># Query format properties</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bytes per sample: </span><span class="si">{</span><span class="n">fmt</span><span class="o">.</span><span class="n">bytes_per_sample</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bytes per frame: </span><span class="si">{</span><span class="n">fmt</span><span class="o">.</span><span class="n">bytes_per_frame</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Format dict: </span><span class="si">{</span><span class="n">fmt</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="c1"># Compare formats</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="n">other_fmt</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormat</span><span class="p">(</span><span class="mf">44100.0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormat</span><span class="o">.</span><span class="n">FLOAT32</span><span class="p">)</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="n">other_fmt</span><span class="p">:</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Formats match&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h4 id="audioformatconverter-class">AudioFormatConverter Class<a class="headerlink" href="#audioformatconverter-class" title="Permanent link">&para;</a></h4>
+<p>Automatic format conversion between any supported audio formats.</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Two-stage conversion pipeline: source → float32 interleaved → destination</li>
+<li>Support for all format combinations</li>
+<li>Proper audio normalization to [-1.0, 1.0] range</li>
+<li>Symmetric rounding for integer formats (max value = 32767, not 32768)</li>
+<li>Handles sample format, bit depth, and channel layout changes</li>
+</ul>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># Define source and destination formats</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">source</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormat</span><span class="p">(</span><span class="mf">44100.0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormat</span><span class="o">.</span><span class="n">INT16</span><span class="p">,</span> <span class="n">interleaved</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">dest</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormat</span><span class="p">(</span><span class="mf">48000.0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormat</span><span class="o">.</span><span class="n">FLOAT32</span><span class="p">,</span> <span class="n">interleaved</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Convert audio data</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="n">output_data</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormatConverter</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    <span class="n">input_data</span><span class="o">=</span><span class="n">audio_bytes</span><span class="p">,</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="n">num_frames</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="n">source_format</span><span class="o">=</span><span class="n">source</span><span class="p">,</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    <span class="n">dest_format</span><span class="o">=</span><span class="n">dest</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="p">)</span>
+</code></pre></div>
+<p><strong>Conversion Pipeline</strong>:</p>
+<ol>
+<li>Source format → float32 interleaved (canonical format)</li>
+<li>Float32 interleaved → destination format</li>
+</ol>
+<p>This two-stage approach ensures all conversions work correctly and simplifies the implementation.</p>
+<p><strong>Test Coverage</strong>: 7 comprehensive tests</p>
+<ul>
+<li>No conversion needed (same format)</li>
+<li>Float32 ↔ Int16 conversion</li>
+<li>Float32 ↔ Int32 conversion</li>
+<li>Float32 ↔ Float64 conversion</li>
+<li>Interleaved ↔ Non-interleaved conversion</li>
+</ul>
+<h3 id="phase-9-user-preset-management-x">Phase 9: User Preset Management [x]<a class="headerlink" href="#phase-9-user-preset-management-x" title="Permanent link">&para;</a></h3>
+<p><strong>Implementation</strong>: <code>src/coremusic/audiounit_host.py:341-535</code></p>
+<h4 id="presetmanager-class">PresetManager Class<a class="headerlink" href="#presetmanager-class" title="Permanent link">&para;</a></h4>
+<p>Complete preset lifecycle management with JSON storage.</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Save presets with metadata (name, description, plugin info, timestamp)</li>
+<li>Load presets with parameter validation</li>
+<li>List all available user presets</li>
+<li>Delete presets</li>
+<li>Export presets to custom locations</li>
+<li>Import presets from files</li>
+<li>Plugin compatibility checking</li>
+<li>JSON storage in <code>~/Library/Audio/Presets/coremusic/{plugin_name}/</code></li>
+</ul>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioUnitPlugin</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="s2">&quot;AUDelay&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">plugin</span><span class="p">:</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="c1"># Set some parameters</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">plugin</span><span class="p">[</span><span class="s1">&#39;Delay Time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="n">plugin</span><span class="p">[</span><span class="s1">&#39;Feedback&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.3</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="c1"># Save preset with metadata</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">preset_path</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">save_preset</span><span class="p">(</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>        <span class="s2">&quot;My Delay Setting&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>        <span class="s2">&quot;500ms delay with light feedback&quot;</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>    <span class="p">)</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved to: </span><span class="si">{</span><span class="n">preset_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>    <span class="c1"># List all user presets</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    <span class="n">presets</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">list_user_presets</span><span class="p">()</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Available presets: </span><span class="si">{</span><span class="n">presets</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>    <span class="c1"># Load preset</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>    <span class="n">plugin</span><span class="o">.</span><span class="n">load_preset</span><span class="p">(</span><span class="s2">&quot;My Delay Setting&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>    <span class="c1"># Export for sharing</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>    <span class="n">plugin</span><span class="o">.</span><span class="n">export_preset</span><span class="p">(</span><span class="s2">&quot;My Delay Setting&quot;</span><span class="p">,</span> <span class="s2">&quot;/path/to/export.json&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>    <span class="c1"># Import preset</span>
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a>    <span class="n">imported_name</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">import_preset</span><span class="p">(</span><span class="s2">&quot;/path/to/preset.json&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Imported as: </span><span class="si">{</span><span class="n">imported_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a>
+<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a>    <span class="c1"># Delete preset</span>
+<a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a>    <span class="n">plugin</span><span class="o">.</span><span class="n">delete_preset</span><span class="p">(</span><span class="s2">&quot;My Delay Setting&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Preset File Format</strong> (JSON):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;My Delay Setting&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;500ms delay with light feedback&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="nt">&quot;plugin_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Apple: AUDelay&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="nt">&quot;plugin_manufacturer&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Apple&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-10-23T12:34:56&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span><span class="nt">&quot;parameters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">        </span><span class="nt">&quot;Delay Time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">        </span><span class="nt">&quot;Feedback&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">        </span><span class="nt">&quot;Wet/Dry Mix&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1.0</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>Test Coverage</strong>: 6 comprehensive tests</p>
+<ul>
+<li>Save preset</li>
+<li>Load preset with validation</li>
+<li>List presets</li>
+<li>Delete preset</li>
+<li>Export preset</li>
+<li>Import preset</li>
+</ul>
+<h3 id="phase-10-audiounitchain-class-x">Phase 10: AudioUnitChain Class [x]<a class="headerlink" href="#phase-10-audiounitchain-class-x" title="Permanent link">&para;</a></h3>
+<p><strong>Implementation</strong>: <code>src/coremusic/audiounit_host.py:1169-1438</code></p>
+<h4 id="audiounitchain-class">AudioUnitChain Class<a class="headerlink" href="#audiounitchain-class" title="Permanent link">&para;</a></h4>
+<p>Sequential plugin processing with automatic routing and format conversion.</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Dynamic chain building: add, insert, remove plugins</li>
+<li>Automatic format conversion between plugins</li>
+<li>Wet/dry mixing (blend processed and original signals)</li>
+<li>Plugin configuration by index</li>
+<li>Context manager support for automatic cleanup</li>
+<li>Method chaining for fluent API</li>
+<li>Get plugins by index</li>
+</ul>
+<p><strong>Usage</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># Basic chain creation</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">chain</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioUnitChain</span><span class="p">()</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="n">chain</span><span class="o">.</span><span class="n">add_plugin</span><span class="p">(</span><span class="s2">&quot;AUHighpass&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="n">chain</span><span class="o">.</span><span class="n">add_plugin</span><span class="p">(</span><span class="s2">&quot;AUDelay&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="n">chain</span><span class="o">.</span><span class="n">add_plugin</span><span class="p">(</span><span class="s2">&quot;AUReverb&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="c1"># Configure plugins</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="n">chain</span><span class="o">.</span><span class="n">configure_plugin</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Cutoff Frequency&#39;</span><span class="p">:</span> <span class="mf">200.0</span><span class="p">})</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="n">chain</span><span class="o">.</span><span class="n">configure_plugin</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Delay Time&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;Feedback&#39;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">})</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="n">chain</span><span class="o">.</span><span class="n">configure_plugin</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Room Size&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">})</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="c1"># Process audio</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="n">output</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">num_frames</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">wet_dry_mix</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="c1"># Cleanup</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="n">chain</span><span class="o">.</span><span class="n">dispose</span><span class="p">()</span>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="c1"># Or use context manager (recommended)</span>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioUnitChain</span><span class="p">()</span> <span class="k">as</span> <span class="n">chain</span><span class="p">:</span>
+<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>    <span class="n">chain</span><span class="o">.</span><span class="n">add_plugin</span><span class="p">(</span><span class="s2">&quot;AUDelay&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>    <span class="n">chain</span><span class="o">.</span><span class="n">add_plugin</span><span class="p">(</span><span class="s2">&quot;AUReverb&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a>    <span class="n">output</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+<a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a>
+<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span class="c1"># Custom audio format with automatic conversion</span>
+<a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a><span class="n">fmt</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormat</span><span class="p">(</span><span class="mf">48000.0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">cm</span><span class="o">.</span><span class="n">PluginAudioFormat</span><span class="o">.</span><span class="n">INT16</span><span class="p">)</span>
+<a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a><span class="n">chain</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioUnitChain</span><span class="p">(</span><span class="n">audio_format</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+<a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a><span class="n">chain</span><span class="o">.</span><span class="n">add_plugin</span><span class="p">(</span><span class="s2">&quot;AUDelay&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-30" name="__codelineno-10-30" href="#__codelineno-10-30"></a><span class="n">output</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">audio_format</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+<a id="__codelineno-10-31" name="__codelineno-10-31" href="#__codelineno-10-31"></a>
+<a id="__codelineno-10-32" name="__codelineno-10-32" href="#__codelineno-10-32"></a><span class="c1"># Insert plugin at specific position</span>
+<a id="__codelineno-10-33" name="__codelineno-10-33" href="#__codelineno-10-33"></a><span class="n">chain</span><span class="o">.</span><span class="n">insert_plugin</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;AUHighpass&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-34" name="__codelineno-10-34" href="#__codelineno-10-34"></a>
+<a id="__codelineno-10-35" name="__codelineno-10-35" href="#__codelineno-10-35"></a><span class="c1"># Remove plugin</span>
+<a id="__codelineno-10-36" name="__codelineno-10-36" href="#__codelineno-10-36"></a><span class="n">chain</span><span class="o">.</span><span class="n">remove_plugin</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-10-37" name="__codelineno-10-37" href="#__codelineno-10-37"></a>
+<a id="__codelineno-10-38" name="__codelineno-10-38" href="#__codelineno-10-38"></a><span class="c1"># Get plugin by index</span>
+<a id="__codelineno-10-39" name="__codelineno-10-39" href="#__codelineno-10-39"></a><span class="n">delay</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">get_plugin</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-10-40" name="__codelineno-10-40" href="#__codelineno-10-40"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Plugin: </span><span class="si">{</span><span class="n">delay</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Wet/Dry Mixing</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># 0.0 = 100% dry (original signal)</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># 0.5 = 50% wet, 50% dry</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># 1.0 = 100% wet (fully processed)</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="n">output</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">wet_dry_mix</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Test Coverage</strong>: 14 comprehensive tests</p>
+<ul>
+<li>Chain creation and disposal</li>
+<li>Custom audio format</li>
+<li>Add multiple plugins</li>
+<li>Insert plugin at index</li>
+<li>Remove plugin</li>
+<li>Get plugin by index</li>
+<li>Configure plugin</li>
+<li>Process empty chain (passthrough)</li>
+<li>Process with format conversion</li>
+<li>Process with wet/dry mix</li>
+<li>Context manager support</li>
+<li>Chain repr</li>
+</ul>
+<h3 id="enhanced-audiounitplugin-methods">Enhanced AudioUnitPlugin Methods<a class="headerlink" href="#enhanced-audiounitplugin-methods" title="Permanent link">&para;</a></h3>
+<p><strong>New Format Methods</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Set audio format</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">plugin</span><span class="o">.</span><span class="n">set_audio_format</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Query current format</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="n">current_fmt</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">audio_format</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1"># Process with automatic conversion</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="n">output</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">num_frames</span><span class="p">,</span> <span class="n">audio_format</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>New Preset Methods</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Save preset</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">plugin</span><span class="o">.</span><span class="n">save_preset</span><span class="p">(</span><span class="s2">&quot;Preset Name&quot;</span><span class="p">,</span> <span class="s2">&quot;Description&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># Load preset</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="n">plugin</span><span class="o">.</span><span class="n">load_preset</span><span class="p">(</span><span class="s2">&quot;Preset Name&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="c1"># List user presets</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="n">presets</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">list_user_presets</span><span class="p">()</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="c1"># Delete preset</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="n">plugin</span><span class="o">.</span><span class="n">delete_preset</span><span class="p">(</span><span class="s2">&quot;Preset Name&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="c1"># Export preset</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="n">plugin</span><span class="o">.</span><span class="n">export_preset</span><span class="p">(</span><span class="s2">&quot;Preset Name&quot;</span><span class="p">,</span> <span class="s2">&quot;/path/to/file.json&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="c1"># Import preset</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="n">name</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">import_preset</span><span class="p">(</span><span class="s2">&quot;/path/to/file.json&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="implementation-statistics">Implementation Statistics<a class="headerlink" href="#implementation-statistics" title="Permanent link">&para;</a></h3>
+<p><strong>Code Added</strong>:</p>
+<ul>
+<li>1,270 lines of production code in <code>audiounit_host.py</code></li>
+<li>551 lines of test code in <code>test_audiounit_host_enhancements.py</code></li>
+</ul>
+<p><strong>Test Results</strong>:</p>
+<ul>
+<li>37 new tests created</li>
+<li>27 tests passing</li>
+<li>10 tests skipped (plugins not available - expected)</li>
+<li>0 tests failing</li>
+<li><strong>736 total tests passing</strong> (100% success rate)</li>
+</ul>
+<p><strong>Classes Exported</strong>:</p>
+<ul>
+<li><code>AudioFormat</code></li>
+<li><code>AudioFormatConverter</code></li>
+<li><code>PresetManager</code></li>
+<li><code>AudioUnitChain</code></li>
+</ul>
+<p>All classes available via: <code>import coremusic as cm</code></p>
+<h3 id="future-enhancement-opportunities">Future Enhancement Opportunities<a class="headerlink" href="#future-enhancement-opportunities" title="Permanent link">&para;</a></h3>
+<p><strong>Plugin UI Integration</strong> (MEDIUM-LOW priority):</p>
+<ul>
+<li>Cocoa view instantiation for plugin UIs</li>
+<li>Window management</li>
+<li>UI update synchronization</li>
+<li>Generic UI fallback</li>
+</ul>
+<p><strong>Link Integration for Tempo-Synced Plugins</strong> (MEDIUM priority):</p>
+<ul>
+<li>Tempo callback integration</li>
+<li>Automatic delay time sync to BPM</li>
+<li>Beat/bar position for effects</li>
+<li>Transport state synchronization</li>
+</ul>
+<p><strong>Advanced MIDI Features</strong> (LOW priority):</p>
+<ul>
+<li>MIDI file playback through instruments</li>
+<li>Live CoreMIDI routing to instruments</li>
+<li>MIDI learn for parameter automation</li>
+<li>MIDI clock sync with Link</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
