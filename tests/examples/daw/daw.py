@@ -722,7 +722,7 @@ class Timeline:
         """
         if enabled and not self._link_session:
             try:
-                from coremusic import link  # noqa: lazy import for optional Link support
+                from coremusic import link
 
                 self._link_session = link.LinkSession(bpm=self.tempo)
                 logger.info("Ableton Link enabled")

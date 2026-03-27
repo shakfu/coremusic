@@ -159,13 +159,13 @@ coremusic --json plugin list --type instrument
 ### One-Liner Convenience Functions
 
 ```python
-from coremusic.shortcuts import play, play_async, convert
+from coremusic.shortcuts import play, play_background, convert
 from coremusic.shortcuts import analyze_tempo, analyze_key, get_info
 from coremusic.shortcuts import list_devices, list_plugins
 
 # Quick playback
 play("song.wav")                       # Blocking playback
-handle = play_async("song.wav")        # Non-blocking, returns control handle
+handle = play_background("song.wav")   # Non-blocking, returns control handle
 handle.stop()                          # Stop when done
 
 # Quick analysis

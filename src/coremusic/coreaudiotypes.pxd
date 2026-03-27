@@ -65,4 +65,3 @@ cdef extern from "CoreAudioTypes/CoreAudioBaseTypes.h":
         UInt32                      mNumberChannelDescriptions
         # this is a variable length array of mNumberChannelDescriptions elements
         AudioChannelDescription     mChannelDescriptions[1]
-

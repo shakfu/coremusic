@@ -3,6 +3,7 @@ build
 __pycache__
 
 docs/_build
+site/
 headers/
 
 src/coremusic/capi.c

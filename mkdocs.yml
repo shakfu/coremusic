@@ -1,0 +1,100 @@
+site_name: CoreMusic
+site_description: Python bindings for Apple CoreAudio
+site_url: https://shakfu.github.io/coremusic
+repo_url: https://github.com/shakfu/coremusic
+repo_name: shakfu/coremusic
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: quickstart.md
+    - Installation & Setup: getting_started.md
+  - Guides:
+    - guides/index.md
+    - CLI Reference: guides/cli.md
+    - Import Patterns: guides/imports.md
+    - Performance: guides/performance.md
+    - Migration: guides/migration.md
+  - Tutorials:
+    - tutorials/index.md
+    - Audio File Basics: tutorials/audio_file_basics.md
+    - Audio Playback: tutorials/audio_playback.md
+    - Audio Recording: tutorials/audio_recording.md
+    - Effects Processing: tutorials/effects_processing.md
+    - MIDI Basics: tutorials/midi_basics.md
+    - MIDI Transforms: tutorials/midi_transform.md
+    - Async Audio: tutorials/async_audio.md
+    - Music Theory: tutorials/music_theory.md
+  - Cookbook:
+    - cookbook/index.md
+    - Common Patterns: cookbook/common_patterns.md
+    - File Operations: cookbook/file_operations.md
+    - Audio Processing: cookbook/audio_processing.md
+    - Real-Time Audio: cookbook/real_time_audio.md
+    - AudioUnit Hosting: cookbook/audiounit_hosting.md
+    - Link Integration: cookbook/link_integration.md
+    - MIDI Processing: cookbook/midi_processing.md
+  - Examples:
+    - examples/index.md
+    - Audio Inspector: examples/audio_inspector.md
+  - API Reference:
+    - api/index.md
+    - API Quick Start: api/quickstart.md
+    - Audio File: api/audio_file.md
+  - Link Integration: link_integration.md
+
+not_in_nav: |
+  /dev/**
+
+plugins:
+  - search
+  - mkdocstrings:
+      enabled: true
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: true
+            show_root_heading: true
+            members_order: source
+            allow_inspection: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+  - tables

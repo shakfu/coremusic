@@ -17,6 +17,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Changed
+
+- **Documentation migrated from Sphinx to MkDocs with Material theme** - Converted all 23 reStructuredText files to Markdown. Replaced Sphinx autodoc directives with mkdocstrings. Added Material for MkDocs theme with dark/light mode toggle, navigation tabs, code copy buttons, and search. `make docs-serve` now provides live-reload preview via `mkdocs serve`.
+- **Renamed `play_async` to `play_background`** - Clarifies the function uses a background thread, not Python `async/await`. The old `play_async` name is preserved as a deprecated wrapper that emits `DeprecationWarning`.
+
+### Removed
+
+- Sphinx configuration (`docs/conf.py`, `docs/Makefile`) and build artifacts (`docs/_build/`)
+- `sphinx>=7.0` dev dependency, replaced by `mkdocs>=1.6`, `mkdocs-material>=9.5`, `mkdocstrings[python]>=0.25`
+- `docs-pdf` and `docs-linkcheck` Makefile targets (Sphinx-specific)
+
 ## [0.2.1]
 
 ### Fixed

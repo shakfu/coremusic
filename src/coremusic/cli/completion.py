@@ -45,7 +45,7 @@ def get_bash_completion() -> str:
         for cmd, subs in COMMANDS.items()
     )
 
-    return f'''# Bash completion for coremusic
+    return f"""# Bash completion for coremusic
 # Add to ~/.bashrc: eval "$(coremusic completion bash)"
 
 _coremusic_completion() {{
@@ -85,7 +85,7 @@ _coremusic_completion() {{
 }}
 
 complete -F _coremusic_completion coremusic
-'''
+"""
 
 
 def get_zsh_completion() -> str:

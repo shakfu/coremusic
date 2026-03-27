@@ -4,76 +4,64 @@ See [CHANGELOG.md](CHANGELOG.md) for completed features.
 
 ---
 
-## Quick Fixes
+## High Priority
 
-All completed -- see CHANGELOG.md.
+Small-to-medium effort with immediate user-facing value.
 
----
+### API
 
-## Code Health
+- [x] Rename `play_async` to `play_background` to clarify it is thread-based, not `async def`
+- [ ] Audio file metadata write (ID3 tags, iTunes metadata via `kAudioFilePropertyInfoDictionary`) -- read already works
 
-Internal quality improvements that reduce maintenance burden and prevent bugs.
+### Build and Distribution
 
-### Error Handling Audit
+- [ ] Verify license implications of Ableton Link thirdparty headers in sdist
 
-All completed -- see CHANGELOG.md.
+### Documentation
 
-### Type Safety
-
-All completed -- see CHANGELOG.md.
-
-### Refactoring
-
-- [x] Extract ASBD parsing into `AudioFormat.from_asbd_bytes()`
-- [x] Add `AudioFormat.pcm()` factory method
-- [x] Split `constants.py` into `constants/` subpackage
-- [ ] Evaluate whether `CoreAudioObject` can be defined in pure Python -- **dropped**: uses Cython `__dealloc__` for guaranteed C-level cleanup, not replicable with `__del__`
-
-### Testing
-
-All completed -- see CHANGELOG.md.
+- [ ] Publish hosted API reference
 
 ---
 
-## CLI
+## Medium Priority
 
-### UX Improvements
+Meaningful improvements, moderate effort.
+
+### CLI UX
 
 - [ ] Add usage examples to `--help` output
 - [ ] Progress indicators for `play` (elapsed/total time) and `record` (elapsed time, level)
-- [ ] CLI module auto-discovery via `importlib` or decorator pattern to reduce boilerplate in `main.py`
 
-### New Commands
+### New CLI Commands
 
 - [ ] `coremusic doctor` -- diagnose installation (optional deps, hardware access, available frameworks)
-- [ ] `coremusic shell` -- Python REPL with coremusic preloaded
-- [ ] `coremusic diff file1.wav file2.wav` -- compare spectral content, loudness, duration
 - [ ] `coremusic analyze batch *.wav --output results.csv` -- batch analysis with structured export
-- [ ] `coremusic watch` -- monitor directory for new audio files and auto-process (convert, normalize, analyze)
+
+### Build
+
+- [ ] Wheel caching in CI to speed up builds
 
 ---
 
-## API
+## Lower Priority
 
-- [ ] Rename `play_async` to `play_background` to avoid confusion with `async/await` (it is not an `async def`)
-- [ ] Audio file metadata read/write (ID3 tags, iTunes metadata via `kAudioFilePropertyInfoDictionary`)
+Nice-to-have features. Implement when needed or when higher-priority items are done.
+
+### CLI
+
+- [ ] `coremusic shell` -- Python REPL with coremusic preloaded
+- [ ] `coremusic diff file1.wav file2.wav` -- compare spectral content, loudness, duration
+- [ ] `coremusic watch` -- monitor directory for new audio files and auto-process
+- [ ] CLI module auto-discovery via `importlib` or decorator to reduce boilerplate in `main.py`
+
+### API
+
 - [ ] Plugin parameter presets as YAML/JSON for reproducible processing pipelines
 - [ ] MIDI learn / CC mapping for AudioUnit parameter automation
 
----
+### Documentation
 
-## Documentation
-
-- [ ] Publish hosted API reference (Sphinx is configured but not published -- GitHub Pages or Read the Docs)
 - [ ] Performance guide for real-time audio work (buffer sizing, latency, threading)
-
----
-
-## Build and Distribution
-
-- [ ] Pre-built wheels on PyPI (currently requires Xcode CLI tools to install from source)
-- [ ] Wheel caching in CI to speed up builds
-- [ ] Verify license implications of Ableton Link thirdparty headers in sdist
 
 ---
 
@@ -136,5 +124,5 @@ Implement only if specific need arises.
 ## Notes
 
 - **macOS-only:** CoreAudio, CoreMIDI, AudioToolbox frameworks
-- **Python 3.11+:** Minimum supported version
+- **Python 3.10+:** Minimum supported version
 - For completed features, see **CHANGELOG.md**

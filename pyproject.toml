@@ -51,7 +51,9 @@ coremusic = "coremusic.cli:main"
 dev = [
     "numpy>=2.0",
     "scipy>=1.10",
-    "sphinx>=7.0",
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.25",
     "pytest>=8.0",
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=6.0.0",
@@ -59,7 +61,6 @@ dev = [
     "mypy>=1.10.0",
     "matplotlib>=3.8",
     "ruff>=0.4.0",
-    "isort>=5.12.0",
 ]
 
 [build-system]
@@ -68,6 +69,7 @@ build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
 wheel.packages = ["src/coremusic"]
+wheel.exclude = ["**.pyx", "**.pxd", "**.pxi", "**.c", "**.cpp", "**.h", "**.hpp"]
 cmake.build-type = "Release"
 sdist.include = [
     "thirdparty",
@@ -86,7 +88,6 @@ sdist.include = [
 ]
 
 sdist.exclude = [".git/", "*.egg-info/"]
-wheel.exclude = ["**.pyx", "**.pxd", "**.pxi", "**.c", "**.cpp", "**.h", "**.hpp"]
 
 
 

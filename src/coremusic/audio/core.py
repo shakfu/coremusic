@@ -356,10 +356,12 @@ class AudioFile(capi.CoreAudioObject):
             AudioFileError: If reading fails
 
         Example:
-            >>> with AudioFile("audio.wav") as audio:
-            ...     data = audio.read_as_numpy()
-            ...     print(f"Shape: {data.shape}, dtype: {data.dtype}")
-            Shape: (44100, 2), dtype: int16
+
+            with AudioFile("audio.wav") as audio:
+                data = audio.read_as_numpy()
+                print(f"Shape: {data.shape}, dtype: {data.dtype}")
+            
+            # output: Shape: (44100, 2), dtype: int16
         """
         if not NUMPY_AVAILABLE:
             raise ImportError(
@@ -541,7 +543,7 @@ class AudioFileStream(capi.CoreAudioObject):
         Raises:
             AudioFileError: If parsing fails
 
-        Example::
+        Example:
 
             stream = AudioFileStream()
             with open("audio.mp3", "rb") as f:
@@ -662,7 +664,7 @@ class AudioConverter(capi.CoreAudioObject):
         Raises:
             AudioConverterError: If conversion fails
 
-        Example::
+        Example:
 
             # Convert stereo to mono (simple format conversion)
             source = AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
@@ -703,7 +705,7 @@ class AudioConverter(capi.CoreAudioObject):
         Raises:
             AudioConverterError: If conversion fails
 
-        Example::
+        Example:
 
             # Convert 44.1kHz to 48kHz
             source_format = AudioFormat(44100.0, 'lpcm', channels_per_frame=2, bits_per_channel=16)
@@ -787,7 +789,7 @@ class AudioConverter(capi.CoreAudioObject):
         Raises:
             AudioConverterError: If setting property fails
 
-        Example::
+        Example:
 
             import struct
             import coremusic as cm

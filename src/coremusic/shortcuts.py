@@ -33,6 +33,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "play",
+    "play_background",
     "play_async",
     "convert",
     "analyze_tempo",
@@ -142,7 +143,7 @@ class AudioPlayerHandle:
         return f"<AudioPlayerHandle {status}={self._path!r}>"
 
 
-def play_async(
+def play_background(
     path: str | Path,
     *,
     loop: bool = False,
@@ -161,13 +162,30 @@ def play_async(
         AudioPlayerHandle to control playback
 
     Example:
-        >>> handle = cm.play_async("song.wav")
+        >>> handle = cm.play_background("song.wav")
         >>> # Do other work...
         >>> handle.stop()  # Stop when done
     """
     result = play(path, loop=loop, volume=volume, block=False)
     assert result is not None
     return result
+
+
+def play_async(
+    path: str | Path,
+    *,
+    loop: bool = False,
+    volume: float = 1.0,
+) -> AudioPlayerHandle:
+    """Deprecated: use play_background() instead."""
+    import warnings
+
+    warnings.warn(
+        "play_async() is deprecated, use play_background() instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return play_background(path, loop=loop, volume=volume)
 
 
 def convert(

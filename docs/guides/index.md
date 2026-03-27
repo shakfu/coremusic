@@ -1,22 +1,10 @@
-Guides
-======
+# Guides
 
 Comprehensive guides for using CoreMusic effectively.
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Available Guides
+## Guide Overview
 
-   cli
-   imports
-   performance
-   migration
-
-Guide Overview
---------------
-
-Command Line Interface
-^^^^^^^^^^^^^^^^^^^^^^
+### Command Line Interface
 
 Complete reference for the CoreMusic CLI tool.
 
@@ -32,10 +20,9 @@ Complete reference for the CoreMusic CLI tool.
 
 **Target audience:** Users who prefer command-line tools or need scripting capabilities
 
-:doc:`Read the CLI Guide -> <cli>`
+[Read the CLI Guide ->](cli.md)
 
-Import Guide
-^^^^^^^^^^^^
+### Import Guide
 
 Complete reference for importing modules and classes from CoreMusic.
 
@@ -50,10 +37,9 @@ Complete reference for importing modules and classes from CoreMusic.
 
 **Target audience:** All users, especially those new to CoreMusic
 
-:doc:`Read the Import Guide → <imports>`
+[Read the Import Guide](imports.md)
 
-Performance Guide
-^^^^^^^^^^^^^^^^^
+### Performance Guide
 
 Best practices, benchmarks, and optimization techniques for optimal performance.
 
@@ -68,10 +54,9 @@ Best practices, benchmarks, and optimization techniques for optimal performance.
 
 **Target audience:** Users building performance-critical applications
 
-:doc:`Read the Performance Guide → <performance>`
+[Read the Performance Guide](performance.md)
 
-Migration Guide
-^^^^^^^^^^^^^^^
+### Migration Guide
 
 Guide for migrating from other Python audio libraries to CoreMusic.
 
@@ -88,73 +73,66 @@ Guide for migrating from other Python audio libraries to CoreMusic.
 
 **Target audience:** Users with existing audio code in other libraries
 
-:doc:`Read the Migration Guide → <migration>`
+[Read the Migration Guide](migration.md)
 
-Quick Navigation
-----------------
+## Quick Navigation
 
 **New to CoreMusic?**
 
-Start with the :doc:`imports` to understand the package structure and import patterns.
+Start with the [Import Guide](imports.md) to understand the package structure and import patterns.
 
 **Building performance-critical applications?**
 
-Check the :doc:`performance` for optimization techniques and benchmarks.
+Check the [Performance Guide](performance.md) for optimization techniques and benchmarks.
 
 **Migrating existing code?**
 
-The :doc:`migration` provides side-by-side comparisons with other libraries.
+The [Migration Guide](migration.md) provides side-by-side comparisons with other libraries.
 
 **Looking for practical examples?**
 
-See the :doc:`/cookbook/index` for ready-to-use recipes.
+See the [Cookbook](../cookbook/index.md) for ready-to-use recipes.
 
 **Prefer command-line tools?**
 
-The :doc:`cli` covers all CLI commands for audio and MIDI operations.
+The [CLI Guide](cli.md) covers all CLI commands for audio and MIDI operations.
 
 **Need API reference?**
 
-Browse the complete :doc:`/api/index`.
+Browse the complete [API Reference](../api/index.md).
 
-Additional Resources
---------------------
+## Additional Resources
 
-Tutorials
-^^^^^^^^^
+### Tutorials
 
 Step-by-step tutorials for common tasks:
 
-- :doc:`/tutorials/index` - Comprehensive tutorials
+- [Comprehensive tutorials](../tutorials/index.md)
 
-Cookbook
-^^^^^^^^
+### Cookbook
 
 Practical recipes for common operations:
 
-- :doc:`/cookbook/file_operations` - File I/O recipes
-- :doc:`/cookbook/audio_processing` - Audio processing recipes
-- :doc:`/cookbook/real_time_audio` - Real-time audio recipes
-- :doc:`/cookbook/midi_processing` - MIDI recipes
-- :doc:`/cookbook/audiounit_hosting` - AudioUnit plugin hosting
-- :doc:`/cookbook/link_integration` - Ableton Link integration
+- [File I/O recipes](../cookbook/file_operations.md)
+- [Audio processing recipes](../cookbook/audio_processing.md)
+- [Real-time audio recipes](../cookbook/real_time_audio.md)
+- [MIDI recipes](../cookbook/midi_processing.md)
+- [AudioUnit plugin hosting](../cookbook/audiounit_hosting.md)
+- [Ableton Link integration](../cookbook/link_integration.md)
 
-API Reference
-^^^^^^^^^^^^^
+### API Reference
 
 Complete API documentation:
 
-- :doc:`/api/index` - Full API reference
+- [Full API reference](../api/index.md)
 
-Examples
-^^^^^^^^
+### Examples
 
 Working example applications:
 
-- ``tests/demos/`` directory in the source repository
+- `tests/demos/` directory in the source repository
 
-Getting Help
-------------
+## Getting Help
 
 **Documentation:**
 
@@ -163,22 +141,21 @@ Getting Help
 
 **Examples:**
 
-- Review the demo scripts in ``tests/demos/``
+- Review the demo scripts in `tests/demos/`
 - Study the test suite for usage patterns
 
 **Source Code:**
 
-- Examine the implementation in ``src/coremusic/``
+- Examine the implementation in `src/coremusic/`
 - Read inline documentation and docstrings
 
 **Issues:**
 
 - Report bugs or request features on GitHub
 
-See Also
---------
+## See Also
 
-- :doc:`/getting_started` - Installation and setup
-- :doc:`/cookbook/index` - Practical recipes
-- :doc:`/tutorials/index` - Step-by-step tutorials
-- :doc:`/api/index` - API reference
+- [Installation and setup](../getting_started.md)
+- [Practical recipes](../cookbook/index.md)
+- [Step-by-step tutorials](../tutorials/index.md)
+- [API reference](../api/index.md)

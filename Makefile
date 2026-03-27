@@ -4,9 +4,9 @@
 # This Makefile wraps common build commands for convenience.
 # The actual build is handled by scikit-build-core via pyproject.toml
 
-.PHONY: all sync build rebuild test test-all test-clean-install lint isort format typecheck qa \
+.PHONY: all sync build rebuild test test-all test-clean-install lint format typecheck qa \
         clean distclean wheel sdist dist check publish-test publish upgrade \
-        coverage coverage-html docs docs-clean docs-serve docs-pdf docs-linkcheck \
+        coverage coverage-html docs docs-clean docs-serve docs-deploy docs-linkcheck \
         release help
 
 # Default target
@@ -40,10 +40,6 @@ test-clean-install:
 lint:
 	@uv run ruff check --fix src/ tests/
 
-# Sort imports with isort
-isort:
-	@uv run isort src/coremusic
-
 # Format with ruff
 format:
 	@uv run ruff format src/ tests/
@@ -53,7 +49,7 @@ typecheck:
 	@uv run mypy src/coremusic
 
 # Run a full quality assurance check
-qa: lint isort format typecheck test
+qa: lint typecheck format test 
 
 # Build wheel
 wheel:
@@ -96,29 +92,28 @@ coverage-html:
 # Build HTML documentation
 docs:
 	@echo "Building HTML documentation..."
-	@cd docs && $(MAKE) html
-	@echo "Documentation built in docs/_build/html/index.html"
+	@uv run mkdocs build
+	@echo "Documentation built in site/"
 
 # Clean documentation build
 docs-clean:
 	@echo "Cleaning documentation build..."
-	@cd docs && $(MAKE) clean
+	@rm -rf site/
 
-# Serve documentation locally
+# Serve documentation locally with live reload
 docs-serve:
-	@echo "Starting documentation server at http://localhost:8000"
-	@cd docs/_build/html && python3 -m http.server 8000
+	@uv run mkdocs serve
 
-# Build PDF documentation
-docs-pdf:
-	@echo "Building PDF documentation..."
-	@cd docs && $(MAKE) latexpdf
-	@echo "PDF documentation built in docs/_build/latex/coremusic.pdf"
+# Deploy documentation to GitHub Pages
+docs-deploy:
+	@echo "Deploying documentation to GitHub Pages..."
+	@uv run mkdocs gh-deploy --force
+	@echo "Documentation deployed to GitHub Pages"
 
-# Check documentation links
+# Check documentation for broken links
 docs-linkcheck:
 	@echo "Checking documentation links..."
-	@cd docs && $(MAKE) linkcheck
+	@uv run mkdocs build --strict 2>&1 | grep -E "WARNING|ERROR" || echo "No link issues found"
 
 # Build release wheels for multiple Python versions
 release:
@@ -134,6 +129,7 @@ release:
 clean:
 	@rm -rf build/
 	@rm -rf dist/
+	@rm -rf site/
 	@rm -rf *.egg-info/
 	@rm -rf src/*.egg-info/
 	@rm -rf .pytest_cache/
@@ -166,7 +162,6 @@ help:
 	@echo ""
 	@echo "  Quality:"
 	@echo "    lint           - Lint with ruff"
-	@echo "    isort          - Sort imports with isort"
 	@echo "    format         - Format with ruff"
 	@echo "    typecheck      - Type check with mypy"
 	@echo "    qa             - Run full QA (lint, isort, format, typecheck, test)"
@@ -176,16 +171,16 @@ help:
 	@echo "    sdist          - Build source distribution"
 	@echo "    dist           - Build both wheel and sdist"
 	@echo "    check          - Check distributions with twine"
-	@echo "    release        - Build wheels for Python 3.11-3.14"
+	@echo "    release        - Build wheels for Python 3.10-3.14"
 	@echo "    publish-test   - Publish to TestPyPI"
 	@echo "    publish        - Publish to PyPI"
 	@echo ""
 	@echo "  Documentation:"
 	@echo "    docs           - Build HTML documentation"
 	@echo "    docs-clean     - Clean documentation build"
-	@echo "    docs-serve     - Serve documentation locally"
-	@echo "    docs-pdf       - Build PDF documentation"
-	@echo "    docs-linkcheck - Check documentation links"
+	@echo "    docs-serve     - Serve documentation locally with live reload"
+	@echo "    docs-deploy    - Deploy documentation to GitHub Pages"
+	@echo "    docs-linkcheck - Check documentation for broken links"
 	@echo ""
 	@echo "  Maintenance:"
 	@echo "    upgrade        - Upgrade all dependencies"
