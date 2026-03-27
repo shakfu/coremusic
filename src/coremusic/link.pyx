@@ -1,6 +1,11 @@
 # distutils: language = c++
 # cython: language_level=3
 
+# This module is licensed under the GNU General Public License v2.0 (GPLv2)
+# because it is a derivative work of Ableton Link, which is GPLv2-licensed.
+# See thirdparty/link/LICENSE.md and thirdparty/link/GNU-GPL-v2.0.md for details.
+# The rest of coremusic is MIT-licensed -- see LICENSE in the project root.
+
 """Ableton Link Cython wrapper
 
 Provides Python interface to Ableton Link tempo synchronization library.

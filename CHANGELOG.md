@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Changed
 
-- **License changed from MIT to GPLv3** - The project is now licensed under the GNU General Public License v3.0. This aligns with the Ableton Link dependency (GPLv2+) and ensures license compatibility across all distributed components.
+- **Dual license structure** - Core project remains MIT-licensed. The optional `coremusic.link` module is GPLv2-licensed as a derivative work of Ableton Link. GPL header added to `link.pyx`.
 - **Documentation migrated from Sphinx to MkDocs with Material theme** - Converted all 23 reStructuredText files to Markdown. Replaced Sphinx autodoc directives with mkdocstrings. Added Material for MkDocs theme with dark/light mode toggle, navigation tabs, code copy buttons, and search. `make docs-serve` now provides live-reload preview via `mkdocs serve`.
 - **Renamed `play_async` to `play_background`** - Clarifies the function uses a background thread, not Python `async/await`. The old `play_async` name is preserved as a deprecated wrapper that emits `DeprecationWarning`.
 

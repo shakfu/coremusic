@@ -16,7 +16,7 @@ Small-to-medium effort with immediate user-facing value.
 ### Build and Distribution
 
 - [x] Verify license implications of Ableton Link thirdparty headers in sdist
-- [x] Change project license from MIT to GPLv3 for Ableton Link compatibility
+- [x] Dual license structure: MIT for core, GPLv2 for optional `coremusic.link` module
 
 ### Documentation
 

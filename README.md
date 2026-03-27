@@ -391,6 +391,6 @@ Available tutorials: `test_quickstart.py`, `test_audio_file_basics.py`, `test_mi
 
 ## License
 
-CoreMusic is licensed under the GNU General Public License v3.0 (GPLv3) - see [LICENSE](LICENSE) file, and includes or links against the following third-party components:
+CoreMusic is licensed under the MIT License -- see [LICENSE](LICENSE).
 
-- **Ableton Link** in `coremusic.link` licensed under the GNU General Public License v2.0 (GPLv2), see `thirdparty/link/LICENSE.md` and `thirdparty/link/GNU-GPL-v2.0.md`.
+The optional `coremusic.link` module is a derivative work of [Ableton Link](https://github.com/Ableton/link) and is licensed under the GNU General Public License v2.0 (GPLv2). See `thirdparty/link/LICENSE.md` and `thirdparty/link/GNU-GPL-v2.0.md` for details.

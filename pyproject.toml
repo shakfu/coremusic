@@ -28,7 +28,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
-license = "GPL-3.0-or-later"
+license = "MIT"
 license-files = ["LICENSE"]
 dependencies = []
 
