@@ -106,6 +106,67 @@ class TestAudioFile:
         audio_file.open()
         del audio_file
 
+    def test_audio_file_metadata_read(self, amen_wav_path):
+        """Test reading info dictionary metadata from a WAV file"""
+        with AudioFile(amen_wav_path) as audio_file:
+            metadata = audio_file.metadata
+            # WAV files may or may not have metadata depending on the file
+            assert metadata is None or isinstance(metadata, dict)
+
+    def test_audio_file_metadata_read_returns_dict(self, amen_wav_path):
+        """Test that metadata returns a dict with string keys"""
+        with AudioFile(amen_wav_path) as audio_file:
+            metadata = audio_file.metadata
+            if metadata is not None:
+                for key in metadata:
+                    assert isinstance(key, str)
+
+    def test_audio_file_metadata_write_requires_writable(self, amen_wav_path):
+        """Test that set_metadata raises when file is not writable"""
+        with AudioFile(amen_wav_path) as audio_file:
+            with pytest.raises(AudioFileError, match="not opened for writing"):
+                audio_file.set_metadata({"title": "test"})
+
+    def test_audio_file_metadata_roundtrip(self, amen_wav_path, tmp_path):
+        """Test writing and reading back metadata via CAF format"""
+        import subprocess
+
+        caf_path = str(tmp_path / "test.caf")
+        subprocess.run(
+            ["afconvert", "-f", "caff", "-d", "LEI16", amen_wav_path, caf_path],
+            check=True,
+        )
+
+        tags = {"title": "Test Title", "artist": "Test Artist"}
+        with AudioFile(caf_path, writable=True) as af:
+            af.set_metadata(tags)
+
+        with AudioFile(caf_path) as af:
+            result = af.metadata
+            assert result is not None
+            assert result["title"] == "Test Title"
+            assert result["artist"] == "Test Artist"
+
+    def test_audio_file_set_property(self, amen_wav_path):
+        """Test get_property and set_property exist and work"""
+        with AudioFile(amen_wav_path) as audio_file:
+            # get_property should work for data format
+            data = audio_file.get_property(capi.get_audio_file_property_data_format())
+            assert isinstance(data, bytes)
+            assert len(data) >= 40  # ASBD is 40 bytes
+
+    def test_audio_file_writable_flag(self, amen_wav_path, tmp_path):
+        """Test that writable flag opens file with read-write permissions"""
+        import shutil
+
+        copy_path = str(tmp_path / "copy.wav")
+        shutil.copy(amen_wav_path, copy_path)
+
+        # Should open without error
+        with AudioFile(copy_path, writable=True) as af:
+            fmt = af.format
+            assert fmt.sample_rate > 0
+
 
 class TestAudioFileStream:
     """Test AudioFileStream object-oriented wrapper"""

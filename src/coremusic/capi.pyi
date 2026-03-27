@@ -75,7 +75,9 @@ def int_to_fourchar(value: int) -> str:
 # Audio File Operations
 # ============================================================================
 
-def audio_file_open_url(file_path: str) -> int:
+def audio_file_open_url(
+    file_path: str, permissions: int = 1, file_type_hint: int = 0
+) -> int:
     """Open an audio file and return file ID."""
     ...
 
@@ -85,6 +87,18 @@ def audio_file_close(file_id: int) -> None:
 
 def audio_file_get_property(file_id: int, property_id: int) -> bytes:
     """Get a property from an audio file."""
+    ...
+
+def audio_file_set_property(file_id: int, property_id: int, data: bytes) -> None:
+    """Set a property on an audio file (file must be opened with write permissions)."""
+    ...
+
+def audio_file_read_info_dictionary(file_id: int) -> dict[str, Any] | None:
+    """Read the info dictionary from an audio file as a Python dict."""
+    ...
+
+def audio_file_write_info_dictionary(file_id: int, metadata: dict[str, Any]) -> None:
+    """Write an info dictionary to an audio file (file must be opened with write permissions)."""
     ...
 
 def audio_file_read_packets(

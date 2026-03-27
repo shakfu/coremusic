@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import argparse
 import logging
+from pathlib import Path
 from typing import Any
 
 from ._formatters import format_bytes, format_duration, format_sample_rate, output_json
 from ._mappings import get_channel_display, get_format_display
-from ._utils import EXIT_SUCCESS, print_help_default, require_file
+from ._utils import CLIError, EXIT_SUCCESS, print_help_default, require_file
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +37,16 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     dur_parser.set_defaults(func=cmd_duration)
 
     # audio metadata
-    meta_parser = audio_sub.add_parser("metadata", help="Show audio file metadata/tags")
+    meta_parser = audio_sub.add_parser(
+        "metadata", help="Show or write audio file metadata/tags"
+    )
     meta_parser.add_argument("file", help="Audio file path")
+    meta_parser.add_argument(
+        "--set",
+        nargs="+",
+        metavar='key="value"',
+        help='Write metadata tags as key=value pairs (e.g. --set title="My Song" artist="Me")',
+    )
     meta_parser.set_defaults(func=cmd_metadata)
 
     # audio play
@@ -161,12 +170,31 @@ def cmd_duration(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def _parse_tag_pairs(pairs: list[str]) -> dict[str, str]:
+    """Parse key=value pairs from --set arguments."""
+    tags: dict[str, str] = {}
+    for pair in pairs:
+        if "=" not in pair:
+            raise CLIError(
+                f'Invalid tag format: {pair!r} (expected key=value, e.g. title="My Song")'
+            )
+        key, _, value = pair.partition("=")
+        key = key.strip()
+        value = value.strip()
+        if not key:
+            raise CLIError(f"Empty key in tag: {pair!r}")
+        tags[key] = value
+    return tags
+
+
 def cmd_metadata(args: argparse.Namespace) -> int:
-    """Show audio file metadata/tags."""
+    """Show or write audio file metadata/tags."""
     from coremusic.audio import AudioFile
-    from coremusic.constants import AudioFileProperty
 
     path = require_file(args.file)
+
+    if args.set:
+        return _cmd_metadata_set(args, path)
 
     metadata: dict[str, Any] = {}
 
@@ -186,19 +214,10 @@ def cmd_metadata(args: argparse.Namespace) -> int:
         metadata["duration_seconds"] = duration
         metadata["total_frames"] = int(duration * fmt.sample_rate)
 
-        # Try to get info dictionary (may not be available for all formats)
-        # Note: For some properties, audio_file_get_property might return a dict
-        try:
-            import coremusic.capi as capi
-
-            info_dict_prop = AudioFileProperty.INFO_DICTIONARY
-            info_data = capi.audio_file_get_property(
-                audio_file.object_id, info_dict_prop
-            )
-            if info_data and isinstance(info_data, dict):
-                metadata["tags"] = info_data
-        except Exception as e:
-            logger.debug("Info dictionary not available for %s: %s", path.name, e)
+        # Try to read info dictionary metadata
+        tags = audio_file.metadata
+        if tags:
+            metadata["tags"] = tags
 
         # File info
         metadata["file"] = {
@@ -230,6 +249,29 @@ def cmd_metadata(args: argparse.Namespace) -> int:
             print("Tags:")
             for key, value in metadata["tags"].items():
                 print(f"  {key}: {value}")
+
+    return EXIT_SUCCESS
+
+
+def _cmd_metadata_set(args: argparse.Namespace, path: Path) -> int:
+    """Write metadata tags to an audio file."""
+    from coremusic.audio import AudioFile
+    from coremusic.exceptions import AudioFileError
+
+    tags = _parse_tag_pairs(args.set)
+
+    try:
+        with AudioFile(str(path), writable=True) as af:
+            af.set_metadata(tags)
+    except AudioFileError as e:
+        raise CLIError(f"Failed to write metadata: {e}")
+
+    if args.json:
+        output_json({"file": str(path.absolute()), "tags_written": tags})
+    else:
+        print(f"Wrote {len(tags)} tag(s) to {path.name}:")
+        for key, value in tags.items():
+            print(f"  {key}: {value}")
 
     return EXIT_SUCCESS
 

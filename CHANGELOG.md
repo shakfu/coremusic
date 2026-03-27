@@ -19,8 +19,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Changed
 
+- **License changed from MIT to GPLv3** - The project is now licensed under the GNU General Public License v3.0. This aligns with the Ableton Link dependency (GPLv2+) and ensures license compatibility across all distributed components.
 - **Documentation migrated from Sphinx to MkDocs with Material theme** - Converted all 23 reStructuredText files to Markdown. Replaced Sphinx autodoc directives with mkdocstrings. Added Material for MkDocs theme with dark/light mode toggle, navigation tabs, code copy buttons, and search. `make docs-serve` now provides live-reload preview via `mkdocs serve`.
 - **Renamed `play_async` to `play_background`** - Clarifies the function uses a background thread, not Python `async/await`. The old `play_async` name is preserved as a deprecated wrapper that emits `DeprecationWarning`.
+
+### Added
+
+- **Audio file metadata read/write** - `AudioFile.metadata` property reads the info dictionary as a Python dict (title, artist, genre, etc.). `AudioFile.set_metadata(tags)` writes metadata to writable formats (CAF, AIFF). File must be opened with `AudioFile(path, writable=True)` for writes. Added `capi.audio_file_read_info_dictionary()`, `capi.audio_file_write_info_dictionary()`, and `capi.audio_file_set_property()` low-level functions with proper CFDictionary-to-dict conversion.
+- **CLI metadata write support** - `coremusic audio metadata <file> --set key=value [...]` writes metadata tags from the command line. Supports multiple key=value pairs in a single invocation. Works with `--json` for structured output.
 
 ### Removed
 

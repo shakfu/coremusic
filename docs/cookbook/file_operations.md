@@ -138,6 +138,37 @@ for key, value in metadata.items():
     print(f"{key}: {value}")
 ```
 
+### Write Metadata Tags
+
+Write metadata tags (title, artist, album, etc.) to audio files. The file must
+be opened with `writable=True`. Writable formats include CAF and AIFF (not WAV).
+
+```python
+import coremusic as cm
+
+# Write tags to a CAF file
+with cm.AudioFile("song.caf", writable=True) as af:
+    af.set_metadata({
+        "title": "My Song",
+        "artist": "Artist Name",
+        "album": "Album Name",
+        "genre": "Electronic",
+        "year": "2026",
+        "track number": "3",
+        "comments": "Mixed in mono",
+    })
+
+# Read them back
+with cm.AudioFile("song.caf") as af:
+    print(af.metadata)
+```
+
+To write metadata to a WAV file, convert it to CAF first:
+
+```bash
+afconvert -f caff -d LEI16 input.wav output.caf
+```
+
 ### Compare Audio Files
 
 ```python

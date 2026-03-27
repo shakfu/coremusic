@@ -28,7 +28,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
-license = "MIT"
+license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
 dependencies = []
 
@@ -73,16 +73,20 @@ wheel.exclude = ["**.pyx", "**.pxd", "**.pxi", "**.c", "**.cpp", "**.h", "**.hpp
 cmake.build-type = "Release"
 sdist.include = [
     "thirdparty",
-    "src/coremusic/*.pyi", 
-    "src/coremusic/*.pxd", 
-    "src/coremusic/*.pyx", 
-    "src/coremusic/*.c", 
-    "src/coremusic/*.cpp", 
+    "THIRDPARTY.md",
+    "src/coremusic/*.pyi",
+    "src/coremusic/*.pxd",
+    "src/coremusic/*.pyx",
+    "src/coremusic/*.c",
+    "src/coremusic/*.cpp",
     "src/coremusic/py.typed",
 
-    # Thirdparty: Ableton Link headers
+    # Thirdparty: Ableton Link headers and licenses
+    "thirdparty/link/LICENSE.md",
+    "thirdparty/link/GNU-GPL-v2.0.md",
     "thirdparty/link/include/**/*.hpp",
     "thirdparty/link/include/**/*.ipp",
+    "thirdparty/link/modules/asio-standalone/asio/LICENSE_1_0.txt",
     "thirdparty/link/modules/asio-standalone/asio/include/**/*.hpp",
     "thirdparty/link/modules/asio-standalone/asio/include/**/*.ipp",
 ]

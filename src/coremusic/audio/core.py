@@ -237,18 +237,20 @@ class AudioFormat:
 class AudioFile(capi.CoreAudioObject):
     """High-level audio file operations with automatic resource management"""
 
-    def __init__(self, path: str | Path):
+    def __init__(self, path: str | Path, *, writable: bool = False):
         super().__init__()
         self._path = str(path)
         self._format: AudioFormat | None = None
         self._is_open = False
+        self._writable = writable
 
     def open(self) -> "AudioFile":
         """Open the audio file"""
         self._ensure_not_disposed()
         if not self._is_open:
             try:
-                file_id = capi.audio_file_open_url(self._path)
+                permissions = 3 if self._writable else 1  # READ_WRITE or READ
+                file_id = capi.audio_file_open_url(self._path, permissions)
                 self._set_object_id(file_id)
                 self._is_open = True
             except Exception as e:
@@ -360,7 +362,7 @@ class AudioFile(capi.CoreAudioObject):
             with AudioFile("audio.wav") as audio:
                 data = audio.read_as_numpy()
                 print(f"Shape: {data.shape}, dtype: {data.dtype}")
-            
+
             # output: Shape: (44100, 2), dtype: int16
         """
         if not NUMPY_AVAILABLE:
@@ -434,6 +436,58 @@ class AudioFile(capi.CoreAudioObject):
             return capi.audio_file_get_property(self.object_id, property_id)
         except Exception as e:
             raise AudioFileError(f"Failed to get property: {e}")
+
+    def set_property(self, property_id: int, data: bytes) -> None:
+        """Set a property on the audio file.
+
+        The file must have been opened with writable=True.
+        """
+        self._ensure_not_disposed()
+        if not self._is_open:
+            self.open()
+
+        try:
+            capi.audio_file_set_property(self.object_id, property_id, data)
+        except Exception as e:
+            raise AudioFileError(f"Failed to set property: {e}")
+
+    @property
+    def metadata(self) -> dict[str, Any] | None:
+        """Read the info dictionary metadata from the audio file.
+
+        Returns a dict with string keys and string/number/bytes values,
+        or None if the file format does not support metadata.
+        """
+        self._ensure_not_disposed()
+        if not self._is_open:
+            self.open()
+
+        try:
+            return capi.audio_file_read_info_dictionary(self.object_id)
+        except Exception:
+            return None
+
+    def set_metadata(self, tags: dict[str, Any]) -> None:
+        """Write metadata tags to the audio file.
+
+        The file must have been opened with writable=True.
+        Keys should be strings. Values can be str, int, or float.
+
+        Common keys: 'title', 'artist', 'album', 'genre', 'year',
+        'track number', 'comments', 'approximate duration in seconds'.
+        """
+        self._ensure_not_disposed()
+        if not self._is_open:
+            self.open()
+        if not self._writable:
+            raise AudioFileError(
+                "File not opened for writing. Use AudioFile(path, writable=True)."
+            )
+
+        try:
+            capi.audio_file_write_info_dictionary(self.object_id, tags)
+        except Exception as e:
+            raise AudioFileError(f"Failed to write metadata: {e}")
 
     @property
     def duration(self) -> float:

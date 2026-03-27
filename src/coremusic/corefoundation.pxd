@@ -99,7 +99,21 @@ cdef extern from "CoreFoundation/CoreFoundation.h":
     # CFDictionary functions
     ctypedef struct __CFDictionary
     ctypedef __CFDictionary* CFDictionaryRef
+    ctypedef __CFDictionary* CFMutableDictionaryRef
+    cdef CFIndex CFDictionaryGetCount(CFDictionaryRef theDict)
+    cdef void CFDictionaryGetKeysAndValues(CFDictionaryRef theDict, const void** keys, const void** values)
     cdef void* CFDictionaryGetValue(CFDictionaryRef theDict, const void* key)
+    cdef CFTypeID CFDictionaryGetTypeID()
+
+    # Mutable dictionary functions
+    ctypedef struct CFDictionaryKeyCallBacks:
+        pass
+    ctypedef struct CFDictionaryValueCallBacks:
+        pass
+    cdef CFDictionaryKeyCallBacks kCFTypeDictionaryKeyCallBacks
+    cdef CFDictionaryValueCallBacks kCFTypeDictionaryValueCallBacks
+    cdef CFMutableDictionaryRef CFDictionaryCreateMutable(CFAllocatorRef allocator, CFIndex capacity, const CFDictionaryKeyCallBacks* keyCallBacks, const CFDictionaryValueCallBacks* valueCallBacks)
+    cdef void CFDictionarySetValue(CFMutableDictionaryRef theDict, const void* key, const void* value)
 
     # CFNumber functions
     ctypedef struct __CFNumber
@@ -120,3 +134,8 @@ cdef extern from "CoreFoundation/CoreFoundation.h":
         kCFNumberDoubleType = 13
         kCFNumberCFIndexType = 14
     cdef Boolean CFNumberGetValue(CFNumberRef number, CFNumberType theType, void* valuePtr)
+    cdef CFNumberRef CFNumberCreate(CFAllocatorRef allocator, CFNumberType theType, const void* valuePtr)
+
+    # CFData type checking
+    cdef CFTypeID CFDataGetTypeID()
+    cdef CFTypeID CFArrayGetTypeID()

@@ -11,11 +11,12 @@ Small-to-medium effort with immediate user-facing value.
 ### API
 
 - [x] Rename `play_async` to `play_background` to clarify it is thread-based, not `async def`
-- [ ] Audio file metadata write (ID3 tags, iTunes metadata via `kAudioFilePropertyInfoDictionary`) -- read already works
+- [x] Audio file metadata read/write (iTunes metadata via `kAudioFilePropertyInfoDictionary`)
 
 ### Build and Distribution
 
-- [ ] Verify license implications of Ableton Link thirdparty headers in sdist
+- [x] Verify license implications of Ableton Link thirdparty headers in sdist
+- [x] Change project license from MIT to GPLv3 for Ableton Link compatibility
 
 ### Documentation
 
@@ -34,6 +35,7 @@ Meaningful improvements, moderate effort.
 
 ### New CLI Commands
 
+- [ ] `coremusic audio metadata --set title="X" artist="Y"` -- CLI write path for `set_metadata` (API exists, CLI surface missing)
 - [ ] `coremusic doctor` -- diagnose installation (optional deps, hardware access, available frameworks)
 - [ ] `coremusic analyze batch *.wav --output results.csv` -- batch analysis with structured export
 
@@ -49,9 +51,14 @@ Nice-to-have features. Implement when needed or when higher-priority items are d
 
 ### CLI
 
-- [ ] `coremusic shell` -- Python REPL with coremusic preloaded
-- [ ] `coremusic diff file1.wav file2.wav` -- compare spectral content, loudness, duration
+- [ ] `coremusic plugin chain <file> -p "AUDelay" -p "AUReverb2" -o out.wav` -- sequential multi-plugin processing
+- [ ] `coremusic convert resample <file> --rate 44100` -- explicit sample rate conversion
+- [ ] `coremusic audio concat a.wav b.wav -o combined.wav` -- concatenate audio files
+- [ ] `coremusic analyze compare file1.wav file2.wav` -- diff two files by duration, loudness, spectrum, format
+- [ ] `coremusic device monitor` -- live stream of device changes (connect/disconnect, sample rate, volume) via CoreAudio property listeners
+- [ ] `coremusic midi monitor` -- formatted MIDI input display for debugging (timestamp, channel, note name, velocity)
 - [ ] `coremusic watch` -- monitor directory for new audio files and auto-process
+- [ ] `coremusic shell` -- Python REPL with coremusic preloaded
 - [ ] CLI module auto-discovery via `importlib` or decorator to reduce boilerplate in `main.py`
 
 ### API

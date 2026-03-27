@@ -506,6 +506,199 @@ def audio_file_get_property(long audio_file_id, int property_id):
         free(buffer)
 
 
+def audio_file_set_property(long audio_file_id, int property_id, bytes data):
+    """Set a property on an audio file.
+
+    The file must have been opened with write permissions.
+    """
+    cdef at.AudioFileID audio_file = <at.AudioFileID>audio_file_id
+    cdef cf.UInt32 data_size = <cf.UInt32>len(data)
+    cdef const char* buf = data
+
+    cdef cf.OSStatus status = at.AudioFileSetProperty(
+        audio_file,
+        <at.AudioFilePropertyID>property_id,
+        data_size,
+        buf
+    )
+
+    if status != 0:
+        raise RuntimeError(format_osstatus_error(status, "AudioFileSetProperty"))
+
+
+cdef str _cfstring_to_str(cf.CFStringRef cf_str):
+    """Convert a CFStringRef to a Python string."""
+    cdef const char* c_str = cf.CFStringGetCStringPtr(cf_str, cf.kCFStringEncodingUTF8)
+    if c_str != NULL:
+        return c_str.decode("utf-8")
+
+    # Fallback: CFStringGetCStringPtr can return NULL for certain encodings
+    cdef cf.CFIndex length = cf.CFStringGetLength(cf_str)
+    cdef cf.CFIndex max_size = cf.CFStringGetMaximumSizeForEncoding(length, cf.kCFStringEncodingUTF8) + 1
+    cdef char* buffer = <char*>malloc(max_size)
+    if not buffer:
+        raise MemoryError("Could not allocate buffer for CFString")
+    try:
+        if cf.CFStringGetCString(cf_str, buffer, max_size, cf.kCFStringEncodingUTF8):
+            return buffer.decode("utf-8")
+        return ""
+    finally:
+        free(buffer)
+
+
+cdef object _cftype_to_python(cf.CFTypeRef value):
+    """Convert a CFTypeRef to a Python object based on its type."""
+    cdef cf.CFTypeID type_id = cf.CFGetTypeID(value)
+    cdef cf.Float64 float_val
+    cdef cf.SInt64 int_val
+
+    if type_id == cf.CFStringGetTypeID():
+        return _cfstring_to_str(<cf.CFStringRef>value)
+    elif type_id == cf.CFNumberGetTypeID():
+        # Try float first, fall back to integer
+        if cf.CFNumberGetValue(<cf.CFNumberRef>value, cf.kCFNumberFloat64Type, &float_val):
+            if float_val == <cf.SInt64>float_val:
+                return <cf.SInt64>float_val
+            return float_val
+        if cf.CFNumberGetValue(<cf.CFNumberRef>value, cf.kCFNumberSInt64Type, &int_val):
+            return int_val
+        return 0
+    elif type_id == cf.CFDataGetTypeID():
+        data_ref = <cf.CFDataRef>value
+        data_len = cf.CFDataGetLength(data_ref)
+        data_ptr = cf.CFDataGetBytePtr(data_ref)
+        return data_ptr[:data_len]
+    else:
+        return None
+
+
+def audio_file_read_info_dictionary(long audio_file_id):
+    """Read the info dictionary from an audio file.
+
+    Returns a Python dict with string keys and string/number/bytes values,
+    or None if the property is not available.
+    """
+    cdef at.AudioFileID audio_file = <at.AudioFileID>audio_file_id
+    cdef cf.CFDictionaryRef cf_dict = NULL
+    cdef cf.UInt32 data_size = sizeof(cf.CFDictionaryRef)
+    cdef cf.CFIndex count
+    cdef const void** keys = NULL
+    cdef const void** values = NULL
+
+    cdef cf.OSStatus status = at.AudioFileGetProperty(
+        audio_file,
+        at.kAudioFilePropertyInfoDictionary,
+        &data_size,
+        &cf_dict
+    )
+
+    if status != 0 or cf_dict == NULL:
+        return None
+
+    try:
+        count = cf.CFDictionaryGetCount(cf_dict)
+        if count == 0:
+            return {}
+
+        keys = <const void**>malloc(count * sizeof(void*))
+        values = <const void**>malloc(count * sizeof(void*))
+        if not keys or not values:
+            free(keys)
+            free(values)
+            raise MemoryError("Could not allocate buffers for dictionary")
+
+        try:
+            cf.CFDictionaryGetKeysAndValues(cf_dict, keys, values)
+            result = {}
+            for i in range(count):
+                key = _cfstring_to_str(<cf.CFStringRef>keys[i])
+                val = _cftype_to_python(<cf.CFTypeRef>values[i])
+                if val is not None:
+                    result[key] = val
+            return result
+        finally:
+            free(keys)
+            free(values)
+    finally:
+        cf.CFRelease(<cf.CFTypeRef>cf_dict)
+
+
+def audio_file_write_info_dictionary(long audio_file_id, dict metadata):
+    """Write an info dictionary to an audio file.
+
+    The file must have been opened with write permissions.
+    Keys and values should be strings or numbers.
+    """
+    cdef at.AudioFileID audio_file = <at.AudioFileID>audio_file_id
+    cdef cf.CFStringRef cf_key
+    cdef cf.CFStringRef cf_str_val
+    cdef cf.CFNumberRef cf_num_val
+    cdef cf.Float64 float_val
+    cdef cf.SInt64 int_val
+    cdef cf.UInt32 data_size = sizeof(cf.CFDictionaryRef)
+    cdef cf.OSStatus status
+
+    cdef cf.CFMutableDictionaryRef cf_dict = cf.CFDictionaryCreateMutable(
+        cf.kCFAllocatorDefault,
+        <cf.CFIndex>len(metadata),
+        &cf.kCFTypeDictionaryKeyCallBacks,
+        &cf.kCFTypeDictionaryValueCallBacks
+    )
+    if cf_dict == NULL:
+        raise MemoryError("Could not create CFDictionary")
+
+    # Track CF objects that need releasing
+    cdef list to_release = []
+
+    try:
+        for key, value in metadata.items():
+            key_bytes = str(key).encode("utf-8")
+            cf_key = cf.CFStringCreateWithCString(
+                cf.kCFAllocatorDefault, key_bytes, cf.kCFStringEncodingUTF8
+            )
+            to_release.append(<unsigned long>cf_key)
+
+            if isinstance(value, str):
+                val_bytes = value.encode("utf-8")
+                cf_str_val = cf.CFStringCreateWithCString(
+                    cf.kCFAllocatorDefault, val_bytes, cf.kCFStringEncodingUTF8
+                )
+                to_release.append(<unsigned long>cf_str_val)
+                cf.CFDictionarySetValue(cf_dict, <const void*>cf_key, <const void*>cf_str_val)
+            elif isinstance(value, float):
+                float_val = value
+                cf_num_val = cf.CFNumberCreate(
+                    cf.kCFAllocatorDefault, cf.kCFNumberFloat64Type, &float_val
+                )
+                to_release.append(<unsigned long>cf_num_val)
+                cf.CFDictionarySetValue(cf_dict, <const void*>cf_key, <const void*>cf_num_val)
+            elif isinstance(value, int):
+                int_val = value
+                cf_num_val = cf.CFNumberCreate(
+                    cf.kCFAllocatorDefault, cf.kCFNumberSInt64Type, &int_val
+                )
+                to_release.append(<unsigned long>cf_num_val)
+                cf.CFDictionarySetValue(cf_dict, <const void*>cf_key, <const void*>cf_num_val)
+            else:
+                # Skip unsupported types
+                continue
+
+        status = at.AudioFileSetProperty(
+            audio_file,
+            at.kAudioFilePropertyInfoDictionary,
+            data_size,
+            &cf_dict
+        )
+
+        if status != 0:
+            raise RuntimeError(format_osstatus_error(status, "AudioFileSetProperty (InfoDictionary)"))
+
+    finally:
+        for ptr in to_release:
+            cf.CFRelease(<cf.CFTypeRef><unsigned long>ptr)
+        cf.CFRelease(<cf.CFTypeRef>cf_dict)
+
+
 def audio_file_read_packets(long audio_file_id, long start_packet, int num_packets):
     """Read packets from an audio file"""
     cdef at.AudioFileID audio_file = <at.AudioFileID>audio_file_id
