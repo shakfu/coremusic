@@ -99,11 +99,11 @@ options:
 | Command    | Description                                                      |
 |----------- |------------------------------------------------------------------|
 | `audio`    | Audio file operations (info, play, record, duration, metadata)   |
-| `devices`  | Audio device management (list, info, volume, mute, set-default)  |
-| `plugin`   | AudioUnit plugins (list, find, info, params, process, render)    |
+| `device`   | Audio device management (list, info, volume, mute, set-default, monitor) |
+| `plugin`   | AudioUnit plugins (list, find, info, params, process, chain, render) |
 | `analyze`  | Audio analysis (levels, tempo, key, spectrum, loudness, onsets)  |
 | `convert`  | Audio conversion (file, batch, normalize, trim)                  |
-| `midi`     | MIDI operations (list, info, play, quantize, receive, send, panic) |
+| `midi`     | MIDI operations (list, info, play, quantize, receive, monitor, send, panic) |
 | `sequence` | MIDI sequence operations (info, play, tracks)                    |
 | `completion` | Generate shell completion scripts (bash, zsh, fish)            |
 
@@ -139,16 +139,21 @@ coremusic device volume "MacBook Pro Speakers" 0.5
 coremusic plugin list --type effect
 coremusic plugin list --name-only | grep -i reverb
 coremusic plugin process "AUDelay" input.wav -o output.wav
+coremusic plugin chain input.wav -p "AUDelay:Delay Time=0.5" -p "AUReverb2" -o out.wav
 coremusic plugin render "DLSMusicDevice" song.mid -o rendered.wav
 
 # MIDI
 coremusic midi list
+coremusic midi monitor                              # Human-readable MIDI input
 coremusic midi receive                              # Display incoming MIDI
 coremusic midi receive -o recording.mid             # Save to MIDI file
 coremusic midi receive --plugin "DLSMusicDevice"    # Route to synth plugin
 coremusic midi play song.mid
 coremusic midi quantize input.mid -o quantized.mid --grid 1/16
 coremusic midi panic
+
+# Device monitoring
+coremusic device monitor                            # Watch for device changes
 
 # JSON output for scripting
 coremusic --json plugin list --type instrument

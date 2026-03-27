@@ -37,11 +37,11 @@ All commands support these global options:
 | Command | Description |
 |---------|-------------|
 | `audio` | Audio file operations (info, play, record, duration, metadata) |
-| `devices` | Audio device management (list, info, volume, mute, set-default) |
-| `plugin` | AudioUnit plugin discovery and processing (list, find, info, params, process, render) |
+| `device` | Audio device management (list, info, volume, mute, set-default, monitor) |
+| `plugin` | AudioUnit plugin discovery and processing (list, find, info, params, process, chain, render) |
 | `analyze` | Audio analysis (levels, tempo, key, spectrum, loudness, onsets) |
 | `convert` | Audio conversion (file, batch, normalize, trim) |
-| `midi` | MIDI operations (devices, input, output, file) |
+| `midi` | MIDI operations (list, info, play, quantize, receive, monitor, send, panic) |
 | `sequence` | MIDI sequence operations (info, play, tracks) |
 
 ## Audio Command
@@ -66,6 +66,9 @@ coremusic audio duration song.wav --format samples
 
 # Show metadata/tags
 coremusic audio metadata song.mp3
+
+# Write metadata tags
+coremusic audio metadata song.caf --set title="My Song" artist="Me"
 ```
 
 **Subcommands:**
@@ -88,8 +91,9 @@ coremusic audio metadata song.mp3
 `duration <file> [--format FORMAT]`
    Get audio file duration. Format options: `seconds` (default), `mm:ss`, `samples`.
 
-`metadata <file>`
-   Show audio file metadata and tags (title, artist, album, etc.).
+`metadata <file> [--set key=value ...]`
+   Show audio file metadata and tags. Use `--set` with `key=value` pairs to write
+   metadata (file must support writing, e.g. CAF or AIFF).
 
 ## Devices Command
 
@@ -118,6 +122,10 @@ coremusic devices mute "MacBook Pro Speakers" on
 # Set default device
 coremusic devices set-default "External Headphones" --output
 coremusic devices set-default "USB Microphone" --input
+
+# Monitor device changes (connect/disconnect, volume, sample rate)
+coremusic device monitor
+coremusic device monitor --interval 0.5
 ```
 
 **Subcommands:**
@@ -142,6 +150,11 @@ coremusic devices set-default "USB Microphone" --input
 
 `set-default <device> [--input|--output]`
    Set the system default input or output device.
+
+`monitor [--interval SEC]`
+   Monitor audio device state changes in real time. Reports device connect/disconnect,
+   sample rate changes, volume changes, mute state changes, and default device changes.
+   Default poll interval is 1 second. Press Ctrl+C to stop.
 
 ## Plugin Command
 
@@ -174,6 +187,18 @@ coremusic plugin preset list "AUReverb2"
 # Process audio through effect plugin
 coremusic plugin process "AUDelay" input.wav -o output.wav
 coremusic plugin process "AUReverb2" input.wav -o output.wav --preset "Large Hall"
+
+# Chain multiple effect plugins
+coremusic plugin chain input.wav -p "AUDelay" -p "AUReverb2" -o out.wav
+
+# Chain with inline parameters (colon-delimited)
+coremusic plugin chain input.wav -p "AUDelay:Delay Time=0.5:Wet Dry Mix=50" -p "AUReverb2" -o out.wav
+
+# Chain with presets
+coremusic plugin chain input.wav -p "AUDelay" -p "AUReverb2" --preset "Long Delay" --preset "Large Hall" -o out.wav
+
+# Chain from config file (JSON or YAML)
+coremusic plugin chain input.wav --config chain.yaml -o out.wav
 
 # Render MIDI through instrument plugin
 coremusic plugin render "DLSMusicDevice" song.mid -o rendered.wav
@@ -214,6 +239,23 @@ coremusic plugin render "DLSMusicDevice" song.mid -o rendered.wav --preset 0
 
 `process <name> <input> -o <output> [--preset NAME|NUMBER]`
    Apply an effect plugin to an audio file.
+
+`chain <input> -p SPEC [...] -o <output> [--preset PRESET [...]] [--config FILE]`
+   Process audio through multiple effect plugins sequentially. Plugin specs can
+   include inline parameters: `-p "AUDelay:Delay Time=0.5:Wet Dry Mix=50"`.
+   Alternatively, define the chain in a JSON or YAML config file:
+
+   ```yaml
+   chain:
+     - name: AUDelay
+       preset: "Long Delay"
+       params:
+         Delay Time: 0.5
+         Wet Dry Mix: 50
+     - name: AUReverb2
+       params:
+         Dry Wet Mix: 80
+   ```
 
 `render <name> <midi> -o <output> [--preset NAME|NUMBER] [--sample-rate RATE] [--duration SEC]`
    Render a MIDI file through an instrument plugin to audio.
@@ -357,72 +399,65 @@ coremusic convert trim input.wav output.wav --start 5 --duration 10
 MIDI device discovery, monitoring, recording, and basic MIDI operations.
 
 ```bash
-# List all MIDI devices
-coremusic midi devices
-
-# Show detailed device info
-coremusic midi device info "USB MIDI Controller"
-
-# Monitor MIDI input
-coremusic midi input monitor
-coremusic midi input monitor 0
-
-# Record MIDI input to file
-coremusic midi input record -o recorded.mid -d 30
-coremusic midi input record -o recorded.mid --tempo 120
-
-# Send test note
-coremusic midi output test
-coremusic midi output test --device 1
-
-# Send panic (all notes off)
-coremusic midi output panic
+# List all MIDI devices and endpoints
+coremusic midi list
+coremusic midi list --verbose
 
 # Show MIDI file info
-coremusic midi file info song.mid
+coremusic midi info song.mid
 
-# Hex dump of MIDI file
-coremusic midi file dump song.mid
+# Monitor MIDI input (human-readable: note names, CC names, timestamps)
+coremusic midi monitor
+coremusic midi monitor --device 1
+
+# Receive MIDI input (raw display, record, or route to plugin)
+coremusic midi receive
+coremusic midi receive -o recorded.mid --tempo 120
+coremusic midi receive --plugin "DLSMusicDevice"
+
+# Send MIDI messages
+coremusic midi send --note 60 --velocity 100
+coremusic midi send --cc 7 64
+coremusic midi send --test
+
+# Send panic (all notes off)
+coremusic midi panic
 
 # Play MIDI file
-coremusic midi file play song.mid
-coremusic midi file play song.mid --device 1
+coremusic midi play song.mid
 
 # Quantize MIDI file
-coremusic midi file quantize input.mid -o output.mid --grid 1/16
-coremusic midi file quantize input.mid -o output.mid --grid 1/8 --strength 0.8
+coremusic midi quantize input.mid -o output.mid --grid 1/16
+coremusic midi quantize input.mid -o output.mid --grid 1/8 --strength 0.8
 ```
 
 **Subcommands:**
 
-`devices`
-   List all MIDI devices (physical and virtual).
+`list [--verbose]`
+   List all MIDI devices, sources, and destinations.
 
-`device info <name>`
-   Show detailed MIDI device info including entities, sources, and destinations.
+`info <path>`
+   Show MIDI file information (tracks, events, duration, tempo).
 
-`input monitor [index]`
-   Monitor MIDI input in real-time. Press Ctrl+C to stop.
+`monitor [--device INDEX]`
+   Monitor MIDI input with human-readable formatting. Displays note names (C4, F#3),
+   CC names (Sustain Pedal, Modulation), centered pitch bend values, and 1-indexed
+   channels. Press Ctrl+C to stop.
 
-`input record -o <file> [-d <duration>] [--tempo BPM]`
-   Record MIDI input to a file.
+`receive [--device INDEX] [-o FILE] [--plugin NAME] [--quiet] [--duration SEC] [--tempo BPM]`
+   Receive MIDI input. Modes: display (default), save to MIDI file (`-o file.mid`),
+   or route to AudioUnit plugin (`--plugin`).
 
-`output test [--device INDEX]`
-   Send a test note (middle C) to verify MIDI connectivity.
+`send [DEST] [--note N] [--cc NUM VAL] [--program N] [--test] [--channel CH] [--velocity VEL]`
+   Send MIDI messages to an output destination.
 
-`output panic [--device INDEX]`
+`panic [DEST]`
    Send all-notes-off (CC 123) and all-sound-off (CC 120) on all 16 channels.
 
-`file info <path>`
-   Show MIDI file information.
-
-`file dump <path>`
-   Hex dump of raw MIDI events with time, track, channel, type, and data.
-
-`file play <path> [--device INDEX] [--tempo BPM]`
+`play <path> [--device INDEX]`
    Play MIDI file through an output device.
 
-`file quantize <input> -o <output> [--grid GRID] [--strength FLOAT]`
+`quantize <input> -o <output> [--grid GRID] [--strength FLOAT]`
    Quantize MIDI note timing to grid. Grid options: `1/4`, `1/8`, `1/16`, `1/32`.
 
 ## Sequence Command
@@ -503,14 +538,14 @@ coremusic analyze tempo recording.wav
 coremusic convert normalize recording.wav normalized.wav --target -1.0
 coremusic convert trim normalized.wav trimmed.wav --start 2 --end 30
 
-# 4. Process through effect plugin
-coremusic plugin process "AUReverb2" trimmed.wav -o final.wav --preset "Medium Hall"
+# 4. Process through effect chain
+coremusic plugin chain trimmed.wav -p "AUBandpass" -p "AUReverb2" --preset "" --preset "Medium Hall" -o final.wav
 
 # 5. Check available MIDI outputs
-coremusic midi devices
+coremusic midi list
 
 # 6. Play MIDI accompaniment
-coremusic midi file play accompaniment.mid
+coremusic midi play accompaniment.mid
 ```
 
 ### Batch Processing Script

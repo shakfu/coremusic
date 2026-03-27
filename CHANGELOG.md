@@ -27,6 +27,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 - **Audio file metadata read/write** - `AudioFile.metadata` property reads the info dictionary as a Python dict (title, artist, genre, etc.). `AudioFile.set_metadata(tags)` writes metadata to writable formats (CAF, AIFF). File must be opened with `AudioFile(path, writable=True)` for writes. Added `capi.audio_file_read_info_dictionary()`, `capi.audio_file_write_info_dictionary()`, and `capi.audio_file_set_property()` low-level functions with proper CFDictionary-to-dict conversion.
 - **CLI metadata write support** - `coremusic audio metadata <file> --set key=value [...]` writes metadata tags from the command line. Supports multiple key=value pairs in a single invocation. Works with `--json` for structured output.
+- **`plugin chain` command** - `coremusic plugin chain <file> -p "AUDelay" -p "AUReverb2" -o out.wav` processes audio through multiple effect plugins sequentially. Supports per-plugin presets via `--preset`, inline parameters via colon syntax (`-p "AUDelay:Delay Time=0.5:Wet Dry Mix=50"`), and JSON/YAML config files via `--config`. Parameters are resolved by name (case-insensitive partial match).
+- **`midi monitor` command** - `coremusic midi monitor` displays incoming MIDI with human-readable formatting: note names (C4, F#3), CC names (Sustain Pedal, Modulation), centered pitch bend values, and 1-indexed channels. Supports `--device` to select input source and `--json` for structured output.
+- **`device monitor` command** - `coremusic device monitor` polls for audio device state changes: connect/disconnect, sample rate, volume, mute, and default device changes. Configurable poll interval via `--interval`. Supports `--json` for structured output.
 
 ### Removed
 

@@ -126,6 +126,15 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     )
     receive_parser.set_defaults(func=cmd_receive)
 
+    # midi monitor [--device N]
+    monitor_parser = midi_sub.add_parser(
+        "monitor", help="Monitor MIDI input with human-readable formatting"
+    )
+    monitor_parser.add_argument(
+        "--device", "-d", type=int, default=0, help="Input device index (default: 0)"
+    )
+    monitor_parser.set_defaults(func=cmd_monitor)
+
     # midi send <dest> [--note N] [--cc N N] [--program N] [--test]
     send_parser = midi_sub.add_parser("send", help="Send MIDI message to output")
     send_parser.add_argument(
@@ -623,6 +632,171 @@ def cmd_panic(args: argparse.Namespace) -> int:
             capi.midi_client_dispose(client_id)
         except Exception:
             pass
+
+    return EXIT_SUCCESS
+
+
+def _midi_note_name(note: int) -> str:
+    """Convert MIDI note number to human-readable name (e.g. 60 -> C4)."""
+    names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    octave = (note // 12) - 1
+    return f"{names[note % 12]}{octave}"
+
+
+def _midi_cc_name(cc: int) -> str:
+    """Convert CC number to human-readable name if known."""
+    from coremusic.constants.midi import MIDIControlChange
+
+    try:
+        return MIDIControlChange(cc).name.replace("_", " ").title()
+    except ValueError:
+        return str(cc)
+
+
+def cmd_monitor(args: argparse.Namespace) -> int:
+    """Monitor MIDI input with human-readable formatting."""
+    import signal
+    import threading
+
+    num_sources = capi.midi_get_number_of_sources()
+    if num_sources == 0:
+        raise CLIError("No MIDI input sources available")
+
+    if args.device >= num_sources:
+        raise CLIError(f"Input index {args.device} out of range (0-{num_sources - 1})")
+
+    source_id = capi.midi_get_source(args.device)
+    source_name = _get_endpoint_name(source_id)
+
+    event_count = 0
+    events_list: list[dict[str, Any]] = []
+    stop_event = threading.Event()
+
+    def format_message(data: bytes, timestamp: float) -> dict[str, Any]:
+        if len(data) < 1:
+            return {"type": "unknown", "raw": data.hex(), "timestamp": timestamp}
+
+        status = data[0] & 0xF0
+        channel = (data[0] & 0x0F) + 1  # 1-indexed for display
+        d1 = data[1] if len(data) > 1 else 0
+        d2 = data[2] if len(data) > 2 else 0
+
+        msg: dict[str, Any] = {"channel": channel, "timestamp": timestamp}
+
+        if status == 0x90 and d2 > 0:
+            msg["type"] = "note_on"
+            msg["note"] = d1
+            msg["name"] = _midi_note_name(d1)
+            msg["velocity"] = d2
+        elif status == 0x80 or (status == 0x90 and d2 == 0):
+            msg["type"] = "note_off"
+            msg["note"] = d1
+            msg["name"] = _midi_note_name(d1)
+        elif status == 0xB0:
+            msg["type"] = "cc"
+            msg["controller"] = d1
+            msg["cc_name"] = _midi_cc_name(d1)
+            msg["value"] = d2
+        elif status == 0xC0:
+            msg["type"] = "program"
+            msg["program"] = d1
+        elif status == 0xE0:
+            msg["type"] = "pitch_bend"
+            msg["value"] = d1 | (d2 << 7)
+        elif status == 0xA0:
+            msg["type"] = "poly_aftertouch"
+            msg["note"] = d1
+            msg["name"] = _midi_note_name(d1)
+            msg["pressure"] = d2
+        elif status == 0xD0:
+            msg["type"] = "channel_aftertouch"
+            msg["pressure"] = d1
+        else:
+            msg["type"] = "other"
+            msg["raw"] = data.hex()
+
+        return msg
+
+    def print_message(msg: dict[str, Any]) -> None:
+        ch = msg["channel"]
+        ts = msg["timestamp"]
+        t = msg["type"]
+
+        if t == "note_on":
+            print(
+                f"[{ts:8.3f}] ch {ch:2d}  Note On   {msg['name']:4s} ({msg['note']:3d})  vel {msg['velocity']:3d}"
+            )
+        elif t == "note_off":
+            print(
+                f"[{ts:8.3f}] ch {ch:2d}  Note Off  {msg['name']:4s} ({msg['note']:3d})"
+            )
+        elif t == "cc":
+            print(
+                f"[{ts:8.3f}] ch {ch:2d}  CC        {msg['cc_name']:<20s}  val {msg['value']:3d}"
+            )
+        elif t == "program":
+            print(f"[{ts:8.3f}] ch {ch:2d}  Program   {msg['program']:3d}")
+        elif t == "pitch_bend":
+            centered = msg["value"] - 8192
+            print(
+                f"[{ts:8.3f}] ch {ch:2d}  Pitch     {centered:+6d} ({msg['value']:5d})"
+            )
+        elif t == "poly_aftertouch":
+            print(
+                f"[{ts:8.3f}] ch {ch:2d}  PolyAT    {msg['name']:4s} ({msg['note']:3d})  pres {msg['pressure']:3d}"
+            )
+        elif t == "channel_aftertouch":
+            print(f"[{ts:8.3f}] ch {ch:2d}  ChanAT    pres {msg['pressure']:3d}")
+        else:
+            print(f"[{ts:8.3f}] ch {ch:2d}  {msg.get('raw', '?')}")
+
+    def midi_callback(data: bytes, timestamp: float) -> None:
+        nonlocal event_count
+        event_count += 1
+        msg = format_message(data, timestamp)
+        if args.json:
+            events_list.append(msg)
+        else:
+            print_message(msg)
+
+    def signal_handler(sig: int, frame: FrameType | None) -> None:
+        stop_event.set()
+
+    original_handler = signal.signal(signal.SIGINT, signal_handler)
+
+    try:
+        client_id = capi.midi_client_create("coremusic-monitor")
+        try:
+            port_id = capi.midi_input_port_create(client_id, "input")
+            capi.midi_port_connect_source(port_id, source_id)
+
+            if not args.json:
+                print(f"Monitoring: {source_name}")
+                print("Press Ctrl+C to stop...\n")
+
+            while not stop_event.is_set():
+                stop_event.wait(timeout=0.1)
+
+        finally:
+            try:
+                capi.midi_client_dispose(client_id)
+            except Exception:
+                pass
+
+        if args.json:
+            output_json(
+                {
+                    "source": source_name,
+                    "index": args.device,
+                    "event_count": event_count,
+                    "events": events_list,
+                }
+            )
+        else:
+            print(f"\nStopped. Received {event_count} events.")
+
+    finally:
+        signal.signal(signal.SIGINT, original_handler)
 
     return EXIT_SUCCESS
 

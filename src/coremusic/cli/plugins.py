@@ -127,6 +127,40 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     )
     render_parser.set_defaults(func=cmd_render)
 
+    # plugin chain
+    chain_parser = plugin_sub.add_parser(
+        "chain", help="Process audio through multiple effect plugins"
+    )
+    chain_parser.add_argument("input", help="Input audio file path")
+    chain_parser.add_argument(
+        "-p",
+        "--plugin",
+        action="append",
+        default=None,
+        metavar="SPEC",
+        help=(
+            'Plugin spec: "Name" or "Name:param=val:param=val". '
+            "Repeat for each plugin in the chain."
+        ),
+    )
+    chain_parser.add_argument(
+        "-o", "--output", required=True, help="Output audio file path"
+    )
+    chain_parser.add_argument(
+        "--preset",
+        action="append",
+        default=None,
+        metavar="PRESET",
+        help="Preset for each plugin (use '' to skip). Must match -p count if used.",
+    )
+    chain_parser.add_argument(
+        "--config",
+        "-c",
+        default=None,
+        help="Chain config file (JSON or YAML). Overrides -p/--preset.",
+    )
+    chain_parser.set_defaults(func=cmd_chain)
+
     # plugin preset
     preset_parser = plugin_sub.add_parser("preset", help="Plugin preset management")
     preset_sub = preset_parser.add_subparsers(
@@ -584,6 +618,308 @@ def cmd_process(args: argparse.Namespace) -> int:
             capi.audio_component_instance_dispose(au_id)
         except Exception:
             pass
+
+    return EXIT_SUCCESS
+
+
+def _parse_plugin_spec(spec: str) -> dict[str, Any]:
+    """Parse inline plugin spec: 'Name' or 'Name:param=val:param=val'.
+
+    Returns dict with 'name' and optional 'params' dict.
+    """
+    parts = spec.split(":")
+    result: dict[str, Any] = {"name": parts[0].strip()}
+    if len(parts) > 1:
+        params: dict[str, float] = {}
+        for part in parts[1:]:
+            if "=" not in part:
+                raise CLIError(
+                    f"Invalid parameter format in plugin spec: {part!r} "
+                    f"(expected param=value)"
+                )
+            key, _, val = part.partition("=")
+            try:
+                params[key.strip()] = float(val.strip())
+            except ValueError:
+                raise CLIError(f"Parameter value must be numeric: {key}={val}")
+        result["params"] = params
+    return result
+
+
+def _load_chain_config(config_path: str) -> list[dict[str, Any]]:
+    """Load chain configuration from JSON or YAML file.
+
+    Expected format:
+        chain:
+          - name: AUDelay
+            preset: "Long Delay"
+            params:
+              delay_time: 0.5
+              wet_dry_mix: 50
+          - name: AUReverb2
+            params:
+              dry_wet_mix: 80
+
+    Returns list of plugin step dicts with 'name', optional 'preset', optional 'params'.
+    """
+    from pathlib import Path
+
+    path = Path(config_path)
+    if not path.exists():
+        raise CLIError(f"Config file not found: {config_path}")
+
+    text = path.read_text()
+
+    if path.suffix in (".json",):
+        import json
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as e:
+            raise CLIError(f"Invalid JSON in config file: {e}")
+    elif path.suffix in (".yaml", ".yml"):
+        try:
+            import yaml  # type: ignore[import-untyped]
+        except ImportError:
+            raise CLIError(
+                "PyYAML is required for YAML config files: pip install pyyaml"
+            )
+        try:
+            data = yaml.safe_load(text)
+        except yaml.YAMLError as e:
+            raise CLIError(f"Invalid YAML in config file: {e}")
+    else:
+        raise CLIError(
+            f"Unsupported config format: {path.suffix} (use .json or .yaml/.yml)"
+        )
+
+    # Accept either {"chain": [...]} or bare list
+    if isinstance(data, dict):
+        chain = data.get("chain")
+        if chain is None:
+            raise CLIError(
+                "Config file must contain a 'chain' key with a list of plugins"
+            )
+    elif isinstance(data, list):
+        chain = data
+    else:
+        raise CLIError(
+            "Config file must contain a 'chain' list or a dict with a 'chain' key"
+        )
+
+    if not chain:
+        raise CLIError("Chain config is empty")
+
+    for i, step in enumerate(chain):
+        if not isinstance(step, dict) or "name" not in step:
+            raise CLIError(
+                f"Chain step {i + 1} must be a dict with at least a 'name' key"
+            )
+
+    return chain
+
+
+def _resolve_param_by_name(au_id: int, param_name: str) -> int:
+    """Resolve a parameter name to its ID via case-insensitive partial match."""
+    param_ids = capi.audio_unit_get_parameter_list(au_id)
+    name_lower = param_name.lower()
+
+    for pid in param_ids:
+        try:
+            info = capi.audio_unit_get_parameter_info(au_id, pid)
+            if name_lower == info.get("name", "").lower():
+                return pid
+        except Exception:
+            pass
+
+    # Partial match fallback
+    for pid in param_ids:
+        try:
+            info = capi.audio_unit_get_parameter_info(au_id, pid)
+            if name_lower in info.get("name", "").lower():
+                return pid
+        except Exception:
+            pass
+
+    raise CLIError(f"Parameter not found: {param_name!r}")
+
+
+def _apply_params(au_id: int, params: dict[str, float]) -> list[str]:
+    """Set parameters on an AudioUnit by name. Returns list of 'name=value' strings."""
+    applied = []
+    for name, value in params.items():
+        param_id = _resolve_param_by_name(au_id, name)
+        capi.audio_unit_set_parameter(au_id, param_id, value)
+        applied.append(f"{name}={value:g}")
+    return applied
+
+
+def cmd_chain(args: argparse.Namespace) -> int:
+    """Process audio through multiple effect plugins sequentially."""
+    import struct
+    import wave
+    from pathlib import Path
+
+    from coremusic.audio import AudioFile
+
+    from ._utils import require_file
+
+    input_path = require_file(args.input)
+    output_path = Path(args.output)
+
+    # Build chain steps from --config or -p/--preset args
+    if args.config:
+        if args.plugin:
+            raise CLIError("Cannot use both --config and -p/--plugin")
+        chain_steps = _load_chain_config(args.config)
+    elif args.plugin:
+        presets = args.preset or []
+        if presets and len(presets) != len(args.plugin):
+            raise CLIError(
+                f"--preset count ({len(presets)}) must match "
+                f"--plugin count ({len(args.plugin)})"
+            )
+        chain_steps = []
+        for i, spec_str in enumerate(args.plugin):
+            step = _parse_plugin_spec(spec_str)
+            if presets:
+                preset = presets[i]
+                if preset:
+                    step["preset"] = preset
+            chain_steps.append(step)
+    else:
+        raise CLIError("Either -p/--plugin or --config is required")
+
+    # Resolve all plugins (fail fast)
+    resolved: list[tuple[dict[str, Any], dict[str, Any]]] = []
+    for step in chain_steps:
+        plugin = _find_plugin_by_name(step["name"])
+        plugin_type = plugin.get("type", "")
+        if plugin_type != "aufx":
+            raise CLIError(
+                f"Plugin '{plugin.get('name')}' is not an effect plugin (type: {plugin_type})"
+            )
+        resolved.append((plugin, step))
+
+    # Load input audio
+    try:
+        with AudioFile(str(input_path)) as audio_file:
+            fmt = audio_file.format
+            duration = audio_file.duration
+            total_frames = int(duration * fmt.sample_rate)
+            audio_data, num_packets = capi.audio_file_read_packets(
+                audio_file.object_id, 0, total_frames
+            )
+    except Exception as e:
+        raise CLIError(f"Failed to read audio file: {e}")
+
+    plugin_names = [p.get("name") for p, _ in resolved]
+    if not args.json:
+        print(f"Processing: {input_path.name}")
+        print(f"Chain:      {' -> '.join(str(n) for n in plugin_names)}")
+        print(f"Duration:   {duration:.2f}s")
+        print(f"Format:     {fmt.sample_rate:.0f}Hz, {fmt.channels_per_frame}ch")
+
+    # Convert input to float32
+    if fmt.bits_per_channel == 16:
+        num_samples = len(audio_data) // 2
+        samples = struct.unpack(f"<{num_samples}h", audio_data)
+        float_samples = [s / 32768.0 for s in samples]
+        audio_data = struct.pack(f"{len(float_samples)}f", *float_samples)
+    elif fmt.bits_per_channel == 32 and fmt.format_flags & 0x1 == 0:
+        num_samples = len(audio_data) // 4
+        samples = struct.unpack(f"<{num_samples}i", audio_data)
+        float_samples = [s / 2147483648.0 for s in samples]
+        audio_data = struct.pack(f"{len(float_samples)}f", *float_samples)
+
+    # Process through each plugin in sequence
+    for step_num, (plugin, step) in enumerate(resolved, 1):
+        comp_id = _get_component_id_for_plugin(plugin)
+        au_id = capi.audio_component_instance_new(comp_id)
+
+        try:
+            capi.audio_unit_initialize(au_id)
+
+            # Load preset if specified
+            details: list[str] = []
+            preset_arg = step.get("preset")
+            if preset_arg:
+                preset_name = _load_preset_by_name_or_number(au_id, str(preset_arg))
+                if preset_name is None:
+                    raise CLIError(
+                        f"Preset not found for '{plugin.get('name')}': {preset_arg}"
+                    )
+                details.append(f"preset: {preset_name}")
+
+            # Set parameters if specified
+            params = step.get("params")
+            if params:
+                applied = _apply_params(au_id, params)
+                details.extend(applied)
+
+            if not args.json:
+                suffix = f" ({', '.join(details)})" if details else ""
+                print(f"  [{step_num}] {plugin.get('name')}{suffix}")
+
+            # Process in chunks
+            chunk_size = 4096
+            processed_chunks = []
+            num_frames = len(audio_data) // (4 * fmt.channels_per_frame)
+
+            for offset in range(0, num_frames, chunk_size):
+                frames_to_process = min(chunk_size, num_frames - offset)
+                start_byte = offset * 4 * fmt.channels_per_frame
+                end_byte = (offset + frames_to_process) * 4 * fmt.channels_per_frame
+                chunk = audio_data[start_byte:end_byte]
+
+                processed = capi.audio_unit_render(
+                    au_id,
+                    chunk,
+                    frames_to_process,
+                    fmt.sample_rate,
+                    fmt.channels_per_frame,
+                )
+                processed_chunks.append(processed)
+
+            audio_data = b"".join(processed_chunks)
+
+        finally:
+            try:
+                capi.audio_unit_uninitialize(au_id)
+            except Exception:
+                pass
+            try:
+                capi.audio_component_instance_dispose(au_id)
+            except Exception:
+                pass
+
+    # Convert float32 back to int16 for WAV output
+    num_samples = len(audio_data) // 4
+    float_samples = list(struct.unpack(f"{num_samples}f", audio_data))
+    int_samples = [int(max(-32768, min(32767, s * 32768))) for s in float_samples]
+    output_data = struct.pack(f"<{len(int_samples)}h", *int_samples)
+
+    # Write output
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with wave.open(str(output_path), "wb") as wav_out:
+        wav_out.setnchannels(fmt.channels_per_frame)
+        wav_out.setsampwidth(2)
+        wav_out.setframerate(int(fmt.sample_rate))
+        wav_out.writeframes(output_data)
+
+    if args.json:
+        output_json(
+            {
+                "input": str(input_path.absolute()),
+                "output": str(output_path.absolute()),
+                "plugins": plugin_names,
+                "duration": duration,
+                "sample_rate": fmt.sample_rate,
+                "channels": fmt.channels_per_frame,
+            }
+        )
+    else:
+        print(f"Output:     {output_path}")
 
     return EXIT_SUCCESS
 

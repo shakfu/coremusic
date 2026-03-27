@@ -110,6 +110,18 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
     )
     mute_parser.set_defaults(func=cmd_mute)
 
+    # device monitor
+    monitor_parser = device_sub.add_parser(
+        "monitor", help="Monitor audio device changes"
+    )
+    monitor_parser.add_argument(
+        "--interval",
+        type=float,
+        default=1.0,
+        help="Poll interval in seconds (default: 1.0)",
+    )
+    monitor_parser.set_defaults(func=cmd_monitor)
+
     parser.set_defaults(func=lambda args: print_help_default(parser))
 
 
@@ -413,5 +425,156 @@ def cmd_mute(args: argparse.Namespace) -> int:
                 print(
                     f"{device.name}: Mute state not available for this device/channel"
                 )
+
+    return EXIT_SUCCESS
+
+
+def _snapshot_devices() -> dict[str, dict[str, Any]]:
+    """Take a snapshot of all device states."""
+    from coremusic.audio import AudioDeviceManager
+
+    snapshot: dict[str, dict[str, Any]] = {}
+    for d in AudioDeviceManager.get_devices():
+        uid = d.uid or d.name or str(d.object_id)
+        state: dict[str, Any] = {
+            "name": d.name,
+            "uid": uid,
+            "is_alive": d.is_alive,
+            "sample_rate": d.sample_rate,
+        }
+        try:
+            state["volume_out"] = d.get_volume(scope="output", channel=0)
+        except Exception:
+            state["volume_out"] = None
+        try:
+            state["mute_out"] = d.get_mute(scope="output", channel=0)
+        except Exception:
+            state["mute_out"] = None
+        snapshot[uid] = state
+    return snapshot
+
+
+def _snapshot_defaults() -> dict[str, str | None]:
+    """Snapshot default input/output device UIDs."""
+    from coremusic.audio import AudioDeviceManager
+
+    defaults: dict[str, str | None] = {"input": None, "output": None}
+    try:
+        dev = AudioDeviceManager.get_default_output_device()
+        if dev:
+            defaults["output"] = dev.uid or dev.name
+    except Exception:
+        pass
+    try:
+        dev = AudioDeviceManager.get_default_input_device()
+        if dev:
+            defaults["input"] = dev.uid or dev.name
+    except Exception:
+        pass
+    return defaults
+
+
+def cmd_monitor(args: argparse.Namespace) -> int:
+    """Monitor audio device changes (connect/disconnect, sample rate, volume, defaults)."""
+    import signal
+    import threading
+    import time
+
+    stop_event = threading.Event()
+    events: list[dict[str, Any]] = []
+
+    def signal_handler(sig: int, frame: Any) -> None:
+        stop_event.set()
+
+    original_handler = signal.signal(signal.SIGINT, signal_handler)
+
+    try:
+        prev_devices = _snapshot_devices()
+        prev_defaults = _snapshot_defaults()
+
+        if not args.json:
+            print(
+                f"Monitoring {len(prev_devices)} device(s), polling every {args.interval}s"
+            )
+            print("Press Ctrl+C to stop...\n")
+
+        def emit(event_type: str, device: str, detail: str) -> None:
+            ts = time.time()
+            evt = {"time": ts, "event": event_type, "device": device, "detail": detail}
+            events.append(evt)
+            if not args.json:
+                t = time.strftime("%H:%M:%S", time.localtime(ts))
+                print(f"[{t}] {event_type:<18s} {device}: {detail}")
+
+        while not stop_event.is_set():
+            stop_event.wait(timeout=args.interval)
+            if stop_event.is_set():
+                break
+
+            curr_devices = _snapshot_devices()
+            curr_defaults = _snapshot_defaults()
+
+            # Detect added devices
+            for uid in curr_devices:
+                if uid not in prev_devices:
+                    name = curr_devices[uid]["name"]
+                    emit("device_connected", name or uid, "connected")
+
+            # Detect removed devices
+            for uid in prev_devices:
+                if uid not in curr_devices:
+                    name = prev_devices[uid]["name"]
+                    emit("device_disconnected", name or uid, "disconnected")
+
+            # Detect property changes on existing devices
+            for uid in curr_devices:
+                if uid not in prev_devices:
+                    continue
+                curr = curr_devices[uid]
+                prev = prev_devices[uid]
+                name = curr["name"] or uid
+
+                if curr["sample_rate"] != prev["sample_rate"]:
+                    emit(
+                        "sample_rate_changed",
+                        name,
+                        f"{prev['sample_rate']:.0f} -> {curr['sample_rate']:.0f} Hz",
+                    )
+
+                if curr["volume_out"] != prev["volume_out"]:
+                    prev_vol = prev["volume_out"]
+                    curr_vol = curr["volume_out"]
+                    if prev_vol is not None and curr_vol is not None:
+                        emit(
+                            "volume_changed",
+                            name,
+                            f"{prev_vol:.0%} -> {curr_vol:.0%}",
+                        )
+
+                if curr["mute_out"] != prev["mute_out"]:
+                    state = "muted" if curr["mute_out"] else "unmuted"
+                    emit("mute_changed", name, state)
+
+                if curr["is_alive"] != prev["is_alive"]:
+                    state = "alive" if curr["is_alive"] else "not alive"
+                    emit("alive_changed", name, state)
+
+            # Detect default device changes
+            for scope in ("input", "output"):
+                if curr_defaults[scope] != prev_defaults[scope]:
+                    old = prev_defaults[scope] or "(none)"
+                    new = curr_defaults[scope] or "(none)"
+                    emit(f"default_{scope}_changed", new, f"was {old}")
+
+            prev_devices = curr_devices
+            prev_defaults = curr_defaults
+
+        if args.json:
+            output_json({"event_count": len(events), "events": events})
+        else:
+            print(f"\nStopped. {len(events)} event(s) detected.")
+
+    finally:
+        signal.signal(signal.SIGINT, original_handler)
 
     return EXIT_SUCCESS
