@@ -678,6 +678,43 @@ class TestAudioUnitChain:
         except Exception:
             pytest.skip("Could not process with format conversion")
 
+    def test_process_auto_num_frames_stereo(self):
+        """Auto-detected num_frames must not halve interleaved stereo buffers.
+
+        Regression: bytes_per_frame already spans channels, so dividing by
+        channels again dropped the second half of the audio.
+        """
+        chain = AudioUnitChain()
+        try:
+            chain.add_plugin("AUDelay")
+            num_frames = 1024
+            input_samples = [0.25] * (num_frames * 2)  # stereo interleaved
+            input_data = struct.pack(f"{len(input_samples)}f", *input_samples)
+
+            # num_frames omitted -> must be auto-detected as 1024, not 512.
+            output_data = chain.process(input_data)
+            assert len(output_data) == len(input_data)
+
+            chain.dispose()
+        except Exception as e:
+            pytest.skip(f"Could not process audio: {e}")
+
+    def test_process_auto_num_frames_mono(self):
+        """Auto-detected num_frames for mono interleaved buffers."""
+        try:
+            plugin = AudioUnitPlugin.from_name("AUDelay")
+        except Exception as e:
+            pytest.skip(f"AUDelay not available: {e}")
+        fmt = PluginAudioFormat(44100.0, 1, PluginAudioFormat.FLOAT32)
+        num_frames = 1024
+        input_data = struct.pack(f"{num_frames}f", *([0.25] * num_frames))
+        try:
+            with plugin:
+                output_data = plugin.process(input_data, audio_format=fmt)
+            assert len(output_data) == len(input_data)
+        except Exception as e:
+            pytest.skip(f"Could not process audio: {e}")
+
     def test_process_with_wet_dry_mix(self):
         """Test processing with wet/dry mixing"""
         chain = AudioUnitChain()

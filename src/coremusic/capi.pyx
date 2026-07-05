@@ -1704,13 +1704,17 @@ def extended_audio_file_read_into(long ext_file_id, int num_frames,
     return (actual_size, frames_to_read)
 
 
-def extended_audio_file_write(long ext_file_id, int num_frames, bytes audio_data):
+def extended_audio_file_write(long ext_file_id, int num_frames, bytes audio_data,
+                              int num_channels=2):
     """Write audio frames to ExtendedAudioFile
 
     Args:
         ext_file_id: ExtAudioFile ID
         num_frames: Number of frames to write
-        audio_data: Audio data bytes
+        audio_data: Audio data bytes (interleaved samples)
+        num_channels: Channels in the supplied buffer (default: 2). Must match the
+            client data format (the PCM feed) when encoding, or the file format
+            otherwise; a wrong value mislabels the buffer and corrupts output.
     """
     cdef at.ExtAudioFileRef ext_file = <at.ExtAudioFileRef>ext_file_id
     cdef cf.UInt32 frames = num_frames
@@ -1719,7 +1723,7 @@ def extended_audio_file_write(long ext_file_id, int num_frames, bytes audio_data
 
     cdef at.AudioBufferList buffer_list
     buffer_list.mNumberBuffers = 1
-    buffer_list.mBuffers[0].mNumberChannels = 2
+    buffer_list.mBuffers[0].mNumberChannels = num_channels
     buffer_list.mBuffers[0].mDataByteSize = buffer_size
     buffer_list.mBuffers[0].mData = buffer
 
@@ -1794,6 +1798,24 @@ def get_extended_audio_file_property_client_channel_layout() -> int:
 def get_extended_audio_file_property_codec_manufacturer() -> int:
     """Get the codec manufacturer for an extended audio file"""
     return at.kExtAudioFileProperty_CodecManufacturer
+
+def get_extended_audio_file_property_audio_converter() -> int:
+    """Get the underlying AudioConverter for an extended audio file.
+
+    Reading this property returns the AudioConverterRef (as a pointer) that the
+    ExtAudioFile uses internally for encoding, so codec settings such as the
+    encode bitrate can be applied to it.
+    """
+    return at.kExtAudioFileProperty_AudioConverter
+
+def get_extended_audio_file_property_converter_config() -> int:
+    """Get the converter-config property for an extended audio file.
+
+    Setting this property (to NULL) makes the ExtAudioFile re-read its
+    converter's current settings, which is how a bitrate change applied to the
+    converter takes effect before writing.
+    """
+    return at.kExtAudioFileProperty_ConverterConfig
 
 def get_extended_audio_file_property_audio_file() -> int:
     """Get the audio file for an extended audio file"""
@@ -4077,20 +4099,32 @@ cdef class AudioOutputStreamImpl:
 
     def stop(self):
         """Stop pulling audio."""
+        cdef at.AudioUnit u
         if not self._initialized or not self._active:
             return
-        at.AudioOutputUnitStop(self.output_unit)
+        # Release the GIL: AudioOutputUnitStop waits for the in-flight render
+        # callback to return, and that callback (output_stream_render_callback)
+        # blocks on `with gil:`. Holding the GIL here would deadlock it.
+        u = self.output_unit
+        with nogil:
+            at.AudioOutputUnitStop(u)
         self._active = False
 
     def close(self):
         """Stop and dispose the output unit."""
+        cdef at.AudioUnit u
         if self.output_unit != NULL:
-            if self._active:
-                at.AudioOutputUnitStop(self.output_unit)
-                self._active = False
-            at.AudioUnitUninitialize(self.output_unit)
-            at.AudioComponentInstanceDispose(self.output_unit)
+            # Release the GIL for the same reason as stop(): stop/uninitialize/
+            # dispose each wait for any running render callback to finish, and
+            # that callback needs the GIL. Null the handle first so no other
+            # path re-enters teardown on the same unit.
+            u = self.output_unit
             self.output_unit = NULL
+            self._active = False
+            with nogil:
+                at.AudioOutputUnitStop(u)
+                at.AudioUnitUninitialize(u)
+                at.AudioComponentInstanceDispose(u)
         # The unit is stopped and disposed, so no callback can touch _octl.
         if self._octl != NULL:
             free(self._octl)
@@ -4108,14 +4142,17 @@ cdef class AudioOutputStreamImpl:
         return bool(self._error)
 
     def __dealloc__(self):
+        cdef at.AudioUnit u
         if self._octl != NULL:
             free(self._octl)
             self._octl = NULL
         if self.output_unit != NULL:
-            at.AudioOutputUnitStop(self.output_unit)
-            at.AudioUnitUninitialize(self.output_unit)
-            at.AudioComponentInstanceDispose(self.output_unit)
+            u = self.output_unit
             self.output_unit = NULL
+            with nogil:
+                at.AudioOutputUnitStop(u)
+                at.AudioUnitUninitialize(u)
+                at.AudioComponentInstanceDispose(u)
 
 
 # ============================================================================
@@ -4370,20 +4407,32 @@ cdef class AudioInputStreamImpl:
 
     def stop(self):
         """Stop capturing audio."""
+        cdef at.AudioUnit u
         if not self._initialized or not self._active:
             return
-        at.AudioOutputUnitStop(self.input_unit)
+        # Release the GIL: AudioOutputUnitStop waits for the in-flight capture
+        # callback to return, and that callback (input_stream_capture_callback)
+        # blocks on `with gil:`. Holding the GIL here would deadlock it.
+        u = self.input_unit
+        with nogil:
+            at.AudioOutputUnitStop(u)
         self._active = False
 
     def close(self):
         """Stop and dispose the input unit."""
+        cdef at.AudioUnit u
         if self.input_unit != NULL:
-            if self._active:
-                at.AudioOutputUnitStop(self.input_unit)
-                self._active = False
-            at.AudioUnitUninitialize(self.input_unit)
-            at.AudioComponentInstanceDispose(self.input_unit)
+            # Release the GIL for the same reason as stop(): stop/uninitialize/
+            # dispose each wait for any running capture callback to finish, and
+            # that callback needs the GIL. Null the handle first so no other
+            # path re-enters teardown on the same unit.
+            u = self.input_unit
             self.input_unit = NULL
+            self._active = False
+            with nogil:
+                at.AudioOutputUnitStop(u)
+                at.AudioUnitUninitialize(u)
+                at.AudioComponentInstanceDispose(u)
         if self._capture_buffer != NULL:
             free(self._capture_buffer)
             self._capture_buffer = NULL
@@ -4413,11 +4462,14 @@ cdef class AudioInputStreamImpl:
         return self._last_status
 
     def __dealloc__(self):
+        cdef at.AudioUnit u
         if self.input_unit != NULL:
-            at.AudioOutputUnitStop(self.input_unit)
-            at.AudioUnitUninitialize(self.input_unit)
-            at.AudioComponentInstanceDispose(self.input_unit)
+            u = self.input_unit
             self.input_unit = NULL
+            with nogil:
+                at.AudioOutputUnitStop(u)
+                at.AudioUnitUninitialize(u)
+                at.AudioComponentInstanceDispose(u)
         if self._capture_buffer != NULL:
             free(self._capture_buffer)
             self._capture_buffer = NULL

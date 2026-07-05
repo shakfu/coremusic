@@ -55,10 +55,11 @@ class AudioFileType(IntEnum):
     MP1 = 1297106737  # 'MPG1'
     AC3 = 1633889587  # 'ac-3'
     AAC_ADTS = 1633973363  # 'adts'
-    MPEG4 = 1836069990  # 'm4a '
-    M4A = 1836069990  # 'm4a '
+    MPEG4 = 1836069990  # 'mp4f' (kAudioFileMPEG4Type)
+    M4A = 1832149350  # 'm4af' (kAudioFileM4AType)
     M4B = 1836069986  # 'm4b '
     CAF = 1667327590  # 'caff'
+    FLAC = 1718378851  # 'flac' (kAudioFileFLACType)
     THREEGP = 862417008  # '3gp '
     THREEGP2 = 862416946  # '3gp2'
     AMR = 1634562662  # 'amrf'

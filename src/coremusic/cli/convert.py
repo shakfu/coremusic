@@ -65,6 +65,12 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
         default="high",
         help="Conversion quality (default: high)",
     )
+    file_parser.add_argument(
+        "--bitrate",
+        dest="bitrate",
+        type=int,
+        help="Target AAC bitrate in kbps (e.g. 128, 256); AAC (.m4a/.aac) only",
+    )
     file_parser.set_defaults(func=cmd_convert)
 
     # convert batch (batch conversion)
@@ -118,6 +124,12 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
         type=int,
         choices=[8, 16, 24, 32],
         help="Output bit depth",
+    )
+    batch_parser.add_argument(
+        "--bitrate",
+        dest="bitrate",
+        type=int,
+        help="Target AAC bitrate in kbps (e.g. 128, 256); AAC (.m4a/.aac) only",
     )
     batch_parser.add_argument(
         "--recursive",
@@ -229,13 +241,16 @@ def cmd_convert(args: argparse.Namespace) -> int:
     # clear error before any work is done.
     _get_file_type_for_extension(output_path)
 
-    # Only PCM/lossless output is supported; reject a compressed --format override
-    # instead of silently ignoring it.
+    # A --format override may request PCM or a supported compressed codec
+    # (AAC/ALAC/FLAC). Anything else (e.g. MP3) is rejected up front.
+    format_override: str | None = None
     if getattr(args, "output_format", None):
-        if get_format_id(args.output_format) != "lpcm":
+        format_override = get_format_id(args.output_format)
+        allowed_overrides = {"lpcm", "aac ", "alac", "flac"}
+        if format_override not in allowed_overrides:
             raise CLIError(
-                f"Only PCM/lossless output is supported; "
-                f"'{args.output_format}' output is not available."
+                f"Unsupported output codec '{args.output_format}'. "
+                f"Supported: pcm, aac, alac, flac."
             )
 
     # Read the source format for building the destination and for reporting.
@@ -269,10 +284,44 @@ def cmd_convert(args: argparse.Namespace) -> int:
         bits_per_channel=dest_bits,
     )
 
+    # An explicit compressed --format overrides the PCM description so the caller
+    # can, e.g., force ALAC into an .m4a container (which defaults to AAC). When
+    # no override is given, a compressed extension still selects its default
+    # codec inside convert_audio_file.
+    if format_override in ("aac ", "alac", "flac"):
+        codec_factory = {
+            "aac ": AudioFormat.aac,
+            "alac": AudioFormat.alac,
+            "flac": AudioFormat.flac,
+        }[format_override]
+        dest_format = codec_factory(
+            sample_rate=float(dest_sample_rate), channels=dest_channels
+        )
+
+    # Resolve the effective destination so reporting reflects the real codec
+    # (a compressed container defaults to a codec even without --format).
+    from coremusic.audio.utilities import _compressed_output_format
+
+    try:
+        codec = _compressed_output_format(str(output_path), dest_format)
+    except ValueError as e:
+        raise CLIError(str(e))
+    if codec is not None:
+        dest_format = codec
+
+    # --bitrate is specified in kbps for the CLI; the library API is bits/sec.
+    bitrate_bps: int | None = None
+    if getattr(args, "bitrate", None):
+        if args.bitrate <= 0:
+            raise CLIError(f"--bitrate must be positive, got {args.bitrate}")
+        bitrate_bps = args.bitrate * 1000
+
     # Delegate the read/convert/write to the shared library helper, which uses
     # the callback-based converter API required for sample-rate changes.
     try:
-        convert_audio_file(str(input_path), str(output_path), dest_format)
+        convert_audio_file(
+            str(input_path), str(output_path), dest_format, bitrate=bitrate_bps
+        )
     except ValueError as e:
         raise CLIError(str(e))
     except Exception as e:
@@ -367,16 +416,24 @@ def cmd_batch(args: argparse.Namespace) -> int:
     # Get output extension
     output_ext = _get_output_extension(args.output_format)
 
-    # Only PCM/lossless containers are writable; fail fast before processing.
-    if get_format_id(args.output_format) != "lpcm":
+    # PCM or a supported compressed codec (AAC/ALAC/FLAC); fail fast otherwise.
+    batch_format_id = get_format_id(args.output_format)
+    if batch_format_id not in {"lpcm", "aac ", "alac", "flac"}:
         raise CLIError(
-            f"Only PCM/lossless output is supported; "
-            f"'{args.output_format}' output is not available."
+            f"Unsupported output codec '{args.output_format}'. "
+            f"Supported: pcm, aac, alac, flac."
         )
     try:
         resolve_output_file_type(f"x{output_ext}")
     except ValueError as e:
         raise CLIError(str(e))
+
+    # --bitrate is kbps for the CLI; the library API is bits/sec.
+    batch_bitrate_bps: int | None = None
+    if getattr(args, "bitrate", None):
+        if args.bitrate <= 0:
+            raise CLIError(f"--bitrate must be positive, got {args.bitrate}")
+        batch_bitrate_bps = args.bitrate * 1000
 
     results = []
     success_count = 0
@@ -437,7 +494,21 @@ def cmd_batch(args: argparse.Namespace) -> int:
                 bits_per_channel=dest_bits,
             )
 
-            convert_audio_file(str(input_path), str(output_path), dest_format)
+            # Honor an explicit compressed codec (else a compressed extension
+            # falls back to its default codec inside convert_audio_file).
+            if batch_format_id in ("aac ", "alac", "flac"):
+                codec_factory = {
+                    "aac ": AudioFormat.aac,
+                    "alac": AudioFormat.alac,
+                    "flac": AudioFormat.flac,
+                }[batch_format_id]
+                dest_format = codec_factory(
+                    sample_rate=float(dest_sample_rate), channels=dest_channels
+                )
+
+            convert_audio_file(
+                str(input_path), str(output_path), dest_format, bitrate=batch_bitrate_bps
+            )
             success_count += 1
 
         except Exception as e:

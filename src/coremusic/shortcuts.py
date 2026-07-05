@@ -16,7 +16,7 @@ Example:
     key, mode = cm.analyze_key("song.wav")
 
     # Quick conversion
-    cm.convert("input.wav", "output.mp3")
+    cm.convert("input.wav", "output.m4a")
 """
 
 from __future__ import annotations
@@ -195,6 +195,7 @@ def convert(
     sample_rate: float | None = None,
     channels: int | None = None,
     bit_depth: int | None = None,
+    bitrate: int | None = None,
 ) -> None:
     """Convert an audio file to another format.
 
@@ -206,15 +207,20 @@ def convert(
         sample_rate: Target sample rate (None = keep original)
         channels: Target channel count (None = keep original)
         bit_depth: Target bit depth (None = keep original)
+        bitrate: Target AAC encode bitrate in bits/sec (e.g. 128000). Only valid
+            for .m4a/.aac output; rejected for PCM and lossless (ALAC/FLAC).
 
-    Supported output containers: .wav, .aiff, .caf (lossless PCM). Compressed
-    formats such as .mp3, .m4a, and .flac raise a clear error (macOS cannot
-    encode them through this path).
+    Supported output containers: .wav, .aiff, .caf (lossless PCM), plus
+    compressed .m4a (AAC), .aac (AAC/ADTS), and .flac, which are encoded via
+    ExtAudioFile. .mp3, .ogg, and .opus raise a clear error (macOS AudioToolbox
+    cannot encode them).
 
     Example:
         >>> cm.convert("input.wav", "output.aiff")
         >>> cm.convert("stereo.wav", "mono.wav", channels=1)
         >>> cm.convert("hires.wav", "cd.wav", sample_rate=44100, bit_depth=16)
+        >>> cm.convert("song.wav", "song.m4a")   # AAC
+        >>> cm.convert("song.wav", "song.flac")  # lossless
     """
     from .audio.core import AudioFormat
     from .audio.utilities import convert_audio_file
@@ -245,7 +251,9 @@ def convert(
         bits_per_channel=out_bits,
     )
 
-    convert_audio_file(str(input_path), str(output_path), output_format)
+    convert_audio_file(
+        str(input_path), str(output_path), output_format, bitrate=bitrate
+    )
 
 
 def analyze_tempo(path: str | Path) -> float:

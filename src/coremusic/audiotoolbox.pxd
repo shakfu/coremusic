@@ -331,7 +331,7 @@ cdef extern from "AudioToolbox/AudioComponent.h":
     cdef OSStatus AudioComponentGetDescription(AudioComponent inComponent, AudioComponentDescription* outDesc)
     cdef OSStatus AudioComponentGetVersion(AudioComponent inComponent, UInt32* outVersion)
     cdef OSStatus AudioComponentInstanceNew(AudioComponent inComponent, AudioComponentInstance* outInstance)
-    cdef OSStatus AudioComponentInstanceDispose(AudioComponentInstance inInstance)
+    cdef OSStatus AudioComponentInstanceDispose(AudioComponentInstance inInstance) nogil
     cdef OSStatus AudioComponentInstanceCanDo(AudioComponentInstance inInstance, SInt16 inSelectorID)
 
 
@@ -513,7 +513,7 @@ cdef extern from "AudioToolbox/AUComponent.h":
 
     # AudioUnit functions
     cdef OSStatus AudioUnitInitialize(AudioUnit inUnit)
-    cdef OSStatus AudioUnitUninitialize(AudioUnit inUnit)
+    cdef OSStatus AudioUnitUninitialize(AudioUnit inUnit) nogil
     cdef OSStatus AudioUnitGetPropertyInfo(AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, UInt32* outDataSize, Boolean* outWritable)
     cdef OSStatus AudioUnitGetProperty(AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, void* outData, UInt32* ioDataSize)
     cdef OSStatus AudioUnitSetProperty(AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, const void* inData, UInt32 inDataSize)
@@ -534,7 +534,7 @@ cdef extern from "AudioToolbox/AUComponent.h":
 cdef extern from "AudioToolbox/AudioOutputUnit.h":
 
     cdef OSStatus AudioOutputUnitStart(AudioUnit ci)
-    cdef OSStatus AudioOutputUnitStop(AudioUnit ci)
+    cdef OSStatus AudioOutputUnitStop(AudioUnit ci) nogil
 
 
 cdef extern from "AudioToolbox/AudioConverter.h":

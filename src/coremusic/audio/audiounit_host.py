@@ -930,13 +930,19 @@ class AudioUnitPlugin:
         if audio_format is None:
             audio_format = self._audio_format
 
-        # Auto-detect num_frames if not provided
+        # Auto-detect num_frames if not provided. For interleaved data
+        # bytes_per_frame already spans all channels, so dividing by channels
+        # again would halve the count; only the non-interleaved (per-sample)
+        # case needs the extra channel division.
         if num_frames is None:
             if audio_format.interleaved:
-                bytes_per_frame = audio_format.bytes_per_frame
+                num_frames = len(input_data) // audio_format.bytes_per_frame
             else:
-                bytes_per_frame = audio_format.bytes_per_sample
-            num_frames = len(input_data) // bytes_per_frame // audio_format.channels
+                num_frames = (
+                    len(input_data)
+                    // audio_format.bytes_per_sample
+                    // audio_format.channels
+                )
 
         # Convert input to float32 interleaved (AudioUnit native format)
         plugin_format = PluginAudioFormat(
@@ -1482,12 +1488,18 @@ class AudioUnitChain:
         if audio_format is None:
             audio_format = self._audio_format
 
-        # Auto-detect num_frames if not provided
+        # Auto-detect num_frames if not provided. Interleaved bytes_per_frame
+        # already spans all channels; dividing by channels again (as before)
+        # halved stereo buffers, dropping the second half of the audio.
         if num_frames is None:
-            bytes_per_frame = audio_format.bytes_per_frame
-            if not audio_format.interleaved:
-                bytes_per_frame = audio_format.bytes_per_sample
-            num_frames = len(input_data) // bytes_per_frame // audio_format.channels
+            if audio_format.interleaved:
+                num_frames = len(input_data) // audio_format.bytes_per_frame
+            else:
+                num_frames = (
+                    len(input_data)
+                    // audio_format.bytes_per_sample
+                    // audio_format.channels
+                )
 
         # Process through each plugin in sequence
         current_data = input_data

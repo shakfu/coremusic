@@ -16,7 +16,7 @@ A zero-dependency music development toolkit for macOS providing Python access to
 | **CoreMIDI** | Device/endpoint management, UMP (MIDI 1.0/2.0), thru connections, transforms |
 | **Ableton Link** | Network tempo sync, beat-accurate playback/sequencing |
 
-**Audio**: File I/O (WAV, AIFF, MP3), real-time processing, analysis (peak, RMS, tempo, key), buffer pool, memory-mapped I/O
+**Audio**: File I/O (read WAV/AIFF/CAF/MP3/AAC/M4A/ALAC/FLAC; write WAV/AIFF/CAF plus AAC/M4A/ALAC/FLAC encoding), real-time processing, analysis (peak, RMS, tempo, key), buffer pool, memory-mapped I/O
 
 **MIDI**: Device discovery, virtual devices, routing, transformation pipeline (transpose, quantize, humanize, harmonize)
 
@@ -181,8 +181,9 @@ tempo = analyze_tempo("song.wav")      # Get BPM
 key, mode = analyze_key("song.wav")    # Get musical key
 info = get_info("song.wav")            # Get file metadata
 
-# Quick conversion (lossless containers: .wav, .aiff, .caf)
+# Quick conversion (.wav, .aiff, .caf, plus .m4a/.aac/.flac encoding)
 convert("input.wav", "output.aiff")
+convert("song.wav", "song.m4a", bitrate=192000)   # AAC at 192 kbps
 
 # Render a MIDI file through an instrument plugin to audio
 from coremusic.shortcuts import render_midi
@@ -191,6 +192,25 @@ render_midi("DLSMusicDevice", "song.mid", "song.wav")
 # List resources
 devices = list_devices()
 plugins = list_plugins(type='effect')
+```
+
+### Runnable demos
+
+The [`demos/`](demos/) directory has small, self-contained scripts:
+host an AudioUnit effect chain, render MIDI to WAV, play a real-time tone, and
+run an Ableton Link-synced step sequencer. See [`demos/README.md`](demos/README.md).
+
+```bash
+python demos/host_au_chain.py         # WAV -> effect chain -> WAV
+python demos/render_midi_to_wav.py    # MIDI -> instrument -> WAV
+python demos/output_stream_tone.py    # real-time sine tone
+python demos/link_sequencer.py        # Link-synced step sequencer
+```
+
+Run all four in sequence, writing output to `build/demos-output/`, with:
+
+```bash
+make demos
 ```
 
 ### Audio Files

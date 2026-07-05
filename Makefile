@@ -7,7 +7,10 @@
 .PHONY: all sync build rebuild test test-all test-clean-install lint format typecheck qa \
         clean distclean wheel sdist dist check publish-test publish upgrade \
         coverage coverage-html docs docs-clean docs-serve docs-deploy docs-linkcheck \
-        release help
+        demos release help
+
+# Directory for demo output artifacts
+DEMOS_OUTPUT := build/demos-output
 
 # Default target
 all: build
@@ -30,6 +33,29 @@ test:
 # Run all tests including slow tests
 test-all:
 	@uv run pytest
+
+# Run the demo scripts in sequence, writing all output to build/demos-output/.
+# The two file-producing demos write their WAVs there; the two real-time demos
+# tee their console output to matching .log files. Real-time demos use short
+# durations so the target completes unattended.
+demos:
+	@mkdir -p $(DEMOS_OUTPUT)
+	@echo "Running demos -> $(DEMOS_OUTPUT)/"
+	@echo "== host_au_chain =="
+	@uv run python demos/host_au_chain.py \
+		tests/data/wav/amen.wav $(DEMOS_OUTPUT)/out_chain.wav \
+		2>&1 | tee $(DEMOS_OUTPUT)/host_au_chain.log
+	@echo "== render_midi_to_wav =="
+	@uv run python demos/render_midi_to_wav.py \
+		tests/data/midi/demo.mid $(DEMOS_OUTPUT)/out_midi.wav \
+		2>&1 | tee $(DEMOS_OUTPUT)/render_midi_to_wav.log
+	@echo "== output_stream_tone =="
+	@uv run python demos/output_stream_tone.py --duration 3 \
+		2>&1 | tee $(DEMOS_OUTPUT)/output_stream_tone.log
+	@echo "== link_sequencer =="
+	@uv run python demos/link_sequencer.py --duration 6 \
+		2>&1 | tee $(DEMOS_OUTPUT)/link_sequencer.log
+	@echo "Demos complete. Output in $(DEMOS_OUTPUT)/"
 
 # Test clean installation without optional dependencies
 test-clean-install:
@@ -159,6 +185,9 @@ help:
 	@echo "    test-clean-install - Test clean installation"
 	@echo "    coverage       - Run tests with coverage"
 	@echo "    coverage-html  - Generate HTML coverage report"
+	@echo ""
+	@echo "  Demos:"
+	@echo "    demos          - Run demo scripts, output to build/demos-output/"
 	@echo ""
 	@echo "  Quality:"
 	@echo "    lint           - Lint with ruff"

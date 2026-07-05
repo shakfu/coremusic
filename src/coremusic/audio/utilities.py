@@ -256,8 +256,8 @@ def batch_convert(
     return converted_files
 
 
-# Lossless PCM containers coremusic can currently write.
-def _writable_output_types() -> dict[str, int]:
+# Lossless PCM containers coremusic writes directly (raw PCM samples).
+def _pcm_output_types() -> dict[str, int]:
     from coremusic.constants import AudioFileType
 
     return {
@@ -268,20 +268,84 @@ def _writable_output_types() -> dict[str, int]:
     }
 
 
-# Extensions coremusic cannot write, with a reason for a clear error. Compressed
-# output (AAC/M4A) needs a separate client/file data-format path that is not yet
-# wired up, so it is rejected rather than emitting a broken or PCM-in-MP4 file.
+# Compressed containers coremusic encodes via ExtAudioFile. The value is the
+# container (AudioFileTypeID); the codec is chosen in _compressed_output_format.
+def _compressed_output_types() -> dict[str, int]:
+    from coremusic.constants import AudioFileType
+
+    return {
+        ".m4a": AudioFileType.M4A,
+        ".aac": AudioFileType.AAC_ADTS,
+        ".flac": AudioFileType.FLAC,
+    }
+
+
+# Every extension coremusic can write, PCM and compressed alike.
+def _writable_output_types() -> dict[str, int]:
+    types = _pcm_output_types()
+    types.update(_compressed_output_types())
+    return types
+
+
+# Extensions coremusic cannot write, with a reason for a clear error.
 _UNWRITABLE_OUTPUT_REASONS = {
-    ".m4a": "AAC/M4A encoding is not yet supported; "
-    "use .wav, .aiff, or .caf for lossless output",
-    ".aac": "AAC encoding is not yet supported; "
-    "use .wav, .aiff, or .caf for lossless output",
     ".mp3": "macOS AudioToolbox can decode MP3 but cannot encode it",
-    ".flac": "FLAC output is not yet supported; "
-    "use .wav, .aiff, or .caf for lossless output",
     ".ogg": "OGG/Vorbis is not supported by macOS AudioToolbox",
     ".opus": "Opus output is not supported by macOS AudioToolbox",
 }
+
+
+def _compressed_output_format(
+    output_path: str, requested: AudioFormat
+) -> AudioFormat | None:
+    """Resolve the compressed codec for a compressed output extension.
+
+    Returns None for PCM containers (the caller writes raw PCM). For compressed
+    containers it returns the AudioFormat describing the codec to encode into,
+    honoring an explicit compressed ``requested`` format when one is given and
+    otherwise defaulting by extension (.m4a/.aac -> AAC, .flac -> FLAC).
+
+    Raises:
+        ValueError: If a compressed ``requested`` format is incompatible with
+            the chosen container extension.
+    """
+    ext = Path(output_path).suffix.lower()
+    compressed_exts = _compressed_output_types()
+    sr = requested.sample_rate
+    ch = requested.channels_per_frame
+
+    # Map each container extension to the codecs it may hold.
+    container_codecs: dict[str, set[str]] = {
+        ".m4a": {"aac ", "alac"},
+        ".aac": {"aac "},
+        ".flac": {"flac"},
+    }
+
+    if requested.is_compressed:
+        codec = requested.format_id
+        if ext not in compressed_exts:
+            raise ValueError(
+                f"Cannot write '{codec}' audio to a '{ext}' container; "
+                f"use one of {', '.join(sorted(compressed_exts))}."
+            )
+        allowed = container_codecs[ext]
+        if codec not in allowed:
+            raise ValueError(
+                f"Container '{ext}' cannot hold '{codec}'; "
+                f"it supports {', '.join(sorted(allowed))}."
+            )
+        # Normalize to a well-formed compressed ASBD at the requested rate/channels.
+        factory = {"aac ": AudioFormat.aac, "alac": AudioFormat.alac,
+                   "flac": AudioFormat.flac}[codec]
+        return factory(sample_rate=sr, channels=ch)
+
+    if ext not in compressed_exts:
+        return None  # PCM container: caller writes raw PCM.
+
+    # PCM format requested into a compressed container: pick the default codec.
+    if ext == ".flac":
+        return AudioFormat.flac(sample_rate=sr, channels=ch)
+    return AudioFormat.aac(sample_rate=sr, channels=ch)
 
 
 def resolve_output_file_type(output_path: str) -> int:
@@ -308,7 +372,10 @@ def resolve_output_file_type(output_path: str) -> int:
 
 
 def convert_audio_file(
-    input_path: str, output_path: str, output_format: AudioFormat
+    input_path: str,
+    output_path: str,
+    output_format: AudioFormat,
+    bitrate: int | None = None,
 ) -> None:
     """Convert a single audio file to a different format.
 
@@ -322,6 +389,9 @@ def convert_audio_file(
         input_path: Input file path
         output_path: Output file path
         output_format: Target AudioFormat
+        bitrate: Target encode bitrate in bits/sec for lossy (AAC) output. Only
+            valid for AAC (.m4a/.aac); ignored for PCM containers and rejected
+            for lossless codecs (ALAC/FLAC).
 
     Example:
         ```python
@@ -351,15 +421,39 @@ def convert_audio_file(
         # fail clearly instead of being silently copied under a wrong name.
         file_type = resolve_output_file_type(output_path)
 
+        # Resolve the compressed codec (None for PCM containers).
+        codec = _compressed_output_format(output_path, output_format)
+
+        # Validate bitrate applicability before any fast-path copy, so it never
+        # slips through silently. It only applies to AAC output.
+        if bitrate is not None and (codec is None or codec.format_id != "aac "):
+            raise ValueError(
+                "bitrate is only supported for AAC output (.m4a/.aac); "
+                "PCM and lossless (ALAC/FLAC) do not accept it."
+            )
+
         # Fast path: identical format AND same container -> copy bytes as-is.
         # The container check prevents copying, e.g., WAV bytes into a .aiff.
+        # Skipped when a bitrate is requested, which implies a re-encode.
         same_container = (
             Path(input_path).suffix.lower() == Path(output_path).suffix.lower()
         )
-        if same_container and _formats_match(source_format, output_format):
+        if (
+            bitrate is None
+            and same_container
+            and _formats_match(source_format, output_format)
+        ):
             import shutil
 
             shutil.copy(input_path, output_path)
+            return
+
+        # Compressed output (AAC/ALAC/FLAC): decode to PCM, then let ExtAudioFile
+        # run the encoder while writing the compressed container.
+        if codec is not None:
+            _encode_compressed(
+                input_file, source_format, output_path, file_type, codec, bitrate
+            )
             return
 
         # Read all audio data
@@ -393,6 +487,81 @@ def convert_audio_file(
             output_ext_file.write(num_frames, converted_data)
         finally:
             output_ext_file.close()
+
+
+def _pcm_feed_format(sample_rate: float, channels: int) -> AudioFormat:
+    """Canonical 16-bit signed, little-endian, packed, interleaved PCM.
+
+    This is the client (feed) format handed to the encoder. 16-bit is the source
+    depth CoreAudio's AAC/ALAC/FLAC encoders expect for a lossless-quality feed.
+    """
+    bytes_per_frame = 2 * channels
+    return AudioFormat(
+        sample_rate=sample_rate,
+        format_id="lpcm",
+        format_flags=12,  # kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked
+        bytes_per_packet=bytes_per_frame,
+        frames_per_packet=1,
+        bytes_per_frame=bytes_per_frame,
+        channels_per_frame=channels,
+        bits_per_channel=16,
+    )
+
+
+def _encode_compressed(
+    input_file: AudioFile,
+    source_format: AudioFormat,
+    output_path: str,
+    file_type: int,
+    codec: AudioFormat,
+    bitrate: int | None = None,
+) -> None:
+    """Encode an already-open source file into a compressed container.
+
+    The source is decoded/converted to a canonical PCM feed at the codec's rate
+    and channel count, then written through an ExtAudioFile whose file format is
+    the compressed codec and whose client format is the PCM feed; CoreAudio runs
+    the encoder as it writes. An optional ``bitrate`` targets the AAC encoder.
+    """
+    if bitrate is not None and codec.format_id != "aac ":
+        raise ValueError(
+            f"bitrate is only supported for AAC output, not '{codec.format_id}' "
+            f"(lossless codecs have no bitrate)."
+        )
+
+    feed = _pcm_feed_format(codec.sample_rate, codec.channels_per_frame)
+
+    audio_data, packet_count = input_file.read_packets(0, 999999999)
+
+    if _formats_match(source_format, feed):
+        pcm_data = audio_data
+    else:
+        with AudioConverter(source_format, feed) as converter:
+            needs_complex_conversion = (
+                source_format.sample_rate != feed.sample_rate
+                or source_format.bits_per_channel != feed.bits_per_channel
+            )
+            if needs_complex_conversion:
+                pcm_data = converter.convert_with_callback(audio_data, packet_count)
+            else:
+                pcm_data = converter.convert(audio_data)
+
+    if not pcm_data:
+        raise ValueError("No audio data to encode")
+
+    num_frames = len(pcm_data) // feed.bytes_per_frame
+
+    output_ext_file = ExtendedAudioFile.create(output_path, file_type, codec)
+    try:
+        # Setting the client format tells ExtAudioFile the buffers we hand it are
+        # PCM; it encodes to the codec (the file format) on write.
+        output_ext_file.client_format = feed
+        # Bitrate must be applied after the client format and before writing.
+        if bitrate is not None:
+            output_ext_file.set_encode_bitrate(bitrate)
+        output_ext_file.write(num_frames, pcm_data)
+    finally:
+        output_ext_file.close()
 
 
 def _formats_match(fmt1: AudioFormat, fmt2: AudioFormat) -> bool:
@@ -508,6 +677,15 @@ def trim_audio(
         cm.trim_audio("input.wav", "output.wav", start_time=10.0)
         ```
     """
+    # trim writes raw PCM samples, so it can only target a PCM container.
+    # Re-encoding a trimmed region into a compressed format is convert's job.
+    if Path(output_path).suffix.lower() in _compressed_output_types():
+        raise ValueError(
+            f"trim_audio writes PCM and cannot target "
+            f"'{Path(output_path).suffix.lower()}'; "
+            f"trim to .wav/.aiff/.caf, or use convert to encode."
+        )
+
     with AudioFile(input_path) as input_file:
         format = input_file.format
         sample_rate = format.sample_rate

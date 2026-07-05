@@ -41,6 +41,11 @@ __all__ = [
     "AudioQueue",
 ]
 
+# Compressed codecs coremusic can encode via ExtAudioFile. These are the FourCC
+# format IDs (not container/file types); the container is chosen from the output
+# extension. AAC also covers the .m4a and .aac (ADTS) containers.
+_COMPRESSED_FORMAT_IDS = frozenset({"aac ", "alac", "flac"})
+
 
 class AudioFormat:
     """Pythonic representation of AudioStreamBasicDescription"""
@@ -140,10 +145,83 @@ class AudioFormat:
             bits_per_channel=bits,
         )
 
+    @classmethod
+    def aac(
+        cls, sample_rate: float = 44100.0, channels: int = 2
+    ) -> "AudioFormat":
+        """Create an AAC (lossy) compressed format description.
+
+        The returned description is suitable as the *file* format when creating
+        an ExtAudioFile for encoding; the PCM feed is supplied separately as the
+        client format. CoreAudio fills in the encoder-specific fields, so the
+        packet/frame/bit fields are left at their canonical AAC values.
+
+        Args:
+            sample_rate: Sample rate in Hz (default: 44100.0)
+            channels: Number of channels (default: 2)
+        """
+        return cls(
+            sample_rate=sample_rate,
+            format_id="aac ",
+            format_flags=0,
+            bytes_per_packet=0,
+            frames_per_packet=1024,
+            bytes_per_frame=0,
+            channels_per_frame=channels,
+            bits_per_channel=0,
+        )
+
+    @classmethod
+    def alac(
+        cls, sample_rate: float = 44100.0, channels: int = 2
+    ) -> "AudioFormat":
+        """Create an Apple Lossless (ALAC) compressed format description.
+
+        Args:
+            sample_rate: Sample rate in Hz (default: 44100.0)
+            channels: Number of channels (default: 2)
+        """
+        return cls(
+            sample_rate=sample_rate,
+            format_id="alac",
+            format_flags=0,
+            bytes_per_packet=0,
+            frames_per_packet=4096,
+            bytes_per_frame=0,
+            channels_per_frame=channels,
+            bits_per_channel=0,
+        )
+
+    @classmethod
+    def flac(
+        cls, sample_rate: float = 44100.0, channels: int = 2
+    ) -> "AudioFormat":
+        """Create a FLAC (lossless) compressed format description.
+
+        Args:
+            sample_rate: Sample rate in Hz (default: 44100.0)
+            channels: Number of channels (default: 2)
+        """
+        return cls(
+            sample_rate=sample_rate,
+            format_id="flac",
+            format_flags=0,
+            bytes_per_packet=0,
+            frames_per_packet=4096,
+            bytes_per_frame=0,
+            channels_per_frame=channels,
+            bits_per_channel=0,
+        )
+
     @property
     def is_pcm(self) -> bool:
         """Check if this is a PCM format"""
         return self.format_id == "lpcm"
+
+    @property
+    def is_compressed(self) -> bool:
+        """Check if this is a compressed (non-PCM) format coremusic can encode."""
+        return self.format_id in _COMPRESSED_FORMAT_IDS
 
     @property
     def is_stereo(self) -> bool:
@@ -1129,10 +1207,70 @@ class ExtendedAudioFile(capi.CoreAudioObject):
         if not self._is_open:
             raise AudioFileError("File not open")
 
+        # The buffer layout matches the client format when one is set (the PCM
+        # feed for encoding), otherwise the file's own format. Passing the right
+        # channel count keeps mono/multichannel writes from being mislabeled.
+        if self._client_format is not None:
+            channels = self._client_format.channels_per_frame
+        elif self._file_format is not None:
+            channels = self._file_format.channels_per_frame
+        else:
+            channels = 2
+
         try:
-            capi.extended_audio_file_write(self.object_id, num_frames, audio_data)
+            capi.extended_audio_file_write(
+                self.object_id, num_frames, audio_data, channels
+            )
         except Exception as e:
             raise AudioFileError(f"Failed to write frames: {e}")
+
+    def set_encode_bitrate(self, bitrate: int) -> None:
+        """Set the target encode bitrate (bits/sec) for a compressed output file.
+
+        Applies the bitrate to the ExtAudioFile's internal AudioConverter, then
+        resets the converter config so the change takes effect. Must be called
+        after the client (PCM feed) format is set and before the first write.
+
+        The bitrate behaves as an average/target: CoreAudio's AAC encoder may
+        use fewer bits on simpler material. It is only meaningful for lossy
+        codecs (AAC); lossless codecs (ALAC/FLAC) reject it.
+
+        Args:
+            bitrate: Target bitrate in bits per second (e.g. 128000).
+
+        Raises:
+            ValueError: If bitrate is not a positive integer.
+            AudioFileError: If the codec rejects the bitrate.
+        """
+        if not isinstance(bitrate, int) or bitrate <= 0:
+            raise ValueError(f"bitrate must be a positive integer, got {bitrate!r}")
+
+        self._ensure_not_disposed()
+        if not self._is_open:
+            raise AudioFileError("File not open")
+
+        from ..constants import AudioConverterProperty
+
+        try:
+            converter_data = capi.extended_audio_file_get_property(
+                self.object_id,
+                capi.get_extended_audio_file_property_audio_converter(),
+            )
+            converter_id = struct.unpack("<q", converter_data[:8])[0]
+            capi.audio_converter_set_property(
+                converter_id,
+                int(AudioConverterProperty.BIT_RATE),
+                struct.pack("<I", bitrate),
+            )
+            # Setting ConverterConfig to NULL makes ExtAudioFile re-read the
+            # converter's settings, so the new bitrate is picked up on write.
+            capi.extended_audio_file_set_property(
+                self.object_id,
+                capi.get_extended_audio_file_property_converter_config(),
+                b"\x00" * 8,
+            )
+        except Exception as e:
+            raise AudioFileError(f"Failed to set encode bitrate: {e}")
 
     @property
     def frame_count(self) -> int:

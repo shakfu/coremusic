@@ -59,6 +59,33 @@ Nice-to-have features. Implement when needed or when higher-priority items are d
 
 - [x] Plugin parameter presets as YAML/JSON for reproducible processing pipelines
 - [ ] MIDI learn / CC mapping for AudioUnit parameter automation
+- [ ] Generative MIDI toolkit -- Euclidean rhythm generator
+      (`bjorklund(pulses, steps)`), a step sequencer that emits a `MIDISequence`
+      or scheduled events, and chord triggers (chord name / scale degree ->
+      simultaneous note-ons). Promotes the patterns in `demos/link_sequencer.py`
+      and the `tests/examples/generative` package to first-class library APIs.
+- [ ] Chord and key recognition from notes -- symbolic analysis over MIDI/note
+      input: identify chords from simultaneous notes (root, quality, inversion)
+      and infer key from a note sequence (e.g. Krumhansl-Schmuckler key
+      profiles). Distinct from the existing audio `analyze_key`, which operates
+      on rendered audio rather than notes.
+- [ ] Lossless Standard MIDI File round-trip -- guarantee
+      `MIDISequence.load(path).save(path2)` preserves all tracks, delta timing,
+      running status, tempo/time-signature/meta events, and PPQ (byte-for-byte
+      where possible, otherwise semantically identical). Add a round-trip test
+      over `tests/data/midi/`.
+- [ ] VBR quality knob for AAC encoding. `convert`/`shortcuts.convert` currently
+      expose only a target `bitrate` (ABR). True VBR-by-quality needs
+      `kAudioConverterBitRateControlMode = Variable` plus
+      `kAudioConverterEncodeSoundQualityForVBR` (0-127). Empirically these two
+      properties are rejected via `AudioConverterSetProperty` on both the
+      ExtAudioFile-owned converter and a standalone one
+      (`kAudioFormatUnsupportedPropertyError`), so they likely must be pushed
+      through `kExtAudioFileProperty_ConverterConfig` as a `CFArray` of
+      `CFDictionary` settings -- which requires a small dedicated Cython helper
+      to build the CF objects (the current bytes-based property setter cannot).
+      Scope: verify the ConverterConfig CFArray route, add a `quality` param
+      alongside `bitrate` (mutually exclusive), reject on lossless/PCM.
 
 ### Documentation
 

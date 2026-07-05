@@ -10,4 +10,4 @@ Import from domain subpackages::
     from coremusic.shortcuts import play, convert
 """
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
