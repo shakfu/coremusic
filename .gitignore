@@ -5,6 +5,7 @@ __pycache__
 docs/_build
 site/
 headers/
+REVIEW.md
 
 src/coremusic/capi.c
 src/coremusic/link.cpp

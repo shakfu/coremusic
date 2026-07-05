@@ -22,6 +22,28 @@ __all__ = [
 ]
 
 
+def _parse_buffer_list_channels(data: bytes) -> tuple[int, int]:
+    """Parse an AudioBufferList blob into (buffer_count, total_channels).
+
+    Layout on 64-bit macOS (native little-endian):
+        UInt32 mNumberBuffers; <4 bytes padding>; AudioBuffer mBuffers[]
+    where each AudioBuffer is {UInt32 mNumberChannels; UInt32 mDataByteSize;
+    void* mData} == 16 bytes (8-byte aligned because of the pointer). Channels
+    are summed across all buffers, which is how CoreAudio reports multi-stream
+    devices.
+    """
+    if len(data) < 4:
+        return 0, 0
+    buffer_count = struct.unpack_from("<I", data, 0)[0]
+    total_channels = 0
+    for i in range(buffer_count):
+        base = 8 + i * 16  # skip count(4) + padding(4), then each buffer is 16
+        if base + 4 > len(data):
+            break
+        total_channels += struct.unpack_from("<I", data, base)[0]
+    return buffer_count, total_channels
+
+
 class AudioDevice(capi.CoreAudioObject):
     """Represents a hardware audio device with property access
 
@@ -175,11 +197,36 @@ class AudioDevice(capi.CoreAudioObject):
                 scope_val,
                 0,
             )
-            # AudioBufferList structure - would need detailed parsing
-            # For now, return basic info
-            return {"raw_data_length": len(data)}
+            buffer_count, channels = _parse_buffer_list_channels(data)
+            return {
+                "channels": channels,
+                "buffer_count": buffer_count,
+                "raw_data_length": len(data),
+            }
         except Exception as e:
             raise AudioDeviceError(f"Failed to get stream configuration: {e}")
+
+    def channel_count(self, scope: str = "output") -> int:
+        """Number of channels the device provides in the given scope.
+
+        Args:
+            scope: 'input' or 'output' (default: 'output')
+
+        Returns:
+            Total channel count across all streams in the scope (0 if none).
+        """
+        try:
+            return int(self.get_stream_configuration(scope)["channels"])
+        except AudioDeviceError:
+            return 0
+
+    def has_input(self) -> bool:
+        """Whether the device exposes any input (capture) channels."""
+        return self.channel_count("input") > 0
+
+    def has_output(self) -> bool:
+        """Whether the device exposes any output (playback) channels."""
+        return self.channel_count("output") > 0
 
     def get_volume(self, scope: str = "output", channel: int = 0) -> float | None:
         """Get volume level for a channel
@@ -392,25 +439,21 @@ class AudioDeviceManager:
 
     @staticmethod
     def get_output_devices() -> list[AudioDevice]:
-        """Get all output devices
+        """Get devices that provide output (playback) channels.
 
         Returns:
-            List of AudioDevice objects that have output capability
+            List of AudioDevice objects with at least one output channel.
         """
-        # For now, return all devices - would need to filter by checking
-        # stream configuration for output scope
-        return AudioDeviceManager.get_devices()
+        return [d for d in AudioDeviceManager.get_devices() if d.has_output()]
 
     @staticmethod
     def get_input_devices() -> list[AudioDevice]:
-        """Get all input devices
+        """Get devices that provide input (capture) channels.
 
         Returns:
-            List of AudioDevice objects that have input capability
+            List of AudioDevice objects with at least one input channel.
         """
-        # For now, return all devices - would need to filter by checking
-        # stream configuration for input scope
-        return AudioDeviceManager.get_devices()
+        return [d for d in AudioDeviceManager.get_devices() if d.has_input()]
 
     @staticmethod
     def find_device_by_name(name: str) -> AudioDevice | None:

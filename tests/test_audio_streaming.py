@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Tests for real-time audio streaming module."""
 
+import time
+
 import pytest
+from conftest import has_audio_output
 from coremusic.base import NUMPY_AVAILABLE
 from coremusic.audio.streaming import (
     AudioInputStream,
@@ -146,23 +149,22 @@ class TestAudioOutputStream:
         with pytest.raises(RuntimeError, match="No generator"):
             stream.start()
 
-    def test_start_not_implemented_with_generator(self):
-        """Test that start raises RuntimeError even with generator."""
-        stream = AudioOutputStream()
+    @has_audio_output
+    def test_start_with_generator_runs(self):
+        """Starting with a generator drives the output unit and pulls audio."""
+        stream = AudioOutputStream(channels=2, sample_rate=44100.0, buffer_size=512)
+        counter = {"calls": 0}
 
         def generator(frame_count):
-            try:
-                import numpy as np
-
-                return np.zeros((frame_count, 2), dtype=np.float32)
-            except ImportError:
-                return b"\x00" * (frame_count * 2 * 4)
+            counter["calls"] += 1
+            return b"\x00" * (frame_count * 2 * 4)  # float32 stereo silence
 
         stream.set_generator(generator)
-
-        # Start requires Cython-level callback implementation
-        with pytest.raises(RuntimeError, match="Cython-level callback"):
-            stream.start()
+        with stream:
+            assert stream.is_active
+            time.sleep(0.2)
+        assert not stream.is_active
+        assert counter["calls"] > 0
 
     def test_stop_safe_when_not_active(self):
         """Test that stop is safe when not active."""

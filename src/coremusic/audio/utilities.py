@@ -256,6 +256,57 @@ def batch_convert(
     return converted_files
 
 
+# Lossless PCM containers coremusic can currently write.
+def _writable_output_types() -> dict[str, int]:
+    from coremusic.constants import AudioFileType
+
+    return {
+        ".wav": AudioFileType.WAVE,
+        ".aif": AudioFileType.AIFF,
+        ".aiff": AudioFileType.AIFF,
+        ".caf": AudioFileType.CAF,
+    }
+
+
+# Extensions coremusic cannot write, with a reason for a clear error. Compressed
+# output (AAC/M4A) needs a separate client/file data-format path that is not yet
+# wired up, so it is rejected rather than emitting a broken or PCM-in-MP4 file.
+_UNWRITABLE_OUTPUT_REASONS = {
+    ".m4a": "AAC/M4A encoding is not yet supported; "
+    "use .wav, .aiff, or .caf for lossless output",
+    ".aac": "AAC encoding is not yet supported; "
+    "use .wav, .aiff, or .caf for lossless output",
+    ".mp3": "macOS AudioToolbox can decode MP3 but cannot encode it",
+    ".flac": "FLAC output is not yet supported; "
+    "use .wav, .aiff, or .caf for lossless output",
+    ".ogg": "OGG/Vorbis is not supported by macOS AudioToolbox",
+    ".opus": "Opus output is not supported by macOS AudioToolbox",
+}
+
+
+def resolve_output_file_type(output_path: str) -> int:
+    """Resolve an AudioFileTypeID from an output file extension.
+
+    Replaces the previous behaviour of always writing a WAV stream regardless
+    of the requested extension, which silently produced mislabeled files.
+
+    Raises:
+        ValueError: If the extension names a format coremusic cannot write.
+    """
+    supported = _writable_output_types()
+    ext = Path(output_path).suffix.lower()
+    if ext in supported:
+        return int(supported[ext])
+
+    reason = _UNWRITABLE_OUTPUT_REASONS.get(ext)
+    if reason:
+        raise ValueError(f"Cannot write '{ext}' files: {reason}.")
+    raise ValueError(
+        f"Unsupported output format '{ext}'. "
+        f"Supported: {', '.join(sorted(supported))}."
+    )
+
+
 def convert_audio_file(
     input_path: str, output_path: str, output_format: AudioFormat
 ) -> None:
@@ -296,8 +347,16 @@ def convert_audio_file(
     with AudioFile(input_path) as input_file:
         source_format = input_file.format
 
-        # If formats match exactly, just copy
-        if _formats_match(source_format, output_format):
+        # Validate the requested container up front so unsupported extensions
+        # fail clearly instead of being silently copied under a wrong name.
+        file_type = resolve_output_file_type(output_path)
+
+        # Fast path: identical format AND same container -> copy bytes as-is.
+        # The container check prevents copying, e.g., WAV bytes into a .aiff.
+        same_container = (
+            Path(input_path).suffix.lower() == Path(output_path).suffix.lower()
+        )
+        if same_container and _formats_match(source_format, output_format):
             import shutil
 
             shutil.copy(input_path, output_path)
@@ -326,11 +385,9 @@ def convert_audio_file(
         # Calculate number of frames from converted data
         num_frames = len(converted_data) // output_format.bytes_per_frame
 
-        # Write to output file
-        from .. import capi
-
+        # Write to output file, honoring the requested container.
         output_ext_file = ExtendedAudioFile.create(
-            output_path, capi.get_audio_file_wave_type(), output_format
+            output_path, file_type, output_format
         )
         try:
             output_ext_file.write(num_frames, converted_data)
@@ -469,12 +526,10 @@ def trim_audio(
             start_packet, packet_count or 999999999
         )
 
-        # Write to output file using ExtendedAudioFile
-        from .. import capi
-
+        # Write to output file, honoring the requested container.
         output_ext_file = ExtendedAudioFile.create(
             output_path,
-            capi.get_audio_file_wave_type(),  # WAV file
+            resolve_output_file_type(output_path),
             format,
         )
         try:

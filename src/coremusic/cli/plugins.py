@@ -926,10 +926,9 @@ def cmd_chain(args: argparse.Namespace) -> int:
 
 def cmd_render(args: argparse.Namespace) -> int:
     """Render MIDI through instrument plugin to audio file."""
-    import struct
-    import wave
     from pathlib import Path
 
+    from coremusic.audio.audiounit_host import render_midi_file
     from coremusic.midi.utilities import MIDISequence
 
     from ._utils import require_file
@@ -937,155 +936,52 @@ def cmd_render(args: argparse.Namespace) -> int:
     midi_path = require_file(args.midi)
     output_path = Path(args.output)
 
-    # Load MIDI file
+    # Load MIDI file (for reporting; render_midi_file loads it again internally).
     try:
         seq = MIDISequence.load(str(midi_path))
     except Exception as e:
         raise CLIError(f"Failed to load MIDI file: {e}")
 
-    # Find the plugin
-    plugin = _find_plugin_by_name(args.name)
-    plugin_type = plugin.get("type", "")
-
-    # Check if it's an instrument plugin
-    if plugin_type != "aumu":
-        raise CLIError(
-            f"Plugin '{plugin.get('name')}' is not an instrument plugin (type: {plugin_type})"
-        )
-
     sample_rate = args.sample_rate
     num_channels = 2
     extra_duration = args.duration if args.duration is not None else 1.0
     total_duration = seq.duration + extra_duration
-    total_frames = int(total_duration * sample_rate)
+    event_count = sum(len(track.events) for track in seq.tracks)
 
     if not args.json:
         print(f"Rendering:  {midi_path.name}")
-        print(f"Plugin:     {plugin.get('name')}")
         print(f"MIDI dur:   {seq.duration:.2f}s")
         print(f"Total dur:  {total_duration:.2f}s")
         print(f"Format:     {sample_rate}Hz, {num_channels}ch")
 
-    # Create and initialize the AudioUnit
-    comp_id = _get_component_id_for_plugin(plugin)
-    au_id = capi.audio_component_instance_new(comp_id)
-
     try:
-        capi.audio_unit_initialize(au_id)
+        render_midi_file(
+            args.name,
+            str(midi_path),
+            str(output_path),
+            sample_rate=float(sample_rate),
+            channels=num_channels,
+            tail_seconds=extra_duration,
+            preset=args.preset,
+        )
+    except ValueError as e:
+        raise CLIError(str(e))
 
-        # Load preset if specified
-        preset_name = None
-        if args.preset:
-            preset_name = _load_preset_by_name_or_number(au_id, args.preset)
-            if preset_name is None:
-                raise CLIError(f"Preset not found: {args.preset}")
-            if not args.json:
-                print(f"Preset:     {preset_name}")
-
-        # Collect all MIDI events sorted by time
-        all_events = []
-        for track in seq.tracks:
-            for event in track.events:
-                all_events.append(event)
-        all_events.sort(key=lambda e: e.time)
-
-        # Render audio in chunks, scheduling MIDI events
-        chunk_size = 512
-        rendered_chunks = []
-        event_index = 0
-
-        for frame_offset in range(0, total_frames, chunk_size):
-            frames_to_render = min(chunk_size, total_frames - frame_offset)
-            chunk_start_time = frame_offset / sample_rate
-            chunk_end_time = (frame_offset + frames_to_render) / sample_rate
-
-            # Send MIDI events that fall in this chunk
-            while event_index < len(all_events):
-                event = all_events[event_index]
-                if event.time >= chunk_end_time:
-                    break
-
-                # Calculate offset within this chunk
-                offset_samples = int((event.time - chunk_start_time) * sample_rate)
-                offset_samples = max(0, min(offset_samples, frames_to_render - 1))
-
-                # Send MIDI event to instrument
-                status_byte = (event.status & 0xF0) | (event.channel & 0x0F)
-                try:
-                    capi.music_device_midi_event(
-                        au_id, status_byte, event.data1, event.data2, offset_samples
-                    )
-                except Exception as e:
-                    logger.debug(
-                        "Failed to send MIDI event at sample offset %d: %s",
-                        offset_samples,
-                        e,
-                    )
-
-                event_index += 1
-
-            # Render this chunk (instrument generates audio from MIDI)
-            # We pass silence as input since it's a generator
-            silence = bytes(frames_to_render * num_channels * 4)  # float32 silence
-            try:
-                rendered = capi.audio_unit_render(
-                    au_id, silence, frames_to_render, sample_rate, num_channels
-                )
-                rendered_chunks.append(rendered)
-            except Exception as e:
-                logger.debug("Render failed at frame offset %d: %s", frame_offset, e)
-                rendered_chunks.append(silence)
-
-            if not args.json:
-                progress = min(
-                    100, int((frame_offset + frames_to_render) / total_frames * 100)
-                )
-                print(f"\rRendering: {progress}%", end="", flush=True)
-
-        rendered_data = b"".join(rendered_chunks)
-
-        if not args.json:
-            print("\rRendering: 100%")
-
-        # Convert float32 to int16 for WAV output
-        num_samples = len(rendered_data) // 4
-        float_samples = struct.unpack(f"{num_samples}f", rendered_data)
-        int_samples = [int(max(-32768, min(32767, s * 32768))) for s in float_samples]
-        output_data = struct.pack(f"<{len(int_samples)}h", *int_samples)
-
-        # Write output WAV file
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        with wave.open(str(output_path), "wb") as wav_out:
-            wav_out.setnchannels(num_channels)
-            wav_out.setsampwidth(2)  # 16-bit
-            wav_out.setframerate(sample_rate)
-            wav_out.writeframes(output_data)
-
-        if args.json:
-            output_json(
-                {
-                    "input": str(midi_path.absolute()),
-                    "output": str(output_path.absolute()),
-                    "plugin": plugin.get("name"),
-                    "midi_duration": seq.duration,
-                    "total_duration": total_duration,
-                    "sample_rate": sample_rate,
-                    "channels": num_channels,
-                    "events": len(all_events),
-                }
-            )
-        else:
-            print(f"Output:     {output_path}")
-            print(f"Events:     {len(all_events)}")
-
-    finally:
-        try:
-            capi.audio_unit_uninitialize(au_id)
-        except Exception:
-            pass
-        try:
-            capi.audio_component_instance_dispose(au_id)
-        except Exception:
-            pass
+    if args.json:
+        output_json(
+            {
+                "input": str(midi_path.absolute()),
+                "output": str(output_path.absolute()),
+                "plugin": args.name,
+                "midi_duration": seq.duration,
+                "total_duration": total_duration,
+                "sample_rate": sample_rate,
+                "channels": num_channels,
+                "events": event_count,
+            }
+        )
+    else:
+        print(f"Output:     {output_path}")
+        print(f"Events:     {event_count}")
 
     return EXIT_SUCCESS

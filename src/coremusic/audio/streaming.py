@@ -276,6 +276,7 @@ class AudioOutputStream:
         self._generator: Callable[[int], Any] | None = None
         self._is_active = False
         self._audio_unit_id: int | None = None
+        self._impl: Any = None
         self._lock = threading.Lock()
 
         # Validate NumPy availability if needed
@@ -308,13 +309,12 @@ class AudioOutputStream:
     def start(self) -> None:
         """Start audio playback.
 
+        The generator is invoked on the CoreAudio render thread to produce each
+        buffer. This is best-effort real time (suitable for tone/synthesis
+        generation), not hard-real-time low-latency work.
+
         Raises:
             RuntimeError: If stream is already active, no generator set, or setup fails
-
-        Note:
-            Full implementation requires Cython-level render callback support.
-            This method provides the structure and will work once the render
-            callback infrastructure is extended in capi.pyx.
         """
         if self._is_active:
             raise RuntimeError("Stream is already active")
@@ -334,41 +334,34 @@ class AudioOutputStream:
             raise RuntimeError(f"Failed to start output stream: {e}")
 
     def _setup_audio_unit(self) -> None:
-        """Set up AudioUnit for output playback.
+        """Set up the generator-driven output unit via the Cython backend.
 
-        This method demonstrates the required setup structure. Full functionality
-        requires extending the render callback support in capi.pyx:
-
-        1. Extend existing audio_player_render_callback() or create new callback:
-           cdef OSStatus output_stream_callback(
-               void* user_data,
-               AudioUnitRenderActionFlags* flags,
-               const AudioTimeStamp* timestamp,
-               UInt32 bus_number,
-               UInt32 num_frames,
-               AudioBufferList* io_data
-           ):
-               # Call Python generator function
-               # Fill io_data buffers with generated audio
-               return noErr
-
-        2. Set up AudioUnit for output (Default Output unit):
-           - component_desc.type = 'auou' (kAudioUnitType_Output)
-           - component_desc.subtype = 'def ' (kAudioUnitSubType_DefaultOutput)
-           - Set format on output scope, element 0
-           - Install render callback via kAudioUnitProperty_SetRenderCallback
-
-        For now, this raises NotImplementedError to indicate Cython work is needed.
+        Wraps the user generator so its output (bytes or a NumPy float array of
+        shape (frames,) or (frames, channels)) is delivered to the render
+        callback as float32 interleaved samples.
         """
-        raise NotImplementedError(
-            "Audio output playback requires Cython-level callback implementation. "
-            "To implement:\n"
-            "1. Extend or create output_stream_callback() in capi.pyx\n"
-            "2. Add audio_output_stream_create() wrapper function\n"
-            "3. Expose via Python API\n"
-            "See audio_player_render_callback() in capi.pyx as reference.\n"
-            "The existing audio player infrastructure provides a working example."
-        )
+        generator = self._generator
+        if generator is None:
+            raise RuntimeError("No generator function set")
+
+        np = self._np
+        channels = self.channels
+        has_numpy = self._has_numpy
+
+        def adapter(num_frames: int) -> Any:
+            data = generator(num_frames)
+            if data is None:
+                return None
+            if has_numpy and np is not None and isinstance(data, np.ndarray):
+                arr = np.asarray(data, dtype=np.float32)
+                if arr.ndim == 1 and channels > 1:
+                    arr = np.repeat(arr[:, None], channels, axis=1)
+                return np.ascontiguousarray(arr, dtype=np.float32).tobytes()
+            return data
+
+        self._impl = capi.AudioOutputStreamImpl()
+        self._impl.setup(adapter, float(self.sample_rate), int(channels))
+        self._impl.start()
 
     def stop(self) -> None:
         """Stop audio playback."""
@@ -384,22 +377,15 @@ class AudioOutputStream:
             self._is_active = False
 
     def _teardown_audio_unit(self) -> None:
-        """Tear down AudioUnit.
-
-        Stops and disposes the AudioUnit if it was created.
-        """
-        if self._audio_unit_id is not None:
+        """Stop and dispose the output unit."""
+        if self._impl is not None:
             try:
-                # Stop the audio unit
-                capi.audio_output_unit_stop(self._audio_unit_id)
-                # Uninitialize
-                capi.audio_unit_uninitialize(self._audio_unit_id)
-                # Dispose
-                capi.audio_component_instance_dispose(self._audio_unit_id)
+                self._impl.stop()
+                self._impl.close()
             except Exception as e:
-                logger.warning(f"Error during AudioUnit teardown: {e}")
+                logger.warning(f"Error during output stream teardown: {e}")
             finally:
-                self._audio_unit_id = None
+                self._impl = None
 
     @property
     def is_active(self) -> bool:

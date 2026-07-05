@@ -692,6 +692,213 @@ class AudioAnalyzer(AudioFileLoaderMixin):
         return key, mode
 
     # ========================================================================
+    # Loudness (ITU-R BS.1770 / EBU R128)
+    # ========================================================================
+
+    def _load_channels(self) -> tuple[list[NDArray], float]:
+        """Load audio as a list of per-channel float arrays in [-1, 1].
+
+        Reads directly from the file so channel data is preserved even if a
+        prior mono analysis mutated the cached array.
+
+        Returns:
+            Tuple of (list of 1-D channel arrays, sample_rate)
+        """
+        from coremusic.audio.core import AudioFile
+
+        with AudioFile(str(self.audio_file)) as af:
+            raw = af.read_as_numpy()
+            sample_rate = float(af.format.sample_rate)
+
+        arr = np.asarray(raw)
+        if np.issubdtype(arr.dtype, np.integer):
+            max_val = float(np.iinfo(arr.dtype).max)
+            arr = arr.astype(np.float64) / max_val
+        else:
+            arr = arr.astype(np.float64)
+
+        if arr.ndim == 1:
+            channels = [arr]
+        else:
+            channels = [arr[:, c] for c in range(arr.shape[1])]
+        return channels, sample_rate
+
+    @staticmethod
+    def _k_weighting_coefficients(
+        sample_rate: float,
+    ) -> tuple[tuple[NDArray, NDArray], tuple[NDArray, NDArray]]:
+        """Compute the two-stage K-weighting biquad coefficients (BS.1770).
+
+        Stage 1 is a high-shelf boost (~+4 dB above ~1.5 kHz); stage 2 is the
+        RLB high-pass (~38 Hz). Coefficients are derived per sample rate from
+        RBJ biquad prototypes so the weighting stays correct at rates other
+        than the 48 kHz the standard tabulates.
+
+        Returns:
+            ((shelf_b, shelf_a), (highpass_b, highpass_a))
+        """
+        # Stage 1: high-shelf
+        fc1, q1, gain_db = 1681.9744509555319, 0.7071752369554193, 3.99984385397
+        amp = 10.0 ** (gain_db / 40.0)
+        w0 = 2.0 * np.pi * fc1 / sample_rate
+        cos_w0, sin_w0 = np.cos(w0), np.sin(w0)
+        alpha = sin_w0 / (2.0 * q1)
+        sqrt_a = np.sqrt(amp)
+        b0 = amp * ((amp + 1) + (amp - 1) * cos_w0 + 2 * sqrt_a * alpha)
+        b1 = -2 * amp * ((amp - 1) + (amp + 1) * cos_w0)
+        b2 = amp * ((amp + 1) + (amp - 1) * cos_w0 - 2 * sqrt_a * alpha)
+        a0 = (amp + 1) - (amp - 1) * cos_w0 + 2 * sqrt_a * alpha
+        a1 = 2 * ((amp - 1) - (amp + 1) * cos_w0)
+        a2 = (amp + 1) - (amp - 1) * cos_w0 - 2 * sqrt_a * alpha
+        shelf = (np.array([b0, b1, b2]) / a0, np.array([a0, a1, a2]) / a0)
+
+        # Stage 2: high-pass
+        fc2, q2 = 38.13547087613982, 0.5003270373253953
+        w0 = 2.0 * np.pi * fc2 / sample_rate
+        cos_w0, sin_w0 = np.cos(w0), np.sin(w0)
+        alpha = sin_w0 / (2.0 * q2)
+        b0 = (1 + cos_w0) / 2.0
+        b1 = -(1 + cos_w0)
+        b2 = (1 + cos_w0) / 2.0
+        a0 = 1 + alpha
+        a1 = -2 * cos_w0
+        a2 = 1 - alpha
+        highpass = (np.array([b0, b1, b2]) / a0, np.array([a0, a1, a2]) / a0)
+        return shelf, highpass
+
+    def _block_mean_square(
+        self,
+        channels: list[NDArray],
+        sample_rate: float,
+        block_seconds: float,
+        hop_seconds: float,
+    ) -> NDArray:
+        """Channel-weighted mean-square power (z) per overlapping block.
+
+        Applies K-weighting to each channel then sums the per-channel
+        mean-square over sliding blocks using BS.1770 channel weights.
+
+        Returns:
+            1-D array of block power values (empty if audio shorter than a block)
+        """
+        shelf, highpass = self._k_weighting_coefficients(sample_rate)
+
+        # Channel weights (BS.1770): mono/L/R/C = 1.0. Surround weighting needs a
+        # known layout, which the file does not carry; >2 channels use 1.0 each.
+        weights = [1.0] * len(channels)
+
+        weighted = []
+        for ch in channels:
+            filtered = signal.lfilter(shelf[0], shelf[1], ch)
+            filtered = signal.lfilter(highpass[0], highpass[1], filtered)
+            weighted.append(filtered)
+
+        block_size = max(1, int(round(block_seconds * sample_rate)))
+        hop = max(1, int(round(hop_seconds * sample_rate)))
+        n_samples = len(weighted[0])
+        if n_samples < block_size:
+            return np.array([])
+
+        z_values = []
+        for start in range(0, n_samples - block_size + 1, hop):
+            power = 0.0
+            for weight, y in zip(weights, weighted):
+                block = y[start : start + block_size]
+                power += weight * float(np.mean(block * block))
+            z_values.append(power)
+        return np.array(z_values)
+
+    def _integrated_loudness(
+        self, channels: list[NDArray], sample_rate: float
+    ) -> float:
+        """Gated integrated loudness in LUFS (BS.1770 400 ms blocks)."""
+        z = self._block_mean_square(channels, sample_rate, 0.400, 0.100)
+        if z.size == 0:
+            return float("-inf")
+        with np.errstate(divide="ignore"):
+            block_l = -0.691 + 10.0 * np.log10(z)
+
+        # Absolute gate at -70 LUFS
+        abs_mask = block_l >= -70.0
+        if not np.any(abs_mask):
+            return float("-inf")
+
+        # Relative gate: -10 LU below the mean loudness of absolute-gated blocks
+        mean_z_abs = float(np.mean(z[abs_mask]))
+        rel_threshold = -0.691 + 10.0 * np.log10(mean_z_abs) - 10.0
+        gated = abs_mask & (block_l >= rel_threshold)
+        if not np.any(gated):
+            return float("-inf")
+
+        return float(-0.691 + 10.0 * np.log10(float(np.mean(z[gated]))))
+
+    def _loudness_range(self, channels: list[NDArray], sample_rate: float) -> float:
+        """Loudness range (LRA) in LU per EBU Tech 3342 (3 s blocks)."""
+        z = self._block_mean_square(channels, sample_rate, 3.000, 0.100)
+        if z.size == 0:
+            return 0.0
+        with np.errstate(divide="ignore"):
+            block_l = -0.691 + 10.0 * np.log10(z)
+
+        abs_mask = block_l >= -70.0
+        if not np.any(abs_mask):
+            return 0.0
+        mean_z_abs = float(np.mean(z[abs_mask]))
+        rel_threshold = -0.691 + 10.0 * np.log10(mean_z_abs) - 20.0
+        gated = block_l[abs_mask & (block_l >= rel_threshold)]
+        if gated.size < 2:
+            return 0.0
+        return float(np.percentile(gated, 95) - np.percentile(gated, 10))
+
+    def calculate_loudness(self) -> float:
+        """Measure integrated loudness in LUFS (ITU-R BS.1770 / EBU R128).
+
+        Applies two-stage K-weighting and gated block averaging (absolute
+        -70 LUFS gate followed by a -10 LU relative gate).
+
+        Returns:
+            Integrated loudness in LUFS. Returns ``-inf`` for silence or audio
+            shorter than one 400 ms measurement block.
+        """
+        channels, sample_rate = self._load_channels()
+        return self._integrated_loudness(channels, sample_rate)
+
+    def loudness_range(self) -> float:
+        """Measure loudness range (LRA) in LU (EBU Tech 3342).
+
+        Returns:
+            Loudness range in LU (0.0 if too short to measure).
+        """
+        channels, sample_rate = self._load_channels()
+        return self._loudness_range(channels, sample_rate)
+
+    def measure_loudness(self) -> dict[str, float]:
+        """Full loudness report from a single file read.
+
+        Returns:
+            Dict with ``integrated_lufs``, ``loudness_range_lu``, ``peak_db``,
+            and ``rms_db``.
+        """
+        channels, sample_rate = self._load_channels()
+        integrated = self._integrated_loudness(channels, sample_rate)
+        lra = self._loudness_range(channels, sample_rate)
+
+        peak = max((float(np.max(np.abs(ch))) for ch in channels), default=0.0)
+        peak_db = 20.0 * float(np.log10(peak)) if peak > 0 else float("-inf")
+
+        sum_sq = sum(float(np.sum(ch * ch)) for ch in channels)
+        total = sum(int(ch.size) for ch in channels)
+        rms = (sum_sq / total) ** 0.5 if total else 0.0
+        rms_db = 20.0 * float(np.log10(rms)) if rms > 0 else float("-inf")
+
+        return {
+            "integrated_lufs": integrated,
+            "loudness_range_lu": lra,
+            "peak_db": peak_db,
+            "rms_db": rms_db,
+        }
+
+    # ========================================================================
     # Audio Fingerprinting
     # ========================================================================
 

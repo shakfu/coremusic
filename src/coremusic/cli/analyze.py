@@ -416,89 +416,23 @@ def cmd_mfcc(args: argparse.Namespace) -> int:
 
 
 def cmd_loudness(args: argparse.Namespace) -> int:
-    """Measure integrated LUFS loudness."""
+    """Measure integrated LUFS loudness (ITU-R BS.1770 / EBU R128)."""
     require_numpy()
     require_scipy()
     require_file(args.file)
 
-    import numpy as np
-
     from coremusic.audio import AudioFile
+    from coremusic.audio.analysis import AudioAnalyzer
 
-    # Open audio file and read data
     with AudioFile(args.file) as af:
-        fmt = af.format
-        sample_rate = fmt.sample_rate
         duration = af.duration
-        audio_data = af.read_as_numpy()
 
-    # Convert to float and normalize
-    if audio_data.dtype in [np.int16, np.int32]:
-        max_val = np.iinfo(audio_data.dtype).max
-        audio_float = audio_data.astype(np.float64) / max_val
-    else:
-        audio_float = audio_data.astype(np.float64)
-
-    # Convert to mono if stereo (average channels)
-    if audio_float.ndim == 2:
-        # For LUFS, we need to process stereo properly
-        # but for simplicity, we'll use mono average first
-        audio_mono = (
-            np.mean(audio_float, axis=1)
-            if audio_float.shape[1] == 2
-            else audio_float[:, 0]
-        )
-    else:
-        audio_mono = audio_float
-
-    # K-weighting filter coefficients (simplified version)
-    # Stage 1: High-shelf filter
-    # Stage 2: High-pass filter
-    # For a proper LUFS implementation, these should be exact
-    # Here we use a simplified RMS-based approximation
-
-    # Apply K-weighting approximation using a high-pass filter
-    from scipy import signal as sp_signal
-
-    # High-pass filter at 38 Hz (simplified K-weighting)
-    b, a = sp_signal.butter(2, 38.0 / (sample_rate / 2), btype="high")
-    filtered = sp_signal.filtfilt(b, a, audio_mono)
-
-    # Calculate mean square
-    mean_square = np.mean(filtered**2)
-
-    # Calculate LUFS (approximation)
-    # LUFS = -0.691 + 10 * log10(mean_square)
-    if mean_square > 0:
-        lufs = -0.691 + 10 * np.log10(mean_square)
-    else:
-        lufs = float("-inf")
-
-    # Also calculate simple RMS for comparison
-    rms = np.sqrt(np.mean(audio_mono**2))
-    rms_db = 20 * np.log10(rms) if rms > 0 else float("-inf")
-
-    # Peak level
-    peak = np.max(np.abs(audio_mono))
-    peak_db = 20 * np.log10(peak) if peak > 0 else float("-inf")
-
-    # Loudness range (simplified - difference between loud and quiet sections)
-    # Divide into blocks and calculate variance
-    block_size = int(sample_rate * 0.4)  # 400ms blocks
-    num_blocks = len(filtered) // block_size
-    if num_blocks > 1:
-        block_loudness = []
-        for i in range(num_blocks):
-            block = filtered[i * block_size : (i + 1) * block_size]
-            block_ms = np.mean(block**2)
-            if block_ms > 0:
-                block_loudness.append(-0.691 + 10 * np.log10(block_ms))
-        if block_loudness:
-            loudness_range = max(block_loudness) - min(block_loudness)
-        else:
-            loudness_range = 0.0
-    else:
-        loudness_range = 0.0
+    analyzer = AudioAnalyzer(args.file)
+    report = analyzer.measure_loudness()
+    lufs = report["integrated_lufs"]
+    loudness_range = report["loudness_range_lu"]
+    peak_db = report["peak_db"]
+    rms_db = report["rms_db"]
 
     if args.json:
         output_json(

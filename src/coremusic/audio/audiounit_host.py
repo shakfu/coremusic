@@ -6,11 +6,15 @@ Provides Pythonic object-oriented wrapper for AudioUnit plugin hosting.
 from __future__ import annotations
 
 import json
+import logging
 import struct
+import wave
 from pathlib import Path
 from typing import Any
 
 from .. import capi
+
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # Audio Format Support
@@ -1100,6 +1104,84 @@ class AudioUnitPlugin:
         # MIDI CC 123 = All Notes Off
         self.control_change(channel, 123, 0)
 
+    def render_midi(
+        self,
+        events: Any,
+        duration: float,
+        *,
+        sample_rate: float = 44100.0,
+        channels: int = 2,
+        chunk_size: int = 512,
+    ) -> bytes:
+        """Render scheduled MIDI events through this instrument to audio.
+
+        Renders offline in fixed-size chunks, scheduling each event at its
+        sample-accurate offset within the chunk it falls in. Only valid for
+        instrument plugins (type ``aumu``).
+
+        Args:
+            events: Iterable of ``(time_seconds, status_byte, data1, data2)``
+                tuples. ``status_byte`` includes the channel nibble.
+            duration: Total seconds of audio to render (should exceed the last
+                event time so note tails are captured).
+            sample_rate: Render sample rate in Hz.
+            channels: Output channel count.
+            chunk_size: Frames per render chunk (smaller = finer event timing).
+
+        Returns:
+            Rendered audio as float32 interleaved PCM bytes.
+
+        Raises:
+            RuntimeError: If the plugin is not initialized.
+            ValueError: If the plugin is not an instrument.
+        """
+        if not self._initialized or self._unit_id is None:
+            raise RuntimeError("Plugin not initialized")
+        if self.type != "aumu":
+            raise ValueError(
+                f"render_midi requires an instrument plugin (type 'aumu'), "
+                f"not '{self.type}'"
+            )
+
+        sorted_events = sorted(events, key=lambda e: e[0])
+        total_frames = max(0, int(duration * sample_rate))
+        rendered_chunks: list[bytes] = []
+        event_index = 0
+        num_events = len(sorted_events)
+
+        for frame_offset in range(0, total_frames, chunk_size):
+            frames = min(chunk_size, total_frames - frame_offset)
+            start_time = frame_offset / sample_rate
+            end_time = (frame_offset + frames) / sample_rate
+
+            while event_index < num_events and sorted_events[event_index][0] < end_time:
+                event_time, status, data1, data2 = sorted_events[event_index]
+                offset = int((event_time - start_time) * sample_rate)
+                offset = max(0, min(offset, frames - 1))
+                try:
+                    self.send_midi(int(status), int(data1), int(data2), offset)
+                except Exception as e:  # pragma: no cover - defensive
+                    logger.debug("Failed to send MIDI event at offset %d: %s", offset, e)
+                event_index += 1
+
+            # Instruments output non-interleaved float32; render_instrument
+            # builds the matching buffer layout and advances the timeline.
+            try:
+                rendered_chunks.append(
+                    capi.audio_unit_render_instrument(
+                        self._unit_id,
+                        frames,
+                        float(frame_offset),
+                        sample_rate,
+                        channels,
+                    )
+                )
+            except Exception as e:  # pragma: no cover - defensive
+                logger.debug("Render failed at frame offset %d: %s", frame_offset, e)
+                rendered_chunks.append(bytes(frames * channels * 4))
+
+        return b"".join(rendered_chunks)
+
     def __getitem__(self, key: str) -> float:
         """Get parameter value by name"""
         param = self.get_parameter(key)
@@ -1519,3 +1601,100 @@ class AudioUnitChain:
     def __repr__(self) -> str:
         plugin_list = ", ".join(self._plugin_names) if self._plugin_names else "empty"
         return f"AudioUnitChain([{plugin_list}], format={self._audio_format})"
+
+
+def render_midi_file(
+    plugin: str,
+    midi_path: str | Path,
+    output_path: str | Path,
+    *,
+    sample_rate: float = 44100.0,
+    channels: int = 2,
+    tail_seconds: float = 1.0,
+    preset: str | None = None,
+) -> str:
+    """Render a MIDI file through an instrument plugin to a 16-bit WAV file.
+
+    Loads the MIDI file, hosts the named instrument AudioUnit, renders the
+    events offline, and writes the result. This is the library entry point
+    behind the ``coremusic plugin render`` command.
+
+    Args:
+        plugin: Instrument plugin name (case-insensitive, partial match).
+        midi_path: Path to the input MIDI (.mid) file.
+        output_path: Path for the rendered .wav output.
+        sample_rate: Render sample rate in Hz.
+        channels: Output channel count.
+        tail_seconds: Extra seconds rendered after the last event so note tails
+            and reverb decay are captured.
+        preset: Optional factory preset name to load before rendering.
+
+    Returns:
+        The output path as a string.
+
+    Raises:
+        ValueError: If the plugin is not found or is not an instrument.
+    """
+    from coremusic.midi.utilities import MIDISequence
+
+    seq = MIDISequence.load(str(midi_path))
+
+    # Flatten all tracks into (time, status_byte, data1, data2) tuples.
+    events = [
+        (
+            event.time,
+            (event.status & 0xF0) | (event.channel & 0x0F),
+            event.data1,
+            event.data2,
+        )
+        for track in seq.tracks
+        for event in track.events
+    ]
+
+    duration = seq.duration + max(0.0, tail_seconds)
+
+    instrument = AudioUnitPlugin.from_name(plugin, component_type="aumu")
+    with instrument:
+        if preset:
+            instrument.load_preset(preset)
+        audio = instrument.render_midi(
+            events,
+            duration,
+            sample_rate=sample_rate,
+            channels=channels,
+        )
+
+    # Convert float32 interleaved PCM to 16-bit and write a WAV file.
+    import array
+
+    floats = array.array("f")
+    floats.frombytes(audio)
+    ints = array.array("h", (_float_to_int16(s) for s in floats))
+    if _is_big_endian():  # WAV is little-endian
+        ints.byteswap()
+
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with wave.open(str(out), "wb") as wav_out:
+        wav_out.setnchannels(channels)
+        wav_out.setsampwidth(2)
+        wav_out.setframerate(int(sample_rate))
+        wav_out.writeframes(ints.tobytes())
+
+    return str(out)
+
+
+def _float_to_int16(sample: float) -> int:
+    """Clamp a float sample in [-1, 1] to a signed 16-bit integer."""
+    scaled = int(sample * 32767.0)
+    if scaled > 32767:
+        return 32767
+    if scaled < -32768:
+        return -32768
+    return scaled
+
+
+def _is_big_endian() -> bool:
+    import sys
+
+    return sys.byteorder == "big"

@@ -98,27 +98,29 @@ class TestAudioDevice:
         assert is_hidden is False
 
     def test_audio_device_stream_configuration_output(self):
-        """Test getting output stream configuration"""
+        """Test getting output stream configuration with parsed channel count"""
         device = AudioDeviceManager.get_default_output_device()
         assert device is not None
 
         config = device.get_stream_configuration("output")
-        # Currently returns dict with raw data length (AudioBufferList parsing not yet implemented)
         assert isinstance(config, dict)
         assert "raw_data_length" in config
         assert config["raw_data_length"] > 0
+        # An output device must report at least one output channel.
+        assert config["channels"] >= 1
+        assert config["channels"] == device.channel_count("output")
+        assert device.has_output()
 
     def test_audio_device_stream_configuration_input(self):
-        """Test getting input stream configuration"""
+        """Test getting input stream configuration with parsed channel count"""
         # Try default input device first
         device = AudioDeviceManager.get_default_input_device()
 
         if device is not None:
             config = device.get_stream_configuration("input")
-            # Currently returns dict with raw data length
             assert isinstance(config, dict)
-            assert "raw_data_length" in config
-            assert config["raw_data_length"] >= 0
+            assert "channels" in config
+            assert config["channels"] == device.channel_count("input")
 
     def test_audio_device_manager_get_output_devices(self):
         """Test getting all output devices"""
@@ -127,12 +129,11 @@ class TestAudioDevice:
         # Should have at least one output device
         assert len(devices) > 0
 
-        # All should be AudioDevice instances
+        # Every returned device must actually have output channels.
         for device in devices:
             assert isinstance(device, AudioDevice)
-            # Verify they can get stream configuration
-            config = device.get_stream_configuration("output")
-            assert isinstance(config, dict)
+            assert device.has_output()
+            assert device.channel_count("output") > 0
 
     def test_audio_device_manager_get_input_devices(self):
         """Test getting all input devices"""
@@ -140,12 +141,61 @@ class TestAudioDevice:
         assert isinstance(devices, list)
         # May not have input devices in all environments
 
-        # All should be AudioDevice instances
+        # Every returned device must actually have input channels.
         for device in devices:
             assert isinstance(device, AudioDevice)
-            # Verify they can get stream configuration
-            config = device.get_stream_configuration("input")
-            assert isinstance(config, dict)
+            assert device.has_input()
+            assert device.channel_count("input") > 0
+
+    def test_input_output_device_partition(self):
+        """Input and output filters are subsets of all devices and consistent."""
+        all_devices = {d.object_id for d in AudioDeviceManager.get_devices()}
+        inputs = AudioDeviceManager.get_input_devices()
+        outputs = AudioDeviceManager.get_output_devices()
+        assert {d.object_id for d in inputs} <= all_devices
+        assert {d.object_id for d in outputs} <= all_devices
+        # A pure-output device must not appear in the input list.
+        for device in outputs:
+            if not device.has_input():
+                assert device.object_id not in {d.object_id for d in inputs}
+
+
+class TestBufferListParsing:
+    """Unit tests for the AudioBufferList channel parser (no hardware)."""
+
+    def _make_buffer_list(self, channel_counts):
+        """Build a little-endian AudioBufferList blob for the given buffers."""
+        import struct
+
+        data = struct.pack("<I", len(channel_counts)) + b"\x00\x00\x00\x00"
+        for ch in channel_counts:
+            # mNumberChannels, mDataByteSize, mData(pointer)
+            data += struct.pack("<IIQ", ch, ch * 4, 0)
+        return data
+
+    def test_empty_buffer_list(self):
+        from coremusic.audio.devices import _parse_buffer_list_channels
+
+        assert _parse_buffer_list_channels(b"") == (0, 0)
+        assert _parse_buffer_list_channels(struct_pack_count(0)) == (0, 0)
+
+    def test_single_stereo_buffer(self):
+        from coremusic.audio.devices import _parse_buffer_list_channels
+
+        blob = self._make_buffer_list([2])
+        assert _parse_buffer_list_channels(blob) == (1, 2)
+
+    def test_multiple_buffers_sum_channels(self):
+        from coremusic.audio.devices import _parse_buffer_list_channels
+
+        blob = self._make_buffer_list([1, 1, 2])
+        assert _parse_buffer_list_channels(blob) == (3, 4)
+
+
+def struct_pack_count(n):
+    import struct
+
+    return struct.pack("<I", n) + b"\x00\x00\x00\x00"
 
     def test_audio_device_manager_find_by_name(self):
         """Test finding device by name"""

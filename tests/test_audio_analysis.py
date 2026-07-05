@@ -592,3 +592,102 @@ class TestIntegration:
         # Average frequency should be close to 440 Hz
         avg_freq = np.mean([d.frequency for d in detections])
         assert 400 < avg_freq < 480
+
+
+# ============================================================================
+# Test Loudness (ITU-R BS.1770 / EBU R128)
+# ============================================================================
+
+
+def _write_wav(path, data, sample_rate=48000):
+    """Write float data in [-1, 1] to a 16-bit WAV. data: (N,) or (N, ch)."""
+    import wave
+
+    arr = np.asarray(data, dtype=np.float64)
+    if arr.ndim == 1:
+        arr = arr[:, None]
+    ints = np.clip(arr, -1.0, 1.0)
+    ints = (ints * 32767.0).astype("<i2")
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(arr.shape[1])
+        w.setsampwidth(2)
+        w.setframerate(sample_rate)
+        w.writeframes(ints.tobytes())
+
+
+class TestLoudness:
+    """Tests for BS.1770 / EBU R128 loudness measurement."""
+
+    def _sine(self, sample_rate=48000, seconds=8.0, freq=1000.0, amp=1.0):
+        t = np.arange(int(sample_rate * seconds)) / sample_rate
+        return amp * np.sin(2 * np.pi * freq * t)
+
+    def test_calculate_loudness_returns_finite_for_tone(self, tmp_path):
+        path = tmp_path / "sine.wav"
+        _write_wav(path, self._sine())
+        lufs = AudioAnalyzer(str(path)).calculate_loudness()
+        assert np.isfinite(lufs)
+        # A 0 dBFS 1 kHz sine sits near -3 LUFS.
+        assert -5.0 < lufs < -1.0
+
+    def test_silence_is_negative_infinity(self, tmp_path):
+        path = tmp_path / "silence.wav"
+        _write_wav(path, np.zeros(48000 * 2))
+        assert AudioAnalyzer(str(path)).calculate_loudness() == float("-inf")
+
+    def test_dual_mono_is_about_3lu_louder(self, tmp_path):
+        """Identical L=R channels measure ~3.01 LU above mono (BS.1770)."""
+        sine = self._sine()
+        mono_path = tmp_path / "mono.wav"
+        stereo_path = tmp_path / "stereo.wav"
+        _write_wav(mono_path, sine)
+        _write_wav(stereo_path, np.stack([sine, sine], axis=1))
+        mono = AudioAnalyzer(str(mono_path)).calculate_loudness()
+        stereo = AudioAnalyzer(str(stereo_path)).calculate_loudness()
+        assert abs((stereo - mono) - 3.01) < 0.1
+
+    def test_scaling_shifts_loudness_by_expected_db(self, tmp_path):
+        """Halving amplitude (-6.02 dB) lowers loudness by ~6 LU."""
+        sine = self._sine()
+        loud_path = tmp_path / "loud.wav"
+        quiet_path = tmp_path / "quiet.wav"
+        _write_wav(loud_path, sine * 0.5)
+        _write_wav(quiet_path, sine * 0.25)
+        loud = AudioAnalyzer(str(loud_path)).calculate_loudness()
+        quiet = AudioAnalyzer(str(quiet_path)).calculate_loudness()
+        assert abs((loud - quiet) - 6.02) < 0.1
+
+    def test_target_loudness_roundtrip(self, tmp_path):
+        """Scaling a signal to a target LUFS reproduces that target."""
+        sine = self._sine()
+        base_path = tmp_path / "base.wav"
+        _write_wav(base_path, sine)
+        base = AudioAnalyzer(str(base_path)).calculate_loudness()
+        gain = 10 ** ((-23.0 - base) / 20.0)
+        scaled_path = tmp_path / "scaled.wav"
+        _write_wav(scaled_path, sine * gain)
+        assert abs(AudioAnalyzer(str(scaled_path)).calculate_loudness() - (-23.0)) < 0.2
+
+    def test_loudness_range_small_for_steady_tone(self, tmp_path):
+        path = tmp_path / "steady.wav"
+        _write_wav(path, self._sine(seconds=12.0))
+        assert AudioAnalyzer(str(path)).loudness_range() < 1.0
+
+    def test_measure_loudness_report_keys(self, tmp_path):
+        path = tmp_path / "sine.wav"
+        _write_wav(path, self._sine())
+        report = AudioAnalyzer(str(path)).measure_loudness()
+        assert set(report) == {
+            "integrated_lufs",
+            "loudness_range_lu",
+            "peak_db",
+            "rms_db",
+        }
+        assert report["peak_db"] == pytest.approx(0.0, abs=0.1)
+
+    def test_shortcut_analyze_loudness(self, tmp_path):
+        from coremusic.shortcuts import analyze_loudness
+
+        path = tmp_path / "sine.wav"
+        _write_wav(path, self._sine())
+        assert np.isfinite(analyze_loudness(str(path)))

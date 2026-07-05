@@ -2,7 +2,7 @@
 
 **CoreMusic** is a comprehensive Cython wrapper for Apple's CoreAudio and CoreMIDI ecosystem, providing both functional and object-oriented Python bindings for professional audio and MIDI development on macOS.
 
-[![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
 [![Platform](https://img.shields.io/badge/platform-macOS-lightgrey.svg)](https://www.apple.com/macos/)
 
@@ -23,9 +23,14 @@
 ### Installation
 
 ```bash
-git clone https://github.com/yourusername/coremusic.git
+pip install coremusic
+```
+
+Or build from source:
+
+```bash
+git clone https://github.com/shakfu/coremusic.git
 cd coremusic
-pip install cython
 make
 ```
 
@@ -134,9 +139,15 @@ coremusic plugin list --type effect
 coremusic plugin process "AUDelay" input.wav -o output.wav
 
 # MIDI operations
-coremusic midi devices
-coremusic midi input monitor
-coremusic midi output panic
+coremusic midi list
+coremusic midi monitor
+coremusic midi panic
+
+# Render MIDI through an instrument plugin to audio
+coremusic plugin render "DLSMusicDevice" song.mid -o rendered.wav
+
+# Diagnose the installation
+coremusic doctor
 ```
 
 See [CLI Guide](guides/cli.md) for complete CLI documentation.

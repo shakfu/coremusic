@@ -1273,7 +1273,7 @@ Add Link to feature list:
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/coremusic.git
+git clone https://github.com/shakfu/coremusic.git
 cd coremusic
 
 # Initialize Link submodule

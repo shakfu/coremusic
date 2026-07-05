@@ -2712,6 +2712,92 @@ def audio_unit_render(long audio_unit_id, input_data, num_frames, sample_rate=44
             free(buffer_list)
 
 
+def audio_unit_render_instrument(long audio_unit_id, num_frames, double sample_time,
+                                 sample_rate=44100.0, num_channels=2):
+    """Render an instrument (music device) AudioUnit into interleaved float32.
+
+    Instrument units such as DLSMusicDevice expose a non-interleaved float32
+    output (one AudioBuffer per channel). The interleaved single-buffer layout
+    used by ``audio_unit_render`` is rejected with paramErr, so this function
+    builds a non-interleaved AudioBufferList, renders, and interleaves the
+    result for convenient WAV writing.
+
+    Args:
+        audio_unit_id: Instrument AudioUnit instance ID.
+        num_frames: Number of frames to render.
+        sample_time: Timeline position in frames. Must advance across calls
+            (0, N, 2N, ...) so the instrument sees a monotonic timeline.
+        sample_rate: Sample rate (unused by the render but kept for symmetry).
+        num_channels: Output channel count (number of non-interleaved buffers).
+
+    Returns:
+        Rendered audio as interleaved float32 bytes (num_frames * num_channels).
+    """
+    cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
+    cdef cf.OSStatus status
+    cdef at.AudioUnitRenderActionFlags flags = 0
+    cdef ca.AudioTimeStamp timestamp
+    cdef ca.AudioBufferList* buffer_list = NULL
+    cdef cf.UInt32 nch = <cf.UInt32>num_channels
+    cdef cf.UInt32 nframes = <cf.UInt32>num_frames
+    cdef cf.UInt32 per_channel_bytes = nframes * <cf.UInt32>sizeof(cf.Float32)
+    cdef cf.UInt32 i, frame, ch
+    cdef cf.Float32* src
+    cdef cf.Float32* interleaved = NULL
+    cdef bytes output_data
+
+    if nch == 0:
+        return b""
+
+    # AudioBufferList with one buffer per channel (non-interleaved).
+    buffer_list = <ca.AudioBufferList*>malloc(
+        sizeof(ca.AudioBufferList) + (nch - 1) * sizeof(ca.AudioBuffer)
+    )
+    if buffer_list == NULL:
+        raise MemoryError("Could not allocate AudioBufferList")
+
+    try:
+        buffer_list.mNumberBuffers = nch
+        for i in range(nch):
+            buffer_list.mBuffers[i].mNumberChannels = 1
+            buffer_list.mBuffers[i].mDataByteSize = per_channel_bytes
+            buffer_list.mBuffers[i].mData = malloc(per_channel_bytes)
+            if buffer_list.mBuffers[i].mData == NULL:
+                raise MemoryError("Could not allocate channel buffer")
+            memset(buffer_list.mBuffers[i].mData, 0, per_channel_bytes)
+
+        memset(&timestamp, 0, sizeof(ca.AudioTimeStamp))
+        timestamp.mSampleTime = sample_time
+        timestamp.mFlags = ca.kAudioTimeStampSampleTimeValid
+
+        status = at.AudioUnitRender(
+            unit, &flags, &timestamp, 0, nframes, buffer_list
+        )
+        if status != 0:
+            raise RuntimeError(format_osstatus_error(status, "AudioUnitRender"))
+
+        # Interleave channel buffers into a single float32 buffer.
+        interleaved = <cf.Float32*>malloc(nframes * nch * sizeof(cf.Float32))
+        if interleaved == NULL:
+            raise MemoryError("Could not allocate interleave buffer")
+        for ch in range(nch):
+            src = <cf.Float32*>buffer_list.mBuffers[ch].mData
+            for frame in range(nframes):
+                interleaved[frame * nch + ch] = src[frame]
+
+        output_data = (<char*>interleaved)[:nframes * nch * sizeof(cf.Float32)]
+        return output_data
+
+    finally:
+        if interleaved != NULL:
+            free(interleaved)
+        if buffer_list != NULL:
+            for i in range(buffer_list.mNumberBuffers):
+                if buffer_list.mBuffers[i].mData != NULL:
+                    free(buffer_list.mBuffers[i].mData)
+            free(buffer_list)
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def audio_unit_render_into(long audio_unit_id,
@@ -3334,6 +3420,199 @@ cdef void audio_recorder_input_callback(
     else:
         # Re-enqueue the buffer for more recording
         at.AudioQueueEnqueueBuffer(queue, buffer, 0, NULL)
+
+
+# ============================================================================
+# Real-time audio output stream (generator-driven)
+# ============================================================================
+
+
+cdef void _fill_output_stream(AudioOutputStreamImpl stream, cf.UInt32 num_frames,
+                              ca.AudioBufferList* io_data) noexcept:
+    """Fill the output buffer from the stream's Python generator (holds GIL).
+
+    The generator receives the frame count and must return num_frames*channels
+    float32 interleaved samples as bytes or a C-contiguous buffer (e.g. a NumPy
+    float32 array). Short or missing data leaves the remainder as silence.
+    """
+    cdef cf.UInt32 needed = num_frames * <cf.UInt32>stream._channels * <cf.UInt32>sizeof(cf.Float32)
+    cdef const unsigned char[::1] mv
+    cdef cf.UInt32 avail
+
+    generator = stream._generator
+    if generator is None or io_data == NULL:
+        return
+    if io_data.mNumberBuffers == 0 or io_data.mBuffers[0].mData == NULL:
+        return
+
+    try:
+        data = generator(<int>num_frames)
+    except BaseException:
+        stream._error = True
+        return
+    if data is None:
+        return
+
+    try:
+        mv = memoryview(data).cast('B')
+    except BaseException:
+        return
+
+    avail = <cf.UInt32>mv.shape[0]
+    if avail == 0:
+        return
+    if avail > needed:
+        avail = needed
+    memcpy(io_data.mBuffers[0].mData, &mv[0], avail)
+
+
+cdef cf.OSStatus output_stream_render_callback(
+    void* user_data,
+    at.AudioUnitRenderActionFlags* action_flags,
+    const ca.AudioTimeStamp* time_stamp,
+    cf.UInt32 bus_number,
+    cf.UInt32 num_frames,
+    ca.AudioBufferList* io_data
+) noexcept nogil:
+    """Render callback: zero the buffer, then let the Python generator fill it."""
+    cdef cf.UInt32 b
+    if io_data == NULL:
+        return 0
+    for b in range(io_data.mNumberBuffers):
+        if io_data.mBuffers[b].mData != NULL:
+            memset(io_data.mBuffers[b].mData, 0, io_data.mBuffers[b].mDataByteSize)
+    if user_data == NULL:
+        return 0
+    with gil:
+        _fill_output_stream(<AudioOutputStreamImpl>user_data, num_frames, io_data)
+    return 0
+
+
+cdef class AudioOutputStreamImpl:
+    """Real-time output stream that pulls audio from a Python generator.
+
+    The generator runs on the CoreAudio render thread under the GIL, so this is
+    best-effort real time -- suitable for tone/synthesis generation, not
+    hard-real-time low-latency work. The output format is interleaved float32.
+    """
+    cdef at.AudioUnit output_unit
+    cdef object _generator
+    cdef int _channels
+    cdef double _sample_rate
+    cdef bint _initialized
+    cdef bint _active
+    cdef bint _error
+
+    def __cinit__(self):
+        self.output_unit = NULL
+        self._generator = None
+        self._channels = 2
+        self._sample_rate = 44100.0
+        self._initialized = False
+        self._active = False
+        self._error = False
+
+    def setup(self, generator, double sample_rate=44100.0, int channels=2):
+        """Create the output unit, set the format, and install the callback."""
+        cdef at.AudioComponentDescription desc
+        cdef at.AudioComponent comp
+        cdef cf.OSStatus status
+        cdef at.AudioStreamBasicDescription fmt
+        cdef at.AURenderCallbackStruct cb
+
+        if generator is None:
+            raise ValueError("generator is required")
+        if channels < 1:
+            raise ValueError("channels must be >= 1")
+
+        self._generator = generator
+        self._sample_rate = sample_rate
+        self._channels = channels
+        self._error = False
+
+        desc.componentType = at.kAudioUnitType_Output
+        desc.componentSubType = at.kAudioUnitSubType_DefaultOutput
+        desc.componentManufacturer = at.kAudioUnitManufacturer_Apple
+        desc.componentFlags = 0
+        desc.componentFlagsMask = 0
+        comp = at.AudioComponentFindNext(NULL, &desc)
+        if comp == NULL:
+            raise RuntimeError("Cannot find default output AudioComponent")
+        status = at.AudioComponentInstanceNew(comp, &self.output_unit)
+        if status != 0:
+            raise RuntimeError(f"Could not create output AudioUnit: {status}")
+
+        fmt.mSampleRate = sample_rate
+        fmt.mFormatID = ca.kAudioFormatLinearPCM
+        fmt.mFormatFlags = ca.kLinearPCMFormatFlagIsFloat
+        fmt.mBytesPerPacket = <cf.UInt32>(sizeof(cf.Float32) * channels)
+        fmt.mFramesPerPacket = 1
+        fmt.mBytesPerFrame = <cf.UInt32>(sizeof(cf.Float32) * channels)
+        fmt.mChannelsPerFrame = <cf.UInt32>channels
+        fmt.mBitsPerChannel = 32
+        fmt.mReserved = 0
+        status = at.AudioUnitSetProperty(
+            self.output_unit, at.kAudioUnitProperty_StreamFormat,
+            at.kAudioUnitScope_Input, 0, &fmt, sizeof(fmt))
+        if status != 0:
+            raise RuntimeError(f"Could not set stream format: {status}")
+
+        cb.inputProc = output_stream_render_callback
+        cb.inputProcRefCon = <void*>self
+        status = at.AudioUnitSetProperty(
+            self.output_unit, at.kAudioUnitProperty_SetRenderCallback,
+            at.kAudioUnitScope_Global, 0, &cb, sizeof(cb))
+        if status != 0:
+            raise RuntimeError(f"Could not set render callback: {status}")
+
+        status = at.AudioUnitInitialize(self.output_unit)
+        if status != 0:
+            raise RuntimeError(f"Could not initialize output AudioUnit: {status}")
+        self._initialized = True
+
+    def start(self):
+        """Start pulling audio from the generator."""
+        cdef cf.OSStatus status
+        if not self._initialized:
+            raise RuntimeError("Output stream not set up")
+        status = at.AudioOutputUnitStart(self.output_unit)
+        if status != 0:
+            raise RuntimeError(f"Could not start output stream: {status}")
+        self._active = True
+
+    def stop(self):
+        """Stop pulling audio."""
+        if not self._initialized or not self._active:
+            return
+        at.AudioOutputUnitStop(self.output_unit)
+        self._active = False
+
+    def close(self):
+        """Stop and dispose the output unit."""
+        if self.output_unit != NULL:
+            if self._active:
+                at.AudioOutputUnitStop(self.output_unit)
+                self._active = False
+            at.AudioUnitUninitialize(self.output_unit)
+            at.AudioComponentInstanceDispose(self.output_unit)
+            self.output_unit = NULL
+        self._initialized = False
+        self._generator = None
+
+    @property
+    def is_active(self):
+        return bool(self._active)
+
+    @property
+    def had_error(self):
+        return bool(self._error)
+
+    def __dealloc__(self):
+        if self.output_unit != NULL:
+            at.AudioOutputUnitStop(self.output_unit)
+            at.AudioUnitUninitialize(self.output_unit)
+            at.AudioComponentInstanceDispose(self.output_unit)
+            self.output_unit = NULL
 
 
 cdef class AudioRecorder:

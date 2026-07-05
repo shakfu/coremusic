@@ -207,35 +207,45 @@ def convert(
         channels: Target channel count (None = keep original)
         bit_depth: Target bit depth (None = keep original)
 
+    Supported output containers: .wav, .aiff, .caf (lossless PCM). Compressed
+    formats such as .mp3, .m4a, and .flac raise a clear error (macOS cannot
+    encode them through this path).
+
     Example:
-        >>> cm.convert("input.wav", "output.mp3")
+        >>> cm.convert("input.wav", "output.aiff")
         >>> cm.convert("stereo.wav", "mono.wav", channels=1)
         >>> cm.convert("hires.wav", "cd.wav", sample_rate=44100, bit_depth=16)
     """
     from .audio.core import AudioFormat
     from .audio.utilities import convert_audio_file
 
-    # Build output format if any parameters specified
-    output_format = None
-    if sample_rate is not None or channels is not None or bit_depth is not None:
-        # Read input format as base
-        from .audio import AudioFile
+    # Read the source format as the base for the output format. Building it
+    # unconditionally (not only when kwargs are given) avoids passing None to
+    # convert_audio_file, which expects a concrete AudioFormat.
+    from .audio import AudioFile
 
-        with AudioFile(str(input_path)) as f:
-            src = f.format
+    with AudioFile(str(input_path)) as f:
+        src = f.format
 
-        output_format = AudioFormat(
-            sample_rate=sample_rate or src.sample_rate,
-            format_id=src.format_id,
-            format_flags=src.format_flags,
-            bytes_per_packet=0,  # Will be calculated
-            frames_per_packet=1,
-            bytes_per_frame=0,  # Will be calculated
-            channels_per_frame=channels or src.channels_per_frame,
-            bits_per_channel=bit_depth or src.bits_per_channel,
-        )
+    out_channels = channels or src.channels_per_frame
+    out_bits = bit_depth or src.bits_per_channel
+    # Compute the PCM frame size; a zero bytes_per_frame yields an invalid ASBD
+    # that AudioConverterNew rejects, which previously broke sample-rate and
+    # bit-depth conversion.
+    bytes_per_frame = (out_bits // 8) * out_channels
 
-    convert_audio_file(str(input_path), str(output_path), output_format)  # type: ignore[arg-type]
+    output_format = AudioFormat(
+        sample_rate=sample_rate or src.sample_rate,
+        format_id=src.format_id,
+        format_flags=src.format_flags,
+        bytes_per_packet=bytes_per_frame,
+        frames_per_packet=1,
+        bytes_per_frame=bytes_per_frame,
+        channels_per_frame=out_channels,
+        bits_per_channel=out_bits,
+    )
+
+    convert_audio_file(str(input_path), str(output_path), output_format)
 
 
 def analyze_tempo(path: str | Path) -> float:
@@ -296,7 +306,7 @@ def analyze_loudness(path: str | Path) -> float:
     from .audio.analysis import AudioAnalyzer
 
     analyzer = AudioAnalyzer(str(path))
-    return analyzer.calculate_loudness()  # type: ignore[attr-defined, no-any-return]
+    return analyzer.calculate_loudness()
 
 
 def get_duration(path: str | Path) -> float:
@@ -427,3 +437,43 @@ def list_plugins(*, type: str | None = None) -> list[dict[str, Any]]:
         plugins = [p for p in plugins if p.get("type") == filter_type]
 
     return plugins
+
+
+def render_midi(
+    plugin: str,
+    midi_path: str | Path,
+    output_path: str | Path,
+    *,
+    sample_rate: float = 44100.0,
+    channels: int = 2,
+    tail_seconds: float = 1.0,
+    preset: str | None = None,
+) -> str:
+    """Render a MIDI file through an instrument plugin to an audio file.
+
+    Args:
+        plugin: Instrument plugin name (case-insensitive, partial match)
+        midi_path: Path to the input MIDI file
+        output_path: Path for the rendered .wav output
+        sample_rate: Render sample rate in Hz
+        channels: Output channel count
+        tail_seconds: Extra seconds rendered after the last event (note tails)
+        preset: Optional factory preset name to load before rendering
+
+    Returns:
+        The output path as a string
+
+    Example:
+        >>> cm.render_midi("DLSMusicDevice", "song.mid", "song.wav")
+    """
+    from .audio.audiounit_host import render_midi_file
+
+    return render_midi_file(
+        plugin,
+        midi_path,
+        output_path,
+        sample_rate=sample_rate,
+        channels=channels,
+        tail_seconds=tail_seconds,
+        preset=preset,
+    )

@@ -59,6 +59,20 @@ class AudioRecorder:
     @property
     def channels(self) -> int: ...
 
+class AudioOutputStreamImpl:
+    """Generator-driven real-time audio output stream."""
+    def __init__(self) -> None: ...
+    def setup(
+        self, generator: Any, sample_rate: float = 44100.0, channels: int = 2
+    ) -> None: ...
+    def start(self) -> None: ...
+    def stop(self) -> None: ...
+    def close(self) -> None: ...
+    @property
+    def is_active(self) -> bool: ...
+    @property
+    def had_error(self) -> bool: ...
+
 # ============================================================================
 # FourCC Conversion
 # ============================================================================
@@ -305,6 +319,16 @@ def audio_unit_render(
     num_channels: int,
 ) -> bytes:
     """Render audio through the AudioUnit."""
+    ...
+
+def audio_unit_render_instrument(
+    audio_unit_id: int,
+    num_frames: int,
+    sample_time: float,
+    sample_rate: float = 44100.0,
+    num_channels: int = 2,
+) -> bytes:
+    """Render an instrument AudioUnit into interleaved float32 bytes."""
     ...
 
 def audio_unit_render_into(

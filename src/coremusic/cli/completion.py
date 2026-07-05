@@ -31,6 +31,7 @@ COMMANDS = {
     "convert": ["file", "batch", "normalize", "trim"],
     "midi": ["devices", "input", "output", "file", "record"],
     "sequence": ["info", "play", "tracks"],
+    "doctor": [],
 }
 
 # Common options

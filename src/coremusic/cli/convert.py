@@ -31,7 +31,7 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
         "-f",
         dest="output_format",
         choices=list(FORMAT_NAMES.keys()),
-        help="Output format (e.g., wav, aac, alac, flac)",
+        help="Output data format (e.g., wav, aac, alac)",
     )
     file_parser.add_argument(
         "--rate",
@@ -201,85 +201,82 @@ def _infer_format_from_extension(path: Path) -> str:
 
 
 def _get_file_type_for_extension(path: Path) -> int:
-    """Get AudioFileTypeID for file extension."""
-    from coremusic.constants import AudioFileType
+    """Resolve an AudioFileTypeID from an output extension.
 
-    ext = path.suffix.lower()
-    type_map = {
-        ".wav": AudioFileType.WAVE,
-        ".aif": AudioFileType.AIFF,
-        ".aiff": AudioFileType.AIFF,
-        ".m4a": AudioFileType.M4A,
-        ".aac": AudioFileType.AAC_ADTS,
-        ".caf": AudioFileType.CAF,
-    }
-    return type_map.get(ext, AudioFileType.WAVE)
+    Delegates to the shared library resolver so the CLI and Python API agree on
+    which formats are writable. Raises:
+        CLIError: If the extension names a format coremusic cannot write. This
+            replaces the previous behaviour of silently emitting WAV data under
+            a mismatched extension.
+    """
+    from coremusic.audio.utilities import resolve_output_file_type
+
+    try:
+        return resolve_output_file_type(str(path))
+    except ValueError as e:
+        raise CLIError(str(e))
 
 
 def cmd_convert(args: argparse.Namespace) -> int:
     """Convert audio file."""
-    from coremusic.audio import AudioConverter, AudioFormat, ExtendedAudioFile
+    from coremusic.audio import AudioFormat, ExtendedAudioFile
+    from coremusic.audio.utilities import convert_audio_file
 
     input_path = require_file(args.input)
     output_path = Path(args.output)
 
-    # Open source file using ExtendedAudioFile for reading
+    # Validate the output container up front so unsupported extensions raise a
+    # clear error before any work is done.
+    _get_file_type_for_extension(output_path)
+
+    # Only PCM/lossless output is supported; reject a compressed --format override
+    # instead of silently ignoring it.
+    if getattr(args, "output_format", None):
+        if get_format_id(args.output_format) != "lpcm":
+            raise CLIError(
+                f"Only PCM/lossless output is supported; "
+                f"'{args.output_format}' output is not available."
+            )
+
+    # Read the source format for building the destination and for reporting.
     with ExtendedAudioFile(str(input_path)) as source:
         source.open()
         source_format = source.file_format
 
-        # Determine output format
-        if args.output_format:
-            dest_format_id = get_format_id(args.output_format)
-        else:
-            dest_format_id = _infer_format_from_extension(output_path)
+    # Build destination format
+    dest_sample_rate = args.sample_rate or source_format.sample_rate
+    dest_channels = args.channels or source_format.channels_per_frame
+    dest_bits = args.bit_depth or source_format.bits_per_channel
 
-        # Build destination format
-        dest_sample_rate = args.sample_rate or source_format.sample_rate
-        dest_channels = args.channels or source_format.channels_per_frame
-        dest_bits = args.bit_depth or source_format.bits_per_channel
+    # Compute a complete PCM ASBD. A zero bytes_per_frame or missing PCM flags
+    # produce an invalid description that CoreAudio rejects. AIFF stores
+    # big-endian samples, so flag that container accordingly.
+    is_aiff = output_path.suffix.lower() in (".aif", ".aiff")
+    is_float = bool(source_format.format_flags & 1) and dest_bits >= 32
+    # kAudioFormatFlagIsFloat=1, IsBigEndian=2, IsSignedInteger=4, IsPacked=8
+    dest_flags = (1 if is_float else 4) | 8
+    if is_aiff:
+        dest_flags |= 2
+    dest_bytes_per_frame = (dest_bits // 8) * dest_channels
+    dest_format = AudioFormat(
+        sample_rate=float(dest_sample_rate),
+        format_id="lpcm",
+        format_flags=dest_flags,
+        bytes_per_packet=dest_bytes_per_frame,
+        frames_per_packet=1,
+        bytes_per_frame=dest_bytes_per_frame,
+        channels_per_frame=dest_channels,
+        bits_per_channel=dest_bits,
+    )
 
-        # Create destination AudioFormat
-        dest_format = AudioFormat(
-            sample_rate=float(dest_sample_rate),
-            format_id=dest_format_id,
-            channels_per_frame=dest_channels,
-            bits_per_channel=dest_bits,
-        )
-
-        # Get file type for output
-        file_type = _get_file_type_for_extension(output_path)
-
-        # Read all source data
-        frame_count = source.frame_count
-        source_data, frames_read = source.read(frame_count)
-
-        # Check if conversion is needed
-        needs_conversion = (
-            dest_format.sample_rate != source_format.sample_rate
-            or dest_format.channels_per_frame != source_format.channels_per_frame
-            or dest_format.bits_per_channel != source_format.bits_per_channel
-        )
-
-        if needs_conversion:
-            # Use AudioConverter for format conversion
-            try:
-                with AudioConverter(source_format, dest_format) as converter:
-                    converted_data = converter.convert(source_data)
-            except Exception as e:
-                raise CLIError(f"Conversion failed: {e}")
-        else:
-            converted_data = source_data
-
-        # Write output file
-        try:
-            with ExtendedAudioFile.create(
-                str(output_path), file_type, dest_format
-            ) as out_file:
-                num_frames = len(converted_data) // dest_format.bytes_per_frame
-                out_file.write(num_frames, converted_data)
-        except Exception as e:
-            raise CLIError(f"Failed to write output file: {e}")
+    # Delegate the read/convert/write to the shared library helper, which uses
+    # the callback-based converter API required for sample-rate changes.
+    try:
+        convert_audio_file(str(input_path), str(output_path), dest_format)
+    except ValueError as e:
+        raise CLIError(str(e))
+    except Exception as e:
+        raise CLIError(f"Conversion failed: {e}")
 
     # Output result
     if args.json:
@@ -341,7 +338,8 @@ def _get_output_extension(format_name: str) -> str:
 
 def cmd_batch(args: argparse.Namespace) -> int:
     """Batch convert multiple audio files."""
-    from coremusic.audio import AudioConverter, AudioFormat, ExtendedAudioFile
+    from coremusic.audio import AudioFormat, ExtendedAudioFile
+    from coremusic.audio.utilities import convert_audio_file, resolve_output_file_type
 
     input_dir = Path(args.input_dir)
     output_dir = Path(args.output_dir)
@@ -368,7 +366,17 @@ def cmd_batch(args: argparse.Namespace) -> int:
 
     # Get output extension
     output_ext = _get_output_extension(args.output_format)
-    dest_format_id = get_format_id(args.output_format)
+
+    # Only PCM/lossless containers are writable; fail fast before processing.
+    if get_format_id(args.output_format) != "lpcm":
+        raise CLIError(
+            f"Only PCM/lossless output is supported; "
+            f"'{args.output_format}' output is not available."
+        )
+    try:
+        resolve_output_file_type(f"x{output_ext}")
+    except ValueError as e:
+        raise CLIError(str(e))
 
     results = []
     success_count = 0
@@ -408,42 +416,28 @@ def cmd_batch(args: argparse.Namespace) -> int:
                 source.open()
                 source_format = source.file_format
 
-                # Build destination format
-                dest_sample_rate = args.sample_rate or source_format.sample_rate
-                dest_channels = args.channels or source_format.channels_per_frame
-                dest_bits = args.bit_depth or source_format.bits_per_channel
+            # Build a complete PCM destination format (see cmd_convert).
+            dest_sample_rate = args.sample_rate or source_format.sample_rate
+            dest_channels = args.channels or source_format.channels_per_frame
+            dest_bits = args.bit_depth or source_format.bits_per_channel
+            is_aiff = output_path.suffix.lower() in (".aif", ".aiff")
+            is_float = bool(source_format.format_flags & 1) and dest_bits >= 32
+            dest_flags = (1 if is_float else 4) | 8
+            if is_aiff:
+                dest_flags |= 2
+            bytes_per_frame = (dest_bits // 8) * dest_channels
+            dest_format = AudioFormat(
+                sample_rate=float(dest_sample_rate),
+                format_id="lpcm",
+                format_flags=dest_flags,
+                bytes_per_packet=bytes_per_frame,
+                frames_per_packet=1,
+                bytes_per_frame=bytes_per_frame,
+                channels_per_frame=dest_channels,
+                bits_per_channel=dest_bits,
+            )
 
-                dest_format = AudioFormat(
-                    sample_rate=float(dest_sample_rate),
-                    format_id=dest_format_id,
-                    channels_per_frame=dest_channels,
-                    bits_per_channel=dest_bits,
-                )
-
-                file_type = _get_file_type_for_extension(output_path)
-                frame_count = source.frame_count
-                source_data, _ = source.read(frame_count)
-
-                # Check if conversion is needed
-                needs_conversion = (
-                    dest_format.sample_rate != source_format.sample_rate
-                    or dest_format.channels_per_frame
-                    != source_format.channels_per_frame
-                    or dest_format.bits_per_channel != source_format.bits_per_channel
-                )
-
-                if needs_conversion:
-                    with AudioConverter(source_format, dest_format) as converter:
-                        converted_data = converter.convert(source_data)
-                else:
-                    converted_data = source_data
-
-                with ExtendedAudioFile.create(
-                    str(output_path), file_type, dest_format
-                ) as out_file:
-                    num_frames = len(converted_data) // dest_format.bytes_per_frame
-                    out_file.write(num_frames, converted_data)
-
+            convert_audio_file(str(input_path), str(output_path), dest_format)
             success_count += 1
 
         except Exception as e:

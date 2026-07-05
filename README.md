@@ -28,7 +28,7 @@ A zero-dependency music development toolkit for macOS providing Python access to
 pip install coremusic
 ```
 
-**Requirements:** macOS, Python 3.11+
+**Requirements:** macOS, Python 3.10+
 
 ### Optional Dependencies
 
@@ -88,6 +88,7 @@ positional arguments:
     convert   Convert audio files between formats
     midi      MIDI operations
     sequence  MIDI sequence operations
+    doctor    Diagnose the installation and environment
     completion
               Generate shell completion scripts
 
@@ -106,6 +107,7 @@ options:
 | `convert`  | Audio conversion (file, batch, normalize, trim)                  |
 | `midi`     | MIDI operations (list, info, play, quantize, receive, monitor, send, panic) |
 | `sequence` | MIDI sequence operations (info, play, tracks)                    |
+| `doctor`   | Diagnose installation (optional deps, audio/MIDI access, plugins) |
 | `completion` | Generate shell completion scripts (bash, zsh, fish)            |
 
 ### Shell Completion
@@ -179,8 +181,12 @@ tempo = analyze_tempo("song.wav")      # Get BPM
 key, mode = analyze_key("song.wav")    # Get musical key
 info = get_info("song.wav")            # Get file metadata
 
-# Quick conversion
-convert("input.wav", "output.mp3")
+# Quick conversion (lossless containers: .wav, .aiff, .caf)
+convert("input.wav", "output.aiff")
+
+# Render a MIDI file through an instrument plugin to audio
+from coremusic.shortcuts import render_midi
+render_midi("DLSMusicDevice", "song.mid", "song.wav")
 
 # List resources
 devices = list_devices()
