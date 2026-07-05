@@ -466,9 +466,6 @@ class TestAudioUnitPluginEnhancements:
         assert plugin.audio_format.sample_rate == 48000.0
         assert plugin.audio_format.channels == 4
 
-    @pytest.mark.skip(
-        reason="AudioUnit render requires proper I/O connection setup - format conversion tested separately"
-    )
     def test_process_with_format_conversion(self, plugin):
         """Test processing audio with format conversion"""
         # Create int16 test data
@@ -531,6 +528,25 @@ class TestAudioUnitChain:
         chain = AudioUnitChain()
         assert len(chain) == 0
         assert chain._audio_format.sample_rate == 44100.0
+
+    def test_bypass_plugin_out_of_range(self):
+        """bypass_plugin validates the index (no longer a NotImplementedError stub)."""
+        chain = AudioUnitChain()
+        with pytest.raises(IndexError):
+            chain.bypass_plugin(0, True)
+
+    def test_bypass_plugin_on_effect(self):
+        """bypass_plugin sets the bypass property on a real effect without error."""
+        chain = AudioUnitChain()
+        try:
+            chain.add_plugin("AUDelay")
+        except Exception as e:  # pragma: no cover - environment dependent
+            pytest.skip(f"Could not load AUDelay: {e}")
+        try:
+            chain.bypass_plugin(0, True)  # must not raise
+            chain.bypass_plugin(0, False)
+        finally:
+            chain.dispose()
 
     def test_chain_with_custom_format(self):
         """Test creating chain with custom audio format"""

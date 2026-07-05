@@ -88,6 +88,10 @@ class AudioInputStream:
         self._callbacks: list[Callable[[Any, int], None]] = []
         self._is_active = False
         self._audio_unit_id: int | None = None
+        self._impl: Any = None
+        self._ring: Any = None
+        self._drain_thread: threading.Thread | None = None
+        self._running = False
         self._lock = threading.Lock()
 
         # Validate NumPy availability if needed
@@ -130,13 +134,12 @@ class AudioInputStream:
     def start(self) -> None:
         """Start capturing audio.
 
-        Raises:
-            RuntimeError: If stream is already active or setup fails
+        Registered callbacks are invoked on the CoreAudio input thread with each
+        captured buffer. This is best-effort real time.
 
-        Note:
-            Full implementation requires Cython-level render callback support.
-            This method provides the structure and will work once the render
-            callback infrastructure is added to capi.pyx.
+        Raises:
+            RuntimeError: If the stream is already active, no input device is
+                available, setup fails, or microphone access is denied.
         """
         if self._is_active:
             raise RuntimeError("Stream is already active")
@@ -152,42 +155,122 @@ class AudioInputStream:
             logger.error(f"Failed to start input stream: {e}")
             raise RuntimeError(f"Failed to start input stream: {e}")
 
+    # kAudioUnitErr_CannotDoInCurrentContext: returned by AudioUnitRender when
+    # microphone (TCC) permission has not been granted to the process.
+    _PERMISSION_DENIED_STATUS = -10863
+
     def _setup_audio_unit(self) -> None:
-        """Set up AudioUnit for input capture.
+        """Set up the HAL input unit and start ring-buffered capture.
 
-        This method demonstrates the required setup structure. Full functionality
-        requires adding input capture callback support to capi.pyx:
+        The capture thread pushes samples into a lock-free ring (no GIL); a
+        drain thread pops from the ring and delivers each buffer to registered
+        callbacks as a NumPy float32 `(frames, channels)` array (or raw float32
+        interleaved bytes without NumPy).
 
-        1. Create callback function in Cython:
-           cdef OSStatus input_capture_callback(
-               void* user_data,
-               AudioUnitRenderActionFlags* flags,
-               const AudioTimeStamp* timestamp,
-               UInt32 bus_number,
-               UInt32 num_frames,
-               AudioBufferList* io_data
-           ):
-               # Pull audio from input
-               # Call Python callbacks with audio data
-               return noErr
-
-        2. Set up AudioUnit for input (HAL I/O unit):
-           - component_desc.type = 'auou' (kAudioUnitType_Output)
-           - component_desc.subtype = 'ahal' (kAudioUnitSubType_HALOutput)
-           - Enable input on element 1
-           - Set format on input scope, element 1
-           - Install input callback via kAudioOutputUnitProperty_SetInputCallback
-
-        For now, this raises NotImplementedError to indicate Cython work is needed.
+        Raises:
+            RuntimeError: If no input device is available or microphone access is
+                denied.
         """
-        raise NotImplementedError(
-            "Audio input capture requires Cython-level callback implementation. "
-            "To implement:\n"
-            "1. Add input_capture_callback() to capi.pyx\n"
-            "2. Add audio_input_stream_create() wrapper function\n"
-            "3. Expose via Python API\n"
-            "See audio_player_render_callback() in capi.pyx as reference."
+        device = self.device
+        if device is None:
+            raise RuntimeError("No input device available")
+
+        # Ring sized to several device buffers so the drain thread has slack.
+        ring = capi.AudioRingBuffer(8 * self.buffer_size, self.channels)
+        impl = capi.AudioInputStreamImpl()
+        impl.setup_direct(
+            ring,
+            int(device.object_id),
+            float(self.sample_rate),
+            int(self.channels),
+            max(8192, 4 * self.buffer_size),
         )
+        impl.start()
+
+        # Capture failures (notably denied microphone permission) surface
+        # asynchronously once the render callback first runs, so poll briefly.
+        import time as _time
+
+        for _ in range(5):
+            _time.sleep(0.02)
+            if impl.last_status == self._PERMISSION_DENIED_STATUS:
+                impl.stop()
+                impl.close()
+                raise RuntimeError(
+                    "Microphone access denied. Grant Microphone permission to "
+                    "your terminal or app in System Settings > Privacy & "
+                    "Security > Microphone, then retry."
+                )
+
+        self._impl = impl
+        self._ring = ring
+        self._running = True
+        self._drain_thread = threading.Thread(target=self._drain_loop, daemon=True)
+        self._drain_thread.start()
+
+    def _drain_loop(self) -> None:
+        """Pop captured samples off the ring and dispatch to callbacks."""
+        import time as _time
+
+        channels = self.channels
+        elems = self.buffer_size * channels
+        np = self._np
+        has_numpy = self._has_numpy
+        if has_numpy and np is not None:
+            scratch = np.empty(elems, dtype=np.float32)
+        else:
+            import array
+
+            scratch = array.array("f", bytes(elems * 4))
+
+        while self._running:
+            got = self._ring.pop_into(scratch)
+            if got == 0:
+                _time.sleep(0.001)
+                continue
+            frame_count = got // channels
+            if has_numpy and np is not None:
+                flat = np.array(scratch[:got], copy=True)  # own the data past this call
+                payload: Any = flat.reshape(-1, channels) if channels > 1 else flat
+            else:
+                payload = scratch[:got].tobytes()
+            with self._lock:
+                callbacks = list(self._callbacks)
+            for callback in callbacks:
+                try:
+                    callback(payload, frame_count)
+                except Exception as e:
+                    logger.error(f"Error in input callback: {e}")
+
+    def _teardown_audio_unit(self) -> None:
+        """Stop the capture unit and drain thread, then release resources.
+
+        Order matters: stop the capture unit first so the ring stops filling,
+        then join the drain thread, then drop the ring.
+        """
+        self._running = False
+        if self._impl is not None:
+            try:
+                self._impl.stop()
+                self._impl.close()
+            except Exception as e:
+                logger.warning(f"Error during input stream teardown: {e}")
+            finally:
+                self._impl = None
+        if self._drain_thread is not None:
+            self._drain_thread.join(timeout=1.0)
+            self._drain_thread = None
+        self._ring = None
+
+    @property
+    def overruns(self) -> int:
+        """Ring-buffer overruns (producer outran the drain thread)."""
+        return int(self._ring.overruns) if self._ring is not None else 0
+
+    @property
+    def underruns(self) -> int:
+        """Ring-buffer underruns (drain thread found the ring empty)."""
+        return int(self._ring.underruns) if self._ring is not None else 0
 
     def stop(self) -> None:
         """Stop capturing audio."""
@@ -201,24 +284,6 @@ class AudioInputStream:
         except Exception as e:
             logger.warning(f"Error stopping input stream: {e}")
             self._is_active = False
-
-    def _teardown_audio_unit(self) -> None:
-        """Tear down AudioUnit.
-
-        Stops and disposes the AudioUnit if it was created.
-        """
-        if self._audio_unit_id is not None:
-            try:
-                # Stop the audio unit
-                capi.audio_output_unit_stop(self._audio_unit_id)
-                # Uninitialize
-                capi.audio_unit_uninitialize(self._audio_unit_id)
-                # Dispose
-                capi.audio_component_instance_dispose(self._audio_unit_id)
-            except Exception as e:
-                logger.warning(f"Error during AudioUnit teardown: {e}")
-            finally:
-                self._audio_unit_id = None
 
     @property
     def is_active(self) -> bool:
@@ -469,10 +534,56 @@ class AudioProcessor:
         self.input_stream.add_callback(self._on_input)
         self.output_stream.set_generator(self._generate_output)
 
+        # Two-ring worker state (set up on start()).
+        self._out_ring: Any = None
+        self._output_impl: Any = None
+        self._np: Any = None
+        self._has_numpy = False
+        try:
+            import numpy as np
+
+            self._np = np
+            self._has_numpy = True
+        except ImportError:
+            pass
+
     def _on_input(self, data: Any, frame_count: int) -> None:
-        """Store input data for processing (called in real-time thread)."""
+        """Process a captured buffer (runs on the input drain/worker thread).
+
+        Stores the latest input and, when running, applies ``process_func`` and
+        enqueues the result into the output ring. Because this runs on the drain
+        thread rather than the audio render thread, ``process_func`` never holds
+        up the real-time output callback.
+        """
         with self._buffer_lock:
             self._input_buffer = data
+        if self._out_ring is not None:
+            self._enqueue_output(data)
+
+    def _enqueue_output(self, data: Any) -> None:
+        """Apply process_func and push the result into the output ring."""
+        try:
+            result = self.process_func(data)
+        except Exception as e:
+            logger.error(f"Error in process function: {e}")
+            return  # skip this buffer -> the output underruns to silence
+        if result is None:
+            return
+        ring = self._out_ring
+        if ring is None:
+            return
+        if self._has_numpy and self._np is not None and isinstance(
+            result, self._np.ndarray
+        ):
+            arr = self._np.ascontiguousarray(result, dtype=self._np.float32).ravel()
+            ring.push_floats(arr)
+        elif isinstance(result, (bytes, bytearray)):
+            ring.push_bytes(result)
+        else:
+            logger.error(
+                "process_func must return a NumPy float array or bytes, "
+                f"got {type(result).__name__}"
+            )
 
     def _generate_output(self, frame_count: int) -> Any:
         """Generate output by processing input (called in real-time thread)."""
@@ -503,25 +614,70 @@ class AudioProcessor:
                     return b"\x00" * (frame_count * self.channels * bytes_per_sample)
 
     def start(self) -> None:
-        """Start real-time processing.
+        """Start real-time processing (two-ring worker model).
 
-        Starts both input and output streams.
+        The capture callback pushes into the input stream's ring, whose drain
+        thread applies ``process_func`` and pushes into an output ring; the
+        render callback pops that output ring. Both audio threads run without
+        the GIL -- ``process_func`` executes on the drain/worker thread.
+
+        Raises:
+            RuntimeError: If setup fails or microphone access is denied.
         """
-        self.input_stream.start()
-        self.output_stream.start()
+        out_ring = capi.AudioRingBuffer(8 * self.buffer_size, self.channels)
+        output_impl = capi.AudioOutputStreamImpl()
+        output_impl.setup_direct(
+            out_ring, float(self.sample_rate), int(self.channels)
+        )
+
+        # Publish the ring before the input drain thread starts so _on_input can
+        # enqueue immediately once capture begins.
+        self._out_ring = out_ring
+        try:
+            self.input_stream.start()  # may raise (e.g. microphone permission)
+        except Exception:
+            output_impl.close()
+            self._out_ring = None
+            raise
+
+        output_impl.start()
+        self._output_impl = output_impl
 
     def stop(self) -> None:
         """Stop real-time processing.
 
-        Stops both input and output streams.
+        Stops the consumer (output) first, then the producer (input capture and
+        its worker thread), then drops the shared output ring.
         """
-        self.output_stream.stop()
+        if self._output_impl is not None:
+            try:
+                self._output_impl.stop()
+                self._output_impl.close()
+            except Exception as e:
+                logger.warning(f"Error stopping processor output: {e}")
+            finally:
+                self._output_impl = None
         self.input_stream.stop()
+        self._out_ring = None
 
     @property
     def is_active(self) -> bool:
         """Check if processor is currently active."""
-        return self.input_stream.is_active and self.output_stream.is_active
+        return (
+            self.input_stream.is_active
+            and self._output_impl is not None
+            and self._output_impl.is_active
+        )
+
+    @property
+    def overruns(self) -> int:
+        """Output-ring overruns (worker outran playback)."""
+        return int(self._out_ring.overruns) if self._out_ring is not None else 0
+
+    @property
+    def underruns(self) -> int:
+        """Output-ring underruns (playback outran the worker)."""
+        return int(self._out_ring.underruns) if self._out_ring is not None else 0
 
     @property
     def latency(self) -> float:
@@ -794,12 +950,153 @@ class StreamGraph:
 # ============================================================================
 
 
+class DirectLoopback:
+    """Zero-copy input-to-output loopback with no Python on the audio path.
+
+    A single lock-free ring is shared by the capture and render threads: the
+    HAL input callback pushes captured frames and the output render callback
+    pops them, both in C without acquiring the GIL. This is lower-latency and
+    glitch-resistant compared to routing audio through a Python callback.
+
+    Attributes:
+        channels: Number of channels (input and output must match)
+        sample_rate: Sample rate in Hz
+        buffer_size: Device buffer size in frames
+    """
+
+    _PERMISSION_DENIED_STATUS = -10863
+
+    def __init__(
+        self,
+        channels: int = 2,
+        sample_rate: float = 44100.0,
+        buffer_size: int = 512,
+    ):
+        self.channels = channels
+        self.sample_rate = sample_rate
+        self.buffer_size = buffer_size
+        self.device = AudioDeviceManager.get_default_input_device()
+        self._ring: Any = None
+        self._input: Any = None
+        self._output: Any = None
+        self._is_active = False
+
+    def start(self) -> None:
+        """Start the loopback.
+
+        Raises:
+            RuntimeError: If already active, no input device is available, or
+                microphone access is denied.
+        """
+        if self._is_active:
+            raise RuntimeError("Loopback is already active")
+        if self.device is None:
+            raise RuntimeError("No input device available")
+
+        ring = capi.AudioRingBuffer(8 * self.buffer_size, self.channels)
+        input_impl = capi.AudioInputStreamImpl()
+        output_impl = capi.AudioOutputStreamImpl()
+
+        input_impl.setup_direct(
+            ring,
+            int(self.device.object_id),
+            float(self.sample_rate),
+            int(self.channels),
+            max(8192, 4 * self.buffer_size),
+        )
+        input_impl.start()
+
+        # Surface a denied-microphone-permission failure clearly.
+        import time as _time
+
+        for _ in range(5):
+            _time.sleep(0.02)
+            if input_impl.last_status == self._PERMISSION_DENIED_STATUS:
+                input_impl.stop()
+                input_impl.close()
+                raise RuntimeError(
+                    "Microphone access denied. Grant Microphone permission to "
+                    "your terminal or app in System Settings > Privacy & "
+                    "Security > Microphone, then retry."
+                )
+
+        output_impl.setup_direct(ring, float(self.sample_rate), int(self.channels))
+        output_impl.start()
+
+        self._ring = ring
+        self._input = input_impl
+        self._output = output_impl
+        self._is_active = True
+        logger.info(
+            f"Started loopback: {self.channels} channels, {self.sample_rate} Hz, "
+            f"{self.buffer_size} frames"
+        )
+
+    def stop(self) -> None:
+        """Stop the loopback and release resources.
+
+        Order matters: stop the consumer (output) first, then the producer
+        (input), then drop the shared ring.
+        """
+        if not self._is_active:
+            return
+        if self._output is not None:
+            try:
+                self._output.stop()
+                self._output.close()
+            except Exception as e:
+                logger.warning(f"Error stopping loopback output: {e}")
+            finally:
+                self._output = None
+        if self._input is not None:
+            try:
+                self._input.stop()
+                self._input.close()
+            except Exception as e:
+                logger.warning(f"Error stopping loopback input: {e}")
+            finally:
+                self._input = None
+        self._ring = None
+        self._is_active = False
+        logger.info("Stopped loopback")
+
+    @property
+    def is_active(self) -> bool:
+        """Check whether the loopback is running."""
+        return self._is_active
+
+    @property
+    def latency(self) -> float:
+        """Approximate one-way latency in seconds (ring fill target)."""
+        return self.buffer_size / self.sample_rate
+
+    @property
+    def overruns(self) -> int:
+        """Ring overruns (capture outran playback)."""
+        return int(self._ring.overruns) if self._ring is not None else 0
+
+    @property
+    def underruns(self) -> int:
+        """Ring underruns (playback outran capture)."""
+        return int(self._ring.underruns) if self._ring is not None else 0
+
+    def __enter__(self) -> "DirectLoopback":
+        self.start()
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.stop()
+
+
 def create_loopback(
     channels: int = 2,
     sample_rate: float = 44100.0,
     buffer_size: int = 512,
-) -> AudioProcessor:
-    """Create a simple audio loopback (input → output).
+) -> DirectLoopback:
+    """Create a zero-GIL audio loopback (input → output).
+
+    The capture and render threads exchange audio through a single lock-free
+    ring with no Python on the audio path (see :class:`DirectLoopback`).
 
     Args:
         channels: Number of channels
@@ -807,21 +1104,14 @@ def create_loopback(
         buffer_size: Buffer size in frames
 
     Returns:
-        AudioProcessor configured for loopback
+        A :class:`DirectLoopback` (start/stop, context manager, and
+        overrun/underrun counters).
 
     Example:
-        >>> loopback = create_loopback(buffer_size=256)
-        >>> loopback.start()
-        >>> time.sleep(5)
-        >>> loopback.stop()
+        >>> with create_loopback(buffer_size=256) as loopback:
+        ...     time.sleep(5)
     """
-
-    def passthrough(audio_in: Any) -> Any:
-        """Pass audio through unchanged."""
-        return audio_in
-
-    return AudioProcessor(
-        passthrough,
+    return DirectLoopback(
         channels=channels,
         sample_rate=sample_rate,
         buffer_size=buffer_size,
@@ -832,6 +1122,7 @@ __all__ = [
     "AudioInputStream",
     "AudioOutputStream",
     "AudioProcessor",
+    "DirectLoopback",
     "StreamGraph",
     "StreamNode",
     "create_loopback",

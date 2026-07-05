@@ -2798,6 +2798,221 @@ def audio_unit_render_instrument(long audio_unit_id, num_frames, double sample_t
             free(buffer_list)
 
 
+ctypedef struct EffectInputControl:
+    const cf.Float32* input     # interleaved input, num_frames * channels floats
+    cf.UInt32 num_frames        # number of valid input frames available
+    cf.UInt32 channels
+
+
+cdef cf.OSStatus effect_input_callback(
+    void* user_data,
+    at.AudioUnitRenderActionFlags* action_flags,
+    const ca.AudioTimeStamp* time_stamp,
+    cf.UInt32 bus_number,
+    cf.UInt32 in_frames,
+    ca.AudioBufferList* io_data
+) noexcept nogil:
+    """Serve the caller's interleaved input to an effect that pulls its input.
+
+    Adapts to whichever layout the effect requests (interleaved single buffer,
+    or one buffer per channel). Runs synchronously inside AudioUnitRender.
+    """
+    cdef EffectInputControl* c = <EffectInputControl*>user_data
+    cdef cf.UInt32 nb, ch, frame, copyf
+    cdef cf.Float32* dst
+    if c == NULL or io_data == NULL:
+        return 0
+    nb = io_data.mNumberBuffers
+    copyf = in_frames if in_frames < c.num_frames else c.num_frames
+
+    if nb == 1 and io_data.mBuffers[0].mNumberChannels == c.channels:
+        # Interleaved input buffer.
+        dst = <cf.Float32*>io_data.mBuffers[0].mData
+        if dst != NULL:
+            memset(dst, 0, in_frames * c.channels * sizeof(cf.Float32))
+            memcpy(dst, c.input, copyf * c.channels * sizeof(cf.Float32))
+    else:
+        # Non-interleaved: one buffer per channel.
+        for ch in range(nb):
+            dst = <cf.Float32*>io_data.mBuffers[ch].mData
+            if dst == NULL:
+                continue
+            for frame in range(in_frames):
+                if frame < copyf and ch < c.channels:
+                    dst[frame] = c.input[frame * c.channels + ch]
+                else:
+                    dst[frame] = 0.0
+    return 0
+
+
+def audio_unit_render_effect(long audio_unit_id, input_data, num_frames,
+                             sample_rate=44100.0, num_channels=2):
+    """Render interleaved float32 audio through an effect AudioUnit offline.
+
+    Feeds the input via an input render callback (so the effect pulls it the way
+    it expects) and reads the effect's output -- handling the canonical
+    non-interleaved float32 layout that ``audio_unit_render`` cannot. Returns
+    interleaved float32 bytes (num_frames * num_channels).
+
+    Args:
+        audio_unit_id: Initialized effect AudioUnit instance id.
+        input_data: Interleaved float32 input bytes.
+        num_frames: Frames to render.
+        sample_rate: Sample rate (informational; the unit keeps its own format).
+        num_channels: Interleaved channel count of the input/returned buffer.
+    """
+    cdef at.AudioUnit unit = <at.AudioUnit>audio_unit_id
+    cdef cf.OSStatus status
+    cdef at.AudioUnitRenderActionFlags flags = 0
+    cdef ca.AudioTimeStamp timestamp
+    cdef at.AudioStreamBasicDescription out_fmt
+    cdef cf.UInt32 fmt_size = sizeof(out_fmt)
+    cdef cf.UInt32 nframes = <cf.UInt32>num_frames
+    cdef cf.UInt32 nch = <cf.UInt32>num_channels
+    cdef cf.UInt32 out_ch, i, frame, ch, nbuf, avail_frames
+    cdef cf.UInt32 max_fps = 0, max_fps_size = sizeof(max_fps)
+    cdef cf.UInt32 block, offset, sub, in_here
+    cdef double sample_time = 0.0
+    cdef bint out_noninterleaved
+    cdef at.AURenderCallbackStruct cb
+    cdef ca.AudioBufferList* out_list = NULL
+    cdef EffectInputControl ctl
+    cdef cf.Float32* interleaved = NULL
+    cdef cf.Float32* src
+    cdef cf.Float32* input_base
+    cdef bytes output_data
+    cdef const unsigned char[::1] in_view = input_data
+
+    if nch == 0 or nframes == 0:
+        return b""
+
+    # Query the effect's output stream format so we allocate a matching buffer.
+    status = at.AudioUnitGetProperty(
+        unit, at.kAudioUnitProperty_StreamFormat,
+        at.kAudioUnitScope_Output, 0, &out_fmt, &fmt_size)
+    if status != 0:
+        raise RuntimeError(format_osstatus_error(status, "AudioUnitGetProperty(StreamFormat)"))
+    out_ch = out_fmt.mChannelsPerFrame
+    if out_ch == 0:
+        out_ch = nch
+    out_noninterleaved = (out_fmt.mFormatFlags & ca.kLinearPCMFormatFlagIsNonInterleaved) != 0
+
+    # Render in sub-blocks no larger than the unit's MaximumFramesPerSlice
+    # (which cannot be raised once the unit is initialized). Advancing the input
+    # slice and the timeline keeps time-based effects (delay, reverb) correct.
+    if at.AudioUnitGetProperty(unit, at.kAudioUnitProperty_MaximumFramesPerSlice,
+                               at.kAudioUnitScope_Global, 0,
+                               &max_fps, &max_fps_size) != 0 or max_fps == 0:
+        max_fps = 1156  # CoreAudio default
+    block = max_fps if max_fps < nframes else nframes
+
+    avail_frames = <cf.UInt32>(in_view.shape[0] // (nch * sizeof(cf.Float32)))
+    input_base = <cf.Float32*>&in_view[0]
+    ctl.channels = nch
+    cb.inputProc = effect_input_callback
+    cb.inputProcRefCon = <void*>&ctl
+    status = at.AudioUnitSetProperty(
+        unit, at.kAudioUnitProperty_SetRenderCallback,
+        at.kAudioUnitScope_Input, 0, &cb, sizeof(cb))
+    if status != 0:
+        raise RuntimeError(format_osstatus_error(status, "AudioUnitSetProperty(SetRenderCallback)"))
+
+    if out_noninterleaved:
+        nbuf = out_ch
+    else:
+        nbuf = 1
+    out_list = <ca.AudioBufferList*>malloc(
+        sizeof(ca.AudioBufferList) + (nbuf - 1) * sizeof(ca.AudioBuffer))
+    if out_list == NULL:
+        raise MemoryError("Could not allocate output buffer list")
+
+    try:
+        out_list.mNumberBuffers = nbuf
+        # Allocate each output buffer for the maximum sub-block size (block).
+        if out_noninterleaved:
+            for i in range(nbuf):
+                out_list.mBuffers[i].mNumberChannels = 1
+                out_list.mBuffers[i].mData = malloc(block * sizeof(cf.Float32))
+                if out_list.mBuffers[i].mData == NULL:
+                    raise MemoryError("Could not allocate output channel buffer")
+        else:
+            out_list.mBuffers[0].mNumberChannels = out_ch
+            out_list.mBuffers[0].mData = malloc(block * out_ch * sizeof(cf.Float32))
+            if out_list.mBuffers[0].mData == NULL:
+                raise MemoryError("Could not allocate output buffer")
+
+        interleaved = <cf.Float32*>malloc(nframes * nch * sizeof(cf.Float32))
+        if interleaved == NULL:
+            raise MemoryError("Could not allocate interleave buffer")
+
+        offset = 0
+        while offset < nframes:
+            sub = block if (offset + block) <= nframes else (nframes - offset)
+
+            # Serve this sub-block's input slice (clamped to available frames).
+            ctl.input = input_base + <size_t>offset * nch
+            if offset >= avail_frames:
+                in_here = 0
+            else:
+                in_here = avail_frames - offset
+            ctl.num_frames = sub if sub < in_here else in_here
+
+            if out_noninterleaved:
+                for i in range(nbuf):
+                    out_list.mBuffers[i].mDataByteSize = sub * <cf.UInt32>sizeof(cf.Float32)
+                    memset(out_list.mBuffers[i].mData, 0, sub * sizeof(cf.Float32))
+            else:
+                out_list.mBuffers[0].mDataByteSize = sub * out_ch * <cf.UInt32>sizeof(cf.Float32)
+                memset(out_list.mBuffers[0].mData, 0, sub * out_ch * sizeof(cf.Float32))
+
+            memset(&timestamp, 0, sizeof(ca.AudioTimeStamp))
+            timestamp.mSampleTime = sample_time
+            timestamp.mFlags = ca.kAudioTimeStampSampleTimeValid
+            flags = 0
+
+            status = at.AudioUnitRender(unit, &flags, &timestamp, 0, sub, out_list)
+            if status != 0:
+                raise RuntimeError(format_osstatus_error(status, "AudioUnitRender"))
+
+            # Re-interleave this sub-block into the full output buffer.
+            if out_noninterleaved:
+                for ch in range(nch):
+                    if ch < out_ch:
+                        src = <cf.Float32*>out_list.mBuffers[ch].mData
+                        for frame in range(sub):
+                            interleaved[(offset + frame) * nch + ch] = src[frame]
+                    else:
+                        for frame in range(sub):
+                            interleaved[(offset + frame) * nch + ch] = 0.0
+            else:
+                src = <cf.Float32*>out_list.mBuffers[0].mData
+                for frame in range(sub):
+                    for ch in range(nch):
+                        if ch < out_ch:
+                            interleaved[(offset + frame) * nch + ch] = src[frame * out_ch + ch]
+                        else:
+                            interleaved[(offset + frame) * nch + ch] = 0.0
+
+            sample_time += sub
+            offset += sub
+
+        output_data = (<char*>interleaved)[:nframes * nch * sizeof(cf.Float32)]
+        return output_data
+    finally:
+        # Remove the callback so the freed stack struct can never be re-pulled.
+        cb.inputProc = NULL
+        cb.inputProcRefCon = NULL
+        at.AudioUnitSetProperty(unit, at.kAudioUnitProperty_SetRenderCallback,
+                                at.kAudioUnitScope_Input, 0, &cb, sizeof(cb))
+        if interleaved != NULL:
+            free(interleaved)
+        if out_list != NULL:
+            for i in range(out_list.mNumberBuffers):
+                if out_list.mBuffers[i].mData != NULL:
+                    free(out_list.mBuffers[i].mData)
+            free(out_list)
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def audio_unit_render_into(long audio_unit_id,
@@ -3423,6 +3638,240 @@ cdef void audio_recorder_input_callback(
 
 
 # ============================================================================
+# Lock-free SPSC ring buffer (shared by capture, playback, and loopback)
+# ============================================================================
+
+cdef extern from *:
+    """
+    #include <stddef.h>
+    /* Acquire/release/relaxed atomics on the ring cursors. One writer per
+       cursor, so no CAS is needed -- this keeps the audio-thread path
+       lock-free and wait-free. */
+    static inline size_t _rb_load_acq(size_t *p){ return __atomic_load_n(p, __ATOMIC_ACQUIRE); }
+    static inline size_t _rb_load_rlx(size_t *p){ return __atomic_load_n(p, __ATOMIC_RELAXED); }
+    static inline void   _rb_store_rel(size_t *p, size_t v){ __atomic_store_n(p, v, __ATOMIC_RELEASE); }
+    """
+    size_t _rb_load_acq(size_t *p) nogil
+    size_t _rb_load_rlx(size_t *p) nogil
+    void   _rb_store_rel(size_t *p, size_t v) nogil
+
+
+ctypedef struct RingBuffer:
+    cf.Float32* buf
+    size_t capacity          # float32 slots, power of two
+    size_t mask              # capacity - 1
+    size_t write             # producer cursor, monotonic
+    char   _pad[64]          # separate cache line: avoid producer/consumer false sharing
+    size_t read              # consumer cursor, monotonic
+    size_t overruns          # producer-only counter (advisory)
+    size_t underruns         # consumer-only counter (advisory)
+
+
+cdef size_t _next_pow2(size_t n) noexcept nogil:
+    cdef size_t p = 1
+    while p < n:
+        p <<= 1
+    return p
+
+
+cdef size_t ring_push(RingBuffer* r, const cf.Float32* src, size_t n) noexcept nogil:
+    """Copy up to n float32 elements into the ring. Returns the count written."""
+    cdef size_t w = _rb_load_rlx(&r.write)   # sole writer -> relaxed
+    cdef size_t rd = _rb_load_acq(&r.read)   # observe consumer progress
+    cdef size_t free_slots = r.capacity - (w - rd)
+    cdef size_t off, first
+    if n > free_slots:
+        r.overruns += n - free_slots
+        n = free_slots
+    if n == 0:
+        return 0
+    off = w & r.mask
+    first = r.capacity - off
+    if first > n:
+        first = n
+    memcpy(r.buf + off, src, first * sizeof(cf.Float32))
+    if n > first:
+        memcpy(r.buf, src + first, (n - first) * sizeof(cf.Float32))
+    _rb_store_rel(&r.write, w + n)           # publish data
+    return n
+
+
+cdef size_t ring_pop(RingBuffer* r, cf.Float32* dst, size_t n) noexcept nogil:
+    """Copy up to n float32 elements out of the ring. Returns the count read."""
+    cdef size_t rd = _rb_load_rlx(&r.read)   # sole reader -> relaxed
+    cdef size_t w = _rb_load_acq(&r.write)   # observe producer data
+    cdef size_t avail = w - rd
+    cdef size_t off, first
+    if n > avail:
+        r.underruns += n - avail
+        n = avail
+    if n == 0:
+        return 0
+    off = rd & r.mask
+    first = r.capacity - off
+    if first > n:
+        first = n
+    memcpy(dst, r.buf + off, first * sizeof(cf.Float32))
+    if n > first:
+        memcpy(dst + first, r.buf, (n - first) * sizeof(cf.Float32))
+    _rb_store_rel(&r.read, rd + n)
+    return n
+
+
+cdef class AudioRingBuffer:
+    """Single-producer/single-consumer lock-free ring of float32 samples.
+
+    The producer and consumer may run on different real-time threads with no
+    lock and no allocation. push/pop from Python (``push_floats``/``pop_into``)
+    are for feeder/drain worker threads; the audio-thread path uses the C-level
+    ring_push/ring_pop against ``ptr()``.
+
+    ``overruns``/``underruns`` count the per-call shortfall in float32 elements:
+    a push that cannot fit everything adds the remainder to ``overruns``; a pop
+    that cannot fill the request adds the remainder to ``underruns``. This is the
+    right metric for the one-shot audio-thread callbacks (a full ring on capture
+    is genuine sample loss). A Python feeder that retries a rejected push should
+    check free space first, or the counter will include samples it later wrote.
+    """
+    cdef RingBuffer* _r
+
+    def __cinit__(self, int frames=8192, int channels=2):
+        cdef size_t cap
+        if frames < 1 or channels < 1:
+            raise ValueError("frames and channels must be >= 1")
+        cap = _next_pow2(<size_t>frames * <size_t>channels)
+        self._r = <RingBuffer*>malloc(sizeof(RingBuffer))
+        if self._r == NULL:
+            raise MemoryError("Could not allocate ring buffer")
+        memset(self._r, 0, sizeof(RingBuffer))
+        self._r.buf = <cf.Float32*>malloc(cap * sizeof(cf.Float32))
+        if self._r.buf == NULL:
+            free(self._r)
+            self._r = NULL
+            raise MemoryError("Could not allocate ring storage")
+        self._r.capacity = cap
+        self._r.mask = cap - 1
+
+    cdef RingBuffer* ptr(self) noexcept nogil:
+        return self._r
+
+    @property
+    def capacity(self):
+        return int(self._r.capacity) if self._r != NULL else 0
+
+    @property
+    def overruns(self):
+        return int(self._r.overruns) if self._r != NULL else 0
+
+    @property
+    def underruns(self):
+        return int(self._r.underruns) if self._r != NULL else 0
+
+    def available(self):
+        """Elements currently available to read (advisory)."""
+        if self._r == NULL:
+            return 0
+        return int(_rb_load_acq(&self._r.write) - _rb_load_rlx(&self._r.read))
+
+    def push_floats(self, float[::1] data not None):
+        """Push interleaved float32 (for a feeder thread). Returns elements written."""
+        if self._r == NULL or data.shape[0] == 0:
+            return 0
+        return int(ring_push(self._r, &data[0], <size_t>data.shape[0]))
+
+    def push_bytes(self, const unsigned char[::1] data not None):
+        """Push raw float32-interleaved bytes. Returns float32 elements written."""
+        cdef size_t n = <size_t>data.shape[0] // sizeof(cf.Float32)
+        if self._r == NULL or n == 0:
+            return 0
+        return int(ring_push(self._r, <const cf.Float32*>&data[0], n))
+
+    def pop_into(self, float[::1] out not None):
+        """Pop into a preallocated float32 buffer (for a drain thread). Returns elements read."""
+        if self._r == NULL or out.shape[0] == 0:
+            return 0
+        return int(ring_pop(self._r, &out[0], <size_t>out.shape[0]))
+
+    def __dealloc__(self):
+        if self._r != NULL:
+            if self._r.buf != NULL:
+                free(self._r.buf)
+            free(self._r)
+            self._r = NULL
+
+
+# Control blocks passed to the audio-thread callbacks as refcon. They are plain
+# C structs (not Python objects) so the callbacks stay fully nogil.
+ctypedef struct InputControl:
+    at.AudioUnit unit
+    RingBuffer*  ring
+    void*        scratch
+    cf.UInt32    scratch_bytes
+    cf.UInt32    channels
+    cf.OSStatus  last_status
+
+
+ctypedef struct OutputControl:
+    RingBuffer*  ring
+    cf.UInt32    channels
+
+
+cdef cf.OSStatus ring_input_callback(
+    void* user_data,
+    at.AudioUnitRenderActionFlags* action_flags,
+    const ca.AudioTimeStamp* time_stamp,
+    cf.UInt32 bus_number,
+    cf.UInt32 num_frames,
+    ca.AudioBufferList* io_data
+) noexcept nogil:
+    """Capture callback: render into scratch, push to the ring. No GIL, no Python."""
+    cdef InputControl* c = <InputControl*>user_data
+    cdef ca.AudioBufferList bl
+    cdef cf.UInt32 needed
+    cdef cf.OSStatus status
+    if c == NULL or c.scratch == NULL:
+        return 0
+    needed = num_frames * c.channels * <cf.UInt32>sizeof(cf.Float32)
+    if needed == 0 or needed > c.scratch_bytes:
+        return 0
+    bl.mNumberBuffers = 1
+    bl.mBuffers[0].mNumberChannels = c.channels
+    bl.mBuffers[0].mDataByteSize = needed
+    bl.mBuffers[0].mData = c.scratch
+    status = at.AudioUnitRender(c.unit, action_flags, time_stamp,
+                                bus_number, num_frames, &bl)
+    if status != 0:
+        c.last_status = status
+        return 0
+    ring_push(c.ring, <cf.Float32*>c.scratch, <size_t>(num_frames * c.channels))
+    return 0
+
+
+cdef cf.OSStatus ring_output_callback(
+    void* user_data,
+    at.AudioUnitRenderActionFlags* action_flags,
+    const ca.AudioTimeStamp* time_stamp,
+    cf.UInt32 bus_number,
+    cf.UInt32 num_frames,
+    ca.AudioBufferList* io_data
+) noexcept nogil:
+    """Render callback: pop from the ring, zero-fill on underrun. No GIL, no Python."""
+    cdef OutputControl* c = <OutputControl*>user_data
+    cdef cf.Float32* dst
+    cdef size_t want, got
+    if c == NULL or io_data == NULL or io_data.mNumberBuffers == 0:
+        return 0
+    if io_data.mBuffers[0].mData == NULL:
+        return 0
+    dst = <cf.Float32*>io_data.mBuffers[0].mData
+    want = <size_t>(num_frames * c.channels)
+    got = ring_pop(c.ring, dst, want)
+    if got < want:
+        memset(dst + got, 0, (want - got) * sizeof(cf.Float32))
+    return 0
+
+
+# ============================================================================
 # Real-time audio output stream (generator-driven)
 # ============================================================================
 
@@ -3502,6 +3951,8 @@ cdef class AudioOutputStreamImpl:
     cdef bint _initialized
     cdef bint _active
     cdef bint _error
+    cdef OutputControl* _octl
+    cdef object _ring_obj
 
     def __cinit__(self):
         self.output_unit = NULL
@@ -3511,24 +3962,15 @@ cdef class AudioOutputStreamImpl:
         self._initialized = False
         self._active = False
         self._error = False
+        self._octl = NULL
+        self._ring_obj = None
 
-    def setup(self, generator, double sample_rate=44100.0, int channels=2):
-        """Create the output unit, set the format, and install the callback."""
+    cdef void _create_output_unit(self, double sample_rate, int channels) except *:
+        """Create the Default Output unit and set the interleaved float32 format."""
         cdef at.AudioComponentDescription desc
         cdef at.AudioComponent comp
         cdef cf.OSStatus status
         cdef at.AudioStreamBasicDescription fmt
-        cdef at.AURenderCallbackStruct cb
-
-        if generator is None:
-            raise ValueError("generator is required")
-        if channels < 1:
-            raise ValueError("channels must be >= 1")
-
-        self._generator = generator
-        self._sample_rate = sample_rate
-        self._channels = channels
-        self._error = False
 
         desc.componentType = at.kAudioUnitType_Output
         desc.componentSubType = at.kAudioUnitSubType_DefaultOutput
@@ -3556,6 +3998,59 @@ cdef class AudioOutputStreamImpl:
             at.kAudioUnitScope_Input, 0, &fmt, sizeof(fmt))
         if status != 0:
             raise RuntimeError(f"Could not set stream format: {status}")
+
+    def setup_direct(self, AudioRingBuffer ring not None,
+                     double sample_rate=44100.0, int channels=2):
+        """Feed the output from a ring buffer via a nogil callback (no Python).
+
+        Used for zero-GIL loopback: the render thread pops directly from the
+        shared ring with no generator call.
+        """
+        cdef at.AURenderCallbackStruct cb
+        cdef cf.OSStatus status
+        if channels < 1:
+            raise ValueError("channels must be >= 1")
+
+        self._sample_rate = sample_rate
+        self._channels = channels
+        self._create_output_unit(sample_rate, channels)
+
+        self._octl = <OutputControl*>malloc(sizeof(OutputControl))
+        if self._octl == NULL:
+            raise MemoryError("Could not allocate OutputControl")
+        self._octl.ring = ring.ptr()
+        self._octl.channels = <cf.UInt32>channels
+        self._ring_obj = ring  # keep the ring alive while this unit runs
+
+        cb.inputProc = ring_output_callback
+        cb.inputProcRefCon = <void*>self._octl
+        status = at.AudioUnitSetProperty(
+            self.output_unit, at.kAudioUnitProperty_SetRenderCallback,
+            at.kAudioUnitScope_Global, 0, &cb, sizeof(cb))
+        if status != 0:
+            raise RuntimeError(f"Could not set render callback: {status}")
+
+        status = at.AudioUnitInitialize(self.output_unit)
+        if status != 0:
+            raise RuntimeError(f"Could not initialize output AudioUnit: {status}")
+        self._initialized = True
+
+    def setup(self, generator, double sample_rate=44100.0, int channels=2):
+        """Create the output unit, set the format, and install the generator callback."""
+        cdef at.AURenderCallbackStruct cb
+        cdef cf.OSStatus status
+
+        if generator is None:
+            raise ValueError("generator is required")
+        if channels < 1:
+            raise ValueError("channels must be >= 1")
+
+        self._generator = generator
+        self._sample_rate = sample_rate
+        self._channels = channels
+        self._error = False
+
+        self._create_output_unit(sample_rate, channels)
 
         cb.inputProc = output_stream_render_callback
         cb.inputProcRefCon = <void*>self
@@ -3596,8 +4091,13 @@ cdef class AudioOutputStreamImpl:
             at.AudioUnitUninitialize(self.output_unit)
             at.AudioComponentInstanceDispose(self.output_unit)
             self.output_unit = NULL
+        # The unit is stopped and disposed, so no callback can touch _octl.
+        if self._octl != NULL:
+            free(self._octl)
+            self._octl = NULL
         self._initialized = False
         self._generator = None
+        self._ring_obj = None
 
     @property
     def is_active(self):
@@ -3608,11 +4108,324 @@ cdef class AudioOutputStreamImpl:
         return bool(self._error)
 
     def __dealloc__(self):
+        if self._octl != NULL:
+            free(self._octl)
+            self._octl = NULL
         if self.output_unit != NULL:
             at.AudioOutputUnitStop(self.output_unit)
             at.AudioUnitUninitialize(self.output_unit)
             at.AudioComponentInstanceDispose(self.output_unit)
             self.output_unit = NULL
+
+
+# ============================================================================
+# Real-time audio input stream (capture callback -> Python)
+# ============================================================================
+
+
+cdef void _capture_input_stream(AudioInputStreamImpl stream,
+                                 at.AudioUnitRenderActionFlags* action_flags,
+                                 const ca.AudioTimeStamp* time_stamp,
+                                 cf.UInt32 bus_number,
+                                 cf.UInt32 num_frames) noexcept:
+    """Pull captured audio via AudioUnitRender and deliver it to Python (holds GIL)."""
+    cdef cf.UInt32 needed = num_frames * <cf.UInt32>stream._channels * <cf.UInt32>sizeof(cf.Float32)
+    cdef ca.AudioBufferList buffer_list
+    cdef cf.OSStatus status
+    cdef bytes data
+
+    if stream.input_unit == NULL or stream._capture_buffer == NULL:
+        return
+    if needed == 0 or needed > stream._capture_capacity:
+        return  # buffer would overflow; skip this cycle
+
+    buffer_list.mNumberBuffers = 1
+    buffer_list.mBuffers[0].mNumberChannels = <cf.UInt32>stream._channels
+    buffer_list.mBuffers[0].mDataByteSize = needed
+    buffer_list.mBuffers[0].mData = stream._capture_buffer
+
+    status = at.AudioUnitRender(stream.input_unit, action_flags, time_stamp,
+                                bus_number, num_frames, &buffer_list)
+    if status != 0:
+        stream._error = True
+        stream._last_status = <int>status
+        return
+
+    callback = stream._callback
+    if callback is None:
+        return
+    data = (<char*>stream._capture_buffer)[:needed]
+    try:
+        callback(data, <int>num_frames)
+    except BaseException:
+        stream._error = True
+
+
+cdef cf.OSStatus input_stream_capture_callback(
+    void* user_data,
+    at.AudioUnitRenderActionFlags* action_flags,
+    const ca.AudioTimeStamp* time_stamp,
+    cf.UInt32 bus_number,
+    cf.UInt32 num_frames,
+    ca.AudioBufferList* io_data
+) noexcept nogil:
+    """Input callback: render the captured buffer, then deliver it to Python."""
+    if user_data == NULL:
+        return 0
+    with gil:
+        _capture_input_stream(<AudioInputStreamImpl>user_data, action_flags,
+                              time_stamp, bus_number, num_frames)
+    return 0
+
+
+cdef class AudioInputStreamImpl:
+    """Real-time input stream that delivers captured audio to a Python callback.
+
+    Uses a HAL output unit configured for input. The callback receives float32
+    interleaved bytes on the CoreAudio input thread (under the GIL) -- best-effort
+    real time, suitable for monitoring and loopback, not hard-real-time work.
+    """
+    cdef at.AudioUnit input_unit
+    cdef object _callback
+    cdef int _channels
+    cdef double _sample_rate
+    cdef bint _initialized
+    cdef bint _active
+    cdef bint _error
+    cdef int _last_status
+    cdef void* _capture_buffer
+    cdef cf.UInt32 _capture_capacity
+    cdef InputControl* _ctl
+    cdef object _ring_obj
+
+    def __cinit__(self):
+        self.input_unit = NULL
+        self._callback = None
+        self._channels = 2
+        self._sample_rate = 44100.0
+        self._initialized = False
+        self._active = False
+        self._error = False
+        self._last_status = 0
+        self._capture_buffer = NULL
+        self._capture_capacity = 0
+        self._ctl = NULL
+        self._ring_obj = None
+
+    cdef void _configure_input_unit(self, long input_device_id,
+                                    double sample_rate, int channels) except *:
+        """Create the HAL unit, enable input, bind the device, and set the format."""
+        cdef at.AudioComponentDescription desc
+        cdef at.AudioComponent comp
+        cdef cf.OSStatus status
+        cdef at.AudioStreamBasicDescription fmt
+        cdef cf.UInt32 enable
+        cdef cf.UInt32 device = <cf.UInt32>input_device_id
+
+        desc.componentType = at.kAudioUnitType_Output
+        desc.componentSubType = at.kAudioUnitSubType_HALOutput
+        desc.componentManufacturer = at.kAudioUnitManufacturer_Apple
+        desc.componentFlags = 0
+        desc.componentFlagsMask = 0
+        comp = at.AudioComponentFindNext(NULL, &desc)
+        if comp == NULL:
+            raise RuntimeError("Cannot find HAL output AudioComponent")
+        status = at.AudioComponentInstanceNew(comp, &self.input_unit)
+        if status != 0:
+            raise RuntimeError(f"Could not create HAL input unit: {status}")
+
+        # Enable input on element 1, disable output on element 0.
+        enable = 1
+        status = at.AudioUnitSetProperty(
+            self.input_unit, at.kAudioOutputUnitProperty_EnableIO,
+            at.kAudioUnitScope_Input, 1, &enable, sizeof(enable))
+        if status != 0:
+            raise RuntimeError(f"Could not enable input: {status}")
+        enable = 0
+        status = at.AudioUnitSetProperty(
+            self.input_unit, at.kAudioOutputUnitProperty_EnableIO,
+            at.kAudioUnitScope_Output, 0, &enable, sizeof(enable))
+        if status != 0:
+            raise RuntimeError(f"Could not disable output: {status}")
+
+        # Bind the capture device.
+        status = at.AudioUnitSetProperty(
+            self.input_unit, at.kAudioOutputUnitProperty_CurrentDevice,
+            at.kAudioUnitScope_Global, 0, &device, sizeof(device))
+        if status != 0:
+            raise RuntimeError(f"Could not set input device: {status}")
+
+        # Client format (interleaved float32) on the output scope of element 1.
+        fmt.mSampleRate = sample_rate
+        fmt.mFormatID = ca.kAudioFormatLinearPCM
+        fmt.mFormatFlags = ca.kLinearPCMFormatFlagIsFloat
+        fmt.mBytesPerPacket = <cf.UInt32>(sizeof(cf.Float32) * channels)
+        fmt.mFramesPerPacket = 1
+        fmt.mBytesPerFrame = <cf.UInt32>(sizeof(cf.Float32) * channels)
+        fmt.mChannelsPerFrame = <cf.UInt32>channels
+        fmt.mBitsPerChannel = 32
+        fmt.mReserved = 0
+        status = at.AudioUnitSetProperty(
+            self.input_unit, at.kAudioUnitProperty_StreamFormat,
+            at.kAudioUnitScope_Output, 1, &fmt, sizeof(fmt))
+        if status != 0:
+            raise RuntimeError(f"Could not set input stream format: {status}")
+
+    def setup(self, callback, long input_device_id, double sample_rate=44100.0,
+              int channels=2, int max_frames=8192):
+        """Create the HAL input unit and deliver captured audio to a Python callback."""
+        cdef cf.OSStatus status
+        cdef at.AURenderCallbackStruct cb
+
+        if callback is None:
+            raise ValueError("callback is required")
+        if channels < 1:
+            raise ValueError("channels must be >= 1")
+        if input_device_id <= 0:
+            raise ValueError("a valid input device id is required")
+
+        self._callback = callback
+        self._sample_rate = sample_rate
+        self._channels = channels
+        self._error = False
+
+        self._configure_input_unit(input_device_id, sample_rate, channels)
+
+        cb.inputProc = input_stream_capture_callback
+        cb.inputProcRefCon = <void*>self
+        status = at.AudioUnitSetProperty(
+            self.input_unit, at.kAudioOutputUnitProperty_SetInputCallback,
+            at.kAudioUnitScope_Global, 0, &cb, sizeof(cb))
+        if status != 0:
+            raise RuntimeError(f"Could not set input callback: {status}")
+
+        # Preallocate the capture buffer used inside the render callback.
+        self._capture_capacity = <cf.UInt32>(max_frames * channels * sizeof(cf.Float32))
+        self._capture_buffer = malloc(self._capture_capacity)
+        if self._capture_buffer == NULL:
+            raise MemoryError("Could not allocate capture buffer")
+
+        status = at.AudioUnitInitialize(self.input_unit)
+        if status != 0:
+            raise RuntimeError(f"Could not initialize input unit: {status}")
+        self._initialized = True
+
+    def setup_direct(self, AudioRingBuffer ring not None, long input_device_id,
+                     double sample_rate=44100.0, int channels=2, int max_frames=8192):
+        """Push captured audio straight into a ring buffer via a nogil callback.
+
+        Used for zero-GIL capture (a drain thread reads the ring) and loopback
+        (the output render thread reads the same ring). No Python runs on the
+        capture thread.
+        """
+        cdef cf.OSStatus status
+        cdef at.AURenderCallbackStruct cb
+
+        if channels < 1:
+            raise ValueError("channels must be >= 1")
+        if input_device_id <= 0:
+            raise ValueError("a valid input device id is required")
+
+        self._sample_rate = sample_rate
+        self._channels = channels
+        self._error = False
+
+        self._configure_input_unit(input_device_id, sample_rate, channels)
+
+        self._ctl = <InputControl*>malloc(sizeof(InputControl))
+        if self._ctl == NULL:
+            raise MemoryError("Could not allocate InputControl")
+        memset(self._ctl, 0, sizeof(InputControl))
+        self._ctl.unit = self.input_unit
+        self._ctl.ring = ring.ptr()
+        self._ctl.channels = <cf.UInt32>channels
+        self._ctl.scratch_bytes = <cf.UInt32>(max_frames * channels * sizeof(cf.Float32))
+        self._ctl.scratch = malloc(self._ctl.scratch_bytes)
+        if self._ctl.scratch == NULL:
+            raise MemoryError("Could not allocate capture scratch buffer")
+        self._ring_obj = ring  # keep the ring alive while this unit runs
+
+        cb.inputProc = ring_input_callback
+        cb.inputProcRefCon = <void*>self._ctl
+        status = at.AudioUnitSetProperty(
+            self.input_unit, at.kAudioOutputUnitProperty_SetInputCallback,
+            at.kAudioUnitScope_Global, 0, &cb, sizeof(cb))
+        if status != 0:
+            raise RuntimeError(f"Could not set input callback: {status}")
+
+        status = at.AudioUnitInitialize(self.input_unit)
+        if status != 0:
+            raise RuntimeError(f"Could not initialize input unit: {status}")
+        self._initialized = True
+
+    def start(self):
+        """Start capturing audio."""
+        cdef cf.OSStatus status
+        if not self._initialized:
+            raise RuntimeError("Input stream not set up")
+        status = at.AudioOutputUnitStart(self.input_unit)
+        if status != 0:
+            raise RuntimeError(f"Could not start input stream: {status}")
+        self._active = True
+
+    def stop(self):
+        """Stop capturing audio."""
+        if not self._initialized or not self._active:
+            return
+        at.AudioOutputUnitStop(self.input_unit)
+        self._active = False
+
+    def close(self):
+        """Stop and dispose the input unit."""
+        if self.input_unit != NULL:
+            if self._active:
+                at.AudioOutputUnitStop(self.input_unit)
+                self._active = False
+            at.AudioUnitUninitialize(self.input_unit)
+            at.AudioComponentInstanceDispose(self.input_unit)
+            self.input_unit = NULL
+        if self._capture_buffer != NULL:
+            free(self._capture_buffer)
+            self._capture_buffer = NULL
+        # The unit is stopped and disposed, so no callback can touch _ctl.
+        if self._ctl != NULL:
+            if self._ctl.scratch != NULL:
+                free(self._ctl.scratch)
+            free(self._ctl)
+            self._ctl = NULL
+        self._initialized = False
+        self._callback = None
+        self._ring_obj = None
+
+    @property
+    def is_active(self):
+        return bool(self._active)
+
+    @property
+    def had_error(self):
+        return bool(self._error)
+
+    @property
+    def last_status(self):
+        # In direct (ring) mode the capture error is recorded on the control block.
+        if self._ctl != NULL:
+            return int(self._ctl.last_status)
+        return self._last_status
+
+    def __dealloc__(self):
+        if self.input_unit != NULL:
+            at.AudioOutputUnitStop(self.input_unit)
+            at.AudioUnitUninitialize(self.input_unit)
+            at.AudioComponentInstanceDispose(self.input_unit)
+            self.input_unit = NULL
+        if self._capture_buffer != NULL:
+            free(self._capture_buffer)
+            self._capture_buffer = NULL
+        if self._ctl != NULL:
+            if self._ctl.scratch != NULL:
+                free(self._ctl.scratch)
+            free(self._ctl)
+            self._ctl = NULL
 
 
 cdef class AudioRecorder:

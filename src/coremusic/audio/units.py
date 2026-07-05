@@ -465,23 +465,36 @@ class AudioUnit(capi.CoreAudioObject):
         except Exception:
             return []
 
-    def render(self, num_frames: int, timestamp: int | None = None) -> bytes:
-        """Render audio frames (for offline processing)
+    def render(
+        self,
+        input_data: bytes,
+        num_frames: int,
+        sample_rate: float = 44100.0,
+        channels: int = 2,
+    ) -> bytes:
+        """Render audio through this unit for offline (effect) processing.
+
+        Feeds ``input_data`` to the unit via an input render callback and reads
+        its output, handling the canonical non-interleaved float32 layout that
+        most effect AudioUnits use.
 
         Args:
+            input_data: Input audio as interleaved float32 bytes
             num_frames: Number of frames to render
-            timestamp: Optional timestamp (default: None uses current time)
+            sample_rate: Sample rate in Hz (default: 44100.0)
+            channels: Channel count (default: 2)
 
         Returns:
-            Rendered audio data as bytes
+            Processed audio as interleaved float32 bytes.
 
-        Note: This is a simplified render method for offline processing.
-        For real-time audio, use render callbacks with the audio player infrastructure.
+        Note:
+            This drives an effect unit. Instrument (music device) units should
+            be rendered with ``coremusic.audio.audiounit_host.render_midi_file``
+            or ``AudioUnitPlugin.render_midi`` instead.
         """
-        # This would require implementing AudioUnitRender which needs more infrastructure
-        raise NotImplementedError(
-            "Direct rendering not yet implemented. "
-            "Use the audio player infrastructure with render callbacks for real-time audio."
+        self._ensure_not_disposed()
+        return capi.audio_unit_render_effect(
+            self.object_id, input_data, num_frames, sample_rate, channels
         )
 
     def __repr__(self) -> str:

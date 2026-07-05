@@ -77,6 +77,24 @@ class TestAudioDevice:
         assert sample_rate > 0
         assert sample_rate >= 44100  # Minimum typical sample rate
 
+    def test_audio_device_set_sample_rate(self):
+        """Setting the sample rate works (idempotent set) and rejects bad rates."""
+        from coremusic.exceptions import AudioDeviceError
+
+        device = AudioDeviceManager.get_default_output_device()
+        assert device is not None
+
+        current = device.sample_rate
+        # Setting to the current rate is a safe no-op and must not raise.
+        device.sample_rate = current
+        assert device.sample_rate == pytest.approx(current)
+
+        # An implausible rate should be rejected with a clear error, and the
+        # device must remain at a valid rate afterwards.
+        with pytest.raises(AudioDeviceError):
+            device.sample_rate = 1.0
+        assert device.sample_rate > 0
+
     def test_audio_device_is_alive(self):
         """Test is_alive property"""
         device = AudioDeviceManager.get_default_output_device()

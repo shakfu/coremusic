@@ -953,8 +953,9 @@ class AudioUnitPlugin:
         else:
             converted_input = input_data
 
-        # Process through AudioUnit
-        processed_data = capi.audio_unit_render(
+        # Process through AudioUnit (effect render: feeds input via a callback
+        # and reads the effect's native, typically non-interleaved, output).
+        processed_data = capi.audio_unit_render_effect(
             self._unit_id,
             converted_input,
             num_frames,
@@ -1562,18 +1563,32 @@ class AudioUnitChain:
         return mixed_data
 
     def bypass_plugin(self, index: int, bypass: bool = True) -> None:
-        """Bypass a plugin in the chain (plugin remains in chain but doesn't process)
+        """Bypass (or re-enable) a plugin in the chain.
+
+        Sets ``kAudioUnitProperty_BypassEffect`` so the unit passes audio
+        through unprocessed while remaining in the chain -- useful for A/B'ing
+        an effect without rebuilding the chain.
 
         Args:
             index: Plugin index
-            bypass: True to bypass, False to enable (default True)
+            bypass: True to bypass, False to re-enable (default True)
 
-        Note: This is a simplified implementation - actual bypass would require
-        storing bypass state and skipping processing in the process() method.
+        Raises:
+            IndexError: If index is out of range
+            RuntimeError: If the plugin is not instantiated
         """
-        # This would require adding bypass state tracking to AudioUnitPlugin
-        # For now, we document the intended behavior
-        raise NotImplementedError("Plugin bypass not yet implemented")
+        if index < 0 or index >= len(self._plugins):
+            raise IndexError(f"Plugin index {index} out of range")
+        plugin = self._plugins[index]
+        if plugin._unit_id is None:
+            raise RuntimeError("Plugin not instantiated")
+        capi.audio_unit_set_property(
+            plugin._unit_id,
+            21,  # kAudioUnitProperty_BypassEffect
+            0,  # kAudioUnitScope_Global
+            0,
+            struct.pack("<I", 1 if bypass else 0),
+        )
 
     def dispose(self) -> None:
         """Dispose all plugins in the chain"""

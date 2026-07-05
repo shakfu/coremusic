@@ -279,16 +279,43 @@ class TestAudioUnitAdvancedWorkflow:
 
 
 class TestAudioUnitRenderMethod:
-    """Test AudioUnit render method"""
+    """Test AudioUnit.render() offline effect processing."""
 
-    def test_render_not_implemented(self):
-        """Test that render method raises NotImplementedError"""
-        unit = AudioUnit.default_output()
+    def test_render_effect_processes_audio(self):
+        """render() feeds input through an effect and returns processed audio."""
+        import numpy as np
+
+        from coremusic.audio.units import AudioComponent, AudioComponentDescription
+
+        # AUDelay: an Apple effect that uses the canonical non-interleaved format.
+        desc = AudioComponentDescription(
+            type="aufx", subtype="dely", manufacturer="appl"
+        )
         try:
-            with pytest.raises(NotImplementedError):
-                unit.render(1024)
+            comp = AudioComponent.find_next(desc)
+            unit = comp.create_instance()
+        except Exception as e:
+            pytest.skip(f"AUDelay not available: {e}")
 
+        try:
+            unit.initialize()
+            # n exceeds the default MaximumFramesPerSlice (1156) to exercise the
+            # internal sub-block rendering loop.
+            sr, n, ch = 44100.0, 4096, 2
+            sig = (0.5 * np.sin(2 * np.pi * 440 * np.arange(n) / sr)).astype(np.float32)
+            stereo = np.repeat(sig, 2).astype(np.float32).tobytes()
+
+            out = unit.render(stereo, n, sr, ch)
+            assert len(out) == n * ch * 4  # interleaved float32
+            data = np.frombuffer(out, dtype=np.float32)
+            assert np.count_nonzero(data) > 0  # not silent
+
+            # A delay of silence is silence.
+            silence = bytes(n * ch * 4)
+            out_sil = np.frombuffer(unit.render(silence, n, sr, ch), dtype=np.float32)
+            assert float(np.max(np.abs(out_sil))) == pytest.approx(0.0, abs=1e-6)
         finally:
+            unit.uninitialize()
             unit.dispose()
 
 

@@ -75,15 +75,24 @@ class TestAudioInputStream:
         stream.remove_callback(my_callback)
         assert len(stream._callbacks) == 0
 
-    def test_start_not_implemented(self):
-        """Test that start raises error (requires Cython callbacks)."""
+    def test_start_captures_or_reports_permission(self):
+        """Start either captures (mic permitted) or fails with a clear error.
+
+        It must no longer be a stub -- the old `NotImplementedError` /
+        "Cython-level callback" behaviour is gone.
+        """
         stream = AudioInputStream()
-
         assert not stream.is_active
-
-        # Start requires Cython-level callback implementation
-        with pytest.raises(RuntimeError, match="Cython-level callback"):
+        try:
             stream.start()
+        except RuntimeError as e:
+            # Acceptable: no input device, or microphone permission denied.
+            assert "Cython" not in str(e)
+            assert not stream.is_active
+        else:
+            assert stream.is_active
+            stream.stop()
+            assert not stream.is_active
 
     def test_start_already_active_raises_error(self):
         """Test that starting already active stream raises error."""
@@ -271,17 +280,22 @@ class TestAudioProcessor:
         # Should return silence (zeros or zero bytes)
         assert output is not None
 
-    def test_processor_start_not_implemented(self):
-        """Test processor start raises RuntimeError."""
+    def test_processor_start_runs_or_reports_permission(self):
+        """Processor start either runs (mic permitted) or fails with a clear error."""
 
         def process_func(audio_in):
             return audio_in
 
         processor = AudioProcessor(process_func)
-
-        # Start requires Cython-level callback implementation
-        with pytest.raises(RuntimeError, match="Cython-level callback"):
+        try:
             processor.start()
+        except RuntimeError as e:
+            assert "Cython" not in str(e)
+            assert not processor.is_active
+        else:
+            assert processor.is_active
+            processor.stop()
+            assert not processor.is_active
 
     def test_processor_stop_safe(self):
         """Test processor stop is safe."""
@@ -308,6 +322,39 @@ class TestAudioProcessor:
         # Should return silence on error, not raise
         output = processor._generate_output(512)
         assert output is not None
+
+    def test_worker_applies_process_func_into_ring(self):
+        """The worker step (_on_input) applies process_func and fills the ring.
+
+        This exercises the two-ring model deterministically without audio
+        hardware: process_func runs on the worker path, not the render thread.
+        """
+        np = pytest.importorskip("numpy")
+        from coremusic import capi
+
+        processor = AudioProcessor(lambda x: x * 0.5, channels=2, buffer_size=64)
+        ring = capi.AudioRingBuffer(8 * 64, 2)
+        processor._out_ring = ring  # simulate a started processor
+
+        data = np.ones((64, 2), dtype=np.float32)
+        processor._on_input(data, 64)  # worker: process + enqueue
+
+        out = np.zeros(64 * 2, dtype=np.float32)
+        got = ring.pop_into(out)
+        assert got == 64 * 2
+        assert np.allclose(out, 0.5)  # gain of 0.5 applied
+
+    def test_worker_skips_bad_process_result(self):
+        """A process_func returning an unsupported type must not crash the worker."""
+        pytest.importorskip("numpy")
+        from coremusic import capi
+
+        processor = AudioProcessor(lambda x: "not audio", channels=1, buffer_size=32)
+        ring = capi.AudioRingBuffer(8 * 32, 1)
+        processor._out_ring = ring
+        # Should log and skip, not raise; ring stays empty.
+        processor._on_input(b"\x00" * 128, 32)
+        assert ring.available() == 0
 
 
 # ============================================================================
@@ -459,14 +506,19 @@ class TestStreamGraph:
         with pytest.raises(ValueError, match="empty graph"):
             graph.start()
 
-    def test_start_not_implemented(self):
-        """Test that starting graph raises RuntimeError."""
+    def test_start_runs_or_reports_permission(self):
+        """Starting a graph either runs (mic permitted) or fails with a clear error."""
         graph = StreamGraph()
         graph.add_node("test", lambda x: x)
-
-        # Start requires Cython-level callback implementation
-        with pytest.raises(RuntimeError, match="Cython-level callback"):
+        try:
             graph.start()
+        except RuntimeError as e:
+            assert "Cython" not in str(e)
+            assert not graph.is_active
+        else:
+            assert graph.is_active
+            graph.stop()
+            assert not graph.is_active
 
     def test_start_already_active_raises_error(self):
         """Test that starting already active graph raises error."""
@@ -536,24 +588,27 @@ class TestConvenienceFunctions:
     """Test convenience functions."""
 
     def test_create_loopback(self):
-        """Test creating loopback processor."""
+        """create_loopback returns a startable DirectLoopback with its config."""
+        from coremusic.audio.streaming import DirectLoopback
+
         loopback = create_loopback(channels=2, sample_rate=48000.0, buffer_size=256)
 
-        assert isinstance(loopback, AudioProcessor)
+        assert isinstance(loopback, DirectLoopback)
         assert loopback.channels == 2
         assert loopback.sample_rate == 48000.0
         assert loopback.buffer_size == 256
+        assert not loopback.is_active
+        # Zero-GIL loopback exposes ring health counters.
+        assert loopback.overruns == 0
+        assert loopback.underruns == 0
 
-    def test_loopback_passes_through_data(self):
-        """Test that loopback passes data through unchanged."""
-        loopback = create_loopback()
+    def test_processor_passes_through_data(self):
+        """AudioProcessor with an identity function returns input unchanged."""
+        processor = AudioProcessor(lambda audio_in: audio_in)
 
-        # Set input data
         test_data = b"test audio"
-        loopback._input_buffer = test_data
-
-        # Generate output
-        output = loopback._generate_output(512)
+        processor._input_buffer = test_data
+        output = processor._generate_output(512)
 
         assert output == test_data
 

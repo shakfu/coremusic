@@ -155,9 +155,22 @@ class AudioDevice(capi.CoreAudioObject):
 
     @sample_rate.setter
     def sample_rate(self, rate: float) -> None:
-        """Set the nominal sample rate (not all devices support this)"""
-        # This would require implementing AudioObjectSetPropertyData
-        raise NotImplementedError("Setting sample rate not yet implemented")
+        """Set the nominal sample rate.
+
+        Not all devices allow this, and a device may snap to its nearest
+        supported rate. Raises AudioDeviceError if the device rejects the change.
+        """
+        data = struct.pack("<d", float(rate))
+        try:
+            capi.audio_object_set_property_data(
+                self.object_id,
+                capi.get_audio_device_property_nominal_sample_rate(),
+                capi.get_audio_object_property_scope_global(),
+                0,
+                data,
+            )
+        except Exception as e:
+            raise AudioDeviceError(f"Failed to set sample rate to {rate}: {e}")
 
     @property
     def is_alive(self) -> bool:

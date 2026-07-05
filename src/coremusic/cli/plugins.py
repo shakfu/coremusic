@@ -565,7 +565,7 @@ def cmd_process(args: argparse.Namespace) -> int:
             end_byte = (offset + frames_to_process) * 4 * fmt.channels_per_frame
             chunk = audio_data[start_byte:end_byte]
 
-            processed = capi.audio_unit_render(
+            processed = capi.audio_unit_render_effect(
                 au_id, chunk, frames_to_process, fmt.sample_rate, fmt.channels_per_frame
             )
             processed_chunks.append(processed)
@@ -872,7 +872,7 @@ def cmd_chain(args: argparse.Namespace) -> int:
                 end_byte = (offset + frames_to_process) * 4 * fmt.channels_per_frame
                 chunk = audio_data[start_byte:end_byte]
 
-                processed = capi.audio_unit_render(
+                processed = capi.audio_unit_render_effect(
                     au_id,
                     chunk,
                     frames_to_process,
