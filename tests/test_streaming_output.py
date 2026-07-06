@@ -24,6 +24,18 @@ def _silence_generator(counter, channels=2):
     return gen
 
 
+def _wait_for_calls(counter, timeout=5.0):
+    """Poll until the render callback has fired at least once.
+
+    The CoreAudio output unit can take longer than a fixed sleep to prime on a
+    loaded/headless CI runner, so wait for the first callback rather than racing
+    a hardcoded duration. Returns as soon as a call is observed.
+    """
+    deadline = time.monotonic() + timeout
+    while counter["calls"] == 0 and time.monotonic() < deadline:
+        time.sleep(0.02)
+
+
 @has_audio_output
 class TestAudioOutputStreamImpl:
     def test_lifecycle_and_generator_called(self):
@@ -33,7 +45,7 @@ class TestAudioOutputStreamImpl:
         assert impl.is_active is False
         impl.start()
         assert impl.is_active is True
-        time.sleep(0.2)
+        _wait_for_calls(counter)
         impl.stop()
         assert impl.is_active is False
         impl.close()
@@ -55,7 +67,7 @@ class TestAudioOutputStream:
         stream.set_generator(_silence_generator(counter))
         with stream:
             assert stream.is_active is True
-            time.sleep(0.2)
+            _wait_for_calls(counter)
         assert stream.is_active is False
         assert counter["calls"] > 0
 
@@ -70,7 +82,7 @@ class TestAudioOutputStream:
         stream = AudioOutputStream(channels=2, sample_rate=44100.0, buffer_size=512)
         stream.set_generator(gen)
         with stream:
-            time.sleep(0.2)
+            _wait_for_calls(counter)
         assert counter["calls"] > 0
 
     def test_start_without_generator_raises(self):
