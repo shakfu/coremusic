@@ -4,7 +4,7 @@ This module provides low-level Python bindings to CoreAudio frameworks
 via Cython. All functions are thin wrappers around C APIs.
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 # ============================================================================
 # Base Classes
@@ -608,8 +608,41 @@ def midi_client_dispose(client_id: int) -> None:
     """Dispose of a MIDI client."""
     ...
 
-def midi_input_port_create(client_id: int, name: str) -> int:
+def midi_input_port_create(
+    client_id: int,
+    name: str,
+    callback: Optional[Callable[[bytes, int], None]] = None,
+    queue_size: int = 4096,
+) -> int:
     """Create a MIDI input port."""
+    ...
+
+def midi_input_poll(obj_id: int, max_events: int = 0) -> List[Tuple[int, bytes]]:
+    """Drain buffered MIDI packets as (host_time, data) tuples."""
+    ...
+
+def midi_input_pending(obj_id: int) -> int:
+    """Number of MIDI packets currently buffered."""
+    ...
+
+def midi_input_dropped(obj_id: int) -> int:
+    """Number of MIDI packets discarded because the buffer was full."""
+    ...
+
+def midi_input_wait(obj_id: int, timeout: Optional[float] = None) -> bool:
+    """Block until a MIDI packet is buffered or the timeout expires."""
+    ...
+
+def midi_host_time_to_seconds(host_time: int) -> float:
+    """Convert a CoreMIDI host timestamp to seconds."""
+    ...
+
+def midi_seconds_to_host_time(seconds: float) -> int:
+    """Convert a duration in seconds to host time ticks."""
+    ...
+
+def midi_current_host_time() -> int:
+    """Current host time (mach absolute time) in ticks."""
     ...
 
 def midi_output_port_create(client_id: int, name: str) -> int:
@@ -626,10 +659,6 @@ def midi_port_connect_source(port_id: int, source_id: int) -> None:
 
 def midi_port_disconnect_source(port_id: int, source_id: int) -> None:
     """Disconnect MIDI port from source."""
-    ...
-
-def midi_send(port_id: int, destination_id: int, data: bytes, timestamp: int) -> None:
-    """Send MIDI data."""
     ...
 
 def create_midi_note_message(
@@ -1231,12 +1260,21 @@ def midi_source_create(client_id: int, name: str) -> int:
     """Create virtual MIDI source."""
     ...
 
-def midi_destination_create(client_id: int, name: str) -> int:
+def midi_destination_create(
+    client_id: int,
+    name: str,
+    callback: Optional[Callable[[bytes, int], None]] = None,
+    queue_size: int = 4096,
+) -> int:
     """Create virtual MIDI destination."""
     ...
 
-def midi_send_data(port_id: int, dest_id: int, data: bytes, timestamp: int) -> None:
+def midi_send_data(port_id: int, dest_id: int, data: bytes, timestamp: int = 0) -> None:
     """Send MIDI data."""
+    ...
+
+def midi_received(source_id: int, data: bytes, timestamp: int = 0) -> None:
+    """Distribute MIDI data from a virtual source to its connections."""
     ...
 
 def midi_note_on(channel: int, note: int, velocity: int) -> Tuple[int, int, int]:

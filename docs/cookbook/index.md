@@ -115,7 +115,7 @@ port = capi.midi_output_port_create(client, "Out")
 dest = capi.midi_get_destination(0)
 
 # Send Note On
-capi.midi_send(port, dest, bytes([0x90, 60, 100]))
+capi.midi_send_data(port, dest, bytes([0x90, 60, 100]))
 ```
 
 ## Tips and Best Practices

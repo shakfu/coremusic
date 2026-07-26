@@ -14,7 +14,14 @@ This package contains MIDI-related modules:
 from . import link, transform
 
 # Import domain object classes
-from .core import MIDIClient, MIDIInputPort, MIDIOutputPort, MIDIPort
+from .core import (
+    MIDIClient,
+    MIDIInputPort,
+    MIDIMessageSplitter,
+    MIDIOutputPort,
+    MIDIPort,
+    split_midi_messages,
+)
 from .player import MusicPlayer, MusicSequence, MusicTrack
 
 # Import transform classes
@@ -65,6 +72,8 @@ __all__ = [
     "MIDIPort",
     "MIDIInputPort",
     "MIDIOutputPort",
+    "MIDIMessageSplitter",
+    "split_midi_messages",
     # Music player
     "MusicPlayer",
     "MusicSequence",

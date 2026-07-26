@@ -388,9 +388,12 @@ class TestCoreMIDIIntegration:
                     assert description == "Test source"
             except RuntimeError:
                 pass
-            # Note: We do NOT send data to virtual_destination here because it was
-            # created with a NULL read proc callback. MIDISend to such an endpoint
-            # causes a segfault in CoreMIDI when it tries to invoke the callback.
+            # Sending to a virtual destination is safe: every endpoint is
+            # created with a real read proc, and packets are buffered for
+            # midi_input_poll(). See tests/test_midi_receive.py.
+            capi.midi_send_data(
+                output_port, virtual_destination, bytes([0x90, 0x3C, 0x64])
+            )
             capi.midi_endpoint_dispose(virtual_destination)
             capi.midi_endpoint_dispose(virtual_source)
             capi.midi_port_dispose(output_port)

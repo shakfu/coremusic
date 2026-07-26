@@ -339,7 +339,7 @@ dest = capi.midi_get_destination(0)
 
 # Send note on
 note_on = bytes([0x90, 60, 100])  # Channel 0, note 60, velocity 100
-capi.midi_send(port, dest, note_on)
+capi.midi_send_data(port, dest, note_on)
 ```
 
 ### MIDI Files
@@ -551,7 +551,7 @@ dest = capi.midi_get_destination(0)
 
 # Send note
 note_on = bytes([0x90, 60, 100])
-capi.midi_send(output_port, dest, note_on)
+capi.midi_send_data(output_port, dest, note_on)
 ```
 
 ## From AudioKit (Swift)
@@ -727,7 +727,7 @@ dest = capi.midi_get_destination(0)
 
 for note in [60, 64, 67]:
     msg = bytes([0x90, note, 100])  # Note on
-    capi.midi_send(port, dest, msg)
+    capi.midi_send_data(port, dest, msg)
 ```
 
 ## See Also

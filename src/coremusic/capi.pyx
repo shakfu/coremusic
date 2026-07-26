@@ -6075,6 +6075,337 @@ def create_midi_channel_message(int status, int data1, int data2=0):
 
 # ===== CoreMIDI API =====
 
+# ---------------------------------------------------------------------------
+# MIDI input receive plumbing
+#
+# CoreMIDI delivers incoming packets by calling a C read proc on its own
+# high-priority receive thread. Passing NULL for that proc is not legal: the
+# framework dereferences it as soon as the first packet arrives, which crashes
+# the process. Every input port and virtual destination therefore installs
+# _midi_read_proc below, which either hands packets to a Python callback or
+# buffers them for midi_input_poll().
+# ---------------------------------------------------------------------------
+
+import threading as _threading
+from collections import deque as _deque
+
+
+cdef extern from "mach/mach_time.h":
+    ctypedef struct mach_timebase_info_data_t:
+        cf.UInt32 numer
+        cf.UInt32 denom
+    int mach_timebase_info(mach_timebase_info_data_t* info) nogil
+    cf.UInt64 mach_absolute_time() nogil
+
+
+cdef double _midi_host_tick_seconds = 0.0
+
+
+cdef _midi_init_host_timebase():
+    global _midi_host_tick_seconds
+    cdef mach_timebase_info_data_t info
+    if mach_timebase_info(&info) == 0 and info.denom != 0:
+        _midi_host_tick_seconds = (<double>info.numer / <double>info.denom) * 1e-9
+
+
+_midi_init_host_timebase()
+
+
+DEF MIDI_DEFAULT_QUEUE_SIZE = 4096
+
+
+cdef class _MIDIReceiver:
+    """Python-side state for one CoreMIDI receive endpoint.
+
+    Either dispatches to a user callback on the CoreMIDI receive thread, or
+    buffers events in a bounded deque that the owning thread drains with
+    midi_input_poll().
+    """
+    cdef object callback
+    cdef object queue
+    cdef object lock
+    cdef object event
+    cdef unsigned long long dropped
+    cdef unsigned long long errors
+    cdef bint logged_error
+
+    def __cinit__(self, object callback, int queue_size):
+        self.callback = callback
+        self.queue = None if callback is not None else _deque((), queue_size)
+        self.lock = _threading.Lock()
+        self.event = _threading.Event()
+        self.dropped = 0
+        self.errors = 0
+        self.logged_error = False
+
+
+# token -> _MIDIReceiver. Tokens are handed to CoreMIDI as the read proc
+# refCon, so the receiver can be looked up without dereferencing a pointer
+# that may have been freed by a concurrent dispose.
+cdef dict _midi_receivers = {}
+# MIDIPortRef / MIDIEndpointRef -> token
+cdef dict _midi_object_tokens = {}
+# MIDIClientRef -> set of refs owned by that client
+cdef dict _midi_client_objects = {}
+cdef object _midi_registry_lock = _threading.Lock()
+cdef unsigned long long _midi_next_token = 0
+
+
+def _midi_register_receiver(object callback, int queue_size):
+    """Create a receiver and return the token used as the read proc refCon."""
+    global _midi_next_token
+    if callback is not None and not callable(callback):
+        raise TypeError("callback must be callable or None")
+    if queue_size < 1:
+        raise ValueError("queue_size must be >= 1")
+    receiver = _MIDIReceiver(callback, queue_size)
+    with _midi_registry_lock:
+        _midi_next_token += 1
+        token = _midi_next_token
+        _midi_receivers[token] = receiver
+    return token
+
+
+def _midi_bind_receiver(object token, long client, long obj):
+    """Associate a created port or virtual destination with its receiver."""
+    with _midi_registry_lock:
+        _midi_object_tokens[obj] = token
+        _midi_client_objects.setdefault(client, set()).add(obj)
+
+
+def _midi_drop_token(object token):
+    """Discard a receiver whose endpoint was never successfully created."""
+    with _midi_registry_lock:
+        _midi_receivers.pop(token, None)
+
+
+def _midi_release_object(long obj):
+    """Discard the receiver bound to a disposed port or virtual destination."""
+    with _midi_registry_lock:
+        token = _midi_object_tokens.pop(obj, None)
+        if token is not None:
+            _midi_receivers.pop(token, None)
+        for refs in _midi_client_objects.values():
+            refs.discard(obj)
+
+
+def _midi_release_client(long client):
+    """Discard every receiver owned by a disposed client.
+
+    MIDIClientDispose implicitly disposes the client's ports and virtual
+    endpoints, so their receivers must go with it.
+    """
+    with _midi_registry_lock:
+        refs = _midi_client_objects.pop(client, None)
+        if not refs:
+            return
+        for obj in refs:
+            token = _midi_object_tokens.pop(obj, None)
+            if token is not None:
+                _midi_receivers.pop(token, None)
+
+
+cdef _MIDIReceiver _midi_receiver_for(long obj):
+    with _midi_registry_lock:
+        token = _midi_object_tokens.get(obj)
+        if token is None:
+            return None
+        return _midi_receivers.get(token)
+
+
+cdef _MIDIReceiver _midi_receiver_for_token(unsigned long long token):
+    with _midi_registry_lock:
+        return _midi_receivers.get(token)
+
+
+cdef void _midi_deliver(const cm.MIDIPacketList* pktlist,
+                        unsigned long long token) noexcept:
+    """Copy a packet list into Python objects and hand it to its receiver.
+
+    Runs on the CoreMIDI receive thread with the GIL held. It must never let an
+    exception escape back into the framework.
+    """
+    cdef cf.UInt32 i
+    cdef cf.UInt32 num_packets
+    cdef const cm.MIDIPacket* packet
+    cdef const char* payload
+    cdef _MIDIReceiver receiver
+    cdef Py_ssize_t overflow
+
+    receiver = _midi_receiver_for_token(token)
+    if receiver is None:
+        return
+
+    num_packets = pktlist.numPackets
+    packet = &pktlist.packet[0]
+    events = []
+    for i in range(num_packets):
+        if packet.length > 0:
+            payload = <const char*>packet.data
+            events.append((<unsigned long long>packet.timeStamp,
+                           payload[:packet.length]))
+        packet = cm.MIDIPacketNext(packet)
+
+    if not events:
+        return
+
+    if receiver.callback is not None:
+        for timestamp, data in events:
+            try:
+                receiver.callback(data, timestamp)
+            except BaseException:
+                receiver.errors += 1
+                if not receiver.logged_error:
+                    receiver.logged_error = True
+                    try:
+                        logger.exception(
+                            "MIDI receive callback raised; further errors are "
+                            "counted but not logged")
+                    except BaseException:
+                        pass
+        return
+
+    with receiver.lock:
+        overflow = len(events) - (receiver.queue.maxlen - len(receiver.queue))
+        if overflow > 0:
+            receiver.dropped += <unsigned long long>overflow
+        receiver.queue.extend(events)
+    receiver.event.set()
+
+
+cdef void _midi_read_proc(const cm.MIDIPacketList* pktlist,
+                          void* readProcRefCon,
+                          void* srcConnRefCon) noexcept nogil:
+    """CoreMIDI read proc installed on every input port and destination."""
+    if pktlist == NULL:
+        return
+    with gil:
+        _midi_deliver(pktlist, <unsigned long long><uintptr_t>readProcRefCon)
+
+
+def midi_host_time_to_seconds(unsigned long long host_time) -> float:
+    """Convert a CoreMIDI/CoreAudio host timestamp to seconds.
+
+    Args:
+        host_time: A mach absolute time value, e.g. a MIDI packet timestamp
+
+    Returns:
+        The timestamp expressed in seconds on the mach monotonic clock
+    """
+    return <double>host_time * _midi_host_tick_seconds
+
+
+def midi_seconds_to_host_time(double seconds) -> int:
+    """Convert a duration in seconds to host time ticks.
+
+    Use this to schedule a message ahead of the current time::
+
+        when = capi.midi_current_host_time() + capi.midi_seconds_to_host_time(0.05)
+        capi.midi_send_data(port, dest, note_on, when)
+
+    Args:
+        seconds: A non-negative duration in seconds
+
+    Returns:
+        The equivalent number of mach absolute time ticks
+    """
+    if seconds <= 0.0 or _midi_host_tick_seconds <= 0.0:
+        return 0
+    return <unsigned long long>(seconds / _midi_host_tick_seconds)
+
+
+def midi_current_host_time() -> int:
+    """Get the current host time (mach absolute time) in ticks."""
+    return mach_absolute_time()
+
+
+def midi_input_poll(long obj, int max_events=0):
+    """Drain MIDI events buffered for an input port or virtual destination.
+
+    Args:
+        obj: A MIDIPortRef from midi_input_port_create() or a MIDIEndpointRef
+            from midi_destination_create(), created without a callback
+        max_events: Maximum number of events to return, or 0 for all pending
+
+    Returns:
+        List of (host_time, data) tuples in arrival order, where host_time is a
+        mach absolute timestamp and data is the raw MIDI bytes of one packet
+
+    Raises:
+        ValueError: If no receiver is registered for the object
+    """
+    cdef _MIDIReceiver receiver = _midi_receiver_for(obj)
+    if receiver is None:
+        raise ValueError(f"No MIDI receiver registered for object {obj}")
+    if receiver.queue is None:
+        # Callback-driven port: events were already delivered.
+        return []
+
+    events = []
+    with receiver.lock:
+        queue = receiver.queue
+        if max_events <= 0 or max_events >= len(queue):
+            events = list(queue)
+            queue.clear()
+        else:
+            for _ in range(max_events):
+                events.append(queue.popleft())
+        if not queue:
+            receiver.event.clear()
+    return events
+
+
+def midi_input_pending(long obj) -> int:
+    """Get the number of MIDI events buffered for an input port or destination.
+
+    Raises:
+        ValueError: If no receiver is registered for the object
+    """
+    cdef _MIDIReceiver receiver = _midi_receiver_for(obj)
+    if receiver is None:
+        raise ValueError(f"No MIDI receiver registered for object {obj}")
+    if receiver.queue is None:
+        return 0
+    with receiver.lock:
+        return len(receiver.queue)
+
+
+def midi_input_dropped(long obj) -> int:
+    """Get the number of MIDI events dropped because the buffer was full.
+
+    A non-zero result means the owning thread is not polling often enough, or
+    that queue_size is too small for the incoming rate.
+
+    Raises:
+        ValueError: If no receiver is registered for the object
+    """
+    cdef _MIDIReceiver receiver = _midi_receiver_for(obj)
+    if receiver is None:
+        raise ValueError(f"No MIDI receiver registered for object {obj}")
+    return receiver.dropped
+
+
+def midi_input_wait(long obj, object timeout=None) -> bool:
+    """Block until at least one MIDI event is buffered, or the timeout expires.
+
+    Args:
+        obj: A MIDIPortRef or MIDIEndpointRef created without a callback
+        timeout: Maximum seconds to wait, or None to wait indefinitely
+
+    Returns:
+        True if events are available, False if the timeout expired
+
+    Raises:
+        ValueError: If no receiver is registered for the object
+    """
+    cdef _MIDIReceiver receiver = _midi_receiver_for(obj)
+    if receiver is None:
+        raise ValueError(f"No MIDI receiver registered for object {obj}")
+    if receiver.queue is None:
+        return False
+    return bool(receiver.event.wait(timeout))
+
+
 # Client functions
 
 def midi_client_create(str name):
@@ -6119,18 +6450,30 @@ def midi_client_dispose(long client):
         RuntimeError: If disposal fails
     """
     cdef cf.OSStatus status = cm.MIDIClientDispose(<cm.MIDIClientRef>client)
+    # Disposing the client also disposes its ports and virtual endpoints, so
+    # their receivers go too. Done after the call returns, when CoreMIDI
+    # guarantees no further read proc invocations.
+    _midi_release_client(client)
     if status != 0:
         raise RuntimeError(format_osstatus_error(status, "MIDIClientDispose"))
     return status
 
 # Port functions
 
-def midi_input_port_create(long client, str port_name):
+def midi_input_port_create(long client, str port_name, object callback=None,
+                           int queue_size=MIDI_DEFAULT_QUEUE_SIZE):
     """Create a MIDI input port.
 
     Args:
         client: The MIDIClientRef
         port_name: Name for the input port
+        callback: Optional callable invoked as callback(data, host_time) for
+            each incoming packet. It runs on the CoreMIDI receive thread, so it
+            must be short and must not block. When omitted, packets are
+            buffered instead and retrieved with midi_input_poll().
+        queue_size: Maximum number of buffered events when no callback is given.
+            Once full, the oldest events are discarded and counted by
+            midi_input_dropped().
 
     Returns:
         MIDIPortRef handle
@@ -6147,12 +6490,18 @@ def midi_input_port_create(long client, str port_name):
     if not cf_name:
         raise MemoryError("Could not create CFString from port name")
 
+    token = _midi_register_receiver(callback, queue_size)
     try:
         status = cm.MIDIInputPortCreate(
-            <cm.MIDIClientRef>client, cf_name, NULL, NULL, &port)
+            <cm.MIDIClientRef>client, cf_name, _midi_read_proc,
+            <void*><uintptr_t><unsigned long long>token, &port)
         if status != 0:
             raise RuntimeError(format_osstatus_error(status, "MIDIInputPortCreate"))
+        _midi_bind_receiver(token, client, <long>port)
         return <long>port
+    except BaseException:
+        _midi_drop_token(token)
+        raise
     finally:
         cf.CFRelease(cf_name)
 
@@ -6200,6 +6549,7 @@ def midi_port_dispose(long port):
         RuntimeError: If disposal fails
     """
     cdef cf.OSStatus status = cm.MIDIPortDispose(<cm.MIDIPortRef>port)
+    _midi_release_object(port)
     if status != 0:
         raise RuntimeError(format_osstatus_error(status, "MIDIPortDispose"))
     return status
@@ -6453,12 +6803,17 @@ def midi_source_create(long client, str name):
     finally:
         cf.CFRelease(cf_name)
 
-def midi_destination_create(long client, str name):
+def midi_destination_create(long client, str name, object callback=None,
+                            int queue_size=MIDI_DEFAULT_QUEUE_SIZE):
     """Create a virtual MIDI destination.
 
     Args:
         client: The MIDIClientRef
         name: Name for the virtual destination
+        callback: Optional callable invoked as callback(data, host_time) for
+            each incoming packet, on the CoreMIDI receive thread. When omitted,
+            packets are buffered and retrieved with midi_input_poll().
+        queue_size: Maximum number of buffered events when no callback is given
 
     Returns:
         MIDIEndpointRef handle
@@ -6475,12 +6830,18 @@ def midi_destination_create(long client, str name):
     if not cf_name:
         raise MemoryError("Could not create CFString from name")
 
+    token = _midi_register_receiver(callback, queue_size)
     try:
         status = cm.MIDIDestinationCreate(
-            <cm.MIDIClientRef>client, cf_name, NULL, NULL, &dest)
+            <cm.MIDIClientRef>client, cf_name, _midi_read_proc,
+            <void*><uintptr_t><unsigned long long>token, &dest)
         if status != 0:
             raise RuntimeError(format_osstatus_error(status, "MIDIDestinationCreate"))
+        _midi_bind_receiver(token, client, <long>dest)
         return <long>dest
+    except BaseException:
+        _midi_drop_token(token)
+        raise
     finally:
         cf.CFRelease(cf_name)
 
@@ -6497,6 +6858,7 @@ def midi_endpoint_dispose(long endpoint):
         RuntimeError: If disposal fails
     """
     cdef cf.OSStatus status = cm.MIDIEndpointDispose(<cm.MIDIEndpointRef>endpoint)
+    _midi_release_object(endpoint)
     if status != 0:
         raise RuntimeError(format_osstatus_error(status, "MIDIEndpointDispose"))
     return status
@@ -6856,7 +7218,8 @@ def midi_object_get_model(long obj):
 
 # Send functions with simplified packet creation
 
-def midi_send_data(long port, long destination, bytes data, int timestamp=0):
+def midi_send_data(long port, long destination, bytes data,
+                   unsigned long long timestamp=0):
     """Send MIDI data to a destination.
 
     Args:
@@ -6908,6 +7271,57 @@ def midi_send_data(long port, long destination, bytes data, int timestamp=0):
 
         if status != 0:
             raise RuntimeError(format_osstatus_error(status, "MIDISend"))
+        return status
+
+    finally:
+        free(pktlist)
+
+def midi_received(long source, bytes data, unsigned long long timestamp=0):
+    """Distribute MIDI data from a virtual source to everything connected to it.
+
+    This is the counterpart of midi_send_data() for virtual sources created
+    with midi_source_create(): it makes the endpoint behave as if a device had
+    just produced the given bytes.
+
+    Args:
+        source: The MIDIEndpointRef of a virtual source
+        data: MIDI data bytes to distribute
+        timestamp: MIDI host timestamp (default 0 for immediate)
+
+    Returns:
+        OSStatus result code (0 on success)
+
+    Raises:
+        RuntimeError: If distribution fails
+        ValueError: If data is too large
+    """
+    cdef size_t pktlist_size
+    cdef cm.MIDIPacketList* pktlist
+    cdef cm.MIDIPacket* packet
+    cdef cf.OSStatus status
+
+    if len(data) > 256:
+        raise ValueError("MIDI data too large (max 256 bytes)")
+
+    pktlist_size = sizeof(cm.MIDIPacketList) + len(data)
+    pktlist = <cm.MIDIPacketList*>malloc(pktlist_size)
+    if not pktlist:
+        raise MemoryError("Could not allocate packet list")
+
+    try:
+        packet = cm.MIDIPacketListInit(pktlist)
+        packet = cm.MIDIPacketListAdd(
+            pktlist, pktlist_size, packet,
+            <cm.MIDITimeStamp>timestamp,
+            <cf.UInt32>len(data),
+            <const cf.UInt8*><char*>data)
+
+        if not packet:
+            raise RuntimeError("Could not add packet to packet list")
+
+        status = cm.MIDIReceived(<cm.MIDIEndpointRef>source, pktlist)
+        if status != 0:
+            raise RuntimeError(format_osstatus_error(status, "MIDIReceived"))
         return status
 
     finally:

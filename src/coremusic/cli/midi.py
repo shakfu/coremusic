@@ -15,6 +15,44 @@ from ._utils import EXIT_SUCCESS, CLIError, print_help_default, require_file
 logger = logging.getLogger(__name__)
 
 
+class _MIDIDrain:
+    """Poll a MIDI input port and hand back individual messages.
+
+    CoreMIDI delivers packets on its own receive thread. A packet may hold
+    several MIDI messages, and a large system-exclusive dump is spread over
+    consecutive packets, so the raw bytes are run through a splitter. Message
+    times are reported in seconds relative to the first message received.
+    """
+
+    def __init__(self, port_id: int) -> None:
+        from coremusic.midi.core import MIDIMessageSplitter
+
+        self._port_id = port_id
+        self._splitter = MIDIMessageSplitter()
+        self._origin: float | None = None
+        self.dropped = 0
+
+    def read(self, timeout: float = 0.1) -> list[tuple[bytes, float]]:
+        """Wait up to `timeout` seconds, then return the messages that arrived."""
+        if not capi.midi_input_wait(self._port_id, timeout):
+            return []
+
+        messages: list[tuple[bytes, float]] = []
+        for host_time, payload in capi.midi_input_poll(self._port_id):
+            # A zero timestamp means "as soon as possible", not the epoch.
+            if host_time == 0:
+                host_time = capi.midi_current_host_time()
+            seconds = capi.midi_host_time_to_seconds(host_time)
+            if self._origin is None:
+                self._origin = seconds
+            elapsed = seconds - self._origin
+            for message in self._splitter.push(payload):
+                messages.append((message, elapsed))
+
+        self.dropped = capi.midi_input_dropped(self._port_id)
+        return messages
+
+
 def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """Register MIDI commands."""
     parser = subparsers.add_parser("midi", help="MIDI operations")
@@ -379,7 +417,7 @@ def cmd_send(args: argparse.Namespace) -> int:
 
             # Note on
             note_on_data = bytes([0x90 | args.channel, args.note, args.velocity])
-            capi.midi_send(port_id, dest_id, note_on_data, 0)
+            capi.midi_send_data(port_id, dest_id, note_on_data, 0)
             messages_sent.append(f"Note On: {args.note} vel={args.velocity}")
 
             # Wait for duration
@@ -387,7 +425,7 @@ def cmd_send(args: argparse.Namespace) -> int:
 
             # Note off
             note_off_data = bytes([0x80 | args.channel, args.note, 0])
-            capi.midi_send(port_id, dest_id, note_off_data, 0)
+            capi.midi_send_data(port_id, dest_id, note_off_data, 0)
             messages_sent.append(f"Note Off: {args.note}")
 
         # Send CC
@@ -399,7 +437,7 @@ def cmd_send(args: argparse.Namespace) -> int:
                 raise CLIError(f"CC value must be 0-127, got {cc_val}")
 
             cc_data = bytes([0xB0 | args.channel, cc_num, cc_val])
-            capi.midi_send(port_id, dest_id, cc_data, 0)
+            capi.midi_send_data(port_id, dest_id, cc_data, 0)
             messages_sent.append(f"CC: {cc_num}={cc_val}")
 
         # Send program change
@@ -408,7 +446,7 @@ def cmd_send(args: argparse.Namespace) -> int:
                 raise CLIError(f"Program must be 0-127, got {args.program}")
 
             program_data = bytes([0xC0 | args.channel, args.program])
-            capi.midi_send(port_id, dest_id, program_data, 0)
+            capi.midi_send_data(port_id, dest_id, program_data, 0)
             messages_sent.append(f"Program: {args.program}")
 
         if args.json:
@@ -606,12 +644,12 @@ def cmd_panic(args: argparse.Namespace) -> int:
             # Send CC 123 (All Notes Off) on all 16 channels
             for channel in range(16):
                 cc_data = bytes([0xB0 | channel, 123, 0])
-                capi.midi_send(port_id, dest_id, cc_data, 0)
+                capi.midi_send_data(port_id, dest_id, cc_data, 0)
 
             # Also send CC 120 (All Sound Off) for immediate silence
             for channel in range(16):
                 cc_data = bytes([0xB0 | channel, 120, 0])
-                capi.midi_send(port_id, dest_id, cc_data, 0)
+                capi.midi_send_data(port_id, dest_id, cc_data, 0)
 
             results.append({"index": idx, "name": dest_name})
 
@@ -669,6 +707,7 @@ def cmd_monitor(args: argparse.Namespace) -> int:
     source_name = _get_endpoint_name(source_id)
 
     event_count = 0
+    dropped = 0
     events_list: list[dict[str, Any]] = []
     stop_event = threading.Event()
 
@@ -677,11 +716,17 @@ def cmd_monitor(args: argparse.Namespace) -> int:
             return {"type": "unknown", "raw": data.hex(), "timestamp": timestamp}
 
         status = data[0] & 0xF0
-        channel = (data[0] & 0x0F) + 1  # 1-indexed for display
+        # The low nibble is a channel only for channel voice messages; for
+        # system messages (0xF0 and up) it is part of the status itself.
+        channel = (data[0] & 0x0F) + 1 if data[0] < 0xF0 else None
         d1 = data[1] if len(data) > 1 else 0
         d2 = data[2] if len(data) > 2 else 0
 
         msg: dict[str, Any] = {"channel": channel, "timestamp": timestamp}
+        if channel is None:
+            msg["type"] = "system"
+            msg["raw"] = data.hex()
+            return msg
 
         if status == 0x90 and d2 > 0:
             msg["type"] = "note_on"
@@ -721,6 +766,10 @@ def cmd_monitor(args: argparse.Namespace) -> int:
         ch = msg["channel"]
         ts = msg["timestamp"]
         t = msg["type"]
+
+        if ch is None:
+            print(f"[{ts:8.3f}]       System    {msg['raw']}")
+            return
 
         if t == "note_on":
             print(
@@ -774,8 +823,11 @@ def cmd_monitor(args: argparse.Namespace) -> int:
                 print(f"Monitoring: {source_name}")
                 print("Press Ctrl+C to stop...\n")
 
+            drain = _MIDIDrain(port_id)
             while not stop_event.is_set():
-                stop_event.wait(timeout=0.1)
+                for data, elapsed in drain.read(timeout=0.1):
+                    midi_callback(data, elapsed)
+            dropped = drain.dropped
 
         finally:
             try:
@@ -789,11 +841,14 @@ def cmd_monitor(args: argparse.Namespace) -> int:
                     "source": source_name,
                     "index": args.device,
                     "event_count": event_count,
+                    "dropped": dropped,
                     "events": events_list,
                 }
             )
         else:
             print(f"\nStopped. Received {event_count} events.")
+            if dropped:
+                print(f"Warning: dropped {dropped} packets (input buffer overflow).")
 
     finally:
         signal.signal(signal.SIGINT, original_handler)
@@ -879,6 +934,7 @@ def _receive_display(args: argparse.Namespace, source_id: int, source_name: str)
     import threading
 
     event_count = 0
+    dropped = 0
     events_list: list[dict[str, Any]] = []
     stop_event = threading.Event()
 
@@ -888,7 +944,9 @@ def _receive_display(args: argparse.Namespace, source_id: int, source_name: str)
             return {"type": "unknown", "data": data.hex()}
 
         status = data[0] & 0xF0
-        channel = data[0] & 0x0F
+        # The low nibble is a channel only for channel voice messages; for
+        # system messages (0xF0 and up) it is part of the status itself.
+        channel = data[0] & 0x0F if data[0] < 0xF0 else None
         d1 = data[1] if len(data) > 1 else 0
         d2 = data[2] if len(data) > 2 else 0
 
@@ -932,6 +990,10 @@ def _receive_display(args: argparse.Namespace, source_id: int, source_name: str)
         """Print formatted MIDI message."""
         ch = msg["channel"]
         ts = msg.get("timestamp", 0)
+
+        if ch is None:
+            print(f"[{ts:10.3f}]        System    {msg['raw']}")
+            return
 
         if msg["type"] == "note_on":
             print(
@@ -980,8 +1042,11 @@ def _receive_display(args: argparse.Namespace, source_id: int, source_name: str)
                 print(f"Receiving from: {source_name}")
                 print("Press Ctrl+C to stop...\n")
 
+            drain = _MIDIDrain(port_id)
             while not stop_event.is_set():
-                stop_event.wait(timeout=0.1)
+                for data, elapsed in drain.read(timeout=0.1):
+                    midi_callback(data, elapsed)
+            dropped = drain.dropped
 
         finally:
             try:
@@ -995,11 +1060,14 @@ def _receive_display(args: argparse.Namespace, source_id: int, source_name: str)
                     "source": source_name,
                     "index": args.device,
                     "event_count": event_count,
+                    "dropped": dropped,
                     "events": events_list,
                 }
             )
         else:
             print(f"\nStopped. Received {event_count} events.")
+            if dropped:
+                print(f"Warning: dropped {dropped} packets (input buffer overflow).")
 
     finally:
         signal.signal(signal.SIGINT, original_handler)
@@ -1018,17 +1086,8 @@ def _receive_to_midi_file(
     from coremusic.midi.utilities import MIDIEvent, MIDISequence
 
     recorded_events: list[tuple[float, bytes]] = []
-    start_time: float = 0.0
+    dropped = 0
     stop_event = threading.Event()
-    event_lock = threading.Lock()
-
-    def midi_callback(data: bytes, timestamp: float) -> None:
-        nonlocal start_time
-        if start_time == 0.0:
-            start_time = timestamp
-        relative_time = timestamp - start_time
-        with event_lock:
-            recorded_events.append((relative_time, data))
 
     def signal_handler(sig: int, frame: FrameType | None) -> None:
         stop_event.set()
@@ -1050,11 +1109,14 @@ def _receive_to_midi_file(
                     print("Press Ctrl+C to stop...")
                 print()
 
+            drain = _MIDIDrain(port_id)
             recording_start = time.time()
             while not stop_event.is_set():
                 if args.duration and (time.time() - recording_start) >= args.duration:
                     break
-                stop_event.wait(timeout=0.1)
+                for data, elapsed in drain.read(timeout=0.1):
+                    recorded_events.append((elapsed, data))
+            dropped = drain.dropped
 
         finally:
             try:
@@ -1062,8 +1124,7 @@ def _receive_to_midi_file(
             except Exception:
                 pass
 
-        with event_lock:
-            events_copy = list(recorded_events)
+        events_copy = recorded_events
 
         if not events_copy:
             if not args.json:
@@ -1074,7 +1135,9 @@ def _receive_to_midi_file(
         track = seq.add_track("Recorded")
 
         for rel_time, data in events_copy:
-            if len(data) >= 2:
+            # MIDIEvent only models channel voice messages; system messages
+            # (including system-exclusive) have no representation here.
+            if len(data) >= 2 and 0x80 <= data[0] <= 0xEF:
                 status = data[0] & 0xF0
                 channel = data[0] & 0x0F
                 d1 = data[1]
@@ -1106,6 +1169,7 @@ def _receive_to_midi_file(
                     "output": str(output_path.absolute()),
                     "event_count": len(events_copy),
                     "note_count": note_on_count,
+                    "dropped": dropped,
                     "duration_seconds": recording_duration,
                     "tempo": args.tempo,
                 }
@@ -1115,6 +1179,8 @@ def _receive_to_midi_file(
             print(f"  Events:   {len(events_copy)}")
             print(f"  Notes:    {note_on_count}")
             print(f"  Duration: {format_duration(recording_duration)}")
+            if dropped:
+                print(f"  Warning:  dropped {dropped} packets (buffer overflow)")
 
     finally:
         signal.signal(signal.SIGINT, original_handler)
@@ -1139,6 +1205,7 @@ def _receive_with_plugin(
     stop_event = threading.Event()
     event_count = 0
     note_count = 0
+    dropped = 0
 
     def signal_handler(sig: int, frame: FrameType | None) -> None:
         stop_event.set()
@@ -1197,12 +1264,28 @@ def _receive_with_plugin(
             port_id = capi.midi_input_port_create(client_id, "input")
             capi.midi_port_connect_source(port_id, source_id)
 
+            drain = _MIDIDrain(port_id)
             start_time = time.time()
             last_render_time = start_time
 
             while not stop_event.is_set():
                 if args.duration and (time.time() - start_time) >= args.duration:
                     break
+
+                # Forward any MIDI that arrived to the plugin. Only channel
+                # voice messages can be passed through MusicDeviceMIDIEvent.
+                for data, _elapsed in drain.read(timeout=0.005):
+                    if len(data) < 2 or not (0x80 <= data[0] <= 0xEF):
+                        continue
+                    event_count += 1
+                    if (data[0] & 0xF0) == 0x90 and len(data) > 2 and data[2] > 0:
+                        note_count += 1
+                    try:
+                        plugin.send_midi(
+                            data[0], data[1], data[2] if len(data) > 2 else 0
+                        )
+                    except Exception as e:
+                        logger.debug("Plugin MIDI send failed: %s", e)
 
                 # Render audio from plugin periodically
                 current_time = time.time()
@@ -1220,7 +1303,7 @@ def _receive_with_plugin(
                         logger.debug("Plugin render failed: %s", e)
                     last_render_time = current_time
 
-                stop_event.wait(timeout=0.01)
+            dropped = drain.dropped
 
         finally:
             try:
@@ -1282,10 +1365,13 @@ def _receive_with_plugin(
                     "output": str(output_path) if output_path else None,
                     "event_count": event_count,
                     "note_count": note_count,
+                    "dropped": dropped,
                 }
             )
         elif not output_path:
-            print("\nStopped.")
+            print(f"\nStopped. Received {event_count} events.")
+            if dropped:
+                print(f"Warning: dropped {dropped} packets (input buffer overflow).")
 
     finally:
         signal.signal(signal.SIGINT, original_handler)
@@ -1385,14 +1471,14 @@ def cmd_play(args: argparse.Namespace) -> int:
 
             # Send MIDI event
             midi_data = event.to_bytes()
-            capi.midi_send(port_id, dest_id, midi_data, 0)
+            capi.midi_send_data(port_id, dest_id, midi_data, 0)
             events_played += 1
 
         # Send all-notes-off to clean up
         if stop_requested:
             for channel in range(16):
                 cc_data = bytes([0xB0 | channel, 123, 0])
-                capi.midi_send(port_id, dest_id, cc_data, 0)
+                capi.midi_send_data(port_id, dest_id, cc_data, 0)
 
         if args.json:
             output_json(

@@ -216,7 +216,7 @@ def cmd_play(args: argparse.Namespace) -> int:
                             midi_data = bytes(
                                 [event.status | event.channel, event.data1, event.data2]
                             )
-                            capi.midi_send(port_id, dest_id, midi_data, 0)
+                            capi.midi_send_data(port_id, dest_id, midi_data, 0)
                         except Exception:
                             pass  # Continue on send errors
                     event_index += 1
@@ -233,7 +233,7 @@ def cmd_play(args: argparse.Namespace) -> int:
             try:
                 # All notes off (CC 123)
                 all_notes_off = bytes([0xB0 | channel, 123, 0])
-                capi.midi_send(port_id, dest_id, all_notes_off, 0)
+                capi.midi_send_data(port_id, dest_id, all_notes_off, 0)
             except Exception:
                 pass
 

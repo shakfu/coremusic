@@ -54,13 +54,13 @@ has_audio_input = pytest.mark.skipif(
 
 def pytest_collection_modifyitems(session, config, items):
     """Reorder tests to run MIDI tests first."""
+    midi_modules = ("test_objects_midi", "test_coremidi", "test_midi_receive")
     midi_tests = []
     other_tests = []
 
     for item in items:
-        if "test_objects_midi" in str(item.fspath) or "test_coremidi" in str(
-            item.fspath
-        ):
+        path = str(item.fspath)
+        if any(module in path for module in midi_modules):
             midi_tests.append(item)
         else:
             other_tests.append(item)

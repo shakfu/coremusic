@@ -20,8 +20,9 @@ cdef extern from "CoreMIDI/MIDIServices.h":
     ctypedef MIDIObjectRef MIDIEndpointRef
 
     ctypedef UInt32 MIDIProtocolID
-    ctypedef UInt32 MIDITimeStamp
-    ctypedef UInt32 MIDIUniqueID
+    # MIDITimeStamp is a 64-bit mach host time; MIDIUniqueID is signed.
+    ctypedef UInt64 MIDITimeStamp
+    ctypedef SInt32 MIDIUniqueID
 
     # Error constants
     ctypedef enum:
@@ -227,6 +228,11 @@ cdef extern from "CoreMIDI/MIDIServices.h":
         MIDITimeStamp time,
         UInt32 nData,
         const UInt8* data)
+
+    # Advances to the next packet in a packet list. Packets are variable
+    # length (and 4-byte aligned on arm64), so pointer arithmetic on the
+    # struct is not valid -- this inline helper must be used instead.
+    cdef MIDIPacket* MIDIPacketNext(const MIDIPacket* pkt) nogil
 
     # Property constants
     cdef extern const CFStringRef kMIDIPropertyName

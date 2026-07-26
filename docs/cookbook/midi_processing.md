@@ -59,56 +59,60 @@ else:
 
 ## MIDI Input
 
+### How Incoming Packets Arrive
+
+CoreMIDI delivers incoming data as *packets* on its own high-priority receive
+thread. A packet is not the same thing as a MIDI message:
+
+- One packet may contain several complete messages that arrived together.
+- A large system-exclusive dump is spread across consecutive packets.
+- Real-time bytes such as clock may be interleaved inside another message.
+
+`MIDIMessageSplitter` turns a stream of packet payloads back into individual
+messages, holding the state needed to span packets. Timestamps are host times
+(mach absolute ticks); convert them with `capi.midi_host_time_to_seconds`.
+
+An input port buffers packets by default, so the owning thread controls when
+Python code runs. Pass a callback instead only when you need the lowest
+possible latency and can guarantee the callback never blocks.
+
 ### Receive MIDI Messages
 
-Set up MIDI input and receive messages:
+Poll the port from your own loop:
 
 ```python
 import coremusic.capi as capi
-import time
+from coremusic.midi import MIDIMessageSplitter
 
-def midi_callback(packet_list, src_conn_ref_con):
-    """Handle incoming MIDI messages"""
-    num_packets = capi.midi_packet_list_get_num_packets(packet_list)
-
-    for i in range(num_packets):
-        packet = capi.midi_packet_list_get_packet(packet_list, i)
-        data = capi.midi_packet_get_data(packet)
-        timestamp = capi.midi_packet_get_timestamp(packet)
-
-        # Parse MIDI message
-        if len(data) >= 1:
-            status = data[0]
-            message_type = status & 0xF0
-            channel = status & 0x0F
-
-            if message_type == 0x90 and len(data) >= 3:  # Note On
-                note = data[1]
-                velocity = data[2]
-                print(f"Note On: ch={channel}, note={note}, vel={velocity}")
-
-            elif message_type == 0x80 and len(data) >= 3:  # Note Off
-                note = data[1]
-                velocity = data[2]
-                print(f"Note Off: ch={channel}, note={note}, vel={velocity}")
-
-            elif message_type == 0xB0 and len(data) >= 3:  # Control Change
-                controller = data[1]
-                value = data[2]
-                print(f"CC: ch={channel}, ctrl={controller}, val={value}")
-
-# Create MIDI client and input port
 client = capi.midi_client_create("MIDI Input")
-input_port = capi.midi_input_port_create(client, "Input", midi_callback)
+input_port = capi.midi_input_port_create(client, "Input")
 
-# Connect to first MIDI source
 source = capi.midi_get_source(0)
 capi.midi_port_connect_source(input_port, source)
+
+splitter = MIDIMessageSplitter()
 
 print("Listening for MIDI... (Press Ctrl+C to stop)")
 try:
     while True:
-        time.sleep(0.1)
+        # Blocks until a packet arrives or the timeout expires.
+        if not capi.midi_input_wait(input_port, 0.1):
+            continue
+
+        for host_time, payload in capi.midi_input_poll(input_port):
+            seconds = capi.midi_host_time_to_seconds(host_time)
+
+            for data in splitter.push(payload):
+                status = data[0]
+                message_type = status & 0xF0
+                channel = status & 0x0F
+
+                if message_type == 0x90 and data[2] > 0:  # Note On
+                    print(f"Note On: ch={channel}, note={data[1]}, vel={data[2]}")
+                elif message_type == 0x80 or message_type == 0x90:  # Note Off
+                    print(f"Note Off: ch={channel}, note={data[1]}")
+                elif message_type == 0xB0:  # Control Change
+                    print(f"CC: ch={channel}, ctrl={data[1]}, val={data[2]}")
 except KeyboardInterrupt:
     print("\nStopped")
 
@@ -118,47 +122,66 @@ capi.midi_port_dispose(input_port)
 capi.midi_client_dispose(client)
 ```
 
+If the loop cannot keep up, the oldest packets are discarded once the buffer is
+full. Check `capi.midi_input_dropped(input_port)` to detect this, and raise
+`queue_size` on `midi_input_port_create` if it happens.
+
+### Receive with a Callback
+
+A callback runs on the CoreMIDI receive thread, so it must be short and must
+not block, allocate heavily, or acquire locks held by slow code. Exceptions
+raised inside it are swallowed rather than propagated into the framework.
+
+```python
+import coremusic.capi as capi
+import queue
+
+incoming: queue.SimpleQueue = queue.SimpleQueue()
+
+def midi_callback(data: bytes, host_time: int) -> None:
+    # Hand off immediately; do the real work on your own thread.
+    incoming.put((host_time, data))
+
+client = capi.midi_client_create("MIDI Input")
+input_port = capi.midi_input_port_create(client, "Input", midi_callback)
+capi.midi_port_connect_source(input_port, capi.midi_get_source(0))
+```
+
 ### Filter MIDI Messages
 
 Filter specific MIDI message types:
 
 ```python
 import coremusic.capi as capi
+from coremusic.midi import MIDIMessageSplitter
 
 class MIDIFilter:
     def __init__(self, filter_notes=False, filter_cc=False):
         self.filter_notes = filter_notes
         self.filter_cc = filter_cc
+        self.splitter = MIDIMessageSplitter()
 
-    def callback(self, packet_list, src_conn_ref_con):
-        num_packets = capi.midi_packet_list_get_num_packets(packet_list)
+    def process(self, payload: bytes) -> None:
+        for data in self.splitter.push(payload):
+            message_type = data[0] & 0xF0
 
-        for i in range(num_packets):
-            packet = capi.midi_packet_list_get_packet(packet_list, i)
-            data = capi.midi_packet_get_data(packet)
+            # Filter note messages
+            if message_type in (0x80, 0x90) and self.filter_notes:
+                continue
 
-            if len(data) >= 1:
-                status = data[0]
-                message_type = status & 0xF0
+            # Filter CC messages
+            if message_type == 0xB0 and self.filter_cc:
+                continue
 
-                # Filter note messages
-                if message_type in [0x80, 0x90] and self.filter_notes:
-                    continue
-
-                # Filter CC messages
-                if message_type == 0xB0 and self.filter_cc:
-                    continue
-
-                # Process remaining messages
-                print(f"MIDI: {[hex(b) for b in data]}")
+            print(f"MIDI: {[hex(b) for b in data]}")
 
 # Create filter that blocks notes but allows CC
 midi_filter = MIDIFilter(filter_notes=True, filter_cc=False)
 
 client = capi.midi_client_create("Filtered Input")
-input_port = capi.midi_input_port_create(client, "Input", midi_filter.callback)
+input_port = capi.midi_input_port_create(client, "Input")
 
-# Connect and listen...
+# Connect, then feed polled packets to midi_filter.process()...
 ```
 
 ## MIDI Output
@@ -180,14 +203,14 @@ dest = capi.midi_get_destination(0)
 
 # Send Note On
 note_on = bytes([0x90, 60, 100])  # Channel 1, Middle C, Velocity 100
-capi.midi_send(output_port, dest, note_on)
+capi.midi_send_data(output_port, dest, note_on)
 print("Sent Note On")
 
 time.sleep(1.0)
 
 # Send Note Off
 note_off = bytes([0x80, 60, 0])  # Channel 1, Middle C
-capi.midi_send(output_port, dest, note_off)
+capi.midi_send_data(output_port, dest, note_off)
 print("Sent Note Off")
 
 # Cleanup
@@ -207,14 +230,14 @@ def play_note(port, dest, channel, note, velocity, duration):
     """Play a single note"""
     # Note On
     note_on = bytes([0x90 | channel, note, velocity])
-    capi.midi_send(port, dest, note_on)
+    capi.midi_send_data(port, dest, note_on)
 
     # Wait
     time.sleep(duration)
 
     # Note Off
     note_off = bytes([0x80 | channel, note, 0])
-    capi.midi_send(port, dest, note_off)
+    capi.midi_send_data(port, dest, note_off)
 
 # Setup
 client = capi.midi_client_create("Sequencer")
@@ -247,17 +270,17 @@ dest = capi.midi_get_destination(0)
 
 # Start a note
 note_on = bytes([0x90, 60, 100])
-capi.midi_send(output_port, dest, note_on)
+capi.midi_send_data(output_port, dest, note_on)
 
 # Fade volume (CC 7) from 127 to 0
 for volume in range(127, -1, -5):
     cc = bytes([0xB0, 7, volume])  # Channel 1, CC 7 (Volume), value
-    capi.midi_send(output_port, dest, cc)
+    capi.midi_send_data(output_port, dest, cc)
     time.sleep(0.05)
 
 # Stop note
 note_off = bytes([0x80, 60, 0])
-capi.midi_send(output_port, dest, note_off)
+capi.midi_send_data(output_port, dest, note_off)
 
 # Cleanup
 capi.midi_port_dispose(output_port)
@@ -272,7 +295,6 @@ Route MIDI input directly to output:
 
 ```python
 import coremusic.capi as capi
-import time
 
 # Create client with input and output ports
 client = capi.midi_client_create("MIDI Thru")
@@ -281,26 +303,20 @@ client = capi.midi_client_create("MIDI Thru")
 output_port = capi.midi_output_port_create(client, "Output")
 dest = capi.midi_get_destination(0)
 
-# Input callback that forwards to output
-def thru_callback(packet_list, src_conn_ref_con):
-    num_packets = capi.midi_packet_list_get_num_packets(packet_list)
-
-    for i in range(num_packets):
-        packet = capi.midi_packet_list_get_packet(packet_list, i)
-        data = capi.midi_packet_get_data(packet)
-
-        # Forward to output
-        capi.midi_send(output_port, dest, data)
-
 # Input port
-input_port = capi.midi_input_port_create(client, "Input", thru_callback)
+input_port = capi.midi_input_port_create(client, "Input")
 source = capi.midi_get_source(0)
 capi.midi_port_connect_source(input_port, source)
 
 print("MIDI thru active... (Press Ctrl+C to stop)")
 try:
     while True:
-        time.sleep(0.1)
+        if not capi.midi_input_wait(input_port, 0.1):
+            continue
+
+        # Packets can be forwarded verbatim; no need to split them first.
+        for _host_time, payload in capi.midi_input_poll(input_port):
+            capi.midi_send_data(output_port, dest, payload)
 except KeyboardInterrupt:
     print("\nStopped")
 
@@ -317,6 +333,7 @@ Route MIDI from one channel to another:
 
 ```python
 import coremusic.capi as capi
+from coremusic.midi import MIDIMessageSplitter
 
 class ChannelRouter:
     def __init__(self, output_port, dest, input_channel, output_channel):
@@ -324,26 +341,20 @@ class ChannelRouter:
         self.dest = dest
         self.input_channel = input_channel
         self.output_channel = output_channel
+        self.splitter = MIDIMessageSplitter()
 
-    def callback(self, packet_list, src_conn_ref_con):
-        num_packets = capi.midi_packet_list_get_num_packets(packet_list)
+    def process(self, payload: bytes) -> None:
+        for message in self.splitter.push(payload):
+            status = message[0]
 
-        for i in range(num_packets):
-            packet = capi.midi_packet_list_get_packet(packet_list, i)
-            data = list(capi.midi_packet_get_data(packet))
+            # Channel voice messages only; system messages have no channel.
+            if not 0x80 <= status <= 0xEF:
+                continue
 
-            if len(data) >= 1:
-                status = data[0]
-                message_type = status & 0xF0
-                channel = status & 0x0F
-
-                # Only process messages on input channel
-                if channel == self.input_channel:
-                    # Change to output channel
-                    data[0] = message_type | self.output_channel
-
-                    # Forward modified message
-                    capi.midi_send(self.output_port, self.dest, bytes(data))
+            if (status & 0x0F) == self.input_channel:
+                data = bytearray(message)
+                data[0] = (status & 0xF0) | self.output_channel
+                capi.midi_send_data(self.output_port, self.dest, bytes(data))
 
 # Route channel 0 -> channel 1
 client = capi.midi_client_create("Channel Router")
@@ -352,11 +363,14 @@ dest = capi.midi_get_destination(0)
 
 router = ChannelRouter(output_port, dest, input_channel=0, output_channel=1)
 
-input_port = capi.midi_input_port_create(client, "Input", router.callback)
+input_port = capi.midi_input_port_create(client, "Input")
 source = capi.midi_get_source(0)
 capi.midi_port_connect_source(input_port, source)
 
-# Let it run...
+while True:
+    if capi.midi_input_wait(input_port, 0.1):
+        for _host_time, payload in capi.midi_input_poll(input_port):
+            router.process(payload)
 ```
 
 ## MIDI Transformation
@@ -367,34 +381,30 @@ Transpose all incoming notes:
 
 ```python
 import coremusic.capi as capi
+from coremusic.midi import MIDIMessageSplitter
 
 class Transposer:
     def __init__(self, output_port, dest, semitones):
         self.output_port = output_port
         self.dest = dest
         self.semitones = semitones
+        self.splitter = MIDIMessageSplitter()
 
-    def callback(self, packet_list, src_conn_ref_con):
-        num_packets = capi.midi_packet_list_get_num_packets(packet_list)
+    def process(self, payload: bytes) -> None:
+        for message in self.splitter.push(payload):
+            data = bytearray(message)
+            message_type = data[0] & 0xF0
 
-        for i in range(num_packets):
-            packet = capi.midi_packet_list_get_packet(packet_list, i)
-            data = list(capi.midi_packet_get_data(packet))
+            # Transpose note on/off messages
+            if message_type in (0x80, 0x90) and len(data) >= 3:
+                original_note = data[1]
+                transposed_note = max(0, min(127, original_note + self.semitones))
+                data[1] = transposed_note
 
-            if len(data) >= 3:
-                status = data[0]
-                message_type = status & 0xF0
+                print(f"Transposed: {original_note} -> {transposed_note}")
 
-                # Transpose note on/off messages
-                if message_type in [0x80, 0x90]:  # Note On/Off
-                    original_note = data[1]
-                    transposed_note = max(0, min(127, original_note + self.semitones))
-                    data[1] = transposed_note
-
-                    print(f"Transposed: {original_note} -> {transposed_note}")
-
-                # Forward modified message
-                capi.midi_send(self.output_port, self.dest, bytes(data))
+            # Forward the (possibly modified) message
+            capi.midi_send_data(self.output_port, self.dest, bytes(data))
 
 # Transpose up one octave
 client = capi.midi_client_create("Transposer")
@@ -403,11 +413,14 @@ dest = capi.midi_get_destination(0)
 
 transposer = Transposer(output_port, dest, semitones=12)
 
-input_port = capi.midi_input_port_create(client, "Input", transposer.callback)
+input_port = capi.midi_input_port_create(client, "Input")
 source = capi.midi_get_source(0)
 capi.midi_port_connect_source(input_port, source)
 
-# Let it run...
+while True:
+    if capi.midi_input_wait(input_port, 0.1):
+        for _host_time, payload in capi.midi_input_poll(input_port):
+            transposer.process(payload)
 ```
 
 ### Velocity Scaling
@@ -416,39 +429,34 @@ Scale note velocities:
 
 ```python
 import coremusic.capi as capi
+from coremusic.midi import MIDIMessageSplitter
 
 class VelocityScaler:
     def __init__(self, output_port, dest, scale_factor):
         self.output_port = output_port
         self.dest = dest
         self.scale_factor = scale_factor
+        self.splitter = MIDIMessageSplitter()
 
-    def callback(self, packet_list, src_conn_ref_con):
-        num_packets = capi.midi_packet_list_get_num_packets(packet_list)
+    def process(self, payload: bytes) -> None:
+        for message in self.splitter.push(payload):
+            data = bytearray(message)
 
-        for i in range(num_packets):
-            packet = capi.midi_packet_list_get_packet(packet_list, i)
-            data = list(capi.midi_packet_get_data(packet))
+            # Note On with a non-zero velocity; a zero velocity is a Note Off
+            # and must keep its value.
+            if (data[0] & 0xF0) == 0x90 and len(data) >= 3 and data[2] > 0:
+                original_vel = data[2]
+                scaled_vel = int(original_vel * self.scale_factor)
+                data[2] = max(1, min(127, scaled_vel))  # Clamp to 1-127
 
-            if len(data) >= 3:
-                status = data[0]
-                message_type = status & 0xF0
+                print(f"Velocity: {original_vel} -> {data[2]}")
 
-                if message_type == 0x90:  # Note On
-                    original_vel = data[2]
-                    scaled_vel = int(original_vel * self.scale_factor)
-                    scaled_vel = max(1, min(127, scaled_vel))  # Clamp to 1-127
-                    data[2] = scaled_vel
-
-                    print(f"Velocity: {original_vel} -> {scaled_vel}")
-
-                # Forward message
-                capi.midi_send(self.output_port, self.dest, bytes(data))
+            capi.midi_send_data(self.output_port, self.dest, bytes(data))
 
 # Scale velocities to 80% (softer)
 scaler = VelocityScaler(output_port, dest, scale_factor=0.8)
 
-# Setup and run...
+# Setup and run as in the Transpose Notes example...
 ```
 
 ## MIDI Recording
@@ -457,46 +465,51 @@ scaler = VelocityScaler(output_port, dest, scale_factor=0.8)
 
 Record MIDI to a list with timestamps:
 
+Message times come from the packet host timestamp rather than the wall clock,
+so they stay accurate even if the polling loop is briefly delayed.
+
 ```python
 import coremusic.capi as capi
+import json
 import time
+from coremusic.midi import MIDIMessageSplitter
 
 class MIDIRecorder:
-    def __init__(self):
-        self.recording = False
-        self.start_time = None
+    def __init__(self, port_id):
+        self.port_id = port_id
+        self.splitter = MIDIMessageSplitter()
+        self.origin = None
         self.recorded_messages = []
 
-    def start(self):
-        self.recording = True
-        self.start_time = time.time()
-        self.recorded_messages = []
+    def record(self, duration):
         print("Recording started")
+        deadline = time.monotonic() + duration
 
-    def stop(self):
-        self.recording = False
+        while time.monotonic() < deadline:
+            if not capi.midi_input_wait(self.port_id, 0.1):
+                continue
+
+            for host_time, payload in capi.midi_input_poll(self.port_id):
+                # A zero timestamp means "as soon as possible".
+                if host_time == 0:
+                    host_time = capi.midi_current_host_time()
+                seconds = capi.midi_host_time_to_seconds(host_time)
+                if self.origin is None:
+                    self.origin = seconds
+
+                for data in self.splitter.push(payload):
+                    self.recorded_messages.append({
+                        'time': seconds - self.origin,
+                        'data': data,
+                    })
+
+        dropped = capi.midi_input_dropped(self.port_id)
+        if dropped:
+            print(f"Warning: dropped {dropped} packets")
         print(f"Recording stopped: {len(self.recorded_messages)} messages")
-
-    def callback(self, packet_list, src_conn_ref_con):
-        if not self.recording:
-            return
-
-        current_time = time.time() - self.start_time
-        num_packets = capi.midi_packet_list_get_num_packets(packet_list)
-
-        for i in range(num_packets):
-            packet = capi.midi_packet_list_get_packet(packet_list, i)
-            data = capi.midi_packet_get_data(packet)
-
-            self.recorded_messages.append({
-                'time': current_time,
-                'data': bytes(data)
-            })
 
     def save(self, filename):
         """Save recorded messages to file"""
-        import json
-
         with open(filename, 'w') as f:
             messages = [
                 {'time': msg['time'], 'data': list(msg['data'])}
@@ -507,19 +520,13 @@ class MIDIRecorder:
         print(f"Saved to {filename}")
 
 # Setup recorder
-recorder = MIDIRecorder()
-
 client = capi.midi_client_create("Recorder")
-input_port = capi.midi_input_port_create(client, "Input", recorder.callback)
+input_port = capi.midi_input_port_create(client, "Input")
 source = capi.midi_get_source(0)
 capi.midi_port_connect_source(input_port, source)
 
-# Record for 10 seconds
-recorder.start()
-time.sleep(10)
-recorder.stop()
-
-# Save recording
+recorder = MIDIRecorder(input_port)
+recorder.record(duration=10)
 recorder.save("recorded_midi.json")
 
 # Cleanup
@@ -560,7 +567,7 @@ def playback_midi(filename, output_port, dest):
 
         # Send message
         data = bytes(msg['data'])
-        capi.midi_send(output_port, dest, data)
+        capi.midi_send_data(output_port, dest, data)
 
     print("Playback complete")
 
@@ -583,11 +590,12 @@ Full-featured MIDI monitor with message parsing:
 
 ```python
 import coremusic.capi as capi
-import time
+from coremusic.midi import MIDIMessageSplitter
 
 class MIDIMonitor:
     def __init__(self):
         self.message_count = 0
+        self.splitter = MIDIMessageSplitter()
 
     def parse_message(self, data):
         """Parse and format MIDI message"""
@@ -627,13 +635,8 @@ class MIDIMonitor:
             hex_data = ' '.join(f'{b:02X}' for b in data)
             return f"Unknown   | {hex_data}"
 
-    def callback(self, packet_list, src_conn_ref_con):
-        num_packets = capi.midi_packet_list_get_num_packets(packet_list)
-
-        for i in range(num_packets):
-            packet = capi.midi_packet_list_get_packet(packet_list, i)
-            data = capi.midi_packet_get_data(packet)
-
+    def process(self, payload):
+        for data in self.splitter.push(payload):
             self.message_count += 1
             message = self.parse_message(data)
             print(f"[{self.message_count:6d}] {message}")
@@ -642,7 +645,7 @@ class MIDIMonitor:
 monitor = MIDIMonitor()
 
 client = capi.midi_client_create("MIDI Monitor")
-input_port = capi.midi_input_port_create(client, "Monitor Input", monitor.callback)
+input_port = capi.midi_input_port_create(client, "Monitor Input")
 
 # Connect to all MIDI sources
 num_sources = capi.midi_get_number_of_sources()
@@ -659,7 +662,10 @@ print("-" * 70)
 
 try:
     while True:
-        time.sleep(0.1)
+        if not capi.midi_input_wait(input_port, 0.1):
+            continue
+        for _host_time, payload in capi.midi_input_poll(input_port):
+            monitor.process(payload)
 except KeyboardInterrupt:
     print(f"\n\nStopped - Received {monitor.message_count} messages")
 
@@ -704,39 +710,53 @@ except IndexError:
     return
 
 try:
-    capi.midi_send(port, dest, data)
+    capi.midi_send_data(port, dest, data)
 except Exception as e:
     print(f"Failed to send MIDI: {e}")
 ```
 
 ### Timing Precision
 
-Use timestamps for accurate timing:
+MIDI timestamps are host times: mach absolute ticks on the same monotonic clock
+CoreAudio uses. Schedule ahead of the current time rather than sending at the
+moment the note should sound, so the CoreMIDI server absorbs the jitter of your
+own loop. A timestamp of 0 means "as soon as possible".
 
 ```python
-# Get current host time for precise scheduling
-timestamp = capi.midi_get_current_time()
+# Schedule a note 50 ms from now
+when = capi.midi_current_host_time() + capi.midi_seconds_to_host_time(0.05)
+capi.midi_send_data(port, dest, note_on, when)
 
-# Schedule MIDI message with timestamp
-# (Note: Requires using MIDIPacketList directly)
+# Convert an incoming packet timestamp back to seconds
+for host_time, payload in capi.midi_input_poll(input_port):
+    seconds = capi.midi_host_time_to_seconds(host_time)
 ```
 
 ### Thread Safety
 
-MIDI callbacks run on separate threads - use thread-safe operations:
+CoreMIDI receives on its own thread. Polling with `midi_input_poll` keeps every
+Python object you touch on your own thread, which is the simpler and safer
+default.
+
+A callback passed to `midi_input_port_create` runs on the CoreMIDI receive
+thread instead. Keep it to a hand-off, and do the real work elsewhere:
 
 ```python
-import threading
+import queue
 
-class ThreadSafeMIDIProcessor:
+class MIDIProcessor:
     def __init__(self):
-        self.lock = threading.Lock()
-        self.buffer = []
+        self.incoming: queue.SimpleQueue = queue.SimpleQueue()
 
-    def callback(self, packet_list, src_conn_ref_con):
-        with self.lock:
-            # Process MIDI safely
-            pass
+    def callback(self, data: bytes, host_time: int) -> None:
+        # Runs on the CoreMIDI thread: hand off and return immediately.
+        self.incoming.put((host_time, data))
+
+    def run(self) -> None:
+        # Runs on your own thread.
+        while True:
+            host_time, data = self.incoming.get()
+            ...
 ```
 
 ## See Also

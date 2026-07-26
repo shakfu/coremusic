@@ -15,6 +15,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Segfault when receiving MIDI input ([#1](https://github.com/shakfu/coremusic/issues/1))** - `midi_input_port_create()` and `midi_destination_create()` passed `NULL` as the CoreMIDI read proc. That parameter is not optional: the framework calls it on its own receive thread as soon as a packet arrives, so the process jumped to address 0 and died with `Segmentation fault: 11`. Any `coremusic midi receive`/`midi monitor` session crashed the moment the monitored device sent anything, and sending to a virtual destination crashed the sender. Both functions now install a real read proc. By default incoming packets are buffered in a bounded queue and drained with the new `midi_input_poll()`; passing a `callback` delivers them on the CoreMIDI thread instead, with exceptions contained so they can never propagate back into the framework. Receivers are released when the owning port, endpoint, or client is disposed.
+- **`MIDITimeStamp` was declared 32-bit** - The Cython declaration had it as `UInt32` where CoreMIDI defines `UInt64`, so packet timestamps were truncated and `midi_send_data()` could not accept a real host time (its `timestamp` argument was a C `int`). Both are now 64-bit. `MIDIUniqueID` was likewise corrected from `UInt32` to the signed `SInt32` the header declares.
+- **`MIDIOutputPort.send_data()` always failed** - It called `capi.midi_send()`, which does not exist; every call raised `MIDIError: module 'coremusic.capi' has no attribute 'midi_send'`. The same nonexistent function was called from the `midi send`, `midi panic`, and `sequence play` CLI commands, so all three were broken. All call sites now use `midi_send_data()`.
+- **`midi receive --plugin` never forwarded MIDI to the plugin** - The command loaded and rendered the instrument but no MIDI ever reached it, so it only ever produced silence. Incoming channel voice messages are now passed to the plugin, and the reported event and note counts are no longer always zero.
+- **System messages were displayed with a bogus channel** - `midi receive` and `midi monitor` derived a channel from the low nibble of every status byte, so system-exclusive and real-time messages were printed as belonging to a channel. They are now labelled as system messages.
+
+### Added
+
+- **`MIDIMessageSplitter` and `split_midi_messages()`** (`coremusic.midi`) - A CoreMIDI packet is not one MIDI message: the framework packs several same-timestamp events into a single packet, spreads a large system-exclusive dump over consecutive packets, and may interleave real-time bytes inside another message. The splitter reassembles a packet stream into individual messages, resolving running status and holding sysex state across packets.
+- **MIDI input buffering API** - `capi.midi_input_poll()`, `midi_input_wait()`, `midi_input_pending()`, and `midi_input_dropped()`, plus `MIDIInputPort.poll()`, `.wait()`, `.pending`, and `.dropped` on the object layer. `MIDIClient.create_input_port()` accepts `callback` and `queue_size`. Overflow discards the oldest packets and is reported by `dropped` rather than passing silently; the CLI warns when it happens.
+- **Host time conversion helpers** - `capi.midi_host_time_to_seconds()`, `midi_seconds_to_host_time()`, and `midi_current_host_time()` for working with MIDI packet timestamps and for scheduling sends ahead of the current time.
+- **`capi.midi_received()`** - Wraps `MIDIReceived`, the counterpart of `MIDISend` for virtual sources: it distributes MIDI data to everything connected to a source created with `midi_source_create()`.
+
 ## [0.2.3]
 
 ### Fixed
