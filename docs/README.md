@@ -2,6 +2,19 @@
 
 This directory contains the documentation for coremusic, built with [MkDocs](https://www.mkdocs.org/) and [Material for MkDocs](https://squidfunnel.github.io/mkdocs-material/).
 
+## Code Examples
+
+Doc pages do not contain their code. Each snippet lives in `examples/`, mirrored
+by page, and is pulled in with a `pymdownx.snippets` include:
+
+```markdown
+--8<-- "examples/tutorials/midi_basics/send_note.py:example"
+```
+
+`tests/test_examples.py` runs every one of those programs, so an example that
+stops working fails the test suite instead of reaching a reader. Edit the
+example file, not the doc page. See `examples/README.md` for the conventions.
+
 ## Building Documentation
 
 ### Prerequisites

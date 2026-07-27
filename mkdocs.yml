@@ -88,6 +88,11 @@ markdown_extensions:
   - admonition
   - pymdownx.details
   - pymdownx.superfences
+  # Code blocks are included from the runnable programs under examples/, which
+  # are executed by tests/test_examples.py. See examples/README.md.
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite

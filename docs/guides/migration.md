@@ -1,8 +1,33 @@
 # Migration Guide
 
-**Version:** 0.1.8
+Guide for migrating from other Python audio libraries to CoreMusic, porting
+CoreAudio C/Objective-C code to Python, and updating code written against older
+CoreMusic releases.
 
-Guide for migrating from other Python audio libraries to CoreMusic, and porting CoreAudio C/Objective-C code to Python.
+## From CoreMusic 0.2.2 and Earlier
+
+0.2.3 dissolved the `coremusic.objects` package into domain subpackages, and
+there is no compatibility shim: `import coremusic.objects` raises
+`ModuleNotFoundError`. The top-level package exports only `__version__`, so
+`coremusic.AudioFile` and similar flat names do not resolve either.
+
+| Old import | New import |
+| --- | --- |
+| `from coremusic.objects import AudioFile, AudioFormat` | `from coremusic.audio import AudioFile, AudioFormat` |
+| `from coremusic.objects import AudioQueue, AudioUnit, AUGraph` | `from coremusic.audio import AudioQueue, AudioUnit, AUGraph` |
+| `from coremusic.objects import AudioDevice, AudioDeviceManager` | `from coremusic.audio import AudioDevice, AudioDeviceManager` |
+| `from coremusic.objects import AudioClock, ClockTimeFormat` | `from coremusic.audio import AudioClock, ClockTimeFormat` |
+| `from coremusic.objects import MIDIClient, MIDIPort` | `from coremusic.midi import MIDIClient, MIDIPort` |
+| `from coremusic.objects import MusicPlayer, MusicSequence, MusicTrack` | `from coremusic.midi import MusicPlayer, MusicSequence, MusicTrack` |
+| `from coremusic.objects import AudioFileError, MIDIError` | `from coremusic.exceptions import AudioFileError, MIDIError` |
+| `from coremusic.objects import CoreAudioObject, AudioPlayer, NUMPY_AVAILABLE` | `from coremusic.base import CoreAudioObject, AudioPlayer, NUMPY_AVAILABLE` |
+| `import coremusic as cm; cm.AudioFile(...)` | `from coremusic.audio import AudioFile` |
+
+The MIDI CLI was restructured at the same time - `midi device list`,
+`midi input monitor`, and `midi output send` became `midi list`,
+`midi monitor`, and `midi send`. See the [CLI Guide](cli.md).
+
+The [Import Guide](imports.md) has the full package map.
 
 ## From pydub
 
@@ -28,18 +53,7 @@ channels = audio.channels
 **CoreMusic:**
 
 ```python
-import coremusic as cm
-
-# Load audio (supports WAV, MP3, AAC, AIFF, etc.)
-with cm.AudioFile("audio.wav") as audio:
-    # Get properties
-    duration = audio.duration  # seconds
-    sample_rate = audio.format.sample_rate
-    channels = audio.format.channels_per_frame
-
-# Or for any format with automatic conversion
-with cm.ExtendedAudioFile("audio.mp3") as audio:
-    format = audio.file_format
+--8<-- "examples/guides/migration/from_pydub.py:load"
 ```
 
 ### Basic Operations
@@ -69,30 +83,7 @@ audio.export("output.mp3", format="mp3")
 **CoreMusic:**
 
 ```python
-import coremusic as cm
-import numpy as np
-
-# Load
-with cm.AudioFile("input.wav") as audio:
-    data, count = audio.read(audio.frame_count)
-    samples = np.frombuffer(data, dtype=np.float32)
-
-    # Volume adjustment (in place)
-    samples *= 1.26  # +10dB ~ 3.16x
-    samples *= 0.56  # -5dB ~ 0.56x
-
-    # Slicing
-    from coremusic.audio import AudioSlicer
-    slicer = AudioSlicer("input.wav")
-    first_10_seconds = slicer.slice_time_range(0.0, 10.0)
-
-    # Export
-    with cm.ExtendedAudioFile.create(
-        "output.wav",
-        cm.capi.fourchar_to_int('WAVE'),
-        audio.format
-    ) as output:
-        output.write(count, samples.tobytes())
+--8<-- "examples/guides/migration/from_pydub.py:operations"
 ```
 
 ### Key Differences
@@ -133,20 +124,7 @@ print(f"Channels: {info.channels}")
 **CoreMusic:**
 
 ```python
-import coremusic as cm
-import numpy as np
-
-# Read entire file
-with cm.AudioFile("audio.wav") as audio:
-    data, count = audio.read(audio.frame_count)
-    samples = np.frombuffer(data, dtype=np.float32)
-    sample_rate = audio.format.sample_rate
-
-# Get info without reading
-with cm.AudioFile("audio.wav") as audio:
-    duration = audio.duration
-    channels = audio.format.channels_per_frame
-    sample_rate = audio.format.sample_rate
+--8<-- "examples/guides/migration/from_soundfile.py:read"
 ```
 
 ### Writing Audio
@@ -167,28 +145,7 @@ sf.write("output.wav", data, 44100)
 **CoreMusic:**
 
 ```python
-import coremusic as cm
-import numpy as np
-
-# Generate audio
-data = np.random.randn(44100 * 2).astype(np.float32)
-
-# Create format
-format = cm.AudioFormat(
-    sample_rate=44100.0,
-    format_id=cm.capi.fourchar_to_int('lpcm'),
-    format_flags=cm.capi.get_linear_pcm_format_flag_is_float(),
-    channels_per_frame=1,
-    bits_per_channel=32
-)
-
-# Write
-with cm.ExtendedAudioFile.create(
-    "output.wav",
-    cm.capi.fourchar_to_int('WAVE'),
-    format
-) as audio:
-    audio.write(len(data), data.tobytes())
+--8<-- "examples/guides/migration/from_soundfile.py:write"
 ```
 
 ### Streaming
@@ -210,15 +167,7 @@ with sf.SoundFile("audio.wav") as file:
 **CoreMusic:**
 
 ```python
-import coremusic as cm
-
-# Read in blocks
-with cm.AudioFile("audio.wav") as audio:
-    while True:
-        data, count = audio.read(1024)
-        if count == 0:
-            break
-        # Process block
+--8<-- "examples/guides/migration/from_soundfile.py:stream"
 ```
 
 ## From wave / audioread
@@ -246,17 +195,7 @@ with wave.open("audio.wav", 'rb') as wav:
 **CoreMusic:**
 
 ```python
-import coremusic as cm
-
-with cm.AudioFile("audio.wav") as audio:
-    # Get parameters
-    channels = audio.format.channels_per_frame
-    sample_rate = audio.format.sample_rate
-    bits = audio.format.bits_per_channel
-    n_frames = audio.frame_count
-
-    # Read frames
-    data, count = audio.read(n_frames)
+--8<-- "examples/guides/migration/from_soundfile.py:wave-read"
 ```
 
 ### Writing WAV
@@ -279,25 +218,7 @@ with wave.open("output.wav", 'wb') as wav:
 **CoreMusic:**
 
 ```python
-import coremusic as cm
-import numpy as np
-
-data = np.random.randint(-32768, 32767, 44100, dtype=np.int16)
-
-format = cm.AudioFormat(
-    sample_rate=44100.0,
-    format_id=cm.capi.fourchar_to_int('lpcm'),
-    format_flags=cm.capi.get_linear_pcm_format_flag_is_signed_integer(),
-    channels_per_frame=1,
-    bits_per_channel=16
-)
-
-with cm.ExtendedAudioFile.create(
-    "output.wav",
-    cm.capi.fourchar_to_int('WAVE'),
-    format
-) as audio:
-    audio.write(len(data), data.tobytes())
+--8<-- "examples/guides/migration/from_soundfile.py:wave-write"
 ```
 
 ## From mido (MIDI)
@@ -323,23 +244,7 @@ with mido.open_output('IAC Driver Bus 1') as port:
 **CoreMusic:**
 
 ```python
-import coremusic.capi as capi
-
-# List ports
-num_dests = capi.midi_get_number_of_destinations()
-for i in range(num_dests):
-    dest = capi.midi_get_destination(i)
-    name = capi.midi_object_get_string_property(dest, "name")
-    print(name)
-
-# Send MIDI
-client = capi.midi_client_create("MyApp")
-port = capi.midi_output_port_create(client, "Output")
-dest = capi.midi_get_destination(0)
-
-# Send note on
-note_on = bytes([0x90, 60, 100])  # Channel 0, note 60, velocity 100
-capi.midi_send_data(port, dest, note_on)
+--8<-- "examples/guides/migration/from_mido.py:ports"
 ```
 
 ### MIDI Files
@@ -371,32 +276,7 @@ mid.save("output.mid")
 **CoreMusic:**
 
 ```python
-import coremusic as cm
-
-# Load MIDI file
-sequence = cm.MusicSequence()
-sequence.load_from_file("song.mid")
-
-# Iterate through tracks
-for i in range(sequence.track_count):
-    track = sequence.get_track(i)
-    # Access track data
-
-# Create new sequence
-sequence = cm.MusicSequence()
-track = sequence.new_track()
-
-# Add notes
-track.add_midi_note(
-    time=0.0,
-    channel=0,
-    note=60,
-    velocity=100,
-    duration=1.0
-)
-
-# Save (using functional API)
-# sequence.save_to_file("output.mid")  # OO API method
+--8<-- "examples/guides/migration/from_mido.py:files"
 ```
 
 ## From CoreAudio C/Objective-C
@@ -433,38 +313,13 @@ free(buffer);
 **CoreMusic:**
 
 ```python
-import coremusic as cm
-
-# Open audio file
-with cm.AudioFile("/path/to/audio.wav") as audio:
-    # Get format
-    format = audio.format
-
-    # Read packets
-    data, count = audio.read(1024)
-
-# Automatic cleanup via context manager
+--8<-- "examples/guides/migration/from_c_api.py:audiofile-oo"
 ```
 
 Or using functional API for closer C mapping:
 
 ```python
-import coremusic.capi as capi
-
-# Open
-file_id = capi.audio_file_open_url("/path/to/audio.wav")
-
-# Get format
-format_data = capi.audio_file_get_property(
-    file_id,
-    capi.get_audio_file_property_data_format()
-)
-
-# Read
-data, count = capi.audio_file_read_packets(file_id, 0, 1024)
-
-# Close
-capi.audio_file_close(file_id)
+--8<-- "examples/guides/migration/from_c_api.py:audiofile-functional"
 ```
 
 ### AudioUnit Operations
@@ -490,28 +345,7 @@ AudioOutputUnitStart(unit);
 **CoreMusic:**
 
 ```python
-import coremusic as cm
-
-# Find and create output unit
-unit = cm.AudioUnit.default_output()
-
-# Initialize and start
-unit.initialize()
-unit.start()
-
-# Or functional API
-import coremusic.capi as capi
-
-desc = {
-    'componentType': capi.get_audio_unit_type_output(),
-    'componentSubType': capi.get_audio_unit_subtype_default_output(),
-    'componentManufacturer': capi.get_audio_unit_manufacturer_apple()
-}
-
-comp = capi.audio_component_find_next(0, desc)
-unit = capi.audio_component_instance_new(comp)
-capi.audio_unit_initialize(unit)
-capi.audio_output_unit_start(unit)
+--8<-- "examples/guides/migration/from_c_api.py:audiounit"
 ```
 
 ### MIDI Operations
@@ -538,20 +372,7 @@ MIDISend(outputPort, dest, packet, 3);
 **CoreMusic:**
 
 ```python
-import coremusic.capi as capi
-
-# Create MIDI client
-client = capi.midi_client_create("MyClient")
-
-# Create output port
-output_port = capi.midi_output_port_create(client, "Output")
-
-# Get destination
-dest = capi.midi_get_destination(0)
-
-# Send note
-note_on = bytes([0x90, 60, 100])
-capi.midi_send_data(output_port, dest, note_on)
+--8<-- "examples/guides/migration/from_c_api.py:midi"
 ```
 
 ## From AudioKit (Swift)
@@ -575,19 +396,7 @@ player.play()
 **CoreMusic:**
 
 ```python
-import coremusic as cm
-
-# High-level player
-player = cm.AudioPlayer("audio.wav")
-player.play()
-
-# Or lower-level AudioQueue
-with cm.AudioFile("audio.wav") as audio:
-    format = audio.format
-    queue = cm.AudioQueue.create_output(format)
-
-    # Allocate buffers and queue playback
-    # (See cookbook for complete example)
+--8<-- "examples/guides/migration/from_audiokit.py:playback"
 ```
 
 ### Audio Effects
@@ -608,14 +417,7 @@ try AudioKit.start()
 **CoreMusic:**
 
 ```python
-from coremusic.audio.audiounit_host import AudioUnitPlugin
-
-# Load reverb AudioUnit
-with AudioUnitPlugin.from_name("AUReverb") as reverb:
-    reverb['Dry/Wet Mix'] = 0.5
-
-    # Process audio
-    output = reverb.process(input_data)
+--8<-- "examples/guides/migration/from_audiokit.py:effects"
 ```
 
 ## Feature Comparison Matrix
@@ -687,20 +489,7 @@ audio.export("output.wav", format="wav")
 **After (CoreMusic):**
 
 ```python
-import coremusic as cm
-import numpy as np
-
-with cm.AudioFile("input.wav") as audio:
-    data, count = audio.read(audio.frame_count)
-    samples = np.frombuffer(data, dtype=np.float32)
-    samples *= 2.0  # Increase volume (~6dB)
-
-    with cm.ExtendedAudioFile.create(
-        "output.wav",
-        cm.capi.fourchar_to_int('WAVE'),
-        audio.format
-    ) as output:
-        output.write(count, samples.tobytes())
+--8<-- "examples/guides/migration/patterns.py:audio"
 ```
 
 ### Pattern 2: MIDI Processing
@@ -719,15 +508,7 @@ with mido.open_output() as port:
 **After (CoreMusic):**
 
 ```python
-import coremusic.capi as capi
-
-client = capi.midi_client_create("App")
-port = capi.midi_output_port_create(client, "Out")
-dest = capi.midi_get_destination(0)
-
-for note in [60, 64, 67]:
-    msg = bytes([0x90, note, 100])  # Note on
-    capi.midi_send_data(port, dest, msg)
+--8<-- "examples/guides/migration/patterns.py:midi"
 ```
 
 ## See Also
@@ -738,4 +519,4 @@ for note in [60, 64, 67]:
 - [Complete API reference](../api/index.md)
 
 !!! note
-    Need help with migration? Check the examples in `tests/demos/` or consult the API documentation.
+    Every snippet on this page is a runnable program under `examples/guides/migration/`.

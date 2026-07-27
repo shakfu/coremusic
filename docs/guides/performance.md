@@ -70,28 +70,7 @@ CoreMusic uses a hybrid architecture for optimal performance:
 ### Performance Comparison
 
 ```python
-import time
-import coremusic as cm
-
-# Test file: 10MB audio file
-test_file = "large_audio.wav"
-
-# Object-Oriented API
-start = time.time()
-with cm.AudioFile(test_file) as audio:
-    data = audio.read_packets(1024)
-oo_time = time.time() - start
-
-# Functional API
-start = time.time()
-file_id = cm.capi.audio_file_open_url(test_file)
-data = cm.capi.audio_file_read_packets(file_id, 0, 1024)
-cm.capi.audio_file_close(file_id)
-func_time = time.time() - start
-
-print(f"OO API: {oo_time:.4f}s")
-print(f"Functional API: {func_time:.4f}s")
-print(f"Overhead: {((oo_time / func_time - 1) * 100):.1f}%")
+--8<-- "examples/guides/performance/snippet_01.py:example"
 ```
 
 Expected Results:
@@ -107,20 +86,7 @@ Overhead: 5.0%
 Best of both worlds - use OO for convenience, functional for performance:
 
 ```python
-import coremusic as cm
-
-# Use OO API for file management
-with cm.AudioFile("input.wav") as audio:
-    format = audio.format  # OO API convenience
-
-    # Switch to functional API for bulk processing
-    file_id = audio.object_id
-    for i in range(0, audio.frame_count, 4096):
-        # Direct C calls - maximum performance
-        data, count = cm.capi.audio_file_read_packets(
-            file_id, i, 4096
-        )
-        # Process data...
+--8<-- "examples/guides/performance/snippet_02.py:example"
 ```
 
 ## Memory Management
@@ -130,29 +96,13 @@ with cm.AudioFile("input.wav") as audio:
 **Automatic Cleanup (OO API):**
 
 ```python
-# Good: Automatic cleanup via context manager
-with cm.AudioFile("large.wav") as audio:
-    data = audio.read(1024)
-# File automatically closed here
-
-# Also Good: Explicit disposal
-audio = cm.AudioFile("large.wav")
-audio.open()
-try:
-    data = audio.read(1024)
-finally:
-    audio.dispose()  # Explicit cleanup
+--8<-- "examples/guides/performance/snippet_03.py:example"
 ```
 
 **Manual Cleanup (Functional API):**
 
 ```python
-# Must manually clean up
-file_id = cm.capi.audio_file_open_url("large.wav")
-try:
-    data = cm.capi.audio_file_read_packets(file_id, 0, 1024)
-finally:
-    cm.capi.audio_file_close(file_id)  # Don't forget!
+--8<-- "examples/guides/performance/snippet_04.py:example"
 ```
 
 ### Memory Pooling
@@ -160,37 +110,13 @@ finally:
 Pre-allocate buffers for large operations:
 
 ```python
-import numpy as np
-import coremusic as cm
-
-# Pre-allocate reusable buffer
-buffer_size = 4096
-buffer = np.zeros(buffer_size * 2, dtype=np.float32)
-
-with cm.AudioFile("huge_file.wav") as audio:
-    for i in range(0, audio.frame_count, buffer_size):
-        # Reuse buffer instead of allocating new memory
-        data, count = audio.read(buffer_size)
-
-        # Convert to NumPy view (zero-copy when possible)
-        samples = np.frombuffer(data, dtype=np.float32)
-
-        # Process in-place to avoid copies
-        samples *= 0.5  # Example: reduce volume
+--8<-- "examples/guides/performance/snippet_05.py:example"
 ```
 
 ### Avoiding Memory Leaks
 
 ```python
-# BAD: Potential leak if exception occurs
-player = cm.MusicPlayer()
-sequence = cm.MusicSequence()
-# If error occurs, resources not cleaned up
-
-# GOOD: Ensure cleanup with context managers
-with cm.MusicPlayer() as player:
-    with cm.MusicSequence() as sequence:
-        # Resources automatically cleaned up
+--8<-- "examples/guides/performance/snippet_06.py:example"
 ```
 
 ## Buffer Optimization
@@ -207,28 +133,7 @@ with cm.MusicPlayer() as player:
 ### Buffer Size Tuning
 
 ```python
-import coremusic as cm
-import time
-
-def benchmark_buffer_size(file_path, buffer_size):
-    start = time.time()
-    total_frames = 0
-
-    with cm.AudioFile(file_path) as audio:
-        while total_frames < audio.frame_count:
-            data, count = audio.read(buffer_size)
-            total_frames += count
-            if count == 0:
-                break
-
-    duration = time.time() - start
-    throughput = total_frames / duration / 1000000  # Million frames/sec
-    return throughput
-
-# Test different buffer sizes
-for size in [512, 1024, 2048, 4096, 8192, 16384]:
-    throughput = benchmark_buffer_size("audio.wav", size)
-    print(f"Buffer {size}: {throughput:.2f} Mframes/sec")
+--8<-- "examples/guides/performance/benchmark_buffer_size.py:example"
 ```
 
 Expected Results:
@@ -249,38 +154,7 @@ Buffer 16384: 25.2 Mframes/sec
 Process large files in manageable chunks:
 
 ```python
-import coremusic as cm
-import numpy as np
-
-def process_large_file(input_path, output_path, chunk_size=8192):
-    """Process large audio file efficiently"""
-    with cm.AudioFile(input_path) as input_file:
-        format = input_file.format
-
-        with cm.ExtendedAudioFile.create(
-            output_path,
-            cm.capi.fourchar_to_int('WAVE'),
-            format
-        ) as output_file:
-            total_frames = input_file.frame_count
-            processed = 0
-
-            while processed < total_frames:
-                # Read chunk
-                remaining = min(chunk_size, total_frames - processed)
-                data, count = input_file.read(remaining)
-
-                # Process
-                samples = np.frombuffer(data, dtype=np.float32)
-                samples *= 0.8  # Example processing
-
-                # Write
-                output_file.write(count, samples.tobytes())
-                processed += count
-
-                # Progress
-                progress = (processed / total_frames) * 100
-                print(f"Progress: {progress:.1f}%", end='\r')
+--8<-- "examples/guides/performance/process_large_file.py:example"
 ```
 
 ### Parallel File Processing
@@ -288,31 +162,7 @@ def process_large_file(input_path, output_path, chunk_size=8192):
 Process multiple files in parallel:
 
 ```python
-import coremusic as cm
-from concurrent.futures import ProcessPoolExecutor
-from pathlib import Path
-
-def convert_file(input_path):
-    """Convert single file"""
-    output_path = input_path.with_suffix('.mp3')
-
-    with cm.AudioFile(str(input_path)) as audio:
-        format = audio.format
-        # Conversion logic...
-
-    return output_path
-
-def batch_convert(input_dir, num_workers=4):
-    """Convert all files in directory"""
-    files = list(Path(input_dir).glob("*.wav"))
-
-    with ProcessPoolExecutor(max_workers=num_workers) as executor:
-        results = executor.map(convert_file, files)
-
-    return list(results)
-
-# Convert 100 files using 4 cores
-results = batch_convert("audio_files/", num_workers=4)
+--8<-- "examples/guides/performance/convert_file.py:example"
 ```
 
 ## Real-Time Audio
@@ -320,33 +170,12 @@ results = batch_convert("audio_files/", num_workers=4)
 ### Low-Latency Configuration
 
 ```python
-import coremusic as cm
-
-# Create low-latency audio unit
-unit = cm.AudioUnit.default_output()
-
-# Configure for minimum latency
-format = cm.AudioFormat(
-    sample_rate=44100.0,
-    format_id=cm.capi.fourchar_to_int('lpcm'),
-    format_flags=cm.capi.get_linear_pcm_format_flag_is_float(),
-    channels_per_frame=2,
-    bits_per_channel=32
-)
-
-unit.set_stream_format(format)
-
-# Set small buffer size for low latency
-# Typical: 256-512 frames at 44.1kHz = 5-11ms latency
-buffer_frames = 256
-
-unit.initialize()
-unit.start()
+--8<-- "examples/guides/performance/snippet_10.py:example"
 ```
 
 ### Render Callback Performance
 
-```python
+```cython
 # Pure Cython callback for maximum performance
 # Defined in capi.pyx
 
@@ -426,81 +255,19 @@ Configuration: 44.1kHz, float32, stereo
 ### Using Python Profiler
 
 ```python
-import cProfile
-import pstats
-import coremusic as cm
-
-def audio_processing_task():
-    with cm.AudioFile("audio.wav") as audio:
-        for i in range(0, audio.frame_count, 4096):
-            data, count = audio.read(4096)
-            # Process...
-
-# Profile the code
-profiler = cProfile.Profile()
-profiler.enable()
-
-audio_processing_task()
-
-profiler.disable()
-stats = pstats.Stats(profiler)
-stats.strip_dirs()
-stats.sort_stats('cumulative')
-stats.print_stats(20)  # Top 20 functions
+--8<-- "examples/guides/performance/audio_processing_task.py:example"
 ```
 
 ### Memory Profiling
 
 ```python
-from memory_profiler import profile
-import coremusic as cm
-
-@profile
-def memory_intensive_operation():
-    files = []
-    for i in range(10):
-        audio = cm.AudioFile(f"audio_{i}.wav")
-        data, count = audio.read(audio.frame_count)
-        files.append((audio, data))
-
-    # Check memory usage
-    return files
-
-# Run with: python -m memory_profiler script.py
+--8<-- "examples/guides/performance/memory_intensive_operation.py:example"
 ```
 
 ### Performance Monitoring
 
 ```python
-import coremusic as cm
-import time
-import psutil
-import os
-
-class PerformanceMonitor:
-    def __init__(self):
-        self.process = psutil.Process(os.getpid())
-        self.start_time = time.time()
-        self.start_memory = self.process.memory_info().rss / 1024 / 1024
-
-    def report(self, label):
-        elapsed = time.time() - self.start_time
-        current_memory = self.process.memory_info().rss / 1024 / 1024
-        memory_delta = current_memory - self.start_memory
-        cpu_percent = self.process.cpu_percent()
-
-        print(f"{label}:")
-        print(f"  Time: {elapsed:.3f}s")
-        print(f"  Memory: {current_memory:.1f} MB (+{memory_delta:.1f} MB)")
-        print(f"  CPU: {cpu_percent:.1f}%")
-
-# Usage
-monitor = PerformanceMonitor()
-
-with cm.AudioFile("large.wav") as audio:
-    data, count = audio.read(audio.frame_count)
-
-monitor.report("After reading audio")
+--8<-- "examples/guides/performance/performancemonitor.py:example"
 ```
 
 ## Best Practices Summary

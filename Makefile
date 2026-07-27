@@ -64,7 +64,7 @@ test-clean-install:
 
 # Lint with ruff
 lint:
-	@uv run ruff check --fix src/ tests/
+	@uv run ruff check --fix src/ tests/ examples/
 
 # Format with ruff
 format:

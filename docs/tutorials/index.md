@@ -36,73 +36,31 @@ Start here if you're new to coremusic:
 ### Audio Files
 
 ```python
-import coremusic as cm
-
-# Read audio file
-with cm.AudioFile("audio.wav") as audio:
-    print(f"Duration: {audio.duration}s")
-    print(f"Sample rate: {audio.format.sample_rate}")
-    data, count = audio.read_packets(0, 1024)
+--8<-- "examples/index/audio_file.py:example"
 ```
 
 ### Audio Playback
 
 ```python
-import coremusic as cm
-
-player = cm.AudioPlayer()
-player.load_file("audio.wav")
-player.setup_output()
-player.start()
-
-while player.is_playing():
-    import time
-    time.sleep(0.1)
+--8<-- "examples/quickstart/play_audio.py:player"
 ```
 
 ### Audio Recording
 
 ```python
-import coremusic as cm
-
-recorder = cm.AudioRecorder()
-recorder.setup(sample_rate=44100.0, channels=2, output_path="recording.wav")
-recorder.start()
-
-import time
-time.sleep(10)  # Record for 10 seconds
-
-recorder.stop()
+--8<-- "examples/quickstart/record_audio.py:example"
 ```
 
 ### Effects Processing
 
 ```python
-import coremusic as cm
-
-chain = cm.AudioEffectsChain()
-reverb = chain.add_effect_by_name("AUReverb2")
-output = chain.add_output()
-chain.connect(reverb, output)
-
-chain.open()
-chain.initialize()
-chain.start()
+--8<-- "examples/quickstart/effects_chain.py:example"
 ```
 
 ### MIDI
 
 ```python
-import coremusic as cm
-
-client = cm.MIDIClient("My App")
-port = client.create_output_port("Output")
-
-# Send Note On (middle C)
-dest = cm.midi_get_destination(0)
-port.send(dest, bytes([0x90, 60, 100]))
-
-client.dispose()
+--8<-- "examples/quickstart/send_midi_notes.py:example"
 ```
 
 ### Command Line Examples
@@ -118,7 +76,7 @@ coremusic audio record -o recording.wav --duration 10
 coremusic plugin process AUReverb2 input.wav -o output.wav
 
 # Monitor MIDI
-coremusic midi input monitor
+coremusic midi monitor
 
 # List devices
 coremusic device list

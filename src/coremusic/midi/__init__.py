@@ -16,10 +16,15 @@ from . import link, transform
 # Import domain object classes
 from .core import (
     MIDIClient,
+    MIDIEndpoint,
     MIDIInputPort,
     MIDIMessageSplitter,
     MIDIOutputPort,
     MIDIPort,
+    find_destination,
+    find_source,
+    get_destinations,
+    get_sources,
     split_midi_messages,
 )
 from .player import MusicPlayer, MusicSequence, MusicTrack
@@ -72,8 +77,14 @@ __all__ = [
     "MIDIPort",
     "MIDIInputPort",
     "MIDIOutputPort",
+    "MIDIEndpoint",
     "MIDIMessageSplitter",
     "split_midi_messages",
+    # Endpoint discovery
+    "get_sources",
+    "get_destinations",
+    "find_source",
+    "find_destination",
     # Music player
     "MusicPlayer",
     "MusicSequence",

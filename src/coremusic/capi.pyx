@@ -6449,7 +6449,14 @@ def midi_client_dispose(long client):
     Raises:
         RuntimeError: If disposal fails
     """
-    cdef cf.OSStatus status = cm.MIDIClientDispose(<cm.MIDIClientRef>client)
+    cdef cm.MIDIClientRef ref = <cm.MIDIClientRef>client
+    cdef cf.OSStatus status
+    # Release the GIL: MIDIClientDispose waits for in-flight read proc calls to
+    # return, and _midi_read_proc blocks on `with gil:`. Holding the GIL here
+    # would deadlock against any packet still on its way to one of this
+    # client's input ports or virtual destinations.
+    with nogil:
+        status = cm.MIDIClientDispose(ref)
     # Disposing the client also disposes its ports and virtual endpoints, so
     # their receivers go too. Done after the call returns, when CoreMIDI
     # guarantees no further read proc invocations.
@@ -6548,7 +6555,12 @@ def midi_port_dispose(long port):
     Raises:
         RuntimeError: If disposal fails
     """
-    cdef cf.OSStatus status = cm.MIDIPortDispose(<cm.MIDIPortRef>port)
+    cdef cm.MIDIPortRef ref = <cm.MIDIPortRef>port
+    cdef cf.OSStatus status
+    # Release the GIL, as in midi_client_dispose: this call waits for any
+    # in-flight read proc, which needs the GIL to deliver its packet.
+    with nogil:
+        status = cm.MIDIPortDispose(ref)
     _midi_release_object(port)
     if status != 0:
         raise RuntimeError(format_osstatus_error(status, "MIDIPortDispose"))
@@ -6857,7 +6869,12 @@ def midi_endpoint_dispose(long endpoint):
     Raises:
         RuntimeError: If disposal fails
     """
-    cdef cf.OSStatus status = cm.MIDIEndpointDispose(<cm.MIDIEndpointRef>endpoint)
+    cdef cm.MIDIEndpointRef ref = <cm.MIDIEndpointRef>endpoint
+    cdef cf.OSStatus status
+    # Release the GIL, as in midi_client_dispose: a virtual destination may
+    # have a packet in flight, and its read proc needs the GIL to deliver it.
+    with nogil:
+        status = cm.MIDIEndpointDispose(ref)
     _midi_release_object(endpoint)
     if status != 0:
         raise RuntimeError(format_osstatus_error(status, "MIDIEndpointDispose"))

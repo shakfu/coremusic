@@ -36,47 +36,19 @@ Ableton Link is a technology that synchronizes musical beat, tempo, and phase ac
 ### Basic Link Session
 
 ```python
-import coremusic as cm
-
-# Create Link session with context manager
-with cm.link.LinkSession(bpm=120.0) as session:
-    print(f"Link enabled: {session.enabled}")
-    print(f"Connected peers: {session.num_peers}")
-
-    # Get current state
-    state = session.capture_app_session_state()
-    print(f"Tempo: {state.tempo:.1f} BPM")
-    print(f"Playing: {state.is_playing}")
+--8<-- "examples/link_integration/snippet_01.py:example"
 ```
 
 ### Query Beat Position
 
 ```python
-with cm.link.LinkSession(bpm=120.0) as session:
-    clock = session.clock
-
-    # Get current beat position
-    state = session.capture_app_session_state()
-    current_time = clock.micros()
-    beat = state.beat_at_time(current_time, quantum=4.0)
-    phase = state.phase_at_time(current_time, quantum=4.0)
-
-    print(f"Beat: {beat:.2f}, Phase: {phase:.2f}/4")
+--8<-- "examples/link_integration/snippet_02.py:example"
 ```
 
 ### Change Tempo
 
 ```python
-with cm.link.LinkSession(bpm=120.0) as session:
-    # Capture state
-    state = session.capture_app_session_state()
-    current_time = session.clock.micros()
-
-    # Set new tempo
-    state.set_tempo(140.0, current_time)
-    session.commit_app_session_state(state)
-
-    print("Tempo changed to 140 BPM")
+--8<-- "examples/link_integration/snippet_03.py:example"
 ```
 
 ## Link Basics
@@ -86,23 +58,7 @@ with cm.link.LinkSession(bpm=120.0) as session:
 The main interface to Ableton Link.
 
 ```python
-# Create session with initial tempo
-session = cm.link.LinkSession(bpm=120.0)
-
-# Enable networking (discovers peers)
-session.enabled = True
-
-# Enable transport sync
-session.start_stop_sync_enabled = True
-
-# Check connections
-print(f"Connected to {session.num_peers} peers")
-
-# Access the clock
-clock = session.clock
-
-# Cleanup
-session.enabled = False
+--8<-- "examples/link_integration/snippet_04.py:example"
 ```
 
 ### SessionState Class
@@ -156,137 +112,25 @@ Integrate Link with CoreAudio for synchronized audio playback.
 ### AudioPlayer with Link
 
 ```python
-import coremusic as cm
-import time
-
-# Create Link session
-with cm.link.LinkSession(bpm=120.0) as session:
-    # Create AudioPlayer with Link integration
-    player = cm.AudioPlayer(link_session=session)
-
-    # Load and setup audio
-    player.load_file("loop.wav")
-    player.setup_output()
-
-    # Query Link timing before playback
-    timing = player.get_link_timing(quantum=4.0)
-    print(f"Starting at beat {timing['beat']:.2f}")
-    print(f"Tempo: {timing['tempo']:.1f} BPM")
-
-    # Start playback
-    player.play()
-
-    # Monitor playback with Link timing
-    for _ in range(20):
-        timing = player.get_link_timing(quantum=4.0)
-        progress = player.get_progress()
-
-        print(f"Beat: {timing['beat']:7.2f} | "
-              f"Phase: {timing['phase']:4.2f} | "
-              f"Progress: {progress*100:5.1f}%", end='\r')
-
-        time.sleep(0.5)
-
-    # Stop playback
-    player.stop()
+--8<-- "examples/link_integration/snippet_07.py:example"
 ```
 
 ### Real-Time Beat Monitoring
 
 ```python
-import coremusic as cm
-import time
-
-with cm.link.LinkSession(bpm=120.0) as session:
-    player = cm.AudioPlayer(link_session=session)
-    player.load_file("audio.wav")
-    player.setup_output()
-    player.play()
-    player.start()
-
-    # Monitor beats during playback
-    while player.is_playing():
-        timing = player.get_link_timing(quantum=4.0)
-        beat = timing['beat']
-
-        # Visual beat indicator
-        indicator = "●" if int(beat) % 4 == 0 else "○"
-
-        print(f"{indicator} Beat: {beat:7.2f} | "
-              f"Tempo: {timing['tempo']:6.1f} BPM", end='\r')
-
-        time.sleep(0.1)
-
-    player.stop()
+--8<-- "examples/link_integration/snippet_08.py:example"
 ```
 
 ### Quantized Playback Start
 
 ```python
-import coremusic as cm
-
-with cm.link.LinkSession(bpm=120.0) as session:
-    player = cm.AudioPlayer(link_session=session)
-    player.load_file("loop.wav")
-    player.setup_output()
-
-    # Get current Link state
-    state = session.capture_app_session_state()
-    current_time = session.clock.micros()
-
-    # Calculate next bar boundary (4 beats)
-    current_beat = state.beat_at_time(current_time, quantum=4.0)
-    next_bar = (int(current_beat / 4) + 1) * 4.0
-
-    print(f"Current beat: {current_beat:.2f}")
-    print(f"Waiting for beat {next_bar:.0f}...")
-
-    # Wait for next bar
-    while True:
-        state = session.capture_app_session_state()
-        current_time = session.clock.micros()
-        beat = state.beat_at_time(current_time, quantum=4.0)
-
-        if beat >= next_bar:
-            break
-
-        time.sleep(0.001)
-
-    # Start playback exactly on the bar
-    player.play()
-    player.start()
-    print("Started!")
+--8<-- "examples/link_integration/snippet_09.py:example"
 ```
 
 ### Multiple Players Synchronized
 
 ```python
-import coremusic as cm
-
-# Share one Link session across multiple players
-with cm.link.LinkSession(bpm=120.0) as session:
-    # Create multiple players
-    player1 = cm.AudioPlayer(link_session=session)
-    player2 = cm.AudioPlayer(link_session=session)
-
-    player1.load_file("drums.wav")
-    player2.load_file("bass.wav")
-
-    player1.setup_output()
-    player2.setup_output()
-
-    # Both players see same Link timing
-    timing1 = player1.get_link_timing()
-    timing2 = player2.get_link_timing()
-
-    assert timing1['tempo'] == timing2['tempo']
-    assert abs(timing1['beat'] - timing2['beat']) < 0.01
-
-    # Start both (synchronized via Link)
-    player1.play()
-    player2.play()
-    player1.start()
-    player2.start()
+--8<-- "examples/link_integration/snippet_10.py:example"
 ```
 
 ## Link + CoreMIDI
@@ -298,39 +142,7 @@ Integrate Link with CoreMIDI for synchronized MIDI.
 Send MIDI Clock messages (0xF8) synchronized to Link tempo.
 
 ```python
-import coremusic as cm
-from coremusic import link_midi
-import time
-
-# Setup MIDI
-client = cm.capi.midi_client_create("MIDI Clock")
-port = cm.capi.midi_output_port_create(client, "Clock Out")
-destination = cm.capi.midi_get_destination(0)
-
-# Create Link session and MIDI clock
-with cm.link.LinkSession(bpm=120.0) as session:
-    # Create MIDI clock synchronized to Link
-    clock = link_midi.LinkMIDIClock(session, port, destination)
-
-    # Start sending MIDI clock
-    clock.start()
-    print("Sending MIDI Clock at 120 BPM")
-    print("(24 clock messages per quarter note)")
-
-    # Run for 10 seconds
-    for i in range(20):
-        state = session.capture_app_session_state()
-        print(f"Tempo: {state.tempo:6.1f} BPM | "
-              f"Peers: {session.num_peers}", end='\r')
-        time.sleep(0.5)
-
-    # Stop clock
-    clock.stop()
-    print("\nMIDI Clock stopped")
-
-# Cleanup
-cm.capi.midi_port_dispose(port)
-cm.capi.midi_client_dispose(client)
+--8<-- "examples/link_integration/snippet_11.py:example"
 ```
 
 ### Beat-Accurate MIDI Sequencing
@@ -338,193 +150,25 @@ cm.capi.midi_client_dispose(client)
 Schedule MIDI events at specific Link beat positions.
 
 ```python
-import coremusic as cm
-from coremusic import link_midi
-import time
-
-# Setup MIDI
-client = cm.capi.midi_client_create("Sequencer")
-port = cm.capi.midi_output_port_create(client, "Seq Out")
-destination = cm.capi.midi_get_destination(0)
-
-with cm.link.LinkSession(bpm=120.0) as session:
-    # Create sequencer
-    seq = link_midi.LinkMIDISequencer(session, port, destination)
-
-    # Schedule a C major arpeggio (one note per beat)
-    seq.schedule_note(beat=0.0, channel=0, note=60, velocity=100, duration=0.9)  # C4
-    seq.schedule_note(beat=1.0, channel=0, note=64, velocity=100, duration=0.9)  # E4
-    seq.schedule_note(beat=2.0, channel=0, note=67, velocity=100, duration=0.9)  # G4
-    seq.schedule_note(beat=3.0, channel=0, note=72, velocity=100, duration=0.9)  # C5
-
-    print(f"Scheduled {len(seq.events)} MIDI events")
-
-    # Start sequencer
-    seq.start()
-    print("Sequencer running...")
-
-    # Monitor playback
-    for i in range(20):
-        state = session.capture_app_session_state()
-        current_time = session.clock.micros()
-        beat = state.beat_at_time(current_time, 4.0)
-
-        # Show which beat we're on
-        beat_num = int(beat) % 4
-        indicators = ["●" if i == beat_num else "○" for i in range(4)]
-        print(f"{' '.join(indicators)}  Beat: {beat:7.2f}", end='\r')
-
-        time.sleep(0.5)
-
-    # Stop sequencer
-    seq.stop()
-
-cm.capi.midi_port_dispose(port)
-cm.capi.midi_client_dispose(client)
+--8<-- "examples/link_integration/snippet_12.py:example"
 ```
 
 ### MIDI CC Automation Synchronized to Link
 
 ```python
-import coremusic as cm
-from coremusic import link_midi
-import time
-
-# Setup MIDI
-client = cm.capi.midi_client_create("CC Automation")
-port = cm.capi.midi_output_port_create(client, "CC Out")
-destination = cm.capi.midi_get_destination(0)
-
-with cm.link.LinkSession(bpm=120.0) as session:
-    seq = link_midi.LinkMIDISequencer(session, port, destination)
-
-    # Schedule filter cutoff sweep over 4 beats
-    # CC #74 (Filter Cutoff) from 0 to 127
-    for beat in range(0, 4):
-        for substep in range(8):
-            position = beat + (substep / 8.0)
-            value = int((position / 4.0) * 127)
-            seq.schedule_cc(
-                beat=position,
-                channel=0,
-                controller=74,  # Filter Cutoff
-                value=value
-            )
-
-    print(f"Scheduled {len(seq.events)} CC events")
-
-    seq.start()
-    time.sleep(5)
-    seq.stop()
-
-cm.capi.midi_port_dispose(port)
-cm.capi.midi_client_dispose(client)
+--8<-- "examples/link_integration/snippet_13.py:example"
 ```
 
 ### Looping MIDI Patterns
 
 ```python
-import coremusic as cm
-from coremusic import link_midi
-import time
-
-client = cm.capi.midi_client_create("Loop Sequencer")
-port = cm.capi.midi_output_port_create(client, "Loop Out")
-destination = cm.capi.midi_get_destination(0)
-
-with cm.link.LinkSession(bpm=120.0) as session:
-    seq = link_midi.LinkMIDISequencer(session, port, destination)
-
-    # Create a 4-beat pattern
-    pattern = [
-        (0.0, 60, 100),   # Beat 0: C4
-        (0.5, 62, 80),    # Beat 0.5: D4
-        (1.0, 64, 100),   # Beat 1: E4
-        (2.0, 67, 100),   # Beat 2: G4
-        (3.0, 65, 100),   # Beat 3: F4
-        (3.5, 64, 80),    # Beat 3.5: E4
-    ]
-
-    # Schedule pattern for multiple bars
-    num_bars = 4
-    for bar in range(num_bars):
-        for beat, note, velocity in pattern:
-            absolute_beat = (bar * 4.0) + beat
-            seq.schedule_note(
-                beat=absolute_beat,
-                channel=0,
-                note=note,
-                velocity=velocity,
-                duration=0.4
-            )
-
-    print(f"Scheduled {num_bars} bars of pattern")
-
-    seq.start()
-    time.sleep(num_bars * 2)  # 2 seconds per bar at 120 BPM
-    seq.stop()
-
-cm.capi.midi_port_dispose(port)
-cm.capi.midi_client_dispose(client)
+--8<-- "examples/link_integration/snippet_14.py:example"
 ```
 
 ### Combined Audio + MIDI Synchronized
 
 ```python
-import coremusic as cm
-from coremusic import link_midi
-import time
-
-# Setup MIDI
-client = cm.capi.midi_client_create("Audio+MIDI")
-port = cm.capi.midi_output_port_create(client, "Out")
-destination = cm.capi.midi_get_destination(0)
-
-# Share one Link session for both audio and MIDI
-with cm.link.LinkSession(bpm=120.0) as session:
-    # Setup audio player
-    player = cm.AudioPlayer(link_session=session)
-    player.load_file("drums.wav")
-    player.setup_output()
-
-    # Setup MIDI sequencer
-    seq = link_midi.LinkMIDISequencer(session, port, destination)
-
-    # Schedule bass notes every beat
-    for beat in range(16):
-        note = 36 if beat % 4 == 0 else 38  # Kick and snare pattern
-        seq.schedule_note(
-            beat=float(beat),
-            channel=9,  # MIDI drum channel
-            note=note,
-            velocity=100,
-            duration=0.9
-        )
-
-    # Start both audio and MIDI
-    print("Starting synchronized audio + MIDI playback...")
-
-    player.play()
-    player.start()
-    seq.start()
-
-    # Monitor both
-    for i in range(40):
-        timing = player.get_link_timing(quantum=4.0)
-        progress = player.get_progress()
-
-        print(f"Beat: {timing['beat']:7.2f} | "
-              f"Audio: {progress*100:5.1f}% | "
-              f"Tempo: {timing['tempo']:6.1f} BPM", end='\r')
-
-        time.sleep(0.5)
-
-    # Stop both
-    player.stop()
-    seq.stop()
-
-cm.capi.midi_port_dispose(port)
-cm.capi.midi_client_dispose(client)
+--8<-- "examples/link_integration/snippet_15.py:example"
 ```
 
 ## API Reference

@@ -4,8 +4,13 @@ This module provides classes for working with MIDI:
 - MIDIPort: Base class for MIDI ports
 - MIDIInputPort: MIDI input port for receiving MIDI data
 - MIDIOutputPort: MIDI output port for sending MIDI data
+- MIDIEndpoint: A MIDI source or destination endpoint
 - MIDIClient: MIDI client for managing MIDI operations
 - MIDIMessageSplitter: Split incoming packet bytes into individual messages
+
+Module-level helpers list the endpoints published by the system
+(:func:`get_destinations`, :func:`get_sources`, :func:`find_destination`,
+:func:`find_source`).
 """
 
 from __future__ import annotations
@@ -20,9 +25,14 @@ __all__ = [
     "MIDIPort",
     "MIDIInputPort",
     "MIDIOutputPort",
+    "MIDIEndpoint",
     "MIDIClient",
     "MIDIMessageSplitter",
     "split_midi_messages",
+    "get_destinations",
+    "get_sources",
+    "find_destination",
+    "find_source",
 ]
 
 
@@ -165,6 +175,211 @@ def split_midi_messages(data: bytes | bytearray) -> list[bytes]:
     return MIDIMessageSplitter().push(data)
 
 
+def _endpoint_id(endpoint: Any) -> int:
+    """Resolve an endpoint argument to a raw MIDIEndpointRef.
+
+    Accepts a :class:`MIDIEndpoint` (or anything exposing ``object_id``) as
+    well as a plain integer handle from the functional ``capi`` layer.
+    """
+    if isinstance(endpoint, int):
+        return endpoint
+    object_id = getattr(endpoint, "object_id", None)
+    if not isinstance(object_id, int):
+        raise MIDIError(
+            f"Expected a MIDIEndpoint or an endpoint id, got {type(endpoint).__name__}"
+        )
+    return object_id
+
+
+class MIDIEndpoint(capi.CoreAudioObject):
+    """A MIDI endpoint: either a source (produces MIDI) or a destination
+    (consumes MIDI).
+
+    Endpoints come from two places:
+
+    - The system, via :func:`get_sources` / :func:`get_destinations`. These
+      belong to other applications or hardware and are never disposed here.
+    - This process, via :meth:`MIDIClient.create_virtual_source` and
+      :meth:`MIDIClient.create_virtual_destination`. These are owned, and
+      :meth:`dispose` destroys them.
+
+    A virtual destination created without a callback buffers incoming packets;
+    retrieve them with :meth:`poll`, as for :class:`MIDIInputPort`.
+    """
+
+    def __init__(self, endpoint_id: int, name: str | None = None, owned: bool = False):
+        super().__init__()
+        self._set_object_id(endpoint_id)
+        self._owned = owned
+        self._client: MIDIClient | None = None
+        if name is None:
+            try:
+                name = capi.midi_endpoint_get_name(endpoint_id)
+            except Exception:
+                name = None
+        self._name = name or ""
+
+    @property
+    def name(self) -> str:
+        """Name of the endpoint as published to CoreMIDI"""
+        return self._name
+
+    @property
+    def is_owned(self) -> bool:
+        """True for virtual endpoints created by this process"""
+        return self._owned
+
+    def __repr__(self) -> str:
+        status = "disposed" if self.is_disposed else "active"
+        kind = "virtual" if self._owned else "system"
+        return f"MIDIEndpoint({self._name!r}, {kind}, {status})"
+
+    def __enter__(self) -> MIDIEndpoint:
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.dispose()
+
+    def send(self, data: bytes, timestamp: int = 0) -> None:
+        """Distribute MIDI data from this virtual source to its connections.
+
+        This is the counterpart of :meth:`MIDIOutputPort.send_data`: it makes
+        the endpoint behave as if a device had just produced the given bytes.
+        Only meaningful for an endpoint from
+        :meth:`MIDIClient.create_virtual_source`.
+
+        Args:
+            data: MIDI message bytes
+            timestamp: MIDI timestamp (0 for immediate)
+
+        Raises:
+            MIDIError: If distribution fails
+        """
+        self._ensure_not_disposed()
+        try:
+            capi.midi_received(self.object_id, data, timestamp)
+        except Exception as e:
+            raise MIDIError(f"Failed to send from source: {e}")
+
+    def poll(self, max_events: int = 0) -> list[tuple[int, bytes]]:
+        """Drain packets buffered by this virtual destination.
+
+        Args:
+            max_events: Maximum number of packets to return, or 0 for all
+
+        Returns:
+            List of (host_time, data) tuples in arrival order. Always empty for
+            a destination created with a callback.
+        """
+        self._ensure_not_disposed()
+        return capi.midi_input_poll(self.object_id, max_events)
+
+    def wait(self, timeout: float | None = None) -> bool:
+        """Block until at least one packet is buffered or the timeout expires.
+
+        Returns:
+            True if packets are available, False if the timeout expired
+        """
+        self._ensure_not_disposed()
+        return capi.midi_input_wait(self.object_id, timeout)
+
+    @property
+    def pending(self) -> int:
+        """Number of packets currently buffered."""
+        self._ensure_not_disposed()
+        return capi.midi_input_pending(self.object_id)
+
+    @property
+    def dropped(self) -> int:
+        """Number of packets discarded because the buffer was full."""
+        self._ensure_not_disposed()
+        return capi.midi_input_dropped(self.object_id)
+
+    def dispose(self) -> None:
+        """Dispose of a virtual endpoint.
+
+        A system endpoint is owned by another process, so this only marks the
+        wrapper as disposed and leaves the endpoint alone.
+        """
+        if self.is_disposed:
+            return
+        if self._owned:
+            try:
+                capi.midi_endpoint_dispose(self.object_id)
+            except Exception:
+                # Best effort disposal - the client may already be gone
+                pass
+        if self._client is not None and hasattr(self._client, "_endpoints"):
+            try:
+                self._client._endpoints.remove(self)
+            except ValueError:
+                pass  # Already removed
+        super().dispose()
+
+
+def get_sources() -> list[MIDIEndpoint]:
+    """List the MIDI sources currently published by the system.
+
+    Returns:
+        Source endpoints, in CoreMIDI index order. These are inputs to this
+        process: connect one to a :class:`MIDIInputPort` to receive from it.
+    """
+    return [
+        MIDIEndpoint(capi.midi_get_source(i))
+        for i in range(capi.midi_get_number_of_sources())
+    ]
+
+
+def get_destinations() -> list[MIDIEndpoint]:
+    """List the MIDI destinations currently published by the system.
+
+    Returns:
+        Destination endpoints, in CoreMIDI index order. These are outputs from
+        this process: pass one to :meth:`MIDIOutputPort.send_data`.
+    """
+    return [
+        MIDIEndpoint(capi.midi_get_destination(i))
+        for i in range(capi.midi_get_number_of_destinations())
+    ]
+
+
+def _find_endpoint(endpoints: list[MIDIEndpoint], name: str) -> MIDIEndpoint | None:
+    for endpoint in endpoints:
+        if endpoint.name == name:
+            return endpoint
+    lowered = name.lower()
+    for endpoint in endpoints:
+        if lowered in endpoint.name.lower():
+            return endpoint
+    return None
+
+
+def find_source(name: str) -> MIDIEndpoint | None:
+    """Find a MIDI source by name.
+
+    Args:
+        name: Exact name, or a substring matched case-insensitively when no
+            exact match exists
+
+    Returns:
+        The first matching source, or None
+    """
+    return _find_endpoint(get_sources(), name)
+
+
+def find_destination(name: str) -> MIDIEndpoint | None:
+    """Find a MIDI destination by name.
+
+    Args:
+        name: Exact name, or a substring matched case-insensitively when no
+            exact match exists
+
+    Returns:
+        The first matching destination, or None
+    """
+    return _find_endpoint(get_destinations(), name)
+
+
 class MIDIPort(capi.CoreAudioObject):
     """Base class for MIDI ports"""
 
@@ -180,6 +395,12 @@ class MIDIPort(capi.CoreAudioObject):
     def __repr__(self) -> str:
         status = "disposed" if self.is_disposed else "active"
         return f"{self.__class__.__name__}({self._name!r}, {status})"
+
+    def __enter__(self) -> MIDIPort:
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.dispose()
 
     def dispose(self) -> None:
         """Dispose of the MIDI port"""
@@ -215,19 +436,26 @@ class MIDIInputPort(MIDIPort):
                     print(host_time, payload.hex())
     """
 
-    def connect_source(self, source: Any) -> None:
-        """Connect to a MIDI source"""
+    def connect_source(self, source: MIDIEndpoint | int) -> None:
+        """Connect to a MIDI source
+
+        Args:
+            source: A :class:`MIDIEndpoint` from :func:`get_sources`, or a raw
+                endpoint id from the functional ``capi`` layer
+        """
         self._ensure_not_disposed()
+        source_id = _endpoint_id(source)
         try:
-            capi.midi_port_connect_source(self.object_id, source.object_id)
+            capi.midi_port_connect_source(self.object_id, source_id)
         except Exception as e:
             raise MIDIError(f"Failed to connect source: {e}")
 
-    def disconnect_source(self, source: Any) -> None:
+    def disconnect_source(self, source: MIDIEndpoint | int) -> None:
         """Disconnect from a MIDI source"""
         self._ensure_not_disposed()
+        source_id = _endpoint_id(source)
         try:
-            capi.midi_port_disconnect_source(self.object_id, source.object_id)
+            capi.midi_port_disconnect_source(self.object_id, source_id)
         except Exception as e:
             raise MIDIError(f"Failed to disconnect source: {e}")
 
@@ -276,11 +504,14 @@ class MIDIInputPort(MIDIPort):
 class MIDIOutputPort(MIDIPort):
     """MIDI output port for sending MIDI data"""
 
-    def send_data(self, destination: Any, data: bytes, timestamp: int = 0) -> None:
+    def send_data(
+        self, destination: MIDIEndpoint | int, data: bytes, timestamp: int = 0
+    ) -> None:
         """Send MIDI data to a destination endpoint
 
         Args:
-            destination: MIDIEndpoint to send data to
+            destination: A :class:`MIDIEndpoint` to send data to, or a raw
+                endpoint id from the functional ``capi`` layer
             data: MIDI message bytes (following MIDI protocol specification)
             timestamp: MIDI timestamp (0 for immediate, or future timestamp)
 
@@ -289,13 +520,18 @@ class MIDIOutputPort(MIDIPort):
 
         Example::
 
-            from coremusic.midi import MIDIClient
+            from coremusic.midi import MIDIClient, get_destinations
 
             client = MIDIClient("MyApp")
             output_port = client.create_output_port("Output")
 
-            # Get destination (e.g., virtual destination or hardware endpoint)
-            destination = client.create_virtual_destination("Synth")
+            # Pick a destination: a hardware or software endpoint published by
+            # the system, or a virtual one owned by this process.
+            destinations = get_destinations()
+            if destinations:
+                destination = destinations[0]
+            else:
+                destination = client.create_virtual_destination("Synth")
 
             # Send Note On (middle C, velocity 100)
             note_on = bytes([0x90, 0x3C, 0x64])  # Status, note, velocity
@@ -308,10 +544,13 @@ class MIDIOutputPort(MIDIPort):
             # Send Note Off
             note_off = bytes([0x80, 0x3C, 0x00])
             output_port.send_data(destination, note_off)
+
+            client.dispose()
         """
         self._ensure_not_disposed()
+        dest_id = _endpoint_id(destination)
         try:
-            capi.midi_send_data(self.object_id, destination.object_id, data, timestamp)
+            capi.midi_send_data(self.object_id, dest_id, data, timestamp)
         except Exception as e:
             raise MIDIError(f"Failed to send data: {e}")
 
@@ -323,6 +562,7 @@ class MIDIClient(capi.CoreAudioObject):
         super().__init__()
         self._name = name
         self._ports: list[MIDIPort] = []
+        self._endpoints: list[MIDIEndpoint] = []
         try:
             client_id = capi.midi_client_create(name)
             self._set_object_id(client_id)
@@ -337,6 +577,12 @@ class MIDIClient(capi.CoreAudioObject):
         if self.is_disposed:
             return f"MIDIClient({self._name!r}, disposed)"
         return f"MIDIClient({self._name!r}, ports={len(self._ports)})"
+
+    def __enter__(self) -> MIDIClient:
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.dispose()
 
     def create_input_port(
         self,
@@ -380,10 +626,75 @@ class MIDIClient(capi.CoreAudioObject):
         except Exception as e:
             raise MIDIError(f"Failed to create output port: {e}")
 
+    def create_virtual_source(self, name: str) -> MIDIEndpoint:
+        """Create a virtual MIDI source owned by this client.
+
+        The source appears to other applications as a MIDI input they can
+        connect to. Produce MIDI from it with :meth:`MIDIEndpoint.send`.
+
+        Args:
+            name: Name published to CoreMIDI
+
+        Returns:
+            The virtual source endpoint, disposed with this client
+        """
+        self._ensure_not_disposed()
+        try:
+            endpoint_id = capi.midi_source_create(self.object_id, name)
+        except Exception as e:
+            raise MIDIError(f"Failed to create virtual source: {e}")
+        endpoint = MIDIEndpoint(endpoint_id, name, owned=True)
+        endpoint._client = self
+        self._endpoints.append(endpoint)
+        return endpoint
+
+    def create_virtual_destination(
+        self,
+        name: str,
+        callback: Callable[[bytes, int], None] | None = None,
+        queue_size: int = 4096,
+    ) -> MIDIEndpoint:
+        """Create a virtual MIDI destination owned by this client.
+
+        The destination appears to other applications as a MIDI output they
+        can send to.
+
+        Args:
+            name: Name published to CoreMIDI
+            callback: Optional ``callback(data, host_time)`` invoked for each
+                incoming packet on the CoreMIDI receive thread. It must be
+                short and must not block. When omitted, packets are buffered
+                for :meth:`MIDIEndpoint.poll`.
+            queue_size: Maximum buffered packets when no callback is given
+
+        Returns:
+            The virtual destination endpoint, disposed with this client
+        """
+        self._ensure_not_disposed()
+        try:
+            endpoint_id = capi.midi_destination_create(
+                self.object_id, name, callback, queue_size
+            )
+        except Exception as e:
+            raise MIDIError(f"Failed to create virtual destination: {e}")
+        endpoint = MIDIEndpoint(endpoint_id, name, owned=True)
+        endpoint._client = self
+        self._endpoints.append(endpoint)
+        return endpoint
+
     def dispose(self) -> None:
-        """Dispose of the MIDI client and all its ports"""
+        """Dispose of the MIDI client, its ports and its virtual endpoints"""
         if not self.is_disposed:
-            # Dispose all ports first
+            # Dispose virtual endpoints first - CoreMIDI would drop them with
+            # the client anyway, but this keeps the wrappers consistent.
+            for endpoint in self._endpoints[:]:
+                if not endpoint.is_disposed:
+                    try:
+                        endpoint.dispose()
+                    except Exception:
+                        pass  # Best effort cleanup
+
+            # Dispose all ports next
             for port in self._ports[
                 :
             ]:  # Copy list to avoid modification during iteration

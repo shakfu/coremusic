@@ -49,18 +49,29 @@ Advanced techniques and integration:
 - **Audio Visualizer**: Real-time visualization
 - **SciPy Integration**: Signal processing with SciPy
 
-## Running the Examples
+## Where the Examples Live
 
-All examples are standalone Python scripts that can be run directly:
+Every snippet in this documentation is a runnable program under
+[`examples/`](https://github.com/shakfu/coremusic/tree/main/examples), arranged
+by the page that includes it. They are executed by the test suite, so a snippet
+that no longer runs fails the build rather than reaching you.
 
 ```bash
-# From the project root
-python examples/audio_player.py audio.wav
+# Run one
+python examples/tutorials/midi_basics/send_note.py
 
-# Or from the examples directory
-cd examples
-python audio_player.py ../tests/amen.wav
+# Run all of them, as the test suite does
+pytest tests/test_examples.py
 ```
+
+Larger standalone programs live elsewhere in the repository:
+
+- [`demos/`](https://github.com/shakfu/coremusic/tree/main/demos) - four
+  end-to-end demos: an AudioUnit effect chain, MIDI rendered to WAV, a
+  real-time tone, and a Link-synchronised sequencer. `make demos` runs them.
+- [`tests/examples/`](https://github.com/shakfu/coremusic/tree/main/tests/examples) -
+  utilities (audio inspector, converter) and experimental modules (a DAW-style
+  timeline, generative algorithms) that are not part of the package.
 
 ## Prerequisites
 
@@ -87,41 +98,7 @@ pip install numpy scipy matplotlib
 Use this template for creating new examples:
 
 ```python
-#!/usr/bin/env python3
-"""
-Example: [Example Name]
-
-Description: [What this example demonstrates]
-
-Usage: python example_name.py [arguments]
-"""
-
-import coremusic as cm
-import sys
-
-def main():
-    """Main function."""
-    # Argument parsing
-    if len(sys.argv) < 2:
-        print("Usage: python example_name.py <audio_file>")
-        sys.exit(1)
-
-    filepath = sys.argv[1]
-
-    # Example implementation
-    try:
-        # Your code here
-        pass
-
-    except cm.AudioFileError as e:
-        print(f"Audio file error: {e}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
+--8<-- "examples/examples/index/template.py:example"
 ```
 
 ## Quick Reference
@@ -131,52 +108,25 @@ if __name__ == "__main__":
 **Simple audio playback:**
 
 ```python
-import coremusic as cm
-
-player = cm.AudioPlayer()
-player.load_file("audio.wav")
-player.setup_output()
-player.start()
+--8<-- "examples/quickstart/play_audio.py:player"
 ```
 
 **Format conversion:**
 
 ```python
-import coremusic as cm
-
-# Define formats
-src_fmt = cm.AudioFormat(44100.0, 'lpcm', ...)
-dst_fmt = cm.AudioFormat(48000.0, 'lpcm', ...)
-
-# Convert
-converter = cm.AudioConverter(src_fmt, dst_fmt)
-output = converter.convert(input_data, frame_count)
+--8<-- "examples/examples/index/convert_format.py:example"
 ```
 
 **MIDI routing:**
 
 ```python
-import coremusic as cm
-
-client = cm.MIDIClient("Router")
-input_port = client.create_input_port("Input")
-output_port = client.create_output_port("Output")
-
-# Route MIDI data
-output_port.send_data(destination, midi_data)
+--8<-- "examples/examples/index/midi_router.py:example"
 ```
 
 **Real-time processing:**
 
 ```python
-import coremusic as cm
-
-with cm.AudioUnit.default_output() as unit:
-    format = cm.AudioFormat(44100.0, 'lpcm', ...)
-    unit.set_stream_format(format)
-    unit.start()
-    # Process audio
-    unit.stop()
+--8<-- "examples/index/audiounit.py:example"
 ```
 
 ## Contributing Examples

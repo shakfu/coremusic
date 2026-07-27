@@ -110,7 +110,7 @@ cdef extern from "CoreMIDI/MIDIServices.h":
         void* notifyRefCon,
         MIDIClientRef* outClient)
 
-    cdef OSStatus MIDIClientDispose(MIDIClientRef client)
+    cdef OSStatus MIDIClientDispose(MIDIClientRef client) nogil
 
     # Port functions
     cdef OSStatus MIDIInputPortCreate(
@@ -125,7 +125,7 @@ cdef extern from "CoreMIDI/MIDIServices.h":
         CFStringRef portName,
         MIDIPortRef* outPort)
 
-    cdef OSStatus MIDIPortDispose(MIDIPortRef port)
+    cdef OSStatus MIDIPortDispose(MIDIPortRef port) nogil
 
     cdef OSStatus MIDIPortConnectSource(
         MIDIPortRef port,
@@ -180,7 +180,7 @@ cdef extern from "CoreMIDI/MIDIServices.h":
         void* refCon,
         MIDIEndpointRef* outDest)
 
-    cdef OSStatus MIDIEndpointDispose(MIDIEndpointRef endpt)
+    cdef OSStatus MIDIEndpointDispose(MIDIEndpointRef endpt) nogil
 
     # Property functions
     cdef OSStatus MIDIObjectGetIntegerProperty(

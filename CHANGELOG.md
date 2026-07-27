@@ -22,6 +22,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- **`MIDIEndpoint` and endpoint discovery ([#2](https://github.com/shakfu/coremusic/issues/2))** - `MIDIOutputPort.send_data()` takes a destination endpoint, but the object layer had no way to obtain one: `MIDIClient` could create ports and nothing else, and endpoints only existed as integer handles in `capi`. Every documented send example was therefore unrunnable, referring to an undefined `destination` or to a `client.create_virtual_destination()` that did not exist. Added `MIDIEndpoint`, wrapping a MIDI source or destination with its name and, for virtual endpoints, ownership; `MIDIClient.create_virtual_source()` and `create_virtual_destination()`, both disposed with the client; and the module-level `get_sources()`, `get_destinations()`, `find_source()`, and `find_destination()` for the endpoints published by the system. A virtual destination buffers or dispatches incoming packets exactly as an input port does (`poll()`, `wait()`, `pending`, `dropped`), and `MIDIEndpoint.send()` produces MIDI from a virtual source.
+
+- **Context managers for the MIDI objects** - `MIDIClient`, `MIDIPort`, and `MIDIEndpoint` support `with`, matching the audio objects and the documentation's claim that the object API cleans up automatically.
+
+- **`AudioFile.path` and `AudioFile.packet_count`** - The packet count is the bound `read_packets()` is checked against, so reading a file in chunks previously meant either reading everything with `read_as_numpy()` or going to `capi` for the property. Both are now readable from the object.
+
+- **`LinkSession` is a context manager** - `with LinkSession(bpm=120.0) as session:` enables networking on entry and disables it on exit, which is how every Link example was already written.
+
+### Fixed
+
+- **Disposing a MIDI client, port, or endpoint deadlocked with packets in flight** - `midi_client_dispose()`, `midi_port_dispose()`, and `midi_endpoint_dispose()` held the GIL across the CoreMIDI call. Those calls wait for any in-flight read proc to return, and the read proc - installed on every input port and virtual destination since 0.2.4 - blocks on `with gil:` to deliver its packet. Sending to a virtual destination and then disposing therefore hung the process, permanently and without an error. It looked intermittent because it needs a packet actually in flight: disposing with nothing pending always worked, while anything that delayed delivery, such as an enabled Ableton Link session competing for CPU, made it near-certain. The three calls now release the GIL, matching what `AudioOutputUnitStop` already does for the same reason on the audio side.
+
+- **`send_data()` and `connect_source()` rejected raw endpoint ids** - Both read `.object_id` off their argument, so an integer handle from `capi` raised `AttributeError` instead of working, and a wrong argument type produced that same opaque error rather than a `MIDIError`. Both now accept either a `MIDIEndpoint` or an integer, so the two APIs interoperate as documented.
+
+### Changed
+
+- **Documentation examples are now runnable programs, and are executed by the test suite** - Of the 382 python blocks in the published documentation, 224 referenced modules, classes, or methods that do not exist. Most were written against a flat `coremusic.*` namespace that has never existed; others called invented APIs (`AudioRecorder.setup()`, `AudioQueue.new_input()`, `unit.get_parameter_info()`, `slicer.slice_time_range()`, `AudioEffectsChain.process()`, a two-argument MIDI receive callback). Every example now lives under `examples/`, mirroring the page that uses it, and doc pages include it with `pymdownx.snippets` rather than restating it. `tests/test_examples.py` runs all 205 of them in a temp directory seeded with sample media and requires a clean exit; `tests/test_doc_snippets.py` checks that every include resolves and that any block still written inline only names things that exist. A snippet that stops working now fails the build instead of reaching a reader.
+
+- **Import Guide rewritten** - It documented version 0.1.8: an `objects.py` module, a flat top-level namespace, and "full backward compatibility" with imports that were removed in 0.2.3. It now describes the actual package layout, with the per-domain import for each public class, and the optional-dependency flags.
+
+- **Migration Guide covers upgrading from 0.2.2 and earlier** - A table maps every `coremusic.objects` import to its domain replacement, alongside the existing guidance for moving from pydub, soundfile, mido, AudioKit, and CoreAudio C.
+
+- **MIDI documentation corrected** - The README, `docs/index.md`, `docs/examples/index.md`, and the MIDI Basics tutorial were written against `coremusic.objects`, a package removed in 0.2.3, and against a flat `coremusic.*` namespace that has never existed. The tutorial additionally documented a two-argument receive callback, a `port.send()` method, and a `packet_list` object, none of which are real. All of them now use `coremusic.midi` and the actual send, receive, and endpoint APIs. The architecture tree in the README was updated to the current layout.
+
 ## [0.2.4]
 
 ### Fixed

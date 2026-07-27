@@ -95,6 +95,12 @@ sdist.exclude = [".git/", "*.egg-info/"]
 
 
 
+[tool.ruff.lint.per-file-ignores]
+# Documentation examples are structured one self-contained snippet per section,
+# so each section repeats the imports it needs and may not use every name it
+# shows. That is deliberate: the snippet a reader copies has to stand alone.
+"examples/**/*.py" = ["E402", "F401", "F811", "F841"]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]

@@ -5,17 +5,7 @@ A rapid introduction to coremusic's most commonly used APIs.
 ## Import Patterns
 
 ```python
-# Main package - object-oriented API (recommended)
-import coremusic as cm
-
-# Low-level functional API
-import coremusic.capi as capi
-
-# Constants (preferred over capi getter functions)
-from coremusic.constants import AudioFileProperty, AudioFormatID
-
-# Optional integrations
-import coremusic.utils.scipy as spu  # SciPy integration (requires scipy)
+--8<-- "examples/api/quickstart/snippet_01.py:example"
 ```
 
 ## Audio File Operations
@@ -23,38 +13,19 @@ import coremusic.utils.scipy as spu  # SciPy integration (requires scipy)
 ### Read Audio File
 
 ```python
-import coremusic as cm
-
-# Context manager (recommended)
-with cm.AudioFile("audio.wav") as audio:
-    print(f"Duration: {audio.duration:.2f}s")
-    print(f"Sample rate: {audio.format.sample_rate}Hz")
-    data, count = audio.read_packets(0, 1024)
+--8<-- "examples/api/quickstart/snippet_02.py:example"
 ```
 
 ### Get Audio Format
 
 ```python
-with cm.AudioFile("audio.wav") as audio:
-    fmt = audio.format
-    print(f"Format ID: {fmt.format_id}")           # 'lpcm'
-    print(f"Sample rate: {fmt.sample_rate}")       # 44100.0
-    print(f"Channels: {fmt.channels_per_frame}")   # 2
-    print(f"Bits: {fmt.bits_per_channel}")         # 16
+--8<-- "examples/api/quickstart/snippet_03.py:example"
 ```
 
 ### Extended Audio File (Format Conversion)
 
 ```python
-with cm.ExtendedAudioFile("input.mp3") as ext_audio:
-    # Set client format for automatic conversion
-    ext_audio.client_format = cm.AudioFormat(
-        sample_rate=48000.0,
-        format_id='lpcm',
-        channels_per_frame=2
-    )
-    # Read converted data
-    data, count = ext_audio.read(8192)
+--8<-- "examples/api/quickstart/snippet_04.py:example"
 ```
 
 ## AudioUnit Operations
@@ -62,38 +33,13 @@ with cm.ExtendedAudioFile("input.mp3") as ext_audio:
 ### Create Default Output
 
 ```python
-import coremusic as cm
-
-with cm.AudioUnit.default_output() as unit:
-    # Set format
-    format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2)
-    unit.set_stream_format(format)
-
-    # Start audio processing
-    unit.start()
-    # ... audio flows ...
-    unit.stop()
+--8<-- "examples/api/quickstart/snippet_05.py:example"
 ```
 
 ### Find and Create AudioUnit
 
 ```python
-# Create component description
-desc = cm.AudioComponentDescription(
-    component_type='aufx',      # Effect
-    component_subtype='dely',   # Delay
-    component_manufacturer='appl'
-)
-
-# Find component
-component = cm.AudioComponent.find_first(desc)
-if component:
-    print(f"Found: {component.name}")
-
-    # Create instance
-    with component.create_instance() as unit:
-        unit.initialize()
-        # ... use the unit ...
+--8<-- "examples/api/quickstart/snippet_06.py:example"
 ```
 
 ## MIDI Operations
@@ -101,30 +47,13 @@ if component:
 ### List MIDI Devices
 
 ```python
-import coremusic.capi as capi
-
-# Count devices
-num_devices = capi.midi_get_number_of_devices()
-num_sources = capi.midi_get_number_of_sources()
-num_destinations = capi.midi_get_number_of_destinations()
-
-print(f"Devices: {num_devices}")
-print(f"Sources: {num_sources}")
-print(f"Destinations: {num_destinations}")
+--8<-- "examples/api/quickstart/snippet_07.py:example"
 ```
 
 ### Create MIDI Client
 
 ```python
-client = cm.MIDIClient("My App")
-try:
-    # Create ports
-    output_port = client.create_output_port("Output")
-    input_port = client.create_input_port("Input")
-
-    # Use ports...
-finally:
-    client.dispose()
+--8<-- "examples/api/quickstart/snippet_08.py:example"
 ```
 
 ## Audio Queue Operations
@@ -132,18 +61,7 @@ finally:
 ### Create Output Queue
 
 ```python
-format = cm.AudioFormat(44100.0, 'lpcm', channels_per_frame=2)
-
-with cm.AudioQueue.new_output(format) as queue:
-    # Allocate buffer
-    buffer = queue.allocate_buffer(4096)
-
-    # Start playback
-    queue.start()
-
-    # ... fill buffer and enqueue ...
-
-    queue.stop()
+--8<-- "examples/api/quickstart/snippet_09.py:example"
 ```
 
 ## Constants Usage
@@ -151,43 +69,13 @@ with cm.AudioQueue.new_output(format) as queue:
 ### Using Enum Constants
 
 ```python
-from coremusic import (
-    AudioFileProperty,
-    AudioFormatID,
-    AudioUnitProperty,
-    AudioUnitScope,
-)
-
-# Audio file properties
-prop_id = AudioFileProperty.DATA_FORMAT          # 1684434292
-prop_id = AudioFileProperty.ESTIMATED_DURATION   # 1701082482
-
-# Audio format IDs
-fmt_id = AudioFormatID.LINEAR_PCM   # 1819304813
-fmt_id = AudioFormatID.AAC          # 1633772320
-
-# AudioUnit properties
-au_prop = AudioUnitProperty.STREAM_FORMAT    # 8
-au_prop = AudioUnitProperty.SAMPLE_RATE      # 2
-
-# AudioUnit scopes
-scope = AudioUnitScope.INPUT   # 1
-scope = AudioUnitScope.OUTPUT  # 2
+--8<-- "examples/api/quickstart/snippet_10.py:example"
 ```
 
 ### Constants in API Calls
 
 ```python
-import coremusic as cm
-import coremusic.capi as capi
-
-# Use constant enum in functional API
-file_id = capi.audio_file_open_url("audio.wav")
-format_data = capi.audio_file_get_property(
-    file_id,
-    int(cm.AudioFileProperty.DATA_FORMAT)  # Convert to int
-)
-capi.audio_file_close(file_id)
+--8<-- "examples/api/quickstart/snippet_11.py:example"
 ```
 
 ## Async Operations
@@ -195,19 +83,7 @@ capi.audio_file_close(file_id)
 ### Async File Reading
 
 ```python
-import asyncio
-import coremusic as cm
-
-async def read_async():
-    async with cm.AsyncAudioFile("audio.wav") as audio:
-        print(f"Duration: {audio.duration:.2f}s")
-
-        # Stream chunks
-        async for chunk in audio.read_chunks_async(chunk_size=4096):
-            # Process chunk
-            pass
-
-asyncio.run(read_async())
+--8<-- "examples/api/quickstart/snippet_12.py:example"
 ```
 
 ## Error Handling
@@ -215,25 +91,7 @@ asyncio.run(read_async())
 ### Exception Hierarchy
 
 ```python
-import coremusic as cm
-
-try:
-    with cm.AudioFile("missing.wav") as audio:
-        pass
-except cm.AudioFileError as e:
-    print(f"Audio file error: {e}")
-except cm.CoreAudioError as e:
-    print(f"CoreAudio error: {e}")
-
-# Specific exception types:
-# - cm.AudioFileError
-# - cm.AudioQueueError
-# - cm.AudioUnitError
-# - cm.AudioConverterError
-# - cm.MIDIError
-# - cm.MusicPlayerError
-# - cm.AudioDeviceError
-# - cm.AUGraphError
+--8<-- "examples/api/quickstart/snippet_13.py:example"
 ```
 
 ## NumPy Integration
@@ -241,31 +99,13 @@ except cm.CoreAudioError as e:
 ### Check Availability
 
 ```python
-import coremusic as cm
-
-if cm.NUMPY_AVAILABLE:
-    import numpy as np
-
-    with cm.AudioFile("audio.wav") as audio:
-        # Get NumPy dtype
-        dtype = audio.format.to_numpy_dtype()
-
-        # Read and convert
-        data, count = audio.read_packets(0, 1024)
-        samples = np.frombuffer(data, dtype=dtype)
+--8<-- "examples/api/quickstart/snippet_14.py:example"
 ```
 
 ### Memory-Mapped Files
 
 ```python
-from coremusic.audio import MMapAudioFile
-
-with MMapAudioFile("large.wav") as mmap:
-    # Fast random access
-    chunk = mmap[1000:2000]  # Read frames 1000-2000
-
-    # Zero-copy NumPy array
-    audio_np = mmap.read_as_numpy(start_frame=0, num_frames=44100)
+--8<-- "examples/api/quickstart/snippet_15.py:example"
 ```
 
 ## Quick Reference Table

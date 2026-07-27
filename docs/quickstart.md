@@ -30,14 +30,7 @@ coremusic midi list
 Create a file called `hello_audio.py`:
 
 ```python
-import coremusic as cm
-
-# Open and inspect an audio file
-with cm.AudioFile("path/to/audio.wav") as audio:
-    print(f"Duration: {audio.duration:.2f} seconds")
-    print(f"Sample Rate: {audio.format.sample_rate} Hz")
-    print(f"Channels: {audio.format.channels_per_frame}")
-    print(f"Bit Depth: {audio.format.bits_per_channel}")
+--8<-- "examples/quickstart/hello_audio.py:example"
 ```
 
 Run it:
@@ -59,16 +52,7 @@ coremusic audio play music.wav
 **Python:**
 
 ```python
-import coremusic as cm
-import time
-
-player = cm.AudioPlayer()
-player.load_file("music.wav")
-player.setup_output()
-player.start()
-
-while player.is_playing():
-    time.sleep(0.1)
+--8<-- "examples/quickstart/play_audio.py:player"
 ```
 
 ### Record Audio
@@ -82,14 +66,7 @@ coremusic audio record -o recording.wav --duration 10
 **Python:**
 
 ```python
-import coremusic as cm
-import time
-
-recorder = cm.AudioRecorder()
-recorder.setup(sample_rate=44100.0, channels=2, output_path="recording.wav")
-recorder.start()
-time.sleep(10)
-recorder.stop()
+--8<-- "examples/quickstart/record_audio.py:example"
 ```
 
 ### Convert Audio Format
@@ -98,17 +75,13 @@ recorder.stop()
 
 ```bash
 # Convert to mono WAV
-coremusic convert format input.wav output.wav --channels 1
+coremusic convert file input.wav output.wav --channels 1
 ```
 
 **Python:**
 
 ```python
-import coremusic as cm
-
-# Convert stereo to mono
-output_format = cm.AudioFormatPresets.wav_44100_mono()
-cm.convert_audio_file("input.wav", "output.wav", output_format)
+--8<-- "examples/quickstart/convert_audio.py:example"
 ```
 
 ### Apply Audio Effects
@@ -123,13 +96,7 @@ coremusic plugin process AUReverb2 input.wav -o output.wav
 **Python:**
 
 ```python
-import coremusic as cm
-
-chain = cm.AudioEffectsChain()
-reverb = chain.add_effect_by_name("AUReverb2")
-output = chain.add_output()
-chain.connect(reverb, output)
-# ... process audio through chain
+--8<-- "examples/quickstart/effects_chain.py:example"
 ```
 
 ### List Available Plugins
@@ -143,15 +110,7 @@ coremusic plugin list
 **Python:**
 
 ```python
-import coremusic as cm
-
-# List all AudioUnits
-units = cm.list_available_audio_units()
-for unit in units:
-    print(f"{unit['name']} ({unit['type']})")
-
-# List effect names only
-effects = cm.get_audiounit_names(filter_type='aufx')
+--8<-- "examples/quickstart/list_plugins.py:example"
 ```
 
 ### Monitor MIDI Input
@@ -159,39 +118,19 @@ effects = cm.get_audiounit_names(filter_type='aufx')
 **Command Line:**
 
 ```bash
-coremusic midi input monitor
+coremusic midi monitor
 ```
 
 **Python:**
 
 ```python
-import coremusic as cm
-
-# List MIDI sources
-for i in range(cm.midi_get_number_of_sources()):
-    source = cm.midi_get_source(i)
-    name = cm.midi_object_get_string_property(source, cm.get_midi_property_name())
-    print(f"Source {i}: {name}")
+--8<-- "examples/quickstart/list_midi_sources.py:example"
 ```
 
 ### Send MIDI Notes
 
 ```python
-import coremusic as cm
-import time
-
-client = cm.MIDIClient("My App")
-port = client.create_output_port("Output")
-dest = cm.midi_get_destination(0)
-
-# Send Note On (middle C, velocity 100)
-port.send(dest, bytes([0x90, 60, 100]))
-time.sleep(0.5)
-
-# Send Note Off
-port.send(dest, bytes([0x80, 60, 0]))
-
-client.dispose()
+--8<-- "examples/quickstart/send_midi_notes.py:example"
 ```
 
 ## API Patterns
@@ -199,39 +138,19 @@ client.dispose()
 ### Context Managers (Recommended)
 
 ```python
-# Automatic resource cleanup
-with cm.AudioFile("audio.wav") as audio:
-    data = audio.read_packets(0, 1000)
-# File automatically closed
+--8<-- "examples/quickstart/api_patterns.py:context-manager"
 ```
 
 ### Error Handling
 
 ```python
-import coremusic as cm
-
-try:
-    with cm.AudioFile("audio.wav") as audio:
-        data = audio.read_packets(0, 1000)
-except cm.AudioFileError as e:
-    print(f"Audio error: {e}")
-except FileNotFoundError:
-    print("File not found")
+--8<-- "examples/quickstart/api_patterns.py:error-handling"
 ```
 
 ### NumPy Integration
 
 ```python
-import coremusic as cm
-
-if cm.NUMPY_AVAILABLE:
-    import numpy as np
-
-    with cm.AudioFile("audio.wav") as audio:
-        # Read as NumPy array
-        data = audio.read_as_numpy()
-        print(f"Shape: {data.shape}")
-        print(f"Peak: {np.max(np.abs(data))}")
+--8<-- "examples/quickstart/api_patterns.py:numpy"
 ```
 
 ## CLI Command Reference
@@ -251,10 +170,10 @@ Plugin Commands:
 
 MIDI Commands:
   coremusic midi list                      List MIDI devices
-  coremusic midi input monitor             Monitor MIDI input
+  coremusic midi monitor             Monitor MIDI input
 
 Analysis Commands:
-  coremusic analyze info <file>            Audio file info
+  coremusic audio info <file>              Audio file info
   coremusic analyze loudness <file>        LUFS measurement
 ```
 

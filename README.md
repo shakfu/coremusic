@@ -48,7 +48,7 @@ pip install coremusic[all]
 Check feature availability at runtime:
 
 ```python
-from coremusic.objects import NUMPY_AVAILABLE
+from coremusic.base import NUMPY_AVAILABLE
 from coremusic.audio.analysis import AudioAnalyzer
 import coremusic.utils.scipy as spu
 
@@ -216,7 +216,7 @@ make demos
 ### Audio Files
 
 ```python
-from coremusic.objects import AudioFile
+from coremusic.audio import AudioFile
 
 with AudioFile("audio.wav") as f:
     print(f"Duration: {f.duration:.2f}s, Rate: {f.format.sample_rate}Hz")
@@ -226,7 +226,7 @@ with AudioFile("audio.wav") as f:
 ### Audio Playback
 
 ```python
-from coremusic.objects import AudioPlayer
+from coremusic.base import AudioPlayer
 
 player = AudioPlayer()
 player.load_file("audio.wav")
@@ -255,11 +255,34 @@ with host.load_plugin("DLSMusicDevice", type='instrument') as synth:
 ### MIDI
 
 ```python
-from coremusic.objects import MIDIClient
+from coremusic.midi import MIDIClient, get_destinations
 
 client = MIDIClient("My App")
 output_port = client.create_output_port("Output")
+
+# Send to an endpoint published by the system, or create a virtual one
+destinations = get_destinations()
+destination = destinations[0] if destinations else client.create_virtual_destination("Synth")
+
 output_port.send_data(destination, b'\x90\x3C\x7F')  # Note On
+output_port.send_data(destination, b'\x80\x3C\x00')  # Note Off
+client.dispose()
+```
+
+Receiving works the same way, from the other side:
+
+```python
+from coremusic.midi import MIDIClient, get_sources
+
+client = MIDIClient("My App")
+input_port = client.create_input_port("Input")
+for source in get_sources():
+    input_port.connect_source(source)
+
+while input_port.wait(0.1):
+    for host_time, data in input_port.poll():
+        print(host_time, data.hex())
+
 client.dispose()
 ```
 
@@ -325,7 +348,8 @@ Pythonic wrappers with automatic resource management:
 - IDE autocompletion and type hints
 
 ```python
-from coremusic.objects import AudioFile, AudioFormat, MIDIClient
+from coremusic.audio import AudioFile, AudioFormat
+from coremusic.midi import MIDIClient
 from coremusic.constants import AudioFileProperty, AudioFormatID
 ```
 
@@ -351,18 +375,18 @@ Both APIs interoperate - OO objects expose underlying IDs when needed.
 
 ```
 src/coremusic/
-  __init__.py          # Package entry, OO API exports
+  __init__.py          # Package entry
   capi.pyx/pxd         # Cython bindings to CoreAudio/CoreMIDI
-  objects/             # Object-oriented wrappers
-    audio.py           # AudioFile, AudioFormat, AudioQueue, etc.
-    audiounit.py       # AudioUnit, AudioComponent
-    midi.py            # MIDIClient, MIDIPort
-    devices.py         # AudioDevice, AudioDeviceManager
-    music.py           # MusicPlayer, MusicSequence, MusicTrack
-    exceptions.py      # Exception hierarchy
-  audio/               # Analysis, buffer pool, streaming
-  midi/                # Utilities, transforms, Link integration
+  base.py              # CoreAudioObject, AudioPlayer
+  exceptions.py        # Exception hierarchy
+  audio/               # AudioFile, AudioFormat, AudioUnit, AUGraph, devices,
+                       #   analysis, buffer pool, streaming
+  midi/                # MIDIClient, MIDIPort, MIDIEndpoint, MusicPlayer,
+                       #   utilities, transforms, Link integration
   music/               # Theory (scales, chords)
+  constants/           # Enumerated CoreAudio/CoreMIDI constants
+  utils/               # Fourcc, batch, scipy helpers
+  shortcuts.py         # One-call helpers (play, convert, render_midi)
   cli/                 # Command-line interface
   link.pyx             # Ableton Link bindings
 ```
@@ -373,8 +397,13 @@ Linked frameworks: CoreAudio, AudioToolbox, AudioUnit, CoreMIDI, CoreFoundation
 
 ```bash
 make test           # Fast tests
-make test-all       # All tests (1600+)
+make test-all       # All tests, including the documentation examples
 ```
+
+Every code example in the documentation is a runnable program under
+[`examples/`](examples/), included into the docs rather than copied. `make
+test-all` executes all of them, so a snippet that no longer runs fails the
+build. See [`examples/README.md`](examples/README.md).
 
 ## Documentation
 

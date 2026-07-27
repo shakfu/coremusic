@@ -37,90 +37,31 @@ make
 ### Basic Audio File Operations
 
 ```python
-import coremusic as cm
-
-# Object-oriented API (recommended)
-with cm.AudioFile("audio.wav") as audio:
-    print(f"Duration: {audio.duration:.2f}s")
-    print(f"Sample rate: {audio.format.sample_rate}Hz")
-    data, count = audio.read_packets(0, 1000)
+--8<-- "examples/index/audio_file.py:example"
 ```
 
 ### AudioUnit Processing
 
 ```python
-import coremusic as cm
-
-# Create and configure an AudioUnit
-with cm.AudioUnit.default_output() as unit:
-    format = cm.AudioFormat(
-        sample_rate=44100.0,
-        format_id='lpcm',
-        channels_per_frame=2,
-        bits_per_channel=16
-    )
-    unit.set_stream_format(format)
-    unit.start()
-    # ... audio processing ...
-    unit.stop()
+--8<-- "examples/index/audiounit.py:example"
 ```
 
 ### MIDI Operations
 
 ```python
-import coremusic as cm
-
-# Create MIDI client
-client = cm.MIDIClient("My MIDI App")
-try:
-    output_port = client.create_output_port("Output")
-    # Send MIDI data
-    note_on = b'\x90\x60\x7F'  # Note On, Middle C
-    output_port.send_data(destination, note_on)
-finally:
-    client.dispose()
+--8<-- "examples/index/midi.py:example"
 ```
 
 ### Audio/MIDI Synchronization
 
 ```python
-import coremusic as cm
-import time
-
-# Use AudioClock for precise timing
-with cm.AudioClock() as clock:
-    clock.play_rate = 1.0  # Normal speed
-    clock.start()
-
-    # Get time in different formats
-    seconds = clock.get_time_seconds()
-    beats = clock.get_time_beats()
-    samples = clock.get_time_samples()
-
-    # Change speed (for tempo sync)
-    clock.play_rate = 0.5  # Half speed
-
-    clock.stop()
+--8<-- "examples/index/audio_clock.py:example"
 ```
 
 ### Music Theory
 
 ```python
-from coremusic.music.theory import Note, Scale, ScaleType, Chord, ChordType
-
-# Create notes, scales, and chords
-c4 = Note.from_name("C4")
-c_major = Scale(c4, ScaleType.MAJOR)
-cmaj7 = Chord(c4, ChordType.MAJOR_7)
-
-# Get scale degrees and chord notes
-print(f"C Major scale: {[n.name for n in c_major.notes]}")
-print(f"CMaj7 chord: {[n.name for n in cmaj7.notes]}")
-
-# Interval analysis
-from coremusic.music.theory import Interval
-interval = Interval.between(c4, Note.from_name("G4"))
-print(f"Interval: {interval.name}")  # Perfect Fifth
+--8<-- "examples/index/music_theory.py:example"
 ```
 
 ### Command Line Interface

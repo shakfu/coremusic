@@ -51,6 +51,37 @@ High-level Pythonic wrappers with automatic resource management.
       members: true
       show_bases: true
 
+### MIDIInputPort Class
+
+::: coremusic.midi.MIDIInputPort
+    options:
+      members: true
+      show_bases: true
+
+### MIDIOutputPort Class
+
+::: coremusic.midi.MIDIOutputPort
+    options:
+      members: true
+      show_bases: true
+
+### MIDIEndpoint Class
+
+::: coremusic.midi.MIDIEndpoint
+    options:
+      members: true
+      show_bases: true
+
+### Endpoint Discovery
+
+::: coremusic.midi.get_sources
+
+::: coremusic.midi.get_destinations
+
+::: coremusic.midi.find_source
+
+::: coremusic.midi.find_destination
+
 ### AudioClock Class
 
 ::: coremusic.audio.AudioClock

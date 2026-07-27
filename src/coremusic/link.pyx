@@ -336,6 +336,19 @@ cdef class LinkSession:
             del self._link
             self._link = NULL
 
+    def __enter__(self):
+        """Enable networking for the duration of the block
+
+        Returns:
+            This session, with ``enabled`` set to True
+        """
+        self.enabled = True
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Disable networking on leaving the block"""
+        self.enabled = False
+
     @property
     def enabled(self) -> bool:
         """Whether Link networking is enabled

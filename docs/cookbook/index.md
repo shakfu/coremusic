@@ -67,55 +67,31 @@ Ready-to-use recipes for common audio and MIDI processing tasks.
 **Read audio file:**
 
 ```python
-import coremusic as cm
-
-with cm.AudioFile("audio.wav") as audio:
-    data, count = audio.read_packets(0, audio.frame_count)
+--8<-- "examples/cookbook/index/common_patterns.py:read-file"
 ```
 
 **Load AudioUnit plugin:**
 
 ```python
-import coremusic as cm
-
-with cm.AudioUnitPlugin.from_name("AUDelay") as plugin:
-    plugin['Delay Time'] = 0.5
-    output = plugin.process(input_data)
+--8<-- "examples/cookbook/index/common_patterns.py:load-plugin"
 ```
 
 **Create plugin chain:**
 
 ```python
-import coremusic as cm
-
-with cm.AudioUnitChain() as chain:
-    chain.add_plugin("AUHighpass")
-    chain.add_plugin("AUReverb")
-    output = chain.process(input_data, wet_dry_mix=0.8)
+--8<-- "examples/cookbook/index/common_patterns.py:plugin-chain"
 ```
 
 **Sync with Ableton Link:**
 
 ```python
-import coremusic as cm
-
-with cm.link.LinkSession(bpm=120.0) as session:
-    state = session.capture_app_session_state()
-    print(f"Tempo: {state.tempo:.1f} BPM")
-    print(f"Peers: {session.num_peers}")
+--8<-- "examples/cookbook/index/common_patterns.py:link"
 ```
 
 **Send MIDI:**
 
 ```python
-import coremusic.capi as capi
-
-client = capi.midi_client_create("Output")
-port = capi.midi_output_port_create(client, "Out")
-dest = capi.midi_get_destination(0)
-
-# Send Note On
-capi.midi_send_data(port, dest, bytes([0x90, 60, 100]))
+--8<-- "examples/cookbook/index/common_patterns.py:send-midi"
 ```
 
 ## Tips and Best Practices

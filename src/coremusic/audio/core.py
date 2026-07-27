@@ -584,6 +584,35 @@ class AudioFile(capi.CoreAudioObject):
             raise AudioFileError(f"Failed to write metadata: {e}")
 
     @property
+    def path(self) -> str:
+        """Path the file was opened from"""
+        return self._path
+
+    @property
+    def packet_count(self) -> int:
+        """Number of audio packets in the file.
+
+        For uncompressed PCM one packet is one frame, so this is also the frame
+        count. It is the upper bound for :meth:`read_packets`.
+        """
+        self._ensure_not_disposed()
+        if not self._is_open:
+            self.open()
+
+        try:
+            packet_count_data = capi.audio_file_get_property(
+                self.object_id,
+                capi.get_audio_file_property_audio_data_packet_count(),
+            )
+        except Exception as e:
+            raise AudioFileError(f"Failed to get packet count: {e}")
+
+        if len(packet_count_data) < 8:
+            raise AudioFileError("File reported no packet count")
+        count: int = struct.unpack("<Q", packet_count_data[:8])[0]
+        return count
+
+    @property
     def duration(self) -> float:
         """Duration in seconds"""
         self._ensure_not_disposed()
