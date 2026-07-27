@@ -34,7 +34,7 @@ class TestAudioFormatNumPy:
         format = AudioFormat(
             sample_rate=44100.0,
             format_id="lpcm",
-            format_flags=0,  # Signed
+            format_flags=4,  # kAudioFormatFlagIsSignedInteger
             channels_per_frame=1,
             bits_per_channel=8,
         )
@@ -43,11 +43,14 @@ class TestAudioFormatNumPy:
         assert dtype == np.dtype(np.int8)
 
     def test_to_numpy_dtype_8bit_unsigned_pcm(self):
-        """Test converting 8-bit unsigned PCM format to NumPy dtype"""
+        """Test converting 8-bit unsigned PCM format to NumPy dtype
+
+        8-bit PCM is unsigned unless kAudioFormatFlagIsSignedInteger is set.
+        """
         format = AudioFormat(
             sample_rate=44100.0,
             format_id="lpcm",
-            format_flags=2,  # kAudioFormatFlagIsSignedInteger = 2 (inverted)
+            format_flags=8,  # kAudioFormatFlagIsPacked, not signed
             channels_per_frame=1,
             bits_per_channel=8,
         )

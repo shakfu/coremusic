@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from coremusic import capi
+from coremusic.constants.audio import LinearPCMFormatFlag
 from coremusic.exceptions import AudioConverterError, AudioFileError, AudioQueueError
 
 # Check if NumPy is available
@@ -115,29 +116,38 @@ class AudioFormat:
         channels: int = 2,
         bits: int = 16,
         is_float: bool = False,
+        big_endian: bool = False,
     ) -> "AudioFormat":
-        """Create a PCM AudioFormat with correctly computed derived fields.
+        """Create a packed PCM AudioFormat with correctly computed derived fields.
 
         Args:
             sample_rate: Sample rate in Hz (default: 44100.0)
             channels: Number of channels (default: 2)
             bits: Bits per sample (default: 16)
             is_float: If True, create float format; otherwise signed integer
+            big_endian: If True, mark the samples as big-endian. macOS is
+                little-endian natively, so set this only for containers that
+                require it, such as AIFF.
 
         Returns:
             AudioFormat with all ASBD fields correctly computed
         """
         bytes_per_sample = bits // 8
         bytes_per_frame = bytes_per_sample * channels
-        flags = 0
+        # Samples are contiguous with no padding bits, so IsPacked always
+        # applies here. Omitting it produced an ASBD CoreAudio rejects for
+        # containers such as WAV.
+        flags = int(LinearPCMFormatFlag.IS_PACKED)
         if is_float:
-            flags |= 1  # kAudioFormatFlagIsFloat
+            flags |= int(LinearPCMFormatFlag.IS_FLOAT)
         else:
-            flags |= 4 | 2  # kAudioFormatFlagIsPacked | kAudioFormatFlagIsSignedInteger
+            flags |= int(LinearPCMFormatFlag.IS_SIGNED_INTEGER)
+        if big_endian:
+            flags |= int(LinearPCMFormatFlag.IS_BIG_ENDIAN)
         return cls(
             sample_rate=sample_rate,
             format_id="lpcm",
-            format_flags=flags,
+            format_flags=int(flags),
             bytes_per_packet=bytes_per_frame,
             frames_per_packet=1,
             bytes_per_frame=bytes_per_frame,
@@ -270,32 +280,38 @@ class AudioFormat:
 
         # Handle PCM formats
         if self.is_pcm:
-            # Check if float or integer
-            is_float = bool(self.format_flags & 1)  # kAudioFormatFlagIsFloat
-            is_signed = not bool(
-                self.format_flags & 2
-            )  # kAudioFormatFlagIsSignedInteger
+            is_float = bool(self.format_flags & LinearPCMFormatFlag.IS_FLOAT)
+            is_signed = bool(self.format_flags & LinearPCMFormatFlag.IS_SIGNED_INTEGER)
+            # CoreAudio describes byte order in the flags; without the dtype
+            # byte order a big-endian stream would be read as little-endian.
+            byte_order = (
+                ">" if self.format_flags & LinearPCMFormatFlag.IS_BIG_ENDIAN else "<"
+            )
 
             if is_float:
                 if self.bits_per_channel == 32:
-                    return np.dtype(np.float32)
+                    return np.dtype(byte_order + "f4")
                 elif self.bits_per_channel == 64:
-                    return np.dtype(np.float64)
+                    return np.dtype(byte_order + "f8")
                 else:
                     raise ValueError(
                         f"Unsupported float bit depth: {self.bits_per_channel}"
                     )
             else:
-                # Integer formats
+                # 8-bit PCM is unsigned unless flagged signed, which is the
+                # CoreAudio convention. At 16 bits and above unsigned PCM does
+                # not occur in practice, so an unflagged format is read as
+                # signed rather than reinterpreting real samples as unsigned
+                # and corrupting them.
                 if self.bits_per_channel == 8:
-                    return np.dtype(np.int8 if is_signed else np.uint8)
+                    return np.dtype("i1" if is_signed else "u1")
                 elif self.bits_per_channel == 16:
-                    return np.dtype(np.int16)
+                    return np.dtype(byte_order + "i2")
                 elif self.bits_per_channel == 24:
                     # 24-bit audio is typically padded to 32-bit
-                    return np.dtype(np.int32)
+                    return np.dtype(byte_order + "i4")
                 elif self.bits_per_channel == 32:
-                    return np.dtype(np.int32)
+                    return np.dtype(byte_order + "i4")
                 else:
                     raise ValueError(
                         f"Unsupported integer bit depth: {self.bits_per_channel}"

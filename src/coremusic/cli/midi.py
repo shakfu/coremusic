@@ -15,6 +15,21 @@ from ._utils import EXIT_SUCCESS, CLIError, print_help_default, require_file
 logger = logging.getLogger(__name__)
 
 
+def _float32_to_int16_be(data: bytes) -> bytes:
+    """Convert interleaved float32 PCM to big-endian int16, for AIFF output."""
+    import array
+    import sys
+
+    samples = array.array("f")
+    samples.frombytes(data[: len(data) // 4 * 4])
+    ints = array.array(
+        "h", (max(-32768, min(32767, int(s * 32767.0))) for s in samples)
+    )
+    if sys.byteorder == "little":  # AIFF is big-endian
+        ints.byteswap()
+    return ints.tobytes()
+
+
 class _MIDIDrain:
     """Poll a MIDI input port and hand back individual messages.
 
@@ -1206,6 +1221,8 @@ def _receive_with_plugin(
     event_count = 0
     note_count = 0
     dropped = 0
+    rendered_frames = 0
+    render_errors = 0
 
     def signal_handler(sig: int, frame: FrameType | None) -> None:
         stop_event.set()
@@ -1245,18 +1262,52 @@ def _receive_with_plugin(
         except Exception as e:
             raise CLIError(f"Failed to initialize plugin: {e}")
 
-        # Set up audio output queue if not quiet
-        output_queue = None
-        if not args.quiet:
-            from coremusic.audio import AudioFormat, AudioQueue
+        unit_id = plugin._unit_id
+        if unit_id is None:
+            raise CLIError(f"Plugin '{args.plugin}' failed to instantiate")
 
-            audio_format = AudioFormat(
-                sample_rate=float(sample_rate),
-                format_id="lpcm",
-                channels_per_frame=channels,
-                bits_per_channel=32,
-            )
-            output_queue = AudioQueue.new_output(audio_format)
+        def render(frames: int) -> bytes:
+            """Render one block from the instrument as interleaved float32.
+
+            Instruments output non-interleaved float32; render_instrument
+            builds the matching buffer layout and advances the render timeline.
+            """
+            nonlocal rendered_frames, render_errors
+            try:
+                block = capi.audio_unit_render_instrument(
+                    unit_id,
+                    frames,
+                    float(rendered_frames),
+                    float(sample_rate),
+                    channels,
+                )
+            except Exception as e:
+                render_errors += 1
+                if render_errors == 1:
+                    logger.warning("Plugin render failed: %s", e)
+                return b"\x00" * (frames * channels * 4)
+
+            rendered_frames += frames
+            if output_path:
+                audio_chunks.append(block)
+            return block
+
+        # Play through the default output device unless suppressed. The stream
+        # pulls each block from `render` on the CoreAudio render thread, which
+        # is how a host normally drives an instrument.
+        output_stream = None
+        if not args.quiet:
+            from coremusic.audio import AudioOutputStream
+
+            try:
+                output_stream = AudioOutputStream(
+                    channels=channels, sample_rate=float(sample_rate)
+                )
+                output_stream.set_generator(render)
+                output_stream.start()
+            except Exception as e:
+                logger.warning("Audio output unavailable (%s); continuing silently", e)
+                output_stream = None
 
         # Create MIDI client
         client_id = capi.midi_client_create("coremusic-receive")
@@ -1287,25 +1338,24 @@ def _receive_with_plugin(
                     except Exception as e:
                         logger.debug("Plugin MIDI send failed: %s", e)
 
-                # Render audio from plugin periodically
-                current_time = time.time()
-                if current_time - last_render_time >= 0.01:  # ~100Hz render rate
-                    try:
-                        # Render a small buffer
-                        frames = 512
-                        rendered = plugin.render(frames)  # type: ignore[attr-defined]
-                        if rendered and len(rendered) > 0:
-                            if output_path:
-                                audio_chunks.append(rendered)
-                            if output_queue:
-                                output_queue.enqueue_buffer(rendered)
-                    except Exception as e:
-                        logger.debug("Plugin render failed: %s", e)
-                    last_render_time = current_time
+                # With no output stream nothing pulls the instrument, so drive
+                # it here to keep capturing audio.
+                if output_stream is None:
+                    current_time = time.time()
+                    if current_time - last_render_time >= 0.01:  # ~100Hz
+                        render(512)
+                        last_render_time = current_time
 
             dropped = drain.dropped
+            if render_errors:
+                logger.warning("Plugin render failed %d times", render_errors)
 
         finally:
+            if output_stream is not None:
+                try:
+                    output_stream.stop()
+                except Exception:
+                    pass
             try:
                 capi.midi_client_dispose(client_id)
             except Exception:
@@ -1324,12 +1374,6 @@ def _receive_with_plugin(
                 from coremusic.constants import AudioFileType
 
                 audio_data = b"".join(audio_chunks)
-                audio_format = AudioFormat(
-                    sample_rate=float(sample_rate),
-                    format_id="lpcm",
-                    channels_per_frame=channels,
-                    bits_per_channel=32,
-                )
 
                 ext = output_path.suffix.lower()
                 file_type = {
@@ -1340,12 +1384,31 @@ def _receive_with_plugin(
                     ".caf": AudioFileType.CAF,
                 }.get(ext, AudioFileType.WAVE)
 
+                # The plugin renders interleaved float32, which WAV, CAF, and
+                # M4A accept directly. AIFF is integer-only and big-endian, so
+                # convert for that container. The ASBD was previously built by
+                # hand with no format flags and no frame sizes, so
+                # ExtAudioFileCreateWithURL rejected it and nothing was written.
+                if file_type == AudioFileType.AIFF:
+                    audio_data = _float32_to_int16_be(audio_data)
+                    audio_format = AudioFormat.pcm(
+                        sample_rate=float(sample_rate),
+                        channels=channels,
+                        bits=16,
+                        big_endian=True,
+                    )
+                else:
+                    audio_format = AudioFormat.pcm(
+                        sample_rate=float(sample_rate),
+                        channels=channels,
+                        bits=32,
+                        is_float=True,
+                    )
+
                 with ExtendedAudioFile.create(
                     str(output_path), file_type, audio_format
                 ) as out_file:
-                    num_frames = len(audio_data) // (
-                        channels * 4
-                    )  # 4 bytes per float32
+                    num_frames = len(audio_data) // audio_format.bytes_per_frame
                     out_file.write(num_frames, audio_data)
 
                 if not args.json:

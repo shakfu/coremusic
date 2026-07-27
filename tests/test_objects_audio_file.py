@@ -315,3 +315,109 @@ class TestAudioFileIntegration:
         for audio_file in files:
             audio_file.close()
             assert audio_file.is_disposed
+
+
+class TestAudioFormatPCMFlags:
+    """AudioFormat.pcm must emit the CoreAudio flags it claims.
+
+    It previously set `4 | 2` while the comment claimed
+    kAudioFormatFlagIsPacked | kAudioFormatFlagIsSignedInteger. In CoreAudio 2
+    is kAudioFormatFlagIsBigEndian and IsPacked is 8, so it produced unpacked
+    big-endian integer PCM, which CoreAudio rejects for WAV and CAF.
+    """
+
+    # kAudioFormatFlagIsFloat=1, IsBigEndian=2, IsSignedInteger=4, IsPacked=8
+    IS_FLOAT = 1
+    IS_BIG_ENDIAN = 2
+    IS_SIGNED_INTEGER = 4
+    IS_PACKED = 8
+
+    def test_int_pcm_is_signed_and_packed(self):
+        fmt = AudioFormat.pcm(bits=16)
+        assert fmt.format_flags & self.IS_SIGNED_INTEGER
+        assert fmt.format_flags & self.IS_PACKED
+        assert not fmt.format_flags & self.IS_FLOAT
+        assert not fmt.format_flags & self.IS_BIG_ENDIAN
+        assert fmt.format_flags == 12
+
+    def test_float_pcm_is_float_and_packed(self):
+        fmt = AudioFormat.pcm(bits=32, is_float=True)
+        assert fmt.format_flags & self.IS_FLOAT
+        assert fmt.format_flags & self.IS_PACKED
+        assert not fmt.format_flags & self.IS_SIGNED_INTEGER
+        assert fmt.format_flags == 9
+
+    def test_big_endian_flag(self):
+        fmt = AudioFormat.pcm(bits=16, big_endian=True)
+        assert fmt.format_flags & self.IS_BIG_ENDIAN
+        assert fmt.format_flags == 14
+        assert AudioFormat.pcm(bits=32, is_float=True, big_endian=True).format_flags == 11
+
+    def test_derived_sizes(self):
+        fmt = AudioFormat.pcm(bits=16, channels=2)
+        assert fmt.bytes_per_frame == 4
+        assert fmt.bytes_per_packet == 4
+        assert fmt.frames_per_packet == 1
+        assert AudioFormat.pcm(bits=32, channels=1).bytes_per_frame == 4
+
+
+class TestAudioFormatNumpyDtype:
+    """to_numpy_dtype must read the same flags AudioFormat.pcm writes.
+
+    It read flag 2 as kAudioFormatFlagIsSignedInteger (2 is IsBigEndian, 4 is
+    IsSignedInteger) and inverted it, and ignored byte order entirely.
+    """
+
+    def test_round_trip_int16(self):
+        np = pytest.importorskip("numpy")
+        assert AudioFormat.pcm(bits=16).to_numpy_dtype() == np.dtype("<i2")
+
+    def test_round_trip_float32(self):
+        np = pytest.importorskip("numpy")
+        assert AudioFormat.pcm(bits=32, is_float=True).to_numpy_dtype() == np.dtype(
+            "<f4"
+        )
+
+    def test_big_endian_dtype(self):
+        np = pytest.importorskip("numpy")
+        fmt = AudioFormat.pcm(bits=16, big_endian=True)
+        assert fmt.to_numpy_dtype() == np.dtype(">i2")
+
+    def test_signed_flag_respected(self):
+        np = pytest.importorskip("numpy")
+        signed = AudioFormat(44100.0, "lpcm", format_flags=12, bits_per_channel=8)
+        unsigned = AudioFormat(44100.0, "lpcm", format_flags=8, bits_per_channel=8)
+        assert signed.to_numpy_dtype() == np.dtype("i1")
+        assert unsigned.to_numpy_dtype() == np.dtype("u1")
+
+
+class TestAudioFormatPCMAccepted:
+    """CoreAudio must accept the ASBD AudioFormat.pcm builds.
+
+    Before the flag fix, AudioFormat.pcm(bits=16) produced flags=6 and
+    ExtAudioFileCreateWithURL rejected it for WAV with
+    kAudioFileStreamError_UnsupportedDataFormat.
+    """
+
+    @pytest.mark.parametrize(
+        "suffix,file_type_name,kwargs",
+        [
+            ("wav", "WAVE", {"bits": 16}),
+            ("wav", "WAVE", {"bits": 32, "is_float": True}),
+            ("caf", "CAF", {"bits": 16}),
+            ("caf", "CAF", {"bits": 32, "is_float": True}),
+            ("aif", "AIFF", {"bits": 16, "big_endian": True}),
+        ],
+    )
+    def test_created_file_is_accepted(self, tmp_path, suffix, file_type_name, kwargs):
+        from coremusic.audio import ExtendedAudioFile
+        from coremusic.constants import AudioFileType
+
+        file_type = getattr(AudioFileType, file_type_name)
+        fmt = AudioFormat.pcm(sample_rate=44100.0, channels=2, **kwargs)
+        out = tmp_path / f"probe.{suffix}"
+
+        with ExtendedAudioFile.create(str(out), file_type, fmt) as f:
+            f.write(8, b"\x00" * (fmt.bytes_per_frame * 8))
+
+        assert out.exists() and out.stat().st_size > 0
