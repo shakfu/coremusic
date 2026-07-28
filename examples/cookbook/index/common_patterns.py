@@ -45,13 +45,14 @@ session.enabled = False
 
 # --8<-- [start:send-midi]
 from coremusic import capi
+from coremusic.midi import note_on
 
 client = capi.midi_client_create("Output")
 port = capi.midi_output_port_create(client, "Out")
 dest = capi.midi_destination_create(client, "Cookbook Destination")
 
 # Send Note On
-capi.midi_send_data(port, dest, bytes([0x90, 60, 100]))
+capi.midi_send_data(port, dest, note_on("C4", 100))
 
 capi.midi_client_dispose(client)
 # --8<-- [end:send-midi]

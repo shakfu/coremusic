@@ -5,20 +5,19 @@
 import time
 
 from coremusic import capi
+from coremusic.midi import note_off, note_on
 
 
 def play_note(port, dest, channel, note, velocity, duration):
     """Play a single note"""
     # Note On
-    note_on = bytes([0x90 | channel, note, velocity])
-    capi.midi_send_data(port, dest, note_on)
+    capi.midi_send_data(port, dest, note_on(note, velocity, channel=channel))
 
     # Wait
     time.sleep(duration)
 
     # Note Off
-    note_off = bytes([0x80 | channel, note, 0])
-    capi.midi_send_data(port, dest, note_off)
+    capi.midi_send_data(port, dest, note_off(note, channel=channel))
 
 # Setup
 client = capi.midi_client_create("Sequencer")

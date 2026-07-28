@@ -2,10 +2,11 @@
 """Error Handling."""
 
 from coremusic import capi
+from coremusic.midi import note_on
 
 client = capi.midi_client_create("Error Handling")
 port = capi.midi_output_port_create(client, "Out")
-data = bytes([0x90, 60, 100])
+data = note_on("C4", 100)
 
 
 # --8<-- [start:example]

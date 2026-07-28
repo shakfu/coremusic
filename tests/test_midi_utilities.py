@@ -17,6 +17,7 @@ from coremusic.midi import (
     MIDIStatus,
     MIDITrack,
     channel_remap_transform,
+    note_on,
     quantize_transform,
     transpose_transform,
     velocity_scale_transform,
@@ -85,7 +86,7 @@ class TestMIDIEvent:
 
     def test_from_bytes(self):
         """Test creating event from bytes."""
-        data = bytes([0x90, 60, 100])
+        data = note_on(60, 100)
         event = MIDIEvent.from_bytes(data, 1.0)
 
         assert event.time == 1.0
@@ -96,7 +97,7 @@ class TestMIDIEvent:
 
     def test_from_bytes_with_channel(self):
         """Test creating event from bytes with channel."""
-        data = bytes([0x93, 60, 100])  # Channel 3
+        data = note_on(60, 100, channel=3)
         event = MIDIEvent.from_bytes(data)
 
         assert event.channel == 3

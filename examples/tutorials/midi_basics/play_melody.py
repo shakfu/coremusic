@@ -4,7 +4,7 @@
 # --8<-- [start:example]
 import time
 
-from coremusic.midi import MIDIClient, get_destinations
+from coremusic.midi import MIDIClient, get_destinations, note_off, note_on
 
 
 def play_melody(notes, durations, tempo_bpm=120):
@@ -23,9 +23,9 @@ def play_melody(notes, durations, tempo_bpm=120):
         beat_duration = 60.0 / tempo_bpm
 
         for note, duration in zip(notes, durations, strict=True):
-            port.send_data(destination, bytes([0x90, note, 100]))
+            port.send_data(destination, note_on(note, 100))
             time.sleep(duration * beat_duration)
-            port.send_data(destination, bytes([0x80, note, 0]))
+            port.send_data(destination, note_off(note))
 
 
 # The opening phrase of "Twinkle Twinkle Little Star"

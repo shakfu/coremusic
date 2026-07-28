@@ -6,6 +6,7 @@ import queue
 import time
 
 from coremusic import capi
+from coremusic.midi import note_on
 
 
 class MIDIProcessor:
@@ -29,6 +30,6 @@ class MIDIProcessor:
 processor = MIDIProcessor()
 
 # Whatever the callback is attached to, the hand-off looks like this
-processor.callback(b"\x90\x3c\x64", capi.midi_current_host_time())
+processor.callback(note_on("C4", 100), capi.midi_current_host_time())
 processor.run(deadline=time.monotonic() + 0.2)
 # --8<-- [end:example]

@@ -155,12 +155,13 @@ def create_midi_client():
 def build_midi_note():
     """Build a MIDI note message.
 
+    >>> from coremusic.midi import note_on
     >>> # Note On: channel 0, note 60 (C4), velocity 100
-    >>> note_on = bytes([0x90, 60, 100])
-    >>> assert len(note_on) == 3
-    >>> assert note_on[0] == 0x90  # Note On, channel 0
-    >>> assert note_on[1] == 60    # Middle C
-    >>> assert note_on[2] == 100   # Velocity
+    >>> message = note_on("C4", 100)
+    >>> assert len(message) == 3
+    >>> assert message[0] == 0x90  # Note On, channel 0
+    >>> assert message[1] == 60    # Middle C
+    >>> assert message[2] == 100   # Velocity
     """
 
 

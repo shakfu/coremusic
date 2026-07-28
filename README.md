@@ -259,7 +259,7 @@ with host.load_plugin("DLSMusicDevice", type='instrument') as synth:
 ### MIDI
 
 ```python
-from coremusic.midi import MIDIClient, get_destinations
+from coremusic.midi import MIDIClient, get_destinations, note_off, note_on
 
 client = MIDIClient("My App")
 output_port = client.create_output_port("Output")
@@ -268,8 +268,9 @@ output_port = client.create_output_port("Output")
 destinations = get_destinations()
 destination = destinations[0] if destinations else client.create_virtual_destination("Synth")
 
-output_port.send_data(destination, b'\x90\x3C\x7F')  # Note On
-output_port.send_data(destination, b'\x80\x3C\x00')  # Note Off
+# A note may be a MIDI number, a name, or a Note
+output_port.send_data(destination, note_on("C4", 127))
+output_port.send_data(destination, note_off("C4"))
 client.dispose()
 ```
 

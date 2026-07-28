@@ -392,6 +392,8 @@ def cmd_send(args: argparse.Namespace) -> int:
     """Send MIDI message."""
     import time
 
+    from coremusic.midi import control_change, note_off, note_on, program_change
+
     # Handle --test flag (send middle C)
     if args.test:
         args.note = 60
@@ -431,7 +433,7 @@ def cmd_send(args: argparse.Namespace) -> int:
                 raise CLIError(f"Velocity must be 0-127, got {args.velocity}")
 
             # Note on
-            note_on_data = bytes([0x90 | args.channel, args.note, args.velocity])
+            note_on_data = note_on(args.note, args.velocity, channel=args.channel)
             capi.midi_send_data(port_id, dest_id, note_on_data, 0)
             messages_sent.append(f"Note On: {args.note} vel={args.velocity}")
 
@@ -439,7 +441,7 @@ def cmd_send(args: argparse.Namespace) -> int:
             time.sleep(args.duration)
 
             # Note off
-            note_off_data = bytes([0x80 | args.channel, args.note, 0])
+            note_off_data = note_off(args.note, channel=args.channel)
             capi.midi_send_data(port_id, dest_id, note_off_data, 0)
             messages_sent.append(f"Note Off: {args.note}")
 
@@ -451,7 +453,7 @@ def cmd_send(args: argparse.Namespace) -> int:
             if not 0 <= cc_val <= 127:
                 raise CLIError(f"CC value must be 0-127, got {cc_val}")
 
-            cc_data = bytes([0xB0 | args.channel, cc_num, cc_val])
+            cc_data = control_change(cc_num, cc_val, channel=args.channel)
             capi.midi_send_data(port_id, dest_id, cc_data, 0)
             messages_sent.append(f"CC: {cc_num}={cc_val}")
 
@@ -460,7 +462,7 @@ def cmd_send(args: argparse.Namespace) -> int:
             if not 0 <= args.program <= 127:
                 raise CLIError(f"Program must be 0-127, got {args.program}")
 
-            program_data = bytes([0xC0 | args.channel, args.program])
+            program_data = program_change(args.program, channel=args.channel)
             capi.midi_send_data(port_id, dest_id, program_data, 0)
             messages_sent.append(f"Program: {args.program}")
 
@@ -635,6 +637,8 @@ def _show_events(args: argparse.Namespace, path: Any, seq: Any) -> int:
 
 def cmd_panic(args: argparse.Namespace) -> int:
     """Send all-notes-off on all channels to stop stuck notes."""
+    from coremusic.midi import all_notes_off, all_sound_off
+
     num_dests = capi.midi_get_number_of_destinations()
     if num_dests == 0:
         raise CLIError("No MIDI output destinations available")
@@ -656,15 +660,13 @@ def cmd_panic(args: argparse.Namespace) -> int:
             dest_id = capi.midi_get_destination(idx)
             dest_name = _get_endpoint_name(dest_id)
 
-            # Send CC 123 (All Notes Off) on all 16 channels
+            # Release held notes on all 16 channels, letting release tails ring
             for channel in range(16):
-                cc_data = bytes([0xB0 | channel, 123, 0])
-                capi.midi_send_data(port_id, dest_id, cc_data, 0)
+                capi.midi_send_data(port_id, dest_id, all_notes_off(channel=channel), 0)
 
-            # Also send CC 120 (All Sound Off) for immediate silence
+            # Then cut the sound dead, ignoring release envelopes
             for channel in range(16):
-                cc_data = bytes([0xB0 | channel, 120, 0])
-                capi.midi_send_data(port_id, dest_id, cc_data, 0)
+                capi.midi_send_data(port_id, dest_id, all_sound_off(channel=channel), 0)
 
             results.append({"index": idx, "name": dest_name})
 
@@ -1461,6 +1463,7 @@ def cmd_play(args: argparse.Namespace) -> int:
     import signal
     import time
 
+    from coremusic.midi import all_notes_off
     from coremusic.midi.utilities import MIDISequence
 
     path = require_file(args.path)
@@ -1540,8 +1543,7 @@ def cmd_play(args: argparse.Namespace) -> int:
         # Send all-notes-off to clean up
         if stop_requested:
             for channel in range(16):
-                cc_data = bytes([0xB0 | channel, 123, 0])
-                capi.midi_send_data(port_id, dest_id, cc_data, 0)
+                capi.midi_send_data(port_id, dest_id, all_notes_off(channel=channel), 0)
 
         if args.json:
             output_json(

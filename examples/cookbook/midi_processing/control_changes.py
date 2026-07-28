@@ -5,6 +5,8 @@
 import time
 
 from coremusic import capi
+from coremusic.constants import MIDIControlChange
+from coremusic.midi import control_change, note_off, note_on
 
 client = capi.midi_client_create("CC Controller")
 output_port = capi.midi_output_port_create(client, "Output")
@@ -16,18 +18,16 @@ else:
     dest = capi.midi_destination_create(client, "Cookbook Output")
 
 # Start a note
-note_on = bytes([0x90, 60, 100])
-capi.midi_send_data(output_port, dest, note_on)
+capi.midi_send_data(output_port, dest, note_on("C4", 100))
 
 # Fade volume (CC 7) from 127 to 0
 for volume in range(127, -1, -5):
-    cc = bytes([0xB0, 7, volume])  # Channel 1, CC 7 (Volume), value
+    cc = control_change(MIDIControlChange.VOLUME, volume)
     capi.midi_send_data(output_port, dest, cc)
     time.sleep(0.05)
 
 # Stop note
-note_off = bytes([0x80, 60, 0])
-capi.midi_send_data(output_port, dest, note_off)
+capi.midi_send_data(output_port, dest, note_off("C4"))
 
 # Cleanup
 capi.midi_port_dispose(output_port)

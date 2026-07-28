@@ -3,6 +3,7 @@
 import pytest
 
 from coremusic import capi
+from coremusic.midi import note_on
 
 # Check MIDI availability at module load time
 # Run multiple checks to ensure MIDI is reliably available
@@ -391,9 +392,7 @@ class TestCoreMIDIIntegration:
             # Sending to a virtual destination is safe: every endpoint is
             # created with a real read proc, and packets are buffered for
             # midi_input_poll(). See tests/test_midi_receive.py.
-            capi.midi_send_data(
-                output_port, virtual_destination, bytes([0x90, 0x3C, 0x64])
-            )
+            capi.midi_send_data(output_port, virtual_destination, note_on("C4", 100))
             capi.midi_endpoint_dispose(virtual_destination)
             capi.midi_endpoint_dispose(virtual_source)
             capi.midi_port_dispose(output_port)

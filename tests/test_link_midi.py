@@ -10,6 +10,7 @@ import pytest
 
 from coremusic import capi, link
 from coremusic.midi import link as link_midi
+from coremusic.midi import note_on
 
 
 class TestLinkMIDIConstants:
@@ -34,16 +35,16 @@ class TestMIDIEvent:
         """Test creating MIDI event"""
         event = link_midi.MIDIEvent(
             beat=1.0,
-            message=b"\x90\x3c\x64",  # Note On C4
+            message=note_on("C4", 100),
         )
 
         assert event.beat == 1.0
-        assert event.message == b"\x90\x3c\x64"
+        assert event.message == note_on("C4", 100)
         assert not event.sent
 
     def test_midi_event_sent_flag(self):
         """Test MIDI event sent flag"""
-        event = link_midi.MIDIEvent(beat=1.0, message=b"\x90\x3c\x64", sent=True)
+        event = link_midi.MIDIEvent(beat=1.0, message=note_on("C4", 100), sent=True)
 
         assert event.sent
 
@@ -164,7 +165,7 @@ class TestLinkMIDISequencer:
         seq = link_midi.LinkMIDISequencer(session, port, dest)
 
         # Schedule event
-        message = b"\x90\x3c\x64"  # Note On
+        message = note_on("C4", 100)
         seq.schedule_event(beat=1.0, message=message)
 
         assert len(seq.events) == 1
@@ -180,9 +181,9 @@ class TestLinkMIDISequencer:
         seq = link_midi.LinkMIDISequencer(session, port, dest)
 
         # Schedule events out of order
-        seq.schedule_event(beat=2.0, message=b"\x90\x40\x64")
-        seq.schedule_event(beat=1.0, message=b"\x90\x3c\x64")
-        seq.schedule_event(beat=3.0, message=b"\x90\x44\x64")
+        seq.schedule_event(beat=2.0, message=note_on("E4", 100))
+        seq.schedule_event(beat=1.0, message=note_on("C4", 100))
+        seq.schedule_event(beat=3.0, message=note_on("G#4", 100))
 
         assert len(seq.events) == 3
         assert seq.events[0].beat == 1.0
@@ -225,8 +226,8 @@ class TestLinkMIDISequencer:
         seq = link_midi.LinkMIDISequencer(session, port, dest)
 
         # Schedule events
-        seq.schedule_event(beat=1.0, message=b"\x90\x3c\x64")
-        seq.schedule_event(beat=2.0, message=b"\x90\x40\x64")
+        seq.schedule_event(beat=1.0, message=note_on("C4", 100))
+        seq.schedule_event(beat=2.0, message=note_on("E4", 100))
 
         assert len(seq.events) == 2
 

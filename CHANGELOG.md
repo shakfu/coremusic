@@ -22,6 +22,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Added
+
+- **MIDI channel voice message builders (`coremusic.midi.messages`)** - `note_on`, `note_off`, `control_change`, `program_change`, `pitch_bend`, `poly_aftertouch`, `channel_aftertouch`, `all_notes_off`, and `all_sound_off`, each returning the `bytes` that `send_data()` takes. Nothing in the library previously produced a wire message: `capi.midi_note_on` returns a tuple for the AudioUnit MusicDevice call, `MIDIEvent.to_bytes()` needs an event time you do not have when sending, and `MIDIStatus` only names the status nibble. So every send in the codebase, including the CLI, hand-assembled `bytes([0x90 | channel, note, velocity])`.
+
+  A note may be a MIDI number, a name, or a `Note`: `note_on(60, 100)`, `note_on("C4", 100)`, and `note_on(Note("C", 4), 100)` are the same message. This connects `coremusic.music.theory`, which has had `Note`, `note_name_to_midi`, and `Scale` all along, to the wire layer for the first time. Octave numbering follows scientific pitch notation, matching `note_name_to_midi`, so middle C is `"C4"` is 60; Ableton Live and Logic display that note as C3.
+
+  Channel is keyword-only. `capi.midi_note_on` takes `(channel, note, velocity)`, so a positional channel would make `note_on(0, 60, 100)` build a valid but entirely different message; it raises `TypeError` instead. When a `Note` is passed and no velocity is given, the note's own velocity applies.
+
+  Out-of-range arguments raise `ValueError` naming the offending argument. `MIDIEvent.to_bytes()` masks instead, silently turning a velocity of 200 into 72, and a data byte above 127 reads as a status byte and desynchronises the rest of the stream.
+
+### Changed
+
+- **Every hand-assembled MIDI message now uses the builders** - across the CLI (`midi send`, `midi panic`, `midi play`, `sequence play`), the examples, the tutorials, the README, and the tests. Verified byte-identical to the expressions they replace across all 16 channels and every message type. The byte-level tests in `TestMIDIMessageSplitter` deliberately keep their hex literals: they cover running status, orphan data bytes, aborted SysEx, and a realtime byte landing mid-message, none of which a builder can express.
+
+- **MIDI transport tests name a shared constant for each message** - the send and the assertion refer to the same `NOTE_ON_E4`, so they cannot drift apart. That drift is exactly what made `test_input_port_receives_from_virtual_source` send two messages while asserting on one packet.
+
+- **The MIDI Message Reference in the MIDI Basics tutorial** is now a runnable, tested program (`examples/tutorials/midi_basics/message_reference.py`) rather than five blocks of byte literals, and documents that the `capi.midi_*` triples are not interchangeable with wire messages: `bytes(capi.midi_program_change(...))` appends a `0x00` that a receiver reads as data for a running-status message, because Program Change is two bytes.
+
+- **The MIDI Basics tutorial no longer teaches hand-rolled note-name conversion** - two doctests reimplemented `note_name_to_midi` and `midi_to_note_name` inline; they now use the library functions, which validate their input and cover enharmonic spellings.
+
+### Fixed
+
+- **`ScaleFilter` documented a constructor that does not exist** - its docstring showed `Scale(Note.from_name("C4"), ...)`; `Note` has no `from_name`. Corrected to `Scale(Note("C", 4), ...)`.
+
 ## [0.2.5]
 
 ### Added

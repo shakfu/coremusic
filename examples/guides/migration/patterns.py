@@ -27,7 +27,7 @@ with ExtendedAudioFile.create(
 # --8<-- [end:audio]
 
 # --8<-- [start:midi]
-from coremusic.midi import MIDIClient, get_destinations
+from coremusic.midi import MIDIClient, get_destinations, note_on
 
 client = MIDIClient("App")
 port = client.create_output_port("Out")
@@ -36,7 +36,7 @@ destinations = get_destinations()
 dest = destinations[0] if destinations else client.create_virtual_destination("Out")
 
 for note in [60, 64, 67]:
-    port.send_data(dest, bytes([0x90, note, 100]))  # Note on
+    port.send_data(dest, note_on(note, 100))
 
 client.dispose()
 # --8<-- [end:midi]

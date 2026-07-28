@@ -213,52 +213,68 @@ Putting both halves together gives a self-contained round trip:
 
 ## MIDI Message Reference
 
+Build messages with the functions in `coremusic.midi` rather than assembling
+bytes by hand. Each returns the `bytes` that `send_data` takes, validates its
+arguments, and gets the awkward parts right - the two-byte messages and the
+pitch bend split.
+
 ### Note Messages
 
 ```python
-# Note On: 0x90 + channel, note, velocity
-note_on = bytes([0x90, 60, 100])   # Middle C, velocity 100
-
-# Note Off: 0x80 + channel, note, velocity
-note_off = bytes([0x80, 60, 0])    # Middle C off
-
-# Note numbers: 0-127
-# Middle C (C4) = 60
-# A440 = 69
+--8<-- "examples/tutorials/midi_basics/message_reference.py:notes"
 ```
+
+Channel is keyword-only. `capi.midi_note_on` takes `(channel, note, velocity)`
+and returns a tuple, so allowing a positional channel here would make
+`note_on(0, 60, 100)` build a valid but completely different message. It raises
+`TypeError` instead.
+
+Octave numbering is scientific pitch notation, matching `note_name_to_midi`:
+middle C is `"C4"` is 60. Ableton Live and Logic display that note as C3 and
+Cakewalk as C5, so prefer the MIDI number when matching a DAW display.
 
 ### Control Change
 
 ```python
-# CC: 0xB0 + channel, controller, value
-modulation = bytes([0xB0, 1, 64])   # Mod wheel to 50%
-volume = bytes([0xB0, 7, 100])      # Volume to 100
-pan = bytes([0xB0, 10, 64])         # Pan center
-sustain_on = bytes([0xB0, 64, 127]) # Sustain on
-sustain_off = bytes([0xB0, 64, 0])  # Sustain off
-all_off = bytes([0xB0, 123, 0])     # All Notes Off
+--8<-- "examples/tutorials/midi_basics/message_reference.py:control-change"
 ```
 
 ### Program Change
 
 ```python
-# Program Change: 0xC0 + channel, program
-piano = bytes([0xC0, 0])     # Program 0 (Piano)
-strings = bytes([0xC0, 48])  # Program 48 (Strings)
+--8<-- "examples/tutorials/midi_basics/message_reference.py:program-change"
 ```
 
 ### Pitch Bend
 
 ```python
-# Pitch Bend: 0xE0 + channel, LSB, MSB
-# Value range: 0-16383, center = 8192
-
-center = 8192
-bend_up = bytes([0xE0, center & 0x7F, (center >> 7) & 0x7F])
-
-max_up = 16383
-bend_max = bytes([0xE0, max_up & 0x7F, (max_up >> 7) & 0x7F])
+--8<-- "examples/tutorials/midi_basics/message_reference.py:pitch-bend"
 ```
+
+### Aftertouch
+
+```python
+--8<-- "examples/tutorials/midi_basics/message_reference.py:aftertouch"
+```
+
+### Validation
+
+```python
+--8<-- "examples/tutorials/midi_basics/message_reference.py:validation"
+```
+
+Note that `MIDIEvent.to_bytes()` masks instead of raising, so a velocity of 200
+silently becomes 72 there.
+
+### Not Interchangeable With `capi.midi_*`
+
+The `capi.midi_note_on` family looks similar but serves a different target: it
+returns a fixed `(status, data1, data2)` triple for
+`capi.music_device_midi_event()`, the AudioUnit MusicDevice call, whose `data2`
+is "0 if not needed". Program Change and Channel Aftertouch are two bytes on
+the wire, so `bytes(capi.midi_program_change(...))` appends a `0x00` that a
+receiver reads as data for a running-status message. Use the builders above for
+anything sent through CoreMIDI.
 
 ## Complete Example: MIDI Keyboard
 

@@ -75,12 +75,23 @@ def midi_note_on_message():
     - Note: 0-127 (60 = Middle C)
     - Velocity: 0-127
 
+    Build one with note_on() rather than by hand; the note may be a number,
+    a name, or a Note.
+
+    >>> from coremusic.midi import note_on
     >>> # Note On: Middle C (60), velocity 100, channel 0
-    >>> note_on = bytes([0x90, 60, 100])
-    >>> assert len(note_on) == 3
-    >>> assert note_on[0] == 0x90  # Note On, channel 0
-    >>> assert note_on[1] == 60    # Middle C
-    >>> assert note_on[2] == 100   # Velocity
+    >>> message = note_on("C4", 100)
+    >>> assert len(message) == 3
+    >>> assert message[0] == 0x90  # Note On, channel 0
+    >>> assert message[1] == 60    # Middle C
+    >>> assert message[2] == 100   # Velocity
+
+    >>> # A number, a name and a Note are interchangeable
+    >>> from coremusic.music.theory import Note
+    >>> assert note_on(60, 100) == note_on("C4", 100) == note_on(Note("C", 4), 100)
+
+    >>> # Channel is keyword-only, so it cannot be confused with a note
+    >>> assert note_on("C4", 100, channel=3)[0] == 0x93
     """
 
 
@@ -92,12 +103,13 @@ def midi_note_off_message():
     - Note: 0-127
     - Velocity: typically 0
 
+    >>> from coremusic.midi import note_off
     >>> # Note Off: Middle C (60), channel 0
-    >>> note_off = bytes([0x80, 60, 0])
-    >>> assert len(note_off) == 3
-    >>> assert note_off[0] == 0x80  # Note Off, channel 0
-    >>> assert note_off[1] == 60    # Middle C
-    >>> assert note_off[2] == 0     # Velocity (release)
+    >>> message = note_off("C4")
+    >>> assert len(message) == 3
+    >>> assert message[0] == 0x80  # Note Off, channel 0
+    >>> assert message[1] == 60    # Middle C
+    >>> assert message[2] == 0     # Velocity (release)
     """
 
 
@@ -109,19 +121,26 @@ def midi_control_change_message():
     - Controller: 0-127 (e.g., 1=mod wheel, 7=volume, 10=pan)
     - Value: 0-127
 
+    >>> from coremusic.constants import MIDIControlChange
+    >>> from coremusic.midi import control_change
     >>> # CC: Modulation wheel to 64 (50%), channel 0
-    >>> mod_wheel = bytes([0xB0, 1, 64])
+    >>> mod_wheel = control_change(MIDIControlChange.MODULATION, 64)
     >>> assert len(mod_wheel) == 3
     >>> assert mod_wheel[0] == 0xB0  # CC, channel 0
     >>> assert mod_wheel[1] == 1     # Mod wheel
     >>> assert mod_wheel[2] == 64    # Value (50%)
 
-    >>> # Common CC numbers
-    >>> CC_MOD_WHEEL = 1
-    >>> CC_VOLUME = 7
-    >>> CC_PAN = 10
-    >>> CC_SUSTAIN = 64
-    >>> CC_ALL_NOTES_OFF = 123
+    >>> # MIDIControlChange names the common controller numbers
+    >>> assert MIDIControlChange.MODULATION == 1
+    >>> assert MIDIControlChange.VOLUME == 7
+    >>> assert MIDIControlChange.PAN == 10
+    >>> assert MIDIControlChange.SUSTAIN_PEDAL == 64
+    >>> assert MIDIControlChange.ALL_NOTES_OFF == 123
+
+    >>> # The two panic messages have their own helpers
+    >>> from coremusic.midi import all_notes_off, all_sound_off
+    >>> assert all_notes_off() == control_change(123, 0)
+    >>> assert all_sound_off() == control_change(120, 0)
     """
 
 
@@ -132,11 +151,15 @@ def midi_program_change_message():
     - Status byte: 0xC0 (Program Change) + channel (0-15)
     - Program: 0-127
 
+    Note the length: Program Change carries a single data byte, so the message
+    is two bytes, not three.
+
+    >>> from coremusic.midi import program_change
     >>> # Program Change: Select program 0 (piano), channel 0
-    >>> program_change = bytes([0xC0, 0])
-    >>> assert len(program_change) == 2
-    >>> assert program_change[0] == 0xC0  # Program Change, channel 0
-    >>> assert program_change[1] == 0     # Program 0
+    >>> message = program_change(0)
+    >>> assert len(message) == 2
+    >>> assert message[0] == 0xC0  # Program Change, channel 0
+    >>> assert message[1] == 0     # Program 0
     """
 
 
@@ -149,17 +172,21 @@ def midi_pitch_bend_message():
     - LSB: value & 0x7F
     - MSB: (value >> 7) & 0x7F
 
+    pitch_bend() does the LSB/MSB split for you.
+
+    >>> from coremusic.midi import PITCH_BEND_CENTER, PITCH_BEND_MAX, pitch_bend
     >>> # Pitch Bend: Center position (no bend)
-    >>> center = 8192
-    >>> lsb = center & 0x7F
-    >>> msb = (center >> 7) & 0x7F
-    >>> pitch_bend = bytes([0xE0, lsb, msb])
-    >>> assert len(pitch_bend) == 3
-    >>> assert pitch_bend[0] == 0xE0  # Pitch Bend, channel 0
+    >>> message = pitch_bend(PITCH_BEND_CENTER)
+    >>> assert len(message) == 3
+    >>> assert message[0] == 0xE0  # Pitch Bend, channel 0
 
     >>> # Reconstruct value
-    >>> reconstructed = pitch_bend[1] | (pitch_bend[2] << 7)
-    >>> assert reconstructed == 8192
+    >>> reconstructed = message[1] | (message[2] << 7)
+    >>> assert reconstructed == PITCH_BEND_CENTER == 8192
+
+    >>> # The extremes of the 14-bit range
+    >>> assert pitch_bend(0) == b"\\xe0\\x00\\x00"
+    >>> assert pitch_bend(PITCH_BEND_MAX) == b"\\xe0\\x7f\\x7f"
     """
 
 
@@ -186,62 +213,73 @@ def parse_midi_status_byte():
 def midi_note_number_to_name():
     """Convert MIDI note number to note name.
 
-    >>> NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-    >>> def note_to_name(note_num):
-    ...     octave = (note_num // 12) - 1
-    ...     note = NOTE_NAMES[note_num % 12]
-    ...     return f"{note}{octave}"
-
-    >>> note_to_name(60)  # Middle C
+    >>> from coremusic.music import midi_to_note_name
+    >>> midi_to_note_name(60)  # Middle C
     'C4'
-    >>> note_to_name(69)  # A440
+    >>> midi_to_note_name(69)  # A440
     'A4'
-    >>> note_to_name(48)  # C3
+    >>> midi_to_note_name(48)  # C3
     'C3'
-    >>> note_to_name(72)  # C5
+    >>> midi_to_note_name(72)  # C5
     'C5'
+
+    >>> # Accidentals may be spelled as flats instead of sharps
+    >>> midi_to_note_name(61)
+    'C#4'
+    >>> midi_to_note_name(61, use_flats=True)
+    'Db4'
+
+    >>> # Round trips with note_name_to_midi
+    >>> from coremusic.music import note_name_to_midi
+    >>> assert all(note_name_to_midi(midi_to_note_name(n)) == n for n in range(128))
     """
 
 
 def midi_name_to_note_number():
     """Convert note name to MIDI note number.
 
-    >>> NOTE_MAP = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
-    >>> def name_to_note(name):
-    ...     # Parse note name (e.g., "C#4", "Db4", "C4")
-    ...     note = name[0].upper()
-    ...     idx = 1
-    ...     modifier = 0
-    ...     if len(name) > 1 and name[1] in '#b':
-    ...         modifier = 1 if name[1] == '#' else -1
-    ...         idx = 2
-    ...     octave = int(name[idx:])
-    ...     return NOTE_MAP[note] + modifier + (octave + 1) * 12
+    Use note_name_to_midi rather than parsing names yourself. It validates the
+    name and the resulting range, and handles enharmonic spellings.
 
-    >>> name_to_note("C4")
+    >>> from coremusic.music import note_name_to_midi
+    >>> note_name_to_midi("C4")
     60
-    >>> name_to_note("A4")
+    >>> note_name_to_midi("A4")
     69
-    >>> name_to_note("C#4")
+    >>> note_name_to_midi("C#4")
     61
-    >>> name_to_note("C3")
+    >>> note_name_to_midi("Db4")  # enharmonic with C#4
+    61
+    >>> note_name_to_midi("C3")
     48
+
+    Octave numbering is scientific pitch notation: middle C is C4 is 60.
+    Ableton Live and Logic display that same note as C3.
+
+    >>> # The builders take a name directly, so this is rarely needed
+    >>> from coremusic.midi import note_on
+    >>> assert note_on("C4", 100) == note_on(note_name_to_midi("C4"), 100)
+
+    >>> # Bad names and out-of-range results raise rather than pass silently
+    >>> note_name_to_midi("H4")
+    Traceback (most recent call last):
+        ...
+    ValueError: Invalid note name: H4
     """
 
 
 def build_midi_melody():
     """Build a sequence of MIDI messages for a melody.
 
+    >>> from coremusic.midi import note_off, note_on
     >>> def create_melody_messages(notes, velocities=None, channel=0):
     ...     '''Create Note On/Off messages for a melody.'''
     ...     if velocities is None:
     ...         velocities = [100] * len(notes)
     ...     messages = []
-    ...     for note, vel in zip(notes, velocities):
-    ...         # Note On
-    ...         messages.append(('on', bytes([0x90 + channel, note, vel])))
-    ...         # Note Off
-    ...         messages.append(('off', bytes([0x80 + channel, note, 0])))
+    ...     for note, vel in zip(notes, velocities, strict=True):
+    ...         messages.append(('on', note_on(note, vel, channel=channel)))
+    ...         messages.append(('off', note_off(note, channel=channel)))
     ...     return messages
 
     >>> # C major scale

@@ -2,7 +2,7 @@
 """Send a Note On to a MIDI destination."""
 
 # --8<-- [start:example]
-from coremusic.midi import MIDIClient, get_destinations
+from coremusic.midi import MIDIClient, get_destinations, note_on
 
 # Create MIDI client
 client = MIDIClient("My MIDI App")
@@ -16,9 +16,8 @@ try:
     else:
         destination = client.create_virtual_destination("Synth")
 
-    # Send MIDI data
-    note_on = b'\x90\x3C\x7F'  # Note On, Middle C
-    output_port.send_data(destination, note_on)
+    # Send MIDI data: Note On, middle C, full velocity
+    output_port.send_data(destination, note_on("C4", 127))
 finally:
     client.dispose()
 # --8<-- [end:example]

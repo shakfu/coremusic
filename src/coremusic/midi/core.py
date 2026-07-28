@@ -520,7 +520,14 @@ class MIDIOutputPort(MIDIPort):
 
         Example::
 
-            from coremusic.midi import MIDIClient, get_destinations
+            from coremusic.constants import MIDIControlChange
+            from coremusic.midi import (
+                MIDIClient,
+                control_change,
+                get_destinations,
+                note_off,
+                note_on,
+            )
 
             client = MIDIClient("MyApp")
             output_port = client.create_output_port("Output")
@@ -534,16 +541,15 @@ class MIDIOutputPort(MIDIPort):
                 destination = client.create_virtual_destination("Synth")
 
             # Send Note On (middle C, velocity 100)
-            note_on = bytes([0x90, 0x3C, 0x64])  # Status, note, velocity
-            output_port.send_data(destination, note_on)
+            output_port.send_data(destination, note_on("C4", 100))
 
-            # Send Control Change (CC 7 = volume to 127)
-            cc_volume = bytes([0xB0, 0x07, 0x7F])  # Status, controller, value
-            output_port.send_data(destination, cc_volume)
+            # Send Control Change (volume to 127)
+            output_port.send_data(
+                destination, control_change(MIDIControlChange.VOLUME, 127)
+            )
 
             # Send Note Off
-            note_off = bytes([0x80, 0x3C, 0x00])
-            output_port.send_data(destination, note_off)
+            output_port.send_data(destination, note_off("C4"))
 
             client.dispose()
         """

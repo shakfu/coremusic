@@ -10,7 +10,8 @@ dest = capi.midi_destination_create(client, "Velocity Scaler Out")
 
 # --8<-- [start:example]
 from coremusic import capi
-from coremusic.midi import MIDIMessageSplitter
+from coremusic.constants import MIDIStatus
+from coremusic.midi import MIDIMessageSplitter, note_on
 
 
 class VelocityScaler:
@@ -26,7 +27,11 @@ class VelocityScaler:
 
             # Note On with a non-zero velocity; a zero velocity is a Note Off
             # and must keep its value.
-            if (data[0] & 0xF0) == 0x90 and len(data) >= 3 and data[2] > 0:
+            if (
+                (data[0] & 0xF0) == MIDIStatus.NOTE_ON
+                and len(data) >= 3
+                and data[2] > 0
+            ):
                 original_vel = data[2]
                 scaled_vel = int(original_vel * self.scale_factor)
                 data[2] = max(1, min(127, scaled_vel))  # Clamp to 1-127
@@ -40,7 +45,7 @@ class VelocityScaler:
 scaler = VelocityScaler(output_port, dest, scale_factor=0.8)
 
 # Feed it as in the Transpose Notes example; here is one message by hand
-scaler.process(bytes([0x90, 60, 100]))
+scaler.process(note_on("C4", 100))
 # --8<-- [end:example]
 
 capi.midi_client_dispose(client)

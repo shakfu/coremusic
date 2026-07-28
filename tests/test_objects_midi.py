@@ -6,7 +6,13 @@ from conftest import midi_or_skip
 from coremusic import capi
 from coremusic.base import CoreAudioObject
 from coremusic.exceptions import MIDIError
-from coremusic.midi import MIDIClient, MIDIInputPort, MIDIOutputPort, MIDIPort
+from coremusic.midi import (
+    MIDIClient,
+    MIDIInputPort,
+    MIDIOutputPort,
+    MIDIPort,
+    note_on,
+)
 
 # Check MIDI availability at module load time
 _MIDI_AVAILABLE = False
@@ -231,7 +237,7 @@ class TestMIDIOutputPort:
                     self.object_id = 54321
 
             mock_destination = MockEndpoint()
-            test_data = b"\x90@\x7f"
+            test_data = note_on("E4", 127)
             try:
                 port.send_data(mock_destination, test_data)
                 port.send_data(mock_destination, test_data, timestamp=1000)
@@ -251,7 +257,7 @@ class TestMIDIOutputPort:
                 self.object_id = 54321
 
         mock_destination = MockEndpoint()
-        test_data = b"\x90@\x7f"
+        test_data = note_on("E4", 127)
         with pytest.raises(RuntimeError, match="has been disposed"):
             port.send_data(mock_destination, test_data)
 
@@ -302,7 +308,7 @@ class TestMIDIIntegration:
             mock_destination = MockEndpoint(22222)
             try:
                 input_port.connect_source(mock_source)
-                output_port.send_data(mock_destination, b"\x90@\x7f")
+                output_port.send_data(mock_destination, note_on("E4", 127))
                 input_port.disconnect_source(mock_source)
             except MIDIError:
                 pass

@@ -7,7 +7,7 @@ import termios
 import time
 import tty
 
-from coremusic.midi import MIDIClient, get_destinations
+from coremusic.midi import MIDIClient, get_destinations, note_off, note_on
 
 
 class MIDIKeyboard:
@@ -50,10 +50,10 @@ class MIDIKeyboard:
 
     def play(self, note, velocity=100):
         """Play one note."""
-        self.port.send_data(self.destination, bytes([0x90, note, velocity]))
+        self.port.send_data(self.destination, note_on(note, velocity))
         print(f"Note On: {note}")
         time.sleep(self.NOTE_DURATION)
-        self.port.send_data(self.destination, bytes([0x80, note, 0]))
+        self.port.send_data(self.destination, note_off(note))
 
     def run(self):
         """Run keyboard input loop."""

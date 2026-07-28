@@ -12,10 +12,25 @@ import pytest
 from conftest import midi_or_skip
 
 from coremusic import capi
-from coremusic.midi import MIDIClient, MIDIMessageSplitter, split_midi_messages
+from coremusic.midi import (
+    MIDIClient,
+    MIDIMessageSplitter,
+    note_off,
+    note_on,
+    split_midi_messages,
+)
 
 # Timeout for a packet to make the round trip through the CoreMIDI server.
 DELIVERY_TIMEOUT = 5.0
+
+# Messages for the transport tests. The send and the assertion name the same
+# constant, so the two cannot drift apart - which is how
+# test_input_port_receives_from_virtual_source came to send two messages and
+# assert on one packet.
+NOTE_ON_E4 = note_on(64, 100)  # b"\x90\x40\x64"
+NOTE_OFF_E4 = note_off(64)  # b"\x80\x40\x00"
+NOTE_ON_CH2 = note_on(21, 69, channel=2)  # b"\x92\x15\x45"
+NOTE_OFF_CH2 = note_off(21, 32, channel=2)  # b"\x82\x15\x20"
 
 
 _MIDI_AVAILABLE = False
@@ -173,7 +188,7 @@ class TestVirtualDestinationReceive:
         # Issue #1: this used to jump to a NULL read proc and kill the process.
         dest = capi.midi_destination_create(client, "cm-test-dest-crash")
         out = capi.midi_output_port_create(client, "cm-test-out-crash")
-        capi.midi_send_data(out, dest, bytes([0x90, 0x40, 0x64]))
+        capi.midi_send_data(out, dest, NOTE_ON_E4)
         time.sleep(0.2)
         capi.midi_port_dispose(out)
         capi.midi_endpoint_dispose(dest)
@@ -182,8 +197,8 @@ class TestVirtualDestinationReceive:
         dest = capi.midi_destination_create(client, "cm-test-dest-poll")
         out = capi.midi_output_port_create(client, "cm-test-out-poll")
         try:
-            capi.midi_send_data(out, dest, bytes([0x92, 0x15, 0x45]))
-            assert payloads(collect(dest, 1)) == [b"\x92\x15\x45"]
+            capi.midi_send_data(out, dest, NOTE_ON_CH2)
+            assert payloads(collect(dest, 1)) == [NOTE_ON_CH2]
         finally:
             capi.midi_port_dispose(out)
             capi.midi_endpoint_dispose(dest)
@@ -210,9 +225,9 @@ class TestVirtualDestinationReceive:
         dest = capi.midi_destination_create(client, "cm-test-dest-cb", on_midi)
         out = capi.midi_output_port_create(client, "cm-test-out-cb")
         try:
-            capi.midi_send_data(out, dest, bytes([0x90, 0x40, 0x64]))
+            capi.midi_send_data(out, dest, NOTE_ON_E4)
             assert arrived.wait(DELIVERY_TIMEOUT)
-            assert received[0][0] == b"\x90\x40\x64"
+            assert received[0][0] == NOTE_ON_E4
         finally:
             capi.midi_port_dispose(out)
             capi.midi_endpoint_dispose(dest)
@@ -227,13 +242,13 @@ class TestVirtualDestinationReceive:
         dest = capi.midi_destination_create(client, "cm-test-dest-raise", on_midi)
         out = capi.midi_output_port_create(client, "cm-test-out-raise")
         try:
-            capi.midi_send_data(out, dest, bytes([0x90, 0x40, 0x64]))
+            capi.midi_send_data(out, dest, NOTE_ON_E4)
             deadline = time.monotonic() + DELIVERY_TIMEOUT
             while not calls and time.monotonic() < deadline:
                 time.sleep(0.05)
             assert calls
             # A second message must still be delivered after the failure.
-            capi.midi_send_data(out, dest, bytes([0x80, 0x40, 0x00]))
+            capi.midi_send_data(out, dest, NOTE_OFF_E4)
             time.sleep(0.3)
             assert len(calls) >= 2
         finally:
@@ -264,12 +279,12 @@ class TestInputPortReceive:
             # Give the CoreMIDI server time to establish the connection.
             time.sleep(0.2)
 
-            capi.midi_received(source, bytes([0x92, 0x15, 0x45]))
-            capi.midi_received(source, bytes([0x82, 0x15, 0x20]))
+            capi.midi_received(source, NOTE_ON_CH2)
+            capi.midi_received(source, NOTE_OFF_CH2)
 
             messages = collect_messages(port, 2)
-            assert b"\x92\x15\x45" in messages
-            assert b"\x82\x15\x20" in messages
+            assert NOTE_ON_CH2 in messages
+            assert NOTE_OFF_CH2 in messages
         finally:
             capi.midi_port_dispose(port)
             capi.midi_endpoint_dispose(source)
@@ -282,7 +297,7 @@ class TestInputPortReceive:
             time.sleep(0.2)
 
             sent_at = capi.midi_current_host_time()
-            capi.midi_received(source, bytes([0x90, 0x40, 0x64]), sent_at)
+            capi.midi_received(source, NOTE_ON_E4, sent_at)
 
             events = collect(port, 1)
             assert events
@@ -313,7 +328,7 @@ class TestInputPortReceive:
 
             # Space the sends out so CoreMIDI cannot merge them into one packet.
             for i in range(3):
-                capi.midi_received(source, bytes([0x90, 0x40 + i, 0x64]))
+                capi.midi_received(source, note_on(64 + i, 100))
                 time.sleep(0.05)
 
             # Wait for arrival without draining the queue.
@@ -382,11 +397,11 @@ class TestMIDIInputPortObject:
             try:
                 capi.midi_port_connect_source(port.object_id, source_id)
                 time.sleep(0.2)
-                capi.midi_received(source_id, bytes([0x90, 0x40, 0x64]))
+                capi.midi_received(source_id, NOTE_ON_E4)
 
                 assert port.wait(DELIVERY_TIMEOUT)
                 events = port.poll()
-                assert payloads(events) == [b"\x90\x40\x64"]
+                assert payloads(events) == [NOTE_ON_E4]
                 assert port.pending == 0
                 assert port.dropped == 0
             finally:
@@ -408,8 +423,8 @@ class TestMIDIInputPortObject:
                 client.object_id, "cm-test-object-send-dest"
             )
             try:
-                out.send_data(Endpoint(dest_id), bytes([0x90, 0x40, 0x64]))
-                assert payloads(collect(dest_id, 1)) == [b"\x90\x40\x64"]
+                out.send_data(Endpoint(dest_id), NOTE_ON_E4)
+                assert payloads(collect(dest_id, 1)) == [NOTE_ON_E4]
             finally:
                 capi.midi_endpoint_dispose(dest_id)
         finally:
@@ -431,9 +446,9 @@ class TestMIDIInputPortObject:
             try:
                 capi.midi_port_connect_source(port.object_id, source_id)
                 time.sleep(0.2)
-                capi.midi_received(source_id, bytes([0x90, 0x40, 0x64]))
+                capi.midi_received(source_id, NOTE_ON_E4)
                 assert arrived.wait(DELIVERY_TIMEOUT)
-                assert received[0] == b"\x90\x40\x64"
+                assert received[0] == NOTE_ON_E4
             finally:
                 capi.midi_endpoint_dispose(source_id)
         finally:

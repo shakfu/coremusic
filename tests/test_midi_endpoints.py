@@ -24,10 +24,19 @@ from coremusic.midi import (
     find_source,
     get_destinations,
     get_sources,
+    note_on,
 )
 
 # Timeout for a packet to make the round trip through the CoreMIDI server.
 DELIVERY_TIMEOUT = 5.0
+
+# Messages for the transport tests. The send and the assertion name the same
+# constant, so the two cannot drift apart.
+NOTE_ON_C4 = note_on("C4", 127)  # b"\x90\x3c\x7f"
+NOTE_ON_E4 = note_on("E4", 100)  # b"\x90\x40\x64"
+NOTE_ON_F4 = note_on("F4", 100)  # b"\x90\x41\x64"
+NOTE_ON_FS4 = note_on("F#4", 100)  # b"\x90\x42\x64"
+NOTE_ON_G4 = note_on("G4", 100)  # b"\x90\x43\x64"
 
 
 _MIDI_AVAILABLE = False
@@ -83,9 +92,9 @@ class TestVirtualDestination:
         output_port = client.create_output_port("Output")
         destination = client.create_virtual_destination("cm-test-readme-dest")
 
-        output_port.send_data(destination, b"\x90\x3c\x7f")  # Note On
+        output_port.send_data(destination, NOTE_ON_C4)
 
-        assert payloads(collect(destination, 1)) == [b"\x90\x3c\x7f"]
+        assert payloads(collect(destination, 1)) == [NOTE_ON_C4]
 
     def test_endpoint_attributes(self, client):
         destination = client.create_virtual_destination("cm-test-attrs-dest")
@@ -102,15 +111,15 @@ class TestVirtualDestination:
         output_port = client.create_output_port("cm-test-rawid-out")
         destination = client.create_virtual_destination("cm-test-rawid-dest")
 
-        output_port.send_data(destination.object_id, b"\x90\x40\x64")
+        output_port.send_data(destination.object_id, NOTE_ON_E4)
 
-        assert payloads(collect(destination, 1)) == [b"\x90\x40\x64"]
+        assert payloads(collect(destination, 1)) == [NOTE_ON_E4]
 
     def test_send_rejects_non_endpoint(self, client):
         output_port = client.create_output_port("cm-test-badarg-out")
 
         with pytest.raises(MIDIError):
-            output_port.send_data("not-an-endpoint", b"\x90\x40\x64")
+            output_port.send_data("not-an-endpoint", NOTE_ON_E4)
 
     def test_callback_destination(self, client):
         received = []
@@ -119,12 +128,12 @@ class TestVirtualDestination:
         )
         output_port = client.create_output_port("cm-test-cb-out")
 
-        output_port.send_data(destination, b"\x90\x40\x64")
+        output_port.send_data(destination, NOTE_ON_E4)
 
         deadline = time.monotonic() + DELIVERY_TIMEOUT
         while not received and time.monotonic() < deadline:
             time.sleep(0.05)
-        assert received == [b"\x90\x40\x64"]
+        assert received == [NOTE_ON_E4]
         # A callback destination buffers nothing.
         assert destination.pending == 0
 
@@ -169,10 +178,10 @@ class TestVirtualSource:
         # Give CoreMIDI time to establish the connection.
         time.sleep(0.2)
 
-        source.send(b"\x90\x40\x64")
+        source.send(NOTE_ON_E4)
 
         assert input_port.wait(DELIVERY_TIMEOUT)
-        assert payloads(input_port.poll()) == [b"\x90\x40\x64"]
+        assert payloads(input_port.poll()) == [NOTE_ON_E4]
 
     def test_connect_source_accepts_raw_endpoint_id(self, client):
         source = client.create_virtual_source("cm-test-src-rawid")
@@ -180,10 +189,10 @@ class TestVirtualSource:
         input_port.connect_source(source.object_id)
         time.sleep(0.2)
 
-        source.send(b"\x90\x41\x64")
+        source.send(NOTE_ON_F4)
 
         assert input_port.wait(DELIVERY_TIMEOUT)
-        assert payloads(input_port.poll()) == [b"\x90\x41\x64"]
+        assert payloads(input_port.poll()) == [NOTE_ON_F4]
 
     def test_connect_source_rejects_non_endpoint(self, client):
         input_port = client.create_input_port("cm-test-src-badarg-in")
@@ -199,7 +208,7 @@ class TestVirtualSource:
 
         input_port.disconnect_source(source)
         time.sleep(0.2)
-        source.send(b"\x90\x42\x64")
+        source.send(NOTE_ON_FS4)
 
         assert not input_port.wait(0.5)
         assert input_port.poll() == []
@@ -263,9 +272,9 @@ class TestEndpointDiscovery:
         assert discovered is not None
 
         output_port = client.create_output_port("cm-test-discovered-send-out")
-        output_port.send_data(discovered, b"\x90\x43\x64")
+        output_port.send_data(discovered, NOTE_ON_G4)
 
-        assert payloads(collect(owned, 1)) == [b"\x90\x43\x64"]
+        assert payloads(collect(owned, 1)) == [NOTE_ON_G4]
 
 
 @requires_midi

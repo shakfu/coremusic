@@ -2,13 +2,13 @@
 """Send Control Change messages."""
 
 # --8<-- [start:example]
-from coremusic.midi import MIDIClient, get_destinations
+from coremusic.midi import MIDIClient, control_change, get_destinations
 
 
 def send_cc(port, destination, controller, value, channel=0):
     """Send Control Change message."""
     # CC message: 0xB0 + channel, controller number, value
-    port.send_data(destination, bytes([0xB0 + channel, controller, value]))
+    port.send_data(destination, control_change(controller, value, channel=channel))
     print(f"CC {controller}: {value}")
 
 

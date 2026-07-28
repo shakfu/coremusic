@@ -148,6 +148,7 @@ def cmd_play(args: argparse.Namespace) -> int:
     import time
 
     from coremusic import capi
+    from coremusic.midi import all_notes_off
     from coremusic.midi.utilities import MIDISequence
 
     path = require_file(args.file)
@@ -231,9 +232,7 @@ def cmd_play(args: argparse.Namespace) -> int:
         # Send all notes off
         for channel in range(16):
             try:
-                # All notes off (CC 123)
-                all_notes_off = bytes([0xB0 | channel, 123, 0])
-                capi.midi_send_data(port_id, dest_id, all_notes_off, 0)
+                capi.midi_send_data(port_id, dest_id, all_notes_off(channel=channel), 0)
             except Exception:
                 pass
 

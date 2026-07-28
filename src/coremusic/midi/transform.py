@@ -816,11 +816,11 @@ class ScaleFilter(MIDITransformer):
     Example:
         >>> from coremusic.music.theory import Note, Scale, ScaleType
         >>> # Only keep notes in C major
-        >>> c_major = Scale(Note.from_name("C4"), ScaleType.MAJOR)
+        >>> c_major = Scale(Note("C", 4), ScaleType.MAJOR)
         >>> filtered = ScaleFilter(c_major).transform(sequence)
         >>>
         >>> # Only keep notes in A minor pentatonic
-        >>> a_pent = Scale(Note.from_name("A3"), ScaleType.MINOR_PENTATONIC)
+        >>> a_pent = Scale(Note("A", 3), ScaleType.MINOR_PENTATONIC)
         >>> filtered = ScaleFilter(a_pent).transform(sequence)
     """
 

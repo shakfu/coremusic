@@ -4,7 +4,7 @@
 # --8<-- [start:example]
 import time
 
-from coremusic.midi import MIDIClient
+from coremusic.midi import MIDIClient, note_off, note_on
 
 
 class Synth:
@@ -23,9 +23,9 @@ class Synth:
         self.destination = self.client.create_virtual_destination(f"{name} In")
 
     def note(self, note, velocity=100, duration=0.2):
-        self.port.send_data(self.destination, bytes([0x90, note, velocity]))
+        self.port.send_data(self.destination, note_on(note, velocity))
         time.sleep(duration)
-        self.port.send_data(self.destination, bytes([0x80, note, 0]))
+        self.port.send_data(self.destination, note_off(note))
 
     def close(self):
         self.client.dispose()

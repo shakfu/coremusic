@@ -5,6 +5,7 @@
 import time
 
 from coremusic import capi
+from coremusic.midi import note_off, note_on
 
 # Create MIDI client and output port
 client = capi.midi_client_create("MIDI Output")
@@ -17,16 +18,14 @@ if capi.midi_get_number_of_destinations() > 0:
 else:
     dest = capi.midi_destination_create(client, "Cookbook Output")
 
-# Send Note On
-note_on = bytes([0x90, 60, 100])  # Channel 1, Middle C, Velocity 100
-capi.midi_send_data(output_port, dest, note_on)
+# Send Note On (middle C, velocity 100, channel 0)
+capi.midi_send_data(output_port, dest, note_on("C4", 100))
 print("Sent Note On")
 
 time.sleep(1.0)
 
 # Send Note Off
-note_off = bytes([0x80, 60, 0])  # Channel 1, Middle C
-capi.midi_send_data(output_port, dest, note_off)
+capi.midi_send_data(output_port, dest, note_off("C4"))
 print("Sent Note Off")
 
 # Cleanup

@@ -3,6 +3,7 @@
 
 This package contains MIDI-related modules:
 - core: MIDI client and port classes (MIDIClient, MIDIPort, MIDIInputPort, MIDIOutputPort)
+- messages: Builders for channel voice messages (note_on, control_change, etc.)
 - player: Music sequencing and playback (MusicPlayer, MusicSequence, MusicTrack)
 - link: Ableton Link + MIDI integration (LinkMIDIClock, LinkMIDISequencer)
 - utilities: High-level MIDI file I/O, sequencing, and routing
@@ -26,6 +27,21 @@ from .core import (
     get_destinations,
     get_sources,
     split_midi_messages,
+)
+from .messages import (
+    DEFAULT_VELOCITY,
+    PITCH_BEND_CENTER,
+    PITCH_BEND_MAX,
+    NoteLike,
+    all_notes_off,
+    all_sound_off,
+    channel_aftertouch,
+    control_change,
+    note_off,
+    note_on,
+    pitch_bend,
+    poly_aftertouch,
+    program_change,
 )
 from .player import MusicPlayer, MusicSequence, MusicTrack
 
@@ -80,6 +96,20 @@ __all__ = [
     "MIDIEndpoint",
     "MIDIMessageSplitter",
     "split_midi_messages",
+    # Channel voice message builders
+    "note_on",
+    "note_off",
+    "control_change",
+    "program_change",
+    "pitch_bend",
+    "poly_aftertouch",
+    "channel_aftertouch",
+    "all_notes_off",
+    "all_sound_off",
+    "PITCH_BEND_CENTER",
+    "PITCH_BEND_MAX",
+    "DEFAULT_VELOCITY",
+    "NoteLike",
     # Endpoint discovery
     "get_sources",
     "get_destinations",

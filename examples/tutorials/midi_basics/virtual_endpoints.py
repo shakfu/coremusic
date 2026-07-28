@@ -4,7 +4,7 @@
 # --8<-- [start:destination]
 import time
 
-from coremusic.midi import MIDIClient
+from coremusic.midi import MIDIClient, note_off, note_on
 
 with MIDIClient("My Synth") as client:
     # Other applications now see "My Synth Input" as a MIDI output
@@ -26,12 +26,12 @@ with MIDIClient("My Synth (callback)") as client:
     time.sleep(0.2)
 
 # --8<-- [start:source]
-from coremusic.midi import MIDIClient
+from coremusic.midi import MIDIClient, note_off, note_on
 
 with MIDIClient("My Controller") as client:
     # Other applications now see "My Controller Out" as a MIDI input
     source = client.create_virtual_source("My Controller Out")
 
-    source.send(bytes([0x90, 60, 100]))  # Note On
-    source.send(bytes([0x80, 60, 0]))    # Note Off
+    source.send(note_on("C4", 100))
+    source.send(note_off("C4"))
 # --8<-- [end:source]

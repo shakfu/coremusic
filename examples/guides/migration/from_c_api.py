@@ -64,6 +64,7 @@ capi.audio_component_instance_dispose(unit)
 
 # --8<-- [start:midi]
 from coremusic import capi
+from coremusic.midi import note_on
 
 # Create MIDI client
 client = capi.midi_client_create("MyClient")
@@ -75,8 +76,8 @@ output_port = capi.midi_output_port_create(client, "Output")
 dest = capi.midi_destination_create(client, "MyClient Destination")
 
 # Send note
-note_on = bytes([0x90, 60, 100])
-capi.midi_send_data(output_port, dest, note_on)
+message = note_on("C4", 100)
+capi.midi_send_data(output_port, dest, message)
 
 capi.midi_client_dispose(client)
 # --8<-- [end:midi]

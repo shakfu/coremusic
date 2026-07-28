@@ -2,7 +2,7 @@
 """The mido operations, done with coremusic."""
 
 # --8<-- [start:ports]
-from coremusic.midi import MIDIClient, get_destinations
+from coremusic.midi import MIDIClient, get_destinations, note_on
 
 # List ports
 for destination in get_destinations():
@@ -16,8 +16,8 @@ destinations = get_destinations()
 dest = destinations[0] if destinations else client.create_virtual_destination("Out")
 
 # Send note on
-note_on = bytes([0x90, 60, 100])  # Channel 0, note 60, velocity 100
-port.send_data(dest, note_on)
+message = note_on("C4", 100)  # Channel 0, note 60, velocity 100
+port.send_data(dest, message)
 
 client.dispose()
 # --8<-- [end:ports]

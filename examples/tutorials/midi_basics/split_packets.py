@@ -3,7 +3,7 @@
 
 import time
 
-from coremusic.midi import MIDIClient
+from coremusic.midi import MIDIClient, note_off, note_on
 
 with MIDIClient("Splitter Demo") as client:
     input_port = client.create_input_port("Input")
@@ -12,7 +12,7 @@ with MIDIClient("Splitter Demo") as client:
     time.sleep(0.2)
 
     # Two messages in one packet, which is exactly what a splitter is for.
-    source.send(bytes([0x90, 60, 100, 0x80, 60, 0]))
+    source.send(note_on("C4", 100) + note_off("C4"))
     input_port.wait(2.0)
 
     # --8<-- [start:example]
