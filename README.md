@@ -49,12 +49,14 @@ Check feature availability at runtime:
 
 ```python
 from coremusic.base import NUMPY_AVAILABLE
+from coremusic.audio import AudioFile
 from coremusic.audio.analysis import AudioAnalyzer
 import coremusic.utils.scipy as spu
 
 if NUMPY_AVAILABLE:
     # NumPy-based features available
-    data = audio.read_as_numpy()
+    with AudioFile("song.wav") as audio:
+        data = audio.read_as_numpy()
 
 if spu.SCIPY_AVAILABLE:
     # SciPy-based analysis available
@@ -240,6 +242,8 @@ player.stop()
 ### AudioUnit Plugins
 
 ```python
+import time
+
 from coremusic.audio.audiounit_host import AudioUnitHost
 
 # Discover and use plugins

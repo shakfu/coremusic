@@ -196,20 +196,20 @@ __all__ = [
 if CYTHON_OPS_AVAILABLE:
     __all__.extend(
         [
-            "normalize_audio",
-            "apply_gain",
-            "calculate_rms",
-            "calculate_peak",
-            "normalize_audio_float32",
-            "apply_gain_float32",
-            "mix_audio_float32",
-            "convert_float32_to_int16",
-            "convert_int16_to_float32",
-            "stereo_to_mono_float32",
-            "mono_to_stereo_float32",
             "apply_fade_in_float32",
             "apply_fade_out_float32",
-            "calculate_rms_float32",
+            "apply_gain",
+            "apply_gain_float32",
+            "calculate_peak",
             "calculate_peak_float32",
+            "calculate_rms",
+            "calculate_rms_float32",
+            "convert_float32_to_int16",
+            "convert_int16_to_float32",
+            "mix_audio_float32",
+            "mono_to_stereo_float32",
+            "normalize_audio",
+            "normalize_audio_float32",
+            "stereo_to_mono_float32",
         ]
     )

@@ -8,6 +8,7 @@ def process_chunk(chunk):
 # --8<-- [start:example]
 from coremusic.audio import AudioFile
 
+
 def stream_audio(filepath, chunk_size=4096):
     """Stream audio data as a generator."""
     with AudioFile(filepath) as audio:

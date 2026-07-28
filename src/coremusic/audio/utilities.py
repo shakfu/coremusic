@@ -17,8 +17,9 @@ from __future__ import annotations
 import glob
 import logging
 import struct
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from coremusic.base import NUMPY_AVAILABLE
 
@@ -86,7 +87,7 @@ def parse_audio_stream_basic_description(format_data: bytes) -> dict[str, Any]:
     Example::
 
         from coremusic.audio.utilities import parse_audio_stream_basic_description
-        import coremusic.capi as capi
+        from coremusic import capi
 
         # Using functional API
         file_id = capi.audio_file_open_url("audio.wav")
@@ -295,6 +296,30 @@ _UNWRITABLE_OUTPUT_REASONS = {
 }
 
 
+def _adjust_pcm_format_for_container(
+    output_format: AudioFormat, file_type: int
+) -> AudioFormat:
+    """Return a PCM format the container will actually accept.
+
+    Only AIFF constrains this: it carries big-endian signed integer samples,
+    so a format carried over from a little-endian source has to be rewritten
+    or `ExtAudioFileCreateWithURL` rejects it with
+    `kAudioFileStreamError_UnsupportedDataFormat`.
+    """
+    from coremusic.constants import AudioFileType
+
+    if file_type != AudioFileType.AIFF:
+        return output_format
+
+    return AudioFormat.pcm(
+        sample_rate=output_format.sample_rate,
+        channels=output_format.channels_per_frame,
+        bits=output_format.bits_per_channel,
+        is_float=False,
+        big_endian=True,
+    )
+
+
 def _compressed_output_format(
     output_path: str, requested: AudioFormat
 ) -> AudioFormat | None:
@@ -335,8 +360,11 @@ def _compressed_output_format(
                 f"it supports {', '.join(sorted(allowed))}."
             )
         # Normalize to a well-formed compressed ASBD at the requested rate/channels.
-        factory = {"aac ": AudioFormat.aac, "alac": AudioFormat.alac,
-                   "flac": AudioFormat.flac}[codec]
+        factory = {
+            "aac ": AudioFormat.aac,
+            "alac": AudioFormat.alac,
+            "flac": AudioFormat.flac,
+        }[codec]
         return factory(sample_rate=sr, channels=ch)
 
     if ext not in compressed_exts:
@@ -366,8 +394,7 @@ def resolve_output_file_type(output_path: str) -> int:
     if reason:
         raise ValueError(f"Cannot write '{ext}' files: {reason}.")
     raise ValueError(
-        f"Unsupported output format '{ext}'. "
-        f"Supported: {', '.join(sorted(supported))}."
+        f"Unsupported output format '{ext}'. Supported: {', '.join(sorted(supported))}."
     )
 
 
@@ -455,6 +482,11 @@ def convert_audio_file(
                 input_file, source_format, output_path, file_type, codec, bitrate
             )
             return
+
+        # AIFF stores big-endian signed integer PCM and nothing else, so a
+        # format inherited from a little-endian source (any WAV) is rejected by
+        # ExtAudioFileCreateWithURL. Re-describe it for the container.
+        output_format = _adjust_pcm_format_for_container(output_format, file_type)
 
         # Read all audio data
         audio_data, packet_count = input_file.read_packets(0, 999999999)
@@ -903,7 +935,7 @@ class AudioEffectsChain:
             del self._nodes[node_id]
         self._graph.remove_node(node_id)
 
-    def open(self) -> "AudioEffectsChain":
+    def open(self) -> AudioEffectsChain:
         """Open the graph (opens all AudioUnits).
 
         Returns:
@@ -912,7 +944,7 @@ class AudioEffectsChain:
         self._graph.open()
         return self
 
-    def initialize(self) -> "AudioEffectsChain":
+    def initialize(self) -> AudioEffectsChain:
         """Initialize the graph (prepares for rendering).
 
         Returns:
@@ -938,7 +970,7 @@ class AudioEffectsChain:
             pass
         self._graph.dispose()
 
-    def __enter__(self) -> "AudioEffectsChain":
+    def __enter__(self) -> AudioEffectsChain:
         """Context manager entry"""
         return self
 

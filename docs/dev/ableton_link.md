@@ -4,6 +4,13 @@
 >
 > Ableton Link has been fully integrated into CoreMusic, providing professional tempo synchronization and network music capabilities. See [Implementation Status](#implementation-status) for details.
 
+> **Historical.** This note predates the 0.2.3 package reorganisation, which
+> dissolved the flat modules into domain subpackages: `objects.py` into
+> `audio/` and `midi/`, `utilities.py` into `audio/utilities.py`,
+> `audiounit_host.py` into `audio/`, and `link_midi.py` into `midi/link.py`.
+> Paths below are as they were when it was written.
+> The Python layer shown in the diagram below is now `src/coremusic/link.pyx` plus `src/coremusic/midi/link.py`.
+
 ## Overview
 
 This document describes the Ableton Link integration in CoreMusic, which provides tempo synchronization and network music capabilities.
@@ -1437,10 +1444,13 @@ The Ableton Link integration has been successfully implemented and is production
 [x] **Documentation & Examples**
 
 - Complete integration guide: `docs/link_integration.md`
-- Interactive demos:
-  - `tests/demos/link_high_level_demo.py` - Basic Link usage
-  - `tests/demos/link_midi_demo.py` - MIDI clock sync
-  - `tests/demos/link_audio_demo.py` - Audio integration
+- Interactive demos (the three scripts named here were removed in `fb50106`;
+  the same ground is now covered by `demos/link_sequencer.py`, a Link-synced
+  step sequencer, and by the runnable snippets in
+  `examples/cookbook/link_integration/` and `examples/link_integration/`):
+  - `link_high_level_demo.py` - Basic Link usage
+  - `link_midi_demo.py` - MIDI clock sync
+  - `link_audio_demo.py` - Audio integration
 - README.md updated with Link examples
 - API reference for all classes
 

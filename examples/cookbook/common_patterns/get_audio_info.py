@@ -2,9 +2,10 @@
 """Simple Cache."""
 
 # --8<-- [start:example]
+from functools import lru_cache
+
 from coremusic.audio import AudioFile
 
-from functools import lru_cache
 
 @lru_cache(maxsize=100)
 def get_audio_info(filepath):

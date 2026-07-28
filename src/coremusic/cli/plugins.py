@@ -6,7 +6,7 @@ import argparse
 import logging
 from typing import Any
 
-import coremusic.capi as capi
+from coremusic import capi
 
 from ._formatters import output_json, output_table
 from ._mappings import PLUGIN_TYPES, get_plugin_type, get_plugin_type_display
@@ -181,7 +181,7 @@ def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) ->
 
 def _get_all_plugins(type_code: str | None = None) -> list[dict[str, Any]]:
     """Get all plugins with their info."""
-    import coremusic.capi as capi
+    from coremusic import capi
 
     component_ids = capi.audio_unit_find_all_components(type_code)
     components = []
@@ -216,7 +216,7 @@ def cmd_list(args: argparse.Namespace) -> int:
         output_json(components)
     elif args.name_only:
         # Print unique names only
-        names = sorted(set(c.get("name", "Unknown") for c in components))
+        names = sorted({c.get("name", "Unknown") for c in components})
         for name in names:
             print(name)
     else:
@@ -281,7 +281,7 @@ def _find_plugin_by_name(name: str) -> dict[str, Any]:
 
 def _get_component_id_for_plugin(plugin_info: dict[str, Any]) -> int:
     """Get the component ID for a plugin by searching for it."""
-    import coremusic.capi as capi
+    from coremusic import capi
 
     # Search all components to find matching one
     component_ids = capi.audio_unit_find_all_components(None)
@@ -300,7 +300,7 @@ def _get_component_id_for_plugin(plugin_info: dict[str, Any]) -> int:
 
 def cmd_info(args: argparse.Namespace) -> int:
     """Show detailed plugin information."""
-    import coremusic.capi as capi
+    from coremusic import capi
 
     plugin = _find_plugin_by_name(args.name)
 
@@ -332,7 +332,7 @@ def cmd_info(args: argparse.Namespace) -> int:
 
 def cmd_params(args: argparse.Namespace) -> int:
     """List plugin parameters."""
-    import coremusic.capi as capi
+    from coremusic import capi
 
     plugin = _find_plugin_by_name(args.name)
     comp_id = _get_component_id_for_plugin(plugin)
@@ -408,7 +408,7 @@ def cmd_params(args: argparse.Namespace) -> int:
 
 def cmd_preset_list(args: argparse.Namespace) -> int:
     """List factory presets for a plugin."""
-    import coremusic.capi as capi
+    from coremusic import capi
 
     plugin = _find_plugin_by_name(args.name)
     comp_id = _get_component_id_for_plugin(plugin)
@@ -453,7 +453,7 @@ def cmd_preset_list(args: argparse.Namespace) -> int:
 
 def _load_preset_by_name_or_number(au_id: int, preset_arg: str) -> str | None:
     """Load a factory preset by name or number. Returns preset name if found."""
-    import coremusic.capi as capi
+    from coremusic import capi
 
     presets = capi.audio_unit_get_factory_presets(au_id)
     if not presets:
@@ -516,7 +516,7 @@ def cmd_process(args: argparse.Namespace) -> int:
                 audio_file.object_id, 0, total_frames
             )
     except Exception as e:
-        raise CLIError(f"Failed to read audio file: {e}")
+        raise CLIError(f"Failed to read audio file: {e}") from e
 
     if not args.json:
         print(f"Processing: {input_path.name}")
@@ -641,7 +641,9 @@ def _parse_plugin_spec(spec: str) -> dict[str, Any]:
             try:
                 params[key.strip()] = float(val.strip())
             except ValueError:
-                raise CLIError(f"Parameter value must be numeric: {key}={val}")
+                raise CLIError(
+                    f"Parameter value must be numeric: {key}={val}"
+                ) from None
         result["params"] = params
     return result
 
@@ -676,18 +678,18 @@ def _load_chain_config(config_path: str) -> list[dict[str, Any]]:
         try:
             data = json.loads(text)
         except json.JSONDecodeError as e:
-            raise CLIError(f"Invalid JSON in config file: {e}")
+            raise CLIError(f"Invalid JSON in config file: {e}") from e
     elif path.suffix in (".yaml", ".yml"):
         try:
             import yaml  # type: ignore[import-untyped]
-        except ImportError:
+        except ImportError as e:
             raise CLIError(
                 "PyYAML is required for YAML config files: pip install pyyaml"
-            )
+            ) from e
         try:
             data = yaml.safe_load(text)
         except yaml.YAMLError as e:
-            raise CLIError(f"Invalid YAML in config file: {e}")
+            raise CLIError(f"Invalid YAML in config file: {e}") from e
     else:
         raise CLIError(
             f"Unsupported config format: {path.suffix} (use .json or .yaml/.yml)"
@@ -811,7 +813,7 @@ def cmd_chain(args: argparse.Namespace) -> int:
                 audio_file.object_id, 0, total_frames
             )
     except Exception as e:
-        raise CLIError(f"Failed to read audio file: {e}")
+        raise CLIError(f"Failed to read audio file: {e}") from e
 
     plugin_names = [p.get("name") for p, _ in resolved]
     if not args.json:
@@ -940,7 +942,7 @@ def cmd_render(args: argparse.Namespace) -> int:
     try:
         seq = MIDISequence.load(str(midi_path))
     except Exception as e:
-        raise CLIError(f"Failed to load MIDI file: {e}")
+        raise CLIError(f"Failed to load MIDI file: {e}") from e
 
     sample_rate = args.sample_rate
     num_channels = 2
@@ -965,7 +967,7 @@ def cmd_render(args: argparse.Namespace) -> int:
             preset=args.preset,
         )
     except ValueError as e:
-        raise CLIError(str(e))
+        raise CLIError(str(e)) from e
 
     if args.json:
         output_json(

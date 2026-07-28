@@ -5,6 +5,13 @@
 
 This document analyzes the potential refactoring of existing error handling code to use the new decorator pattern implemented in `src/coremusic/os_status.py`.
 
+> **Historical.** This note predates the 0.2.3 package reorganisation, which
+> dissolved the flat modules into domain subpackages: `objects.py` into
+> `audio/` and `midi/`, `utilities.py` into `audio/utilities.py`,
+> `audiounit_host.py` into `audio/`, and `link_midi.py` into `midi/link.py`.
+> Paths below are as they were when it was written.
+> The error-handling sites counted under `objects.py` are now spread across `src/coremusic/audio/` and `src/coremusic/midi/`.
+
 ## Overview
 
 New error handling decorators have been implemented and tested (64/64 tests passing):

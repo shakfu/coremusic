@@ -171,7 +171,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
     # ========================================================================
 
     def _compute_fft(
-        self, audio_data: "NDArray", sample_rate: float
+        self, audio_data: NDArray, sample_rate: float
     ) -> tuple[NDArray, NDArray]:
         """Compute FFT of audio data.
 
@@ -197,7 +197,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
 
         return freqs, mags
 
-    def _spectral_centroid(self, freqs: "NDArray", mags: "NDArray") -> float:
+    def _spectral_centroid(self, freqs: NDArray, mags: NDArray) -> float:
         """Compute spectral centroid.
 
         Args:
@@ -212,7 +212,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
         return float(np.sum(freqs * mags) / np.sum(mags))
 
     def _spectral_rolloff(
-        self, freqs: "NDArray", mags: "NDArray", rolloff_percent: float = 0.85
+        self, freqs: NDArray, mags: NDArray, rolloff_percent: float = 0.85
     ) -> float:
         """Compute spectral rolloff.
 
@@ -232,7 +232,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
         return 0.0
 
     def _find_spectral_peaks(
-        self, freqs: "NDArray", mags: "NDArray", num_peaks: int = 10
+        self, freqs: NDArray, mags: NDArray, num_peaks: int = 10
     ) -> list[tuple[float, float]]:
         """Find spectral peaks.
 
@@ -303,7 +303,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
     # Onset Detection
     # ========================================================================
 
-    def _detect_onsets(self, audio_data: "NDArray", sample_rate: float) -> "NDArray":
+    def _detect_onsets(self, audio_data: NDArray, sample_rate: float) -> NDArray:
         """Detect onsets in audio.
 
         Args:
@@ -339,7 +339,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
     # Beat Detection
     # ========================================================================
 
-    def _estimate_tempo(self, onsets: "NDArray") -> tuple[float, list[float]]:
+    def _estimate_tempo(self, onsets: NDArray) -> tuple[float, list[float]]:
         """Estimate tempo from onset times.
 
         Args:
@@ -401,7 +401,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
     # ========================================================================
 
     def _autocorrelation_pitch(
-        self, audio_data: "NDArray", sample_rate: float
+        self, audio_data: NDArray, sample_rate: float
     ) -> float | None:
         """Detect pitch using autocorrelation.
 
@@ -502,7 +502,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
     # MFCC Extraction
     # ========================================================================
 
-    def _mel_filterbank(self, n_fft: int, n_mels: int, sample_rate: float) -> "NDArray":
+    def _mel_filterbank(self, n_fft: int, n_mels: int, sample_rate: float) -> NDArray:
         """Create mel filterbank.
 
         Args:
@@ -546,7 +546,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
 
         return filterbank
 
-    def extract_mfcc(self, n_mfcc: int = 13) -> "NDArray":
+    def extract_mfcc(self, n_mfcc: int = 13) -> NDArray:
         """Extract Mel-Frequency Cepstral Coefficients.
 
         Args:
@@ -588,7 +588,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
     # Chroma and Key Detection
     # ========================================================================
 
-    def _compute_chroma(self, audio_data: "NDArray", sample_rate: float) -> "NDArray":
+    def _compute_chroma(self, audio_data: NDArray, sample_rate: float) -> NDArray:
         """Compute chromagram.
 
         Args:
@@ -629,7 +629,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
 
         return chroma  # type: ignore[no-any-return]
 
-    def _estimate_key(self, chroma: "NDArray") -> tuple[str, str]:
+    def _estimate_key(self, chroma: NDArray) -> tuple[str, str]:
         """Estimate musical key from chroma features.
 
         Args:
@@ -802,7 +802,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
         z_values = []
         for start in range(0, n_samples - block_size + 1, hop):
             power = 0.0
-            for weight, y in zip(weights, weighted):
+            for weight, y in zip(weights, weighted, strict=True):
                 block = y[start : start + block_size]
                 power += weight * float(np.mean(block * block))
             z_values.append(power)
@@ -902,7 +902,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
     # Audio Fingerprinting
     # ========================================================================
 
-    def _generate_fingerprint(self, audio_data: "NDArray", sample_rate: float) -> str:
+    def _generate_fingerprint(self, audio_data: NDArray, sample_rate: float) -> str:
         """Generate audio fingerprint.
 
         Args:
@@ -1209,9 +1209,9 @@ class LivePitchDetector:
 
         self.sample_rate = sample_rate
         self.buffer_size = buffer_size
-        self._buffer: "NDArray" = np.zeros(buffer_size)
+        self._buffer: NDArray = np.zeros(buffer_size)
 
-    def process(self, audio_chunk: "NDArray") -> PitchInfo | None:
+    def process(self, audio_chunk: NDArray) -> PitchInfo | None:
         """Process audio chunk and detect pitch.
 
         Args:
@@ -1236,7 +1236,7 @@ class LivePitchDetector:
         return None
 
     def _detect_pitch_autocorrelation(
-        self, buffer: "NDArray", sr: float
+        self, buffer: NDArray, sr: float
     ) -> float | None:
         """Detect pitch using autocorrelation.
 

@@ -2,11 +2,10 @@
 """Looping MIDI Patterns."""
 
 # --8<-- [start:example]
-import coremusic.capi as capi
-from coremusic import link
-
-from coremusic.midi import link as link_midi
 import time
+
+from coremusic import capi, link
+from coremusic.midi import link as link_midi
 
 client = capi.midi_client_create("Loop Sequencer")
 port = capi.midi_output_port_create(client, "Loop Out")

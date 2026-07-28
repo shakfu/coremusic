@@ -22,7 +22,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.2.5]
+
 ### Added
+
+- **`demos/plot_audio.py`** - Renders a waveform, spectrogram, or frequency spectrum to a PNG, replacing the three separate visualization scripts from `tests/demos/`. Plotting was the one capability those scripts covered that nothing else demonstrates as a runnable program.
+
+- **`demos/stream_latency.py`** - What each real-time buffer size costs in latency, computed or measured against a live loopback with `--measure`.
 
 - **`MIDIEndpoint` and endpoint discovery ([#2](https://github.com/shakfu/coremusic/issues/2))** - `MIDIOutputPort.send_data()` takes a destination endpoint, but the object layer had no way to obtain one: `MIDIClient` could create ports and nothing else, and endpoints only existed as integer handles in `capi`. Every documented send example was therefore unrunnable, referring to an undefined `destination` or to a `client.create_virtual_destination()` that did not exist. Added `MIDIEndpoint`, wrapping a MIDI source or destination with its name and, for virtual endpoints, ownership; `MIDIClient.create_virtual_source()` and `create_virtual_destination()`, both disposed with the client; and the module-level `get_sources()`, `get_destinations()`, `find_source()`, and `find_destination()` for the endpoints published by the system. A virtual destination buffers or dispatches incoming packets exactly as an input port does (`poll()`, `wait()`, `pending`, `dropped`), and `MIDIEndpoint.send()` produces MIDI from a virtual source.
 
@@ -34,13 +40,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Fixed
 
+- **`convert()` could not write AIFF** - AIFF stores big-endian signed integer PCM, but `shortcuts.convert()` derives the output format from the source, so any WAV input described the output as little-endian and `ExtAudioFileCreateWithURL` rejected it outright with `kAudioFileStreamError_UnsupportedDataFormat`. `convert("input.wav", "output.aiff")` was advertised in the README and had never worked. The PCM output format is now re-described for the container.
+
+- **Six documentation examples ran without exercising anything** - They defined a function and never called it, so executing them proved only that the file imported. Two were broken behind that: one passed two arguments to `AudioConverter.convert()`, which takes one, and another re-read packet 0 on every iteration of its chunked-read loop. `tests/test_examples.py` now fails an example that references none of its own definitions.
+
+- **Duplicate key in `RECOVERY_SUGGESTIONS`** - `-43` was listed twice in the same dict literal, so the first suggestion was dead code and the second silently won. Kept one entry.
+
+- **`ruff` was declared as a runtime dependency** - It landed in `[project] dependencies` rather than the dev group, which already carried it, so every install of a package whose README leads with "zero-dependency" would have pulled a linter. Moved to the dev group and pinned to the version the lint configuration targets.
+
+- **Stale module paths in the developer notes** - Eight notes under `docs/dev/` name `src/coremusic/objects.py`, `utilities.py`, `audiounit_host.py`, `link_midi.py`, and `objects.pyi`, none of which survived the 0.2.3 reorganisation; `implementation_summary.md` cited `objects.py` with line ranges, as if they could still be read. They are implementation records, so each now opens with a note giving the old-to-new mapping and the current home of what it describes, rather than being rewritten as though the reorganisation had never happened.
+
+- **Dangling demo references in the developer notes** - `docs/dev/audiounit_implementation.md`, `ableton_link.md`, and `audiounit_name_lookup.md` pointed at seven demo scripts under `tests/demos/` that were deleted in `fb50106`. They are implementation records rather than guides, so the paths are now marked as removed and annotated with where the same ground is covered today, rather than being silently dropped.
+
+- **`extras/audio_converter.py` called a function that does not exist** - It reached for `capi.convert_audio_file`; the helper lives in `coremusic.audio`. Nothing ran the utility, so nothing noticed. `tests/test_extras.py` now runs both command-line utilities in `extras/`.
+
+- **`docs/examples/audio_inspector.md` still used the removed flat namespace** - Two blocks called `cm.AudioFile` and `cm.AudioFileError` with no import at all, which the snippet check skipped because there was no alias to resolve. The check now rejects any `cm.` use outright, since there is no flat namespace to alias.
+
 - **Disposing a MIDI client, port, or endpoint deadlocked with packets in flight** - `midi_client_dispose()`, `midi_port_dispose()`, and `midi_endpoint_dispose()` held the GIL across the CoreMIDI call. Those calls wait for any in-flight read proc to return, and the read proc - installed on every input port and virtual destination since 0.2.4 - blocks on `with gil:` to deliver its packet. Sending to a virtual destination and then disposing therefore hung the process, permanently and without an error. It looked intermittent because it needs a packet actually in flight: disposing with nothing pending always worked, while anything that delayed delivery, such as an enabled Ableton Link session competing for CPU, made it near-certain. The three calls now release the GIL, matching what `AudioOutputUnitStop` already does for the same reason on the audio side.
+
+- **Note on the send path** - `MIDISend` and `MIDIReceived` deliberately keep the GIL, unlike the dispose calls above. They are non-blocking hand-offs to the MIDI server, a few microseconds each, so releasing the GIL adds a reacquisition per call. Measured against a CPU-bound Python thread, doing so took p99 send latency from 0.01ms to 6.3ms and made a 1 kHz note stream drop messages. The reasoning is recorded next to the call so it is not "optimized" later.
 
 - **`send_data()` and `connect_source()` rejected raw endpoint ids** - Both read `.object_id` off their argument, so an integer handle from `capi` raised `AttributeError` instead of working, and a wrong argument type produced that same opaque error rather than a `MIDIError`. Both now accept either a `MIDIEndpoint` or an integer, so the two APIs interoperate as documented.
 
 ### Changed
 
-- **Documentation examples are now runnable programs, and are executed by the test suite** - Of the 382 python blocks in the published documentation, 224 referenced modules, classes, or methods that do not exist. Most were written against a flat `coremusic.*` namespace that has never existed; others called invented APIs (`AudioRecorder.setup()`, `AudioQueue.new_input()`, `unit.get_parameter_info()`, `slicer.slice_time_range()`, `AudioEffectsChain.process()`, a two-argument MIDI receive callback). Every example now lives under `examples/`, mirroring the page that uses it, and doc pages include it with `pymdownx.snippets` rather than restating it. `tests/test_examples.py` runs all 205 of them in a temp directory seeded with sample media and requires a clean exit; `tests/test_doc_snippets.py` checks that every include resolves and that any block still written inline only names things that exist. A snippet that stops working now fails the build instead of reaching a reader.
+- **flake8-bugbear (`B`) adopted in full** - 153 `raise` statements inside `except` blocks discarded the original error: the message kept its text, but `__cause__` was `None`, so Python printed "During handling of the above exception, another exception occurred" instead of linking the two. Every wrapped error in the library now chains with `from err`. The ten handlers that did not bind the exception were split by intent: a missing optional dependency chains, because a *broken* install raises a different `ImportError` than an absent one, while invalid user input uses `from None`, since "invalid literal for int()" is noise next to the message replacing it. 26 unused loop variables were renamed, and two documentation examples that claimed to process a chunk while never touching it now use it.
+
+- **Three bugbear rules adopted (`B011`, `B017`, `B905`)** - `assert False` in 17 places, which `python -O` removes: 15 were hand-rolled expect-raise blocks in `test_coremidi.py`, now `pytest.raises(RuntimeError, match="failed")`, and two wrapped whole tests in `try/except Exception` that replaced the real error with a bare assertion failure. Four `pytest.raises(Exception)` assertions passed on any error at all, including an `AttributeError` from a typo; each now names what the call actually raises. Twenty-seven `zip()` calls had no `strict=`, so a length mismatch truncated silently: the sites where the sequences must match are now `strict=True`, and the two where truncation is intended say so with a comment. All five `strict=True` sites in the library were confirmed to execute - two by the test suite, three by running the paths directly.
+
+- **Ruff rule set pinned explicitly** - Ruff 0.16 widened its default selection from a handful of rules to roughly 920, which turned a clean tree into 955 findings without a line of code changing. `pyproject.toml` now names the rules the project lints against (`E4`, `E7`, `E9`, `F`, `I`, `W`, `UP`, `C4`, `PIE`) so a future upgrade adds rules to ruff rather than silently redefining what "lint clean" means here. The larger opinionated families are listed in a comment with their counts, to be adopted deliberately: `BLE` alone would mean narrowing 242 `except Exception` clauses in the library, a refactor `docs/dev/error_decorator.md` records as already deferred.
+
+### Changed
+
+- **`tests/examples/` renamed to `extras/`** - Its `daw/` and `generative/` subdirectories are experimental *modules* with 309 tests, not examples, and the name collided with both `examples/` and `demos/`. Their test modules moved to `tests/` proper, where they now add `extras/` to `sys.path` rather than their own directory. `CONTRIBUTING.md` records which of the four directories new code belongs in.
+
+### Removed
+
+- **`tests/demos/`** - Thirty-six scripts that nothing ran: pytest collected no tests from the directory, so seventeen of them had quietly stopped working. `daw.py` imported `coremusic.daw`, which is not a module in the package; `effects/find_by_name.py` called `capi.find_audio_unit_by_name`, which does not exist; `visualization/spectrum.py` called a plotter method that had been renamed; seven more opened `tests/amen.wav`, which moved to `tests/data/wav/` several releases ago. Most of the rest had been superseded - by CLI commands (`coremusic audio info`, `analyze levels`, `device list`, `plugin list`, `convert file`) or by the runnable snippets now under `examples/`. Two were worth keeping and moved to `demos/`.
+
+### Changed
+
+- **Documentation examples are now runnable programs, and are executed by the test suite** - Every example now lives under `examples/`, mirroring the page that uses it, and doc pages include it with `pymdownx.snippets` rather than restating it. `tests/test_examples.py` runs all 249 of them in a temp directory seeded with sample media and requires a clean exit, and refuses an example that defines code it never calls; `tests/test_readme.py` does the same for the README, whose code has to stay inline because GitHub cannot process includes; `tests/test_doc_snippets.py` checks that every include resolves and that any block still written inline only names things that exist. 342 of the 373 blocks are executed - the remainder are comparisons against other libraries, MIDI constant tables, and API signature listings. A snippet that stops working now fails the build instead of reaching a reader.
 
 - **Import Guide rewritten** - It documented version 0.1.8: an `objects.py` module, a flat top-level namespace, and "full backward compatibility" with imports that were removed in 0.2.3. It now describes the actual package layout, with the per-domain import for each public class, and the optional-dependency flags.
 

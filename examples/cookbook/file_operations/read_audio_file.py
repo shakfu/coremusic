@@ -4,6 +4,7 @@
 # --8<-- [start:example]
 from coremusic.audio import AudioFile
 
+
 def read_audio_file(filepath):
     """Read entire audio file into memory."""
     with AudioFile(filepath) as audio:

@@ -7,18 +7,19 @@ This module tests the new features added to the AudioUnit host:
 4. AudioUnitChain class with automatic routing
 """
 
-import pytest
-import struct
-from pathlib import Path
-import tempfile
 import json
+import struct
+import tempfile
+from pathlib import Path
+
+import pytest
 
 try:
     from coremusic.audio.audiounit_host import (
-        PluginAudioFormat,
         AudioFormatConverter,
-        AudioUnitPlugin,
         AudioUnitChain,
+        AudioUnitPlugin,
+        PluginAudioFormat,
         PresetManager,
     )
 
@@ -193,7 +194,7 @@ class TestPluginAudioFormatConverter:
         # Non-interleaved should be: [L1, L2, L3, R1, R2, R3]
         output_samples = struct.unpack(f"{len(input_samples)}f", output_data)
         expected = (0.1, 0.3, 0.5, 0.2, 0.4, 0.6)
-        for i, (actual, exp) in enumerate(zip(output_samples, expected)):
+        for i, (actual, exp) in enumerate(zip(output_samples, expected, strict=True)):
             assert abs(actual - exp) < 0.0001, f"Sample {i}: {actual} != {exp}"
 
     def test_non_interleaved_to_interleaved(self):
@@ -237,7 +238,7 @@ class TestPluginAudioFormatConverter:
 
         # Verify output
         output_samples = struct.unpack(f"{len(input_samples)}f", output_data)
-        for inp, out in zip(input_samples, output_samples):
+        for inp, out in zip(input_samples, output_samples, strict=True):
             assert abs(inp - out) < 0.0001
 
     def test_int32_conversion(self):
@@ -330,7 +331,7 @@ class TestPresetManager:
         assert preset_path.suffix == ".json"
 
         # Verify preset contents
-        with open(preset_path, "r") as f:
+        with open(preset_path) as f:
             preset_data = json.load(f)
 
         assert preset_data["name"] == "My Preset"
@@ -394,7 +395,7 @@ class TestPresetManager:
         assert export_path.exists()
 
         # Verify exported content
-        with open(export_path, "r") as f:
+        with open(export_path) as f:
             preset_data = json.load(f)
         assert preset_data["name"] == "To Export"
 

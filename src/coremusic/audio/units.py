@@ -20,8 +20,8 @@ from .core import AudioFormat
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "AudioComponentDescription",
     "AudioComponent",
+    "AudioComponentDescription",
     "AudioUnit",
 ]
 
@@ -81,7 +81,7 @@ class AudioComponent(capi.CoreAudioObject):
     @classmethod
     def find_next(
         cls, description: AudioComponentDescription
-    ) -> "AudioComponent | None":
+    ) -> AudioComponent | None:
         """Find the next matching audio component"""
         try:
             result = capi.audio_component_find_next(description.to_dict())
@@ -95,7 +95,7 @@ class AudioComponent(capi.CoreAudioObject):
             logger.debug("Component lookup failed: %s", e)
             return None
 
-    def create_instance(self) -> "AudioUnit":
+    def create_instance(self) -> AudioUnit:
         """Create an AudioUnit instance from this component"""
         self._ensure_not_disposed()
         try:
@@ -104,7 +104,7 @@ class AudioComponent(capi.CoreAudioObject):
             unit._set_object_id(unit_id)
             return unit
         except Exception as e:
-            raise AudioUnitError(f"Failed to create instance: {e}")
+            raise AudioUnitError(f"Failed to create instance: {e}") from e
 
     def __repr__(self) -> str:
         return (
@@ -121,7 +121,7 @@ class AudioUnit(capi.CoreAudioObject):
         self._is_initialized = False
 
     @classmethod
-    def default_output(cls) -> "AudioUnit":
+    def default_output(cls) -> AudioUnit:
         """Create a default output AudioUnit"""
         desc = AudioComponentDescription(
             type="auou",  # kAudioUnitType_Output
@@ -141,7 +141,7 @@ class AudioUnit(capi.CoreAudioObject):
                 capi.audio_unit_initialize(self.object_id)
                 self._is_initialized = True
             except Exception as e:
-                raise AudioUnitError(f"Failed to initialize: {e}")
+                raise AudioUnitError(f"Failed to initialize: {e}") from e
 
     def uninitialize(self) -> None:
         """Uninitialize the AudioUnit"""
@@ -149,7 +149,7 @@ class AudioUnit(capi.CoreAudioObject):
             try:
                 capi.audio_unit_uninitialize(self.object_id)
             except Exception as e:
-                raise AudioUnitError(f"Failed to uninitialize: {e}")
+                raise AudioUnitError(f"Failed to uninitialize: {e}") from e
             finally:
                 self._is_initialized = False
 
@@ -161,7 +161,7 @@ class AudioUnit(capi.CoreAudioObject):
         try:
             capi.audio_output_unit_start(self.object_id)
         except Exception as e:
-            raise AudioUnitError(f"Failed to start: {e}")
+            raise AudioUnitError(f"Failed to start: {e}") from e
 
     def stop(self) -> None:
         """Stop the AudioUnit output"""
@@ -169,7 +169,7 @@ class AudioUnit(capi.CoreAudioObject):
         try:
             capi.audio_output_unit_stop(self.object_id)
         except Exception as e:
-            raise AudioUnitError(f"Failed to stop: {e}")
+            raise AudioUnitError(f"Failed to stop: {e}") from e
 
     def get_property(self, property_id: int, scope: int, element: int) -> bytes:
         """Get a property from the AudioUnit"""
@@ -179,7 +179,7 @@ class AudioUnit(capi.CoreAudioObject):
                 self.object_id, property_id, scope, element
             )
         except Exception as e:
-            raise AudioUnitError(f"Failed to get property: {e}")
+            raise AudioUnitError(f"Failed to get property: {e}") from e
 
     def set_property(
         self, property_id: int, scope: int, element: int, data: bytes
@@ -191,7 +191,7 @@ class AudioUnit(capi.CoreAudioObject):
                 self.object_id, property_id, scope, element, data
             )
         except Exception as e:
-            raise AudioUnitError(f"Failed to set property: {e}")
+            raise AudioUnitError(f"Failed to set property: {e}") from e
 
     # ========================================================================
     # Advanced AudioUnit Features
@@ -237,9 +237,9 @@ class AudioUnit(capi.CoreAudioObject):
             )
             return AudioFormat.from_asbd_bytes(asbd_data)
         except ValueError as e:
-            raise AudioUnitError(f"Invalid ASBD data: {e}")
+            raise AudioUnitError(f"Invalid ASBD data: {e}") from e
         except Exception as e:
-            raise AudioUnitError(f"Failed to get stream format: {e}")
+            raise AudioUnitError(f"Failed to get stream format: {e}") from e
 
     def set_stream_format(
         self, format: AudioFormat, scope: str = "output", element: int = 0
@@ -318,7 +318,7 @@ class AudioUnit(capi.CoreAudioObject):
                 asbd_data,
             )
         except Exception as e:
-            raise AudioUnitError(f"Failed to set stream format: {e}")
+            raise AudioUnitError(f"Failed to set stream format: {e}") from e
 
     @property
     def sample_rate(self) -> float:
@@ -374,7 +374,7 @@ class AudioUnit(capi.CoreAudioObject):
             format_data.sample_rate = rate
             self.set_stream_format(format_data, "input", 0)
         except Exception as e:
-            raise AudioUnitError(f"Failed to set sample rate: {e}")
+            raise AudioUnitError(f"Failed to set sample rate: {e}") from e
 
     @property
     def latency(self) -> float:
@@ -431,7 +431,7 @@ class AudioUnit(capi.CoreAudioObject):
                 14, capi.get_audio_unit_scope_global(), 0, data
             )  # kAudioUnitProperty_MaximumFramesPerSlice = 14
         except Exception as e:
-            raise AudioUnitError(f"Failed to set max frames per slice: {e}")
+            raise AudioUnitError(f"Failed to set max frames per slice: {e}") from e
 
     def get_parameter_list(self, scope: str = "global") -> list[int]:
         """Get list of available parameter IDs (kAudioUnitProperty_ParameterList)
@@ -503,7 +503,7 @@ class AudioUnit(capi.CoreAudioObject):
         status = "initialized" if self._is_initialized else "uninitialized"
         return f"AudioUnit({self._description.subtype!r}, {status})"
 
-    def __enter__(self) -> "AudioUnit":
+    def __enter__(self) -> AudioUnit:
         self.initialize()
         return self
 

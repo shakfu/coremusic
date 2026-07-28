@@ -3,11 +3,11 @@
 from enum import IntEnum
 
 __all__ = [
-    "AudioUnitProperty",
-    "AudioUnitScope",
     "AudioUnitElement",
-    "AudioUnitRenderActionFlags",
     "AudioUnitParameterUnit",
+    "AudioUnitProperty",
+    "AudioUnitRenderActionFlags",
+    "AudioUnitScope",
 ]
 
 

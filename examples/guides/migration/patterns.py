@@ -4,7 +4,7 @@
 # --8<-- [start:audio]
 import numpy as np
 
-import coremusic.capi as capi
+from coremusic import capi
 from coremusic.audio import AudioFile, AudioFormat, ExtendedAudioFile
 
 with AudioFile("input.wav") as audio:

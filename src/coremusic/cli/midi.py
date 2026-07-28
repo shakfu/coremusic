@@ -7,7 +7,7 @@ import logging
 from types import FrameType
 from typing import Any
 
-import coremusic.capi as capi
+from coremusic import capi
 
 from ._formatters import format_duration, output_json, output_table
 from ._utils import EXIT_SUCCESS, CLIError, print_help_default, require_file
@@ -495,7 +495,7 @@ def cmd_info(args: argparse.Namespace) -> int:
     try:
         seq = MIDISequence.load(str(path))
     except Exception as e:
-        raise CLIError(f"Failed to load MIDI file: {e}")
+        raise CLIError(f"Failed to load MIDI file: {e}") from e
 
     # If --events flag, show event table (formerly cmd_file_dump)
     if args.events:
@@ -1169,7 +1169,7 @@ def _receive_to_midi_file(
         try:
             seq.save(str(output_path))
         except Exception as e:
-            raise CLIError(f"Failed to save MIDI file: {e}")
+            raise CLIError(f"Failed to save MIDI file: {e}") from e
 
         recording_duration = events_copy[-1][0] if events_copy else 0.0
         note_on_count = sum(
@@ -1235,7 +1235,7 @@ def _receive_with_plugin(
         try:
             plugin = host.load_plugin(args.plugin, type="instrument")
         except Exception as e:
-            raise CLIError(f"Failed to load plugin '{args.plugin}': {e}")
+            raise CLIError(f"Failed to load plugin '{args.plugin}': {e}") from e
 
         if not args.json:
             print(f"Receiving from: {source_name}")
@@ -1260,7 +1260,7 @@ def _receive_with_plugin(
             plugin.instantiate()
             plugin.initialize()
         except Exception as e:
-            raise CLIError(f"Failed to initialize plugin: {e}")
+            raise CLIError(f"Failed to initialize plugin: {e}") from e
 
         unit_id = plugin._unit_id
         if unit_id is None:
@@ -1417,7 +1417,7 @@ def _receive_with_plugin(
                     print(f"  Duration: {format_duration(duration)}")
 
             except Exception as e:
-                raise CLIError(f"Failed to save audio file: {e}")
+                raise CLIError(f"Failed to save audio file: {e}") from e
 
         if args.json:
             output_json(
@@ -1468,7 +1468,7 @@ def cmd_play(args: argparse.Namespace) -> int:
     try:
         seq = MIDISequence.load(str(path))
     except Exception as e:
-        raise CLIError(f"Failed to load MIDI file: {e}")
+        raise CLIError(f"Failed to load MIDI file: {e}") from e
 
     num_dests = capi.midi_get_number_of_destinations()
     if num_dests == 0:
@@ -1590,7 +1590,7 @@ def cmd_quantize(args: argparse.Namespace) -> int:
     except ValueError:
         raise CLIError(
             f"Invalid grid value: {args.grid}. Use format like 1/4, 1/8, 1/16, or decimal."
-        )
+        ) from None
 
     if grid_beats <= 0:
         raise CLIError("Grid value must be positive")
@@ -1601,7 +1601,7 @@ def cmd_quantize(args: argparse.Namespace) -> int:
     try:
         seq = MIDISequence.load(str(input_path))
     except Exception as e:
-        raise CLIError(f"Failed to load MIDI file: {e}")
+        raise CLIError(f"Failed to load MIDI file: {e}") from e
 
     # Calculate grid in seconds based on tempo
     tempo = seq.tempo if seq.tempo else 120.0
@@ -1640,7 +1640,7 @@ def cmd_quantize(args: argparse.Namespace) -> int:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         seq.save(str(output_path))
     except Exception as e:
-        raise CLIError(f"Failed to save MIDI file: {e}")
+        raise CLIError(f"Failed to save MIDI file: {e}") from e
 
     if args.json:
         output_json(

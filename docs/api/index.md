@@ -115,18 +115,7 @@ for advanced use cases requiring direct access to CoreAudio frameworks.
 For direct access to low-level functions:
 
 ```python
-import coremusic.capi as capi
-
-# Low-level audio file operations
-file_id = capi.audio_file_open_url("audio.wav")
-# ... operations ...
-capi.audio_file_close(file_id)
-
-# Low-level clock operations
-clock_id = capi.ca_clock_new()
-capi.ca_clock_start(clock_id)
-# ... operations ...
-capi.ca_clock_dispose(clock_id)
+--8<-- "examples/api/index/functional.py:example"
 ```
 
 ## Error Handling
@@ -184,11 +173,5 @@ Utility functions are available through `coremusic.capi` for FourCC conversion
 and other low-level operations:
 
 ```python
-import coremusic.capi as capi
-
-# Convert FourCC string to integer
-format_int = capi.fourchar_to_int('lpcm')
-
-# Convert integer back to FourCC string
-format_str = capi.int_to_fourchar(format_int)
+--8<-- "examples/api/index/fourcc.py:example"
 ```

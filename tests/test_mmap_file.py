@@ -1,11 +1,11 @@
 """Tests for memory-mapped audio file access."""
 
-import pytest
-import numpy as np
 from pathlib import Path
 
-from coremusic.audio.mmap_file import MMapAudioFile
+import numpy as np
+import pytest
 
+from coremusic.audio.mmap_file import MMapAudioFile
 
 # Use test audio file
 TEST_FILE = Path(__file__).parent / "data" / "wav" / "amen.wav"
@@ -143,9 +143,8 @@ class TestMMapAudioFile:
 
     def test_file_not_found(self):
         """Test handling of non-existent file."""
-        with pytest.raises(FileNotFoundError):
-            with MMapAudioFile("nonexistent.wav"):
-                pass
+        with pytest.raises(FileNotFoundError), MMapAudioFile("nonexistent.wav"):
+            pass
 
     @pytest.mark.skipif(not TEST_FILE.exists(), reason="Test file not found")
     def test_wav_format_parsing(self):

@@ -2,9 +2,9 @@
 """Multi-Channel Performance."""
 
 # --8<-- [start:example]
-from coremusic.audio.audiounit_host import AudioUnitPlugin
-
 import time
+
+from coremusic.audio.audiounit_host import AudioUnitPlugin
 
 with AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu') as synth:
     # Setup different instruments on different channels

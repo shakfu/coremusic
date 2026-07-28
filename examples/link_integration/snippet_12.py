@@ -2,11 +2,10 @@
 """Beat-Accurate MIDI Sequencing."""
 
 # --8<-- [start:example]
-import coremusic.capi as capi
-from coremusic import link
-
-from coremusic.midi import link as link_midi
 import time
+
+from coremusic import capi, link
+from coremusic.midi import link as link_midi
 
 # Setup MIDI
 client = capi.midi_client_create("Sequencer")

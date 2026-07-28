@@ -75,6 +75,59 @@ class TestConvertAudioFile:
             assert f.format.channels_per_frame == 2
             assert f.duration == pytest.approx(1.0, abs=0.05)
 
+    def test_aiff_gets_big_endian_pcm(self, tmp_path):
+        """AIFF stores big-endian samples, whatever the source was.
+
+        `shortcuts.convert()` derives the output format from the source, so a
+        WAV input handed AIFF a little-endian description and
+        ExtAudioFileCreateWithURL rejected it outright with
+        kAudioFileStreamError_UnsupportedDataFormat. The README advertised
+        exactly this call.
+        """
+        from coremusic.constants import LinearPCMFormatFlag
+        from coremusic.shortcuts import convert
+
+        src = _make_wav(tmp_path / "a.wav")
+        out = tmp_path / "b.aiff"
+
+        convert(str(src), str(out))
+
+        with AudioFile(str(out)) as f:
+            assert f.format.format_flags & LinearPCMFormatFlag.IS_BIG_ENDIAN
+            assert f.duration == pytest.approx(1.0, abs=0.05)
+
+    def test_aiff_samples_survive_the_conversion(self, tmp_path):
+        """Byte order must be described, not just relabelled."""
+        np = pytest.importorskip("numpy")
+        from coremusic.shortcuts import convert
+
+        src = _make_wav(tmp_path / "a.wav")
+        out = tmp_path / "b.aiff"
+        convert(str(src), str(out))
+
+        with AudioFile(str(src)) as f:
+            before = f.read_as_numpy().astype("float64")
+        with AudioFile(str(out)) as f:
+            after = f.read_as_numpy().astype("float64")
+
+        # Mislabelled endianness would scramble the samples, not preserve level
+        assert np.sqrt((after**2).mean()) == pytest.approx(
+            np.sqrt((before**2).mean()), rel=0.01
+        )
+
+    def test_aiff_with_format_conversion(self, tmp_path):
+        """The same, when rate and channel count change on the way out."""
+        from coremusic.shortcuts import convert
+
+        src = _make_wav(tmp_path / "a.wav")
+        out = tmp_path / "b.aiff"
+
+        convert(str(src), str(out), channels=1, sample_rate=48000)
+
+        with AudioFile(str(out)) as f:
+            assert f.format.channels_per_frame == 1
+            assert f.format.sample_rate == 48000.0
+
     def test_reject_unsupported_before_writing(self, tmp_path):
         src = _make_wav(tmp_path / "a.wav")
         with AudioFile(str(src)) as f:
@@ -97,9 +150,7 @@ class TestCompressedEncoding:
         from coremusic.audio import AudioFormat
 
         bpf = 2 * channels
-        return AudioFormat(
-            float(sample_rate), "lpcm", 12, bpf, 1, bpf, channels, 16
-        )
+        return AudioFormat(float(sample_rate), "lpcm", 12, bpf, 1, bpf, channels, 16)
 
     @pytest.mark.parametrize(
         "ext,expected_codec",
@@ -188,8 +239,10 @@ class TestCompressedEncoding:
         src = _make_wav(tmp_path / "a.wav")
         with pytest.raises(ValueError):
             convert_audio_file(
-                str(src), str(tmp_path / "o.flac"),
-                AudioFormat.flac(44100, 2), bitrate=128000,
+                str(src),
+                str(tmp_path / "o.flac"),
+                AudioFormat.flac(44100, 2),
+                bitrate=128000,
             )
 
     def test_bitrate_rejected_for_pcm(self, tmp_path):

@@ -4,7 +4,7 @@
 # --8<-- [start:example]
 import numpy as np
 
-import coremusic.capi as capi
+from coremusic import capi
 from coremusic.audio import AudioFile, AudioFormat, ExtendedAudioFile
 from coremusic.audio.audiounit_host import AudioUnitPlugin
 

@@ -8,15 +8,14 @@ c_major = Scale(Note("C", 4), ScaleType.MAJOR)
 # --8<-- [end:music]
 
 # --8<-- [start:scipy]
+# Individual helpers, or the module itself - handy for the availability flag
+import coremusic.utils.scipy as spu
 from coremusic.utils.scipy import (
     SCIPY_AVAILABLE,
     apply_lowpass_filter,
     compute_spectrum,
     resample_audio,
 )
-
-# Or as a module, which is handy for the availability flag
-import coremusic.utils.scipy as spu
 
 print(f"SciPy available: {spu.SCIPY_AVAILABLE}")
 # --8<-- [end:scipy]
@@ -27,7 +26,7 @@ from coremusic.utils.fourcc import fourcc_to_int, fourcc_to_str
 print(fourcc_to_int("lpcm"), fourcc_to_str(1819304813))
 
 # The same conversion exists in the functional API
-import coremusic.capi as capi
+from coremusic import capi
 
 print(capi.fourchar_to_int("lpcm"), capi.int_to_fourchar(1819304813))
 # --8<-- [end:fourcc]

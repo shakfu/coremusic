@@ -58,6 +58,13 @@ with AudioFile("audio.wav") as f:
   input, no plugin of a given name. Check, report, and exit 0 rather than
   raising - and prefer checks that a reader should be writing anyway.
 
+## The README
+
+`README.md` is rendered by GitHub, which does not understand `--8<--`
+includes, so its code stays inline. `tests/test_readme.py` extracts each of its
+python blocks and runs it the same way, in the same seeded temp directory.
+Blocks there have to stand on their own: if one needs a file open, it opens it.
+
 ## Running
 
 ```bash

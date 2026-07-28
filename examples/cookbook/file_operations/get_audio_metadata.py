@@ -2,9 +2,10 @@
 """Get File Metadata."""
 
 # --8<-- [start:example]
+from pathlib import Path
+
 from coremusic.audio import AudioFile
 
-from pathlib import Path
 
 def get_audio_metadata(filepath):
     """Extract comprehensive audio file metadata."""

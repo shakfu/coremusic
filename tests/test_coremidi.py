@@ -1,8 +1,8 @@
 """pytest test suite for CoreMIDI wrapper functionality."""
 
 import pytest
-import coremusic.capi as capi
 
+from coremusic import capi
 
 # Check MIDI availability at module load time
 # Run multiple checks to ensure MIDI is reliably available
@@ -680,11 +680,9 @@ class TestCoreMIDISetup:
 
     def setup_method(self):
         """Set up test environment for MIDISetup tests"""
-        pass
 
     def teardown_method(self):
         """Clean up test environment"""
-        pass
 
     def test_midi_external_device_create(self):
         """Test creating an external MIDI device"""
@@ -776,26 +774,14 @@ class TestCoreMIDISetup:
     def test_midi_setup_device_management(self):
         """Test setup device management functions"""
         invalid_device = 999999
-        try:
+        with pytest.raises(RuntimeError, match="failed"):
             capi.midi_setup_add_device(invalid_device)
-            assert False, "Expected RuntimeError for invalid device"
-        except RuntimeError as e:
-            assert "failed" in str(e)
-        try:
+        with pytest.raises(RuntimeError, match="failed"):
             capi.midi_setup_remove_device(invalid_device)
-            assert False, "Expected RuntimeError for invalid device"
-        except RuntimeError as e:
-            assert "failed" in str(e)
-        try:
+        with pytest.raises(RuntimeError, match="failed"):
             capi.midi_setup_add_external_device(invalid_device)
-            assert False, "Expected RuntimeError for invalid device"
-        except RuntimeError as e:
-            assert "failed" in str(e)
-        try:
+        with pytest.raises(RuntimeError, match="failed"):
             capi.midi_setup_remove_external_device(invalid_device)
-            assert False, "Expected RuntimeError for invalid device"
-        except RuntimeError as e:
-            assert "failed" in str(e)
 
     def test_midi_setup_parameter_validation(self):
         """Test parameter validation for MIDISetup functions"""
@@ -849,11 +835,9 @@ class TestCoreMIDIDriver:
 
     def setup_method(self):
         """Set up test environment for MIDIDriver tests"""
-        pass
 
     def teardown_method(self):
         """Clean up test environment"""
-        pass
 
     def test_midi_device_create_basic(self):
         """Test creating a MIDI device using the driver API"""
@@ -882,11 +866,8 @@ class TestCoreMIDIDriver:
     def test_midi_device_dispose_invalid(self):
         """Test disposing an invalid device"""
         invalid_device = 999999
-        try:
+        with pytest.raises(RuntimeError, match="failed"):
             capi.midi_device_dispose(invalid_device)
-            assert False, "Expected RuntimeError for invalid device"
-        except RuntimeError as e:
-            assert "failed" in str(e)
 
     def test_midi_endpoint_ref_cons_basic(self):
         """Test setting and getting endpoint reference constants"""
@@ -913,16 +894,10 @@ class TestCoreMIDIDriver:
     def test_midi_endpoint_ref_cons_invalid_endpoint(self):
         """Test refCon operations with invalid endpoint"""
         invalid_endpoint = 999999
-        try:
+        with pytest.raises(RuntimeError, match="failed"):
             capi.midi_endpoint_set_ref_cons(invalid_endpoint, 123, 456)
-            assert False, "Expected RuntimeError for invalid endpoint"
-        except RuntimeError as e:
-            assert "failed" in str(e)
-        try:
+        with pytest.raises(RuntimeError, match="failed"):
             capi.midi_endpoint_get_ref_cons(invalid_endpoint)
-            assert False, "Expected RuntimeError for invalid endpoint"
-        except RuntimeError as e:
-            assert "failed" in str(e)
 
     def test_midi_get_driver_io_runloop(self):
         """Test getting the driver I/O run loop"""
@@ -945,16 +920,10 @@ class TestCoreMIDIDriver:
     def test_midi_driver_enable_monitoring_invalid(self):
         """Test enabling monitoring for invalid driver"""
         invalid_driver = 999999
-        try:
+        with pytest.raises(RuntimeError, match="failed"):
             capi.midi_driver_enable_monitoring(invalid_driver, True)
-            assert False, "Expected RuntimeError for invalid driver"
-        except RuntimeError as e:
-            assert "failed" in str(e)
-        try:
+        with pytest.raises(RuntimeError, match="failed"):
             capi.midi_driver_enable_monitoring(invalid_driver, False)
-            assert False, "Expected RuntimeError for invalid driver"
-        except RuntimeError as e:
-            assert "failed" in str(e)
 
     def test_midi_device_list_operations_basic(self):
         """Test basic device list operations (if we can create devices)"""
@@ -965,21 +934,12 @@ class TestCoreMIDIDriver:
             assert num_devices >= 0
         except Exception:
             pass
-        try:
+        with pytest.raises((RuntimeError, IndexError)):
             capi.midi_device_list_get_device(invalid_dev_list, 0)
-            assert False, "Expected error for invalid device list"
-        except (RuntimeError, IndexError):
-            pass
-        try:
+        with pytest.raises(RuntimeError, match="failed"):
             capi.midi_device_list_add_device(invalid_dev_list, 123456)
-            assert False, "Expected RuntimeError for invalid device list"
-        except RuntimeError as e:
-            assert "failed" in str(e)
-        try:
+        with pytest.raises(RuntimeError, match="failed"):
             capi.midi_device_list_dispose(invalid_dev_list)
-            assert False, "Expected RuntimeError for invalid device list"
-        except RuntimeError as e:
-            assert "failed" in str(e)
 
     def test_midi_driver_parameter_validation(self):
         """Test parameter validation for MIDIDriver functions"""
@@ -1005,7 +965,6 @@ class TestCoreMIDIDriver:
             assert device > 0
             try:
                 capi.midi_device_dispose(device)
-                pass
             except RuntimeError:
                 pass
             try:
@@ -1114,30 +1073,21 @@ class TestCoreMIDIThruConnection:
     def test_midi_thru_connection_get_params_invalid(self):
         """Test getting parameters from invalid connection"""
         invalid_connection = 999999
-        try:
+        with pytest.raises(RuntimeError, match="failed"):
             capi.midi_thru_connection_get_params(invalid_connection)
-            assert False, "Expected RuntimeError for invalid connection"
-        except RuntimeError as e:
-            assert "failed" in str(e)
 
     def test_midi_thru_connection_set_params_invalid(self):
         """Test setting parameters on invalid connection"""
         invalid_connection = 999999
         params = capi.midi_thru_connection_params_initialize()
-        try:
+        with pytest.raises(RuntimeError, match="failed"):
             capi.midi_thru_connection_set_params(invalid_connection, params)
-            assert False, "Expected RuntimeError for invalid connection"
-        except RuntimeError as e:
-            assert "failed" in str(e)
 
     def test_midi_thru_connection_dispose_invalid(self):
         """Test disposing invalid connection"""
         invalid_connection = 999999
-        try:
+        with pytest.raises(RuntimeError, match="failed"):
             capi.midi_thru_connection_dispose(invalid_connection)
-            assert False, "Expected RuntimeError for invalid connection"
-        except RuntimeError as e:
-            assert "failed" in str(e)
 
     def test_midi_thru_connection_find_empty(self):
         """Test finding connections with non-existent owner"""

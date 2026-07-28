@@ -11,15 +11,15 @@ import pytest
 
 from coremusic.midi import (
     MIDIEvent,
-    MIDITrack,
-    MIDISequence,
-    MIDIRouter,
     MIDIFileFormat,
+    MIDIRouter,
+    MIDISequence,
     MIDIStatus,
-    transpose_transform,
-    velocity_scale_transform,
+    MIDITrack,
     channel_remap_transform,
     quantize_transform,
+    transpose_transform,
+    velocity_scale_transform,
 )
 
 

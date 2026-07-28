@@ -4,6 +4,13 @@
 
 In response to the question "What about loading or referring to AudioUnits by name, for example 'AUDelay', which an Apple AU and always available?", I've implemented comprehensive name-based AudioUnit discovery for CoreMusic.
 
+> **Historical.** This note predates the 0.2.3 package reorganisation, which
+> dissolved the flat modules into domain subpackages: `objects.py` into
+> `audio/` and `midi/`, `utilities.py` into `audio/utilities.py`,
+> `audiounit_host.py` into `audio/`, and `link_midi.py` into `midi/link.py`.
+> Paths below are as they were when it was written.
+> `find_audio_unit_by_name()`, `list_available_audio_units()`, `get_audiounit_names()`, and `AudioEffectsChain` now live in `src/coremusic/audio/utilities.py`, and are imported from `coremusic.audio` rather than the top-level package.
+
 ## What Was Implemented
 
 ### 1. Low-Level C API Wrappers (`src/coremusic/capi.pyx`)
@@ -320,7 +327,7 @@ print(f"Available: {', '.join(names[:5])}...")
   - `AudioEffectsChain.add_effect_by_name()` - Convenience method
 - `src/coremusic/__init__.py` - Exported 3 new functions
 - `tests/test_utilities.py` - Added 11 comprehensive tests (+120 lines)
-- `tests/demos/demo_utilities.py` - Added Example 10 (+50 lines)
+- `tests/demos/demo_utilities.py` - Added Example 10 (+50 lines) (file removed in `fb50106`; the directory was removed later)
 
 ## Summary
 

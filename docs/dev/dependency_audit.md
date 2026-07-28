@@ -3,6 +3,13 @@
 **Date**: October 31, 2025
 **Issue**: Verify that numpy, scipy, and matplotlib are properly optional dependencies
 
+> **Historical.** This note predates the 0.2.3 package reorganisation, which
+> dissolved the flat modules into domain subpackages: `objects.py` into
+> `audio/` and `midi/`, `utilities.py` into `audio/utilities.py`,
+> `audiounit_host.py` into `audio/`, and `link_midi.py` into `midi/link.py`.
+> Paths below are as they were when it was written.
+> The conditional imports audited under `objects.py` now live in the `src/coremusic/audio/` and `src/coremusic/midi/` modules, and in `src/coremusic/base.py`.
+
 ## Summary
 
 [x] **All optional dependencies are properly implemented** after fixing `mmap_file.py`.

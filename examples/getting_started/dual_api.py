@@ -2,7 +2,7 @@
 """The same file read twice: functional API, then object-oriented API."""
 
 # --8<-- [start:functional]
-import coremusic.capi as capi
+from coremusic import capi
 
 # Open audio file (manual resource management)
 audio_file = capi.audio_file_open_url("audio.wav")

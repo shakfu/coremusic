@@ -5,8 +5,11 @@
 import logging
 from pathlib import Path
 
+from coremusic.shortcuts import convert
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 def batch_process_sequential(input_dir, output_dir, processor_func):
     """Process all audio files in directory sequentially."""
@@ -29,4 +32,9 @@ def batch_process_sequential(input_dir, output_dir, processor_func):
             logger.error(f"[{i}/{total}] Failed: {input_file.name} - {e}")
 
     logger.info("Batch processing complete")
+
+
+batch_process_sequential(
+    ".", "batch_out", lambda src, dst: convert(src, dst, channels=1)
+)
 # --8<-- [end:example]

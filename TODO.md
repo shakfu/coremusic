@@ -20,7 +20,7 @@ Small-to-medium effort with immediate user-facing value.
 
 ### Documentation
 
-- [ ] Publish hosted API reference
+- [x] Publish hosted API reference
 
 ---
 
@@ -63,7 +63,7 @@ Nice-to-have features. Implement when needed or when higher-priority items are d
       (`bjorklund(pulses, steps)`), a step sequencer that emits a `MIDISequence`
       or scheduled events, and chord triggers (chord name / scale degree ->
       simultaneous note-ons). Promotes the patterns in `demos/link_sequencer.py`
-      and the `tests/examples/generative` package to first-class library APIs.
+      and the `extras/generative` package to first-class library APIs.
 - [ ] Chord and key recognition from notes -- symbolic analysis over MIDI/note
       input: identify chords from simultaneous notes (root, quality, inversion)
       and infer key from a note sequence (e.g. Krumhansl-Schmuckler key

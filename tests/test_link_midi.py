@@ -7,8 +7,8 @@ Tests the integration between Ableton Link and CoreMIDI including:
 """
 
 import pytest
-import coremusic.capi as capi
-from coremusic import link
+
+from coremusic import capi, link
 from coremusic.midi import link as link_midi
 
 

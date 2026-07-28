@@ -4,6 +4,7 @@
 # --8<-- [start:example]
 from coremusic.audio import AudioFile
 
+
 def compare_audio_files(file1, file2):
     """Compare two audio files for format compatibility."""
     with AudioFile(file1) as audio1, AudioFile(file2) as audio2:

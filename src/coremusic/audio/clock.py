@@ -12,8 +12,8 @@ from typing import Any
 from coremusic import capi
 
 __all__ = [
-    "ClockTimeFormat",
     "AudioClock",
+    "ClockTimeFormat",
 ]
 
 
@@ -72,7 +72,7 @@ class AudioClock(capi.CoreAudioObject):
         self._is_created = False
         self._is_running = False
 
-    def create(self) -> "AudioClock":
+    def create(self) -> AudioClock:
         """Create the underlying clock object
 
         Returns:
@@ -87,7 +87,7 @@ class AudioClock(capi.CoreAudioObject):
                 self._set_object_id(clock_id)
                 self._is_created = True
             except Exception as e:
-                raise RuntimeError(f"Failed to create clock: {e}")
+                raise RuntimeError(f"Failed to create clock: {e}") from e
         return self
 
     def start(self) -> None:
@@ -104,7 +104,7 @@ class AudioClock(capi.CoreAudioObject):
             capi.ca_clock_start(self.object_id)
             self._is_running = True
         except Exception as e:
-            raise RuntimeError(f"Failed to start clock: {e}")
+            raise RuntimeError(f"Failed to start clock: {e}") from e
 
     def stop(self) -> None:
         """Stop the clock
@@ -117,7 +117,7 @@ class AudioClock(capi.CoreAudioObject):
                 capi.ca_clock_stop(self.object_id)
                 self._is_running = False
             except Exception as e:
-                raise RuntimeError(f"Failed to stop clock: {e}")
+                raise RuntimeError(f"Failed to stop clock: {e}") from e
 
     @property
     def is_running(self) -> bool:
@@ -134,7 +134,7 @@ class AudioClock(capi.CoreAudioObject):
         try:
             return capi.ca_clock_get_play_rate(self.object_id)
         except Exception as e:
-            raise RuntimeError(f"Failed to get play rate: {e}")
+            raise RuntimeError(f"Failed to get play rate: {e}") from e
 
     @play_rate.setter
     def play_rate(self, rate: float) -> None:
@@ -146,7 +146,7 @@ class AudioClock(capi.CoreAudioObject):
         try:
             capi.ca_clock_set_play_rate(self.object_id, rate)
         except Exception as e:
-            raise RuntimeError(f"Failed to set play rate: {e}")
+            raise RuntimeError(f"Failed to set play rate: {e}") from e
 
     def get_current_time(self, time_format: int) -> dict[str, Any]:
         """Get current time in specified format
@@ -167,7 +167,7 @@ class AudioClock(capi.CoreAudioObject):
         try:
             return capi.ca_clock_get_current_time(self.object_id, time_format)
         except Exception as e:
-            raise RuntimeError(f"Failed to get current time: {e}")
+            raise RuntimeError(f"Failed to get current time: {e}") from e
 
     def get_time_seconds(self) -> float:
         """Get current time in seconds
@@ -234,7 +234,7 @@ class AudioClock(capi.CoreAudioObject):
                 self._is_running = False
                 super().dispose()
 
-    def __enter__(self) -> "AudioClock":
+    def __enter__(self) -> AudioClock:
         """Enter context manager"""
         self.create()
         return self

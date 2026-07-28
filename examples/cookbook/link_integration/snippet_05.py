@@ -2,10 +2,10 @@
 """Beat-Accurate Playback Start."""
 
 # --8<-- [start:example]
+import time
+
 from coremusic import link
 from coremusic.base import AudioPlayer
-
-import time
 
 with link.LinkSession(bpm=120.0) as session:
     player = AudioPlayer(link_session=session)

@@ -28,8 +28,8 @@ except ImportError:
 
 if NUMPY_AVAILABLE and SCIPY_AVAILABLE:
     from coremusic.audio.slicing import (
-        Slice,
         AudioSlicer,
+        Slice,
         SliceCollection,
         SliceRecombinator,
     )
@@ -874,6 +874,7 @@ class TestAudioFileGeneration:
     def source_audio(self):
         """Load source audio file."""
         import warnings
+
         from scipy.io import wavfile
         from scipy.io.wavfile import WavFileWarning
 

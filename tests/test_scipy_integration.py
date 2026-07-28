@@ -2,6 +2,7 @@
 """Tests for SciPy signal processing integration."""
 
 import pytest
+
 import coremusic.utils.scipy as spu
 from coremusic.audio import AudioFile
 from coremusic.base import NUMPY_AVAILABLE

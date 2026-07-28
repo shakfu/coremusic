@@ -2,12 +2,11 @@
 """Combined Audio + MIDI Synchronized."""
 
 # --8<-- [start:example]
-import coremusic.capi as capi
-from coremusic import link
-from coremusic.base import AudioPlayer
-
-from coremusic.midi import link as link_midi
 import time
+
+from coremusic import capi, link
+from coremusic.base import AudioPlayer
+from coremusic.midi import link as link_midi
 
 # Setup MIDI
 client = capi.midi_client_create("Audio+MIDI")
@@ -43,7 +42,7 @@ with link.LinkSession(bpm=120.0) as session:
     seq.start()
 
     # Monitor both
-    for i in range(40):
+    for _i in range(40):
         timing = player.get_link_timing(quantum=4.0)
         progress = player.get_progress()
 

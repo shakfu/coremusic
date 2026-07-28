@@ -2,9 +2,9 @@
 """Change Tempo."""
 
 # --8<-- [start:example]
-from coremusic import link
-
 import time
+
+from coremusic import link
 
 with link.LinkSession(bpm=120.0) as session:
     state = session.capture_app_session_state()

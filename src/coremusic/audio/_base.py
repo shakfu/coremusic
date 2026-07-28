@@ -62,7 +62,7 @@ class AudioFileLoaderMixin:
         Raises:
             ImportError: If required dependencies are missing
         """
-        pass  # Default: no dependencies required
+        # Default: no dependencies required
 
     def _load_audio(self) -> tuple[NDArray, float]:
         """Load audio data from file.
@@ -114,8 +114,10 @@ def check_numpy_available() -> None:
     """
     try:
         import numpy as np  # noqa: F401
-    except ImportError:
-        raise ImportError("NumPy is required. Install with: pip install numpy")
+    except ImportError as e:
+        raise ImportError(
+            "NumPy is required. Install with: pip install numpy"
+        ) from e
 
 
 def check_matplotlib_available() -> None:
@@ -126,11 +128,11 @@ def check_matplotlib_available() -> None:
     """
     try:
         import matplotlib.pyplot as plt  # noqa: F401
-    except ImportError:
+    except ImportError as e:
         raise ImportError(
             "matplotlib is required for visualization. "
             "Install with: pip install matplotlib"
-        )
+        ) from e
 
 
 def check_scipy_available() -> None:
@@ -141,7 +143,7 @@ def check_scipy_available() -> None:
     """
     try:
         from scipy import signal  # noqa: F401
-    except ImportError:
+    except ImportError as e:
         raise ImportError(
             "SciPy is required for audio analysis. Install with: pip install scipy"
-        )
+        ) from e

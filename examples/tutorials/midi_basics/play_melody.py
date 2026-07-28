@@ -22,7 +22,7 @@ def play_melody(notes, durations, tempo_bpm=120):
         # Calculate beat duration
         beat_duration = 60.0 / tempo_bpm
 
-        for note, duration in zip(notes, durations):
+        for note, duration in zip(notes, durations, strict=True):
             port.send_data(destination, bytes([0x90, note, 100]))
             time.sleep(duration * beat_duration)
             port.send_data(destination, bytes([0x80, note, 0]))

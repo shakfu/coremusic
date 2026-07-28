@@ -13,7 +13,7 @@ with MIDIClient("My Synth") as client:
     deadline = time.monotonic() + 1.0
     while time.monotonic() < deadline:
         if destination.wait(0.1):
-            for host_time, data in destination.poll():
+            for _host_time, data in destination.poll():
                 print(data.hex())
 # --8<-- [end:destination]
 

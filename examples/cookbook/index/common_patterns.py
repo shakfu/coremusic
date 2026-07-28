@@ -44,7 +44,7 @@ session.enabled = False
 # --8<-- [end:link]
 
 # --8<-- [start:send-midi]
-import coremusic.capi as capi
+from coremusic import capi
 
 client = capi.midi_client_create("Output")
 port = capi.midi_output_port_create(client, "Out")

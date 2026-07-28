@@ -27,9 +27,10 @@ Example:
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum
-from typing import ClassVar, Iterator
+from typing import ClassVar
 
 # ============================================================================
 # Constants
@@ -149,7 +150,7 @@ def note_name_to_midi(name: str, octave: int = 4) -> int:
     try:
         pitch_class = NOTE_NAMES.index(note_part)
     except ValueError:
-        raise ValueError(f"Unknown note name: {note_part}")
+        raise ValueError(f"Unknown note name: {note_part}") from None
 
     midi = (octave + 1) * 12 + pitch_class
     if not 0 <= midi <= 127:
@@ -224,34 +225,34 @@ class Interval:
     name: str
 
     # Class-level interval constants (assigned below class definition)
-    UNISON: ClassVar["Interval"]
-    MINOR_SECOND: ClassVar["Interval"]
-    MAJOR_SECOND: ClassVar["Interval"]
-    MINOR_THIRD: ClassVar["Interval"]
-    MAJOR_THIRD: ClassVar["Interval"]
-    PERFECT_FOURTH: ClassVar["Interval"]
-    TRITONE: ClassVar["Interval"]
-    PERFECT_FIFTH: ClassVar["Interval"]
-    MINOR_SIXTH: ClassVar["Interval"]
-    MAJOR_SIXTH: ClassVar["Interval"]
-    MINOR_SEVENTH: ClassVar["Interval"]
-    MAJOR_SEVENTH: ClassVar["Interval"]
-    OCTAVE: ClassVar["Interval"]
-    MINOR_NINTH: ClassVar["Interval"]
-    MAJOR_NINTH: ClassVar["Interval"]
-    MINOR_TENTH: ClassVar["Interval"]
-    MAJOR_TENTH: ClassVar["Interval"]
-    PERFECT_ELEVENTH: ClassVar["Interval"]
-    AUGMENTED_ELEVENTH: ClassVar["Interval"]
-    PERFECT_TWELFTH: ClassVar["Interval"]
-    MINOR_THIRTEENTH: ClassVar["Interval"]
-    MAJOR_THIRTEENTH: ClassVar["Interval"]
+    UNISON: ClassVar[Interval]
+    MINOR_SECOND: ClassVar[Interval]
+    MAJOR_SECOND: ClassVar[Interval]
+    MINOR_THIRD: ClassVar[Interval]
+    MAJOR_THIRD: ClassVar[Interval]
+    PERFECT_FOURTH: ClassVar[Interval]
+    TRITONE: ClassVar[Interval]
+    PERFECT_FIFTH: ClassVar[Interval]
+    MINOR_SIXTH: ClassVar[Interval]
+    MAJOR_SIXTH: ClassVar[Interval]
+    MINOR_SEVENTH: ClassVar[Interval]
+    MAJOR_SEVENTH: ClassVar[Interval]
+    OCTAVE: ClassVar[Interval]
+    MINOR_NINTH: ClassVar[Interval]
+    MAJOR_NINTH: ClassVar[Interval]
+    MINOR_TENTH: ClassVar[Interval]
+    MAJOR_TENTH: ClassVar[Interval]
+    PERFECT_ELEVENTH: ClassVar[Interval]
+    AUGMENTED_ELEVENTH: ClassVar[Interval]
+    PERFECT_TWELFTH: ClassVar[Interval]
+    MINOR_THIRTEENTH: ClassVar[Interval]
+    MAJOR_THIRTEENTH: ClassVar[Interval]
 
     def __repr__(self) -> str:
         return f"Interval({self.semitones}, {self.name!r})"
 
     @classmethod
-    def from_semitones(cls, semitones: int) -> "Interval":
+    def from_semitones(cls, semitones: int) -> Interval:
         """Create interval from semitone count.
 
         Args:
@@ -270,7 +271,7 @@ class Interval:
         )
 
     @classmethod
-    def between(cls, note1: "Note", note2: "Note") -> "Interval":
+    def between(cls, note1: Note, note2: Note) -> Interval:
         """Calculate interval between two notes.
 
         Args:
@@ -392,7 +393,7 @@ class Note:
     @classmethod
     def from_midi(
         cls, midi: int, velocity: int = 100, use_flats: bool = False
-    ) -> "Note":
+    ) -> Note:
         """Create Note from MIDI number.
 
         Args:
@@ -411,7 +412,7 @@ class Note:
         names = FLAT_NAMES if use_flats else NOTE_NAMES
         return cls(names[pitch_class], octave, velocity)
 
-    def transpose(self, semitones: int | Interval) -> "Note":
+    def transpose(self, semitones: int | Interval) -> Note:
         """Transpose note by semitones or interval.
 
         Args:
@@ -429,7 +430,7 @@ class Note:
 
         return Note.from_midi(new_midi, self.velocity)
 
-    def interval_to(self, other: "Note") -> Interval:
+    def interval_to(self, other: Note) -> Interval:
         """Get interval to another note.
 
         Args:
@@ -448,7 +449,7 @@ class Note:
     def __hash__(self) -> int:
         return hash(self.midi)
 
-    def __lt__(self, other: "Note") -> bool:
+    def __lt__(self, other: Note) -> bool:
         return self.midi < other.midi
 
     def __repr__(self) -> str:
@@ -620,7 +621,7 @@ class Scale:
         relative_pc = (note_pc - root_pc) % 12
         return relative_pc in self.intervals
 
-    def harmonize(self, degree: int, chord_type: "ChordType" | None = None) -> "Chord":
+    def harmonize(self, degree: int, chord_type: ChordType | None = None) -> Chord:
         """Build chord on scale degree.
 
         Args:
@@ -654,7 +655,7 @@ class Scale:
         else:
             return Chord(root, ChordType.MAJOR)  # Default
 
-    def parallel(self, scale_type: ScaleType) -> "Scale":
+    def parallel(self, scale_type: ScaleType) -> Scale:
         """Get parallel scale (same root, different type).
 
         Args:
@@ -665,7 +666,7 @@ class Scale:
         """
         return Scale(self.root, scale_type, self.octaves)
 
-    def relative_minor(self) -> "Scale":
+    def relative_minor(self) -> Scale:
         """Get relative minor scale.
 
         Returns:
@@ -674,7 +675,7 @@ class Scale:
         minor_root = self.degree(6)
         return Scale(minor_root, ScaleType.NATURAL_MINOR, self.octaves)
 
-    def relative_major(self) -> "Scale":
+    def relative_major(self) -> Scale:
         """Get relative major scale.
 
         Returns:
@@ -838,7 +839,7 @@ class Chord:
         """
         return [n.midi for n in self.get_notes()]
 
-    def inversion(self, n: int) -> "Chord":
+    def inversion(self, n: int) -> Chord:
         """Get chord inversion.
 
         Args:
@@ -890,7 +891,7 @@ class Chord:
 
         return notes
 
-    def transpose(self, semitones: int) -> "Chord":
+    def transpose(self, semitones: int) -> Chord:
         """Transpose chord by semitones.
 
         Args:
@@ -903,7 +904,7 @@ class Chord:
         return Chord(new_root, self.chord_type)
 
     @classmethod
-    def from_symbol(cls, symbol: str, octave: int = 4) -> "Chord":
+    def from_symbol(cls, symbol: str, octave: int = 4) -> Chord:
         """Parse chord from symbol string.
 
         Args:
@@ -995,7 +996,7 @@ class ChordProgression:
         numerals: list[str],
         octave: int = 4,
         scale_type: ScaleType = ScaleType.MAJOR,
-    ) -> "ChordProgression":
+    ) -> ChordProgression:
         """Create progression from Roman numeral notation.
 
         Args:
@@ -1066,7 +1067,7 @@ class ChordProgression:
         return cls(chords, key, scale_type)
 
     @classmethod
-    def from_symbols(cls, symbols: list[str], octave: int = 4) -> "ChordProgression":
+    def from_symbols(cls, symbols: list[str], octave: int = 4) -> ChordProgression:
         """Create progression from chord symbols.
 
         Args:
@@ -1079,7 +1080,7 @@ class ChordProgression:
         chords = [Chord.from_symbol(sym, octave) for sym in symbols]
         return cls(chords)
 
-    def transpose(self, semitones: int) -> "ChordProgression":
+    def transpose(self, semitones: int) -> ChordProgression:
         """Transpose entire progression.
 
         Args:
@@ -1168,7 +1169,7 @@ class NoteValue(Enum):
         return self.value * (2 / 3)
 
     @classmethod
-    def from_beats(cls, beats: float, tolerance: float = 0.001) -> "NoteValue":
+    def from_beats(cls, beats: float, tolerance: float = 0.001) -> NoteValue:
         """Find closest note value for a beat duration.
 
         Args:
@@ -1230,9 +1231,9 @@ class TimeSignature:
     denominator: int
 
     # Common time signatures as class constants
-    COMMON_TIME: ClassVar["TimeSignature"]
-    CUT_TIME: ClassVar["TimeSignature"]
-    WALTZ_TIME: ClassVar["TimeSignature"]
+    COMMON_TIME: ClassVar[TimeSignature]
+    CUT_TIME: ClassVar[TimeSignature]
+    WALTZ_TIME: ClassVar[TimeSignature]
 
     def __post_init__(self) -> None:
         if self.numerator < 1:
@@ -1463,7 +1464,7 @@ class Duration:
         return quarter_notes * (60 / tempo)
 
     @classmethod
-    def triplet(cls, value: NoteValue) -> "Duration":
+    def triplet(cls, value: NoteValue) -> Duration:
         """Create a triplet duration.
 
         Args:
@@ -1475,7 +1476,7 @@ class Duration:
         return cls(value, tuplet=(3, 2))
 
     @classmethod
-    def dotted(cls, value: NoteValue, dots: int = 1) -> "Duration":
+    def dotted(cls, value: NoteValue, dots: int = 1) -> Duration:
         """Create a dotted duration.
 
         Args:
@@ -1575,7 +1576,7 @@ class RhythmPattern:
         # beats * 4 = quarter notes, * 60/tempo = seconds
         return [p * 4 * (60 / tempo) for p in positions]
 
-    def repeat(self, times: int) -> "RhythmPattern":
+    def repeat(self, times: int) -> RhythmPattern:
         """Create a repeated pattern.
 
         Args:
@@ -1595,7 +1596,7 @@ class RhythmPattern:
         pattern: str,
         base_value: NoteValue = NoteValue.EIGHTH,
         name: str | None = None,
-    ) -> "RhythmPattern":
+    ) -> RhythmPattern:
         """Create pattern from string notation.
 
         Uses 'x' for notes and '.' for rests. Each character represents
@@ -1623,7 +1624,7 @@ class RhythmPattern:
         return cls(durations, name=name)
 
     @classmethod
-    def straight_eighths(cls, count: int = 8) -> "RhythmPattern":
+    def straight_eighths(cls, count: int = 8) -> RhythmPattern:
         """Create straight eighth note pattern.
 
         Args:
@@ -1639,7 +1640,7 @@ class RhythmPattern:
     @classmethod
     def swing_eighths(
         cls, count: int = 8, swing_ratio: float = 2 / 3
-    ) -> "RhythmPattern":
+    ) -> RhythmPattern:
         """Create swung eighth note pattern.
 
         Args:

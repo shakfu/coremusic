@@ -6,6 +6,11 @@ Production-ready AudioUnit plugin hosting system for CoreMusic.
 
 CoreMusic now includes a **complete AudioUnit plugin hosting system** that enables Python applications to discover, load, and control AudioUnit plugins with both low-level C API access and high-level Pythonic wrappers.
 
+> **Historical.** This note predates the 0.2.3 package reorganisation. The host
+> described below is now `src/coremusic/audio/audiounit_host.py`, imported from
+> `coremusic.audio.audiounit_host`. Paths below are as they were when it was
+> written.
+
 ## What Was Built
 
 ### 1. Low-Level C API Bindings (`src/coremusic/capi.pyx`)
@@ -161,7 +166,14 @@ with host.load_plugin("AUDelay") as delay:
 
 ## Demo Applications
 
-### 1. Low-Level C API Demo (`tests/demos/audiounit_browser_demo.py`)
+> **Historical.** The three demo scripts below were removed in `fb50106`, and
+> the `tests/demos/` directory that held them has since been removed too. What
+> they showed now lives in `examples/cookbook/audiounit_hosting/` and
+> `examples/tutorials/effects_processing/` (both executed by the test suite),
+> in `demos/host_au_chain.py` and `demos/render_midi_to_wav.py`, and in the
+> `coremusic plugin` CLI commands.
+
+### 1. Low-Level C API Demo (`audiounit_browser_demo.py`, removed)
 
 Interactive plugin browser demonstrating:
 
@@ -178,7 +190,7 @@ Interactive plugin browser demonstrating:
 - Preset browsing
 - Plugin detail viewer
 
-### 2. High-Level Pythonic API Demo (`tests/demos/audiounit_highlevel_demo.py`)
+### 2. High-Level Pythonic API Demo (`audiounit_highlevel_demo.py`, removed)
 
 6 interactive demonstrations (effect plugins):
 
@@ -195,7 +207,7 @@ Interactive plugin browser demonstrating:
 - Complete workflow examples
 - Best practices demonstration
 
-### 3. Instrument Plugin MIDI Demo (`tests/demos/audiounit_instrument_demo.py`)
+### 3. Instrument Plugin MIDI Demo (`audiounit_instrument_demo.py`, removed)
 
 8 interactive demonstrations (MIDI instruments):
 

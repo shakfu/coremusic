@@ -4,6 +4,13 @@
 
 This document explains the implementation of complex audio conversions (sample rate, bit depth, codec changes) in CoreMusic.
 
+> **Historical.** This note predates the 0.2.3 package reorganisation, which
+> dissolved the flat modules into domain subpackages: `objects.py` into
+> `audio/` and `midi/`, `utilities.py` into `audio/utilities.py`,
+> `audiounit_host.py` into `audio/`, and `link_midi.py` into `midi/link.py`.
+> Paths below are as they were when it was written.
+> `AudioConverter` now lives in `src/coremusic/audio/core.py` and `convert_audio_file()` in `src/coremusic/audio/utilities.py`.
+
 **STATUS: [x] IMPLEMENTED AND FULLY TESTED**
 
 The callback-based AudioConverter API has been fully implemented and is production-ready. The `convert_audio_file()` utility now supports ALL conversion types automatically.

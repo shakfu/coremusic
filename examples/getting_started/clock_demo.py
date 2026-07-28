@@ -18,7 +18,7 @@ def clock_demo():
         print("Clock started at normal speed")
 
         # Monitor time in different formats
-        for i in range(5):
+        for _i in range(5):
             seconds = clock.get_time_seconds()
             beats = clock.get_time_beats()
             samples = clock.get_time_samples()

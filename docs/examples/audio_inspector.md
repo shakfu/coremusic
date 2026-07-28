@@ -141,7 +141,9 @@ FORMAT DETAILS
 **Format Detection:**
 
 ```python
-with cm.AudioFile(filepath) as audio:
+from coremusic.audio import AudioFile
+
+with AudioFile(filepath) as audio:
     fmt = audio.format
 
     if fmt.format_id == 'lpcm':
@@ -198,6 +200,9 @@ def format_duration(seconds):
 The inspector handles various error cases:
 
 ```python
+from coremusic.audio import AudioFile
+from coremusic.exceptions import AudioFileError
+
 # File not found
 if not Path(filepath).exists():
     print(f"Error: File not found: {filepath}")
@@ -205,10 +210,10 @@ if not Path(filepath).exists():
 
 # Audio file errors
 try:
-    with cm.AudioFile(filepath) as audio:
+    with AudioFile(filepath) as audio:
         # Process file
         pass
-except cm.AudioFileError as e:
+except AudioFileError as e:
     print(f"Error opening audio file: {e}")
     return False
 except Exception as e:
@@ -226,7 +231,7 @@ Add statistical analysis using NumPy:
 import numpy as np
 
 # Read audio data
-data, count = audio.read_packets(0, audio.frame_count)
+data, count = audio.read_packets(0, audio.packet_count)
 
 # Convert to NumPy array
 samples = np.frombuffer(data, dtype=np.int16)
@@ -247,7 +252,7 @@ Display a simple waveform:
 import matplotlib.pyplot as plt
 
 # Read audio
-data, count = audio.read_packets(0, min(audio.frame_count, 10000))
+data, count = audio.read_packets(0, min(audio.packet_count, 10000))
 samples = np.frombuffer(data, dtype=np.int16)
 
 # Plot waveform

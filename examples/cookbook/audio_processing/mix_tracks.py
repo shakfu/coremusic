@@ -4,7 +4,7 @@
 # --8<-- [start:example]
 import numpy as np
 
-import coremusic.capi as capi
+from coremusic import capi
 from coremusic.audio import AudioFile, AudioFormat, ExtendedAudioFile
 
 
@@ -18,7 +18,7 @@ def mix_tracks(track_files, output_path, levels=None):
     max_frames = 0
     source_format = None
 
-    for file_path, level in zip(track_files, levels):
+    for file_path, level in zip(track_files, levels, strict=True):
         with AudioFile(file_path) as audio:
             samples = audio.read_as_numpy().astype(np.float32) / 32768.0
             samples *= level  # Apply level

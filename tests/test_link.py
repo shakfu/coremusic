@@ -4,8 +4,9 @@ Tests the basic functionality of the Link wrapper including session management,
 clock operations, and session state manipulation.
 """
 
-import pytest
 import time
+
+import pytest
 
 # Import Link module directly (not through main coremusic package to avoid circular import)
 from coremusic import link

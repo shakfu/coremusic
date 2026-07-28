@@ -1,6 +1,6 @@
 [project]
 name = "coremusic"
-version = "0.2.4"
+version = "0.2.5"
 authors = [
     { name = "Shakeeb Alireza", email = "shakfu@users.noreply.github.com" }
 ]
@@ -60,7 +60,7 @@ dev = [
     "twine>=5.0",
     "mypy>=1.10.0",
     "matplotlib>=3.8",
-    "ruff>=0.4.0",
+    "ruff>=0.16.0",
 ]
 
 [build-system]
@@ -95,11 +95,37 @@ sdist.exclude = [".git/", "*.egg-info/"]
 
 
 
+[tool.ruff.lint]
+# Pinned explicitly. Ruff's default rule set widened substantially in 0.16,
+# which turned a clean tree into 955 findings overnight without a line of code
+# changing. Selecting by name means an upgrade can add rules to ruff without
+# silently redefining what "lint clean" means here.
+#
+# This is the previous default (E4/E7/E9/F) plus the families that have been
+# worked through. The remaining opinionated ones are deliberately out and can
+# be adopted one at a time:
+#
+#   SIM (77)   flake8-simplify
+#   RUF (132)  ruff-specific
+#   PERF (50)  perflint
+#   BLE (330)  blind-except - would mean narrowing 242 `except Exception`
+#              clauses in the library, changing which errors propagate; see
+#              docs/dev/error_decorator.md, where that refactor was deferred
+#   ANN, D, S, TRY, EM, PL - thousands each, stylistic
+select = [
+    "E4", "E7", "E9", "F", "I", "W", "UP", "C4", "PIE",
+    "B",     # flake8-bugbear
+]
+
 [tool.ruff.lint.per-file-ignores]
 # Documentation examples are structured one self-contained snippet per section,
 # so each section repeats the imports it needs and may not use every name it
 # shows. That is deliberate: the snippet a reader copies has to stand alone.
 "examples/**/*.py" = ["E402", "F401", "F811", "F841"]
+# Scale and chord types intentionally share values: Ionian *is* major, Aeolian
+# *is* natural minor, and a dominant 7th with a sharp 5 *is* an augmented 7th.
+# Python turns the duplicates into aliases, which is the desired behaviour.
+"src/coremusic/music/theory.py" = ["PIE796"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

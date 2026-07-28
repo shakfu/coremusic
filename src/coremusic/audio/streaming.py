@@ -29,8 +29,9 @@ from __future__ import annotations
 
 import logging
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from .. import capi
 from .devices import AudioDevice, AudioDeviceManager
@@ -153,7 +154,7 @@ class AudioInputStream:
             )
         except Exception as e:
             logger.error(f"Failed to start input stream: {e}")
-            raise RuntimeError(f"Failed to start input stream: {e}")
+            raise RuntimeError(f"Failed to start input stream: {e}") from e
 
     # kAudioUnitErr_CannotDoInCurrentContext: returned by AudioUnitRender when
     # microphone (TCC) permission has not been granted to the process.
@@ -295,7 +296,7 @@ class AudioInputStream:
         """Get input latency in seconds."""
         return self.buffer_size / self.sample_rate
 
-    def __enter__(self) -> "AudioInputStream":
+    def __enter__(self) -> AudioInputStream:
         """Context manager entry."""
         self.start()
         return self
@@ -396,7 +397,7 @@ class AudioOutputStream:
             )
         except Exception as e:
             logger.error(f"Failed to start output stream: {e}")
-            raise RuntimeError(f"Failed to start output stream: {e}")
+            raise RuntimeError(f"Failed to start output stream: {e}") from e
 
     def _setup_audio_unit(self) -> None:
         """Set up the generator-driven output unit via the Cython backend.
@@ -462,7 +463,7 @@ class AudioOutputStream:
         """Get output latency in seconds."""
         return self.buffer_size / self.sample_rate
 
-    def __enter__(self) -> "AudioOutputStream":
+    def __enter__(self) -> AudioOutputStream:
         """Context manager entry."""
         self.start()
         return self
@@ -572,8 +573,10 @@ class AudioProcessor:
         ring = self._out_ring
         if ring is None:
             return
-        if self._has_numpy and self._np is not None and isinstance(
-            result, self._np.ndarray
+        if (
+            self._has_numpy
+            and self._np is not None
+            and isinstance(result, self._np.ndarray)
         ):
             arr = self._np.ascontiguousarray(result, dtype=self._np.float32).ravel()
             ring.push_floats(arr)
@@ -626,9 +629,7 @@ class AudioProcessor:
         """
         out_ring = capi.AudioRingBuffer(8 * self.buffer_size, self.channels)
         output_impl = capi.AudioOutputStreamImpl()
-        output_impl.setup_direct(
-            out_ring, float(self.sample_rate), int(self.channels)
-        )
+        output_impl.setup_direct(out_ring, float(self.sample_rate), int(self.channels))
 
         # Publish the ring before the input drain thread starts so _on_input can
         # enqueue immediately once capture begins.
@@ -689,7 +690,7 @@ class AudioProcessor:
         # Input buffer + processing buffer + output buffer
         return (self.buffer_size * 3) / self.sample_rate
 
-    def __enter__(self) -> "AudioProcessor":
+    def __enter__(self) -> AudioProcessor:
         """Context manager entry."""
         self.start()
         return self
@@ -935,7 +936,7 @@ class StreamGraph:
             return self._processor.latency
         return (self.buffer_size * 3) / self.sample_rate
 
-    def __enter__(self) -> "StreamGraph":
+    def __enter__(self) -> StreamGraph:
         """Context manager entry."""
         self.start()
         return self
@@ -1080,7 +1081,7 @@ class DirectLoopback:
         """Ring underruns (playback outran capture)."""
         return int(self._ring.underruns) if self._ring is not None else 0
 
-    def __enter__(self) -> "DirectLoopback":
+    def __enter__(self) -> DirectLoopback:
         self.start()
         return self
 

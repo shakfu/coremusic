@@ -9,8 +9,8 @@ Constants can be imported directly:
 """
 
 import os
-import pytest
 
+import pytest
 
 # ============================================================================
 # Hardware Detection Markers
@@ -288,7 +288,7 @@ def source_format():
 
     Used by functional capi tests that expect dict format.
     """
-    import coremusic.capi as capi
+    from coremusic import capi
 
     return {
         "sample_rate": 44100.0,
@@ -309,7 +309,7 @@ def dest_format_mono():
 
     Used by functional capi tests that expect dict format.
     """
-    import coremusic.capi as capi
+    from coremusic import capi
 
     return {
         "sample_rate": 44100.0,
@@ -330,7 +330,7 @@ def dest_format_48k():
 
     Used by functional capi tests that expect dict format.
     """
-    import coremusic.capi as capi
+    from coremusic import capi
 
     return {
         "sample_rate": 48000.0,
@@ -430,7 +430,7 @@ def dest_format_48k_obj():
 @pytest.fixture
 def pcm_format_dict():
     """Fixture providing PCM audio format as dictionary."""
-    import coremusic.capi as capi
+    from coremusic import capi
 
     return {
         "sample_rate": 44100.0,

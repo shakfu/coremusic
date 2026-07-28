@@ -38,7 +38,7 @@ try:
 except RuntimeError as e:
     # macOS refuses the input stream until the app has microphone permission
     print(e)
-    raise SystemExit(0)
+    raise SystemExit(0) from None
 
 print("Monitoring input levels")
 print("=" * 50)

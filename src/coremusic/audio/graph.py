@@ -39,9 +39,9 @@ class AUGraph(capi.CoreAudioObject):
             graph_id = capi.au_graph_new()
             self._set_object_id(graph_id)
         except Exception as e:
-            raise AUGraphError(f"Failed to create AUGraph: {e}")
+            raise AUGraphError(f"Failed to create AUGraph: {e}") from e
 
-    def open(self) -> "AUGraph":
+    def open(self) -> AUGraph:
         """Open the graph (opens AudioUnits but doesn't initialize them)
 
         Returns:
@@ -55,7 +55,7 @@ class AUGraph(capi.CoreAudioObject):
             capi.au_graph_open(self.object_id)
             return self
         except Exception as e:
-            raise AUGraphError(f"Failed to open graph: {e}")
+            raise AUGraphError(f"Failed to open graph: {e}") from e
 
     def close(self) -> None:
         """Close the graph (closes all AudioUnits)
@@ -67,9 +67,9 @@ class AUGraph(capi.CoreAudioObject):
         try:
             capi.au_graph_close(self.object_id)
         except Exception as e:
-            raise AUGraphError(f"Failed to close graph: {e}")
+            raise AUGraphError(f"Failed to close graph: {e}") from e
 
-    def initialize(self) -> "AUGraph":
+    def initialize(self) -> AUGraph:
         """Initialize the graph (prepares all AudioUnits for rendering)
 
         Returns:
@@ -83,7 +83,7 @@ class AUGraph(capi.CoreAudioObject):
             capi.au_graph_initialize(self.object_id)
             return self
         except Exception as e:
-            raise AUGraphError(f"Failed to initialize graph: {e}")
+            raise AUGraphError(f"Failed to initialize graph: {e}") from e
 
     def uninitialize(self) -> None:
         """Uninitialize the graph
@@ -95,7 +95,7 @@ class AUGraph(capi.CoreAudioObject):
         try:
             capi.au_graph_uninitialize(self.object_id)
         except Exception as e:
-            raise AUGraphError(f"Failed to uninitialize graph: {e}")
+            raise AUGraphError(f"Failed to uninitialize graph: {e}") from e
 
     def start(self) -> None:
         """Start the graph (begins audio rendering)
@@ -107,7 +107,7 @@ class AUGraph(capi.CoreAudioObject):
         try:
             capi.au_graph_start(self.object_id)
         except Exception as e:
-            raise AUGraphError(f"Failed to start graph: {e}")
+            raise AUGraphError(f"Failed to start graph: {e}") from e
 
     def stop(self) -> None:
         """Stop the graph (stops audio rendering)
@@ -119,7 +119,7 @@ class AUGraph(capi.CoreAudioObject):
         try:
             capi.au_graph_stop(self.object_id)
         except Exception as e:
-            raise AUGraphError(f"Failed to stop graph: {e}")
+            raise AUGraphError(f"Failed to stop graph: {e}") from e
 
     @property
     def is_open(self) -> bool:
@@ -194,7 +194,7 @@ class AUGraph(capi.CoreAudioObject):
             }
             return capi.au_graph_add_node(self.object_id, desc_dict)
         except Exception as e:
-            raise AUGraphError(f"Failed to add node: {e}")
+            raise AUGraphError(f"Failed to add node: {e}") from e
 
     def remove_node(self, node_id: int) -> None:
         """Remove a node from the graph
@@ -209,7 +209,7 @@ class AUGraph(capi.CoreAudioObject):
         try:
             capi.au_graph_remove_node(self.object_id, node_id)
         except Exception as e:
-            raise AUGraphError(f"Failed to remove node: {e}")
+            raise AUGraphError(f"Failed to remove node: {e}") from e
 
     @property
     def node_count(self) -> int:
@@ -247,7 +247,7 @@ class AUGraph(capi.CoreAudioObject):
         try:
             return capi.au_graph_get_ind_node(self.object_id, index)
         except Exception as e:
-            raise AUGraphError(f"Failed to get node at index {index}: {e}")
+            raise AUGraphError(f"Failed to get node at index {index}: {e}") from e
 
     def get_node_info(self, node_id: int) -> tuple[AudioComponentDescription, int]:
         """Get information about a node
@@ -278,7 +278,7 @@ class AUGraph(capi.CoreAudioObject):
 
             return (desc, audio_unit_id)
         except Exception as e:
-            raise AUGraphError(f"Failed to get node info: {e}")
+            raise AUGraphError(f"Failed to get node info: {e}") from e
 
     def connect(
         self, source_node: int, source_output: int, dest_node: int, dest_input: int
@@ -300,7 +300,7 @@ class AUGraph(capi.CoreAudioObject):
                 self.object_id, source_node, source_output, dest_node, dest_input
             )
         except Exception as e:
-            raise AUGraphError(f"Failed to connect nodes: {e}")
+            raise AUGraphError(f"Failed to connect nodes: {e}") from e
 
     def disconnect(self, dest_node: int, dest_input: int) -> None:
         """Disconnect a node's input
@@ -316,7 +316,7 @@ class AUGraph(capi.CoreAudioObject):
         try:
             capi.au_graph_disconnect_node_input(self.object_id, dest_node, dest_input)
         except Exception as e:
-            raise AUGraphError(f"Failed to disconnect node: {e}")
+            raise AUGraphError(f"Failed to disconnect node: {e}") from e
 
     def clear_connections(self) -> None:
         """Clear all connections in the graph
@@ -328,7 +328,7 @@ class AUGraph(capi.CoreAudioObject):
         try:
             capi.au_graph_clear_connections(self.object_id)
         except Exception as e:
-            raise AUGraphError(f"Failed to clear connections: {e}")
+            raise AUGraphError(f"Failed to clear connections: {e}") from e
 
     def update(self) -> bool:
         """Update the graph after making changes
@@ -343,7 +343,7 @@ class AUGraph(capi.CoreAudioObject):
         try:
             return capi.au_graph_update(self.object_id)
         except Exception as e:
-            raise AUGraphError(f"Failed to update graph: {e}")
+            raise AUGraphError(f"Failed to update graph: {e}") from e
 
     @property
     def cpu_load(self) -> float:
@@ -367,7 +367,7 @@ class AUGraph(capi.CoreAudioObject):
             finally:
                 super().dispose()
 
-    def __enter__(self) -> "AUGraph":
+    def __enter__(self) -> AUGraph:
         """Enter context manager"""
         return self
 

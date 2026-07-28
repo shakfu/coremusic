@@ -2,9 +2,9 @@
 """MIDI Controllers."""
 
 # --8<-- [start:example]
-from coremusic.audio.audiounit_host import AudioUnitPlugin
-
 import time
+
+from coremusic.audio.audiounit_host import AudioUnitPlugin
 
 with AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu') as synth:
     synth.note_on(channel=0, note=60, velocity=100)

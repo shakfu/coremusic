@@ -523,7 +523,7 @@ def cmd_onsets(args: argparse.Namespace) -> int:
     # Format output
     onsets = [
         {"time": float(t), "strength": float(s)}
-        for t, s in zip(onset_times, onset_strengths)
+        for t, s in zip(onset_times, onset_strengths, strict=True)
     ]
 
     if args.json:

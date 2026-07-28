@@ -130,7 +130,8 @@ Complete API documentation:
 
 Working example applications:
 
-- `tests/demos/` directory in the source repository
+- `demos/` in the source repository - complete programs, run with `make demos`
+- `examples/` in the source repository - the code included by these pages
 
 ## Getting Help
 
@@ -141,7 +142,7 @@ Working example applications:
 
 **Examples:**
 
-- Review the demo scripts in `tests/demos/`
+- Review the demo scripts in `demos/`
 - Study the test suite for usage patterns
 
 **Source Code:**

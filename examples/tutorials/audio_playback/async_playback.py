@@ -13,9 +13,13 @@ async def async_playback(filepath):
         print(f"Duration: {audio.duration:.2f}s")
 
         # Stream chunks asynchronously
+        total = 0
         async for chunk in audio.read_chunks_async(chunk_size=4096):
-            # Process chunk without blocking
+            # Process each chunk without blocking
+            total += len(chunk)
             await asyncio.sleep(0)  # Yield to event loop
+
+        print(f"Read {total:,} bytes")
 
 
 # Run async playback

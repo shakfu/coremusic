@@ -1,16 +1,18 @@
 """Tests for the base infrastructure of the object-oriented coremusic API."""
 
-import pytest
 import gc
-import coremusic.capi as capi
+
+import pytest
+
+from coremusic import capi
 from coremusic.audio import AudioFormat
 from coremusic.base import CoreAudioObject
 from coremusic.exceptions import (
-    AUGraphError,
     AudioDeviceError,
     AudioFileError,
     AudioQueueError,
     AudioUnitError,
+    AUGraphError,
     CoreAudioError,
     MIDIError,
     MusicPlayerError,
@@ -171,7 +173,7 @@ class TestExceptionHierarchy:
             raise AudioFileError("Test file error")
         with pytest.raises(CoreAudioError):
             raise AudioUnitError("Test unit error")
-        with pytest.raises(Exception):
+        with pytest.raises(CoreAudioError):
             raise MIDIError("Test MIDI error")
 
 
@@ -227,28 +229,28 @@ class TestObjectOrientedAPIAvailability:
     @pytest.mark.parametrize("class_name", AUDIO_CLASSES)
     def test_audio_class_available(self, class_name):
         """Test that required class is available via coremusic.audio"""
-        import coremusic.audio as audio
+        from coremusic import audio
 
         assert hasattr(audio, class_name), f"Missing class: {class_name}"
 
     @pytest.mark.parametrize("class_name", MIDI_CLASSES)
     def test_midi_class_available(self, class_name):
         """Test that required class is available via coremusic.midi"""
-        import coremusic.midi as midi
+        from coremusic import midi
 
         assert hasattr(midi, class_name), f"Missing class: {class_name}"
 
     @pytest.mark.parametrize("class_name", EXCEPTION_CLASSES)
     def test_exception_class_available(self, class_name):
         """Test that required class is available via coremusic.exceptions"""
-        import coremusic.exceptions as exceptions
+        from coremusic import exceptions
 
         assert hasattr(exceptions, class_name), f"Missing class: {class_name}"
 
     @pytest.mark.parametrize("class_name", BASE_CLASSES)
     def test_base_class_available(self, class_name):
         """Test that required class is available via coremusic.base"""
-        import coremusic.base as base
+        from coremusic import base
 
         assert hasattr(base, class_name), f"Missing class: {class_name}"
 

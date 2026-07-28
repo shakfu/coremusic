@@ -27,8 +27,9 @@ from __future__ import annotations
 
 import random
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from copy import deepcopy
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 from .utilities import MIDIEvent, MIDISequence, MIDIStatus
 
@@ -58,7 +59,6 @@ class MIDITransformer(ABC):
         Returns:
             Transformed MIDI sequence (copy)
         """
-        pass
 
     def __call__(self, sequence: MIDISequence) -> MIDISequence:
         """Allow transformer to be called directly."""
@@ -99,7 +99,7 @@ class Pipeline:
         """
         self.transformers: list[MIDITransformer] = transformers or []
 
-    def add(self, transformer: MIDITransformer) -> "Pipeline":
+    def add(self, transformer: MIDITransformer) -> Pipeline:
         """Add transformer to pipeline.
 
         Args:
@@ -824,7 +824,7 @@ class ScaleFilter(MIDITransformer):
         >>> filtered = ScaleFilter(a_pent).transform(sequence)
     """
 
-    def __init__(self, scale: "Scale"):
+    def __init__(self, scale: Scale):
         """Initialize scale filter.
 
         Args:
@@ -1176,7 +1176,7 @@ def scale_velocity(
     return VelocityScale(min_vel, max_vel, factor).transform(sequence)
 
 
-def filter_to_scale(sequence: MIDISequence, scale: "Scale") -> MIDISequence:
+def filter_to_scale(sequence: MIDISequence, scale: Scale) -> MIDISequence:
     """Convenience function to filter notes to a scale.
 
     Args:

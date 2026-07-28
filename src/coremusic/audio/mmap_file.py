@@ -72,7 +72,7 @@ class MMapAudioFile:
         self._data_size = 0
         self._is_open = False
 
-    def open(self) -> "MMapAudioFile":
+    def open(self) -> MMapAudioFile:
         """Open file and create memory mapping.
 
         Returns:
@@ -112,7 +112,7 @@ class MMapAudioFile:
 
         self._is_open = False
 
-    def __enter__(self) -> "MMapAudioFile":
+    def __enter__(self) -> MMapAudioFile:
         """Context manager entry."""
         return self.open()
 
@@ -248,9 +248,7 @@ class MMapAudioFile:
         mantissa = struct.unpack(">Q", data[2:10])[0]
 
         # Common sample rates
-        if exponent == 0x400E:
-            return 44100.0
-        elif exponent == 0x400E and mantissa == 0xAC44000000000000:
+        if exponent == 0x400E or exponent == 0x400E and mantissa == 0xAC44000000000000:
             return 44100.0
         elif exponent == 0x400E and mantissa == 0xBB80000000000000:
             return 48000.0
@@ -318,7 +316,7 @@ class MMapAudioFile:
 
     def read_as_numpy(
         self, start_frame: int = 0, num_frames: int | None = None
-    ) -> "np.ndarray":
+    ) -> np.ndarray:
         """Read audio data as NumPy array.
 
         Args:

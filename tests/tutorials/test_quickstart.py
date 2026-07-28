@@ -37,7 +37,6 @@ def import_main_package():
     >>> import coremusic as cm
     >>> assert cm is not None
     """
-    pass
 
 
 def import_functional_api():
@@ -49,7 +48,6 @@ def import_functional_api():
     >>> assert hasattr(capi, 'audio_file_open_url')
     >>> assert hasattr(capi, 'midi_get_number_of_devices')
     """
-    pass
 
 
 def import_constants():
@@ -60,7 +58,6 @@ def import_constants():
     >>> assert AudioFileProperty.DATA_FORMAT is not None
     >>> assert AudioFormatID.LINEAR_PCM is not None
     """
-    pass
 
 
 def import_music_theory():
@@ -72,7 +69,6 @@ def import_music_theory():
     >>> assert Chord is not None
     >>> assert Interval is not None
     """
-    pass
 
 
 # =============================================================================
@@ -91,7 +87,6 @@ def open_audio_file():
     ...     assert fmt.sample_rate > 0
     ...     assert fmt.channels_per_frame >= 1
     """
-    pass
 
 
 def get_audio_info():
@@ -111,7 +106,6 @@ def get_audio_info():
     ...     assert info['channels'] >= 1
     ...     assert info['bits'] > 0
     """
-    pass
 
 
 def read_audio_data():
@@ -126,7 +120,6 @@ def read_audio_data():
     ...     assert len(data) > 0
     ...     assert count > 0
     """
-    pass
 
 
 # =============================================================================
@@ -147,7 +140,6 @@ def check_midi_devices():
     >>> assert num_sources >= 0
     >>> assert num_destinations >= 0
     """
-    pass
 
 
 def create_midi_client():
@@ -158,7 +150,6 @@ def create_midi_client():
     >>> assert client is not None
     >>> client.dispose()
     """
-    pass
 
 
 def build_midi_note():
@@ -171,7 +162,6 @@ def build_midi_note():
     >>> assert note_on[1] == 60    # Middle C
     >>> assert note_on[2] == 100   # Velocity
     """
-    pass
 
 
 # =============================================================================
@@ -187,7 +177,6 @@ def list_audio_units():
     >>> assert isinstance(units, list)
     >>> assert len(units) > 0  # macOS has built-in AudioUnits
     """
-    pass
 
 
 def find_effect_by_name():
@@ -198,7 +187,6 @@ def find_effect_by_name():
     >>> component = find_audio_unit_by_name("AUDelay")
     >>> assert component is not None
     """
-    pass
 
 
 def create_effects_chain():
@@ -211,7 +199,6 @@ def create_effects_chain():
     >>> chain.connect(delay, output)
     >>> chain.dispose()
     """
-    pass
 
 
 # =============================================================================
@@ -226,7 +213,6 @@ def create_note():
     >>> c4 = Note.from_midi(60)
     >>> assert c4.midi == 60
     """
-    pass
 
 
 def create_scale():
@@ -238,7 +224,6 @@ def create_scale():
     >>> notes = list(c_major)
     >>> assert len(notes) == 7
     """
-    pass
 
 
 def create_chord():
@@ -250,7 +235,6 @@ def create_chord():
     >>> notes = list(cmaj)
     >>> assert len(notes) >= 3
     """
-    pass
 
 
 # =============================================================================
@@ -269,7 +253,6 @@ def handle_audio_file_error():
     ... except (AudioFileError, FileNotFoundError, OSError):
     ...     pass  # Expected
     """
-    pass
 
 
 def exception_hierarchy():
@@ -287,7 +270,6 @@ def exception_hierarchy():
     >>> assert AudioUnitError is not None
     >>> assert MIDIError is not None
     """
-    pass
 
 
 # =============================================================================
@@ -303,7 +285,6 @@ def check_numpy_available():
     >>> assert NUMPY_AVAILABLE is not None
     >>> assert isinstance(NUMPY_AVAILABLE, bool)
     """
-    pass
 
 
 def numpy_dtype_from_format():
@@ -317,7 +298,6 @@ def numpy_dtype_from_format():
     ...         dtype = audio.format.to_numpy_dtype()
     ...         assert dtype is not None
     """
-    pass
 
 
 # =============================================================================
@@ -335,7 +315,6 @@ def audio_file_properties():
     >>> _ = AudioFileProperty.FILE_FORMAT
     >>> _ = AudioFileProperty.AUDIO_DATA_BYTE_COUNT
     """
-    pass
 
 
 def audio_format_ids():
@@ -348,7 +327,6 @@ def audio_format_ids():
     >>> _ = AudioFormatID.MPEG4_AAC
     >>> _ = AudioFormatID.MPEG_LAYER_3
     """
-    pass
 
 
 def audiounit_properties():
@@ -364,7 +342,6 @@ def audiounit_properties():
     >>> _ = AudioUnitScope.OUTPUT
     >>> _ = AudioUnitScope.GLOBAL
     """
-    pass
 
 
 # Test runner

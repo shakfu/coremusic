@@ -1,8 +1,10 @@
 """Tests for AudioFile and AudioFileStream object-oriented classes."""
 
-import pytest
 from pathlib import Path
-import coremusic.capi as capi
+
+import pytest
+
+from coremusic import capi
 from coremusic.audio import AudioFile, AudioFileStream, AudioFormat
 from coremusic.base import CoreAudioObject
 from coremusic.exceptions import AudioFileError
@@ -86,9 +88,8 @@ class TestAudioFile:
 
     def test_audio_file_error_handling(self):
         """Test AudioFile error handling"""
-        with pytest.raises(AudioFileError):
-            with AudioFile("/nonexistent/path.wav"):
-                pass
+        with pytest.raises(AudioFileError), AudioFile("/nonexistent/path.wav"):
+            pass
 
     def test_audio_file_operations_on_disposed_object(self, amen_wav_path):
         """Test operations on disposed AudioFile object"""
@@ -351,7 +352,9 @@ class TestAudioFormatPCMFlags:
         fmt = AudioFormat.pcm(bits=16, big_endian=True)
         assert fmt.format_flags & self.IS_BIG_ENDIAN
         assert fmt.format_flags == 14
-        assert AudioFormat.pcm(bits=32, is_float=True, big_endian=True).format_flags == 11
+        assert (
+            AudioFormat.pcm(bits=32, is_float=True, big_endian=True).format_flags == 11
+        )
 
     def test_derived_sizes(self):
         fmt = AudioFormat.pcm(bits=16, channels=2)

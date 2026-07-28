@@ -4,6 +4,13 @@
 **Status:** [x] COMPLETE
 **Task:** Implement remaining Object-Oriented API for MusicPlayer and ExtendedAudioFile
 
+> **Historical.** This note predates the 0.2.3 package reorganisation, which
+> dissolved the flat modules into domain subpackages: `objects.py` into
+> `audio/` and `midi/`, `utilities.py` into `audio/utilities.py`,
+> `audiounit_host.py` into `audio/`, and `link_midi.py` into `midi/link.py`.
+> Paths below are as they were when it was written.
+> The classes described here now live in `src/coremusic/midi/player.py` (`MusicPlayer`, `MusicSequence`, `MusicTrack`) and `src/coremusic/audio/core.py` (`ExtendedAudioFile`).
+
 ---
 
 ## Overview

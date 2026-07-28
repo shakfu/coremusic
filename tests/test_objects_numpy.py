@@ -4,9 +4,9 @@ Tests for NumPy integration in AudioFormat and AudioFile
 """
 
 import pytest
+
 from coremusic.audio import AudioFile, AudioFormat
 from coremusic.base import NUMPY_AVAILABLE
-
 
 if not NUMPY_AVAILABLE:
     pytest.skip("NumPy is not available", allow_module_level=True)

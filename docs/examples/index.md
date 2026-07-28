@@ -69,7 +69,7 @@ Larger standalone programs live elsewhere in the repository:
 - [`demos/`](https://github.com/shakfu/coremusic/tree/main/demos) - four
   end-to-end demos: an AudioUnit effect chain, MIDI rendered to WAV, a
   real-time tone, and a Link-synchronised sequencer. `make demos` runs them.
-- [`tests/examples/`](https://github.com/shakfu/coremusic/tree/main/tests/examples) -
+- [`extras/`](https://github.com/shakfu/coremusic/tree/main/extras) -
   utilities (audio inspector, converter) and experimental modules (a DAW-style
   timeline, generative algorithms) that are not part of the package.
 

@@ -40,8 +40,8 @@ except ImportError:
     NUMPY_AVAILABLE = False
 
 try:
-    import matplotlib.animation as animation
     import matplotlib.pyplot as plt
+    from matplotlib import animation
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
@@ -208,7 +208,7 @@ class WaveformPlotter(AudioFileLoaderMixin):
         plt.close(fig)
         logger.info(f"Saved waveform plot to {output_path}")
 
-    def _calculate_rms_envelope(self, data: "NDArray", window_size: int) -> "NDArray":
+    def _calculate_rms_envelope(self, data: NDArray, window_size: int) -> NDArray:
         """Calculate RMS envelope.
 
         Args:
@@ -224,7 +224,7 @@ class WaveformPlotter(AudioFileLoaderMixin):
         return rms
 
     def _calculate_peak_envelope(
-        self, data: "NDArray", window_size: int
+        self, data: NDArray, window_size: int
     ) -> tuple[NDArray, NDArray]:
         """Calculate peak envelope.
 
@@ -385,7 +385,7 @@ class SpectrogramPlotter(AudioFileLoaderMixin):
 
     def _compute_spectrogram(
         self,
-        data: "NDArray",
+        data: NDArray,
         sr: float,
         window_size: int,
         hop_size: int,
@@ -687,9 +687,9 @@ class FrequencySpectrumPlotter(AudioFileLoaderMixin):
 # ============================================================================
 
 __all__ = [
-    "WaveformPlotter",
-    "SpectrogramPlotter",
-    "FrequencySpectrumPlotter",
     "MATPLOTLIB_AVAILABLE",
     "NUMPY_AVAILABLE",
+    "FrequencySpectrumPlotter",
+    "SpectrogramPlotter",
+    "WaveformPlotter",
 ]

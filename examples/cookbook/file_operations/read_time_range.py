@@ -4,6 +4,7 @@
 # --8<-- [start:example]
 from coremusic.audio import AudioFile
 
+
 def read_time_range(filepath, start_seconds, duration_seconds):
     """Read specific time range from audio file."""
     with AudioFile(filepath) as audio:

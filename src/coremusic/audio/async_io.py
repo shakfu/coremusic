@@ -32,8 +32,9 @@ Example usage:
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 from coremusic.base import NUMPY_AVAILABLE
 
@@ -50,8 +51,8 @@ if NUMPY_AVAILABLE:
 __all__ = [
     "AsyncAudioFile",
     "AsyncAudioQueue",
-    "open_audio_file_async",
     "create_output_queue_async",
+    "open_audio_file_async",
 ]
 
 # ============================================================================
@@ -85,7 +86,7 @@ class AsyncAudioFile:
         self._audio_file = AudioFile(path)
         self._path = str(path)
 
-    async def __aenter__(self) -> "AsyncAudioFile":
+    async def __aenter__(self) -> AsyncAudioFile:
         """Async context manager entry."""
         await asyncio.to_thread(self._audio_file.open)
         return self
@@ -94,7 +95,7 @@ class AsyncAudioFile:
         """Async context manager exit."""
         await asyncio.to_thread(self._audio_file.close)
 
-    async def open_async(self) -> "AsyncAudioFile":
+    async def open_async(self) -> AsyncAudioFile:
         """Open the audio file asynchronously.
 
         Returns:
@@ -196,7 +197,7 @@ class AsyncAudioFile:
 
         async def read_as_numpy_async(
             self, start_packet: int = 0, packet_count: int | None = None
-        ) -> "NDArray[Any]":
+        ) -> NDArray[Any]:
             """Read audio data as NumPy array asynchronously.
 
             Args:
@@ -217,7 +218,7 @@ class AsyncAudioFile:
             chunk_size: int = 4096,
             start_packet: int = 0,
             total_packets: int | None = None,
-        ) -> AsyncIterator["NDArray[Any]"]:
+        ) -> AsyncIterator[NDArray[Any]]:
             """Stream audio data as NumPy arrays asynchronously.
 
             Args:
@@ -305,7 +306,7 @@ class AsyncAudioQueue:
         self._queue = audio_queue
 
     @classmethod
-    async def new_output_async(cls, audio_format: AudioFormat) -> "AsyncAudioQueue":
+    async def new_output_async(cls, audio_format: AudioFormat) -> AsyncAudioQueue:
         """Create a new output audio queue asynchronously.
 
         Args:
@@ -317,7 +318,7 @@ class AsyncAudioQueue:
         queue = await asyncio.to_thread(AudioQueue.new_output, audio_format)
         return cls(queue)
 
-    async def __aenter__(self) -> "AsyncAudioQueue":
+    async def __aenter__(self) -> AsyncAudioQueue:
         """Async context manager entry."""
         return self
 

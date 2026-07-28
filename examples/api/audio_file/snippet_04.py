@@ -2,7 +2,7 @@
 """Reading Audio Data."""
 
 # --8<-- [start:example]
-import coremusic.capi as capi
+from coremusic import capi
 
 file_id = capi.audio_file_open_url("audio.wav")
 try:

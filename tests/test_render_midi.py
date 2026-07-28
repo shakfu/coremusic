@@ -15,7 +15,9 @@ from coremusic.midi.utilities import MIDISequence
 
 # Apple's DLSMusicDevice ships with macOS; skip if it cannot be found.
 try:
-    _HAS_DLS = AudioUnitPlugin.from_name("DLSMusicDevice", component_type="aumu") is not None
+    _HAS_DLS = (
+        AudioUnitPlugin.from_name("DLSMusicDevice", component_type="aumu") is not None
+    )
 except Exception:
     _HAS_DLS = False
 
@@ -70,14 +72,14 @@ class TestRenderMidiFile:
         midi = tmp_path / "in.mid"
         _make_midi(midi)
         with pytest.raises(ValueError):
-            render_midi_file("NoSuchInstrument12345", str(midi), str(tmp_path / "x.wav"))
+            render_midi_file(
+                "NoSuchInstrument12345", str(midi), str(tmp_path / "x.wav")
+            )
 
 
 class TestPluginRenderMidi:
     def test_render_midi_returns_float32_bytes(self):
-        instrument = AudioUnitPlugin.from_name(
-            "DLSMusicDevice", component_type="aumu"
-        )
+        instrument = AudioUnitPlugin.from_name("DLSMusicDevice", component_type="aumu")
         with instrument:
             events = [(0.0, 0x90, 60, 100), (0.5, 0x80, 60, 0)]
             audio = instrument.render_midi(
@@ -92,9 +94,8 @@ class TestPluginRenderMidi:
             effect = AudioUnitPlugin.from_name("AUDelay", component_type="aufx")
         except ValueError:
             pytest.skip("AUDelay effect not available")
-        with effect:
-            with pytest.raises(ValueError):
-                effect.render_midi([(0.0, 0x90, 60, 100)], duration=0.1)
+        with effect, pytest.raises(ValueError):
+            effect.render_midi([(0.0, 0x90, 60, 100)], duration=0.1)
 
 
 class TestShortcutRenderMidi:

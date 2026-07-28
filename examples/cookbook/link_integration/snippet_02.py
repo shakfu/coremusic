@@ -2,9 +2,9 @@
 """Query Tempo and Beat."""
 
 # --8<-- [start:example]
-from coremusic import link
-
 import time
+
+from coremusic import link
 
 with link.LinkSession(bpm=120.0) as session:
     # Start transport
@@ -13,7 +13,7 @@ with link.LinkSession(bpm=120.0) as session:
     session.commit_app_session_state(state)
 
     # Monitor beat position
-    for i in range(4):
+    for _i in range(4):
         time.sleep(0.1)
         state = session.capture_app_session_state()
         current_time = session.clock.micros()

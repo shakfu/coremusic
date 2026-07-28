@@ -13,7 +13,7 @@ with AudioFile("audio.wav") as audio:
 # --8<-- [end:context-manager]
 
 # --8<-- [start:manual]
-import coremusic.capi as capi
+from coremusic import capi
 
 # Open file manually
 file_id = capi.audio_file_open_url("audio.wav")

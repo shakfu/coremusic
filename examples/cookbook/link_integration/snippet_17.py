@@ -2,9 +2,9 @@
 """Thread Safety."""
 
 # --8<-- [start:example]
-from coremusic import link
-
 import threading
+
+from coremusic import link
 
 with link.LinkSession(bpm=120.0) as session:
     def audio_thread():

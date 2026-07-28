@@ -28,7 +28,6 @@ def get_midi_device_counts():
     >>> assert num_sources >= 0
     >>> assert num_destinations >= 0
     """
-    pass
 
 
 def create_midi_client():
@@ -40,7 +39,6 @@ def create_midi_client():
     >>> # Always dispose when done
     >>> client.dispose()
     """
-    pass
 
 
 def create_midi_output_port():
@@ -54,7 +52,6 @@ def create_midi_output_port():
     ... finally:
     ...     client.dispose()
     """
-    pass
 
 
 def create_midi_input_port():
@@ -68,7 +65,6 @@ def create_midi_input_port():
     ... finally:
     ...     client.dispose()
     """
-    pass
 
 
 def midi_note_on_message():
@@ -86,7 +82,6 @@ def midi_note_on_message():
     >>> assert note_on[1] == 60    # Middle C
     >>> assert note_on[2] == 100   # Velocity
     """
-    pass
 
 
 def midi_note_off_message():
@@ -104,7 +99,6 @@ def midi_note_off_message():
     >>> assert note_off[1] == 60    # Middle C
     >>> assert note_off[2] == 0     # Velocity (release)
     """
-    pass
 
 
 def midi_control_change_message():
@@ -129,7 +123,6 @@ def midi_control_change_message():
     >>> CC_SUSTAIN = 64
     >>> CC_ALL_NOTES_OFF = 123
     """
-    pass
 
 
 def midi_program_change_message():
@@ -145,7 +138,6 @@ def midi_program_change_message():
     >>> assert program_change[0] == 0xC0  # Program Change, channel 0
     >>> assert program_change[1] == 0     # Program 0
     """
-    pass
 
 
 def midi_pitch_bend_message():
@@ -169,7 +161,6 @@ def midi_pitch_bend_message():
     >>> reconstructed = pitch_bend[1] | (pitch_bend[2] << 7)
     >>> assert reconstructed == 8192
     """
-    pass
 
 
 def parse_midi_status_byte():
@@ -190,7 +181,6 @@ def parse_midi_status_byte():
     >>> CHANNEL_AFTERTOUCH = 0xD0
     >>> PITCH_BEND = 0xE0
     """
-    pass
 
 
 def midi_note_number_to_name():
@@ -211,7 +201,6 @@ def midi_note_number_to_name():
     >>> note_to_name(72)  # C5
     'C5'
     """
-    pass
 
 
 def midi_name_to_note_number():
@@ -238,7 +227,6 @@ def midi_name_to_note_number():
     >>> name_to_note("C3")
     48
     """
-    pass
 
 
 def build_midi_melody():
@@ -266,7 +254,6 @@ def build_midi_melody():
     >>> messages[0][1][1]  # First note
     60
     """
-    pass
 
 
 def midi_client_lifecycle():
@@ -282,7 +269,6 @@ def midi_client_lifecycle():
     >>> # Always clean up
     >>> client.dispose()
     """
-    pass
 
 
 # Test runner

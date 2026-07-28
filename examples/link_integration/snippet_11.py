@@ -2,11 +2,10 @@
 """MIDI Clock Synchronization."""
 
 # --8<-- [start:example]
-import coremusic.capi as capi
-from coremusic import link
-
-from coremusic.midi import link as link_midi
 import time
+
+from coremusic import capi, link
+from coremusic.midi import link as link_midi
 
 # Setup MIDI
 client = capi.midi_client_create("MIDI Clock")
@@ -24,7 +23,7 @@ with link.LinkSession(bpm=120.0) as session:
     print("(24 clock messages per quarter note)")
 
     # Run for 10 seconds
-    for i in range(20):
+    for _i in range(20):
         state = session.capture_app_session_state()
         print(f"Tempo: {state.tempo:6.1f} BPM | "
               f"Peers: {session.num_peers}", end='\r')

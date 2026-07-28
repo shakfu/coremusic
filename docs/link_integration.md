@@ -358,6 +358,6 @@ class LinkMIDISequencer:
 
 - [Ableton Link Official Site](https://www.ableton.com/en/link/)
 - [Link GitHub Repository](https://github.com/Ableton/link)
-- [CoreMusic Examples](../tests/demos/)
+- [CoreMusic demos](https://github.com/shakfu/coremusic/tree/main/demos) - including `link_sequencer.py`, a Link-synced step sequencer
 - [CoreAudio Documentation](https://developer.apple.com/documentation/coreaudio)
 - [CoreMIDI Documentation](https://developer.apple.com/documentation/coremidi)

@@ -27,7 +27,7 @@ import argparse
 import math
 import struct
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from coremusic import link
 from coremusic.audio.streaming import AudioOutputStream
@@ -41,7 +41,7 @@ def midi_to_hz(note: int) -> float:
 
 
 def make_link_generator(
-    session: "link.LinkSession",
+    session: link.LinkSession,
     *,
     sample_rate: float,
     channels: int,
@@ -92,7 +92,7 @@ def make_link_generator(
 
 
 def print_timeline(
-    session: "link.LinkSession", quantum: float, duration: float
+    session: link.LinkSession, quantum: float, duration: float
 ) -> None:
     """Fallback: show the live Link timeline without producing audio."""
     clock = session.clock

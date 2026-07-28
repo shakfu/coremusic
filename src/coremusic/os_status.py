@@ -7,8 +7,9 @@ and helpful recovery suggestions for common error scenarios.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -265,7 +266,7 @@ ALL_ERRORS = {
 # The suggestion here is generic enough to apply to all cases
 RECOVERY_SUGGESTIONS = {
     -50: "Check that all function parameters are valid and within acceptable ranges",
-    -43: "Verify the file path exists and is accessible",
+    -43: "Verify the file path exists and is spelled correctly",
     -38: "Ensure the file is opened before performing this operation",
     -108: "Free up system memory or reduce buffer sizes",
     -128: "Check system security settings or user permissions",
@@ -274,7 +275,6 @@ RECOVERY_SUGGESTIONS = {
     0x7479703F: "Verify the audio file format is supported (WAV, AIFF, MP3, AAC, etc.)",
     0x666D743F: "Check that the audio format is supported by CoreAudio",
     0x6474613F: "The file may be corrupted or incomplete",
-    -43: "Verify the file path exists and is spelled correctly",
     # Audio hardware errors
     0x21646576: "Check that the audio device is connected and recognized by the system",
     0x21686F67: "Another application may have exclusive access to the audio device",

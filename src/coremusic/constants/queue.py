@@ -3,8 +3,8 @@
 from enum import IntEnum
 
 __all__ = [
-    "AudioQueueProperty",
     "AudioQueueParameter",
+    "AudioQueueProperty",
 ]
 
 

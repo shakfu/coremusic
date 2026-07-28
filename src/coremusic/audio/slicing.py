@@ -20,9 +20,10 @@ from __future__ import annotations
 
 import logging
 import random
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 # Type checking imports
 if TYPE_CHECKING:
@@ -70,7 +71,7 @@ class Slice:
 
     start: float
     end: float
-    data: "NDArray"
+    data: NDArray
     sample_rate: float
     index: int
     confidence: float = 1.0
@@ -234,7 +235,7 @@ class AudioSlicer:
         return slices
 
     def _detect_onsets(
-        self, data: "NDArray", sr: float, sensitivity: float
+        self, data: NDArray, sr: float, sensitivity: float
     ) -> list[float]:
         """Detect onset times in audio.
 
@@ -304,7 +305,7 @@ class AudioSlicer:
         return filtered
 
     def _select_prominent_onsets(
-        self, onsets: list[float], data: "NDArray", sr: float, max_slices: int
+        self, onsets: list[float], data: NDArray, sr: float, max_slices: int
     ) -> list[float]:
         """Select most prominent onsets.
 
@@ -331,7 +332,7 @@ class AudioSlicer:
             onset_strengths.append(strength)
 
         # Select top N by strength
-        onset_strength_pairs = list(zip(onsets, onset_strengths))
+        onset_strength_pairs = list(zip(onsets, onset_strengths, strict=True))
         onset_strength_pairs.sort(key=lambda x: x[1], reverse=True)
 
         selected_onsets = [onset for onset, _ in onset_strength_pairs[:max_slices]]
@@ -562,7 +563,7 @@ class AudioSlicer:
     def _create_slices_from_times(
         self,
         slice_times: list[float],
-        data: "NDArray",
+        data: NDArray,
         sr: float,
         confidence: float = 1.0,
     ) -> list[Slice]:
@@ -685,7 +686,7 @@ class SliceCollection:
         """
         self.slices = slices
 
-    def shuffle(self) -> "SliceCollection":
+    def shuffle(self) -> SliceCollection:
         """Shuffle slices randomly.
 
         Returns:
@@ -695,7 +696,7 @@ class SliceCollection:
         random.shuffle(shuffled)
         return SliceCollection(shuffled)
 
-    def reverse(self) -> "SliceCollection":
+    def reverse(self) -> SliceCollection:
         """Reverse slice order.
 
         Returns:
@@ -703,7 +704,7 @@ class SliceCollection:
         """
         return SliceCollection(self.slices[::-1])
 
-    def repeat(self, times: int) -> "SliceCollection":
+    def repeat(self, times: int) -> SliceCollection:
         """Repeat entire sequence.
 
         Args:
@@ -714,7 +715,7 @@ class SliceCollection:
         """
         return SliceCollection(self.slices * times)
 
-    def filter(self, predicate: Callable[[Slice], bool]) -> "SliceCollection":
+    def filter(self, predicate: Callable[[Slice], bool]) -> SliceCollection:
         """Filter slices by predicate.
 
         Args:
@@ -726,7 +727,7 @@ class SliceCollection:
         filtered = [s for s in self.slices if predicate(s)]
         return SliceCollection(filtered)
 
-    def sort_by_duration(self, reverse: bool = False) -> "SliceCollection":
+    def sort_by_duration(self, reverse: bool = False) -> SliceCollection:
         """Sort slices by duration.
 
         Args:
@@ -738,7 +739,7 @@ class SliceCollection:
         sorted_slices = sorted(self.slices, key=lambda s: s.duration, reverse=reverse)
         return SliceCollection(sorted_slices)
 
-    def select(self, indices: list[int]) -> "SliceCollection":
+    def select(self, indices: list[int]) -> SliceCollection:
         """Select specific slices by index.
 
         Args:
@@ -750,7 +751,7 @@ class SliceCollection:
         selected = [self.slices[i] for i in indices if 0 <= i < len(self.slices)]
         return SliceCollection(selected)
 
-    def apply_pattern(self, pattern: list[int]) -> "SliceCollection":
+    def apply_pattern(self, pattern: list[int]) -> SliceCollection:
         """Apply pattern (e.g., [0, 1, 2, 1] to repeat certain slices).
 
         Args:
@@ -804,7 +805,7 @@ class SliceRecombinator:
         crossfade_duration: float = 0.01,
         normalize: bool = True,
         **kwargs: Any,
-    ) -> "NDArray":
+    ) -> NDArray:
         """Recombine slices into continuous audio.
 
         Args:
@@ -834,7 +835,7 @@ class SliceRecombinator:
 
     def _recombine_original(
         self, crossfade_duration: float, normalize: bool
-    ) -> "NDArray":
+    ) -> NDArray:
         """Recombine in original order."""
         return self._concatenate_slices(self.slices, crossfade_duration, normalize)
 
@@ -843,7 +844,7 @@ class SliceRecombinator:
         crossfade_duration: float,
         normalize: bool,
         num_slices: int | None = None,
-    ) -> "NDArray":
+    ) -> NDArray:
         """Recombine in random order.
 
         Args:
@@ -857,7 +858,7 @@ class SliceRecombinator:
 
     def _recombine_reverse(
         self, crossfade_duration: float, normalize: bool
-    ) -> "NDArray":
+    ) -> NDArray:
         """Recombine in reverse order."""
         return self._concatenate_slices(
             self.slices[::-1], crossfade_duration, normalize
@@ -868,7 +869,7 @@ class SliceRecombinator:
         crossfade_duration: float,
         normalize: bool,
         pattern: list[int] | None = None,
-    ) -> "NDArray":
+    ) -> NDArray:
         """Recombine using pattern.
 
         Args:
@@ -888,7 +889,7 @@ class SliceRecombinator:
         crossfade_duration: float,
         normalize: bool,
         order_func: Callable[[list[Slice]], list[Slice]] | None = None,
-    ) -> "NDArray":
+    ) -> NDArray:
         """Recombine using custom ordering function.
 
         Args:
@@ -905,7 +906,7 @@ class SliceRecombinator:
 
     def _concatenate_slices(
         self, slices: list[Slice], crossfade_duration: float, normalize: bool
-    ) -> "NDArray":
+    ) -> NDArray:
         """Concatenate slices with crossfading.
 
         Args:
@@ -1005,10 +1006,10 @@ class SliceRecombinator:
 # ============================================================================
 
 __all__ = [
-    "Slice",
     "AudioSlicer",
-    "SliceCollection",
-    "SliceRecombinator",
-    "SliceMethod",
     "RecombineMethod",
+    "Slice",
+    "SliceCollection",
+    "SliceMethod",
+    "SliceRecombinator",
 ]

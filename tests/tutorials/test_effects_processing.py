@@ -22,7 +22,6 @@ def list_available_audio_units():
     >>> assert 'name' in unit
     >>> assert 'type' in unit
     """
-    pass
 
 
 def get_effect_names():
@@ -35,7 +34,6 @@ def get_effect_names():
     >>> # Check for at least one effect
     >>> assert len(effects) > 0
     """
-    pass
 
 
 def get_instrument_names():
@@ -47,7 +45,6 @@ def get_instrument_names():
     >>> # macOS includes DLSMusicDevice
     >>> assert len(instruments) >= 0  # May be 0 if no instruments installed
     """
-    pass
 
 
 def find_audio_unit_by_name():
@@ -58,7 +55,6 @@ def find_audio_unit_by_name():
     >>> component = find_audio_unit_by_name("AUDelay")
     >>> assert component is not None
     """
-    pass
 
 
 def find_audio_unit_partial_match():
@@ -69,7 +65,6 @@ def find_audio_unit_partial_match():
     >>> component = find_audio_unit_by_name("Reverb")
     >>> assert component is not None
     """
-    pass
 
 
 def audio_unit_types():
@@ -94,7 +89,6 @@ def audio_unit_types():
     >>> assert AUDIOUNIT_TYPES['aufx'] == 'Effect'
     >>> assert AUDIOUNIT_TYPES['aumu'] == 'Instrument'
     """
-    pass
 
 
 def create_audio_component_description():
@@ -109,7 +103,6 @@ def create_audio_component_description():
     ... )
     >>> assert desc is not None
     """
-    pass
 
 
 def find_component_by_description():
@@ -123,7 +116,6 @@ def find_component_by_description():
     >>> component = find_audio_unit_by_name("AUReverb2")
     >>> assert component is not None
     """
-    pass
 
 
 def create_effects_chain():
@@ -134,7 +126,6 @@ def create_effects_chain():
     >>> assert chain is not None
     >>> chain.dispose()
     """
-    pass
 
 
 def add_effect_to_chain_by_name():
@@ -149,7 +140,6 @@ def add_effect_to_chain_by_name():
     ... finally:
     ...     chain.dispose()
     """
-    pass
 
 
 def add_effect_to_chain_by_descriptor():
@@ -164,7 +154,6 @@ def add_effect_to_chain_by_descriptor():
     ... finally:
     ...     chain.dispose()
     """
-    pass
 
 
 def add_output_to_chain():
@@ -178,7 +167,6 @@ def add_output_to_chain():
     ... finally:
     ...     chain.dispose()
     """
-    pass
 
 
 def connect_chain_nodes():
@@ -195,7 +183,6 @@ def connect_chain_nodes():
     ... finally:
     ...     chain.dispose()
     """
-    pass
 
 
 def create_multi_effect_chain():
@@ -219,7 +206,6 @@ def create_multi_effect_chain():
     ... finally:
     ...     chain.dispose()
     """
-    pass
 
 
 def initialize_effects_chain():
@@ -234,7 +220,6 @@ def initialize_effects_chain():
     >>> _ = chain.initialize()
     >>> chain.dispose()
     """
-    pass
 
 
 def common_apple_effects():
@@ -277,7 +262,6 @@ def common_apple_effects():
     ...     assert len(subtype) == 4
     ...     assert len(manu) == 4
     """
-    pass
 
 
 def calculate_tempo_synced_delay():
@@ -309,7 +293,6 @@ def calculate_tempo_synced_delay():
     >>> round(tempo_to_delay_ms(140, '1/4'), 2)  # Quarter note
     428.57
     """
-    pass
 
 
 # Test runner

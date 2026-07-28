@@ -2,10 +2,11 @@
 """Validate Audio File."""
 
 # --8<-- [start:example]
+from pathlib import Path
+
 from coremusic.audio import AudioFile
 from coremusic.exceptions import AudioFileError
 
-from pathlib import Path
 
 def validate_audio_file(filepath, min_duration=0.1, max_duration=3600):
     """Validate audio file meets requirements."""

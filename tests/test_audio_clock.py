@@ -1,8 +1,10 @@
 """Tests for CoreAudioClock functionality"""
 
-import pytest
 import time
-import coremusic.capi as capi
+
+import pytest
+
+from coremusic import capi
 from coremusic.audio import AudioClock, ClockTimeFormat
 
 

@@ -170,7 +170,7 @@ class AudioDevice(capi.CoreAudioObject):
                 data,
             )
         except Exception as e:
-            raise AudioDeviceError(f"Failed to set sample rate to {rate}: {e}")
+            raise AudioDeviceError(f"Failed to set sample rate to {rate}: {e}") from e
 
     @property
     def is_alive(self) -> bool:
@@ -217,7 +217,7 @@ class AudioDevice(capi.CoreAudioObject):
                 "raw_data_length": len(data),
             }
         except Exception as e:
-            raise AudioDeviceError(f"Failed to get stream configuration: {e}")
+            raise AudioDeviceError(f"Failed to get stream configuration: {e}") from e
 
     def channel_count(self, scope: str = "output") -> int:
         """Number of channels the device provides in the given scope.
@@ -315,7 +315,7 @@ class AudioDevice(capi.CoreAudioObject):
                 data,
             )
         except Exception as e:
-            raise AudioDeviceError(f"Failed to set volume: {e}")
+            raise AudioDeviceError(f"Failed to set volume: {e}") from e
 
     def get_mute(self, scope: str = "output", channel: int = 0) -> bool | None:
         """Get mute state for a channel
@@ -387,7 +387,7 @@ class AudioDevice(capi.CoreAudioObject):
                 data,
             )
         except Exception as e:
-            raise AudioDeviceError(f"Failed to set mute: {e}")
+            raise AudioDeviceError(f"Failed to set mute: {e}") from e
 
     def __repr__(self) -> str:
         name = self.name or "Unknown"
@@ -527,7 +527,7 @@ class AudioDeviceManager:
                 data,
             )
         except Exception as e:
-            raise AudioDeviceError(f"Failed to set default output device: {e}")
+            raise AudioDeviceError(f"Failed to set default output device: {e}") from e
 
     @staticmethod
     def set_default_input_device(device: AudioDevice) -> None:
@@ -553,4 +553,4 @@ class AudioDeviceManager:
                 data,
             )
         except Exception as e:
-            raise AudioDeviceError(f"Failed to set default input device: {e}")
+            raise AudioDeviceError(f"Failed to set default input device: {e}") from e

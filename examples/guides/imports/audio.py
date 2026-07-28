@@ -25,6 +25,8 @@ from coremusic.audio import AsyncAudioFile, AsyncAudioQueue
 
 # Or from the module that defines them
 from coremusic.audio.async_io import AsyncAudioFile
+
+print(AsyncAudioFile, AsyncAudioQueue)
 # --8<-- [end:async]
 
 # --8<-- [start:analysis]

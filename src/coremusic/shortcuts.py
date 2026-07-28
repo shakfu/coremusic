@@ -32,17 +32,17 @@ if TYPE_CHECKING:
     from .base import AudioPlayer
 
 __all__ = [
-    "play",
-    "play_background",
-    "play_async",
-    "convert",
-    "analyze_tempo",
     "analyze_key",
     "analyze_loudness",
+    "analyze_tempo",
+    "convert",
     "get_duration",
     "get_info",
     "list_devices",
     "list_plugins",
+    "play",
+    "play_async",
+    "play_background",
 ]
 
 
@@ -102,7 +102,7 @@ class AudioPlayerHandle:
     Returned by play() when block=False.
     """
 
-    def __init__(self, player: "AudioPlayer", path: str):
+    def __init__(self, player: AudioPlayer, path: str):
         self._player = player
         self._path = path
 
@@ -222,13 +222,12 @@ def convert(
         >>> cm.convert("song.wav", "song.m4a")   # AAC
         >>> cm.convert("song.wav", "song.flac")  # lossless
     """
-    from .audio.core import AudioFormat
-    from .audio.utilities import convert_audio_file
-
     # Read the source format as the base for the output format. Building it
     # unconditionally (not only when kwargs are given) avoids passing None to
     # convert_audio_file, which expects a concrete AudioFormat.
     from .audio import AudioFile
+    from .audio.core import AudioFormat
+    from .audio.utilities import convert_audio_file
 
     with AudioFile(str(input_path)) as f:
         src = f.format

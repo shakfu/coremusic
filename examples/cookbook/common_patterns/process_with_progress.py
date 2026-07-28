@@ -8,6 +8,7 @@ def process_chunk(chunk):
 # --8<-- [start:example]
 from coremusic.audio import AudioFile
 
+
 def process_with_progress(filepath, callback=None):
     """Process audio with progress callback."""
     with AudioFile(filepath) as audio:

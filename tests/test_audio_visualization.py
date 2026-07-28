@@ -29,9 +29,9 @@ except ImportError:
 
 if NUMPY_AVAILABLE and MATPLOTLIB_AVAILABLE:
     from coremusic.audio.visualization import (
-        WaveformPlotter,
-        SpectrogramPlotter,
         FrequencySpectrumPlotter,
+        SpectrogramPlotter,
+        WaveformPlotter,
     )
 
 pytestmark = pytest.mark.skipif(

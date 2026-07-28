@@ -3,9 +3,9 @@
 from enum import IntEnum
 
 __all__ = [
-    "MIDIStatus",
     "MIDIControlChange",
     "MIDIObjectProperty",
+    "MIDIStatus",
 ]
 
 

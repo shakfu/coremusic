@@ -7,20 +7,19 @@ Tests complete workflows as specified in CODE_REVIEW.md Medium Priority:
 """
 
 import os
-import time
 import struct
+import time
+
 import pytest
 
-import coremusic.capi as capi
-from coremusic import link
+from coremusic import capi, link
+from coremusic.audio import AudioFile, AudioFormat
 from coremusic.audio.audiounit_host import AudioUnitHost
 from coremusic.audio.utilities import (
     AudioEffectsChain,
     parse_audio_stream_basic_description,
 )
-from coremusic.audio import AudioFile, AudioFormat
 from coremusic.base import AudioPlayer
-
 
 # =============================================================================
 # Workflow 1: Audio -> Process -> Save

@@ -3,9 +3,11 @@
 Tests the MIDI support for instrument AudioUnit plugins.
 """
 
-import pytest
-from coremusic.audio.audiounit_host import AudioUnitHost, AudioUnitPlugin
 import time
+
+import pytest
+
+from coremusic.audio.audiounit_host import AudioUnitHost, AudioUnitPlugin
 
 
 class TestAudioUnitMIDI:

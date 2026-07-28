@@ -1,12 +1,13 @@
 """Tests for high-level audio utilities."""
 
 import os
-import pytest
 import tempfile
-import coremusic.capi as capi
-from coremusic.audio.analysis import AudioAnalyzer
+
+import pytest
+
+from coremusic import capi
 from coremusic.audio import AudioComponent, AudioFile, AudioFormat
-from coremusic.base import NUMPY_AVAILABLE
+from coremusic.audio.analysis import AudioAnalyzer
 from coremusic.audio.utilities import (
     AudioEffectsChain,
     AudioFormatPresets,
@@ -18,6 +19,7 @@ from coremusic.audio.utilities import (
     list_available_audio_units,
     parse_audio_stream_basic_description,
 )
+from coremusic.base import NUMPY_AVAILABLE
 
 
 class TestAudioAnalyzer:

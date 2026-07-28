@@ -16,7 +16,7 @@ with AudioFile("audio.wav") as audio:
 # --8<-- [end:audiofile-oo]
 
 # --8<-- [start:audiofile-functional]
-import coremusic.capi as capi
+from coremusic import capi
 
 # Open
 file_id = capi.audio_file_open_url("audio.wav")
@@ -46,7 +46,7 @@ unit.dispose()
 # --8<-- [end:audiounit]
 
 # --8<-- [start:audiounit-functional]
-import coremusic.capi as capi
+from coremusic import capi
 
 desc = {
     'type': capi.fourchar_to_int('auou'),
@@ -63,7 +63,7 @@ capi.audio_component_instance_dispose(unit)
 # --8<-- [end:audiounit-functional]
 
 # --8<-- [start:midi]
-import coremusic.capi as capi
+from coremusic import capi
 
 # Create MIDI client
 client = capi.midi_client_create("MyClient")

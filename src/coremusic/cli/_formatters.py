@@ -83,7 +83,7 @@ def output_table(
         return text[: width - 1] + "~"
 
     # Print header (last column not padded)
-    parts = [truncate(h, w) for h, w in zip(headers[:-1], widths[:-1])]
+    parts = [truncate(h, w) for h, w in zip(headers[:-1], widths[:-1], strict=True)]
     parts.append(headers[-1])
     header_line = "  ".join(parts)
     print(header_line)
@@ -91,6 +91,10 @@ def output_table(
 
     # Print rows (last column not padded)
     for row in rows:
-        parts = [truncate(c, w) for c, w in zip(row[:-1], widths[:-1])]
+        # A row may be shorter than the header list; the last cell is
+        # appended separately below, so truncation here is intended.
+        parts = [
+            truncate(c, w) for c, w in zip(row[:-1], widths[:-1], strict=False)
+        ]
         parts.append(str(row[-1]) if len(row) > len(widths) - 1 else str(row[-1]))
         print("  ".join(parts))

@@ -47,18 +47,21 @@ jobs:
         make docs-linkcheck
       continue-on-error: true
 
+    # MkDocs writes to site/. The Sphinx-era docs/_build/html path this used to
+    # name has never existed in this repository, so the upload found nothing
+    # and the deploy had nothing to publish.
     - name: Upload documentation
       uses: actions/upload-artifact@v4
       with:
         name: documentation-${{ github.sha }}
-        path: docs/_build/html/
+        path: site/
         retention-days: 30
+        if-no-files-found: error
 
     - name: Deploy to GitHub Pages
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs/_build/html
+        publish_dir: ./site
         force_orphan: true
-      continue-on-error: true

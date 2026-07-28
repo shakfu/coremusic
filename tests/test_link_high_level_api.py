@@ -3,8 +3,10 @@
 Tests context manager support, module exports, and Pythonic API patterns.
 """
 
-import pytest
 import time
+
+import pytest
+
 from coremusic import link
 
 

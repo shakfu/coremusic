@@ -34,8 +34,9 @@ transposed = transpose(sequence, 5)
 # --8<-- [end:transform]
 
 # --8<-- [start:link]
+# The submodule is reachable from the package, or by its full path
+from coremusic.midi import link
 from coremusic.midi.link import LinkMIDIClock, LinkMIDISequencer
 
-# The submodule is also reachable from the package
-from coremusic.midi import link
+print(link.MIDI_CLOCK, LinkMIDIClock, LinkMIDISequencer)
 # --8<-- [end:link]

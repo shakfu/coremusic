@@ -4,8 +4,10 @@ Tests plugin discovery, instantiation, parameter control, and preset management.
 """
 
 import logging
+
 import pytest
-import coremusic.capi as capi
+
+from coremusic import capi
 
 logger = logging.getLogger(__name__)
 

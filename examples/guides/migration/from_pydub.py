@@ -20,7 +20,7 @@ with ExtendedAudioFile("audio.wav") as audio:
 # --8<-- [start:operations]
 import numpy as np
 
-import coremusic.capi as capi
+from coremusic import capi
 from coremusic.audio import AudioFile, ExtendedAudioFile
 from coremusic.audio.slicing import AudioSlicer
 

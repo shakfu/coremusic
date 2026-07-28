@@ -148,21 +148,40 @@ uv run pre-commit run --all-files
 ```
 coremusic/
   src/coremusic/
-    __init__.py          # Package entry point
+    __init__.py          # package entry (version only)
     capi.pyx             # Cython bindings to CoreAudio/CoreMIDI
-    objects/             # Object-oriented API
-      audio.py           # AudioFile, AudioFormat, etc.
-      audiounit.py       # AudioUnit classes
-      midi.py            # MIDI classes
-      devices.py         # Audio device classes
-      exceptions.py      # Exception hierarchy
-    audio/               # Audio processing utilities
-    midi/                # MIDI utilities
-    music/               # Music theory
-    cli/                 # Command-line interface
-  tests/                 # Test suite
-  docs/                  # Sphinx documentation
+    base.py              # CoreAudioObject, AudioPlayer
+    exceptions.py        # exception hierarchy
+    shortcuts.py         # one-call helpers (play, convert, get_info)
+    constants/           # enumerated CoreAudio/CoreMIDI constants
+    audio/               # audio files, units, devices, streaming, analysis
+    midi/                # MIDI client/ports/endpoints, sequencing, transforms
+    music/               # music theory
+    utils/               # FourCC, batch, SciPy helpers
+    cli/                 # command-line interface
+    link.pyx             # Ableton Link bindings
+  examples/              # the code the documentation includes
+  demos/                 # complete standalone programs
+  extras/                # utilities and experimental modules, not installed
+  tests/                 # test suite
+  docs/                  # MkDocs documentation sources
 ```
+
+### Where new code goes
+
+Four directories hold runnable code that is not the library itself. Pick by
+what the code is *for*:
+
+| If it is... | Put it in | Kept honest by |
+|---|---|---|
+| a snippet a doc page shows | `examples/<page>/` | `tests/test_examples.py` runs it; the page includes it with `--8<--` |
+| a complete program worth running for its own sake | `demos/` | `make demos`, plus `tests/test_demos.py` |
+| a utility or experiment that is not part of the package | `extras/` | its own module in `tests/` |
+| a test | `tests/` | `make test` |
+
+The rule exists because `tests/demos/` once held three dozen scripts that
+nothing ran, and half of them had silently stopped working. Anything in these
+directories should be executed by something.
 
 ## Making Changes
 

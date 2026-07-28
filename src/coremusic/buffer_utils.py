@@ -171,7 +171,7 @@ class AudioStreamBasicDescription:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "AudioStreamBasicDescription":
+    def from_dict(cls, data: dict[str, Any]) -> AudioStreamBasicDescription:
         """Create from dictionary.
 
         Args:
@@ -194,7 +194,7 @@ class AudioStreamBasicDescription:
     @classmethod
     def pcm_float32_stereo(
         cls, sample_rate: float = 44100.0
-    ) -> "AudioStreamBasicDescription":
+    ) -> AudioStreamBasicDescription:
         """Create standard stereo float32 PCM format.
 
         Args:
@@ -217,7 +217,7 @@ class AudioStreamBasicDescription:
     @classmethod
     def pcm_int16_stereo(
         cls, sample_rate: float = 44100.0
-    ) -> "AudioStreamBasicDescription":
+    ) -> AudioStreamBasicDescription:
         """Create standard stereo int16 PCM format.
 
         Args:

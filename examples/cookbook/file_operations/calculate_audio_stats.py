@@ -2,9 +2,10 @@
 """Calculate Audio Statistics."""
 
 # --8<-- [start:example]
+import numpy as np
+
 from coremusic.audio import AudioFile
 
-import numpy as np
 
 def calculate_audio_stats(filepath):
     """Calculate audio statistics."""

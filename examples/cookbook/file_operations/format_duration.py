@@ -4,6 +4,7 @@
 # --8<-- [start:example]
 from coremusic.audio import AudioFile
 
+
 def format_duration(seconds):
     """Format duration as MM:SS."""
     minutes = int(seconds // 60)

@@ -43,7 +43,8 @@ def _capture_permitted() -> bool:
 
 
 capture_permitted = pytest.mark.skipif(
-    not _capture_permitted(), reason="microphone capture not permitted in this environment"
+    not _capture_permitted(),
+    reason="microphone capture not permitted in this environment",
 )
 
 
@@ -95,7 +96,9 @@ class TestInputCapture:
         pytest.importorskip("numpy")
         stream = AudioInputStream(channels=2, sample_rate=44100.0, buffer_size=512)
         shapes = []
-        stream.add_callback(lambda data, fc: shapes.append(getattr(data, "shape", None)))
+        stream.add_callback(
+            lambda data, fc: shapes.append(getattr(data, "shape", None))
+        )
         with stream:
             time.sleep(0.2)
         assert shapes

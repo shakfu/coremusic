@@ -1,16 +1,17 @@
 """Tests for buffer management utilities."""
 
-import pytest
 import numpy as np
+import pytest
+
 from coremusic.buffer_utils import (
     AudioStreamBasicDescription,
+    calculate_buffer_size,
+    convert_buffer_format,
     fourcc_to_int,
     int_to_fourcc,
+    optimal_buffer_size,
     pack_audio_buffer,
     unpack_audio_buffer,
-    convert_buffer_format,
-    calculate_buffer_size,
-    optimal_buffer_size,
 )
 
 

@@ -49,7 +49,7 @@ try:
     monitor.start()
 except RuntimeError as e:
     print(e)
-    raise SystemExit(0)
+    raise SystemExit(0) from None
 
 for _ in range(5):
     levels = monitor.get_levels()

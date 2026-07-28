@@ -2,10 +2,11 @@
 """Retry Pattern."""
 
 # --8<-- [start:example]
+import time
+
 from coremusic.audio import AudioFile
 from coremusic.exceptions import CoreAudioError
 
-import time
 
 def retry_operation(func, max_retries=3, delay=0.5):
     """Retry an operation with exponential backoff."""

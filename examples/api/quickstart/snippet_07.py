@@ -2,7 +2,7 @@
 """List MIDI Devices."""
 
 # --8<-- [start:example]
-import coremusic.capi as capi
+from coremusic import capi
 
 # Count devices
 num_devices = capi.midi_get_number_of_devices()

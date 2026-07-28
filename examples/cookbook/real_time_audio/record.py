@@ -28,7 +28,7 @@ try:
 except RuntimeError as e:
     # macOS refuses input until the app has microphone permission
     print(e)
-    raise SystemExit(0)
+    raise SystemExit(0) from None
 
 time.sleep(0.5)
 stream.stop()

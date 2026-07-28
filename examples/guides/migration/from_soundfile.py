@@ -21,7 +21,7 @@ with AudioFile("audio.wav") as audio:
 # --8<-- [start:write]
 import numpy as np
 
-import coremusic.capi as capi
+from coremusic import capi
 from coremusic.audio import AudioFormat, ExtendedAudioFile
 
 # Generate audio
@@ -74,7 +74,7 @@ with ExtendedAudioFile("audio.wav") as audio:
 # --8<-- [start:wave-write]
 import numpy as np
 
-import coremusic.capi as capi
+from coremusic import capi
 from coremusic.audio import AudioFormat, ExtendedAudioFile
 
 data = np.random.randint(-32768, 32767, 44100, dtype=np.int16)

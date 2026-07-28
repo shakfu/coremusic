@@ -1,7 +1,8 @@
 """pytest test suite for coremusic wrapper functionality."""
 
 import pytest
-import coremusic.capi as capi
+
+from coremusic import capi
 
 
 class TestFourCCConversion:

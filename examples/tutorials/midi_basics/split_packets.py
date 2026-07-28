@@ -20,7 +20,7 @@ with MIDIClient("Splitter Demo") as client:
 
     splitter = MIDIMessageSplitter()
 
-    for host_time, data in input_port.poll():
+    for _host_time, data in input_port.poll():
         for message in splitter.push(data):
             print(message.hex())
     # --8<-- [end:example]

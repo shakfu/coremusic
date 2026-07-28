@@ -10,25 +10,25 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 import pytest
 
 from coremusic.music.theory import (
-    Note,
+    CIRCLE_OF_FIFTHS,
+    COMMON_PATTERNS,
+    KEY_SIGNATURES,
+    Chord,
+    ChordProgression,
+    ChordType,
+    Duration,
     Interval,
     IntervalQuality,
-    Scale,
-    ScaleType,
-    Chord,
-    ChordType,
-    ChordProgression,
-    KEY_SIGNATURES,
-    CIRCLE_OF_FIFTHS,
-    note_name_to_midi,
-    midi_to_note_name,
+    MeterType,
+    Note,
     # Rhythm classes
     NoteValue,
-    MeterType,
-    TimeSignature,
-    Duration,
     RhythmPattern,
-    COMMON_PATTERNS,
+    Scale,
+    ScaleType,
+    TimeSignature,
+    midi_to_note_name,
+    note_name_to_midi,
 )
 
 
@@ -94,7 +94,7 @@ class TestNoteNameConversion:
 
     def test_midi_to_note_name_roundtrip(self):
         """Test conversion roundtrip."""
-        for midi in range(0, 128):
+        for midi in range(128):
             name = midi_to_note_name(midi)
             back = note_name_to_midi(name)
             assert back == midi

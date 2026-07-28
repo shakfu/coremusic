@@ -1,9 +1,11 @@
 """Tests for AudioConverter and ExtendedAudioFile object-oriented classes."""
 
 import os
-import pytest
 from pathlib import Path
-import coremusic.capi as capi
+
+import pytest
+
+from coremusic import capi
 from coremusic.audio import AudioConverter, AudioFile, AudioFormat, ExtendedAudioFile
 from coremusic.base import CoreAudioObject
 from coremusic.exceptions import AudioConverterError, AudioFileError

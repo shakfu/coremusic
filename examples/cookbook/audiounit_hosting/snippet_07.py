@@ -8,9 +8,9 @@ with _Plugin.from_name("AUDelay") as _p:
     _p.save_preset("My Delay Setting", "500ms delay with light feedback")
 
 # --8<-- [start:example]
-from coremusic.audio.audiounit_host import AudioUnitPlugin
-
 from pathlib import Path
+
+from coremusic.audio.audiounit_host import AudioUnitPlugin
 
 with AudioUnitPlugin.from_name("AUDelay") as plugin:
     # Export preset to custom location

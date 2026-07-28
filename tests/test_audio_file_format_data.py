@@ -1,5 +1,6 @@
 from conftest import AMEN_WAV_PATH
-import coremusic.capi as capi
+
+from coremusic import capi
 from coremusic.audio.utilities import parse_audio_stream_basic_description
 
 

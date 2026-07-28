@@ -8,42 +8,41 @@ from pathlib import Path
 
 import pytest
 
-from coremusic.midi.utilities import MIDIEvent, MIDISequence, MIDIStatus
 from coremusic.midi.transform import (
-    # Base classes
-    Pipeline,
-    # Pitch transformers
-    Transpose,
-    Invert,
-    Harmonize,
-    # Time transformers
-    Quantize,
-    TimeStretch,
-    TimeShift,
-    Reverse,
-    # Velocity transformers
-    VelocityScale,
-    VelocityCurve,
-    Humanize,
-    # Filter transformers
-    NoteFilter,
-    ScaleFilter,
-    EventTypeFilter,
-    # Track transformers
-    ChannelRemap,
-    TrackMerge,
     # Arpeggio
     Arpeggiate,
-    # Convenience functions
-    transpose,
-    quantize,
+    # Track transformers
+    ChannelRemap,
+    EventTypeFilter,
+    Harmonize,
+    Humanize,
+    Invert,
+    # Filter transformers
+    NoteFilter,
+    # Base classes
+    Pipeline,
+    # Time transformers
+    Quantize,
+    Reverse,
+    ScaleFilter,
+    TimeShift,
+    TimeStretch,
+    TrackMerge,
+    # Pitch transformers
+    Transpose,
+    VelocityCurve,
+    # Velocity transformers
+    VelocityScale,
+    filter_to_scale,
     humanize,
+    quantize,
     reverse,
     scale_velocity,
-    filter_to_scale,
+    # Convenience functions
+    transpose,
 )
+from coremusic.midi.utilities import MIDIEvent, MIDISequence, MIDIStatus
 from coremusic.music.theory import Note, Scale, ScaleType
-
 
 # ============================================================================
 # Test Fixtures
@@ -151,7 +150,7 @@ class TestPipeline:
         result = pipeline.apply(simple_sequence)
         # All notes should be transposed up an octave
         for orig, trans in zip(
-            simple_sequence.tracks[0].events, result.tracks[0].events
+            simple_sequence.tracks[0].events, result.tracks[0].events, strict=True
         ):
             if orig.status == MIDIStatus.NOTE_ON:
                 assert trans.data1 == orig.data1 + 12
@@ -166,7 +165,7 @@ class TestPipeline:
         )
         result = pipeline.apply(simple_sequence)
         for orig, trans in zip(
-            simple_sequence.tracks[0].events, result.tracks[0].events
+            simple_sequence.tracks[0].events, result.tracks[0].events, strict=True
         ):
             if orig.is_note_on:
                 assert trans.data1 == orig.data1 + 12
@@ -208,7 +207,7 @@ class TestTranspose:
         """Transpose notes up."""
         result = Transpose(5).transform(simple_sequence)
         for orig, trans in zip(
-            simple_sequence.tracks[0].events, result.tracks[0].events
+            simple_sequence.tracks[0].events, result.tracks[0].events, strict=True
         ):
             if orig.status in (MIDIStatus.NOTE_ON, MIDIStatus.NOTE_OFF):
                 assert trans.data1 == orig.data1 + 5
@@ -217,7 +216,7 @@ class TestTranspose:
         """Transpose notes down."""
         result = Transpose(-7).transform(simple_sequence)
         for orig, trans in zip(
-            simple_sequence.tracks[0].events, result.tracks[0].events
+            simple_sequence.tracks[0].events, result.tracks[0].events, strict=True
         ):
             if orig.status in (MIDIStatus.NOTE_ON, MIDIStatus.NOTE_OFF):
                 assert trans.data1 == orig.data1 - 7
@@ -367,7 +366,7 @@ class TestTimeStretch:
         """Double the duration."""
         result = TimeStretch(2.0).transform(simple_sequence)
         for orig, trans in zip(
-            simple_sequence.tracks[0].events, result.tracks[0].events
+            simple_sequence.tracks[0].events, result.tracks[0].events, strict=True
         ):
             assert trans.time == pytest.approx(orig.time * 2.0)
 
@@ -375,7 +374,7 @@ class TestTimeStretch:
         """Halve the duration."""
         result = TimeStretch(0.5).transform(simple_sequence)
         for orig, trans in zip(
-            simple_sequence.tracks[0].events, result.tracks[0].events
+            simple_sequence.tracks[0].events, result.tracks[0].events, strict=True
         ):
             assert trans.time == pytest.approx(orig.time * 0.5)
 
@@ -392,7 +391,7 @@ class TestTimeShift:
         """Shift events forward in time."""
         result = TimeShift(1.0).transform(simple_sequence)
         for orig, trans in zip(
-            simple_sequence.tracks[0].events, result.tracks[0].events
+            simple_sequence.tracks[0].events, result.tracks[0].events, strict=True
         ):
             assert trans.time == pytest.approx(orig.time + 1.0)
 
@@ -446,7 +445,7 @@ class TestVelocityScale:
         """Scale velocity by factor."""
         result = VelocityScale(factor=0.5).transform(simple_sequence)
         for orig, trans in zip(
-            simple_sequence.tracks[0].events, result.tracks[0].events
+            simple_sequence.tracks[0].events, result.tracks[0].events, strict=True
         ):
             if orig.is_note_on:
                 assert trans.data2 == orig.data2 // 2
@@ -519,7 +518,7 @@ class TestHumanize:
         timing_differs = False
         velocity_differs = False
         for orig, trans in zip(
-            simple_sequence.tracks[0].events, result.tracks[0].events
+            simple_sequence.tracks[0].events, result.tracks[0].events, strict=True
         ):
             if abs(orig.time - trans.time) > 0.001:
                 timing_differs = True
@@ -532,7 +531,7 @@ class TestHumanize:
         """Same seed produces same results."""
         result1 = Humanize(timing=0.02, velocity=10, seed=42).transform(simple_sequence)
         result2 = Humanize(timing=0.02, velocity=10, seed=42).transform(simple_sequence)
-        for e1, e2 in zip(result1.tracks[0].events, result2.tracks[0].events):
+        for e1, e2 in zip(result1.tracks[0].events, result2.tracks[0].events, strict=True):
             assert e1.time == e2.time
             assert e1.data2 == e2.data2
 
@@ -924,7 +923,7 @@ class TestConvenienceFunctions:
         """scale_velocity() convenience function."""
         result = scale_velocity(simple_sequence, factor=0.5)
         for orig, trans in zip(
-            simple_sequence.tracks[0].events, result.tracks[0].events
+            simple_sequence.tracks[0].events, result.tracks[0].events, strict=True
         ):
             if orig.is_note_on:
                 assert trans.data2 == orig.data2 // 2

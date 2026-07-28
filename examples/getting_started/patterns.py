@@ -31,7 +31,7 @@ except FileNotFoundError:
 # --8<-- [end:error-handling]
 
 # --8<-- [start:functional-cleanup]
-import coremusic.capi as capi
+from coremusic import capi
 
 # Functional API - manual cleanup required
 audio_file = capi.audio_file_open_url("audio.wav")

@@ -2,9 +2,10 @@
 """Detect Silence."""
 
 # --8<-- [start:example]
+import numpy as np
+
 from coremusic.audio import AudioFile
 
-import numpy as np
 
 def detect_silence(filepath, threshold=0.01, min_duration=0.5):
     """Detect silent regions in audio file."""

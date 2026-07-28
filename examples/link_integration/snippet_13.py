@@ -2,11 +2,10 @@
 """MIDI CC Automation Synchronized to Link."""
 
 # --8<-- [start:example]
-import coremusic.capi as capi
-from coremusic import link
-
-from coremusic.midi import link as link_midi
 import time
+
+from coremusic import capi, link
+from coremusic.midi import link as link_midi
 
 # Setup MIDI
 client = capi.midi_client_create("CC Automation")
@@ -18,7 +17,7 @@ with link.LinkSession(bpm=120.0) as session:
 
     # Schedule filter cutoff sweep over 4 beats
     # CC #74 (Filter Cutoff) from 0 to 127
-    for beat in range(0, 4):
+    for beat in range(4):
         for substep in range(8):
             position = beat + (substep / 8.0)
             value = int((position / 4.0) * 127)

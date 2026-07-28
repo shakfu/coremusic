@@ -1,8 +1,10 @@
 """pytest test suite for MusicPlayer functionality."""
 
 import logging
+
 import pytest
-import coremusic.capi as capi
+
+from coremusic import capi
 
 logger = logging.getLogger(__name__)
 
@@ -475,7 +477,7 @@ class TestMusicPlayerResourceManagement:
         players = []
         sequences = []
         try:
-            for i in range(5):
+            for _i in range(5):
                 player = capi.new_music_player()
                 sequence = capi.new_music_sequence()
                 players.append(player)
@@ -489,7 +491,7 @@ class TestMusicPlayerResourceManagement:
                 time = capi.music_player_get_time(player)
                 assert time == float(i)
         finally:
-            for i, (player, sequence) in enumerate(zip(players, sequences)):
+            for i, (player, sequence) in enumerate(zip(players, sequences, strict=True)):
                 try:
                     capi.music_player_set_sequence(player, 0)
                     capi.dispose_music_sequence(sequence)
@@ -501,14 +503,14 @@ class TestMusicPlayerResourceManagement:
         """Test creating multiple sequences"""
         sequences = []
         try:
-            for i in range(3):
+            for _i in range(3):
                 sequence = capi.new_music_sequence()
                 sequences.append(sequence)
                 assert isinstance(sequence, int)
                 assert sequence != 0
             assert len(set(sequences)) == len(sequences)
             for i, sequence in enumerate(sequences):
-                for j in range(i + 1):
+                for _j in range(i + 1):
                     track = capi.music_sequence_new_track(sequence)
                     assert isinstance(track, int)
                 count = capi.music_sequence_get_track_count(sequence)

@@ -3,14 +3,14 @@
 from enum import IntEnum
 
 __all__ = [
-    "AudioFileProperty",
-    "AudioFileType",
-    "AudioFilePermission",
-    "AudioFormatID",
-    "LinearPCMFormatFlag",
     "AudioConverterProperty",
     "AudioConverterQuality",
+    "AudioFilePermission",
+    "AudioFileProperty",
+    "AudioFileType",
+    "AudioFormatID",
     "ExtendedAudioFileProperty",
+    "LinearPCMFormatFlag",
 ]
 
 

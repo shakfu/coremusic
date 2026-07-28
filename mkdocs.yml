@@ -91,7 +91,10 @@ markdown_extensions:
   # Code blocks are included from the runnable programs under examples/, which
   # are executed by tests/test_examples.py. See examples/README.md.
   - pymdownx.snippets:
-      base_path: ["."]
+      # !relative $config_dir keeps this anchored to the repository root, so a
+      # build works from any working directory - `mkdocs gh-deploy`, a CI job,
+      # or `mkdocs build -f` run from elsewhere.
+      base_path: [!relative $config_dir]
       check_paths: true
   - pymdownx.highlight:
       anchor_linenums: true

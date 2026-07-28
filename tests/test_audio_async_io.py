@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """Tests for async I/O functionality."""
 
-import pytest
 import asyncio
 from pathlib import Path
 
+import pytest
+
+from coremusic.audio import AudioBuffer, AudioFormat
 from coremusic.audio.async_io import (
     AsyncAudioFile,
     AsyncAudioQueue,
     create_output_queue_async,
     open_audio_file_async,
 )
-from coremusic.audio import AudioBuffer, AudioFormat
 from coremusic.base import NUMPY_AVAILABLE
 
 
@@ -138,7 +139,7 @@ class TestAsyncAudioFile:
 
         # All reads should succeed
         assert len(results) == 3
-        for data, packet_count in results:
+        for data, _packet_count in results:
             assert isinstance(data, bytes)
             assert len(data) > 0
 

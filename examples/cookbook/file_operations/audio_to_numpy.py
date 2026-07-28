@@ -2,9 +2,10 @@
 """Convert to NumPy Array."""
 
 # --8<-- [start:example]
+import numpy as np
+
 from coremusic.audio import AudioFile
 
-import numpy as np
 
 def audio_to_numpy(filepath):
     """Convert audio file to NumPy array."""

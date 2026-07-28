@@ -4,8 +4,9 @@ Tests the integration between Ableton Link and AudioPlayer for tempo-synchronize
 audio playback.
 """
 
-import pytest
 import time
+
+import pytest
 
 from coremusic import link
 from coremusic.base import AudioPlayer

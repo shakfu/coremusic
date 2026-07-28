@@ -1,8 +1,10 @@
 """Tests for AudioQueue and AudioBuffer object-oriented classes."""
 
-import pytest
 import time
-import coremusic.capi as capi
+
+import pytest
+
+from coremusic import capi
 from coremusic.audio import AudioBuffer, AudioFormat, AudioQueue
 from coremusic.base import CoreAudioObject
 from coremusic.exceptions import AudioQueueError
@@ -249,9 +251,9 @@ class TestAudioQueueIntegration:
         """Test AudioQueue resource management under stress"""
         skip_if_no_audio_hardware()
         format = AudioFormat(44100.0, "lpcm", channels_per_frame=2, bits_per_channel=16)
-        for i in range(5):
+        for _i in range(5):
             queue = AudioQueue.new_output(format)
-            for j in range(3):
+            for _j in range(3):
                 queue.allocate_buffer(512)
             queue.start()
             time.sleep(0.001)

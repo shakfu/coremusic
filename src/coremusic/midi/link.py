@@ -97,7 +97,7 @@ class LinkMIDIClock:
 
     def __init__(
         self,
-        session: "link_module.LinkSession",
+        session: link_module.LinkSession,
         midi_port: int,
         midi_destination: int,
         quantum: float = 4.0,
@@ -241,7 +241,7 @@ class LinkMIDISequencer:
 
     def __init__(
         self,
-        session: "link_module.LinkSession",
+        session: link_module.LinkSession,
         midi_port: int,
         midi_destination: int,
         quantum: float = 4.0,
@@ -378,7 +378,7 @@ class LinkMIDISequencer:
 
 
 def link_beat_to_host_time(
-    session: "link_module.LinkSession", beat: float, quantum: float = 4.0
+    session: link_module.LinkSession, beat: float, quantum: float = 4.0
 ) -> int:
     """Convert Link beat position to host time (mach_absolute_time)
 
@@ -399,7 +399,7 @@ def link_beat_to_host_time(
 
 
 def host_time_to_link_beat(
-    session: "link_module.LinkSession", host_time_ticks: int, quantum: float = 4.0
+    session: link_module.LinkSession, host_time_ticks: int, quantum: float = 4.0
 ) -> float:
     """Convert host time to Link beat position
 
@@ -418,14 +418,14 @@ def host_time_to_link_beat(
 
 
 __all__ = [
+    "MIDI_CLOCK",
+    "MIDI_CLOCKS_PER_QUARTER_NOTE",
+    "MIDI_CONTINUE",
+    "MIDI_START",
+    "MIDI_STOP",
     "LinkMIDIClock",
     "LinkMIDISequencer",
     "MIDIEvent",
-    "link_beat_to_host_time",
     "host_time_to_link_beat",
-    "MIDI_CLOCK",
-    "MIDI_START",
-    "MIDI_CONTINUE",
-    "MIDI_STOP",
-    "MIDI_CLOCKS_PER_QUARTER_NOTE",
+    "link_beat_to_host_time",
 ]

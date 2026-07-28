@@ -107,7 +107,7 @@ def design_butterworth_filter(
     sample_rate: float,
     order: int = 5,
     filter_type: Literal["lowpass", "highpass", "bandpass", "bandstop"] = "lowpass",
-) -> tuple["NDArray[Any]", "NDArray[Any]"]:
+) -> tuple[NDArray[Any], NDArray[Any]]:
     """Design a Butterworth filter.
 
     Args:
@@ -154,7 +154,7 @@ def design_chebyshev_filter(
     order: int = 5,
     ripple_db: float = 0.5,
     filter_type: Literal["lowpass", "highpass", "bandpass", "bandstop"] = "lowpass",
-) -> tuple["NDArray[Any]", "NDArray[Any]"]:
+) -> tuple[NDArray[Any], NDArray[Any]]:
     """Design a Chebyshev Type I filter.
 
     Args:
@@ -191,11 +191,11 @@ def design_chebyshev_filter(
 
 
 def apply_filter(
-    audio_data: "NDArray[Any]",
-    b: "NDArray[Any]",
-    a: "NDArray[Any]",
+    audio_data: NDArray[Any],
+    b: NDArray[Any],
+    a: NDArray[Any],
     zero_phase: bool = True,
-) -> "NDArray[Any]":
+) -> NDArray[Any]:
     """Apply a digital filter to audio data.
 
     Args:
@@ -241,10 +241,10 @@ def apply_filter(
 
 
 def apply_scipy_filter(
-    audio_data: "NDArray[Any]",
-    filter_output: tuple["NDArray[Any]", "NDArray[Any]"] | Any,
+    audio_data: NDArray[Any],
+    filter_output: tuple[NDArray[Any], NDArray[Any]] | Any,
     zero_phase: bool = True,
-) -> "NDArray[Any]":
+) -> NDArray[Any]:
     """Apply a filter designed by scipy.signal functions directly.
 
     This is a convenience wrapper that accepts the output from scipy.signal
@@ -305,8 +305,8 @@ def apply_scipy_filter(
 
 
 def apply_lowpass_filter(
-    audio_data: "NDArray[Any]", cutoff: float, sample_rate: float, order: int = 5
-) -> "NDArray[Any]":
+    audio_data: NDArray[Any], cutoff: float, sample_rate: float, order: int = 5
+) -> NDArray[Any]:
     """Apply a lowpass filter to audio data.
 
     Args:
@@ -332,8 +332,8 @@ def apply_lowpass_filter(
 
 
 def apply_highpass_filter(
-    audio_data: "NDArray[Any]", cutoff: float, sample_rate: float, order: int = 5
-) -> "NDArray[Any]":
+    audio_data: NDArray[Any], cutoff: float, sample_rate: float, order: int = 5
+) -> NDArray[Any]:
     """Apply a highpass filter to audio data.
 
     Args:
@@ -359,12 +359,12 @@ def apply_highpass_filter(
 
 
 def apply_bandpass_filter(
-    audio_data: "NDArray[Any]",
+    audio_data: NDArray[Any],
     lowcut: float,
     highcut: float,
     sample_rate: float,
     order: int = 5,
-) -> "NDArray[Any]":
+) -> NDArray[Any]:
     """Apply a bandpass filter to audio data.
 
     Args:
@@ -397,11 +397,11 @@ def apply_bandpass_filter(
 
 
 def resample_audio(
-    audio_data: "NDArray[Any]",
+    audio_data: NDArray[Any],
     original_rate: float,
     target_rate: float,
     method: Literal["fft", "polyphase"] = "fft",
-) -> "NDArray[Any]":
+) -> NDArray[Any]:
     """Resample audio to a different sample rate using SciPy.
 
     Args:
@@ -479,11 +479,11 @@ def resample_audio(
 
 
 def compute_spectrum(
-    audio_data: "NDArray[Any]",
+    audio_data: NDArray[Any],
     sample_rate: float,
     window: str | None = "hann",
     nperseg: int | None = None,
-) -> tuple["NDArray[Any]", "NDArray[Any]"]:
+) -> tuple[NDArray[Any], NDArray[Any]]:
     """Compute the frequency spectrum of audio data.
 
     Args:
@@ -532,8 +532,8 @@ def compute_spectrum(
 
 
 def compute_fft(
-    audio_data: "NDArray[Any]", sample_rate: float, window: str | None = "hann"
-) -> tuple["NDArray[Any]", "NDArray[Any]"]:
+    audio_data: NDArray[Any], sample_rate: float, window: str | None = "hann"
+) -> tuple[NDArray[Any], NDArray[Any]]:
     """Compute the Fast Fourier Transform of audio data.
 
     Args:
@@ -581,12 +581,12 @@ def compute_fft(
 
 
 def compute_spectrogram(
-    audio_data: "NDArray[Any]",
+    audio_data: NDArray[Any],
     sample_rate: float,
     window: str = "hann",
     nperseg: int = 256,
     noverlap: int | None = None,
-) -> tuple["NDArray[Any]", "NDArray[Any]", "NDArray[Any]"]:
+) -> tuple[NDArray[Any], NDArray[Any], NDArray[Any]]:
     """Compute spectrogram of audio data.
 
     Args:
@@ -662,7 +662,7 @@ class AudioSignalProcessor:
         ```
     """
 
-    def __init__(self, audio_data: "NDArray[Any]", sample_rate: float):
+    def __init__(self, audio_data: NDArray[Any], sample_rate: float):
         """Initialize AudioSignalProcessor.
 
         Args:
@@ -679,7 +679,7 @@ class AudioSignalProcessor:
         self.sample_rate = float(sample_rate)
         self._original_data = audio_data.copy()
 
-    def lowpass(self, cutoff: float, order: int = 5) -> "AudioSignalProcessor":
+    def lowpass(self, cutoff: float, order: int = 5) -> AudioSignalProcessor:
         """Apply lowpass filter (chainable).
 
         Args:
@@ -694,7 +694,7 @@ class AudioSignalProcessor:
         )
         return self
 
-    def highpass(self, cutoff: float, order: int = 5) -> "AudioSignalProcessor":
+    def highpass(self, cutoff: float, order: int = 5) -> AudioSignalProcessor:
         """Apply highpass filter (chainable).
 
         Args:
@@ -711,7 +711,7 @@ class AudioSignalProcessor:
 
     def bandpass(
         self, lowcut: float, highcut: float, order: int = 5
-    ) -> "AudioSignalProcessor":
+    ) -> AudioSignalProcessor:
         """Apply bandpass filter (chainable).
 
         Args:
@@ -729,7 +729,7 @@ class AudioSignalProcessor:
 
     def resample(
         self, target_rate: float, method: Literal["fft", "polyphase"] = "fft"
-    ) -> "AudioSignalProcessor":
+    ) -> AudioSignalProcessor:
         """Resample audio to different sample rate (chainable).
 
         Args:
@@ -745,7 +745,7 @@ class AudioSignalProcessor:
         self.sample_rate = target_rate
         return self
 
-    def normalize(self, target_level: float = 1.0) -> "AudioSignalProcessor":
+    def normalize(self, target_level: float = 1.0) -> AudioSignalProcessor:
         """Normalize audio to target level (chainable).
 
         Args:
@@ -759,7 +759,7 @@ class AudioSignalProcessor:
             self.audio_data = self.audio_data * (target_level / max_val)
         return self
 
-    def get_audio(self) -> "NDArray[Any]":
+    def get_audio(self) -> NDArray[Any]:
         """Get processed audio data.
 
         Returns:
@@ -775,7 +775,7 @@ class AudioSignalProcessor:
         """
         return self.sample_rate
 
-    def reset(self) -> "AudioSignalProcessor":
+    def reset(self) -> AudioSignalProcessor:
         """Reset to original audio data (chainable).
 
         Returns:
@@ -784,7 +784,7 @@ class AudioSignalProcessor:
         self.audio_data = self._original_data.copy()
         return self
 
-    def spectrum(self, **kwargs: Any) -> tuple["NDArray[Any]", "NDArray[Any]"]:
+    def spectrum(self, **kwargs: Any) -> tuple[NDArray[Any], NDArray[Any]]:
         """Compute frequency spectrum of current audio.
 
         Args:
@@ -795,7 +795,7 @@ class AudioSignalProcessor:
         """
         return compute_spectrum(self.audio_data, self.sample_rate, **kwargs)
 
-    def fft(self, **kwargs: Any) -> tuple["NDArray[Any]", "NDArray[Any]"]:
+    def fft(self, **kwargs: Any) -> tuple[NDArray[Any], NDArray[Any]]:
         """Compute FFT of current audio.
 
         Args:
@@ -808,7 +808,7 @@ class AudioSignalProcessor:
 
     def spectrogram(
         self, **kwargs: Any
-    ) -> tuple["NDArray[Any]", "NDArray[Any]", "NDArray[Any]"]:
+    ) -> tuple[NDArray[Any], NDArray[Any], NDArray[Any]]:
         """Compute spectrogram of current audio.
 
         Args:

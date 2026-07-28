@@ -1,7 +1,7 @@
 """Tests for Cython-optimized audio operations."""
 
-import pytest
 import numpy as np
+import pytest
 
 # Import from capi directly
 try:

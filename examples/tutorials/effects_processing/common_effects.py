@@ -76,7 +76,8 @@ def make_eq(gains_db):
 
     # Band gains are the parameters whose names end in "gain"
     gain_params = [p for p in plugin.parameters if p.name.lower().endswith("gain")]
-    for param, gain in zip(gain_params, gains_db):
+    # Fewer gains than bands is fine; the rest keep their current value
+    for param, gain in zip(gain_params, gains_db, strict=False):
         plugin.set_parameter(param.id, gain)
 
     print(f"EQ configured across {len(gain_params)} bands")

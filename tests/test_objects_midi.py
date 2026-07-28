@@ -1,11 +1,11 @@
 """Tests for MIDI object-oriented classes."""
 
 import pytest
-import coremusic.capi as capi
+
+from coremusic import capi
 from coremusic.base import CoreAudioObject
 from coremusic.exceptions import MIDIError
 from coremusic.midi import MIDIClient, MIDIInputPort, MIDIOutputPort, MIDIPort
-
 
 # Check MIDI availability at module load time
 _MIDI_AVAILABLE = False

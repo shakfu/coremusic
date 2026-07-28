@@ -19,7 +19,7 @@ resample_audio("input.wav", "resampled.wav", target_sample_rate=48000.0)
 # --8<-- [end:example]
 
 # --8<-- [start:manual]
-import coremusic.capi as capi
+from coremusic import capi
 from coremusic.audio import AudioFormat, ExtendedAudioFile
 
 

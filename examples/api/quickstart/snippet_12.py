@@ -2,9 +2,10 @@
 """Async File Reading."""
 
 # --8<-- [start:example]
+import asyncio
+
 from coremusic.audio import AsyncAudioFile
 
-import asyncio
 
 async def read_async():
     async with AsyncAudioFile("audio.wav") as audio:
@@ -13,7 +14,7 @@ async def read_async():
         # Stream chunks
         async for chunk in audio.read_chunks_async(chunk_size=4096):
             # Process chunk
-            pass
+            print(len(chunk))
 
 asyncio.run(read_async())
 # --8<-- [end:example]

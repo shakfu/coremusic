@@ -2,9 +2,9 @@
 """Sync Multiple Applications."""
 
 # --8<-- [start:example]
-from coremusic import link
-
 import time
+
+from coremusic import link
 
 # Create first Link session (e.g., for drums)
 with link.LinkSession(bpm=120.0) as session1:

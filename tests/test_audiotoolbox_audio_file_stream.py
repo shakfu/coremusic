@@ -1,5 +1,6 @@
 import pytest
-import coremusic.capi as capi
+
+from coremusic import capi
 
 
 class TestAudioFileStreamConstants:

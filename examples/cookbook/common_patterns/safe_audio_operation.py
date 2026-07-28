@@ -2,10 +2,11 @@
 """Graceful Error Recovery."""
 
 # --8<-- [start:example]
+from pathlib import Path
+
 from coremusic.audio import AudioFile
 from coremusic.exceptions import AudioFileError
 
-from pathlib import Path
 
 def safe_audio_operation(filepath):
     """Perform audio operation with comprehensive error handling."""

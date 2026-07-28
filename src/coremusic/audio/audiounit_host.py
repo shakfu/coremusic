@@ -95,7 +95,7 @@ class PluginAudioFormat:
             f"{self.sample_format}, {interleaved_str})"
         )
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, PluginAudioFormat):
             return False
         return bool(
@@ -237,9 +237,7 @@ class AudioFormatConverter:
     @staticmethod
     def _normalize_sample(sample: Any, sample_format: str) -> float:
         """Normalize a sample to float32 range [-1.0, 1.0]"""
-        if sample_format == PluginAudioFormat.FLOAT32:
-            return float(sample)
-        elif sample_format == PluginAudioFormat.FLOAT64:
+        if sample_format == PluginAudioFormat.FLOAT32 or sample_format == PluginAudioFormat.FLOAT64:
             return float(sample)
         elif sample_format == PluginAudioFormat.INT16:
             return float(sample) / 32768.0
@@ -295,7 +293,7 @@ class AudioFormatConverter:
 class AudioUnitParameter:
     """Represents a single AudioUnit parameter with metadata and control"""
 
-    def __init__(self, plugin: "AudioUnitPlugin", param_id: int, info: dict[str, Any]):
+    def __init__(self, plugin: AudioUnitPlugin, param_id: int, info: dict[str, Any]):
         self._plugin = plugin
         self._param_id = param_id
         self._info = info
@@ -404,7 +402,7 @@ class PresetManager:
         self.preset_dir.mkdir(parents=True, exist_ok=True)
 
     def save_preset(
-        self, plugin: "AudioUnitPlugin", preset_name: str, description: str = ""
+        self, plugin: AudioUnitPlugin, preset_name: str, description: str = ""
     ) -> Path:
         """Save current plugin state as a user preset
 
@@ -461,7 +459,7 @@ class PresetManager:
         return preset_file
 
     def load_preset(
-        self, plugin: "AudioUnitPlugin", preset_name: str
+        self, plugin: AudioUnitPlugin, preset_name: str
     ) -> dict[str, Any]:
         """Load a user preset and apply it to the plugin
 
@@ -485,7 +483,7 @@ class PresetManager:
             )
 
         # Load preset data
-        with open(preset_file, "r") as f:
+        with open(preset_file) as f:
             preset_data: dict[str, Any] = json.load(f)
 
         # Verify plugin compatibility
@@ -553,7 +551,7 @@ class PresetManager:
             raise FileNotFoundError(f"Preset '{preset_name}' not found")
 
         # Copy preset file
-        with open(preset_file, "r") as f:
+        with open(preset_file) as f:
             preset_data = json.load(f)
 
         with open(output_path, "w") as f:
@@ -570,7 +568,7 @@ class PresetManager:
             Name of imported preset
         """
         # Load preset data
-        with open(preset_path, "r") as f:
+        with open(preset_path) as f:
             preset_data: dict[str, Any] = json.load(f)
 
         preset_name: str = preset_data["name"]
@@ -640,7 +638,7 @@ class AudioUnitPlugin:
     @classmethod
     def from_name(
         cls, name: str, component_type: str | None = None
-    ) -> "AudioUnitPlugin":
+    ) -> AudioUnitPlugin:
         """Create plugin by name
 
         Args:
@@ -666,7 +664,7 @@ class AudioUnitPlugin:
         raise ValueError(f"Plugin '{name}' not found")
 
     @classmethod
-    def from_component_id(cls, component_id: int) -> "AudioUnitPlugin":
+    def from_component_id(cls, component_id: int) -> AudioUnitPlugin:
         """Create plugin from component ID"""
         return cls(component_id)
 
@@ -705,7 +703,7 @@ class AudioUnitPlugin:
         """Check if plugin is initialized"""
         return self._initialized
 
-    def instantiate(self) -> "AudioUnitPlugin":
+    def instantiate(self) -> AudioUnitPlugin:
         """Instantiate the AudioUnit
 
         Returns:
@@ -717,7 +715,7 @@ class AudioUnitPlugin:
         self._unit_id = capi.audio_component_instance_new(self._component_id)
         return self
 
-    def initialize(self) -> "AudioUnitPlugin":
+    def initialize(self) -> AudioUnitPlugin:
         """Initialize the AudioUnit
 
         Returns:
@@ -740,7 +738,7 @@ class AudioUnitPlugin:
 
         return self
 
-    def uninitialize(self) -> "AudioUnitPlugin":
+    def uninitialize(self) -> AudioUnitPlugin:
         """Uninitialize the AudioUnit
 
         Returns:
@@ -1168,7 +1166,9 @@ class AudioUnitPlugin:
                 try:
                     self.send_midi(int(status), int(data1), int(data2), offset)
                 except Exception as e:  # pragma: no cover - defensive
-                    logger.debug("Failed to send MIDI event at offset %d: %s", offset, e)
+                    logger.debug(
+                        "Failed to send MIDI event at offset %d: %s", offset, e
+                    )
                 event_index += 1
 
             # Instruments output non-interleaved float32; render_instrument
@@ -1200,7 +1200,7 @@ class AudioUnitPlugin:
         """Set parameter value by name"""
         self.set_parameter(key, value)
 
-    def __enter__(self) -> "AudioUnitPlugin":
+    def __enter__(self) -> AudioUnitPlugin:
         """Context manager entry"""
         self.instantiate()
         self.initialize()
@@ -1560,7 +1560,7 @@ class AudioUnitChain:
 
         # Mix
         mixed_samples = [
-            dry * (1.0 - mix) + wet * mix for dry, wet in zip(dry_samples, wet_samples)
+            dry * (1.0 - mix) + wet * mix for dry, wet in zip(dry_samples, wet_samples, strict=True)
         ]
 
         # Pack back
@@ -1609,7 +1609,7 @@ class AudioUnitChain:
         self._plugins.clear()
         self._plugin_names.clear()
 
-    def __enter__(self) -> "AudioUnitChain":
+    def __enter__(self) -> AudioUnitChain:
         """Context manager entry"""
         return self
 

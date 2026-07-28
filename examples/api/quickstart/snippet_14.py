@@ -2,7 +2,7 @@
 """Check Availability."""
 
 # --8<-- [start:example]
-from coremusic.audio import AudioFile, NUMPY_AVAILABLE
+from coremusic.audio import NUMPY_AVAILABLE, AudioFile
 
 if NUMPY_AVAILABLE:
     import numpy as np

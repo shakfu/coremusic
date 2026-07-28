@@ -23,7 +23,11 @@ def test_gather_report_structure():
 
 
 def test_check_sections_report_accessible_flag():
-    for section in (doctor._check_audio(), doctor._check_plugins(), doctor._check_midi()):
+    for section in (
+        doctor._check_audio(),
+        doctor._check_plugins(),
+        doctor._check_midi(),
+    ):
         assert "accessible" in section
 
 

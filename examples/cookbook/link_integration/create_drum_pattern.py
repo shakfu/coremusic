@@ -2,11 +2,11 @@
 """Complete Example: Drum Machine."""
 
 # --8<-- [start:example]
-import coremusic.capi as capi
-from coremusic import link
-
-from coremusic.midi import link as link_midi
 import time
+
+from coremusic import capi, link
+from coremusic.midi import link as link_midi
+
 
 def create_drum_pattern():
     """Create a simple drum pattern"""

@@ -19,7 +19,9 @@ def _silence_generator(counter, channels=2):
     def gen(num_frames):
         counter["calls"] += 1
         counter["frames"] += num_frames
-        return struct.pack("<%df" % (num_frames * channels), *([0.0] * num_frames * channels))
+        return struct.pack(
+            f"<{num_frames * channels}f", *([0.0] * num_frames * channels)
+        )
 
     return gen
 

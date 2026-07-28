@@ -2,8 +2,10 @@
 
 import os
 import struct
+
 import pytest
-import coremusic.capi as capi
+
+from coremusic import capi
 from coremusic.exceptions import CoreAudioError
 
 

@@ -19,7 +19,7 @@ def safe_open_audio_file(filepath):
         audio.open()
         return audio
     except AudioFileError as e:
-        raise RuntimeError(f"Failed to open audio file: {e}")
+        raise RuntimeError(f"Failed to open audio file: {e}") from e
 
 
 # Use with error handling

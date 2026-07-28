@@ -8,6 +8,7 @@ def process_chunk(chunk):
 # --8<-- [start:example]
 from coremusic.audio import AudioFile
 
+
 def read_audio_chunks(filepath, chunk_size=4096):
     """Generator that yields audio chunks."""
     with AudioFile(filepath) as audio:

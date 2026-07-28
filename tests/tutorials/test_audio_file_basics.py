@@ -41,7 +41,6 @@ def open_audio_file_context_manager():
     ...     assert fmt.sample_rate > 0
     >>> # File is automatically closed here
     """
-    pass
 
 
 def get_audio_duration():
@@ -56,7 +55,6 @@ def get_audio_duration():
     ...     print(f"Duration: {duration:.2f}s")  # doctest: +ELLIPSIS
     Duration: ...s
     """
-    pass
 
 
 def get_audio_format():
@@ -75,7 +73,6 @@ def get_audio_format():
     ...     # Format ID (e.g., 'lpcm' for Linear PCM)
     ...     assert len(fmt.format_id) > 0
     """
-    pass
 
 
 def get_frame_count():
@@ -89,7 +86,6 @@ def get_frame_count():
     ...     assert isinstance(frames, int)
     ...     assert frames > 0
     """
-    pass
 
 
 def read_audio_packets():
@@ -105,7 +101,6 @@ def read_audio_packets():
     ...     assert packets_read > 0
     ...     assert packets_read <= 1000
     """
-    pass
 
 
 def read_audio_in_chunks():
@@ -129,7 +124,6 @@ def read_audio_in_chunks():
     ...         chunks_read += 1
     ...     assert chunks_read > 0
     """
-    pass
 
 
 def detect_audio_format_type():
@@ -143,7 +137,6 @@ def detect_audio_format_type():
     ...     # WAV files are typically Linear PCM
     ...     assert format_id == 'lpcm'
     """
-    pass
 
 
 def check_format_properties():
@@ -161,7 +154,6 @@ def check_format_properties():
     ...     is_mono = fmt.channels_per_frame == 1
     ...     assert is_stereo or is_mono
     """
-    pass
 
 
 def audio_file_error_handling():
@@ -175,7 +167,6 @@ def audio_file_error_handling():
     ... except (AudioFileError, FileNotFoundError, OSError):
     ...     pass  # Expected error
     """
-    pass
 
 
 def format_bytes_per_frame():
@@ -191,7 +182,6 @@ def format_bytes_per_frame():
     ...     expected = (fmt.bits_per_channel // 8) * fmt.channels_per_frame
     ...     assert bytes_per_frame == expected
     """
-    pass
 
 
 def calculate_bitrate():
@@ -209,7 +199,6 @@ def calculate_bitrate():
     ...     print(f"Bitrate: {bitrate_kbps:.0f} kbps")  # doctest: +ELLIPSIS
     Bitrate: ... kbps
     """
-    pass
 
 
 # Test runner

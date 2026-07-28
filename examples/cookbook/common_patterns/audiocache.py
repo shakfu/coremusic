@@ -2,10 +2,11 @@
 """File Hash Cache."""
 
 # --8<-- [start:example]
-from coremusic.audio import AudioFile
-
 import hashlib
 from pathlib import Path
+
+from coremusic.audio import AudioFile
+
 
 class AudioCache:
     """Cache audio data by file hash."""

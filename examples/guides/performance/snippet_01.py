@@ -4,7 +4,7 @@
 # --8<-- [start:example]
 import time
 
-import coremusic.capi as capi
+from coremusic import capi
 from coremusic.audio import AudioFile
 
 test_file = "audio.wav"

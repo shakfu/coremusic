@@ -183,16 +183,7 @@ object layer is built on it, and the two interoperate: objects expose their
 underlying id through `object_id`, and functions that take an id accept it.
 
 ```python
-import coremusic.capi as capi
-
-# Direct C function calls
-file_id = capi.audio_file_open_url("audio.wav")
-data, count = capi.audio_file_read_packets(file_id, 0, 1024)
-capi.audio_file_close(file_id)
-
-# Constants are exposed as get_* functions
-property_id = capi.get_audio_file_property_data_format()
-format_id = capi.fourchar_to_int('lpcm')
+--8<-- "examples/guides/imports/practices.py:functional"
 ```
 
 ## Best Practices
@@ -200,9 +191,7 @@ format_id = capi.fourchar_to_int('lpcm')
 **Import what you use, from where it lives.**
 
 ```python
-from coremusic.audio import AudioFile
-from coremusic.audio.analysis import AudioAnalyzer
-from coremusic.midi import MIDIClient
+--8<-- "examples/guides/imports/practices.py:specific"
 ```
 
 **Do not use wildcard imports.** They pull in a large namespace and hide where
@@ -216,14 +205,7 @@ from coremusic.audio import *   # don't
 coremusic:
 
 ```python
-import time
-from pathlib import Path
-
-import numpy as np
-
-from coremusic.audio import AudioFile
-from coremusic.midi import MIDIClient
-from coremusic import link
+--8<-- "examples/guides/imports/practices.py:grouping"
 ```
 
 ## Optional Dependencies
@@ -238,10 +220,7 @@ failing at import time:
 | `coremusic.audio.visualization` | `coremusic[visualization]` | `MATPLOTLIB_AVAILABLE` |
 
 ```python
-from coremusic.audio import NUMPY_AVAILABLE
-
-if NUMPY_AVAILABLE:
-    ...
+--8<-- "examples/guides/imports/practices.py:optional"
 ```
 
 ## Troubleshooting

@@ -49,7 +49,7 @@ def warning(message: str) -> None:
     print(f"Warning: {message}", file=sys.stderr)
 
 
-def print_help_default(parser: "argparse.ArgumentParser") -> int:
+def print_help_default(parser: argparse.ArgumentParser) -> int:
     """Default function that prints help and returns EXIT_SUCCESS.
 
     Use with parser.set_defaults(func=...) to show help when no subcommand is given.
@@ -76,13 +76,17 @@ def require_numpy() -> None:
     """Raise error if NumPy is not available."""
     try:
         import numpy  # noqa: F401
-    except ImportError:
-        raise CLIError("This command requires NumPy. Install with: pip install numpy")
+    except ImportError as e:
+        raise CLIError(
+            "This command requires NumPy. Install with: pip install numpy"
+        ) from e
 
 
 def require_scipy() -> None:
     """Raise error if SciPy is not available."""
     try:
         import scipy  # noqa: F401
-    except ImportError:
-        raise CLIError("This command requires SciPy. Install with: pip install scipy")
+    except ImportError as e:
+        raise CLIError(
+            "This command requires SciPy. Install with: pip install scipy"
+        ) from e

@@ -2,7 +2,8 @@
 """Format Detection and Validation."""
 
 # --8<-- [start:example]
-from coremusic.audio import AudioFile
+from coremusic.audio import AudioFile, AudioFormat
+
 
 def validate_audio_format(filepath, required_format=None):
     """Validate audio file format."""
@@ -19,12 +20,18 @@ def validate_audio_format(filepath, required_format=None):
         if required_format:
             if fmt.sample_rate != required_format.sample_rate:
                 raise ValueError(
-                    f"Sample rate mismatch: {fmt.sample_rate} != {required_format.sample_rate}"
+                    f"Sample rate mismatch: {fmt.sample_rate} "
+                    f"!= {required_format.sample_rate}"
                 )
             if fmt.channels_per_frame != required_format.channels_per_frame:
                 raise ValueError(
-                    f"Channel mismatch: {fmt.channels_per_frame} != {required_format.channels_per_frame}"
+                    f"Channel mismatch: {fmt.channels_per_frame} "
+                    f"!= {required_format.channels_per_frame}"
                 )
 
         return fmt
+
+
+fmt = validate_audio_format("audio.wav", AudioFormat.pcm(44100.0, channels=2, bits=16))
+print(f"{fmt.sample_rate}Hz, {fmt.channels_per_frame}ch")
 # --8<-- [end:example]

@@ -122,7 +122,9 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     print(f"Python:            {report['python_version']}")
     macos = report["macos_version"] or "unknown"
     platform_ok = bool(report["is_macos"])
-    print(f"Platform:          {report['platform']} (macOS {macos}) [{_status(platform_ok)}]")
+    print(
+        f"Platform:          {report['platform']} (macOS {macos}) [{_status(platform_ok)}]"
+    )
     if not platform_ok:
         print("  coremusic requires macOS; CoreAudio/CoreMIDI are unavailable here.")
 
@@ -138,7 +140,9 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     print(f"\nAudio hardware:      [{_status(bool(audio.get('accessible')))}]")
     if audio.get("accessible"):
         print(f"  Devices:           {audio.get('device_count')}")
-        print(f"  Inputs / Outputs:  {audio.get('input_devices')} / {audio.get('output_devices')}")
+        print(
+            f"  Inputs / Outputs:  {audio.get('input_devices')} / {audio.get('output_devices')}"
+        )
         print(f"  Default output:    {audio.get('default_output')}")
         print(f"  Default input:     {audio.get('default_input')}")
     else:
@@ -149,7 +153,9 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     print(f"\nAudioUnit plugins:   [{_status(bool(plugins.get('accessible')))}]")
     if plugins.get("accessible"):
         print(f"  Total:             {plugins.get('total')}")
-        print(f"  Effects / Instr.:  {plugins.get('effects')} / {plugins.get('instruments')}")
+        print(
+            f"  Effects / Instr.:  {plugins.get('effects')} / {plugins.get('instruments')}"
+        )
     else:
         print(f"  {plugins.get('error')}")
 

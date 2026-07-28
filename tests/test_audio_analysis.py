@@ -3,13 +3,14 @@
 
 import pytest
 from conftest import AMEN_WAV_PATH
+
 from coremusic.audio.analysis import (
-    AudioAnalyzer,
-    BeatInfo,
-    PitchInfo,
-    LivePitchDetector,
     NUMPY_AVAILABLE,
     SCIPY_AVAILABLE,
+    AudioAnalyzer,
+    BeatInfo,
+    LivePitchDetector,
+    PitchInfo,
 )
 
 # Skip all tests if NumPy or SciPy not available

@@ -1,12 +1,13 @@
 """Tests for buffer pooling functionality."""
 
-import pytest
 import threading
+
+import pytest
 
 from coremusic.audio.buffer_pool import (
     BufferPool,
-    PooledBuffer,
     BufferPoolStats,
+    PooledBuffer,
     get_global_pool,
     reset_global_pool,
 )
@@ -247,10 +248,9 @@ class TestPooledBuffer:
         pool = BufferPool()
         size = 1024
 
-        with pytest.raises(ValueError):
-            with PooledBuffer(size, pool=pool):
-                # Simulate error during processing
-                raise ValueError("Processing error")
+        with pytest.raises(ValueError), PooledBuffer(size, pool=pool):
+            # Simulate error during processing
+            raise ValueError("Processing error")
 
         # Buffer should still be released
         assert pool.stats["cached_buffers"] == 1

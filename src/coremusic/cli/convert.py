@@ -226,7 +226,7 @@ def _get_file_type_for_extension(path: Path) -> int:
     try:
         return resolve_output_file_type(str(path))
     except ValueError as e:
-        raise CLIError(str(e))
+        raise CLIError(str(e)) from e
 
 
 def cmd_convert(args: argparse.Namespace) -> int:
@@ -305,7 +305,7 @@ def cmd_convert(args: argparse.Namespace) -> int:
     try:
         codec = _compressed_output_format(str(output_path), dest_format)
     except ValueError as e:
-        raise CLIError(str(e))
+        raise CLIError(str(e)) from e
     if codec is not None:
         dest_format = codec
 
@@ -323,9 +323,9 @@ def cmd_convert(args: argparse.Namespace) -> int:
             str(input_path), str(output_path), dest_format, bitrate=bitrate_bps
         )
     except ValueError as e:
-        raise CLIError(str(e))
+        raise CLIError(str(e)) from e
     except Exception as e:
-        raise CLIError(f"Conversion failed: {e}")
+        raise CLIError(f"Conversion failed: {e}") from e
 
     # Output result
     if args.json:
@@ -426,7 +426,7 @@ def cmd_batch(args: argparse.Namespace) -> int:
     try:
         resolve_output_file_type(f"x{output_ext}")
     except ValueError as e:
-        raise CLIError(str(e))
+        raise CLIError(str(e)) from e
 
     # --bitrate is kbps for the CLI; the library API is bits/sec.
     batch_bitrate_bps: int | None = None
@@ -507,7 +507,10 @@ def cmd_batch(args: argparse.Namespace) -> int:
                 )
 
             convert_audio_file(
-                str(input_path), str(output_path), dest_format, bitrate=batch_bitrate_bps
+                str(input_path),
+                str(output_path),
+                dest_format,
+                bitrate=batch_bitrate_bps,
             )
             success_count += 1
 
@@ -611,7 +614,7 @@ def cmd_normalize(args: argparse.Namespace) -> int:
             num_frames = len(output_bytes) // source_format.bytes_per_frame
             out_file.write(num_frames, output_bytes)
     except Exception as e:
-        raise CLIError(f"Failed to write output file: {e}")
+        raise CLIError(f"Failed to write output file: {e}") from e
 
     # Calculate levels for output
     current_db = 20 * math.log10(current_level) if current_level > 0 else float("-inf")
@@ -669,10 +672,8 @@ def cmd_trim(args: argparse.Namespace) -> int:
 
     # Validate range
     total_frames = len(audio_data)
-    if start_frame < 0:
-        start_frame = 0
-    if end_frame > total_frames:
-        end_frame = total_frames
+    start_frame = max(start_frame, 0)
+    end_frame = min(end_frame, total_frames)
     if start_frame >= end_frame:
         raise CLIError(
             f"Invalid time range: start ({args.start}s) >= end ({end_frame / sample_rate:.3f}s)"
@@ -698,7 +699,7 @@ def cmd_trim(args: argparse.Namespace) -> int:
         ) as out_file:
             out_file.write(frames_read, trimmed_bytes)
     except Exception as e:
-        raise CLIError(f"Failed to write output file: {e}")
+        raise CLIError(f"Failed to write output file: {e}") from e
 
     if args.json:
         output_json(

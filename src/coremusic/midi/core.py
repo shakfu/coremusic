@@ -22,17 +22,17 @@ from coremusic import capi
 from coremusic.exceptions import MIDIError
 
 __all__ = [
-    "MIDIPort",
-    "MIDIInputPort",
-    "MIDIOutputPort",
-    "MIDIEndpoint",
     "MIDIClient",
+    "MIDIEndpoint",
+    "MIDIInputPort",
     "MIDIMessageSplitter",
-    "split_midi_messages",
-    "get_destinations",
-    "get_sources",
+    "MIDIOutputPort",
+    "MIDIPort",
     "find_destination",
     "find_source",
+    "get_destinations",
+    "get_sources",
+    "split_midi_messages",
 ]
 
 
@@ -259,7 +259,7 @@ class MIDIEndpoint(capi.CoreAudioObject):
         try:
             capi.midi_received(self.object_id, data, timestamp)
         except Exception as e:
-            raise MIDIError(f"Failed to send from source: {e}")
+            raise MIDIError(f"Failed to send from source: {e}") from e
 
     def poll(self, max_events: int = 0) -> list[tuple[int, bytes]]:
         """Drain packets buffered by this virtual destination.
@@ -448,7 +448,7 @@ class MIDIInputPort(MIDIPort):
         try:
             capi.midi_port_connect_source(self.object_id, source_id)
         except Exception as e:
-            raise MIDIError(f"Failed to connect source: {e}")
+            raise MIDIError(f"Failed to connect source: {e}") from e
 
     def disconnect_source(self, source: MIDIEndpoint | int) -> None:
         """Disconnect from a MIDI source"""
@@ -457,7 +457,7 @@ class MIDIInputPort(MIDIPort):
         try:
             capi.midi_port_disconnect_source(self.object_id, source_id)
         except Exception as e:
-            raise MIDIError(f"Failed to disconnect source: {e}")
+            raise MIDIError(f"Failed to disconnect source: {e}") from e
 
     def poll(self, max_events: int = 0) -> list[tuple[int, bytes]]:
         """Drain the buffered incoming packets.
@@ -552,7 +552,7 @@ class MIDIOutputPort(MIDIPort):
         try:
             capi.midi_send_data(self.object_id, dest_id, data, timestamp)
         except Exception as e:
-            raise MIDIError(f"Failed to send data: {e}")
+            raise MIDIError(f"Failed to send data: {e}") from e
 
 
 class MIDIClient(capi.CoreAudioObject):
@@ -567,7 +567,7 @@ class MIDIClient(capi.CoreAudioObject):
             client_id = capi.midi_client_create(name)
             self._set_object_id(client_id)
         except Exception as e:
-            raise MIDIError(f"Failed to create MIDI client: {e}")
+            raise MIDIError(f"Failed to create MIDI client: {e}") from e
 
     @property
     def name(self) -> str:
@@ -611,7 +611,7 @@ class MIDIClient(capi.CoreAudioObject):
             self._ports.append(port)
             return port
         except Exception as e:
-            raise MIDIError(f"Failed to create input port: {e}")
+            raise MIDIError(f"Failed to create input port: {e}") from e
 
     def create_output_port(self, name: str) -> MIDIOutputPort:
         """Create a MIDI output port"""
@@ -624,7 +624,7 @@ class MIDIClient(capi.CoreAudioObject):
             self._ports.append(port)
             return port
         except Exception as e:
-            raise MIDIError(f"Failed to create output port: {e}")
+            raise MIDIError(f"Failed to create output port: {e}") from e
 
     def create_virtual_source(self, name: str) -> MIDIEndpoint:
         """Create a virtual MIDI source owned by this client.
@@ -642,7 +642,7 @@ class MIDIClient(capi.CoreAudioObject):
         try:
             endpoint_id = capi.midi_source_create(self.object_id, name)
         except Exception as e:
-            raise MIDIError(f"Failed to create virtual source: {e}")
+            raise MIDIError(f"Failed to create virtual source: {e}") from e
         endpoint = MIDIEndpoint(endpoint_id, name, owned=True)
         endpoint._client = self
         self._endpoints.append(endpoint)
@@ -676,7 +676,7 @@ class MIDIClient(capi.CoreAudioObject):
                 self.object_id, name, callback, queue_size
             )
         except Exception as e:
-            raise MIDIError(f"Failed to create virtual destination: {e}")
+            raise MIDIError(f"Failed to create virtual destination: {e}") from e
         endpoint = MIDIEndpoint(endpoint_id, name, owned=True)
         endpoint._client = self
         self._endpoints.append(endpoint)

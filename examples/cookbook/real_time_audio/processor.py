@@ -25,7 +25,7 @@ try:
     processor.start()
 except RuntimeError as e:
     print(e)
-    raise SystemExit(0)
+    raise SystemExit(0) from None
 
 print(f"Round-trip latency: {processor.latency * 1000:.1f}ms")
 time.sleep(0.5)

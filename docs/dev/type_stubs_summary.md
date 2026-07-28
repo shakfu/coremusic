@@ -4,6 +4,12 @@
 
 Comprehensive `.pyi` type stub files have been created for the **coremusic** package, providing complete type hints for all modules and enabling excellent IDE autocomplete and static type checking with mypy.
 
+> **Historical.** This note predates the 0.2.3 package reorganisation. The
+> `objects.pyi` stub described below is gone: the object layer moved into
+> `src/coremusic/audio/` and `src/coremusic/midi/`, which are annotated inline
+> and marked with `py.typed`. Only `capi.pyi` and `__init__.pyi` remain as
+> separate stubs, for the Cython extension.
+
 ## Created Files
 
 ### 1. `src/coremusic/__init__.pyi` (2 KB)

@@ -19,7 +19,6 @@ def create_note_from_midi():
     >>> note = Note.from_midi(69)
     >>> assert note.midi == 69  # A440
     """
-    pass
 
 
 def note_properties():
@@ -36,7 +35,6 @@ def note_properties():
     >>> # Frequency (Hz) - C4 is approximately 261.63 Hz
     >>> assert 260 < c4.frequency < 263
     """
-    pass
 
 
 def note_transposition():
@@ -51,7 +49,6 @@ def note_transposition():
     >>> c3 = c4.transpose(-12)
     >>> assert c3.midi == 48
     """
-    pass
 
 
 def create_interval():
@@ -64,7 +61,6 @@ def create_interval():
     >>> interval = c4.interval_to(g4)
     >>> assert interval.semitones == 7
     """
-    pass
 
 
 def interval_semitones():
@@ -89,7 +85,6 @@ def interval_semitones():
     >>> assert INTERVALS['major_3rd'] == 4
     >>> assert INTERVALS['octave'] == 12
     """
-    pass
 
 
 def create_scale():
@@ -105,7 +100,6 @@ def create_scale():
     >>> # First note should be the root
     >>> assert notes[0].midi == 60
     """
-    pass
 
 
 def scale_types():
@@ -129,7 +123,6 @@ def scale_types():
     >>> # Blues
     >>> _ = ScaleType.BLUES
     """
-    pass
 
 
 def scale_intervals():
@@ -152,7 +145,6 @@ def scale_intervals():
     >>> assert len(SCALE_INTERVALS['pentatonic_major']) == 5
     >>> assert len(SCALE_INTERVALS['blues']) == 6
     """
-    pass
 
 
 def create_chord():
@@ -168,7 +160,6 @@ def create_chord():
     >>> # Root should be first
     >>> assert notes[0].midi == 60
     """
-    pass
 
 
 def chord_types():
@@ -187,7 +178,6 @@ def chord_types():
     >>> _ = ChordType.DIMINISHED_7
     >>> _ = ChordType.HALF_DIMINISHED_7
     """
-    pass
 
 
 def chord_intervals():
@@ -208,7 +198,6 @@ def chord_intervals():
     >>> assert CHORD_INTERVALS['minor'] == [0, 3, 7]
     >>> assert len(CHORD_INTERVALS['major_7']) == 4
     """
-    pass
 
 
 def chord_inversions():
@@ -232,7 +221,6 @@ def chord_inversions():
     >>> get_inversion(c_major, 2)
     [67, 72, 76]
     """
-    pass
 
 
 def frequency_from_midi():
@@ -252,7 +240,6 @@ def frequency_from_midi():
     >>> round(midi_to_freq(81), 2)  # A5 = 880 Hz
     880.0
     """
-    pass
 
 
 def midi_from_frequency():
@@ -271,7 +258,6 @@ def midi_from_frequency():
     >>> round(freq_to_midi(880.0))  # A5
     81
     """
-    pass
 
 
 def circle_of_fifths():
@@ -301,7 +287,6 @@ def circle_of_fifths():
     >>> SHARPS_IN_KEY['D']
     2
     """
-    pass
 
 
 def relative_minor():
@@ -326,7 +311,6 @@ def relative_minor():
     >>> RELATIVE_MINORS['G']
     'Em'
     """
-    pass
 
 
 def diatonic_chords():
@@ -352,7 +336,6 @@ def diatonic_chords():
     >>> C_MAJOR_DIATONIC['vi']
     'Am'
     """
-    pass
 
 
 # Test runner

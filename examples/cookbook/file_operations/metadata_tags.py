@@ -2,7 +2,7 @@
 """Writing and reading audio file tags."""
 
 # CAF supports the full tag dictionary; make one to write into.
-import coremusic.capi as capi
+from coremusic import capi
 from coremusic.audio import AudioFormat, ExtendedAudioFile
 
 with ExtendedAudioFile.create(

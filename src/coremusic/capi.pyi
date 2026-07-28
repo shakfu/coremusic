@@ -4,7 +4,8 @@ This module provides low-level Python bindings to CoreAudio frameworks
 via Cython. All functions are thin wrappers around C APIs.
 """
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from collections.abc import Callable
+from typing import Any
 
 # ============================================================================
 # Base Classes
@@ -38,7 +39,7 @@ class AudioPlayer:
     def pause(self) -> None: ...
     @property
     def link_session(self) -> Any: ...
-    def get_link_timing(self, quantum: float = 4.0) -> Optional[Dict[str, Any]]: ...
+    def get_link_timing(self, quantum: float = 4.0) -> dict[str, Any] | None: ...
 
 class AudioRecorder:
     """Audio recorder implementation using AudioQueue."""
@@ -125,11 +126,9 @@ class AudioInputStreamImpl:
 
 def fourchar_to_int(fourcc: str) -> int:
     """Convert a four-character code string to integer."""
-    ...
 
 def int_to_fourchar(value: int) -> str:
     """Convert an integer to four-character code string."""
-    ...
 
 # ============================================================================
 # Audio File Operations
@@ -139,37 +138,30 @@ def audio_file_open_url(
     file_path: str, permissions: int = 1, file_type_hint: int = 0
 ) -> int:
     """Open an audio file and return file ID."""
-    ...
 
 def audio_file_close(file_id: int) -> None:
     """Close an audio file."""
-    ...
 
 def audio_file_get_property(file_id: int, property_id: int) -> bytes:
     """Get a property from an audio file."""
-    ...
 
 def audio_file_set_property(file_id: int, property_id: int, data: bytes) -> None:
     """Set a property on an audio file (file must be opened with write permissions)."""
-    ...
 
 def audio_file_read_info_dictionary(file_id: int) -> dict[str, Any] | None:
     """Read the info dictionary from an audio file as a Python dict."""
-    ...
 
 def audio_file_write_info_dictionary(file_id: int, metadata: dict[str, Any]) -> None:
     """Write an info dictionary to an audio file (file must be opened with write permissions)."""
-    ...
 
 def audio_file_read_packets(
     file_id: int, start_packet: int, packet_count: int
-) -> Tuple[bytes, int]:
+) -> tuple[bytes, int]:
     """Read audio packets from file. Returns (data, actual_count)."""
-    ...
 
 def audio_file_read_packets_into(
     file_id: int, start_packet: int, packet_count: int, buffer: bytearray
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Read packets directly into a provided buffer (zero-copy).
 
     High-performance variant that reads directly into a caller-provided buffer,
@@ -184,7 +176,6 @@ def audio_file_read_packets_into(
     Returns:
         Tuple of (bytes_read, packets_read)
     """
-    ...
 
 # ============================================================================
 # Audio File Stream Operations
@@ -192,18 +183,15 @@ def audio_file_read_packets_into(
 
 def audio_file_stream_open() -> int:
     """Open an audio file stream."""
-    ...
 
 def audio_file_stream_close(stream_id: int) -> None:
     """Close an audio file stream."""
-    ...
 
 def audio_file_stream_parse_bytes(stream_id: int, data: bytes, flags: int = 0) -> int:
     """Parse audio data bytes."""
-    ...
 
 def audio_file_stream_parse_buffer(
-    stream_id: int, data: Union[bytes, bytearray], flags: int = 0
+    stream_id: int, data: bytes | bytearray, flags: int = 0
 ) -> int:
     """Parse buffer data through the AudioFileStream parser (zero-copy).
 
@@ -217,145 +205,116 @@ def audio_file_stream_parse_buffer(
     Returns:
         OSStatus code (0 for success)
     """
-    ...
 
 def audio_file_stream_seek(stream_id: int, packet_offset: int) -> None:
     """Seek to packet offset in stream."""
-    ...
 
 def audio_file_stream_get_property(stream_id: int, property_id: int) -> bytes:
     """Get a property from audio file stream."""
-    ...
 
 def audio_file_stream_get_property_ready_to_produce_packets(stream_id: int) -> bool:
     """Check if stream is ready to produce packets."""
-    ...
 
 # ============================================================================
 # Audio Queue Operations
 # ============================================================================
 
-def audio_queue_new_output(format_dict: Dict[str, Any]) -> int:
+def audio_queue_new_output(format_dict: dict[str, Any]) -> int:
     """Create a new output audio queue."""
-    ...
 
 def audio_queue_allocate_buffer(queue_id: int, buffer_size: int) -> int:
     """Allocate an audio buffer."""
-    ...
 
 def audio_queue_enqueue_buffer(queue_id: int, buffer_id: int) -> None:
     """Enqueue an audio buffer."""
-    ...
 
 def audio_queue_start(queue_id: int) -> None:
     """Start the audio queue."""
-    ...
 
 def audio_queue_stop(queue_id: int, immediate: bool) -> None:
     """Stop the audio queue."""
-    ...
 
 def audio_queue_dispose(queue_id: int, immediate: bool) -> None:
     """Dispose of an audio queue."""
-    ...
 
 # ============================================================================
 # Audio Component & AudioUnit Operations
 # ============================================================================
 
 def audio_component_find_next(
-    description: Dict[str, Any], previous_component_id: int = 0
-) -> Optional[int]:
+    description: dict[str, Any], previous_component_id: int = 0
+) -> int | None:
     """Find next matching audio component."""
-    ...
 
 def audio_component_instance_new(component_id: int) -> int:
     """Create new instance of audio component."""
-    ...
 
 def audio_component_instance_dispose(instance_id: int) -> None:
     """Dispose of audio component instance."""
-    ...
 
-def audio_component_copy_name(component_id: int) -> Optional[str]:
+def audio_component_copy_name(component_id: int) -> str | None:
     """Get the name of an audio component."""
-    ...
 
-def audio_component_get_description(component_id: int) -> Dict[str, Any]:
+def audio_component_get_description(component_id: int) -> dict[str, Any]:
     """Get the description of an audio component."""
-    ...
 
 def audio_unit_initialize(unit_id: int) -> None:
     """Initialize an AudioUnit."""
-    ...
 
 def audio_unit_uninitialize(unit_id: int) -> None:
     """Uninitialize an AudioUnit."""
-    ...
 
 def audio_unit_get_property(
     unit_id: int, property_id: int, scope: int, element: int
 ) -> bytes:
     """Get a property from AudioUnit."""
-    ...
 
 def audio_unit_set_property(
     unit_id: int, property_id: int, scope: int, element: int, data: bytes
 ) -> None:
     """Set a property on AudioUnit."""
-    ...
 
 def audio_output_unit_start(unit_id: int) -> None:
     """Start AudioUnit output."""
-    ...
 
 def audio_output_unit_stop(unit_id: int) -> None:
     """Stop AudioUnit output."""
-    ...
 
 def audio_unit_find_all_components(
-    component_type: Optional[str] = None,
-    component_subtype: Optional[str] = None,
-    manufacturer: Optional[str] = None,
-) -> List[int]:
+    component_type: str | None = None,
+    component_subtype: str | None = None,
+    manufacturer: str | None = None,
+) -> list[int]:
     """Find all AudioComponent IDs matching criteria."""
-    ...
 
-def audio_unit_get_component_info(component_id: int) -> Dict[str, Any]:
+def audio_unit_get_component_info(component_id: int) -> dict[str, Any]:
     """Get component info dict with keys: name, type, subtype, manufacturer, version."""
-    ...
 
 def audio_unit_get_parameter_list(
     audio_unit_id: int, scope: int = 0, element: int = 0
-) -> List[int]:
+) -> list[int]:
     """Get list of parameter IDs."""
-    ...
 
 def audio_unit_get_parameter_info(
     audio_unit_id: int, param_id: int, scope: int = 0
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get parameter info dict with metadata."""
-    ...
 
 def audio_unit_get_parameter(
     audio_unit_id: int, param_id: int, scope: int = 0, element: int = 0
 ) -> float:
     """Get current parameter value."""
-    ...
 
 def audio_unit_set_parameter(
     audio_unit_id: int, param_id: int, value: float, scope: int = 0, element: int = 0
 ) -> None:
     """Set parameter value."""
-    ...
 
-def audio_unit_get_factory_presets(audio_unit_id: int) -> List[Dict[str, Any]]:
+def audio_unit_get_factory_presets(audio_unit_id: int) -> list[dict[str, Any]]:
     """Get list of factory preset dicts with keys: number, name."""
-    ...
 
 def audio_unit_set_current_preset(audio_unit_id: int, preset_number: int) -> None:
     """Load a factory preset by number."""
-    ...
 
 def audio_unit_render(
     audio_unit_id: int,
@@ -365,7 +324,6 @@ def audio_unit_render(
     num_channels: int,
 ) -> bytes:
     """Render audio through the AudioUnit."""
-    ...
 
 def audio_unit_render_instrument(
     audio_unit_id: int,
@@ -375,7 +333,6 @@ def audio_unit_render_instrument(
     num_channels: int = 2,
 ) -> bytes:
     """Render an instrument AudioUnit into interleaved float32 bytes."""
-    ...
 
 def audio_unit_render_effect(
     audio_unit_id: int,
@@ -385,11 +342,10 @@ def audio_unit_render_effect(
     num_channels: int = 2,
 ) -> bytes:
     """Render interleaved float32 audio through an effect AudioUnit."""
-    ...
 
 def audio_unit_render_into(
     audio_unit_id: int,
-    input_data: Union[bytes, bytearray],
+    input_data: bytes | bytearray,
     output_buffer: bytearray,
     num_frames: int,
     num_channels: int = 2,
@@ -406,59 +362,48 @@ def audio_unit_render_into(
     Returns:
         Number of bytes written to output_buffer
     """
-    ...
 
 # ============================================================================
 # Audio Hardware & Device Operations
 # ============================================================================
 
-def audio_hardware_get_devices() -> List[int]:
+def audio_hardware_get_devices() -> list[int]:
     """Get all audio device IDs."""
-    ...
 
 def audio_hardware_get_default_output_device() -> int:
     """Get default output device ID."""
-    ...
 
 def audio_hardware_get_default_input_device() -> int:
     """Get default input device ID."""
-    ...
 
 def audio_hardware_destroy_aggregate_device(device_id: int) -> None:
     """Destroy an aggregate device."""
-    ...
 
 def audio_hardware_unload() -> None:
     """Unload audio hardware."""
-    ...
 
 def audio_object_get_property_data(
     object_id: int, property_id: int, scope: int, element: int
 ) -> bytes:
     """Get property data from an AudioObject."""
-    ...
 
 def audio_object_show(object_id: int) -> None:
     """Display information about an AudioObject."""
-    ...
 
 def audio_object_get_property_string(
     object_id: int, property_selector: int, scope: int, element: int
 ) -> bytes | None:
     """Get a string property from an AudioObject."""
-    ...
 
 def audio_object_is_property_settable(
     object_id: int, property_selector: int, scope: int, element: int
 ) -> bool:
     """Check if a property is settable on an AudioObject."""
-    ...
 
 def audio_object_set_property_data(
     object_id: int, property_selector: int, scope: int, element: int, data: bytes
 ) -> None:
     """Set property data on an AudioObject."""
-    ...
 
 # ============================================================================
 # Audio Services Operations
@@ -466,31 +411,25 @@ def audio_object_set_property_data(
 
 def audio_services_create_system_sound_id(file_url: str) -> int:
     """Create a system sound ID."""
-    ...
 
 def audio_services_dispose_system_sound_id(sound_id: int) -> None:
     """Dispose of a system sound ID."""
-    ...
 
 def audio_services_play_system_sound(sound_id: int) -> None:
     """Play a system sound."""
-    ...
 
 def audio_services_play_alert_sound(sound_id: int) -> None:
     """Play an alert sound."""
-    ...
 
 def audio_services_get_property(
     property_id: int, specifier_size: int, specifier: bytes
 ) -> bytes:
     """Get an AudioServices property."""
-    ...
 
 def audio_services_set_property(
     property_id: int, specifier_size: int, specifier: bytes, data: bytes
 ) -> None:
     """Set an AudioServices property."""
-    ...
 
 # ============================================================================
 # CoreAudioClock Operations
@@ -498,31 +437,24 @@ def audio_services_set_property(
 
 def ca_clock_new() -> int:
     """Create a new CoreAudioClock."""
-    ...
 
 def ca_clock_dispose(clock_id: int) -> None:
     """Dispose of a CoreAudioClock."""
-    ...
 
 def ca_clock_start(clock_id: int) -> None:
     """Start a CoreAudioClock."""
-    ...
 
 def ca_clock_stop(clock_id: int) -> None:
     """Stop a CoreAudioClock."""
-    ...
 
 def ca_clock_get_play_rate(clock_id: int) -> float:
     """Get the play rate of a CoreAudioClock."""
-    ...
 
 def ca_clock_set_play_rate(clock_id: int, rate: float) -> None:
     """Set the play rate of a CoreAudioClock."""
-    ...
 
 def ca_clock_get_current_time(clock_id: int, time_format: int) -> dict[str, Any]:
     """Get current time from a CoreAudioClock."""
-    ...
 
 def get_ca_clock_time_format_host_time() -> int: ...
 def get_ca_clock_time_format_samples() -> int: ...
@@ -536,65 +468,50 @@ def get_ca_clock_time_format_smpte_time() -> int: ...
 
 def normalize_audio(audio_data: Any, target_peak: float = 0.9) -> Any:
     """Normalize audio data to target peak level."""
-    ...
 
 def normalize_audio_float32(audio_data: Any, target_peak: float = 0.9) -> Any:
     """Normalize float32 audio data to target peak level."""
-    ...
 
 def apply_gain(audio_data: Any, gain_db: float) -> Any:
     """Apply gain in dB to audio data."""
-    ...
 
 def apply_gain_float32(audio_data: Any, gain_db: float) -> Any:
     """Apply gain in dB to float32 audio data."""
-    ...
 
 def mix_audio_float32(
     output: Any, input1: Any, input2: Any, gain1: float = 1.0, gain2: float = 1.0
 ) -> Any:
     """Mix two float32 audio buffers with gain."""
-    ...
 
 def convert_float32_to_int16(float_data: Any, int_data: Any) -> None:
     """Convert float32 audio data to int16."""
-    ...
 
 def convert_int16_to_float32(int_data: Any, float_data: Any) -> None:
     """Convert int16 audio data to float32."""
-    ...
 
 def stereo_to_mono_float32(stereo_data: Any, mono_data: Any) -> None:
     """Convert stereo float32 audio to mono."""
-    ...
 
 def mono_to_stereo_float32(mono_data: Any, stereo_data: Any) -> None:
     """Convert mono float32 audio to stereo."""
-    ...
 
 def apply_fade_in_float32(audio_data: Any, fade_frames: int) -> None:
     """Apply fade-in to float32 audio data."""
-    ...
 
 def apply_fade_out_float32(audio_data: Any, fade_frames: int) -> None:
     """Apply fade-out to float32 audio data."""
-    ...
 
 def calculate_rms(audio_data: Any) -> float:
     """Calculate RMS level of audio data."""
-    ...
 
 def calculate_rms_float32(audio_data: Any) -> float:
     """Calculate RMS level of float32 audio data."""
-    ...
 
 def calculate_peak(audio_data: Any) -> float:
     """Calculate peak level of audio data."""
-    ...
 
 def calculate_peak_float32(audio_data: Any) -> float:
     """Calculate peak level of float32 audio data."""
-    ...
 
 # ============================================================================
 # MIDI Operations
@@ -602,74 +519,58 @@ def calculate_peak_float32(audio_data: Any) -> float:
 
 def midi_client_create(name: str) -> int:
     """Create a MIDI client."""
-    ...
 
 def midi_client_dispose(client_id: int) -> None:
     """Dispose of a MIDI client."""
-    ...
 
 def midi_input_port_create(
     client_id: int,
     name: str,
-    callback: Optional[Callable[[bytes, int], None]] = None,
+    callback: Callable[[bytes, int], None] | None = None,
     queue_size: int = 4096,
 ) -> int:
     """Create a MIDI input port."""
-    ...
 
-def midi_input_poll(obj_id: int, max_events: int = 0) -> List[Tuple[int, bytes]]:
+def midi_input_poll(obj_id: int, max_events: int = 0) -> list[tuple[int, bytes]]:
     """Drain buffered MIDI packets as (host_time, data) tuples."""
-    ...
 
 def midi_input_pending(obj_id: int) -> int:
     """Number of MIDI packets currently buffered."""
-    ...
 
 def midi_input_dropped(obj_id: int) -> int:
     """Number of MIDI packets discarded because the buffer was full."""
-    ...
 
-def midi_input_wait(obj_id: int, timeout: Optional[float] = None) -> bool:
+def midi_input_wait(obj_id: int, timeout: float | None = None) -> bool:
     """Block until a MIDI packet is buffered or the timeout expires."""
-    ...
 
 def midi_host_time_to_seconds(host_time: int) -> float:
     """Convert a CoreMIDI host timestamp to seconds."""
-    ...
 
 def midi_seconds_to_host_time(seconds: float) -> int:
     """Convert a duration in seconds to host time ticks."""
-    ...
 
 def midi_current_host_time() -> int:
     """Current host time (mach absolute time) in ticks."""
-    ...
 
 def midi_output_port_create(client_id: int, name: str) -> int:
     """Create a MIDI output port."""
-    ...
 
 def midi_port_dispose(port_id: int) -> None:
     """Dispose of a MIDI port."""
-    ...
 
 def midi_port_connect_source(port_id: int, source_id: int) -> None:
     """Connect MIDI port to source."""
-    ...
 
 def midi_port_disconnect_source(port_id: int, source_id: int) -> None:
     """Disconnect MIDI port from source."""
-    ...
 
 def create_midi_note_message(
     channel: int, note: int, velocity: int, release_velocity: int, duration: float
 ) -> bytes:
     """Create a MIDI note message."""
-    ...
 
 def create_midi_channel_message(status: int, data1: int, data2: int) -> bytes:
     """Create a MIDI channel message."""
-    ...
 
 # ============================================================================
 # Music Player & Sequence Operations
@@ -677,23 +578,18 @@ def create_midi_channel_message(status: int, data1: int, data2: int) -> bytes:
 
 def dispose_music_player(player_id: int) -> None:
     """Dispose of a music player."""
-    ...
 
 def dispose_music_sequence(sequence_id: int) -> None:
     """Dispose of a music sequence."""
-    ...
 
 def create_music_device_note_params(pitch: float, velocity: float) -> bytes:
     """Create music device note parameters."""
-    ...
 
 def create_music_device_std_note_params(pitch: int, velocity: int) -> bytes:
     """Create standard music device note parameters."""
-    ...
 
 def demonstrate_callback_infrastructure() -> None:
     """Demonstrate callback infrastructure (for testing)."""
-    ...
 
 # ============================================================================
 # Property ID Getters - Audio File
@@ -801,21 +697,18 @@ def get_audio_component_type_music_device() -> int: ...
 # ============================================================================
 
 def audio_converter_new(
-    source_format: Dict[str, Any], dest_format: Dict[str, Any]
+    source_format: dict[str, Any], dest_format: dict[str, Any]
 ) -> int:
     """Create a new audio converter."""
-    ...
 
 def audio_converter_dispose(converter_id: int) -> None:
     """Dispose of an audio converter."""
-    ...
 
 def audio_converter_convert_buffer(converter_id: int, input_data: bytes) -> bytes:
     """Convert audio data buffer."""
-    ...
 
 def audio_converter_convert_buffer_into(
-    converter_id: int, input_data: Union[bytes, bytearray], output_buffer: bytearray
+    converter_id: int, input_data: bytes | bytearray, output_buffer: bytearray
 ) -> int:
     """Convert audio data directly into a provided output buffer (zero-copy).
 
@@ -830,40 +723,35 @@ def audio_converter_convert_buffer_into(
     Returns:
         Number of bytes written to output_buffer
     """
-    ...
 
 def audio_converter_get_property(converter_id: int, property_id: int) -> bytes:
     """Get a property from audio converter."""
-    ...
 
 def audio_converter_set_property(
     converter_id: int, property_id: int, data: bytes
 ) -> None:
     """Set a property on audio converter."""
-    ...
 
 def audio_converter_reset(converter_id: int) -> None:
     """Reset audio converter."""
-    ...
 
 def audio_converter_fill_complex_buffer(
     converter_id: int,
     input_data: bytes,
     input_packet_count: int,
     output_packet_count: int,
-    source_format_dict: Dict[str, Any],
-) -> Tuple[bytes, int]:
+    source_format_dict: dict[str, Any],
+) -> tuple[bytes, int]:
     """Convert audio using callback-based API for complex conversions."""
-    ...
 
 def audio_converter_fill_complex_buffer_into(
     converter_id: int,
-    input_data: Union[bytes, bytearray],
+    input_data: bytes | bytearray,
     output_buffer: bytearray,
     input_packet_count: int,
     output_packet_count: int,
-    source_format_dict: Dict[str, Any],
-) -> Tuple[int, int]:
+    source_format_dict: dict[str, Any],
+) -> tuple[int, int]:
     """Convert audio using callback-based API directly into provided buffers (zero-copy).
 
     Args:
@@ -877,7 +765,6 @@ def audio_converter_fill_complex_buffer_into(
     Returns:
         Tuple of (bytes_written, actual_packet_count)
     """
-    ...
 
 # ============================================================================
 # Extended Audio File Operations (MISSING)
@@ -885,29 +772,25 @@ def audio_converter_fill_complex_buffer_into(
 
 def extended_audio_file_open_url(file_path: str) -> int:
     """Open an extended audio file."""
-    ...
 
 def extended_audio_file_create_with_url(
     file_path: str,
     file_type: int,
-    source_format: Dict[str, Any],
-    channel_layout: Optional[bytes],
+    source_format: dict[str, Any],
+    channel_layout: bytes | None,
     flags: int,
 ) -> int:
     """Create a new extended audio file."""
-    ...
 
 def extended_audio_file_dispose(ext_file_id: int) -> None:
     """Dispose of an extended audio file."""
-    ...
 
-def extended_audio_file_read(ext_file_id: int, num_frames: int) -> Tuple[bytes, int]:
+def extended_audio_file_read(ext_file_id: int, num_frames: int) -> tuple[bytes, int]:
     """Read frames from extended audio file."""
-    ...
 
 def extended_audio_file_read_into(
     ext_file_id: int, num_frames: int, buffer: bytearray, num_channels: int = 2
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Read frames directly into a provided buffer (zero-copy).
 
     Args:
@@ -919,23 +802,19 @@ def extended_audio_file_read_into(
     Returns:
         Tuple of (bytes_read, frames_read)
     """
-    ...
 
 def extended_audio_file_write(
     ext_file_id: int, num_frames: int, audio_data: bytes, num_channels: int = ...
 ) -> None:
     """Write frames to extended audio file."""
-    ...
 
 def extended_audio_file_get_property(ext_file_id: int, property_id: int) -> bytes:
     """Get a property from extended audio file."""
-    ...
 
 def extended_audio_file_set_property(
     ext_file_id: int, property_id: int, data: bytes
 ) -> None:
     """Set a property on extended audio file."""
-    ...
 
 # ============================================================================
 # AUGraph Operations (MISSING)
@@ -943,95 +822,73 @@ def extended_audio_file_set_property(
 
 def au_graph_new() -> int:
     """Create a new AUGraph."""
-    ...
 
 def au_graph_dispose(graph_id: int) -> None:
     """Dispose of an AUGraph."""
-    ...
 
 def au_graph_open(graph_id: int) -> None:
     """Open an AUGraph."""
-    ...
 
 def au_graph_close(graph_id: int) -> None:
     """Close an AUGraph."""
-    ...
 
 def au_graph_initialize(graph_id: int) -> None:
     """Initialize an AUGraph."""
-    ...
 
 def au_graph_uninitialize(graph_id: int) -> None:
     """Uninitialize an AUGraph."""
-    ...
 
 def au_graph_start(graph_id: int) -> None:
     """Start an AUGraph."""
-    ...
 
 def au_graph_stop(graph_id: int) -> None:
     """Stop an AUGraph."""
-    ...
 
 def au_graph_is_open(graph_id: int) -> bool:
     """Check if AUGraph is open."""
-    ...
 
 def au_graph_is_initialized(graph_id: int) -> bool:
     """Check if AUGraph is initialized."""
-    ...
 
 def au_graph_is_running(graph_id: int) -> bool:
     """Check if AUGraph is running."""
-    ...
 
-def au_graph_add_node(graph_id: int, description: Dict[str, int]) -> int:
+def au_graph_add_node(graph_id: int, description: dict[str, int]) -> int:
     """Add a node to AUGraph."""
-    ...
 
 def au_graph_remove_node(graph_id: int, node: int) -> None:
     """Remove a node from AUGraph."""
-    ...
 
 def au_graph_get_node_count(graph_id: int) -> int:
     """Get number of nodes in AUGraph."""
-    ...
 
 def au_graph_get_ind_node(graph_id: int, index: int) -> int:
     """Get node at index in AUGraph."""
-    ...
 
 def au_graph_node_info(graph_id: int, node: int) -> int:
     """Get AudioUnit for node in AUGraph."""
-    ...
 
 def au_graph_connect_node_input(
     graph_id: int, source_node: int, source_output: int, dest_node: int, dest_input: int
 ) -> None:
     """Connect nodes in AUGraph."""
-    ...
 
 def au_graph_disconnect_node_input(
     graph_id: int, dest_node: int, dest_input: int
 ) -> None:
     """Disconnect node input in AUGraph."""
-    ...
 
 def au_graph_clear_connections(graph_id: int) -> None:
     """Clear all connections in AUGraph."""
-    ...
 
 def au_graph_update(graph_id: int) -> bool:
     """Update AUGraph configuration."""
-    ...
 
 def au_graph_get_cpu_load(graph_id: int) -> float:
     """Get CPU load for AUGraph."""
-    ...
 
 def au_graph_get_max_cpu_load(graph_id: int) -> float:
     """Get maximum CPU load for AUGraph."""
-    ...
 
 # ============================================================================
 # Music Player & Sequence Operations (MISSING)
@@ -1039,79 +896,60 @@ def au_graph_get_max_cpu_load(graph_id: int) -> float:
 
 def new_music_player() -> int:
     """Create a new music player."""
-    ...
 
 def new_music_sequence() -> int:
     """Create a new music sequence."""
-    ...
 
 def music_player_set_sequence(player_id: int, sequence_id: int) -> None:
     """Set sequence for music player."""
-    ...
 
 def music_player_get_sequence(player_id: int) -> int:
     """Get sequence from music player."""
-    ...
 
 def music_player_set_time(player_id: int, time: float) -> None:
     """Set playback time."""
-    ...
 
 def music_player_get_time(player_id: int) -> float:
     """Get current playback time."""
-    ...
 
 def music_player_preroll(player_id: int) -> None:
     """Preroll music player."""
-    ...
 
 def music_player_start(player_id: int) -> None:
     """Start music player."""
-    ...
 
 def music_player_stop(player_id: int) -> None:
     """Stop music player."""
-    ...
 
 def music_player_is_playing(player_id: int) -> bool:
     """Check if music player is playing."""
-    ...
 
 def music_player_set_play_rate_scalar(player_id: int, rate: float) -> None:
     """Set play rate scalar."""
-    ...
 
 def music_player_get_play_rate_scalar(player_id: int) -> float:
     """Get play rate scalar."""
-    ...
 
 def music_sequence_new_track(sequence_id: int) -> int:
     """Create a new track in sequence."""
-    ...
 
 def music_sequence_dispose_track(sequence_id: int, track_id: int) -> None:
     """Dispose of a track."""
-    ...
 
 def music_sequence_get_track_count(sequence_id: int) -> int:
     """Get number of tracks."""
-    ...
 
 def music_sequence_get_ind_track(sequence_id: int, index: int) -> int:
     """Get track at index."""
-    ...
 
 def music_sequence_get_tempo_track(sequence_id: int) -> int:
     """Get tempo track."""
-    ...
 
 def music_sequence_set_sequence_type(sequence_id: int, seq_type: int) -> None:
     """Set sequence type."""
-    ...
 
 def music_sequence_get_sequence_type(sequence_id: int) -> int:
     """Get sequence type."""
-    ...
 
 def music_sequence_file_load(
     sequence_id: int,
@@ -1120,7 +958,6 @@ def music_sequence_file_load(
     flags: int = 0,
 ) -> None:
     """Load sequence from file."""
-    ...
 
 def music_track_new_midi_note_event(
     track_id: int,
@@ -1132,7 +969,6 @@ def music_track_new_midi_note_event(
     duration: float,
 ) -> None:
     """Add MIDI note event to track."""
-    ...
 
 def music_track_new_midi_channel_event(
     track_id: int,
@@ -1142,19 +978,16 @@ def music_track_new_midi_channel_event(
     data2: int,
 ) -> None:
     """Add MIDI channel event to track."""
-    ...
 
 def music_track_new_extended_tempo_event(
     track_id: int, timestamp: float, bpm: float
 ) -> None:
     """Add tempo event to track."""
-    ...
 
 def music_device_midi_event(
     unit_id: int, status: int, data1: int, data2: int, offset_sample_frame: int
 ) -> None:
     """Send MIDI event to music device."""
-    ...
 
 def music_device_start_note(
     unit_id: int,
@@ -1164,17 +997,14 @@ def music_device_start_note(
     offset_sample_frame: int,
 ) -> int:
     """Start a note on music device."""
-    ...
 
 def music_device_stop_note(
     unit_id: int, group_id: int, note_instance_id: int, offset_sample_frame: int
 ) -> None:
     """Stop a note on music device."""
-    ...
 
 def music_device_sysex(unit_id: int, data: bytes) -> None:
     """Send SysEx to music device."""
-    ...
 
 # ============================================================================
 # Additional MIDI Operations (MISSING - 65 functions)
@@ -1182,145 +1012,112 @@ def music_device_sysex(unit_id: int, data: bytes) -> None:
 
 def midi_object_get_string_property(obj_id: int, property_id: str) -> str:
     """Get string property from MIDI object."""
-    ...
 
 def midi_object_get_integer_property(obj_id: int, property_id: str) -> int:
     """Get integer property from MIDI object."""
-    ...
 
 def midi_object_set_string_property(obj_id: int, property_id: str, value: str) -> None:
     """Set string property on MIDI object."""
-    ...
 
 def midi_object_set_integer_property(obj_id: int, property_id: str, value: int) -> None:
     """Set integer property on MIDI object."""
-    ...
 
 def midi_object_get_name(obj_id: int) -> str:
     """Get name of MIDI object."""
-    ...
 
 def midi_object_get_manufacturer(obj_id: int) -> str:
     """Get manufacturer of MIDI object."""
-    ...
 
 def midi_object_get_model(obj_id: int) -> str:
     """Get model of MIDI object."""
-    ...
 
 def midi_get_device(device_index: int) -> int:
     """Get MIDI device by index."""
-    ...
 
 def midi_get_number_of_devices() -> int:
     """Get number of MIDI devices."""
-    ...
 
 def midi_device_get_number_of_entities(device_id: int) -> int:
     """Get number of entities in device."""
-    ...
 
 def midi_device_get_entity(device_id: int, entity_index: int) -> int:
     """Get entity from device."""
-    ...
 
 def midi_device_get_name(device_id: int) -> str:
     """Get device name."""
-    ...
 
 def midi_entity_get_number_of_sources(entity_id: int) -> int:
     """Get number of sources in entity."""
-    ...
 
 def midi_entity_get_source(entity_id: int, source_index: int) -> int:
     """Get source from entity."""
-    ...
 
 def midi_entity_get_number_of_destinations(entity_id: int) -> int:
     """Get number of destinations in entity."""
-    ...
 
 def midi_entity_get_destination(entity_id: int, dest_index: int) -> int:
     """Get destination from entity."""
-    ...
 
 def midi_entity_get_name(entity_id: int) -> str:
     """Get entity name."""
-    ...
 
 def midi_endpoint_get_name(endpoint_id: int) -> str:
     """Get endpoint name."""
-    ...
 
 def midi_endpoint_dispose(endpoint_id: int) -> None:
     """Dispose of endpoint."""
-    ...
 
 def midi_source_create(client_id: int, name: str) -> int:
     """Create virtual MIDI source."""
-    ...
 
 def midi_destination_create(
     client_id: int,
     name: str,
-    callback: Optional[Callable[[bytes, int], None]] = None,
+    callback: Callable[[bytes, int], None] | None = None,
     queue_size: int = 4096,
 ) -> int:
     """Create virtual MIDI destination."""
-    ...
 
 def midi_send_data(port_id: int, dest_id: int, data: bytes, timestamp: int = 0) -> None:
     """Send MIDI data."""
-    ...
 
 def midi_received(source_id: int, data: bytes, timestamp: int = 0) -> None:
     """Distribute MIDI data from a virtual source to its connections."""
-    ...
 
-def midi_note_on(channel: int, note: int, velocity: int) -> Tuple[int, int, int]:
+def midi_note_on(channel: int, note: int, velocity: int) -> tuple[int, int, int]:
     """Create MIDI note on message. Returns (status, data1, data2)."""
-    ...
 
-def midi_note_off(channel: int, note: int, velocity: int = 0) -> Tuple[int, int, int]:
+def midi_note_off(channel: int, note: int, velocity: int = 0) -> tuple[int, int, int]:
     """Create MIDI note off message. Returns (status, data1, data2)."""
-    ...
 
 def midi_control_change(
     channel: int, controller: int, value: int
-) -> Tuple[int, int, int]:
+) -> tuple[int, int, int]:
     """Create MIDI control change message. Returns (status, data1, data2)."""
-    ...
 
-def midi_program_change(channel: int, program: int) -> Tuple[int, int, int]:
+def midi_program_change(channel: int, program: int) -> tuple[int, int, int]:
     """Create MIDI program change message. Returns (status, data1, data2)."""
-    ...
 
-def midi_pitch_bend(channel: int, value: int) -> Tuple[int, int, int]:
+def midi_pitch_bend(channel: int, value: int) -> tuple[int, int, int]:
     """Create MIDI pitch bend message. Returns (status, data1, data2)."""
-    ...
 
 # MIDI 2.0 UMP Functions
 def midi1_up_note_on(group: int, channel: int, note: int, velocity: int) -> int:
     """Create MIDI 1.0 UMP note on."""
-    ...
 
 def midi1_up_note_off(group: int, channel: int, note: int, velocity: int) -> int:
     """Create MIDI 1.0 UMP note off."""
-    ...
 
 def midi1_up_control_change(
     group: int, channel: int, controller: int, value: int
 ) -> int:
     """Create MIDI 1.0 UMP control change."""
-    ...
 
 def midi1_up_pitch_bend(group: int, channel: int, lsb: int, msb: int) -> int:
     """Create MIDI 1.0 UMP pitch bend."""
-    ...
 
 def midi1_up_system_common(group: int, status: int, byte1: int, byte2: int) -> int:
     """Create MIDI 1.0 UMP system common."""
-    ...
 
 def midi1_up_sysex(
     group: int,
@@ -1332,15 +1129,13 @@ def midi1_up_sysex(
     byte4: int,
     byte5: int,
     byte6: int,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Create MIDI 1.0 UMP SysEx."""
-    ...
 
 def midi1_up_channel_voice_message(
     group: int, status: int, channel: int, data1: int, data2: int
 ) -> int:
     """Create MIDI 1.0 UMP channel voice message."""
-    ...
 
 def midi2_note_on(
     group: int,
@@ -1349,9 +1144,8 @@ def midi2_note_on(
     attribute_type: int,
     attribute_data: int,
     velocity: int,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Create MIDI 2.0 UMP note on."""
-    ...
 
 def midi2_note_off(
     group: int,
@@ -1360,15 +1154,13 @@ def midi2_note_off(
     attribute_type: int,
     attribute_data: int,
     velocity: int,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Create MIDI 2.0 UMP note off."""
-    ...
 
 def midi2_control_change(
     group: int, channel: int, controller: int, value: int
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Create MIDI 2.0 UMP control change."""
-    ...
 
 def midi2_program_change(
     group: int,
@@ -1377,38 +1169,31 @@ def midi2_program_change(
     program: int,
     bank_msb: int,
     bank_lsb: int,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Create MIDI 2.0 UMP program change."""
-    ...
 
-def midi2_pitch_bend(group: int, channel: int, value: int) -> Tuple[int, int]:
+def midi2_pitch_bend(group: int, channel: int, value: int) -> tuple[int, int]:
     """Create MIDI 2.0 UMP pitch bend."""
-    ...
 
 def midi2_channel_voice_message(
     group: int, status: int, channel: int, index: int, value: int
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Create MIDI 2.0 UMP channel voice message."""
-    ...
 
 def midi_message_type_for_up_word(word: int) -> int:
     """Get message type from UMP word."""
-    ...
 
 # MIDI Device/Entity/Endpoint Management
 def midi_device_create(owner: int, name: str, manufacturer: str, model: str) -> int:
     """Create MIDI device."""
-    ...
 
 def midi_device_dispose(device_id: int) -> None:
     """Dispose of MIDI device."""
-    ...
 
 def midi_device_add_entity(
     device_id: int, name: str, embedded: bool, num_sources: int, num_destinations: int
 ) -> int:
     """Add entity to device."""
-    ...
 
 def midi_device_new_entity(
     device_id: int,
@@ -1419,101 +1204,78 @@ def midi_device_new_entity(
     num_destinations: int,
 ) -> int:
     """Create new entity in device."""
-    ...
 
 def midi_device_remove_entity(device_id: int, entity_id: int) -> None:
     """Remove entity from device."""
-    ...
 
 def midi_entity_add_or_remove_endpoints(
     entity_id: int, num_sources: int, num_destinations: int
 ) -> None:
     """Add or remove endpoints in entity."""
-    ...
 
 def midi_endpoint_set_ref_cons(endpoint_id: int, ref1: Any, ref2: Any) -> None:
     """Set reference constants for endpoint."""
-    ...
 
-def midi_endpoint_get_ref_cons(endpoint_id: int) -> Tuple[Any, Any]:
+def midi_endpoint_get_ref_cons(endpoint_id: int) -> tuple[Any, Any]:
     """Get reference constants from endpoint."""
-    ...
 
 # MIDI Device List Management
 def midi_device_list_get_number_of_devices(device_list: int) -> int:
     """Get number of devices in list."""
-    ...
 
 def midi_device_list_get_device(device_list: int, index: int) -> int:
     """Get device from list."""
-    ...
 
 def midi_device_list_add_device(device_list: int, device_id: int) -> None:
     """Add device to list."""
-    ...
 
 def midi_device_list_dispose(device_list: int) -> None:
     """Dispose of device list."""
-    ...
 
 # MIDI Driver Functions
 def midi_get_driver_io_runloop() -> Any:
     """Get driver I/O runloop."""
-    ...
 
 def midi_get_driver_device_list(driver: Any) -> int:
     """Get driver device list."""
-    ...
 
 def midi_driver_enable_monitoring(driver: Any, enabled: bool) -> None:
     """Enable/disable driver monitoring."""
-    ...
 
 # MIDI Setup Functions
 def midi_setup_add_device(device_id: int) -> None:
     """Add device to setup."""
-    ...
 
 def midi_setup_remove_device(device_id: int) -> None:
     """Remove device from setup."""
-    ...
 
 def midi_setup_add_external_device(device_id: int) -> None:
     """Add external device to setup."""
-    ...
 
 def midi_setup_remove_external_device(device_id: int) -> None:
     """Remove external device from setup."""
-    ...
 
 def midi_external_device_create(name: str, manufacturer: str, model: str) -> int:
     """Create external MIDI device."""
-    ...
 
 # MIDI Thru Connection Functions
 def midi_thru_connection_params_initialize(params: Any) -> None:
     """Initialize thru connection parameters."""
-    ...
 
 def midi_thru_connection_create(owner_id: str, params: bytes) -> int:
     """Create MIDI thru connection."""
-    ...
 
 def midi_thru_connection_dispose(connection_id: int) -> None:
     """Dispose of thru connection."""
-    ...
 
 def midi_thru_connection_get_params(connection_id: int) -> bytes:
     """Get thru connection parameters."""
-    ...
 
 def midi_thru_connection_set_params(connection_id: int, params: bytes) -> None:
     """Set thru connection parameters."""
-    ...
 
-def midi_thru_connection_find(owner_id: str) -> List[int]:
+def midi_thru_connection_find(owner_id: str) -> list[int]:
     """Find thru connections by owner."""
-    ...
 
 # ============================================================================
 # Additional Property Constants (Hundreds of getters)
@@ -1714,24 +1476,19 @@ def get_system_sound_id_vibrate() -> int: ...
 # Additional MIDI Functions (missing from earlier sections)
 def midi_get_source(source_index: int) -> int:
     """Get MIDI source by index (already listed above, keeping for completeness)."""
-    ...
 
 def midi_get_destination(dest_index: int) -> int:
     """Get MIDI destination by index (already listed above, keeping for completeness)."""
-    ...
 
 def midi_get_number_of_sources() -> int:
     """Get number of MIDI sources (already listed above, keeping for completeness)."""
-    ...
 
 def midi_get_number_of_destinations() -> int:
     """Get number of MIDI destinations (already listed above, keeping for completeness)."""
-    ...
 
 # Testing/Debugging Functions
 def test_error() -> None:
     """Test error handling (debugging function)."""
-    ...
 
 # NOTE: This .pyi file now includes all ~390 functions from capi.pyx
 # The functional API is comprehensive and covers all major CoreAudio frameworks:

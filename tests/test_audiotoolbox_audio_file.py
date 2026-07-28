@@ -1,8 +1,10 @@
 import struct
 import time
 import wave
+
 import pytest
-import coremusic.capi as capi
+
+from coremusic import capi
 
 
 class TestAudioFileOperations:
@@ -196,7 +198,7 @@ class TestErrorHandling:
 
     def test_invalid_file_handling(self):
         """Test handling of invalid file paths"""
-        with pytest.raises(Exception):
+        with pytest.raises(RuntimeError, match="AudioFileOpenURL failed"):
             capi.audio_file_open_url(
                 "nonexistent_file.wav",
                 capi.get_audio_file_read_permission(),

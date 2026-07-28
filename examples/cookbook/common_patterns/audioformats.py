@@ -4,6 +4,7 @@
 # --8<-- [start:example]
 from coremusic.audio import AudioFormat
 
+
 class AudioFormats:
     """Common audio format presets."""
 

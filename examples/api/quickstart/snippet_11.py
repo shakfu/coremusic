@@ -2,7 +2,7 @@
 """Constants in API Calls."""
 
 # --8<-- [start:example]
-import coremusic.capi as capi
+from coremusic import capi
 from coremusic.constants import AudioFileProperty
 
 # Use constant enum in functional API

@@ -1,7 +1,8 @@
 """Comprehensive tests for the object-oriented coremusic API functionality."""
 
 import pytest
-import coremusic.capi as capi
+
+from coremusic import capi
 from coremusic.audio import (
     AudioBuffer,
     AudioComponentDescription,
@@ -185,9 +186,8 @@ class TestObjectOrientedAPIFunctionality:
 
     def test_error_handling_functionality(self):
         """Test error handling in OO API"""
-        with pytest.raises(AudioFileError):
-            with AudioFile("/nonexistent/file.wav"):
-                pass
+        with pytest.raises(AudioFileError), AudioFile("/nonexistent/file.wav"):
+            pass
         invalid_format = AudioFormat(0.0, "", channels_per_frame=0)
         with pytest.raises(AudioQueueError):
             AudioQueue.new_output(invalid_format)

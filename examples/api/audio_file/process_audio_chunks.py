@@ -4,6 +4,7 @@
 # --8<-- [start:example]
 from coremusic.audio import AudioFile
 
+
 def process_audio_chunks(filepath, chunk_size=1024):
     """Process audio file in chunks."""
     with AudioFile(filepath) as audio:
@@ -25,5 +26,7 @@ def process_audio_chunks(filepath, chunk_size=1024):
 def process_audio_data(data):
     """Process audio data chunk."""
     # Your processing logic here
-    pass
+
+
+process_audio_chunks("audio.wav")
 # --8<-- [end:example]

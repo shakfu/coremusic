@@ -15,9 +15,9 @@ from coremusic import capi
 from coremusic.exceptions import MusicPlayerError
 
 __all__ = [
-    "MusicTrack",
-    "MusicSequence",
     "MusicPlayer",
+    "MusicSequence",
+    "MusicTrack",
 ]
 
 
@@ -32,7 +32,7 @@ class MusicTrack(capi.CoreAudioObject):
         be instantiated directly.
     """
 
-    def __init__(self, track_id: int, parent_sequence: "MusicSequence"):
+    def __init__(self, track_id: int, parent_sequence: MusicSequence):
         """Initialize a music track
 
         Args:
@@ -96,7 +96,7 @@ class MusicTrack(capi.CoreAudioObject):
                 duration,
             )
         except Exception as e:
-            raise MusicPlayerError(f"Failed to add MIDI note: {e}")
+            raise MusicPlayerError(f"Failed to add MIDI note: {e}") from e
 
     def add_midi_channel_event(
         self, time: float, status: int, data1: int, data2: int = 0
@@ -138,7 +138,7 @@ class MusicTrack(capi.CoreAudioObject):
                 self.object_id, time, status, data1, data2
             )
         except Exception as e:
-            raise MusicPlayerError(f"Failed to add MIDI channel event: {e}")
+            raise MusicPlayerError(f"Failed to add MIDI channel event: {e}") from e
 
     def add_tempo_event(self, time: float, bpm: float) -> None:
         """Add a tempo change event to the track
@@ -172,7 +172,7 @@ class MusicTrack(capi.CoreAudioObject):
         try:
             capi.music_track_new_extended_tempo_event(self.object_id, time, bpm)
         except Exception as e:
-            raise MusicPlayerError(f"Failed to add tempo event: {e}")
+            raise MusicPlayerError(f"Failed to add tempo event: {e}") from e
 
     def __repr__(self) -> str:
         return f"MusicTrack(id={self.object_id})"
@@ -198,7 +198,7 @@ class MusicSequence(capi.CoreAudioObject):
             self._tracks: list[MusicTrack] = []
             self._tempo_track: MusicTrack | None = None
         except Exception as e:
-            raise MusicPlayerError(f"Failed to create music sequence: {e}")
+            raise MusicPlayerError(f"Failed to create music sequence: {e}") from e
 
     def new_track(self) -> MusicTrack:
         """Create a new track in the sequence
@@ -222,7 +222,7 @@ class MusicSequence(capi.CoreAudioObject):
             self._tracks.append(track)
             return track
         except Exception as e:
-            raise MusicPlayerError(f"Failed to create track: {e}")
+            raise MusicPlayerError(f"Failed to create track: {e}") from e
 
     def dispose_track(self, track: MusicTrack) -> None:
         """Remove a track from the sequence
@@ -240,7 +240,7 @@ class MusicSequence(capi.CoreAudioObject):
                 self._tracks.remove(track)
             track.dispose()
         except Exception as e:
-            raise MusicPlayerError(f"Failed to dispose track: {e}")
+            raise MusicPlayerError(f"Failed to dispose track: {e}") from e
 
     def get_track(self, index: int) -> MusicTrack:
         """Get track at specified index
@@ -291,7 +291,7 @@ class MusicSequence(capi.CoreAudioObject):
             self._tracks.append(track)
             return track
         except Exception as e:
-            raise MusicPlayerError(f"Failed to get track at index {index}: {e}")
+            raise MusicPlayerError(f"Failed to get track at index {index}: {e}") from e
 
     @property
     def track_count(self) -> int:
@@ -304,7 +304,7 @@ class MusicSequence(capi.CoreAudioObject):
         try:
             return capi.music_sequence_get_track_count(self.object_id)
         except Exception as e:
-            raise MusicPlayerError(f"Failed to get track count: {e}")
+            raise MusicPlayerError(f"Failed to get track count: {e}") from e
 
     @property
     def tempo_track(self) -> MusicTrack:
@@ -324,7 +324,7 @@ class MusicSequence(capi.CoreAudioObject):
                 tempo_track_id = capi.music_sequence_get_tempo_track(self.object_id)
                 self._tempo_track = MusicTrack(tempo_track_id, self)
             except Exception as e:
-                raise MusicPlayerError(f"Failed to get tempo track: {e}")
+                raise MusicPlayerError(f"Failed to get tempo track: {e}") from e
         return self._tempo_track
 
     @property
@@ -338,7 +338,7 @@ class MusicSequence(capi.CoreAudioObject):
         try:
             return capi.music_sequence_get_sequence_type(self.object_id)
         except Exception as e:
-            raise MusicPlayerError(f"Failed to get sequence type: {e}")
+            raise MusicPlayerError(f"Failed to get sequence type: {e}") from e
 
     @sequence_type.setter
     def sequence_type(self, seq_type: int) -> None:
@@ -354,7 +354,7 @@ class MusicSequence(capi.CoreAudioObject):
         try:
             capi.music_sequence_set_sequence_type(self.object_id, seq_type)
         except Exception as e:
-            raise MusicPlayerError(f"Failed to set sequence type: {e}")
+            raise MusicPlayerError(f"Failed to set sequence type: {e}") from e
 
     def load_from_file(self, file_path: str | Path) -> None:
         """Load sequence from a MIDI file
@@ -379,7 +379,7 @@ class MusicSequence(capi.CoreAudioObject):
             self._tracks = []
             self._tempo_track = None
         except Exception as e:
-            raise MusicPlayerError(f"Failed to load from file {file_path}: {e}")
+            raise MusicPlayerError(f"Failed to load from file {file_path}: {e}") from e
 
     def dispose(self) -> None:
         """Dispose the sequence and all its tracks"""
@@ -443,7 +443,7 @@ class MusicPlayer(capi.CoreAudioObject):
             self._set_object_id(player_id)
             self._sequence: MusicSequence | None = None
         except Exception as e:
-            raise MusicPlayerError(f"Failed to create music player: {e}")
+            raise MusicPlayerError(f"Failed to create music player: {e}") from e
 
     @property
     def sequence(self) -> MusicSequence | None:
@@ -473,7 +473,7 @@ class MusicPlayer(capi.CoreAudioObject):
                 capi.music_player_set_sequence(self.object_id, sequence.object_id)
                 self._sequence = sequence
         except Exception as e:
-            raise MusicPlayerError(f"Failed to set sequence: {e}")
+            raise MusicPlayerError(f"Failed to set sequence: {e}") from e
 
     @property
     def time(self) -> float:
@@ -486,7 +486,7 @@ class MusicPlayer(capi.CoreAudioObject):
         try:
             return capi.music_player_get_time(self.object_id)
         except Exception as e:
-            raise MusicPlayerError(f"Failed to get time: {e}")
+            raise MusicPlayerError(f"Failed to get time: {e}") from e
 
     @time.setter
     def time(self, time: float) -> None:
@@ -506,7 +506,7 @@ class MusicPlayer(capi.CoreAudioObject):
         try:
             capi.music_player_set_time(self.object_id, time)
         except Exception as e:
-            raise MusicPlayerError(f"Failed to set time: {e}")
+            raise MusicPlayerError(f"Failed to set time: {e}") from e
 
     @property
     def play_rate(self) -> float:
@@ -519,7 +519,7 @@ class MusicPlayer(capi.CoreAudioObject):
         try:
             return capi.music_player_get_play_rate_scalar(self.object_id)
         except Exception as e:
-            raise MusicPlayerError(f"Failed to get play rate: {e}")
+            raise MusicPlayerError(f"Failed to get play rate: {e}") from e
 
     @play_rate.setter
     def play_rate(self, rate: float) -> None:
@@ -538,7 +538,7 @@ class MusicPlayer(capi.CoreAudioObject):
         try:
             capi.music_player_set_play_rate_scalar(self.object_id, rate)
         except Exception as e:
-            raise MusicPlayerError(f"Failed to set play rate: {e}")
+            raise MusicPlayerError(f"Failed to set play rate: {e}") from e
 
     @property
     def is_playing(self) -> bool:
@@ -551,7 +551,7 @@ class MusicPlayer(capi.CoreAudioObject):
         try:
             return capi.music_player_is_playing(self.object_id)
         except Exception as e:
-            raise MusicPlayerError(f"Failed to check playing state: {e}")
+            raise MusicPlayerError(f"Failed to check playing state: {e}") from e
 
     def preroll(self) -> None:
         """Prepare player for playback
@@ -565,7 +565,7 @@ class MusicPlayer(capi.CoreAudioObject):
         try:
             capi.music_player_preroll(self.object_id)
         except Exception as e:
-            raise MusicPlayerError(f"Failed to preroll: {e}")
+            raise MusicPlayerError(f"Failed to preroll: {e}") from e
 
     def start(self) -> None:
         """Start playback
@@ -584,7 +584,7 @@ class MusicPlayer(capi.CoreAudioObject):
         try:
             capi.music_player_start(self.object_id)
         except Exception as e:
-            raise MusicPlayerError(f"Failed to start playback: {e}")
+            raise MusicPlayerError(f"Failed to start playback: {e}") from e
 
     def stop(self) -> None:
         """Stop playback
@@ -596,7 +596,7 @@ class MusicPlayer(capi.CoreAudioObject):
         try:
             capi.music_player_stop(self.object_id)
         except Exception as e:
-            raise MusicPlayerError(f"Failed to stop playback: {e}")
+            raise MusicPlayerError(f"Failed to stop playback: {e}") from e
 
     def dispose(self) -> None:
         """Dispose the player and free resources"""
@@ -619,7 +619,7 @@ class MusicPlayer(capi.CoreAudioObject):
                 self._sequence = None
                 super().dispose()
 
-    def __enter__(self) -> "MusicPlayer":
+    def __enter__(self) -> MusicPlayer:
         """Enter context manager"""
         return self
 

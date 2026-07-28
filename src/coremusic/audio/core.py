@@ -33,13 +33,13 @@ except ImportError:
         from numpy.typing import NDArray
 
 __all__ = [
-    "AudioFormat",
+    "AudioBuffer",
+    "AudioConverter",
     "AudioFile",
     "AudioFileStream",
-    "AudioConverter",
-    "ExtendedAudioFile",
-    "AudioBuffer",
+    "AudioFormat",
     "AudioQueue",
+    "ExtendedAudioFile",
 ]
 
 # Compressed codecs coremusic can encode via ExtAudioFile. These are the FourCC
@@ -72,7 +72,7 @@ class AudioFormat:
         self.bits_per_channel = bits_per_channel
 
     @classmethod
-    def from_asbd_bytes(cls, data: bytes) -> "AudioFormat":
+    def from_asbd_bytes(cls, data: bytes) -> AudioFormat:
         """Parse an AudioStreamBasicDescription (40 bytes) into an AudioFormat.
 
         Args:
@@ -117,7 +117,7 @@ class AudioFormat:
         bits: int = 16,
         is_float: bool = False,
         big_endian: bool = False,
-    ) -> "AudioFormat":
+    ) -> AudioFormat:
         """Create a packed PCM AudioFormat with correctly computed derived fields.
 
         Args:
@@ -156,9 +156,7 @@ class AudioFormat:
         )
 
     @classmethod
-    def aac(
-        cls, sample_rate: float = 44100.0, channels: int = 2
-    ) -> "AudioFormat":
+    def aac(cls, sample_rate: float = 44100.0, channels: int = 2) -> AudioFormat:
         """Create an AAC (lossy) compressed format description.
 
         The returned description is suitable as the *file* format when creating
@@ -182,9 +180,7 @@ class AudioFormat:
         )
 
     @classmethod
-    def alac(
-        cls, sample_rate: float = 44100.0, channels: int = 2
-    ) -> "AudioFormat":
+    def alac(cls, sample_rate: float = 44100.0, channels: int = 2) -> AudioFormat:
         """Create an Apple Lossless (ALAC) compressed format description.
 
         Args:
@@ -203,9 +199,7 @@ class AudioFormat:
         )
 
     @classmethod
-    def flac(
-        cls, sample_rate: float = 44100.0, channels: int = 2
-    ) -> "AudioFormat":
+    def flac(cls, sample_rate: float = 44100.0, channels: int = 2) -> AudioFormat:
         """Create a FLAC (lossless) compressed format description.
 
         Args:
@@ -262,7 +256,7 @@ class AudioFormat:
             "bits_per_channel": self.bits_per_channel,
         }
 
-    def to_numpy_dtype(self) -> "np.dtype[Any]":
+    def to_numpy_dtype(self) -> np.dtype[Any]:
         """
         Convert audio format to NumPy dtype for audio data arrays.
 
@@ -338,7 +332,7 @@ class AudioFile(capi.CoreAudioObject):
         self._is_open = False
         self._writable = writable
 
-    def open(self) -> "AudioFile":
+    def open(self) -> AudioFile:
         """Open the audio file"""
         self._ensure_not_disposed()
         if not self._is_open:
@@ -348,7 +342,7 @@ class AudioFile(capi.CoreAudioObject):
                 self._set_object_id(file_id)
                 self._is_open = True
             except Exception as e:
-                raise AudioFileError(f"Failed to open file {self._path}: {e}")
+                raise AudioFileError(f"Failed to open file {self._path}: {e}") from e
         return self
 
     def close(self) -> None:
@@ -357,12 +351,12 @@ class AudioFile(capi.CoreAudioObject):
             try:
                 capi.audio_file_close(self.object_id)
             except Exception as e:
-                raise AudioFileError(f"Failed to close file: {e}")
+                raise AudioFileError(f"Failed to close file: {e}") from e
             finally:
                 self._is_open = False
                 self.dispose()
 
-    def __enter__(self) -> "AudioFile":
+    def __enter__(self) -> AudioFile:
         self.open()
         return self
 
@@ -383,7 +377,7 @@ class AudioFile(capi.CoreAudioObject):
                 )
                 self._format = AudioFormat.from_asbd_bytes(format_data)
             except Exception as e:
-                raise AudioFileError(f"Failed to get format: {e}")
+                raise AudioFileError(f"Failed to get format: {e}") from e
 
         return self._format
 
@@ -431,11 +425,11 @@ class AudioFile(capi.CoreAudioObject):
                 self.object_id, start_packet, packet_count
             )
         except Exception as e:
-            raise AudioFileError(f"Failed to read packets: {e}")
+            raise AudioFileError(f"Failed to read packets: {e}") from e
 
     def read_as_numpy(
         self, start_packet: int = 0, packet_count: int | None = None
-    ) -> "NDArray[Any]":
+    ) -> NDArray[Any]:
         """
         Read audio data from the file as a NumPy array.
 
@@ -518,7 +512,7 @@ class AudioFile(capi.CoreAudioObject):
         except Exception as e:
             if isinstance(e, (ImportError, AudioFileError)):
                 raise
-            raise AudioFileError(f"Failed to read as NumPy array: {e}")
+            raise AudioFileError(f"Failed to read as NumPy array: {e}") from e
 
     def get_property(self, property_id: int) -> bytes:
         """Get a property from the audio file"""
@@ -529,7 +523,7 @@ class AudioFile(capi.CoreAudioObject):
         try:
             return capi.audio_file_get_property(self.object_id, property_id)
         except Exception as e:
-            raise AudioFileError(f"Failed to get property: {e}")
+            raise AudioFileError(f"Failed to get property: {e}") from e
 
     def set_property(self, property_id: int, data: bytes) -> None:
         """Set a property on the audio file.
@@ -543,7 +537,7 @@ class AudioFile(capi.CoreAudioObject):
         try:
             capi.audio_file_set_property(self.object_id, property_id, data)
         except Exception as e:
-            raise AudioFileError(f"Failed to set property: {e}")
+            raise AudioFileError(f"Failed to set property: {e}") from e
 
     @property
     def metadata(self) -> dict[str, Any] | None:
@@ -581,7 +575,7 @@ class AudioFile(capi.CoreAudioObject):
         try:
             capi.audio_file_write_info_dictionary(self.object_id, tags)
         except Exception as e:
-            raise AudioFileError(f"Failed to write metadata: {e}")
+            raise AudioFileError(f"Failed to write metadata: {e}") from e
 
     @property
     def path(self) -> str:
@@ -605,7 +599,7 @@ class AudioFile(capi.CoreAudioObject):
                 capi.get_audio_file_property_audio_data_packet_count(),
             )
         except Exception as e:
-            raise AudioFileError(f"Failed to get packet count: {e}")
+            raise AudioFileError(f"Failed to get packet count: {e}") from e
 
         if len(packet_count_data) < 8:
             raise AudioFileError("File reported no packet count")
@@ -672,7 +666,7 @@ class AudioFileStream(capi.CoreAudioObject):
         self._file_type_hint = file_type_hint
         self._is_open = False
 
-    def open(self) -> "AudioFileStream":
+    def open(self) -> AudioFileStream:
         """Open the audio file stream"""
         self._ensure_not_disposed()
         if not self._is_open:
@@ -681,7 +675,7 @@ class AudioFileStream(capi.CoreAudioObject):
                 self._set_object_id(stream_id)
                 self._is_open = True
             except Exception as e:
-                raise AudioFileError(f"Failed to open stream: {e}")
+                raise AudioFileError(f"Failed to open stream: {e}") from e
         return self
 
     def close(self) -> None:
@@ -690,7 +684,7 @@ class AudioFileStream(capi.CoreAudioObject):
             try:
                 capi.audio_file_stream_close(self.object_id)
             except Exception as e:
-                raise AudioFileError(f"Failed to close stream: {e}")
+                raise AudioFileError(f"Failed to close stream: {e}") from e
             finally:
                 self._is_open = False
                 self.dispose()
@@ -736,7 +730,7 @@ class AudioFileStream(capi.CoreAudioObject):
         try:
             capi.audio_file_stream_parse_bytes(self.object_id, data)
         except Exception as e:
-            raise AudioFileError(f"Failed to parse bytes: {e}")
+            raise AudioFileError(f"Failed to parse bytes: {e}") from e
 
     def seek(self, packet_offset: int) -> None:
         """Seek to packet offset.
@@ -757,7 +751,7 @@ class AudioFileStream(capi.CoreAudioObject):
         try:
             capi.audio_file_stream_seek(self.object_id, packet_offset)
         except Exception as e:
-            raise AudioFileError(f"Failed to seek: {e}")
+            raise AudioFileError(f"Failed to seek: {e}") from e
 
     def get_property(self, property_id: int) -> bytes:
         """Get a property from the audio file stream"""
@@ -767,7 +761,7 @@ class AudioFileStream(capi.CoreAudioObject):
         try:
             return capi.audio_file_stream_get_property(self.object_id, property_id)
         except Exception as e:
-            raise AudioFileError(f"Failed to get property: {e}")
+            raise AudioFileError(f"Failed to get property: {e}") from e
 
     def __repr__(self) -> str:
         status = "open" if self._is_open else "closed"
@@ -813,7 +807,7 @@ class AudioConverter(capi.CoreAudioObject):
             )
             self._set_object_id(converter_id)
         except Exception as e:
-            raise AudioConverterError(f"Failed to create converter: {e}")
+            raise AudioConverterError(f"Failed to create converter: {e}") from e
 
     @property
     def source_format(self) -> AudioFormat:
@@ -855,7 +849,7 @@ class AudioConverter(capi.CoreAudioObject):
         try:
             return capi.audio_converter_convert_buffer(self.object_id, audio_data)
         except Exception as e:
-            raise AudioConverterError(f"Failed to convert audio: {e}")
+            raise AudioConverterError(f"Failed to convert audio: {e}") from e
 
     def convert_with_callback(
         self,
@@ -936,7 +930,7 @@ class AudioConverter(capi.CoreAudioObject):
             )
             return output_data
         except Exception as e:
-            raise AudioConverterError(f"Failed to convert audio: {e}")
+            raise AudioConverterError(f"Failed to convert audio: {e}") from e
 
     def get_property(self, property_id: int) -> bytes:
         """Get a property from the converter
@@ -954,7 +948,7 @@ class AudioConverter(capi.CoreAudioObject):
         try:
             return capi.audio_converter_get_property(self.object_id, property_id)
         except Exception as e:
-            raise AudioConverterError(f"Failed to get property: {e}")
+            raise AudioConverterError(f"Failed to get property: {e}") from e
 
     def set_property(self, property_id: int, data: bytes) -> None:
         """Set a property on the converter
@@ -985,7 +979,7 @@ class AudioConverter(capi.CoreAudioObject):
         try:
             capi.audio_converter_set_property(self.object_id, property_id, data)
         except Exception as e:
-            raise AudioConverterError(f"Failed to set property: {e}")
+            raise AudioConverterError(f"Failed to set property: {e}") from e
 
     def reset(self) -> None:
         """Reset the converter to its initial state"""
@@ -993,7 +987,7 @@ class AudioConverter(capi.CoreAudioObject):
         try:
             capi.audio_converter_reset(self.object_id)
         except Exception as e:
-            raise AudioConverterError(f"Failed to reset converter: {e}")
+            raise AudioConverterError(f"Failed to reset converter: {e}") from e
 
     def dispose(self) -> None:
         """Dispose of the audio converter"""
@@ -1005,7 +999,7 @@ class AudioConverter(capi.CoreAudioObject):
             finally:
                 super().dispose()
 
-    def __enter__(self) -> "AudioConverter":
+    def __enter__(self) -> AudioConverter:
         """Enter context manager"""
         return self
 
@@ -1039,7 +1033,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
         self._file_format: AudioFormat | None = None
         self._client_format: AudioFormat | None = None
 
-    def open(self) -> "ExtendedAudioFile":
+    def open(self) -> ExtendedAudioFile:
         """Open the audio file for reading
 
         Returns:
@@ -1055,13 +1049,13 @@ class ExtendedAudioFile(capi.CoreAudioObject):
                 self._set_object_id(file_id)
                 self._is_open = True
             except Exception as e:
-                raise AudioFileError(f"Failed to open file {self._path}: {e}")
+                raise AudioFileError(f"Failed to open file {self._path}: {e}") from e
         return self
 
     @classmethod
     def create(
         cls, path: str | Path, file_type: int, format: AudioFormat
-    ) -> "ExtendedAudioFile":
+    ) -> ExtendedAudioFile:
         """Create a new audio file for writing
 
         Args:
@@ -1085,7 +1079,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
             file._file_format = format
             return file
         except Exception as e:
-            raise AudioFileError(f"Failed to create file {path}: {e}")
+            raise AudioFileError(f"Failed to create file {path}: {e}") from e
 
     def close(self) -> None:
         """Close the audio file"""
@@ -1093,12 +1087,12 @@ class ExtendedAudioFile(capi.CoreAudioObject):
             try:
                 capi.extended_audio_file_dispose(self.object_id)
             except Exception as e:
-                raise AudioFileError(f"Failed to close file: {e}")
+                raise AudioFileError(f"Failed to close file: {e}") from e
             finally:
                 self._is_open = False
                 self.dispose()
 
-    def __enter__(self) -> "ExtendedAudioFile":
+    def __enter__(self) -> ExtendedAudioFile:
         if not self._is_open:
             self.open()
         return self
@@ -1128,7 +1122,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
                 )
                 self._file_format = AudioFormat.from_asbd_bytes(format_data)
             except Exception as e:
-                raise AudioFileError(f"Failed to get file format: {e}")
+                raise AudioFileError(f"Failed to get file format: {e}") from e
 
         return self._file_format
 
@@ -1175,7 +1169,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
             )
             self._client_format = format
         except Exception as e:
-            raise AudioFileError(f"Failed to set client format: {e}")
+            raise AudioFileError(f"Failed to set client format: {e}") from e
 
     def read(self, num_frames: int) -> tuple[bytes, int]:
         """Read audio frames from the file
@@ -1202,7 +1196,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
         try:
             return capi.extended_audio_file_read(self.object_id, num_frames)
         except Exception as e:
-            raise AudioFileError(f"Failed to read frames: {e}")
+            raise AudioFileError(f"Failed to read frames: {e}") from e
 
     def write(self, num_frames: int, audio_data: bytes) -> None:
         """Write audio frames to the file
@@ -1267,7 +1261,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
                 self.object_id, num_frames, audio_data, channels
             )
         except Exception as e:
-            raise AudioFileError(f"Failed to write frames: {e}")
+            raise AudioFileError(f"Failed to write frames: {e}") from e
 
     def set_encode_bitrate(self, bitrate: int) -> None:
         """Set the target encode bitrate (bits/sec) for a compressed output file.
@@ -1315,7 +1309,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
                 b"\x00" * 8,
             )
         except Exception as e:
-            raise AudioFileError(f"Failed to set encode bitrate: {e}")
+            raise AudioFileError(f"Failed to set encode bitrate: {e}") from e
 
     @property
     def frame_count(self) -> int:
@@ -1343,7 +1337,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
         except Exception as e:
             if isinstance(e, AudioFileError):
                 raise
-            raise AudioFileError(f"Failed to get frame count: {e}")
+            raise AudioFileError(f"Failed to get frame count: {e}") from e
 
     def __repr__(self) -> str:
         status = "open" if self._is_open else "closed"
@@ -1387,14 +1381,14 @@ class AudioQueue(capi.CoreAudioObject):
         self._buffers: list[AudioBuffer] = []
 
     @classmethod
-    def new_output(cls, audio_format: AudioFormat) -> "AudioQueue":
+    def new_output(cls, audio_format: AudioFormat) -> AudioQueue:
         """Create a new output audio queue"""
         queue = cls(audio_format)
         try:
             queue_id = capi.audio_queue_new_output(audio_format.to_dict())
             queue._set_object_id(queue_id)
         except Exception as e:
-            raise AudioQueueError(f"Failed to create output queue: {e}")
+            raise AudioQueueError(f"Failed to create output queue: {e}") from e
         return queue
 
     def allocate_buffer(self, buffer_size: int) -> AudioBuffer:
@@ -1407,7 +1401,7 @@ class AudioQueue(capi.CoreAudioObject):
             self._buffers.append(buffer)
             return buffer
         except Exception as e:
-            raise AudioQueueError(f"Failed to allocate buffer: {e}")
+            raise AudioQueueError(f"Failed to allocate buffer: {e}") from e
 
     def enqueue_buffer(self, buffer: AudioBuffer) -> None:
         """Enqueue an audio buffer"""
@@ -1415,7 +1409,7 @@ class AudioQueue(capi.CoreAudioObject):
         try:
             capi.audio_queue_enqueue_buffer(self.object_id, buffer.object_id)
         except Exception as e:
-            raise AudioQueueError(f"Failed to enqueue buffer: {e}")
+            raise AudioQueueError(f"Failed to enqueue buffer: {e}") from e
 
     def start(self) -> None:
         """Start the audio queue"""
@@ -1423,7 +1417,7 @@ class AudioQueue(capi.CoreAudioObject):
         try:
             capi.audio_queue_start(self.object_id)
         except Exception as e:
-            raise AudioQueueError(f"Failed to start queue: {e}")
+            raise AudioQueueError(f"Failed to start queue: {e}") from e
 
     def stop(self, immediate: bool = True) -> None:
         """Stop the audio queue"""
@@ -1431,7 +1425,7 @@ class AudioQueue(capi.CoreAudioObject):
         try:
             capi.audio_queue_stop(self.object_id, immediate)
         except Exception as e:
-            raise AudioQueueError(f"Failed to stop queue: {e}")
+            raise AudioQueueError(f"Failed to stop queue: {e}") from e
 
     def __repr__(self) -> str:
         if self.is_disposed:
@@ -1444,7 +1438,7 @@ class AudioQueue(capi.CoreAudioObject):
             try:
                 capi.audio_queue_dispose(self.object_id, immediate)
             except Exception as e:
-                raise AudioQueueError(f"Failed to dispose queue: {e}")
+                raise AudioQueueError(f"Failed to dispose queue: {e}") from e
             finally:
                 # Clear buffer references and call base dispose
                 self._buffers.clear()

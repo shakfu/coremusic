@@ -1,8 +1,10 @@
 """Tests for MusicPlayer, MusicSequence, and MusicTrack OO API."""
 
 import logging
+
 import pytest
-import coremusic.capi as capi
+
+from coremusic import capi
 from coremusic.exceptions import MusicPlayerError
 from coremusic.midi import (
     MusicPlayer,

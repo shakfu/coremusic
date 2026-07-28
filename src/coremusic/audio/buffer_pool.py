@@ -80,7 +80,7 @@ class BufferPool:
         """
         with self._lock:
             # Check if we have a buffer of this size
-            if size in self._pools and self._pools[size]:
+            if self._pools.get(size):
                 # Reuse existing buffer
                 buffer = self._pools[size].pop()
                 self._cache_hits += 1

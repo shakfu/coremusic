@@ -1,8 +1,9 @@
 """Tests for AUGraph API (both functional and object-oriented)."""
 
 import pytest
-import coremusic.capi as capi
-from coremusic.audio import AUGraph, AudioComponentDescription
+
+from coremusic import capi
+from coremusic.audio import AudioComponentDescription, AUGraph
 
 
 class TestAUGraphFunctionalAPI:

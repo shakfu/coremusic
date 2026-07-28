@@ -296,7 +296,7 @@ def cmd_volume(args: argparse.Namespace) -> int:
         except AudioDeviceError as e:
             from ._utils import CLIError
 
-            raise CLIError(str(e))
+            raise CLIError(str(e)) from e
 
         if args.json:
             output_json(
@@ -389,7 +389,7 @@ def cmd_mute(args: argparse.Namespace) -> int:
         except AudioDeviceError as e:
             from ._utils import CLIError
 
-            raise CLIError(str(e))
+            raise CLIError(str(e)) from e
 
         if args.json:
             output_json(

@@ -10,15 +10,15 @@ from __future__ import annotations
 from coremusic import os_status
 
 __all__ = [
-    "CoreAudioError",
+    "AUGraphError",
+    "AudioConverterError",
+    "AudioDeviceError",
     "AudioFileError",
     "AudioQueueError",
     "AudioUnitError",
-    "AudioConverterError",
+    "CoreAudioError",
     "MIDIError",
     "MusicPlayerError",
-    "AudioDeviceError",
-    "AUGraphError",
 ]
 
 
@@ -30,7 +30,7 @@ class CoreAudioError(Exception):
         self.status_code = status_code
 
     @classmethod
-    def from_os_status(cls, status: int, operation: str = "") -> "CoreAudioError":
+    def from_os_status(cls, status: int, operation: str = "") -> CoreAudioError:
         """Create exception from OSStatus code with human-readable error message.
 
         Args:

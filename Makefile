@@ -55,6 +55,14 @@ demos:
 	@echo "== link_sequencer =="
 	@uv run python demos/link_sequencer.py --duration 6 \
 		2>&1 | tee $(DEMOS_OUTPUT)/link_sequencer.log
+	@echo "== plot_audio =="
+	@uv run python demos/plot_audio.py \
+		tests/data/wav/amen.wav --mode spectrogram \
+		-o $(DEMOS_OUTPUT)/spectrogram.png \
+		2>&1 | tee $(DEMOS_OUTPUT)/plot_audio.log
+	@echo "== stream_latency =="
+	@uv run python demos/stream_latency.py \
+		2>&1 | tee $(DEMOS_OUTPUT)/stream_latency.log
 	@echo "Demos complete. Output in $(DEMOS_OUTPUT)/"
 
 # Test clean installation without optional dependencies
@@ -64,18 +72,18 @@ test-clean-install:
 
 # Lint with ruff
 lint:
-	@uv run ruff check --fix src/ tests/ examples/
+	@uv run ruff check --fix src/ tests/ examples/ extras/ demos/
 
 # Format with ruff
 format:
-	@uv run ruff format src/ tests/
+	@uv run ruff format src/ tests/ examples/ extras/ demos/
 
 # Type check with mypy
 typecheck:
 	@uv run mypy src/coremusic
 
 # Run a full quality assurance check
-qa: lint typecheck format test 
+qa: lint typecheck format test
 
 # Build wheel
 wheel:

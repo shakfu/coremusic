@@ -1,15 +1,16 @@
 """Tests for error handling decorators and OSStatus utilities."""
 
 import pytest
+
 from coremusic.exceptions import AudioFileError
 from coremusic.os_status import (
     check_os_status,
     check_return_status,
-    raises_on_error,
-    handle_exceptions,
     format_os_status_error,
-    os_status_to_string,
     get_error_suggestion,
+    handle_exceptions,
+    os_status_to_string,
+    raises_on_error,
 )
 
 

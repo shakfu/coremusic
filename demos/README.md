@@ -11,9 +11,11 @@ python demos/host_au_chain.py
 python demos/render_midi_to_wav.py
 python demos/output_stream_tone.py
 python demos/link_sequencer.py
+python demos/plot_audio.py tests/data/wav/amen.wav -o waveform.png
+python demos/stream_latency.py
 ```
 
-Or run all four in sequence, writing their output to `build/demos-output/`:
+Or run them in sequence, writing their output to `build/demos-output/`:
 
 ```bash
 make demos
@@ -28,6 +30,8 @@ accept `-h/--help` for options.
 | `render_midi_to_wav.py` | Render a MIDI file to WAV through an instrument AudioUnit (`DLSMusicDevice`). | A MIDI file; an instrument AudioUnit |
 | `output_stream_tone.py` | Play a generated sine tone in real time via a pull-generator output stream. | An audio output device |
 | `link_sequencer.py` | A step sequencer whose timing is locked to the Ableton Link shared beat grid. | Output device (falls back to printing the timeline) |
+| `plot_audio.py` | Render a waveform, spectrogram, or frequency spectrum to a PNG. | `coremusic[visualization]` |
+| `stream_latency.py` | What each real-time buffer size costs in latency. | Nothing (`--measure` needs input and output devices) |
 
 ## Notes
 
@@ -53,3 +57,7 @@ accept `-h/--help` for options.
 
 - Default input assets come from `tests/data/` (`wav/amen.wav`,
   `midi/demo.mid`); pass your own paths as positional arguments.
+
+Short, snippet-sized code belongs in `examples/` instead: those files are
+included into the documentation and executed by `tests/test_examples.py`. A
+demo is a complete program you would run for its own sake.

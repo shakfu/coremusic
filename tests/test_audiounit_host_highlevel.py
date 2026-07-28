@@ -4,6 +4,7 @@ Tests the Pythonic object-oriented wrapper for AudioUnit plugins.
 """
 
 import pytest
+
 from coremusic.audio.audiounit_host import AudioUnitHost, AudioUnitPlugin
 
 

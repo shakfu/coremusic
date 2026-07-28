@@ -5,6 +5,7 @@
 from coremusic.audio import AudioFile
 from coremusic.exceptions import AudioFileError
 
+
 def is_format_supported(filepath):
     """Check if audio format is supported."""
     try:

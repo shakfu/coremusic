@@ -28,8 +28,8 @@ DOCS_DIR = os.path.join(REPO_ROOT, "docs")
 # mkdocs.yml).
 EXCLUDED_DIRS = {"dev"}
 
-PYTHON_BLOCK = re.compile(r"^```python\n(.*?)^```", re.M | re.S)
-INCLUDE = re.compile(r'^\s*--8<--\s+"([^"]+)"', re.M)
+PYTHON_BLOCK = re.compile(r"^```python\n(.*?)^```", re.MULTILINE | re.DOTALL)
+INCLUDE = re.compile(r'^\s*--8<--\s+"([^"]+)"', re.MULTILINE)
 
 
 def find_docs():
@@ -66,6 +66,28 @@ def unresolved_names(source):
         tree = ast.parse(source)
     except SyntaxError as e:
         return [f"does not parse: {e}"]
+
+    # A block that uses `cm.` without importing anything as `cm` slipped past
+    # the alias check below, because there was no alias to resolve against.
+    # There is no flat namespace to alias, so any such use is stale by
+    # construction.
+    imported_aliases = {
+        alias.asname or alias.name.split(".")[0]
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Import)
+        for alias in node.names
+    }
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Attribute)
+            and isinstance(node.value, ast.Name)
+            and node.value.id == "cm"
+            and "cm" not in imported_aliases
+        ):
+            problems.append(
+                f"uses cm.{node.attr} but nothing is imported as 'cm'; "
+                f"coremusic has no flat namespace"
+            )
 
     aliases = {}
     for node in ast.walk(tree):

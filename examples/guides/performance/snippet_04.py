@@ -2,7 +2,7 @@
 """Resource Lifecycle."""
 
 # --8<-- [start:example]
-import coremusic.capi as capi
+from coremusic import capi
 
 # Must manually clean up
 file_id = capi.audio_file_open_url("audio.wav")

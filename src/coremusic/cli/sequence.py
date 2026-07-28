@@ -52,7 +52,7 @@ def cmd_info(args: argparse.Namespace) -> int:
     try:
         seq = MIDISequence.load(str(path))
     except Exception as e:
-        raise CLIError(f"Failed to load MIDI file: {e}")
+        raise CLIError(f"Failed to load MIDI file: {e}") from e
 
     # Gather info
     total_events = sum(len(t.events) for t in seq.tracks)
@@ -103,7 +103,7 @@ def cmd_tracks(args: argparse.Namespace) -> int:
     try:
         seq = MIDISequence.load(str(path))
     except Exception as e:
-        raise CLIError(f"Failed to load MIDI file: {e}")
+        raise CLIError(f"Failed to load MIDI file: {e}") from e
 
     if args.json:
         tracks_info = []
@@ -147,7 +147,7 @@ def cmd_play(args: argparse.Namespace) -> int:
     """Play MIDI file."""
     import time
 
-    import coremusic.capi as capi
+    from coremusic import capi
     from coremusic.midi.utilities import MIDISequence
 
     path = require_file(args.file)
@@ -155,7 +155,7 @@ def cmd_play(args: argparse.Namespace) -> int:
     try:
         seq = MIDISequence.load(str(path))
     except Exception as e:
-        raise CLIError(f"Failed to load MIDI file: {e}")
+        raise CLIError(f"Failed to load MIDI file: {e}") from e
 
     # Override tempo if specified
     if args.tempo:

@@ -3,7 +3,17 @@
 
 # --8<-- [start:example]
 from coremusic.audio import AudioFile
-from coremusic.exceptions import AUGraphError, AudioConverterError, AudioDeviceError, AudioFileError, AudioQueueError, AudioUnitError, CoreAudioError, MIDIError, MusicPlayerError
+from coremusic.exceptions import (
+    AudioConverterError,
+    AudioDeviceError,
+    AudioFileError,
+    AudioQueueError,
+    AudioUnitError,
+    AUGraphError,
+    CoreAudioError,
+    MIDIError,
+    MusicPlayerError,
+)
 
 try:
     with AudioFile("missing.wav") as audio:

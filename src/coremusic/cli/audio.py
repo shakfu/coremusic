@@ -9,7 +9,7 @@ from typing import Any
 
 from ._formatters import format_bytes, format_duration, format_sample_rate, output_json
 from ._mappings import get_channel_display, get_format_display
-from ._utils import CLIError, EXIT_SUCCESS, print_help_default, require_file
+from ._utils import EXIT_SUCCESS, CLIError, print_help_default, require_file
 
 logger = logging.getLogger(__name__)
 
@@ -244,7 +244,7 @@ def cmd_metadata(args: argparse.Namespace) -> int:
         print(f"Duration:    {format_duration(float(metadata['duration_seconds']))}")
         print(f"Frames:      {metadata['total_frames']:,}")
 
-        if "tags" in metadata and metadata["tags"]:
+        if metadata.get("tags"):
             print()
             print("Tags:")
             for key, value in metadata["tags"].items():
@@ -264,7 +264,7 @@ def _cmd_metadata_set(args: argparse.Namespace, path: Path) -> int:
         with AudioFile(str(path), writable=True) as af:
             af.set_metadata(tags)
     except AudioFileError as e:
-        raise CLIError(f"Failed to write metadata: {e}")
+        raise CLIError(f"Failed to write metadata: {e}") from e
 
     if args.json:
         output_json({"file": str(path.absolute()), "tags_written": tags})
@@ -294,7 +294,7 @@ def cmd_play(args: argparse.Namespace) -> int:
             duration = audio_file.duration
             fmt = audio_file.format
     except Exception as e:
-        raise CLIError(f"Failed to open audio file: {e}")
+        raise CLIError(f"Failed to open audio file: {e}") from e
 
     # Create and set up audio player
     try:
@@ -302,7 +302,7 @@ def cmd_play(args: argparse.Namespace) -> int:
         player.load_file(str(path))
         player.setup_output()
     except Exception as e:
-        raise CLIError(f"Failed to initialize audio player: {e}")
+        raise CLIError(f"Failed to initialize audio player: {e}") from e
 
     # Set looping if requested
     player.set_looping(args.loop)
@@ -405,7 +405,7 @@ def cmd_record(args: argparse.Namespace) -> int:
         recorder = AudioRecorder(sample_rate=args.sample_rate, channels=args.channels)
         recorder.setup_input(duration)
     except Exception as e:
-        raise CLIError(f"Failed to initialize audio recorder: {e}")
+        raise CLIError(f"Failed to initialize audio recorder: {e}") from e
 
     # Stop flag for Ctrl+C
     stop_requested = False
@@ -493,7 +493,7 @@ def cmd_record(args: argparse.Namespace) -> int:
                         "Grant permission in: System Preferences > Security & Privacy > Privacy > Microphone"
                     )
             except Exception as e:
-                raise CLIError(f"Failed to save recording: {e}")
+                raise CLIError(f"Failed to save recording: {e}") from e
 
     finally:
         signal.signal(signal.SIGINT, original_handler)

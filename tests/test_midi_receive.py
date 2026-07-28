@@ -10,7 +10,7 @@ import time
 
 import pytest
 
-import coremusic.capi as capi
+from coremusic import capi
 from coremusic.midi import MIDIClient, MIDIMessageSplitter, split_midi_messages
 
 # Timeout for a packet to make the round trip through the CoreMIDI server.

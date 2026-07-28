@@ -2,9 +2,9 @@
 """Basic Note Control."""
 
 # --8<-- [start:example]
-from coremusic.audio.audiounit_host import AudioUnitPlugin
-
 import time
+
+from coremusic.audio.audiounit_host import AudioUnitPlugin
 
 # Load instrument plugin
 with AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu') as synth:

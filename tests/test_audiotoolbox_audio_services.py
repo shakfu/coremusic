@@ -1,8 +1,10 @@
 """pytest test suite for AudioServices functionality."""
 
 import logging
+
 import pytest
-import coremusic.capi as capi
+
+from coremusic import capi
 
 logger = logging.getLogger(__name__)
 
@@ -212,7 +214,7 @@ class TestAudioServicesResourceManagement:
         wav_path = amen_wav_path
         sound_ids = []
         try:
-            for i in range(5):
+            for _i in range(5):
                 sound_id = capi.audio_services_create_system_sound_id(wav_path)
                 sound_ids.append(sound_id)
                 assert isinstance(sound_id, int)

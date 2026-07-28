@@ -5,7 +5,7 @@ import time
 
 import pytest
 from conftest import has_audio_output
-from coremusic.base import NUMPY_AVAILABLE
+
 from coremusic.audio.streaming import (
     AudioInputStream,
     AudioOutputStream,
@@ -14,7 +14,7 @@ from coremusic.audio.streaming import (
     StreamNode,
     create_loopback,
 )
-
+from coremusic.base import NUMPY_AVAILABLE
 
 # ============================================================================
 # Test AudioInputStream

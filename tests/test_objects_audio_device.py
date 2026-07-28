@@ -4,6 +4,7 @@ Tests for AudioDevice and AudioDeviceManager classes
 """
 
 import pytest
+
 from coremusic.audio import AudioDevice, AudioDeviceManager
 
 
@@ -247,7 +248,7 @@ def struct_pack_count(n):
         # Some audio devices have UIDs with special characters that don't compare consistently
         if found_device is None:
             pytest.skip(
-                f"Could not find device by UID (UID may have encoding issues): {repr(device_uid)}"
+                f"Could not find device by UID (UID may have encoding issues): {device_uid!r}"
             )
 
         # Normalize UIDs for comparison (strip whitespace and null bytes)
@@ -258,7 +259,7 @@ def struct_pack_count(n):
         # If UIDs still don't match, skip test due to encoding issues
         if expected_uid != actual_uid:
             pytest.skip(
-                f"Device UIDs don't match due to encoding issues. Expected: {repr(expected_uid)}, Got: {repr(actual_uid)}"
+                f"Device UIDs don't match due to encoding issues. Expected: {expected_uid!r}, Got: {actual_uid!r}"
             )
 
         assert actual_uid == expected_uid

@@ -75,10 +75,9 @@ async def process_with_limit(filepaths, max_concurrent=5):
     semaphore = asyncio.Semaphore(max_concurrent)
 
     async def process_one(filepath):
-        async with semaphore:
-            async with AsyncAudioFile(filepath) as audio:
-                # Process file
-                return audio.duration
+        async with semaphore, AsyncAudioFile(filepath) as audio:
+            # Process file
+            return audio.duration
 
     tasks = [process_one(fp) for fp in filepaths]
     return await asyncio.gather(*tasks)

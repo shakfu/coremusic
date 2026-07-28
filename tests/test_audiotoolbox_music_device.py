@@ -1,8 +1,10 @@
 """pytest test suite for MusicDevice functionality."""
 
 import logging
+
 import pytest
-import coremusic.capi as capi
+
+from coremusic import capi
 
 logger = logging.getLogger(__name__)
 

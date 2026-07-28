@@ -2,10 +2,11 @@
 """Parallel Processing."""
 
 # --8<-- [start:example]
-from coremusic.audio import AudioFile
-
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+
+from coremusic.audio import AudioFile
+
 
 def process_file(filepath):
     """Process a single audio file."""

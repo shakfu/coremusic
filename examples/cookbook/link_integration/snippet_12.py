@@ -2,9 +2,9 @@
 """Tempo-Synced Loops."""
 
 # --8<-- [start:example]
-from coremusic import link
-
 import time
+
+from coremusic import link
 
 with link.LinkSession(bpm=120.0) as session:
     # 4-bar loop

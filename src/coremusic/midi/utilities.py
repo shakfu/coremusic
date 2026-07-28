@@ -19,10 +19,10 @@ from __future__ import annotations
 
 import logging
 import struct
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
-from typing import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +114,7 @@ class MIDIEvent:
             return bytes([status_byte, self.data1 & 0x7F, self.data2 & 0x7F])
 
     @classmethod
-    def from_bytes(cls, data: bytes, time: float = 0.0) -> "MIDIEvent":
+    def from_bytes(cls, data: bytes, time: float = 0.0) -> MIDIEvent:
         """Create MIDIEvent from MIDI message bytes.
 
         Args:
@@ -492,13 +492,12 @@ class MIDISequence:
                 f.write(tempo_track_data)
 
             # Write tracks
-            for track in self.tracks:
-                f.write(self._write_track(track))
+            f.writelines(self._write_track(track) for track in self.tracks)
 
         logger.info(f"Saved MIDI file: {filename} ({len(self.tracks)} tracks)")
 
     @classmethod
-    def load(cls, filename: str) -> "MIDISequence":
+    def load(cls, filename: str) -> MIDISequence:
         """Load Standard MIDI File.
 
         Args:

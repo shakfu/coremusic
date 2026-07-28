@@ -4,13 +4,12 @@
 import pytest
 
 from coremusic.utils.fourcc import (
+    FourCCValue,
     ensure_fourcc_int,
     ensure_fourcc_str,
     fourcc_to_int,
     fourcc_to_str,
-    FourCCValue,
 )
-
 
 # ============================================================================
 # FourCC Utilities Tests

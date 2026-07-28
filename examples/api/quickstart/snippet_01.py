@@ -7,8 +7,7 @@
 # Low-level functional API
 
 # Constants (preferred over capi getter functions)
-from coremusic.constants import AudioFileProperty, AudioFormatID
-
 # Optional integrations
 import coremusic.utils.scipy as spu  # SciPy integration (requires scipy)
+from coremusic.constants import AudioFileProperty, AudioFormatID
 # --8<-- [end:example]

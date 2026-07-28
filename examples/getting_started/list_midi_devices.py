@@ -2,7 +2,7 @@
 """List MIDI devices, sources, and destinations."""
 
 # --8<-- [start:example]
-import coremusic.capi as capi
+from coremusic import capi
 from coremusic.midi import get_destinations, get_sources
 
 

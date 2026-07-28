@@ -3,18 +3,19 @@
 
 import time
 from pathlib import Path
+
 import pytest
+
 from coremusic.audio import AudioFile
 from coremusic.utils.batch import (
-    batch_process_parallel,
-    batch_process_files,
-    BatchResult,
-    BatchProgress,
     BatchOptions,
+    BatchProgress,
+    BatchResult,
     ProcessingMode,
     RetryPolicy,
+    batch_process_files,
+    batch_process_parallel,
 )
-
 
 # ============================================================================
 # Module-level functions (needed for multiprocessing pickling)

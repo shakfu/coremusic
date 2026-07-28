@@ -17,11 +17,11 @@ FourCC = str | int
 
 __all__ = [
     "FourCC",
+    "FourCCValue",
     "ensure_fourcc_int",
     "ensure_fourcc_str",
-    "FourCCValue",
-    "fourcc_to_str",
     "fourcc_to_int",
+    "fourcc_to_str",
 ]
 
 

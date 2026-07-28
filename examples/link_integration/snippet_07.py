@@ -2,10 +2,10 @@
 """AudioPlayer with Link."""
 
 # --8<-- [start:example]
+import time
+
 from coremusic import link
 from coremusic.base import AudioPlayer
-
-import time
 
 # Create Link session
 with link.LinkSession(bpm=120.0) as session:

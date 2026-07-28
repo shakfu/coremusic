@@ -1,8 +1,10 @@
 import logging
 import struct
 import time
+
 import pytest
-import coremusic.capi as capi
+
+from coremusic import capi
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +120,7 @@ class TestErrorHandling:
 
     def test_invalid_audio_unit_operations(self):
         """Test operations on invalid AudioUnit"""
-        with pytest.raises(Exception):
+        with pytest.raises(TypeError):
             capi.audio_unit_initialize(None)
 
     def test_audio_queue_with_invalid_format(self):
@@ -133,7 +135,7 @@ class TestErrorHandling:
             "channels_per_frame": 0,
             "bits_per_channel": 0,
         }
-        with pytest.raises(Exception):
+        with pytest.raises(RuntimeError, match="AudioQueueNewOutput failed"):
             capi.audio_queue_new_output(invalid_format)
 
 

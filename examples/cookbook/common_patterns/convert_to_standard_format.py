@@ -2,8 +2,9 @@
 """Convert any input to a standard PCM format."""
 
 # --8<-- [start:example]
-import coremusic.capi as capi
+from coremusic import capi
 from coremusic.audio import AudioFormat, ExtendedAudioFile
+
 
 def convert_to_standard_format(input_path, output_path):
     """Convert any audio to standard PCM format."""

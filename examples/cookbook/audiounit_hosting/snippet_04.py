@@ -2,9 +2,9 @@
 """Automate Parameters."""
 
 # --8<-- [start:example]
-from coremusic.audio.audiounit_host import AudioUnitPlugin
-
 import time
+
+from coremusic.audio.audiounit_host import AudioUnitPlugin
 
 with AudioUnitPlugin.from_name("AUDelay") as plugin:
     # Fade delay time from 0 to 1 second
