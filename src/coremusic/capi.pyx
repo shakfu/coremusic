@@ -6408,6 +6408,34 @@ def midi_input_wait(long obj, object timeout=None) -> bool:
 
 # Client functions
 
+# Statuses MIDIClientCreate returns once this process\'s connection to
+# MIDIServer has been invalidated. Undocumented; observed in the wild.
+_MIDI_DEAD_CONNECTION_STATUSES = (-2, -304)
+
+_MIDI_DEAD_CONNECTION_HINT = (
+    "\n\nThis usually means this process lost its connection to MIDIServer. "
+    "MIDIServer exits a few seconds after its last client disconnects, and "
+    "that invalidates the connection of every process still running; CoreMIDI "
+    "does not re-establish it, so every later MIDIClientCreate in this process "
+    "fails the same way. Keep one MIDI client alive for as long as your "
+    "program may need MIDI, rather than disposing the last one between uses. "
+    "An already-affected process has to be restarted."
+)
+
+
+def _midi_client_create_message(int status):
+    """Build the error message for a failed MIDIClientCreate.
+
+    Separate from the call itself so the diagnostic can be tested: reproducing
+    the real failure means letting MIDIServer exit, which cannot be done from a
+    process that is holding a client open.
+    """
+    message = format_osstatus_error(status, "MIDIClientCreate")
+    if status in _MIDI_DEAD_CONNECTION_STATUSES:
+        message += _MIDI_DEAD_CONNECTION_HINT
+    return message
+
+
 def midi_client_create(str name):
     """Create a MIDI client.
 
@@ -6432,7 +6460,7 @@ def midi_client_create(str name):
     try:
         status = cm.MIDIClientCreate(cf_name, NULL, NULL, &client)
         if status != 0:
-            raise RuntimeError(format_osstatus_error(status, "MIDIClientCreate"))
+            raise RuntimeError(_midi_client_create_message(status))
         return <long>client
     finally:
         cf.CFRelease(cf_name)

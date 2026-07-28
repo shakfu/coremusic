@@ -79,6 +79,46 @@ def midi_or_skip(create, attempts=3, delay=0.2):
     pytest.skip(f"MIDI services unavailable: {last_error}")
 
 
+@pytest.fixture(scope="session", autouse=True)
+def keep_midi_server_alive():
+    """Hold one MIDI client open for the whole session.
+
+    MIDIServer is an on-demand daemon: when its last client disconnects it
+    exits after a few seconds idle. That invalidates the CoreMIDI connection
+    inside every process still running, and the client framework does not
+    re-establish it - so from that moment every `MIDIClientCreate` in this
+    process fails with "null connection" (surfacing as status -2 or -304) for
+    the rest of the run, no matter how long you wait or retry.
+
+    The suite creates and disposes MIDI clients in bursts, so it regularly
+    leaves a window with none alive. Whether the server idles out during one of
+    those windows is a race, which is why MIDI tests failed intermittently and
+    on one Python version at a time. Captured from the system log:
+
+        MIDIServer [55821] exiting
+        MIDIProcess -> Connection was invalidated with error ...
+        null connection            <- every subsequent create, for good
+
+    Holding a single client open for the session keeps the server up. It
+    publishes no endpoints, so it is invisible to the tests around it.
+    """
+    from coremusic import capi
+
+    try:
+        client_id = capi.midi_client_create("coremusic-test-session")
+    except RuntimeError:
+        # No MIDI at all: the per-test guards will skip appropriately.
+        yield None
+        return
+
+    yield client_id
+
+    try:
+        capi.midi_client_dispose(client_id)
+    except RuntimeError:
+        pass
+
+
 # ============================================================================
 # Test Ordering Hook - Run MIDI tests first
 # ============================================================================

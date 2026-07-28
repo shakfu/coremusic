@@ -43,23 +43,6 @@ Meaningful improvements, moderate effort.
 
 - [ ] Wheel caching in CI to speed up builds
 
-### Test Reliability
-
-- [ ] MIDI client creation is refused intermittently during a test run
-      (`MIDIClientCreate` returns an undocumented -2 or -304), which
-      `conftest.midi_or_skip` currently retries and then turns into a skip. The
-      refusal is environmental: a fresh process can create and dispose 200
-      client/port/endpoint sets without complaint, and the server accepts a
-      client again the instant pytest exits, so nothing is leaking. It appears
-      to be the CoreAudio/CoreMIDI interaction already described above
-      `pytest_collection_modifyitems`, which is why MIDI modules are ordered
-      first. Ordering them all correctly took a full run from ~20 MIDI skips to
-      0-2, but it is not deterministic: three consecutive runs skipped 0, 2, and
-      40. Worth pinning down what specifically puts the server into the refusing
-      state - candidates are the AudioQueue/AudioUnit playback tests and the
-      subprocess-spawning tests - so the suite can avoid it rather than skip
-      around it.
-
 ### Repository Layout
 
 - [ ] Consolidate `examples/`, `demos/`, and `extras/` under a single root

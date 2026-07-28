@@ -374,3 +374,36 @@ class TestClientContextManager:
         with client.create_output_port("cm-test-port-ctx") as port:
             assert not port.is_disposed
         assert port.is_disposed
+
+
+@requires_midi
+class TestDeadConnectionDiagnostic:
+    """MIDIClientCreate explains the failure that cannot be retried.
+
+    MIDIServer exits a few seconds after its last client disconnects, which
+    invalidates the CoreMIDI connection of every process still running. Nothing
+    in that process can create a client again, so the bare "Unknown error code
+    -2" that CoreMIDI reports is the least helpful moment to leave a caller
+    without an explanation.
+
+    The live failure cannot be provoked from here: the session fixture in
+    conftest holds a client open precisely so the server never exits. These
+    check the message the call would raise.
+    """
+
+    def test_dead_connection_status_is_explained(self):
+        for status in capi._MIDI_DEAD_CONNECTION_STATUSES:
+            message = capi._midi_client_create_message(status)
+            assert "MIDIClientCreate failed" in message
+            assert "MIDIServer" in message
+            assert "Keep one MIDI client alive" in message
+            assert "restarted" in message
+
+    def test_other_statuses_are_not_given_the_hint(self):
+        """paramErr and friends have nothing to do with a dead connection."""
+        message = capi._midi_client_create_message(-50)
+        assert "MIDIClientCreate failed" in message
+        assert "MIDIServer" not in message
+
+    def test_hint_matches_the_documented_statuses(self):
+        assert capi._MIDI_DEAD_CONNECTION_STATUSES == (-2, -304)

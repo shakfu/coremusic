@@ -68,6 +68,28 @@ Or use the context manager:
 --8<-- "examples/tutorials/midi_basics/create_client.py:context-manager"
 ```
 
+### How Long to Keep a Client
+
+Keep the client for as long as your program may need MIDI, rather than
+creating one per operation:
+
+```python
+--8<-- "examples/tutorials/midi_basics/client_lifetime.py:example"
+```
+
+This matters more than it looks. `MIDIServer` is an on-demand system daemon:
+it exits a few seconds after its last client disconnects, and that invalidates
+this process's connection to CoreMIDI. The framework does not re-establish it,
+so once it happens, every later `MIDIClient(...)` in the same process fails
+with `MIDIClientCreate failed: Unknown error code -2` no matter how long you
+wait. Only restarting the process clears it.
+
+A program that disposes its last client between pieces of work - a tool that
+idles between MIDI sessions, say - can therefore work perfectly on the first
+run through and fail on the second. Holding one client open avoids it
+entirely; the client costs nothing while idle and publishes no endpoints of
+its own.
+
 ## Sending MIDI Messages
 
 ### Creating an Output Port
@@ -270,6 +292,17 @@ A simple MIDI keyboard using computer keys:
    is the most common cause
 2. Check receiving device/software is listening
 3. Try sending to a different destination
+
+### `MIDIClientCreate failed: Unknown error code -2`
+
+The process has lost its connection to `MIDIServer`, which exits a few seconds
+after its last client disconnects. CoreMIDI does not reconnect, so every
+subsequent client creation in that process fails the same way and no amount of
+retrying helps.
+
+Restart the process to recover, and to prevent it, keep one client open for as
+long as MIDI might be needed - see [How Long to Keep a
+Client](#how-long-to-keep-a-client). Status `-304` has the same cause.
 
 ## Next Steps
 
