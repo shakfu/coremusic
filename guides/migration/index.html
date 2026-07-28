@@ -817,6 +817,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#from-coremusic-022-and-earlier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From CoreMusic 0.2.2 and Earlier
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#from-pydub" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2061,6 +2072,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#from-coremusic-022-and-earlier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From CoreMusic 0.2.2 and Earlier
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#from-pydub" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2420,8 +2442,64 @@
 
 
 <h1 id="migration-guide">Migration Guide<a class="headerlink" href="#migration-guide" title="Permanent link">&para;</a></h1>
-<p><strong>Version:</strong> 0.1.8</p>
-<p>Guide for migrating from other Python audio libraries to CoreMusic, and porting CoreAudio C/Objective-C code to Python.</p>
+<p>Guide for migrating from other Python audio libraries to CoreMusic, porting
+CoreAudio C/Objective-C code to Python, and updating code written against older
+CoreMusic releases.</p>
+<h2 id="from-coremusic-022-and-earlier">From CoreMusic 0.2.2 and Earlier<a class="headerlink" href="#from-coremusic-022-and-earlier" title="Permanent link">&para;</a></h2>
+<p>0.2.3 dissolved the <code>coremusic.objects</code> package into domain subpackages, and
+there is no compatibility shim: <code>import coremusic.objects</code> raises
+<code>ModuleNotFoundError</code>. The top-level package exports only <code>__version__</code>, so
+<code>coremusic.AudioFile</code> and similar flat names do not resolve either.</p>
+<table>
+<thead>
+<tr>
+<th>Old import</th>
+<th>New import</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>from coremusic.objects import AudioFile, AudioFormat</code></td>
+<td><code>from coremusic.audio import AudioFile, AudioFormat</code></td>
+</tr>
+<tr>
+<td><code>from coremusic.objects import AudioQueue, AudioUnit, AUGraph</code></td>
+<td><code>from coremusic.audio import AudioQueue, AudioUnit, AUGraph</code></td>
+</tr>
+<tr>
+<td><code>from coremusic.objects import AudioDevice, AudioDeviceManager</code></td>
+<td><code>from coremusic.audio import AudioDevice, AudioDeviceManager</code></td>
+</tr>
+<tr>
+<td><code>from coremusic.objects import AudioClock, ClockTimeFormat</code></td>
+<td><code>from coremusic.audio import AudioClock, ClockTimeFormat</code></td>
+</tr>
+<tr>
+<td><code>from coremusic.objects import MIDIClient, MIDIPort</code></td>
+<td><code>from coremusic.midi import MIDIClient, MIDIPort</code></td>
+</tr>
+<tr>
+<td><code>from coremusic.objects import MusicPlayer, MusicSequence, MusicTrack</code></td>
+<td><code>from coremusic.midi import MusicPlayer, MusicSequence, MusicTrack</code></td>
+</tr>
+<tr>
+<td><code>from coremusic.objects import AudioFileError, MIDIError</code></td>
+<td><code>from coremusic.exceptions import AudioFileError, MIDIError</code></td>
+</tr>
+<tr>
+<td><code>from coremusic.objects import CoreAudioObject, AudioPlayer, NUMPY_AVAILABLE</code></td>
+<td><code>from coremusic.base import CoreAudioObject, AudioPlayer, NUMPY_AVAILABLE</code></td>
+</tr>
+<tr>
+<td><code>import coremusic as cm; cm.AudioFile(...)</code></td>
+<td><code>from coremusic.audio import AudioFile</code></td>
+</tr>
+</tbody>
+</table>
+<p>The MIDI CLI was restructured at the same time - <code>midi device list</code>,
+<code>midi input monitor</code>, and <code>midi output send</code> became <code>midi list</code>,
+<code>midi monitor</code>, and <code>midi send</code>. See the <a href="../cli/">CLI Guide</a>.</p>
+<p>The <a href="../imports/">Import Guide</a> has the full package map.</p>
 <h2 id="from-pydub">From pydub<a class="headerlink" href="#from-pydub" title="Permanent link">&para;</a></h2>
 <p><strong>pydub</strong> is a high-level audio library focused on simplicity. CoreMusic provides similar ease-of-use with native performance.</p>
 <h3 id="loading-audio-files">Loading Audio Files<a class="headerlink" href="#loading-audio-files" title="Permanent link">&para;</a></h3>
@@ -2438,18 +2516,19 @@
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">channels</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">channels</span>
 </code></pre></div>
 <p><strong>CoreMusic:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioFile</span><span class="p">,</span> <span class="n">ExtendedAudioFile</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Load audio (supports WAV, MP3, AAC, AIFF, etc.)</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">with</span> <span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="c1"># Get properties</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">duration</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">duration</span>  <span class="c1"># seconds</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">sample_rate</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">sample_rate</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">channels</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">channels_per_frame</span>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># Or for any format with automatic conversion</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">ExtendedAudioFile</span><span class="p">(</span><span class="s2">&quot;audio.mp3&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="nb">format</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">file_format</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># Or, to decode a compressed file to PCM as you read it</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="k">with</span> <span class="n">ExtendedAudioFile</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">file_format</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">file_format</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">frame_count</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">frame_count</span>
 </code></pre></div>
 <h3 id="basic-operations">Basic Operations<a class="headerlink" href="#basic-operations" title="Permanent link">&para;</a></h3>
 <p><strong>pydub:</strong></p>
@@ -2472,30 +2551,35 @@
 <a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="n">audio</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;output.mp3&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;mp3&quot;</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>CoreMusic:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Load</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;input.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">data</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">audio</span><span class="o">.</span><span class="n">frame_count</span><span class="p">)</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="c1"># Volume adjustment (in place)</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="n">samples</span> <span class="o">*=</span> <span class="mf">1.26</span>  <span class="c1"># +10dB ~ 3.16x</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="n">samples</span> <span class="o">*=</span> <span class="mf">0.56</span>  <span class="c1"># -5dB ~ 0.56x</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="c1"># Slicing</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioSlicer</span>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    <span class="n">slicer</span> <span class="o">=</span> <span class="n">AudioSlicer</span><span class="p">(</span><span class="s2">&quot;input.wav&quot;</span><span class="p">)</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    <span class="n">first_10_seconds</span> <span class="o">=</span> <span class="n">slicer</span><span class="o">.</span><span class="n">slice_time_range</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">)</span>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span class="c1"># Export</span>
-<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>    <span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">ExtendedAudioFile</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>        <span class="s2">&quot;output.wav&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>        <span class="n">cm</span><span class="o">.</span><span class="n">capi</span><span class="o">.</span><span class="n">fourchar_to_int</span><span class="p">(</span><span class="s1">&#39;WAVE&#39;</span><span class="p">),</span>
-<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>        <span class="n">audio</span><span class="o">.</span><span class="n">format</span>
-<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>    <span class="p">)</span> <span class="k">as</span> <span class="n">output</span><span class="p">:</span>
-<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>        <span class="n">output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">samples</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic.capi</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">capi</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioFile</span><span class="p">,</span> <span class="n">ExtendedAudioFile</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio.slicing</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioSlicer</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Load the whole file as samples</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="k">with</span> <span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;input.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">samples</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">read_as_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">/</span> <span class="mf">32768.0</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="n">audio_format</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">format</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="c1"># Volume adjustment</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="n">samples</span> <span class="o">*=</span> <span class="mf">3.16</span>   <span class="c1"># +10 dB</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="n">samples</span> <span class="o">*=</span> <span class="mf">0.56</span>   <span class="c1"># -5 dB</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># Slicing: AudioSlicer finds musical boundaries rather than cutting blindly</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="n">slicer</span> <span class="o">=</span> <span class="n">AudioSlicer</span><span class="p">(</span><span class="s2">&quot;input.wav&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="n">slices</span> <span class="o">=</span> <span class="n">slicer</span><span class="o">.</span><span class="n">detect_slices</span><span class="p">()</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="c1"># Export</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="n">out_format</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">fourchar_to_int</span><span class="p">(</span><span class="s1">&#39;WAVE&#39;</span><span class="p">)</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="n">float_format</span> <span class="o">=</span> <span class="n">audio_format</span><span class="o">.</span><span class="n">pcm</span><span class="p">(</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>    <span class="n">audio_format</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">,</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>    <span class="n">channels</span><span class="o">=</span><span class="n">audio_format</span><span class="o">.</span><span class="n">channels_per_frame</span><span class="p">,</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>    <span class="n">bits</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>    <span class="n">is_float</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="p">)</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="k">with</span> <span class="n">ExtendedAudioFile</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">,</span> <span class="n">out_format</span><span class="p">,</span> <span class="n">float_format</span><span class="p">)</span> <span class="k">as</span> <span class="n">output</span><span class="p">:</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>    <span class="n">output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">),</span> <span class="n">samples</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span>
 </code></pre></div>
 <h3 id="key-differences">Key Differences<a class="headerlink" href="#key-differences" title="Permanent link">&para;</a></h3>
 <table>
@@ -2562,17 +2646,17 @@
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Channels: </span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">channels</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>CoreMusic:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Read entire file</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">data</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">audio</span><span class="o">.</span><span class="n">frame_count</span><span class="p">)</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioFile</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># Read entire file</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="k">with</span> <span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">samples</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">read_as_numpy</span><span class="p">()</span>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">sample_rate</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">sample_rate</span>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># Get info without reading</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># Get info without reading the samples</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="k">with</span> <span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
 <a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    <span class="n">duration</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">duration</span>
 <a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="n">channels</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">channels_per_frame</span>
 <a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>    <span class="n">sample_rate</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">sample_rate</span>
@@ -2589,28 +2673,29 @@
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>CoreMusic:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Generate audio</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">44100</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Create format</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="nb">format</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioFormat</span><span class="p">(</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    <span class="n">sample_rate</span><span class="o">=</span><span class="mf">44100.0</span><span class="p">,</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="n">format_id</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">capi</span><span class="o">.</span><span class="n">fourchar_to_int</span><span class="p">(</span><span class="s1">&#39;lpcm&#39;</span><span class="p">),</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="n">format_flags</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">capi</span><span class="o">.</span><span class="n">get_linear_pcm_format_flag_is_float</span><span class="p">(),</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    <span class="n">channels_per_frame</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="n">bits_per_channel</span><span class="o">=</span><span class="mi">32</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="p">)</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="c1"># Write</span>
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">ExtendedAudioFile</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>    <span class="s2">&quot;output.wav&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>    <span class="n">cm</span><span class="o">.</span><span class="n">capi</span><span class="o">.</span><span class="n">fourchar_to_int</span><span class="p">(</span><span class="s1">&#39;WAVE&#39;</span><span class="p">),</span>
-<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>    <span class="nb">format</span>
-<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
-<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>    <span class="n">audio</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">data</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic.capi</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">capi</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioFormat</span><span class="p">,</span> <span class="n">ExtendedAudioFile</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="c1"># Generate audio</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">44100</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="c1"># Describe it</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="n">audio_format</span> <span class="o">=</span> <span class="n">AudioFormat</span><span class="o">.</span><span class="n">pcm</span><span class="p">(</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="n">sample_rate</span><span class="o">=</span><span class="mf">44100.0</span><span class="p">,</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    <span class="n">channels</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="n">bits</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>    <span class="n">is_float</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="p">)</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="c1"># Write</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="k">with</span> <span class="n">ExtendedAudioFile</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>    <span class="s2">&quot;output.wav&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>    <span class="n">capi</span><span class="o">.</span><span class="n">fourchar_to_int</span><span class="p">(</span><span class="s1">&#39;WAVE&#39;</span><span class="p">),</span>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>    <span class="n">audio_format</span><span class="p">,</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a>    <span class="n">audio</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">data</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span>
 </code></pre></div>
 <h3 id="streaming">Streaming<a class="headerlink" href="#streaming" title="Permanent link">&para;</a></h3>
 <p><strong>soundfile:</strong></p>
@@ -2625,10 +2710,10 @@
 <a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>        <span class="c1"># Process block</span>
 </code></pre></div>
 <p><strong>CoreMusic:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExtendedAudioFile</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># Read in blocks</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="k">with</span> <span class="n">ExtendedAudioFile</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>        <span class="n">data</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>        <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -2652,17 +2737,18 @@
 <a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>    <span class="n">frames</span> <span class="o">=</span> <span class="n">wav</span><span class="o">.</span><span class="n">readframes</span><span class="p">(</span><span class="n">n_frames</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>CoreMusic:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExtendedAudioFile</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="k">with</span> <span class="n">ExtendedAudioFile</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="c1"># Get parameters</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">channels</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">channels_per_frame</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="n">sample_rate</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">sample_rate</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="n">bits</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">bits_per_channel</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="n">n_frames</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">frame_count</span>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>    <span class="c1"># Read frames</span>
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    <span class="n">data</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">n_frames</span><span class="p">)</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">file_format</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">file_format</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="n">channels</span> <span class="o">=</span> <span class="n">file_format</span><span class="o">.</span><span class="n">channels_per_frame</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="n">sample_rate</span> <span class="o">=</span> <span class="n">file_format</span><span class="o">.</span><span class="n">sample_rate</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="n">bits</span> <span class="o">=</span> <span class="n">file_format</span><span class="o">.</span><span class="n">bits_per_channel</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="n">n_frames</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">frame_count</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    <span class="c1"># Read frames</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>    <span class="n">data</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">n_frames</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="writing-wav">Writing WAV<a class="headerlink" href="#writing-wav" title="Permanent link">&para;</a></h3>
 <p><strong>wave:</strong></p>
@@ -2678,25 +2764,21 @@
 <a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>    <span class="n">wav</span><span class="o">.</span><span class="n">writeframes</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span>
 </code></pre></div>
 <p><strong>CoreMusic:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="o">-</span><span class="mi">32768</span><span class="p">,</span> <span class="mi">32767</span><span class="p">,</span> <span class="mi">44100</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic.capi</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">capi</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioFormat</span><span class="p">,</span> <span class="n">ExtendedAudioFile</span>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="nb">format</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioFormat</span><span class="p">(</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="n">sample_rate</span><span class="o">=</span><span class="mf">44100.0</span><span class="p">,</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>    <span class="n">format_id</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">capi</span><span class="o">.</span><span class="n">fourchar_to_int</span><span class="p">(</span><span class="s1">&#39;lpcm&#39;</span><span class="p">),</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    <span class="n">format_flags</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">capi</span><span class="o">.</span><span class="n">get_linear_pcm_format_flag_is_signed_integer</span><span class="p">(),</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>    <span class="n">channels_per_frame</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>    <span class="n">bits_per_channel</span><span class="o">=</span><span class="mi">16</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="p">)</span>
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>
-<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">ExtendedAudioFile</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    <span class="s2">&quot;output.wav&quot;</span><span class="p">,</span>
-<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>    <span class="n">cm</span><span class="o">.</span><span class="n">capi</span><span class="o">.</span><span class="n">fourchar_to_int</span><span class="p">(</span><span class="s1">&#39;WAVE&#39;</span><span class="p">),</span>
-<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>    <span class="nb">format</span>
-<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
-<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>    <span class="n">audio</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">data</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="o">-</span><span class="mi">32768</span><span class="p">,</span> <span class="mi">32767</span><span class="p">,</span> <span class="mi">44100</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="n">audio_format</span> <span class="o">=</span> <span class="n">AudioFormat</span><span class="o">.</span><span class="n">pcm</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="mf">44100.0</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bits</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="k">with</span> <span class="n">ExtendedAudioFile</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>    <span class="s2">&quot;output16.wav&quot;</span><span class="p">,</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>    <span class="n">capi</span><span class="o">.</span><span class="n">fourchar_to_int</span><span class="p">(</span><span class="s1">&#39;WAVE&#39;</span><span class="p">),</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>    <span class="n">audio_format</span><span class="p">,</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    <span class="n">audio</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">data</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span>
 </code></pre></div>
 <h2 id="from-mido-midi">From mido (MIDI)<a class="headerlink" href="#from-mido-midi" title="Permanent link">&para;</a></h2>
 <p><strong>mido</strong> is a popular MIDI library. CoreMusic provides CoreMIDI access for macOS.</p>
@@ -2713,23 +2795,24 @@
 <a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    <span class="n">port</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>CoreMusic:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic.capi</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">capi</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.midi</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIDIClient</span><span class="p">,</span> <span class="n">get_destinations</span>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="c1"># List ports</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">num_dests</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">midi_get_number_of_destinations</span><span class="p">()</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_dests</span><span class="p">):</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">dest</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">midi_get_destination</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>    <span class="n">name</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">midi_object_get_string_property</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">)</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="c1"># Send MIDI</span>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="n">client</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">midi_client_create</span><span class="p">(</span><span class="s2">&quot;MyApp&quot;</span><span class="p">)</span>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="n">port</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">midi_output_port_create</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="s2">&quot;Output&quot;</span><span class="p">)</span>
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="n">dest</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">midi_get_destination</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>
-<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="c1"># Send note on</span>
-<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="n">note_on</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">([</span><span class="mh">0x90</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">100</span><span class="p">])</span>  <span class="c1"># Channel 0, note 60, velocity 100</span>
-<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="n">capi</span><span class="o">.</span><span class="n">midi_send</span><span class="p">(</span><span class="n">port</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">note_on</span><span class="p">)</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="k">for</span> <span class="n">destination</span> <span class="ow">in</span> <span class="n">get_destinations</span><span class="p">():</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">destination</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># Send MIDI</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="n">client</span> <span class="o">=</span> <span class="n">MIDIClient</span><span class="p">(</span><span class="s2">&quot;MyApp&quot;</span><span class="p">)</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="n">port</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">create_output_port</span><span class="p">(</span><span class="s2">&quot;Output&quot;</span><span class="p">)</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="n">destinations</span> <span class="o">=</span> <span class="n">get_destinations</span><span class="p">()</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="n">dest</span> <span class="o">=</span> <span class="n">destinations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">destinations</span> <span class="k">else</span> <span class="n">client</span><span class="o">.</span><span class="n">create_virtual_destination</span><span class="p">(</span><span class="s2">&quot;Out&quot;</span><span class="p">)</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="c1"># Send note on</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="n">note_on</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">([</span><span class="mh">0x90</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">100</span><span class="p">])</span>  <span class="c1"># Channel 0, note 60, velocity 100</span>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="n">port</span><span class="o">.</span><span class="n">send_data</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="n">note_on</span><span class="p">)</span>
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="n">client</span><span class="o">.</span><span class="n">dispose</span><span class="p">()</span>
 </code></pre></div>
 <h3 id="midi-files">MIDI Files<a class="headerlink" href="#midi-files" title="Permanent link">&para;</a></h3>
 <p><strong>mido:</strong></p>
@@ -2754,32 +2837,18 @@
 <a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a><span class="n">mid</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.mid&quot;</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>CoreMusic:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.midi</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIDISequence</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="c1"># Load MIDI file</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">sequence</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">MusicSequence</span><span class="p">()</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="n">sequence</span><span class="o">.</span><span class="n">load_from_file</span><span class="p">(</span><span class="s2">&quot;song.mid&quot;</span><span class="p">)</span>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="c1"># Iterate through tracks</span>
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sequence</span><span class="o">.</span><span class="n">track_count</span><span class="p">):</span>
-<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>    <span class="n">track</span> <span class="o">=</span> <span class="n">sequence</span><span class="o">.</span><span class="n">get_track</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    <span class="c1"># Access track data</span>
-<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>
-<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="c1"># Create new sequence</span>
-<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="n">sequence</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">MusicSequence</span><span class="p">()</span>
-<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="n">track</span> <span class="o">=</span> <span class="n">sequence</span><span class="o">.</span><span class="n">new_track</span><span class="p">()</span>
-<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>
-<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a><span class="c1"># Add notes</span>
-<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a><span class="n">track</span><span class="o">.</span><span class="n">add_midi_note</span><span class="p">(</span>
-<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>    <span class="n">time</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>    <span class="n">channel</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a>    <span class="n">note</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
-<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a>    <span class="n">velocity</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a>    <span class="n">duration</span><span class="o">=</span><span class="mf">1.0</span>
-<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a><span class="p">)</span>
-<a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a>
-<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a><span class="c1"># Save (using functional API)</span>
-<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a><span class="c1"># sequence.save_to_file(&quot;output.mid&quot;)  # OO API method</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="c1"># Load a MIDI file</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">sequence</span> <span class="o">=</span> <span class="n">MIDISequence</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;song.mid&quot;</span><span class="p">)</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="k">for</span> <span class="n">track</span> <span class="ow">in</span> <span class="n">sequence</span><span class="o">.</span><span class="n">tracks</span><span class="p">:</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">track</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">track</span><span class="o">.</span><span class="n">events</span><span class="p">)</span><span class="si">}</span><span class="s2"> events&quot;</span><span class="p">)</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="c1"># Create a new one</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="n">sequence</span> <span class="o">=</span> <span class="n">MIDISequence</span><span class="p">()</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="n">track</span> <span class="o">=</span> <span class="n">sequence</span><span class="o">.</span><span class="n">add_track</span><span class="p">(</span><span class="s2">&quot;Melody&quot;</span><span class="p">)</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="n">track</span><span class="o">.</span><span class="n">add_note</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">velocity</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="n">sequence</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;output.mid&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="from-coreaudio-cobjective-c">From CoreAudio C/Objective-C<a class="headerlink" href="#from-coreaudio-cobjective-c" title="Permanent link">&para;</a></h2>
 <p>Migrating existing CoreAudio code to Python with CoreMusic.</p>
@@ -2807,15 +2876,15 @@
 <a id="__codelineno-18-20" name="__codelineno-18-20" href="#__codelineno-18-20"></a><span class="n">free</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
 </code></pre></div>
 <p><strong>CoreMusic:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioFile</span>
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="c1"># Open audio file</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;/path/to/audio.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="k">with</span> <span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
 <a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    <span class="c1"># Get format</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="nb">format</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">format</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="n">audio_format</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">format</span>
 <a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>
 <a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>    <span class="c1"># Read packets</span>
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>    <span class="n">data</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>    <span class="n">data</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">read_packets</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1024</span><span class="p">)</span>
 <a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>
 <a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="c1"># Automatic cleanup via context manager</span>
 </code></pre></div>
@@ -2823,7 +2892,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic.capi</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">capi</span>
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="c1"># Open</span>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="n">file_id</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">audio_file_open_url</span><span class="p">(</span><span class="s2">&quot;/path/to/audio.wav&quot;</span><span class="p">)</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="n">file_id</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">audio_file_open_url</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
 <a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>
 <a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="c1"># Get format</span>
 <a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="n">format_data</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">audio_file_get_property</span><span class="p">(</span>
@@ -2854,28 +2923,14 @@
 <a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a><span class="n">AudioOutputUnitStart</span><span class="p">(</span><span class="n">unit</span><span class="p">);</span>
 </code></pre></div>
 <p><strong>CoreMusic:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioUnit</span>
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="c1"># Find and create output unit</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="n">unit</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioUnit</span><span class="o">.</span><span class="n">default_output</span><span class="p">()</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="c1"># Initialize and start</span>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="n">unit</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="n">unit</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>
-<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="c1"># Or functional API</span>
-<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic.capi</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">capi</span>
-<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>
-<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a><span class="n">desc</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>    <span class="s1">&#39;componentType&#39;</span><span class="p">:</span> <span class="n">capi</span><span class="o">.</span><span class="n">get_audio_unit_type_output</span><span class="p">(),</span>
-<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a>    <span class="s1">&#39;componentSubType&#39;</span><span class="p">:</span> <span class="n">capi</span><span class="o">.</span><span class="n">get_audio_unit_subtype_default_output</span><span class="p">(),</span>
-<a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a>    <span class="s1">&#39;componentManufacturer&#39;</span><span class="p">:</span> <span class="n">capi</span><span class="o">.</span><span class="n">get_audio_unit_manufacturer_apple</span><span class="p">()</span>
-<a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a><span class="p">}</span>
-<a id="__codelineno-22-18" name="__codelineno-22-18" href="#__codelineno-22-18"></a>
-<a id="__codelineno-22-19" name="__codelineno-22-19" href="#__codelineno-22-19"></a><span class="n">comp</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">audio_component_find_next</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span>
-<a id="__codelineno-22-20" name="__codelineno-22-20" href="#__codelineno-22-20"></a><span class="n">unit</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">audio_component_instance_new</span><span class="p">(</span><span class="n">comp</span><span class="p">)</span>
-<a id="__codelineno-22-21" name="__codelineno-22-21" href="#__codelineno-22-21"></a><span class="n">capi</span><span class="o">.</span><span class="n">audio_unit_initialize</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span>
-<a id="__codelineno-22-22" name="__codelineno-22-22" href="#__codelineno-22-22"></a><span class="n">capi</span><span class="o">.</span><span class="n">audio_output_unit_start</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="c1"># Find and create the default output unit</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="n">unit</span> <span class="o">=</span> <span class="n">AudioUnit</span><span class="o">.</span><span class="n">default_output</span><span class="p">()</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="n">unit</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="n">unit</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="n">unit</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="n">unit</span><span class="o">.</span><span class="n">dispose</span><span class="p">()</span>
 </code></pre></div>
 <h3 id="midi-operations">MIDI Operations<a class="headerlink" href="#midi-operations" title="Permanent link">&para;</a></h3>
 <p><strong>C/Objective-C:</strong></p>
@@ -2903,12 +2958,14 @@
 <a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="c1"># Create output port</span>
 <a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="n">output_port</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">midi_output_port_create</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="s2">&quot;Output&quot;</span><span class="p">)</span>
 <a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>
-<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="c1"># Get destination</span>
-<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="n">dest</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">midi_get_destination</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="c1"># Get a destination</span>
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="n">dest</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">midi_destination_create</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="s2">&quot;MyClient Destination&quot;</span><span class="p">)</span>
 <a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>
 <a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="c1"># Send note</span>
 <a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a><span class="n">note_on</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">([</span><span class="mh">0x90</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">100</span><span class="p">])</span>
-<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a><span class="n">capi</span><span class="o">.</span><span class="n">midi_send</span><span class="p">(</span><span class="n">output_port</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">note_on</span><span class="p">)</span>
+<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a><span class="n">capi</span><span class="o">.</span><span class="n">midi_send_data</span><span class="p">(</span><span class="n">output_port</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">note_on</span><span class="p">)</span>
+<a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>
+<a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a><span class="n">capi</span><span class="o">.</span><span class="n">midi_client_dispose</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="from-audiokit-swift">From AudioKit (Swift)<a class="headerlink" href="#from-audiokit-swift" title="Permanent link">&para;</a></h2>
 <p><strong>AudioKit</strong> is a powerful Swift framework. CoreMusic provides similar capabilities in Python.</p>
@@ -2923,19 +2980,14 @@
 <a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="n">player</span><span class="p">.</span><span class="n">play</span><span class="p">()</span>
 </code></pre></div>
 <p><strong>CoreMusic:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioPlayer</span>
 <a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="c1"># High-level player</span>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="n">player</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioPlayer</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="n">player</span><span class="o">.</span><span class="n">play</span><span class="p">()</span>
-<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>
-<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="c1"># Or lower-level AudioQueue</span>
-<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
-<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>    <span class="nb">format</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">format</span>
-<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>    <span class="n">queue</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioQueue</span><span class="o">.</span><span class="n">create_output</span><span class="p">(</span><span class="nb">format</span><span class="p">)</span>
-<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>
-<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a>    <span class="c1"># Allocate buffers and queue playback</span>
-<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a>    <span class="c1"># (See cookbook for complete example)</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>    <span class="c1"># High-level player</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>    <span class="n">player</span> <span class="o">=</span> <span class="n">AudioPlayer</span><span class="p">()</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>    <span class="n">player</span><span class="o">.</span><span class="n">load_file</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>    <span class="n">player</span><span class="o">.</span><span class="n">setup_output</span><span class="p">()</span>
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>    <span class="n">player</span><span class="o">.</span><span class="n">play</span><span class="p">()</span>
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>    <span class="n">player</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 </code></pre></div>
 <h3 id="audio-effects">Audio Effects<a class="headerlink" href="#audio-effects" title="Permanent link">&para;</a></h3>
 <p><strong>AudioKit (Swift):</strong></p>
@@ -2951,12 +3003,14 @@
 <p><strong>CoreMusic:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio.audiounit_host</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioUnitPlugin</span>
 <a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="c1"># Load reverb AudioUnit</span>
-<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="k">with</span> <span class="n">AudioUnitPlugin</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="s2">&quot;AUReverb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">reverb</span><span class="p">:</span>
-<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>    <span class="n">reverb</span><span class="p">[</span><span class="s1">&#39;Dry/Wet Mix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span>
-<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>
-<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a>    <span class="c1"># Process audio</span>
-<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>    <span class="n">output</span> <span class="o">=</span> <span class="n">reverb</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="n">input_data</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="mi">512</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">4</span><span class="p">)</span>  <span class="c1"># 512 stereo frames of float32 silence</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="c1"># Load a reverb AudioUnit</span>
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="k">with</span> <span class="n">AudioUnitPlugin</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="s2">&quot;AUMatrixReverb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">reverb</span><span class="p">:</span>
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a>    <span class="n">reverb</span><span class="p">[</span><span class="s1">&#39;Dry/Wet Mix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">50.0</span>
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>
+<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a>    <span class="c1"># Process audio</span>
+<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a>    <span class="n">output</span> <span class="o">=</span> <span class="n">reverb</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="feature-comparison-matrix">Feature Comparison Matrix<a class="headerlink" href="#feature-comparison-matrix" title="Permanent link">&para;</a></h2>
 <table>
@@ -3145,20 +3199,28 @@
 <a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="n">audio</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="s2">&quot;output.wav&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;wav&quot;</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>After (CoreMusic):</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>
-<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;input.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
-<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>    <span class="n">data</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">audio</span><span class="o">.</span><span class="n">frame_count</span><span class="p">)</span>
-<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a>    <span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a>    <span class="n">samples</span> <span class="o">*=</span> <span class="mf">2.0</span>  <span class="c1"># Increase volume (~6dB)</span>
-<a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a>
-<a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a>    <span class="k">with</span> <span class="n">cm</span><span class="o">.</span><span class="n">ExtendedAudioFile</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-<a id="__codelineno-30-10" name="__codelineno-30-10" href="#__codelineno-30-10"></a>        <span class="s2">&quot;output.wav&quot;</span><span class="p">,</span>
-<a id="__codelineno-30-11" name="__codelineno-30-11" href="#__codelineno-30-11"></a>        <span class="n">cm</span><span class="o">.</span><span class="n">capi</span><span class="o">.</span><span class="n">fourchar_to_int</span><span class="p">(</span><span class="s1">&#39;WAVE&#39;</span><span class="p">),</span>
-<a id="__codelineno-30-12" name="__codelineno-30-12" href="#__codelineno-30-12"></a>        <span class="n">audio</span><span class="o">.</span><span class="n">format</span>
-<a id="__codelineno-30-13" name="__codelineno-30-13" href="#__codelineno-30-13"></a>    <span class="p">)</span> <span class="k">as</span> <span class="n">output</span><span class="p">:</span>
-<a id="__codelineno-30-14" name="__codelineno-30-14" href="#__codelineno-30-14"></a>        <span class="n">output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">samples</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic.capi</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">capi</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioFile</span><span class="p">,</span> <span class="n">AudioFormat</span><span class="p">,</span> <span class="n">ExtendedAudioFile</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="k">with</span> <span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;input.wav&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">audio</span><span class="p">:</span>
+<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a>    <span class="n">samples</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">read_as_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">/</span> <span class="mf">32768.0</span>
+<a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a>    <span class="n">samples</span> <span class="o">*=</span> <span class="mf">2.0</span>  <span class="c1"># Increase volume (~6dB)</span>
+<a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a>
+<a id="__codelineno-30-10" name="__codelineno-30-10" href="#__codelineno-30-10"></a>    <span class="n">out_format</span> <span class="o">=</span> <span class="n">AudioFormat</span><span class="o">.</span><span class="n">pcm</span><span class="p">(</span>
+<a id="__codelineno-30-11" name="__codelineno-30-11" href="#__codelineno-30-11"></a>        <span class="n">audio</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">,</span>
+<a id="__codelineno-30-12" name="__codelineno-30-12" href="#__codelineno-30-12"></a>        <span class="n">channels</span><span class="o">=</span><span class="n">audio</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">channels_per_frame</span><span class="p">,</span>
+<a id="__codelineno-30-13" name="__codelineno-30-13" href="#__codelineno-30-13"></a>        <span class="n">bits</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+<a id="__codelineno-30-14" name="__codelineno-30-14" href="#__codelineno-30-14"></a>        <span class="n">is_float</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-30-15" name="__codelineno-30-15" href="#__codelineno-30-15"></a>    <span class="p">)</span>
+<a id="__codelineno-30-16" name="__codelineno-30-16" href="#__codelineno-30-16"></a>
+<a id="__codelineno-30-17" name="__codelineno-30-17" href="#__codelineno-30-17"></a><span class="k">with</span> <span class="n">ExtendedAudioFile</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+<a id="__codelineno-30-18" name="__codelineno-30-18" href="#__codelineno-30-18"></a>    <span class="s2">&quot;output.wav&quot;</span><span class="p">,</span>
+<a id="__codelineno-30-19" name="__codelineno-30-19" href="#__codelineno-30-19"></a>    <span class="n">capi</span><span class="o">.</span><span class="n">fourchar_to_int</span><span class="p">(</span><span class="s1">&#39;WAVE&#39;</span><span class="p">),</span>
+<a id="__codelineno-30-20" name="__codelineno-30-20" href="#__codelineno-30-20"></a>    <span class="n">out_format</span><span class="p">,</span>
+<a id="__codelineno-30-21" name="__codelineno-30-21" href="#__codelineno-30-21"></a><span class="p">)</span> <span class="k">as</span> <span class="n">output</span><span class="p">:</span>
+<a id="__codelineno-30-22" name="__codelineno-30-22" href="#__codelineno-30-22"></a>    <span class="n">output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">),</span> <span class="n">samples</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span>
 </code></pre></div>
 <h3 id="pattern-2-midi-processing">Pattern 2: MIDI Processing<a class="headerlink" href="#pattern-2-midi-processing" title="Permanent link">&para;</a></h3>
 <p><strong>Before (mido):</strong></p>
@@ -3170,15 +3232,18 @@
 <a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>        <span class="n">port</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>After (CoreMusic):</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic.capi</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">capi</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.midi</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIDIClient</span><span class="p">,</span> <span class="n">get_destinations</span>
 <a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>
-<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="n">client</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">midi_client_create</span><span class="p">(</span><span class="s2">&quot;App&quot;</span><span class="p">)</span>
-<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="n">port</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">midi_output_port_create</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="s2">&quot;Out&quot;</span><span class="p">)</span>
-<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="n">dest</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">midi_get_destination</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>
-<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="k">for</span> <span class="n">note</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">60</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">67</span><span class="p">]:</span>
-<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>    <span class="n">msg</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">([</span><span class="mh">0x90</span><span class="p">,</span> <span class="n">note</span><span class="p">,</span> <span class="mi">100</span><span class="p">])</span>  <span class="c1"># Note on</span>
-<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a>    <span class="n">capi</span><span class="o">.</span><span class="n">midi_send</span><span class="p">(</span><span class="n">port</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="n">client</span> <span class="o">=</span> <span class="n">MIDIClient</span><span class="p">(</span><span class="s2">&quot;App&quot;</span><span class="p">)</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="n">port</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">create_output_port</span><span class="p">(</span><span class="s2">&quot;Out&quot;</span><span class="p">)</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a><span class="n">destinations</span> <span class="o">=</span> <span class="n">get_destinations</span><span class="p">()</span>
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="n">dest</span> <span class="o">=</span> <span class="n">destinations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">destinations</span> <span class="k">else</span> <span class="n">client</span><span class="o">.</span><span class="n">create_virtual_destination</span><span class="p">(</span><span class="s2">&quot;Out&quot;</span><span class="p">)</span>
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>
+<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a><span class="k">for</span> <span class="n">note</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">60</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">67</span><span class="p">]:</span>
+<a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a>    <span class="n">port</span><span class="o">.</span><span class="n">send_data</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">([</span><span class="mh">0x90</span><span class="p">,</span> <span class="n">note</span><span class="p">,</span> <span class="mi">100</span><span class="p">]))</span>  <span class="c1"># Note on</span>
+<a id="__codelineno-32-11" name="__codelineno-32-11" href="#__codelineno-32-11"></a>
+<a id="__codelineno-32-12" name="__codelineno-32-12" href="#__codelineno-32-12"></a><span class="n">client</span><span class="o">.</span><span class="n">dispose</span><span class="p">()</span>
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
@@ -3189,7 +3254,7 @@
 </ul>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Need help with migration? Check the examples in <code>tests/demos/</code> or consult the API documentation.</p>
+<p>Every snippet on this page is a runnable program under <code>examples/guides/migration/</code>.</p>
 </div>
 
 
