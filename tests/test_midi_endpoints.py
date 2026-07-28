@@ -12,6 +12,7 @@ import sys
 import time
 
 import pytest
+from conftest import midi_or_skip
 
 from coremusic import capi
 from coremusic.exceptions import MIDIError
@@ -62,11 +63,8 @@ def payloads(events):
 
 
 def make_client(name):
-    """Create a client, skipping if the MIDI server is momentarily unavailable."""
-    try:
-        return MIDIClient(name)
-    except MIDIError:
-        pytest.skip("MIDI client creation failed - MIDI services unavailable")
+    """Create a client, retrying and then skipping if the server refuses."""
+    return midi_or_skip(lambda: MIDIClient(name))
 
 
 @pytest.fixture
@@ -291,10 +289,24 @@ import time
 
 import coremusic.capi as capi
 
+
+def make_client(name):
+    # The server refuses a new client now and then, especially after the rest
+    # of the suite has churned through several dozen. conftest.midi_or_skip
+    # handles that in-process; a child process needs its own retry.
+    for attempt in range(5):
+        try:
+            return capi.midi_client_create(name)
+        except RuntimeError:
+            if attempt == 4:
+                raise
+            time.sleep(0.3)
+
+
 # Each round is its own client: the window is narrow enough that a single
 # attempt only deadlocked about four times in five, and repeating closes it.
 for i in range(3):
-    client = capi.midi_client_create(f"cm-test-inflight-{{i}}")
+    client = make_client(f"cm-test-inflight-{{i}}")
     port = capi.midi_output_port_create(client, "out")
     dest = capi.midi_destination_create(client, f"cm-test-inflight-dest-{{i}}")
 
@@ -319,6 +331,10 @@ print("disposed")
             text=True,
             timeout=30,
         )
+        if result.returncode != 0 and "MIDIClientCreate failed" in result.stderr:
+            # The retry above gave up: the server is refusing clients outright,
+            # which says nothing about the deadlock this test covers.
+            pytest.skip(f"MIDI services unavailable: {result.stderr.strip()[-120:]}")
         assert result.returncode == 0, result.stderr
         assert "disposed" in result.stdout
 

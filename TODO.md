@@ -43,6 +43,51 @@ Meaningful improvements, moderate effort.
 
 - [ ] Wheel caching in CI to speed up builds
 
+### Test Reliability
+
+- [ ] MIDI client creation is refused intermittently during a test run
+      (`MIDIClientCreate` returns an undocumented -2 or -304), which
+      `conftest.midi_or_skip` currently retries and then turns into a skip. The
+      refusal is environmental: a fresh process can create and dispose 200
+      client/port/endpoint sets without complaint, and the server accepts a
+      client again the instant pytest exits, so nothing is leaking. It appears
+      to be the CoreAudio/CoreMIDI interaction already described above
+      `pytest_collection_modifyitems`, which is why MIDI modules are ordered
+      first. Ordering them all correctly took a full run from ~20 MIDI skips to
+      0-2, but it is not deterministic: three consecutive runs skipped 0, 2, and
+      40. Worth pinning down what specifically puts the server into the refusing
+      state - candidates are the AudioQueue/AudioUnit playback tests and the
+      subprocess-spawning tests - so the suite can avoid it rather than skip
+      around it.
+
+### Repository Layout
+
+- [ ] Consolidate `examples/`, `demos/`, and `extras/` under a single root
+      directory. Three top-level directories of runnable-but-not-library code
+      is a lot of root clutter, and the similar names invite the question of
+      which is which. Keep them as distinct subdirectories of the new root
+      rather than merging their contents: they hold different kinds of thing
+      and are exercised by different harnesses (doc snippets pulled into pages
+      by `--8<--` and run by `tests/test_examples.py`; complete programs run by
+      `make demos` and smoke-checked by `tests/test_demos.py`; uninstalled
+      utilities and experimental modules covered by `tests/test_extras.py` and
+      the four `test_daw`/`test_music_*` modules). See the "Where new code
+      goes" table in `CONTRIBUTING.md`.
+
+      Scope is mostly mechanical but wide: 330 `--8<--` directives across the
+      docs reference 241 example files by path, and 74 files outside the three
+      directories name them - `tests/test_examples.py`, `test_demos.py`,
+      `test_extras.py`, `test_readme.py`, and the four experimental-module test
+      modules all hardcode a root; `make demos`, `make lint`, and `make format`
+      name paths; `CONTRIBUTING.md`, `README.md`, `docs/examples/index.md`,
+      `docs/guides/index.md`, and each directory's own README describe them.
+      `mkdocs.yml` needs no change: `base_path` is anchored to
+      `!relative $config_dir`, so only the include paths themselves move.
+
+      Use `git mv` so history follows. Done when `make test`, `make test-all`,
+      `make lint`, `make docs`, and `make demos` are all green, and a grep for
+      the old paths outside `CHANGELOG.md` returns nothing.
+
 ---
 
 ## Lower Priority

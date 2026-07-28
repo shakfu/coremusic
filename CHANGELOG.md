@@ -40,6 +40,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ### Fixed
 
+- **CI failed intermittently on a single Python version** - `MIDIClientCreate` is refused now and then while a run churns through MIDI clients, with undocumented statuses (-2 and -304 both seen). Two tests in `tests/test_midi_receive.py` created clients directly rather than through the fixture that already skipped on this, so the refusal surfaced as a hard failure on Python 3.12 while the other four versions passed the same commit. Client creation across the MIDI test modules now goes through `conftest.midi_or_skip`, which retries before giving up and skips only if the server stays unavailable.
+
+- **Roughly twenty MIDI tests were silently skipping** - `tests/conftest.py` reorders MIDI modules to run before the audio tests, because CoreAudio activity makes CoreMIDI unavailable later in a run - but `test_midi_endpoints`, `test_midi_transform`, and `test_link_midi` were never added to that list, so they ran last and mostly skipped. Running each module alone hid it: `test_midi_endpoints` passed 26 of 26 in isolation while skipping 19 of 26 in a full run. With the modules ordered correctly, the full suite goes from 2186 to 2210 passing.
+
+### Fixed
+
 - **`convert()` could not write AIFF** - AIFF stores big-endian signed integer PCM, but `shortcuts.convert()` derives the output format from the source, so any WAV input described the output as little-endian and `ExtAudioFileCreateWithURL` rejected it outright with `kAudioFileStreamError_UnsupportedDataFormat`. `convert("input.wav", "output.aiff")` was advertised in the README and had never worked. The PCM output format is now re-described for the container.
 
 - **Six documentation examples ran without exercising anything** - They defined a function and never called it, so executing them proved only that the file imported. Two were broken behind that: one passed two arguments to `AudioConverter.convert()`, which takes one, and another re-read packet 0 on every iteration of its chunked-read loop. `tests/test_examples.py` now fails an example that references none of its own definitions.

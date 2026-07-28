@@ -9,6 +9,7 @@ import threading
 import time
 
 import pytest
+from conftest import midi_or_skip
 
 from coremusic import capi
 from coremusic.midi import MIDIClient, MIDIMessageSplitter, split_midi_messages
@@ -51,10 +52,9 @@ def payloads(events):
 
 @pytest.fixture
 def client():
-    try:
-        client_id = capi.midi_client_create("coremusic-receive-tests")
-    except RuntimeError:
-        pytest.skip("MIDI client creation failed - MIDI services unavailable")
+    client_id = midi_or_skip(
+        lambda: capi.midi_client_create("coremusic-receive-tests")
+    )
     yield client_id
     capi.midi_client_dispose(client_id)
 
@@ -322,7 +322,9 @@ class TestReceiverLifetime:
             capi.midi_input_poll(port)
 
     def test_client_dispose_releases_child_receivers(self):
-        client_id = capi.midi_client_create("cm-test-client-dispose")
+        client_id = midi_or_skip(
+            lambda: capi.midi_client_create("cm-test-client-dispose")
+        )
         port = capi.midi_input_port_create(client_id, "cm-test-input-child")
         dest = capi.midi_destination_create(client_id, "cm-test-dest-child")
         capi.midi_client_dispose(client_id)
@@ -350,7 +352,7 @@ class TestMIDIInputPortObject:
     """The object layer exposes the same receive API."""
 
     def test_poll_through_input_port_object(self):
-        client = MIDIClient("cm-test-object-client")
+        client = midi_or_skip(lambda: MIDIClient("cm-test-object-client"))
         try:
             port = client.create_input_port("cm-test-object-input")
             source_id = capi.midi_source_create(client.object_id, "cm-test-object-src")
@@ -376,7 +378,7 @@ class TestMIDIInputPortObject:
             def __init__(self, object_id):
                 self.object_id = object_id
 
-        client = MIDIClient("cm-test-object-send-client")
+        client = midi_or_skip(lambda: MIDIClient("cm-test-object-send-client"))
         try:
             out = client.create_output_port("cm-test-object-out")
             dest_id = capi.midi_destination_create(
@@ -394,7 +396,7 @@ class TestMIDIInputPortObject:
         arrived = threading.Event()
         received = []
 
-        client = MIDIClient("cm-test-object-cb-client")
+        client = midi_or_skip(lambda: MIDIClient("cm-test-object-cb-client"))
         try:
             port = client.create_input_port(
                 "cm-test-object-cb-input",

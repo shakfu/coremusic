@@ -9,6 +9,7 @@ Constants can be imported directly:
 """
 
 import os
+import time
 
 import pytest
 
@@ -44,6 +45,41 @@ has_audio_input = pytest.mark.skipif(
 
 
 # ============================================================================
+# MIDI Client Creation
+# ============================================================================
+
+
+def midi_or_skip(create, attempts=3, delay=0.2):
+    """Create a MIDI object, retrying a refusal from the MIDI server.
+
+    `MIDIClientCreate` intermittently fails when a run creates many clients in
+    quick succession, which this suite does. The status codes are undocumented
+    - both -2 and -304 have been seen, and on CI it has hit one Python version
+    while the other four passed the same commit.
+
+    That is environmental rather than a defect in the code under test, so retry
+    before giving up. Skip only if the server stays unavailable, since a bare
+    skip silently drops real coverage.
+
+    Args:
+        create: Callable returning the MIDI object, e.g.
+            ``lambda: MIDIClient("name")`` or
+            ``lambda: capi.midi_client_create("name")``
+    """
+    from coremusic.exceptions import MIDIError
+
+    last_error = None
+    for attempt in range(attempts):
+        try:
+            return create()
+        except (RuntimeError, MIDIError) as e:
+            last_error = e
+            if attempt < attempts - 1:
+                time.sleep(delay)
+    pytest.skip(f"MIDI services unavailable: {last_error}")
+
+
+# ============================================================================
 # Test Ordering Hook - Run MIDI tests first
 # ============================================================================
 # MIDI services can become temporarily unavailable after long-running audio
@@ -54,7 +90,14 @@ has_audio_input = pytest.mark.skipif(
 
 def pytest_collection_modifyitems(session, config, items):
     """Reorder tests to run MIDI tests first."""
-    midi_modules = ("test_objects_midi", "test_coremidi", "test_midi_receive")
+    midi_modules = (
+        "test_objects_midi",
+        "test_coremidi",
+        "test_midi_receive",
+        "test_midi_endpoints",
+        "test_midi_transform",
+        "test_link_midi",
+    )
     midi_tests = []
     other_tests = []
 
