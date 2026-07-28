@@ -50,6 +50,29 @@ def payloads(events):
     return messages
 
 
+def collect_messages(obj_id, expected, timeout=DELIVERY_TIMEOUT):
+    """Poll until `expected` MIDI *messages* arrive, or the timeout expires.
+
+    `collect` counts packets, which is not the same thing: CoreMIDI decides how
+    many messages travel in a packet, so two sends may arrive coalesced into one
+    or split across two. Waiting for one packet and then asserting two messages
+    passes only while the coalescing happens to go your way - which is how
+    `test_input_port_receives_from_virtual_source` passed locally for months and
+    failed on a loaded CI runner.
+
+    One splitter is kept across polls so a message spanning packets is still
+    assembled correctly.
+    """
+    deadline = time.monotonic() + timeout
+    splitter = MIDIMessageSplitter()
+    messages = []
+    while len(messages) < expected and time.monotonic() < deadline:
+        capi.midi_input_wait(obj_id, 0.05)
+        for _host_time, data in capi.midi_input_poll(obj_id):
+            messages.extend(splitter.push(data))
+    return messages
+
+
 @pytest.fixture
 def client():
     client_id = midi_or_skip(
@@ -244,7 +267,7 @@ class TestInputPortReceive:
             capi.midi_received(source, bytes([0x92, 0x15, 0x45]))
             capi.midi_received(source, bytes([0x82, 0x15, 0x20]))
 
-            messages = payloads(collect(port, 1))
+            messages = collect_messages(port, 2)
             assert b"\x92\x15\x45" in messages
             assert b"\x82\x15\x20" in messages
         finally:
