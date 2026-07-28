@@ -22,6 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.2.6]
+
 ### Added
 
 - **MIDI channel voice message builders (`coremusic.midi.messages`)** - `note_on`, `note_off`, `control_change`, `program_change`, `pitch_bend`, `poly_aftertouch`, `channel_aftertouch`, `all_notes_off`, and `all_sound_off`, each returning the `bytes` that `send_data()` takes. Nothing in the library previously produced a wire message: `capi.midi_note_on` returns a tuple for the AudioUnit MusicDevice call, `MIDIEvent.to_bytes()` needs an event time you do not have when sending, and `MIDIStatus` only names the status nibble. So every send in the codebase, including the CLI, hand-assembled `bytes([0x90 | channel, note, velocity])`.
