@@ -38,8 +38,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 - **`LinkSession` is a context manager** - `with LinkSession(bpm=120.0) as session:` enables networking on entry and disables it on exit, which is how every Link example was already written.
 
-### Added
-
 - **`MIDIClientCreate` explains a dead connection** - Statuses -2 and -304 mean this process lost its connection to MIDIServer, after the daemon exited following the disconnection of its last client. Nothing in the process can create a client again, so the bare "Unknown error code -2" CoreMIDI reports is the least useful moment to leave a caller guessing. The error now names the cause, says that retrying cannot help, and says what to do instead. `docs/tutorials/midi_basics.md` gains a "How Long to Keep a Client" section with a runnable example, and a troubleshooting entry for the status code itself.
 
 ### Fixed
@@ -47,8 +45,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **CI failed intermittently on a single Python version** - `MIDIClientCreate` was refused partway through a run with an undocumented status (-2 and -304 both seen), failing two tests on Python 3.12 while the other four versions passed the same commit. The system log gives the cause: MIDIServer is an on-demand daemon that exits a few seconds after its last client disconnects, and that invalidates the CoreMIDI connection inside every process still running. The client framework does not re-establish it, so from that moment every `MIDIClientCreate` in the process fails with "null connection" for the rest of the run - which is why retrying and waiting never helped, and why a fresh process always worked. The suite creates and disposes clients in bursts, so it regularly leaves a window with none alive; whether the server idled out during one was a race. A session-scoped fixture now holds one client open for the whole run. Under conditions that previously produced 84 skips, four consecutive runs are now identical at 38. Client creation also goes through `conftest.midi_or_skip`, which retries and then skips, as a backstop for machines with no MIDI at all.
 
 - **Roughly twenty MIDI tests were silently skipping** - `tests/conftest.py` reorders MIDI modules to run before the audio tests, because CoreAudio activity makes CoreMIDI unavailable later in a run - but `test_midi_endpoints`, `test_midi_transform`, and `test_link_midi` were never added to that list, so they ran last and mostly skipped. Running each module alone hid it: `test_midi_endpoints` passed 26 of 26 in isolation while skipping 19 of 26 in a full run. With the modules ordered correctly, the full suite goes from 2186 to 2210 passing.
-
-### Fixed
 
 - **`convert()` could not write AIFF** - AIFF stores big-endian signed integer PCM, but `shortcuts.convert()` derives the output format from the source, so any WAV input described the output as little-endian and `ExtAudioFileCreateWithURL` rejected it outright with `kAudioFileStreamError_UnsupportedDataFormat`. `convert("input.wav", "output.aiff")` was advertised in the README and had never worked. The PCM output format is now re-described for the container.
 
@@ -80,15 +76,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 - **Ruff rule set pinned explicitly** - Ruff 0.16 widened its default selection from a handful of rules to roughly 920, which turned a clean tree into 955 findings without a line of code changing. `pyproject.toml` now names the rules the project lints against (`E4`, `E7`, `E9`, `F`, `I`, `W`, `UP`, `C4`, `PIE`) so a future upgrade adds rules to ruff rather than silently redefining what "lint clean" means here. The larger opinionated families are listed in a comment with their counts, to be adopted deliberately: `BLE` alone would mean narrowing 242 `except Exception` clauses in the library, a refactor `docs/dev/error_decorator.md` records as already deferred.
 
-### Changed
-
 - **`tests/examples/` renamed to `extras/`** - Its `daw/` and `generative/` subdirectories are experimental *modules* with 309 tests, not examples, and the name collided with both `examples/` and `demos/`. Their test modules moved to `tests/` proper, where they now add `extras/` to `sys.path` rather than their own directory. `CONTRIBUTING.md` records which of the four directories new code belongs in.
-
-### Removed
-
-- **`tests/demos/`** - Thirty-six scripts that nothing ran: pytest collected no tests from the directory, so seventeen of them had quietly stopped working. `daw.py` imported `coremusic.daw`, which is not a module in the package; `effects/find_by_name.py` called `capi.find_audio_unit_by_name`, which does not exist; `visualization/spectrum.py` called a plotter method that had been renamed; seven more opened `tests/amen.wav`, which moved to `tests/data/wav/` several releases ago. Most of the rest had been superseded - by CLI commands (`coremusic audio info`, `analyze levels`, `device list`, `plugin list`, `convert file`) or by the runnable snippets now under `examples/`. Two were worth keeping and moved to `demos/`.
-
-### Changed
 
 - **Documentation examples are now runnable programs, and are executed by the test suite** - Every example now lives under `examples/`, mirroring the page that uses it, and doc pages include it with `pymdownx.snippets` rather than restating it. `tests/test_examples.py` runs all 249 of them in a temp directory seeded with sample media and requires a clean exit, and refuses an example that defines code it never calls; `tests/test_readme.py` does the same for the README, whose code has to stay inline because GitHub cannot process includes; `tests/test_doc_snippets.py` checks that every include resolves and that any block still written inline only names things that exist. 342 of the 373 blocks are executed - the remainder are comparisons against other libraries, MIDI constant tables, and API signature listings. A snippet that stops working now fails the build instead of reaching a reader.
 
@@ -97,6 +85,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **Migration Guide covers upgrading from 0.2.2 and earlier** - A table maps every `coremusic.objects` import to its domain replacement, alongside the existing guidance for moving from pydub, soundfile, mido, AudioKit, and CoreAudio C.
 
 - **MIDI documentation corrected** - The README, `docs/index.md`, `docs/examples/index.md`, and the MIDI Basics tutorial were written against `coremusic.objects`, a package removed in 0.2.3, and against a flat `coremusic.*` namespace that has never existed. The tutorial additionally documented a two-argument receive callback, a `port.send()` method, and a `packet_list` object, none of which are real. All of them now use `coremusic.midi` and the actual send, receive, and endpoint APIs. The architecture tree in the README was updated to the current layout.
+
+### Removed
+
+- **`tests/demos/`** - Thirty-six scripts that nothing ran: pytest collected no tests from the directory, so seventeen of them had quietly stopped working. `daw.py` imported `coremusic.daw`, which is not a module in the package; `effects/find_by_name.py` called `capi.find_audio_unit_by_name`, which does not exist; `visualization/spectrum.py` called a plotter method that had been renamed; seven more opened `tests/amen.wav`, which moved to `tests/data/wav/` several releases ago. Most of the rest had been superseded - by CLI commands (`coremusic audio info`, `analyze levels`, `device list`, `plugin list`, `convert file`) or by the runnable snippets now under `examples/`. Two were worth keeping and moved to `demos/`.
 
 ## [0.2.4]
 
