@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as get_pkg_version
 
 
@@ -11,7 +12,7 @@ def get_version() -> str:
     """Get package version from metadata."""
     try:
         return get_pkg_version("coremusic")
-    except Exception:
+    except PackageNotFoundError:
         from coremusic import __version__
 
         return __version__

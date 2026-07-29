@@ -5,9 +5,16 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from coremusic.exceptions import FRAMEWORK_ERRORS
+
 from ._formatters import output_json
 from ._mappings import FORMAT_NAMES, get_format_display, get_format_id
 from ._utils import EXIT_SUCCESS, CLIError, print_help_default, require_file
+
+# convert_audio_file raises ValueError for an unsupported or unwritable
+# format. For one file in a batch that is a per-file result, not a reason to
+# abandon the remaining files, so it joins the framework errors here.
+_BATCH_ITEM_ERRORS: tuple[type[BaseException], ...] = (*FRAMEWORK_ERRORS, ValueError)
 
 
 def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
@@ -514,7 +521,7 @@ def cmd_batch(args: argparse.Namespace) -> int:
             )
             success_count += 1
 
-        except Exception as e:
+        except _BATCH_ITEM_ERRORS as e:
             error_count += 1
             result["status"] = "error"
             result["error"] = str(e)

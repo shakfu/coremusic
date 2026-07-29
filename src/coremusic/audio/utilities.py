@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from coremusic.base import NUMPY_AVAILABLE
+from coremusic.exceptions import FRAMEWORK_ERRORS
 
 from ..utils.batch import batch_process_files, batch_process_parallel
 from .core import AudioConverter, AudioFile, AudioFormat, ExtendedAudioFile
@@ -250,7 +251,7 @@ def batch_convert(
         try:
             convert_audio_file(str(input_path), str(output_path), output_format)
             converted_files.append(str(output_path))
-        except Exception as e:
+        except FRAMEWORK_ERRORS as e:
             logger.warning(f"Failed to convert {input_path}: {e}")
             continue
 
@@ -966,7 +967,7 @@ class AudioEffectsChain:
         try:
             if self._graph.is_running:
                 self.stop()
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
         self._graph.dispose()
 

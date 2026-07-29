@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 
+from coremusic.exceptions import FRAMEWORK_ERRORS
+
 from ._formatters import format_duration, output_json, output_table
 from ._utils import EXIT_SUCCESS, CLIError, print_help_default, require_file
 
@@ -175,7 +177,7 @@ def cmd_play(args: argparse.Namespace) -> int:
     # Get device name
     try:
         dest_name = capi.midi_object_get_string_property(dest_id, "name")
-    except Exception:
+    except FRAMEWORK_ERRORS:
         dest_name = f"Device {args.device}"
 
     duration = seq.duration
@@ -218,7 +220,7 @@ def cmd_play(args: argparse.Namespace) -> int:
                                 [event.status | event.channel, event.data1, event.data2]
                             )
                             capi.midi_send_data(port_id, dest_id, midi_data, 0)
-                        except Exception:
+                        except FRAMEWORK_ERRORS:
                             pass  # Continue on send errors
                     event_index += 1
                 else:
@@ -233,13 +235,13 @@ def cmd_play(args: argparse.Namespace) -> int:
         for channel in range(16):
             try:
                 capi.midi_send_data(port_id, dest_id, all_notes_off(channel=channel), 0)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass
 
     finally:
         try:
             capi.midi_client_dispose(client_id)
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
 
     if args.json:

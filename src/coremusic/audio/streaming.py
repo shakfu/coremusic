@@ -33,6 +33,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from coremusic.exceptions import FRAMEWORK_ERRORS
+
 from .. import capi
 from .devices import AudioDevice, AudioDeviceManager
 
@@ -240,7 +242,9 @@ class AudioInputStream:
             for callback in callbacks:
                 try:
                     callback(payload, frame_count)
-                except Exception as e:
+                # Broad: `callback` is caller-supplied and may raise anything. One bad
+                # subscriber must not stop the drain loop or the others.
+                except Exception as e:  # noqa: BLE001 - see comment above
                     logger.error(f"Error in input callback: {e}")
 
     def _teardown_audio_unit(self) -> None:
@@ -254,7 +258,7 @@ class AudioInputStream:
             try:
                 self._impl.stop()
                 self._impl.close()
-            except Exception as e:
+            except FRAMEWORK_ERRORS as e:
                 logger.warning(f"Error during input stream teardown: {e}")
             finally:
                 self._impl = None
@@ -282,7 +286,7 @@ class AudioInputStream:
             self._teardown_audio_unit()
             self._is_active = False
             logger.info("Stopped audio input stream")
-        except Exception as e:
+        except FRAMEWORK_ERRORS as e:
             logger.warning(f"Error stopping input stream: {e}")
             self._is_active = False
 
@@ -438,7 +442,7 @@ class AudioOutputStream:
             self._teardown_audio_unit()
             self._is_active = False
             logger.info("Stopped audio output stream")
-        except Exception as e:
+        except FRAMEWORK_ERRORS as e:
             logger.warning(f"Error stopping output stream: {e}")
             self._is_active = False
 
@@ -448,7 +452,7 @@ class AudioOutputStream:
             try:
                 self._impl.stop()
                 self._impl.close()
-            except Exception as e:
+            except FRAMEWORK_ERRORS as e:
                 logger.warning(f"Error during output stream teardown: {e}")
             finally:
                 self._impl = None
@@ -565,7 +569,8 @@ class AudioProcessor:
         """Apply process_func and push the result into the output ring."""
         try:
             result = self.process_func(data)
-        except Exception as e:
+        # Broad: `process_func` is caller-supplied and may raise anything.
+        except Exception as e:  # noqa: BLE001 - see comment above
             logger.error(f"Error in process function: {e}")
             return  # skip this buffer -> the output underruns to silence
         if result is None:
@@ -605,7 +610,8 @@ class AudioProcessor:
             # Process the input buffer
             try:
                 return self.process_func(self._input_buffer)
-            except Exception as e:
+            # Broad: `process_func` is caller-supplied and may raise anything.
+            except Exception as e:  # noqa: BLE001 - see comment above
                 logger.error(f"Error in process function: {e}")
                 # Return silence on error
                 try:
@@ -654,7 +660,7 @@ class AudioProcessor:
             try:
                 self._output_impl.stop()
                 self._output_impl.close()
-            except Exception as e:
+            except FRAMEWORK_ERRORS as e:
                 logger.warning(f"Error stopping processor output: {e}")
             finally:
                 self._output_impl = None
@@ -732,7 +738,8 @@ class StreamNode:
         """
         try:
             return self.processor(input_data)
-        except Exception as e:
+        # Broad: `self.processor` is caller-supplied and may raise anything.
+        except Exception as e:  # noqa: BLE001 - see comment above
             logger.error(f"Error processing node '{self.name}': {e}")
             return input_data  # Pass through on error
 
@@ -1045,7 +1052,7 @@ class DirectLoopback:
             try:
                 self._output.stop()
                 self._output.close()
-            except Exception as e:
+            except FRAMEWORK_ERRORS as e:
                 logger.warning(f"Error stopping loopback output: {e}")
             finally:
                 self._output = None
@@ -1053,7 +1060,7 @@ class DirectLoopback:
             try:
                 self._input.stop()
                 self._input.close()
-            except Exception as e:
+            except FRAMEWORK_ERRORS as e:
                 logger.warning(f"Error stopping loopback input: {e}")
             finally:
                 self._input = None

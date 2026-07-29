@@ -18,7 +18,12 @@ from typing import TYPE_CHECKING, Any
 
 from coremusic import capi
 from coremusic.constants.audio import LinearPCMFormatFlag
-from coremusic.exceptions import AudioConverterError, AudioFileError, AudioQueueError
+from coremusic.exceptions import (
+    FRAMEWORK_ERRORS,
+    AudioConverterError,
+    AudioFileError,
+    AudioQueueError,
+)
 
 # Check if NumPy is available
 try:
@@ -552,7 +557,7 @@ class AudioFile(capi.CoreAudioObject):
 
         try:
             return capi.audio_file_read_info_dictionary(self.object_id)
-        except Exception:
+        except FRAMEWORK_ERRORS:
             return None
 
     def set_metadata(self, tags: dict[str, Any]) -> None:
@@ -637,7 +642,7 @@ class AudioFile(capi.CoreAudioObject):
                         )
                         return calculated
                 return 0.0
-        except Exception:
+        except FRAMEWORK_ERRORS:
             # If all methods fail, return 0.0
             return 0.0
 
@@ -651,7 +656,7 @@ class AudioFile(capi.CoreAudioObject):
             if self._is_open:
                 try:
                     capi.audio_file_close(self.object_id)
-                except Exception:
+                except FRAMEWORK_ERRORS:
                     pass  # Best effort cleanup
                 finally:
                     self._is_open = False
@@ -781,7 +786,7 @@ class AudioFileStream(capi.CoreAudioObject):
             if self._is_open:
                 try:
                     capi.audio_file_stream_close(self.object_id)
-                except Exception:
+                except FRAMEWORK_ERRORS:
                     pass  # Best effort cleanup
                 finally:
                     self._is_open = False
@@ -1002,7 +1007,7 @@ class AudioConverter(capi.CoreAudioObject):
         if not self.is_disposed:
             try:
                 capi.audio_converter_dispose(self.object_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass  # Best effort cleanup
             finally:
                 super().dispose()
@@ -1357,7 +1362,7 @@ class ExtendedAudioFile(capi.CoreAudioObject):
             if self._is_open:
                 try:
                     capi.extended_audio_file_dispose(self.object_id)
-                except Exception:
+                except FRAMEWORK_ERRORS:
                     pass  # Best effort cleanup
                 finally:
                     self._is_open = False

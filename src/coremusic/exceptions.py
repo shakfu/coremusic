@@ -11,6 +11,7 @@ from coremusic import os_status
 
 __all__ = [
     "AUGraphError",
+    "FRAMEWORK_ERRORS",
     "AudioConverterError",
     "AudioDeviceError",
     "AudioFileError",
@@ -84,3 +85,36 @@ class AudioDeviceError(CoreAudioError):
 
 class AUGraphError(CoreAudioError):
     """Exception for AUGraph operations"""
+
+
+#: Errors that mean the OS frameworks refused an operation, as opposed to a
+#: defect in this library or its caller.
+#:
+#: Catch this when falling back to a default value or skipping an item, so that
+#: a genuine CoreAudio failure is absorbed but a programming error still
+#: propagates. ``except Exception`` at such sites turns ``AttributeError``,
+#: ``TypeError`` and ``NameError`` into a plausible-looking return value the
+#: caller cannot distinguish from a real answer -- which is how
+#: ``AudioFileStream.ready_to_produce_packets`` reported "not ready" for every
+#: stream in every state while calling a function that did not exist.
+#:
+#: The members are what the layers below actually raise:
+#:
+#: - ``CoreAudioError`` and its subclasses, from the object wrappers.
+#: - ``RuntimeError``, from ``capi`` for a non-zero ``OSStatus`` (223 sites).
+#: - ``OSError``, from file and path operations.
+#:
+#: Deliberately excluded: ``capi`` also raises ``ValueError`` for an invalid
+#: argument, ``MemoryError`` on allocation failure, and ``TypeError`` /
+#: ``IndexError``. Those signal a bad call or an exhausted machine, not a
+#: refused operation, and must not be swallowed.
+#:
+#: Broad ``except Exception`` remains correct in three places, each commented
+#: where it appears: invoking a caller-supplied callback (which may raise
+#: anything), the top of a worker-thread loop (where dying is worse than
+#: continuing), and ``cli doctor`` (whose contract is to report any failure).
+FRAMEWORK_ERRORS: tuple[type[BaseException], ...] = (
+    CoreAudioError,
+    RuntimeError,
+    OSError,
+)

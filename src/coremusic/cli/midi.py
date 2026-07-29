@@ -8,6 +8,7 @@ from types import FrameType
 from typing import Any
 
 from coremusic import capi
+from coremusic.exceptions import FRAMEWORK_ERRORS
 
 from ._formatters import format_duration, output_json, output_table
 from ._utils import EXIT_SUCCESS, CLIError, print_help_default, require_file
@@ -253,7 +254,7 @@ def _get_endpoint_name(endpoint_id: int) -> str:
         name = capi.midi_object_get_string_property(endpoint_id, "displayName")
         if name:
             return name
-    except Exception as e:
+    except FRAMEWORK_ERRORS as e:
         logger.debug("Failed to get displayName for endpoint %d: %s", endpoint_id, e)
 
     try:
@@ -261,7 +262,7 @@ def _get_endpoint_name(endpoint_id: int) -> str:
         name = capi.midi_object_get_string_property(endpoint_id, "name")
         if name:
             return name
-    except Exception as e:
+    except FRAMEWORK_ERRORS as e:
         logger.debug("Failed to get name for endpoint %d: %s", endpoint_id, e)
 
     return f"Unknown ({endpoint_id})"
@@ -277,19 +278,19 @@ def _get_device_info(device_id: int) -> dict[str, Any]:
         info["name"] = (
             capi.midi_object_get_string_property(device_id, "name") or "Unknown"
         )
-    except Exception:
+    except FRAMEWORK_ERRORS:
         info["name"] = "Unknown"
 
     try:
         info["manufacturer"] = (
             capi.midi_object_get_string_property(device_id, "manufacturer") or ""
         )
-    except Exception:
+    except FRAMEWORK_ERRORS:
         info["manufacturer"] = ""
 
     try:
         info["model"] = capi.midi_object_get_string_property(device_id, "model") or ""
-    except Exception:
+    except FRAMEWORK_ERRORS:
         info["model"] = ""
 
     # Count entities, sources, destinations
@@ -306,7 +307,7 @@ def _get_device_info(device_id: int) -> dict[str, Any]:
 
         info["sources"] = sources
         info["destinations"] = destinations
-    except Exception:
+    except FRAMEWORK_ERRORS:
         info["entities"] = 0
         info["sources"] = 0
         info["destinations"] = 0
@@ -482,7 +483,7 @@ def cmd_send(args: argparse.Namespace) -> int:
     finally:
         try:
             capi.midi_client_dispose(client_id)
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
 
     return EXIT_SUCCESS
@@ -685,7 +686,7 @@ def cmd_panic(args: argparse.Namespace) -> int:
     finally:
         try:
             capi.midi_client_dispose(client_id)
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
 
     return EXIT_SUCCESS
@@ -849,7 +850,7 @@ def cmd_monitor(args: argparse.Namespace) -> int:
         finally:
             try:
                 capi.midi_client_dispose(client_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass
 
         if args.json:
@@ -1068,7 +1069,7 @@ def _receive_display(args: argparse.Namespace, source_id: int, source_name: str)
         finally:
             try:
                 capi.midi_client_dispose(client_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass
 
         if args.json:
@@ -1138,7 +1139,7 @@ def _receive_to_midi_file(
         finally:
             try:
                 capi.midi_client_dispose(client_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass
 
         events_copy = recorded_events
@@ -1283,7 +1284,7 @@ def _receive_with_plugin(
                     float(sample_rate),
                     channels,
                 )
-            except Exception as e:
+            except FRAMEWORK_ERRORS as e:
                 render_errors += 1
                 if render_errors == 1:
                     logger.warning("Plugin render failed: %s", e)
@@ -1307,7 +1308,7 @@ def _receive_with_plugin(
                 )
                 output_stream.set_generator(render)
                 output_stream.start()
-            except Exception as e:
+            except FRAMEWORK_ERRORS as e:
                 logger.warning("Audio output unavailable (%s); continuing silently", e)
                 output_stream = None
 
@@ -1337,7 +1338,7 @@ def _receive_with_plugin(
                         plugin.send_midi(
                             data[0], data[1], data[2] if len(data) > 2 else 0
                         )
-                    except Exception as e:
+                    except FRAMEWORK_ERRORS as e:
                         logger.debug("Plugin MIDI send failed: %s", e)
 
                 # With no output stream nothing pulls the instrument, so drive
@@ -1356,17 +1357,17 @@ def _receive_with_plugin(
             if output_stream is not None:
                 try:
                     output_stream.stop()
-                except Exception:
+                except FRAMEWORK_ERRORS:
                     pass
             try:
                 capi.midi_client_dispose(client_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass
 
         # Clean up plugin
         try:
             plugin.dispose()
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
 
         # Save audio file if requested
@@ -1564,7 +1565,7 @@ def cmd_play(args: argparse.Namespace) -> int:
     finally:
         try:
             capi.midi_client_dispose(client_id)
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
         signal.signal(signal.SIGINT, original_handler)
 

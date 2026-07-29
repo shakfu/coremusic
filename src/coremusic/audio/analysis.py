@@ -50,6 +50,8 @@ except ImportError:
     SCIPY_AVAILABLE = False
 
 # Import base class
+from coremusic.exceptions import FRAMEWORK_ERRORS
+
 from ._base import AudioFileLoaderMixin
 
 # Logger
@@ -1171,7 +1173,7 @@ class AudioAnalyzer(AudioFileLoaderMixin):
                 try:
                     info["peak_amplitude"] = AudioAnalyzer.get_peak_amplitude(af)
                     info["rms"] = AudioAnalyzer.calculate_rms(af)
-                except Exception:
+                except FRAMEWORK_ERRORS:
                     pass  # Skip if reading fails
 
             return info

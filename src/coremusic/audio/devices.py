@@ -12,7 +12,7 @@ import struct
 from typing import Any
 
 from coremusic import capi
-from coremusic.exceptions import AudioDeviceError
+from coremusic.exceptions import FRAMEWORK_ERRORS, AudioDeviceError
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class AudioDevice(capi.CoreAudioObject):
                 result: str = data.decode("utf-8", errors="ignore").strip("\x00")
                 return result
             return ""
-        except Exception as e:
+        except FRAMEWORK_ERRORS as e:
             logger.debug("Failed to get property %d: %s", property_id, e)
             return ""
 
@@ -96,7 +96,7 @@ class AudioDevice(capi.CoreAudioObject):
                 result: int = struct.unpack("<L", data[:4])[0]
                 return result
             return 0
-        except Exception as e:
+        except FRAMEWORK_ERRORS as e:
             logger.debug("Failed to get property %d: %s", property_id, e)
             return 0
 
@@ -115,7 +115,7 @@ class AudioDevice(capi.CoreAudioObject):
                 result: float = struct.unpack("<d", data[:8])[0]
                 return result
             return 0.0
-        except Exception as e:
+        except FRAMEWORK_ERRORS as e:
             logger.debug("Failed to get property %d: %s", property_id, e)
             return 0.0
 
@@ -270,7 +270,7 @@ class AudioDevice(capi.CoreAudioObject):
                 result: float = struct.unpack("<f", data[:4])[0]
                 return result
             return None
-        except Exception as e:
+        except FRAMEWORK_ERRORS as e:
             logger.debug("Failed to get volume: %s", e)
             return None
 
@@ -345,7 +345,7 @@ class AudioDevice(capi.CoreAudioObject):
             if len(data) >= 4:
                 return bool(struct.unpack("<I", data[:4])[0])
             return None
-        except Exception as e:
+        except FRAMEWORK_ERRORS as e:
             logger.debug("Failed to get mute state: %s", e)
             return None
 
@@ -498,7 +498,7 @@ class AudioDeviceManager:
                 device_uid = device.uid
                 if device_uid and device_uid == uid:
                     return device
-            except Exception as e:
+            except FRAMEWORK_ERRORS as e:
                 logger.debug("Failed to get UID for device: %s", e)
                 continue
         return None

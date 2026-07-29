@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from coremusic import capi
-from coremusic.exceptions import MusicPlayerError
+from coremusic.exceptions import FRAMEWORK_ERRORS, MusicPlayerError
 
 __all__ = [
     "MusicPlayer",
@@ -389,16 +389,16 @@ class MusicSequence(capi.CoreAudioObject):
                 for track in self._tracks:
                     try:
                         track.dispose()
-                    except Exception:
+                    except FRAMEWORK_ERRORS:
                         pass
                 if self._tempo_track is not None:
                     try:
                         self._tempo_track.dispose()
-                    except Exception:
+                    except FRAMEWORK_ERRORS:
                         pass
 
                 capi.dispose_music_sequence(self.object_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass  # Best effort cleanup
             finally:
                 self._tracks = []
@@ -411,7 +411,7 @@ class MusicSequence(capi.CoreAudioObject):
         try:
             count = self.track_count
             return f"MusicSequence(tracks={count})"
-        except Exception:
+        except FRAMEWORK_ERRORS:
             return "MusicSequence()"
 
 
@@ -609,11 +609,11 @@ class MusicPlayer(capi.CoreAudioObject):
                 if self._sequence is not None:
                     try:
                         capi.music_player_set_sequence(self.object_id, 0)
-                    except Exception:
+                    except FRAMEWORK_ERRORS:
                         pass
 
                 capi.dispose_music_player(self.object_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass  # Best effort cleanup
             finally:
                 self._sequence = None
@@ -635,5 +635,5 @@ class MusicPlayer(capi.CoreAudioObject):
             time = self.time
             rate = self.play_rate
             return f"MusicPlayer({status}, time={time:.2f}, rate={rate:.2f})"
-        except Exception:
+        except FRAMEWORK_ERRORS:
             return "MusicPlayer()"

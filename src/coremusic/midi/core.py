@@ -19,7 +19,7 @@ from collections.abc import Callable, Iterable
 from typing import Any
 
 from coremusic import capi
-from coremusic.exceptions import MIDIError
+from coremusic.exceptions import FRAMEWORK_ERRORS, MIDIError
 
 __all__ = [
     "MIDIClient",
@@ -215,7 +215,7 @@ class MIDIEndpoint(capi.CoreAudioObject):
         if name is None:
             try:
                 name = capi.midi_endpoint_get_name(endpoint_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 name = None
         self._name = name or ""
 
@@ -306,7 +306,7 @@ class MIDIEndpoint(capi.CoreAudioObject):
         if self._owned:
             try:
                 capi.midi_endpoint_dispose(self.object_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 # Best effort disposal - the client may already be gone
                 pass
         if self._client is not None and hasattr(self._client, "_endpoints"):
@@ -407,7 +407,7 @@ class MIDIPort(capi.CoreAudioObject):
         if not self.is_disposed:
             try:
                 capi.midi_port_dispose(self.object_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 # Best effort disposal - some MIDI operations may fail in test environments
                 pass
             finally:
@@ -697,7 +697,7 @@ class MIDIClient(capi.CoreAudioObject):
                 if not endpoint.is_disposed:
                     try:
                         endpoint.dispose()
-                    except Exception:
+                    except FRAMEWORK_ERRORS:
                         pass  # Best effort cleanup
 
             # Dispose all ports next
@@ -707,12 +707,12 @@ class MIDIClient(capi.CoreAudioObject):
                 if not port.is_disposed:
                     try:
                         port.dispose()
-                    except Exception:
+                    except FRAMEWORK_ERRORS:
                         pass  # Best effort cleanup
 
             try:
                 capi.midi_client_dispose(self.object_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 # Best effort disposal - some MIDI operations may fail in test environments
                 pass
             finally:

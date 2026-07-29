@@ -22,6 +22,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.2.7]
+
+### Changed
+
+- **101 broad `except Exception` handlers narrowed to `FRAMEWORK_ERRORS`** - a handler that catches `Exception` and returns a fallback cannot tell a CoreAudio refusal from a defect in this library, so it converted `AttributeError`, `TypeError` and `NameError` into a plausible-looking value the caller could not question. `AudioFileStream.ready_to_produce_packets` is the worked example: it called a function that did not exist and reported "not ready" for every stream in every state.
+
+  `coremusic.exceptions.FRAMEWORK_ERRORS` names what the layers below actually raise - `CoreAudioError` and its subclasses from the object wrappers, `RuntimeError` from `capi` for a non-zero `OSStatus`, and `OSError` from file operations. `ValueError` (which `capi` raises for an invalid argument), `MemoryError`, `TypeError` and `IndexError` are deliberately excluded: they signal a bad call or an exhausted machine, not a refused operation.
+
+  Two handlers written as `except (AudioDeviceError, Exception)` were also narrowed. The tuple form reads as though it is specific while `Exception` subsumes the other member, and it hid from the first pass of this audit.
+
+- **11 handlers stay broad, each with the reason beside it** - invoking a caller-supplied callback or work function (which may raise anything), the top of a worker-thread loop (where dying silently is worse than continuing), and `cli doctor` (whose contract is to report any failure rather than raise). Each carries a `noqa: BLE001` next to the explanation.
+
+- **`convert batch` keeps going when one file has an unsupported format** - narrowing this handler would have let the `ValueError` that `convert_audio_file` raises for an unwritable format abort the whole batch, so it catches `ValueError` alongside the framework errors. For one file among many, a rejected format is a per-file result.
+
+- **Malformed plugin presets are now detected rather than caught** - `AudioUnitPlugin.load_preset` checked `param_data["value"]` inside the guarded block, so a preset entry missing its value was indistinguishable from the plugin refusing the value. The shape is validated explicitly and a warning names the offending parameter.
+
+- **`ruff` now enforces `BLE` (blind-except) on `src/`** - the lint policy in `pyproject.toml` had this family deferred with a note that adopting it "would mean narrowing 242 `except Exception` clauses ... see docs/dev/error_decorator.md, where that refactor was deferred". That work is done, so the rule is on, with `tests/`, `examples/`, `extras/` and `demos/` exempt.
+
+### Added
+
+- **`coremusic.exceptions.FRAMEWORK_ERRORS`** - the shared tuple described above, documented with what belongs in it and what deliberately does not.
+
+- **`tests/test_exception_narrowing.py`** - pins the meaning of `FRAMEWORK_ERRORS` (it must cover what `capi` raises and must not cover the types that signal a bug), checks at a real call site that a programming error propagates while a CoreAudio refusal is still absorbed, and fails if a broad swallowing handler appears outside the documented allowlist or if a listed exemption goes stale. The detector counts the tuple form, which is how the two `except (AudioDeviceError, Exception)` sites were found.
+
+
 ### Fixed
 
 - **52 wrong values in `coremusic.constants`** - the enum layer restated CoreAudio constants as hand-typed integers, and 42% of those carrying a FourCC comment did not encode the FourCC they documented. Several decoded to byte sequences that are not valid FourCC at all (`'nsr\xf2'`, `'q_u`'`, `'fn`j'`), so they were never transcribed from any header. Anyone using the documented enum API rather than the `capi.get_*` getters passed a wrong property ID to CoreAudio: `ExtendedAudioFileProperty.FILE_LENGTH_FRAMES` raised `Unknown error code -66561`, and `AudioDeviceProperty.NOMINAL_SAMPLE_RATE` - off by 126 in its last byte - raised `kAudioCodecUnknownPropertyError`.

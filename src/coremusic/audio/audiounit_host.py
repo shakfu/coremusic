@@ -12,6 +12,8 @@ import wave
 from pathlib import Path
 from typing import Any
 
+from coremusic.exceptions import FRAMEWORK_ERRORS
+
 from .. import capi
 
 logger = logging.getLogger(__name__)
@@ -433,7 +435,7 @@ class PresetManager:
                         "min": param.min_value,
                         "max": param.max_value,
                     }
-                except Exception:
+                except FRAMEWORK_ERRORS:
                     pass  # Skip parameters that can't be read
 
         # Create preset data
@@ -492,13 +494,22 @@ class PresetManager:
                 f"Preset is for {preset_data['plugin']['name']}, not {plugin.name}"
             )
 
-        # Apply parameters
+        # Apply parameters. A preset is user-supplied data, so a malformed entry
+        # is checked for explicitly rather than caught: letting a KeyError reach
+        # the except clause would make it indistinguishable from the plugin
+        # refusing the value.
         parameters = preset_data.get("parameters", {})
         for param_name, param_data in parameters.items():
+            if not isinstance(param_data, dict) or "value" not in param_data:
+                logger.warning(
+                    "Preset entry for parameter %r has no 'value'; skipping",
+                    param_name,
+                )
+                continue
             try:
                 plugin.set_parameter(param_name, param_data["value"])
-            except Exception:
-                pass  # Skip parameters that can't be set
+            except FRAMEWORK_ERRORS as e:
+                logger.debug("Plugin refused parameter %r: %s", param_name, e)
 
         return preset_data
 
@@ -780,7 +791,7 @@ class AudioUnitPlugin:
                 param = AudioUnitParameter(self, param_id, info)
                 self._parameters.append(param)
                 self._parameter_map[param.name] = param
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass  # Skip parameters we can't access
 
     def _discover_presets(self) -> None:
@@ -1165,7 +1176,7 @@ class AudioUnitPlugin:
                 offset = max(0, min(offset, frames - 1))
                 try:
                     self.send_midi(int(status), int(data1), int(data2), offset)
-                except Exception as e:  # pragma: no cover - defensive
+                except FRAMEWORK_ERRORS as e:  # pragma: no cover - defensive
                     logger.debug(
                         "Failed to send MIDI event at offset %d: %s", offset, e
                     )
@@ -1183,7 +1194,7 @@ class AudioUnitPlugin:
                         channels,
                     )
                 )
-            except Exception as e:  # pragma: no cover - defensive
+            except FRAMEWORK_ERRORS as e:  # pragma: no cover - defensive
                 logger.debug("Render failed at frame offset %d: %s", frame_offset, e)
                 rendered_chunks.append(bytes(frames * channels * 4))
 
@@ -1276,7 +1287,7 @@ class AudioUnitHost:
             try:
                 info = capi.audio_unit_get_component_info(comp_id)
                 plugins.append(info)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass
 
         return plugins

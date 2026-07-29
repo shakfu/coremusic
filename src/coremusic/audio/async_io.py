@@ -37,6 +37,7 @@ from pathlib import Path
 from typing import Any
 
 from coremusic.base import NUMPY_AVAILABLE
+from coremusic.exceptions import FRAMEWORK_ERRORS
 
 from .core import AudioBuffer, AudioFile, AudioFormat, AudioQueue
 
@@ -248,7 +249,7 @@ class AsyncAudioFile:
                         current_packet,
                         remaining,
                     )
-                except Exception:
+                except FRAMEWORK_ERRORS:
                     break
 
                 if chunk.size == 0:

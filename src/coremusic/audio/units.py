@@ -14,7 +14,7 @@ from typing import Any
 
 from coremusic import capi
 from coremusic.constants import AudioUnitProperty
-from coremusic.exceptions import AudioUnitError
+from coremusic.exceptions import FRAMEWORK_ERRORS, AudioUnitError
 
 from .core import AudioFormat
 
@@ -92,7 +92,7 @@ class AudioComponent(capi.CoreAudioObject):
             # Set the object_id using the Cython method
             component._set_object_id(result)
             return component
-        except Exception as e:
+        except FRAMEWORK_ERRORS as e:
             logger.debug("Component lookup failed: %s", e)
             return None
 
@@ -333,11 +333,11 @@ class AudioUnit(capi.CoreAudioObject):
                 result: float = struct.unpack("<d", data[:8])[0]
                 return result
             return 0.0
-        except Exception:
+        except FRAMEWORK_ERRORS:
             # Fallback to stream format sample rate
             try:
                 return self.get_stream_format("output", 0).sample_rate
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 return 0.0
 
     @sample_rate.setter
@@ -355,7 +355,7 @@ class AudioUnit(capi.CoreAudioObject):
                 data,
             )
             return
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
 
         # Try output scope (may work after initialization)
@@ -367,7 +367,7 @@ class AudioUnit(capi.CoreAudioObject):
                 data,
             )
             return
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
 
         # Try global scope as fallback
@@ -379,7 +379,7 @@ class AudioUnit(capi.CoreAudioObject):
                 data,
             )
             return
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
 
         # Last resort: try to set via stream format on input scope
@@ -402,7 +402,7 @@ class AudioUnit(capi.CoreAudioObject):
                 result: float = struct.unpack("<d", data[:8])[0]
                 return result
             return 0.0
-        except Exception:
+        except FRAMEWORK_ERRORS:
             return 0.0
 
     @property
@@ -417,7 +417,7 @@ class AudioUnit(capi.CoreAudioObject):
                 result: float = struct.unpack("<f", data[:4])[0]
                 return result
             return 0.0
-        except Exception:
+        except FRAMEWORK_ERRORS:
             return 0.0
 
     @property
@@ -432,7 +432,7 @@ class AudioUnit(capi.CoreAudioObject):
                 result: int = struct.unpack("<L", data[:4])[0]
                 return result
             return 0
-        except Exception:
+        except FRAMEWORK_ERRORS:
             return 0
 
     @max_frames_per_slice.setter
@@ -476,7 +476,7 @@ class AudioUnit(capi.CoreAudioObject):
             if param_count > 0:
                 return list(struct.unpack(f"<{param_count}L", data[: param_count * 4]))
             return []
-        except Exception:
+        except FRAMEWORK_ERRORS:
             return []
 
     def render(
@@ -535,7 +535,7 @@ class AudioUnit(capi.CoreAudioObject):
             if self._is_initialized:
                 try:
                     capi.audio_unit_uninitialize(self.object_id)
-                except Exception:
+                except FRAMEWORK_ERRORS:
                     pass  # Best effort cleanup
                 finally:
                     self._is_initialized = False
@@ -543,7 +543,7 @@ class AudioUnit(capi.CoreAudioObject):
             if self.object_id != 0:
                 try:
                     capi.audio_component_instance_dispose(self.object_id)
-                except Exception:
+                except FRAMEWORK_ERRORS:
                     pass  # Best effort cleanup
 
             super().dispose()

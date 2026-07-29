@@ -29,6 +29,8 @@ import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from coremusic.exceptions import FRAMEWORK_ERRORS
+
 from .. import capi
 
 if TYPE_CHECKING:
@@ -167,7 +169,7 @@ class LinkMIDIClock:
                 message,
                 timestamp=0,  # Send immediately
             )
-        except Exception as e:
+        except FRAMEWORK_ERRORS as e:
             print(f"Error sending MIDI message: {e}")
 
     def _clock_thread(self) -> None:
@@ -202,7 +204,9 @@ class LinkMIDIClock:
 
                 self._last_beat = current_beat
 
-            except Exception as e:
+            # Broad: top of a worker-thread loop. A thread that dies on an unexpected
+            # error stops the clock silently, which is worse than continuing.
+            except Exception as e:  # noqa: BLE001 - see comment above
                 print(f"Error in clock thread: {e}")
 
             time.sleep(sleep_interval)
@@ -368,10 +372,11 @@ class LinkMIDISequencer:
                                     timestamp=0,
                                 )
                                 event.sent = True
-                            except Exception as e:
+                            except FRAMEWORK_ERRORS as e:
                                 print(f"Error sending MIDI event: {e}")
 
-            except Exception as e:
+            # Broad: top of a worker-thread loop; see _clock_thread.
+            except Exception as e:  # noqa: BLE001 - see comment above
                 print(f"Error in sequencer thread: {e}")
 
             time.sleep(sleep_interval)

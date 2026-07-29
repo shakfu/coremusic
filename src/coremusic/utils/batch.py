@@ -302,7 +302,9 @@ def _process_item_with_retry(
                 duration=duration,
             )
 
-        except Exception as e:
+        # Broad: the work function is caller-supplied. Capturing whatever it
+        # raises as a per-item failure is this runner's entire contract.
+        except Exception as e:  # noqa: BLE001 - see comment above
             last_error = e
 
             # On last attempt, record the failure
@@ -551,7 +553,10 @@ def _process_parallel(
                     )
                     progress.failed += 1
 
-                except Exception as e:
+                # Broad: this is the caller's work function surfacing through the
+                # executor. Recording whatever it raised as a per-item failure is
+                # this runner's contract.
+                except Exception as e:  # noqa: BLE001 - see comment above
                     item = future_to_item[future]
                     results.append(
                         ItemResult(

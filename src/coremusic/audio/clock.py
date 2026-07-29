@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from coremusic import capi
+from coremusic.exceptions import FRAMEWORK_ERRORS
 
 __all__ = [
     "AudioClock",
@@ -227,7 +228,7 @@ class AudioClock(capi.CoreAudioObject):
                 if self._is_running:
                     self.stop()
                 capi.ca_clock_dispose(self.object_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass  # Best effort cleanup
             finally:
                 self._is_created = False
@@ -253,7 +254,7 @@ class AudioClock(capi.CoreAudioObject):
                 try:
                     rate = self.play_rate
                     status.append(f"rate={rate:.2f}")
-                except Exception:
+                except FRAMEWORK_ERRORS:
                     pass
         else:
             status.append("disposed")

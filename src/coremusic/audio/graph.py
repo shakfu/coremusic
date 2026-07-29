@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from coremusic import capi
-from coremusic.exceptions import AUGraphError
+from coremusic.exceptions import FRAMEWORK_ERRORS, AUGraphError
 
 from .units import AudioComponentDescription
 
@@ -362,7 +362,7 @@ class AUGraph(capi.CoreAudioObject):
         if not self.is_disposed:
             try:
                 capi.au_graph_dispose(self.object_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass  # Best effort cleanup
             finally:
                 super().dispose()
@@ -385,7 +385,7 @@ class AUGraph(capi.CoreAudioObject):
                     status.append("initialized")
                 if self.is_running:
                     status.append("running")
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass
         else:
             status.append("disposed")

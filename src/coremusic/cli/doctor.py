@@ -31,7 +31,7 @@ def _check_optional_dependencies() -> dict[str, bool]:
         try:
             __import__(name)
             results[name] = True
-        except Exception:
+        except ImportError:
             results[name] = False
     return results
 
@@ -51,7 +51,9 @@ def _check_audio() -> dict[str, object]:
         default_in = AudioDeviceManager.get_default_input_device()
         info["default_output"] = default_out.name if default_out else None
         info["default_input"] = default_in.name if default_in else None
-    except Exception as e:
+    # Broad by contract: `doctor` reports whether a subsystem is usable, so
+    # any failure is a finding to display rather than an error to raise.
+    except Exception as e:  # noqa: BLE001 - see comment above
         info["accessible"] = False
         info["error"] = str(e)
     return info
@@ -67,7 +69,8 @@ def _check_plugins() -> dict[str, object]:
         info["total"] = len(list_plugins())
         info["effects"] = len(list_plugins(type="effect"))
         info["instruments"] = len(list_plugins(type="instrument"))
-    except Exception as e:
+    # Broad by contract: see _check_audio_devices.
+    except Exception as e:  # noqa: BLE001 - see comment above
         info["accessible"] = False
         info["error"] = str(e)
     return info
@@ -82,7 +85,8 @@ def _check_midi() -> dict[str, object]:
         info["accessible"] = True
         info["sources"] = int(capi.midi_get_number_of_sources())
         info["destinations"] = int(capi.midi_get_number_of_destinations())
-    except Exception as e:
+    # Broad by contract: see _check_audio_devices.
+    except Exception as e:  # noqa: BLE001 - see comment above
         info["accessible"] = False
         info["error"] = str(e)
     return info

@@ -7,6 +7,7 @@ import logging
 from typing import Any
 
 from coremusic import capi
+from coremusic.exceptions import FRAMEWORK_ERRORS
 
 from ._formatters import output_json, output_table
 from ._mappings import PLUGIN_TYPES, get_plugin_type, get_plugin_type_display
@@ -323,7 +324,7 @@ def cmd_info(args: argparse.Namespace) -> int:
             finally:
                 capi.audio_unit_uninitialize(au_id)
                 capi.audio_component_instance_dispose(au_id)
-        except Exception as e:
+        except FRAMEWORK_ERRORS as e:
             logger.debug("Failed to query parameter count: %s", e)
             print("Parameters:   (unable to query)")
 
@@ -362,7 +363,7 @@ def cmd_params(args: argparse.Namespace) -> int:
                         "unit_name": PARAM_UNIT_NAMES.get(info.get("unit", 0), ""),
                     }
                 )
-            except Exception as e:
+            except FRAMEWORK_ERRORS as e:
                 logger.debug("Failed to query parameter %d: %s", param_id, e)
 
         if args.json:
@@ -396,11 +397,11 @@ def cmd_params(args: argparse.Namespace) -> int:
     finally:
         try:
             capi.audio_unit_uninitialize(au_id)
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
         try:
             capi.audio_component_instance_dispose(au_id)
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
 
     return EXIT_SUCCESS
@@ -441,11 +442,11 @@ def cmd_preset_list(args: argparse.Namespace) -> int:
     finally:
         try:
             capi.audio_unit_uninitialize(au_id)
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
         try:
             capi.audio_component_instance_dispose(au_id)
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
 
     return EXIT_SUCCESS
@@ -612,11 +613,11 @@ def cmd_process(args: argparse.Namespace) -> int:
     finally:
         try:
             capi.audio_unit_uninitialize(au_id)
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
         try:
             capi.audio_component_instance_dispose(au_id)
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
 
     return EXIT_SUCCESS
@@ -731,7 +732,7 @@ def _resolve_param_by_name(au_id: int, param_name: str) -> int:
             info = capi.audio_unit_get_parameter_info(au_id, pid)
             if name_lower == info.get("name", "").lower():
                 return pid
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
 
     # Partial match fallback
@@ -740,7 +741,7 @@ def _resolve_param_by_name(au_id: int, param_name: str) -> int:
             info = capi.audio_unit_get_parameter_info(au_id, pid)
             if name_lower in info.get("name", "").lower():
                 return pid
-        except Exception:
+        except FRAMEWORK_ERRORS:
             pass
 
     raise CLIError(f"Parameter not found: {param_name!r}")
@@ -888,11 +889,11 @@ def cmd_chain(args: argparse.Namespace) -> int:
         finally:
             try:
                 capi.audio_unit_uninitialize(au_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass
             try:
                 capi.audio_component_instance_dispose(au_id)
-            except Exception:
+            except FRAMEWORK_ERRORS:
                 pass
 
     # Convert float32 back to int16 for WAV output

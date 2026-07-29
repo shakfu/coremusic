@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
+from coremusic.exceptions import FRAMEWORK_ERRORS
+
 from ._formatters import output_json, output_table
 from ._utils import EXIT_SUCCESS, DeviceNotFoundError, print_help_default
 
@@ -167,7 +169,6 @@ def cmd_list(args: argparse.Namespace) -> int:
 def cmd_default(args: argparse.Namespace) -> int:
     """Show default audio devices."""
     from coremusic.audio import AudioDeviceManager
-    from coremusic.exceptions import AudioDeviceError
 
     result: dict[str, dict[str, Any] | None] = {}
     show_input = args.input_device
@@ -188,7 +189,7 @@ def cmd_default(args: argparse.Namespace) -> int:
                 }
             else:
                 result["output"] = None
-        except (AudioDeviceError, Exception):
+        except FRAMEWORK_ERRORS:
             result["output"] = None
 
     if show_input:
@@ -202,7 +203,7 @@ def cmd_default(args: argparse.Namespace) -> int:
                 }
             else:
                 result["input"] = None
-        except (AudioDeviceError, Exception):
+        except FRAMEWORK_ERRORS:
             result["input"] = None
 
     if args.json:
@@ -444,11 +445,11 @@ def _snapshot_devices() -> dict[str, dict[str, Any]]:
         }
         try:
             state["volume_out"] = d.get_volume(scope="output", channel=0)
-        except Exception:
+        except FRAMEWORK_ERRORS:
             state["volume_out"] = None
         try:
             state["mute_out"] = d.get_mute(scope="output", channel=0)
-        except Exception:
+        except FRAMEWORK_ERRORS:
             state["mute_out"] = None
         snapshot[uid] = state
     return snapshot
@@ -463,13 +464,13 @@ def _snapshot_defaults() -> dict[str, str | None]:
         dev = AudioDeviceManager.get_default_output_device()
         if dev:
             defaults["output"] = dev.uid or dev.name
-    except Exception:
+    except FRAMEWORK_ERRORS:
         pass
     try:
         dev = AudioDeviceManager.get_default_input_device()
         if dev:
             defaults["input"] = dev.uid or dev.name
-    except Exception:
+    except FRAMEWORK_ERRORS:
         pass
     return defaults
 

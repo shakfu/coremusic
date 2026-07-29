@@ -332,7 +332,7 @@ def os_status_to_string(status: int) -> str:
                 ]
             ).decode("ascii", errors="ignore")
             return f"Unknown error '{fourcc}' (0x{status:08X})"
-        except Exception:
+        except (ValueError, UnicodeDecodeError):
             logger.debug("Failed to decode FourCC for status code 0x%08X", status)
 
     return f"Unknown error code {status}"

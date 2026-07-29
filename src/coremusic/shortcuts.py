@@ -26,6 +26,8 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from coremusic.exceptions import FRAMEWORK_ERRORS
+
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
@@ -407,7 +409,7 @@ def list_devices(
                     "manufacturer": d.manufacturer,
                 }
             )
-        except Exception as e:
+        except FRAMEWORK_ERRORS as e:
             logger.debug("Failed to query device properties: %s", e)
     return result
 
