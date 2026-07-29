@@ -40,12 +40,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 - **`ruff` now enforces `BLE` (blind-except) on `src/`** - the lint policy in `pyproject.toml` had this family deferred with a note that adopting it "would mean narrowing 242 `except Exception` clauses ... see docs/dev/error_decorator.md, where that refactor was deferred". That work is done, so the rule is on, with `tests/`, `examples/`, `extras/` and `demos/` exempt.
 
+- **`AudioQueueParameter.VolumeRampTime` renamed to `VOLUME_RAMP_TIME`** to match the UPPER_SNAKE_CASE of every other member. The old name is kept as an enum alias, so existing callers are unaffected.
+
+- **`AudioUnit.sample_rate` uses `AudioUnitProperty.SAMPLE_RATE`** instead of a bare literal `2` explained by a trailing comment, at four call sites.
+
 ### Added
 
 - **`coremusic.exceptions.FRAMEWORK_ERRORS`** - the shared tuple described above, documented with what belongs in it and what deliberately does not.
 
 - **`tests/test_exception_narrowing.py`** - pins the meaning of `FRAMEWORK_ERRORS` (it must cover what `capi` raises and must not cover the types that signal a bug), checks at a real call site that a programming error propagates while a CoreAudio refusal is still absorbed, and fails if a broad swallowing handler appears outside the documented allowlist or if a listed exemption goes stale. The detector counts the tuple form, which is how the two `except (AudioDeviceError, Exception)` sites were found.
 
+- **`tests/test_constants_integrity.py`** - reconciles the enum layer against the compiled getters and the SDK, the check that was missing. Four layers: FourCC comments must round-trip their integer; enum members must equal the `capi.get_*` getter naming the same constant (36 pairs, up from the 4 checked previously); all 205 annotated constants are verified against a probe compiled at test time (marked `slow`, skipped where no compiler or SDK is present); and `capi.pyi` must not declare names the extension lacks. A fifth test guards the parser the others depend on. Verified to fail, not merely to pass: corrupting one constant by a single digit fails three checks independently.
+
+- **`tests/test_resource_release.py`** - covers the subclass-dispatch regression directly and measures descriptor counts across 50 unclosed `AudioFile` opens.
+
+- **10 real constants** replacing removed fabrications or filling gaps the compiled getters already exposed - `AudioFileProperty.IS_OPTIMIZED` and `MAGIC_COOKIE_DATA`; `AudioObjectProperty.MODEL_NAME`, `SERIAL_NUMBER`, `FIRMWARE_VERSION`; `AudioDeviceProperty.STREAM_CONFIGURATION`, `VOLUME_SCALAR`, `MUTE`, `IS_HIDDEN`, `PREFERRED_CHANNELS_FOR_STEREO`.
 
 ### Fixed
 
@@ -66,21 +75,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 - **`MIDIObjectProperty`** - a 26-member `IntEnum` of CoreMIDI property IDs describing an API that does not exist. CoreMIDI keys properties by `CFStringRef`, not integer FourCC; the library's own `coremidi.pxd` already declares the correct `MIDIObjectGetStringProperty` and `MIDIObjectGetIntegerProperty` signatures and uses them. The enum could not be passed to any CoreMIDI call, had no call sites, and no test coverage.
 
 - **8 fabricated constants naming no SDK symbol** - `AudioFileProperty.DATA_SIZE` and `DATA_IS_BIG_ENDIAN`; `AudioFormatID.GSM610` and `ADPCM_IMA_WAV` (WAV format tags, not `AudioFormatID`s); `AudioFormatID.MPEG4_AAC_LD_V2` and `MPEG4_AAC_HE_V2_SBR`; `AudioObjectProperty.DEVICE_NAME_IN_OWNER_USER_INTERFACE` and `CLASS_NAME`.
-
-### Added
-
-- **`tests/test_constants_integrity.py`** - reconciles the enum layer against the compiled getters and the SDK, the check that was missing. Four layers: FourCC comments must round-trip their integer; enum members must equal the `capi.get_*` getter naming the same constant (36 pairs, up from the 4 checked previously); all 205 annotated constants are verified against a probe compiled at test time (marked `slow`, skipped where no compiler or SDK is present); and `capi.pyi` must not declare names the extension lacks. A fifth test guards the parser the others depend on. Verified to fail, not merely to pass: corrupting one constant by a single digit fails three checks independently.
-
-- **`tests/test_resource_release.py`** - covers the subclass-dispatch regression directly and measures descriptor counts across 50 unclosed `AudioFile` opens.
-
-- **10 real constants** replacing removed fabrications or filling gaps the compiled getters already exposed - `AudioFileProperty.IS_OPTIMIZED` and `MAGIC_COOKIE_DATA`; `AudioObjectProperty.MODEL_NAME`, `SERIAL_NUMBER`, `FIRMWARE_VERSION`; `AudioDeviceProperty.STREAM_CONFIGURATION`, `VOLUME_SCALAR`, `MUTE`, `IS_HIDDEN`, `PREFERRED_CHANNELS_FOR_STEREO`.
-
-### Changed
-
-- **`AudioQueueParameter.VolumeRampTime` renamed to `VOLUME_RAMP_TIME`** to match the UPPER_SNAKE_CASE of every other member. The old name is kept as an enum alias, so existing callers are unaffected.
-
-- **`AudioUnit.sample_rate` uses `AudioUnitProperty.SAMPLE_RATE`** instead of a bare literal `2` explained by a trailing comment, at four call sites.
-
 
 ## [0.2.6]
 
