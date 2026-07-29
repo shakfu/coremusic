@@ -47,7 +47,7 @@ def mix_tracks(track_files, output_path, levels=None):
         is_float=True,
     )
     with ExtendedAudioFile.create(
-        output_path, capi.fourchar_to_int('WAVE'), out_format
+        output_path, capi.fourchar_to_int("WAVE"), out_format
     ) as output_file:
         output_file.write(len(mixed), mixed.tobytes())
 

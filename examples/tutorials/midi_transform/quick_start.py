@@ -9,11 +9,13 @@ from coremusic.midi.utilities import MIDISequence
 seq = MIDISequence.load("input.mid")
 
 # Create transformation pipeline
-pipeline = Pipeline([
-    Transpose(semitones=5),              # Up a perfect fourth
-    Quantize(grid=0.125, strength=0.8),  # Quantize to 16th notes
-    Humanize(timing=0.01, velocity=5),   # Add human feel
-])
+pipeline = Pipeline(
+    [
+        Transpose(semitones=5),  # Up a perfect fourth
+        Quantize(grid=0.125, strength=0.8),  # Quantize to 16th notes
+        Humanize(timing=0.01, velocity=5),  # Add human feel
+    ]
+)
 
 # Apply and save
 transformed = pipeline.apply(seq)

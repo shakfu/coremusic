@@ -9,7 +9,7 @@ from coremusic.constants import AudioFileProperty
 file_id = capi.audio_file_open_url("audio.wav")
 format_data = capi.audio_file_get_property(
     file_id,
-    int(AudioFileProperty.DATA_FORMAT)  # Convert to int
+    int(AudioFileProperty.DATA_FORMAT),  # Convert to int
 )
 capi.audio_file_close(file_id)
 # --8<-- [end:example]

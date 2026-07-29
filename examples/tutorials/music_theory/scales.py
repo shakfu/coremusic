@@ -4,7 +4,7 @@
 # --8<-- [start:example]
 from coremusic.music.theory import Note, Scale, ScaleType
 
-root = Note('C', 4)
+root = Note("C", 4)
 
 # Diatonic scales
 major = Scale(root, ScaleType.MAJOR)
@@ -13,11 +13,11 @@ harmonic_minor = Scale(root, ScaleType.HARMONIC_MINOR)
 melodic_minor = Scale(root, ScaleType.MELODIC_MINOR)
 
 # Modes
-dorian = Scale(Note('D', 4), ScaleType.DORIAN)
-phrygian = Scale(Note('E', 4), ScaleType.PHRYGIAN)
-lydian = Scale(Note('F', 4), ScaleType.LYDIAN)
-mixolydian = Scale(Note('G', 4), ScaleType.MIXOLYDIAN)
-locrian = Scale(Note('B', 4), ScaleType.LOCRIAN)
+dorian = Scale(Note("D", 4), ScaleType.DORIAN)
+phrygian = Scale(Note("E", 4), ScaleType.PHRYGIAN)
+lydian = Scale(Note("F", 4), ScaleType.LYDIAN)
+mixolydian = Scale(Note("G", 4), ScaleType.MIXOLYDIAN)
+locrian = Scale(Note("B", 4), ScaleType.LOCRIAN)
 
 # Pentatonic and blues
 major_pent = Scale(root, ScaleType.MAJOR_PENTATONIC)

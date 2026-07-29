@@ -21,8 +21,8 @@ with link.LinkSession(bpm=120.0) as session:
     timing1 = player1.get_link_timing()
     timing2 = player2.get_link_timing()
 
-    assert timing1['tempo'] == timing2['tempo']
-    assert abs(timing1['beat'] - timing2['beat']) < 0.01
+    assert timing1["tempo"] == timing2["tempo"]
+    assert abs(timing1["beat"] - timing2["beat"]) < 0.01
 
     # Start both (synchronized via Link)
     player1.play()

@@ -29,7 +29,7 @@ class AudioLevelMonitor:
             return
         samples = np.asarray(audio_data, dtype=np.float32)
         self.peak_level = float(np.max(np.abs(samples)))
-        self.rms_level = float(np.sqrt(np.mean(samples ** 2)))
+        self.rms_level = float(np.sqrt(np.mean(samples**2)))
 
     def start(self):
         self.stream.start()

@@ -20,7 +20,7 @@ fmt = PluginAudioFormat(
     sample_rate=sample_rate,
     channels=channels,
     sample_format=PluginAudioFormat.FLOAT32,
-    interleaved=True
+    interleaved=True,
 )
 
 # Process with reverb
@@ -30,7 +30,7 @@ with AudioUnitPlugin.from_name("AUMatrixReverb") as reverb:
     # Configure reverb
     # Reverbs differ in what they expose; a factory preset is portable
     for preset in reverb.factory_presets:
-        if preset.name == 'Large Room':
+        if preset.name == "Large Room":
             reverb.load_factory_preset(preset)
             break
 

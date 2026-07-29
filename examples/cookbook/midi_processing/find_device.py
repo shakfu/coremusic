@@ -17,6 +17,7 @@ def find_midi_source(device_name):
 
     return None, None
 
+
 # Find a specific device
 source, name = find_midi_source("Keyboard")
 if source:

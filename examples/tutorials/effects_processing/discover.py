@@ -14,15 +14,15 @@ def list_all_audio_units():
     # Group by type
     by_type = {}
     for unit in units:
-        by_type.setdefault(unit['type'], []).append(unit)
+        by_type.setdefault(unit["type"], []).append(unit)
 
     type_names = {
-        'aufx': 'Effects',
-        'aumu': 'Instruments',
-        'augn': 'Generators',
-        'aumx': 'Mixers',
-        'aufc': 'Format Converters',
-        'auou': 'Output Units',
+        "aufx": "Effects",
+        "aumu": "Instruments",
+        "augn": "Generators",
+        "aumx": "Mixers",
+        "aufc": "Format Converters",
+        "auou": "Output Units",
     }
 
     for unit_type, units_list in sorted(by_type.items()):
@@ -39,7 +39,7 @@ from coremusic.audio import get_audiounit_names
 
 def list_effects():
     """List only effect AudioUnits."""
-    names = get_audiounit_names(filter_type='aufx')
+    names = get_audiounit_names(filter_type="aufx")
 
     print("Available Effects:")
     for name in sorted(names)[:10]:
@@ -59,8 +59,9 @@ def find_effect(name):
     """Find an effect by name."""
     host = AudioUnitHost()
     matches = [
-        plugin for plugin in host.discover_plugins(type='effect')
-        if name.lower() in plugin['name'].lower()
+        plugin
+        for plugin in host.discover_plugins(type="effect")
+        if name.lower() in plugin["name"].lower()
     ]
 
     if not matches:

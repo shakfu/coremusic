@@ -239,7 +239,10 @@ class AudioFormatConverter:
     @staticmethod
     def _normalize_sample(sample: Any, sample_format: str) -> float:
         """Normalize a sample to float32 range [-1.0, 1.0]"""
-        if sample_format == PluginAudioFormat.FLOAT32 or sample_format == PluginAudioFormat.FLOAT64:
+        if (
+            sample_format == PluginAudioFormat.FLOAT32
+            or sample_format == PluginAudioFormat.FLOAT64
+        ):
             return float(sample)
         elif sample_format == PluginAudioFormat.INT16:
             return float(sample) / 32768.0
@@ -460,9 +463,7 @@ class PresetManager:
 
         return preset_file
 
-    def load_preset(
-        self, plugin: AudioUnitPlugin, preset_name: str
-    ) -> dict[str, Any]:
+    def load_preset(self, plugin: AudioUnitPlugin, preset_name: str) -> dict[str, Any]:
         """Load a user preset and apply it to the plugin
 
         Args:
@@ -647,9 +648,7 @@ class AudioUnitPlugin:
             self._info = component_info
 
     @classmethod
-    def from_name(
-        cls, name: str, component_type: str | None = None
-    ) -> AudioUnitPlugin:
+    def from_name(cls, name: str, component_type: str | None = None) -> AudioUnitPlugin:
         """Create plugin by name
 
         Args:
@@ -1571,7 +1570,8 @@ class AudioUnitChain:
 
         # Mix
         mixed_samples = [
-            dry * (1.0 - mix) + wet * mix for dry, wet in zip(dry_samples, wet_samples, strict=True)
+            dry * (1.0 - mix) + wet * mix
+            for dry, wet in zip(dry_samples, wet_samples, strict=True)
         ]
 
         # Pack back

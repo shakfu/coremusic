@@ -48,7 +48,7 @@ class MIDIMonitor:
         elif status == 0xFC:  # Stop
             return "MIDI Stop"
         else:
-            hex_data = ' '.join(f'{b:02X}' for b in data)
+            hex_data = " ".join(f"{b:02X}" for b in data)
             return f"Unknown   | {hex_data}"
 
     def process(self, payload):
@@ -56,6 +56,7 @@ class MIDIMonitor:
             self.message_count += 1
             message = self.parse_message(data)
             print(f"[{self.message_count:6d}] {message}")
+
 
 # Setup monitor
 monitor = MIDIMonitor()

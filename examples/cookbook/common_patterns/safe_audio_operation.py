@@ -26,6 +26,7 @@ def safe_audio_operation(filepath):
     except Exception as e:
         return None, f"Unexpected error: {e}"
 
+
 # Usage
 data, error = safe_audio_operation("audio.wav")
 if error:

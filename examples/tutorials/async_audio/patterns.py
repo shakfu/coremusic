@@ -52,10 +52,8 @@ async def process_batch(filepaths, batch_size=10):
     """Process files in batches to limit concurrency."""
     results = []
     for i in range(0, len(filepaths), batch_size):
-        batch = filepaths[i:i + batch_size]
-        batch_results = await asyncio.gather(
-            *[process_file(fp) for fp in batch]
-        )
+        batch = filepaths[i : i + batch_size]
+        batch_results = await asyncio.gather(*[process_file(fp) for fp in batch])
         results.extend(batch_results)
         print(f"Processed batch {i // batch_size + 1}")
     return results

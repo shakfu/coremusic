@@ -8,8 +8,7 @@ from coremusic import capi
 audio_file = capi.audio_file_open_url("audio.wav")
 try:
     format_data = capi.audio_file_get_property(
-        audio_file,
-        capi.get_audio_file_property_data_format()
+        audio_file, capi.get_audio_file_property_data_format()
     )
     data, count = capi.audio_file_read_packets(audio_file, 0, 1000)
 finally:

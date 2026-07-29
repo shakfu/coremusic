@@ -13,8 +13,6 @@ with AudioFile("input.wav") as audio:
     file_id = audio.object_id
     for i in range(0, audio.packet_count, 4096):
         # Direct C calls - maximum performance
-        data, count = capi.audio_file_read_packets(
-            file_id, i, 4096
-        )
+        data, count = capi.audio_file_read_packets(file_id, i, 4096)
         # Process data...
 # --8<-- [end:example]

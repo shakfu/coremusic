@@ -13,9 +13,6 @@ with AudioFile("audio.wav") as audio:
 
 # Create custom format
 format = AudioFormat(
-    sample_rate=44100.0,
-    format_id='lpcm',
-    channels_per_frame=2,
-    bits_per_channel=16
+    sample_rate=44100.0, format_id="lpcm", channels_per_frame=2, bits_per_channel=16
 )
 # --8<-- [end:example]

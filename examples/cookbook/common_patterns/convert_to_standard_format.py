@@ -16,9 +16,7 @@ def convert_to_standard_format(input_path, output_path):
         input_file.client_format = target_format
 
         with ExtendedAudioFile.create(
-            output_path,
-            capi.fourchar_to_int('WAVE'),
-            target_format
+            output_path, capi.fourchar_to_int("WAVE"), target_format
         ) as output_file:
             # Copy with automatic conversion
             chunk_size = 8192
@@ -27,5 +25,7 @@ def convert_to_standard_format(input_path, output_path):
                 if count == 0:
                     break
                 output_file.write(count, data)
+
+
 convert_to_standard_format("audio.wav", "standard.wav")
 # --8<-- [end:example]

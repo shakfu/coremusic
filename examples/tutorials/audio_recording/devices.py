@@ -46,7 +46,7 @@ def record_from_device(device_name, output_path, duration):
     try:
         recorder = AudioRecorder(
             sample_rate=device.sample_rate,
-            channels=min(device.channel_count('input'), 2),
+            channels=min(device.channel_count("input"), 2),
         )
         recorder.setup_input(duration=duration)
         recorder.start()

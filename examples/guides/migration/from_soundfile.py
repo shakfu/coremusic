@@ -38,7 +38,7 @@ audio_format = AudioFormat.pcm(
 # Write
 with ExtendedAudioFile.create(
     "output.wav",
-    capi.fourchar_to_int('WAVE'),
+    capi.fourchar_to_int("WAVE"),
     audio_format,
 ) as audio:
     audio.write(len(data), data.tobytes())
@@ -83,7 +83,7 @@ audio_format = AudioFormat.pcm(sample_rate=44100.0, channels=1, bits=16)
 
 with ExtendedAudioFile.create(
     "output16.wav",
-    capi.fourchar_to_int('WAVE'),
+    capi.fourchar_to_int("WAVE"),
     audio_format,
 ) as audio:
     audio.write(len(data), data.tobytes())

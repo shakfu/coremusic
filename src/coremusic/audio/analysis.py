@@ -1237,9 +1237,7 @@ class LivePitchDetector:
 
         return None
 
-    def _detect_pitch_autocorrelation(
-        self, buffer: NDArray, sr: float
-    ) -> float | None:
+    def _detect_pitch_autocorrelation(self, buffer: NDArray, sr: float) -> float | None:
         """Detect pitch using autocorrelation.
 
         Args:

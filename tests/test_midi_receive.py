@@ -90,9 +90,7 @@ def collect_messages(obj_id, expected, timeout=DELIVERY_TIMEOUT):
 
 @pytest.fixture
 def client():
-    client_id = midi_or_skip(
-        lambda: capi.midi_client_create("coremusic-receive-tests")
-    )
+    client_id = midi_or_skip(lambda: capi.midi_client_create("coremusic-receive-tests"))
     yield client_id
     capi.midi_client_dispose(client_id)
 

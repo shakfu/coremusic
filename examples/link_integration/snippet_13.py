@@ -25,7 +25,7 @@ with link.LinkSession(bpm=120.0) as session:
                 beat=position,
                 channel=0,
                 controller=74,  # Filter Cutoff
-                value=value
+                value=value,
             )
 
     print(f"Scheduled {len(seq.events)} CC events")

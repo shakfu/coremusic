@@ -18,14 +18,16 @@ def retry_operation(func, max_retries=3, delay=0.5):
         except CoreAudioError as e:
             last_error = e
             if attempt < max_retries - 1:
-                time.sleep(delay * (2 ** attempt))
+                time.sleep(delay * (2**attempt))
 
     raise last_error
+
 
 # Usage
 def read_file():
     with AudioFile("audio.wav") as audio:
         return audio.read_packets(0, 1024)
+
 
 data, count = retry_operation(read_file)
 # --8<-- [end:example]

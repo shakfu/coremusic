@@ -59,10 +59,10 @@ class SimpleMusicPlayer:
         """Get current playback status."""
         progress = self.player.get_progress()
         return {
-            'playing': self.player.is_playing(),
-            'progress': progress,
-            'current_time': progress * self.duration,
-            'duration': self.duration,
+            "playing": self.player.is_playing(),
+            "progress": progress,
+            "current_time": progress * self.duration,
+            "duration": self.duration,
         }
 
 
@@ -81,8 +81,8 @@ def main():
         while player.player.is_playing():
             status = player.get_status()
             bar_width = 30
-            filled = int(bar_width * status['progress'])
-            bar = '=' * filled + '-' * (bar_width - filled)
+            filled = int(bar_width * status["progress"])
+            bar = "=" * filled + "-" * (bar_width - filled)
 
             sys.stdout.write(
                 f"\r[{bar}] {status['current_time']:.1f}s / {status['duration']:.1f}s"

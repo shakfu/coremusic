@@ -30,6 +30,7 @@ def create_drum_pattern():
 
     return pattern
 
+
 # Setup MIDI
 client = capi.midi_client_create("Drum Machine")
 port = capi.midi_output_port_create(client, "Drums")
@@ -48,7 +49,7 @@ with link.LinkSession(bpm=120.0) as session:
             channel=9,  # MIDI channel 10 (index 9) for drums
             note=note,
             velocity=velocity,
-            duration=0.1
+            duration=0.1,
         )
 
     print(f"Loaded {len(pattern)} drum hits")

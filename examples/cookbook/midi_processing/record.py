@@ -33,10 +33,12 @@ class MIDIRecorder:
                     self.origin = seconds
 
                 for data in self.splitter.push(payload):
-                    self.recorded_messages.append({
-                        'time': seconds - self.origin,
-                        'data': data,
-                    })
+                    self.recorded_messages.append(
+                        {
+                            "time": seconds - self.origin,
+                            "data": data,
+                        }
+                    )
 
         dropped = capi.midi_input_dropped(self.port_id)
         if dropped:
@@ -45,14 +47,15 @@ class MIDIRecorder:
 
     def save(self, filename):
         """Save recorded messages to file"""
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             messages = [
-                {'time': msg['time'], 'data': list(msg['data'])}
+                {"time": msg["time"], "data": list(msg["data"])}
                 for msg in self.recorded_messages
             ]
             json.dump(messages, f, indent=2)
 
         print(f"Saved to {filename}")
+
 
 # Setup recorder
 client = capi.midi_client_create("Recorder")

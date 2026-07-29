@@ -25,6 +25,6 @@ audio_processing_task()
 profiler.disable()
 stats = pstats.Stats(profiler)
 stats.strip_dirs()
-stats.sort_stats('cumulative')
+stats.sort_stats("cumulative")
 stats.print_stats(20)  # Top 20 functions
 # --8<-- [end:example]

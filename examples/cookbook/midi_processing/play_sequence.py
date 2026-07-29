@@ -19,6 +19,7 @@ def play_note(port, dest, channel, note, velocity, duration):
     # Note Off
     capi.midi_send_data(port, dest, note_off(note, channel=channel))
 
+
 # Setup
 client = capi.midi_client_create("Sequencer")
 output_port = capi.midi_output_port_create(client, "Output")

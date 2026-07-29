@@ -16,5 +16,6 @@ async def read_async():
             # Process chunk
             print(len(chunk))
 
+
 asyncio.run(read_async())
 # --8<-- [end:example]

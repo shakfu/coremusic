@@ -20,8 +20,8 @@ EXTRAS_DIR = os.path.join(REPO_ROOT, "extras")
 
 def run_utility(*args, cwd=None):
     env = dict(os.environ)
-    env["PYTHONPATH"] = os.path.join(REPO_ROOT, "src") + os.pathsep + env.get(
-        "PYTHONPATH", ""
+    env["PYTHONPATH"] = (
+        os.path.join(REPO_ROOT, "src") + os.pathsep + env.get("PYTHONPATH", "")
     )
     return subprocess.run(
         [sys.executable, *args],

@@ -15,8 +15,8 @@ except ValueError as e:
 
 # Or check before loading
 host = AudioUnitHost()
-effects = host.discover_plugins(type='effect')
-plugin_names = [p['name'] for p in effects]
+effects = host.discover_plugins(type="effect")
+plugin_names = [p["name"] for p in effects]
 
 if any("AUDelay" in name for name in plugin_names):
     with AudioUnitPlugin.from_name("AUDelay") as plugin:

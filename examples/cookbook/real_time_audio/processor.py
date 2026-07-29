@@ -3,8 +3,9 @@
 
 from coremusic.audio import AudioDeviceManager
 
-if not (AudioDeviceManager.get_input_devices()
-        and AudioDeviceManager.get_output_devices()):
+if not (
+    AudioDeviceManager.get_input_devices() and AudioDeviceManager.get_output_devices()
+):
     print("Real-time processing needs both an input and an output device.")
     raise SystemExit(0)
 

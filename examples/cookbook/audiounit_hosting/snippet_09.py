@@ -14,8 +14,9 @@ fmt_i32 = PluginAudioFormat(44100.0, 2, PluginAudioFormat.INT32)
 
 # Non-interleaved (planar) format
 fmt_planar = PluginAudioFormat(
-    44100.0, 2,
+    44100.0,
+    2,
     PluginAudioFormat.FLOAT32,
-    interleaved=False  # Separate buffers per channel
+    interleaved=False,  # Separate buffers per channel
 )
 # --8<-- [end:example]

@@ -23,7 +23,7 @@ def process_large_file(input_path, output_path, chunk_size=8192):
         )
 
         with ExtendedAudioFile.create(
-            output_path, capi.fourchar_to_int('WAVE'), out_format
+            output_path, capi.fourchar_to_int("WAVE"), out_format
         ) as output_file:
             processed = 0
 
@@ -44,7 +44,7 @@ def process_large_file(input_path, output_path, chunk_size=8192):
                 processed += count
 
                 # Progress
-                print(f"Progress: {processed / total_packets * 100:.1f}%", end='\r')
+                print(f"Progress: {processed / total_packets * 100:.1f}%", end="\r")
 
     print()
 

@@ -9,9 +9,7 @@ unit = AudioUnit.default_output()
 
 # Configure the format you will feed it. The output scope belongs to the
 # device, so the client format goes on the input scope.
-audio_format = AudioFormat.pcm(
-    sample_rate=44100.0, channels=2, bits=32, is_float=True
-)
+audio_format = AudioFormat.pcm(sample_rate=44100.0, channels=2, bits=32, is_float=True)
 unit.set_stream_format(audio_format, scope="input")
 
 # Smaller slices mean lower latency: 256 frames at 44.1kHz is about 5.8ms

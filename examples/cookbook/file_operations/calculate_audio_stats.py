@@ -20,18 +20,19 @@ def calculate_audio_stats(filepath):
 
         # Calculate statistics
         stats = {
-            'mean': float(np.mean(samples)),
-            'std': float(np.std(samples)),
-            'min': int(np.min(samples)),
-            'max': int(np.max(samples)),
-            'rms': float(np.sqrt(np.mean(samples**2))),
+            "mean": float(np.mean(samples)),
+            "std": float(np.std(samples)),
+            "min": int(np.min(samples)),
+            "max": int(np.max(samples)),
+            "rms": float(np.sqrt(np.mean(samples**2))),
         }
 
         # Calculate peak amplitude
-        max_value = 2**(fmt.bits_per_channel - 1) - 1
-        stats['peak_amplitude'] = max(abs(stats['min']), abs(stats['max'])) / max_value
+        max_value = 2 ** (fmt.bits_per_channel - 1) - 1
+        stats["peak_amplitude"] = max(abs(stats["min"]), abs(stats["max"])) / max_value
 
         return stats
+
 
 # Usage
 stats = calculate_audio_stats("audio.wav")

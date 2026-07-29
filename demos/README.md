@@ -40,6 +40,7 @@ accept `-h/--help` for options.
 
   ```python
   from coremusic.audio.utilities import get_audiounit_names
+
   print(get_audiounit_names(filter_type="aufx"))  # effects
   print(get_audiounit_names(filter_type="aumu"))  # instruments
   ```

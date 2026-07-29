@@ -86,15 +86,18 @@ class TestNoteResolution:
 
     NOTE_TAKING = [note_on, note_off, poly_aftertouch]
 
-    @pytest.mark.parametrize(("name", "number"), [
-        ("C-1", 0),
-        ("C4", 60),
-        ("C#4", 61),
-        ("Db4", 61),
-        ("F#3", 54),
-        ("A4", 69),
-        ("G9", 127),
-    ])
+    @pytest.mark.parametrize(
+        ("name", "number"),
+        [
+            ("C-1", 0),
+            ("C4", 60),
+            ("C#4", 61),
+            ("Db4", 61),
+            ("F#3", 54),
+            ("A4", 69),
+            ("G9", 127),
+        ],
+    )
     def test_name_resolves_to_midi_number(self, name, number):
         assert note_on(name, 100) == note_on(number, 100)
 
@@ -308,18 +311,24 @@ class TestAgreementWithCapiTuples:
     triple is not a valid way to build a message.
     """
 
-    @pytest.mark.parametrize(("built", "triple"), [
-        (note_on(60, 100, channel=3), capi.midi_note_on(3, 60, 100)),
-        (note_off(60, 0, channel=3), capi.midi_note_off(3, 60, 0)),
-        (control_change(7, 100, channel=3), capi.midi_control_change(3, 7, 100)),
-        (pitch_bend(12000, channel=3), capi.midi_pitch_bend(3, 12000)),
-    ])
+    @pytest.mark.parametrize(
+        ("built", "triple"),
+        [
+            (note_on(60, 100, channel=3), capi.midi_note_on(3, 60, 100)),
+            (note_off(60, 0, channel=3), capi.midi_note_off(3, 60, 0)),
+            (control_change(7, 100, channel=3), capi.midi_control_change(3, 7, 100)),
+            (pitch_bend(12000, channel=3), capi.midi_pitch_bend(3, 12000)),
+        ],
+    )
     def test_three_byte_messages_match_capi_exactly(self, built, triple):
         assert built == bytes(triple)
 
-    @pytest.mark.parametrize(("built", "triple"), [
-        (program_change(48, channel=3), capi.midi_program_change(3, 48)),
-    ])
+    @pytest.mark.parametrize(
+        ("built", "triple"),
+        [
+            (program_change(48, channel=3), capi.midi_program_change(3, 48)),
+        ],
+    )
     def test_two_byte_messages_match_capi_on_the_bytes_that_exist(self, built, triple):
         """Status and data1 must agree; capi's padding data2 has no wire byte."""
         assert len(built) == 2

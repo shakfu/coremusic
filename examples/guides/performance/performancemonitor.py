@@ -22,8 +22,10 @@ class PerformanceMonitor:
 
         print(f"{label}:")
         print(f"  Time: {elapsed:.3f}s")
-        print(f"  Memory: {current / 1024 / 1024:.1f} MB "
-              f"(+{(current - self.start_memory) / 1024 / 1024:.1f} MB)")
+        print(
+            f"  Memory: {current / 1024 / 1024:.1f} MB "
+            f"(+{(current - self.start_memory) / 1024 / 1024:.1f} MB)"
+        )
         print(f"  Peak: {peak / 1024 / 1024:.1f} MB")
 
 

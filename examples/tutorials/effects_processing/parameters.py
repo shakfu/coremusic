@@ -31,9 +31,9 @@ def configure_delay_effect():
     """Configure delay effect parameters."""
     with AudioUnitPlugin.from_name("AUDelay", component_type="aufx") as plugin:
         # Parameters are addressed by name or by id
-        plugin.set_parameter("Delay Time", 0.25)     # seconds
-        plugin.set_parameter("Feedback", 50.0)       # percent
-        plugin['Dry/Wet Mix'] = 30.0                 # percent
+        plugin.set_parameter("Delay Time", 0.25)  # seconds
+        plugin.set_parameter("Feedback", 50.0)  # percent
+        plugin["Dry/Wet Mix"] = 30.0  # percent
 
         print("Delay configured:")
         print(f"  Delay Time: {plugin.get_parameter('Delay Time').value}s")

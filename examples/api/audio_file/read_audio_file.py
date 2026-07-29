@@ -15,11 +15,12 @@ def read_audio_file(filepath):
         data, count = audio.read_packets(0, total_frames)
 
         return {
-            'data': data,
-            'sample_rate': audio.format.sample_rate,
-            'channels': audio.format.channels_per_frame,
-            'format': audio.format.format_id
+            "data": data,
+            "sample_rate": audio.format.sample_rate,
+            "channels": audio.format.channels_per_frame,
+            "format": audio.format.format_id,
         }
+
 
 # Use the function
 audio_data = read_audio_file("audio.wav")

@@ -9,10 +9,12 @@ sequence = MIDISequence.load("input.mid")
 from coremusic.midi.transform import Pipeline, Transpose, VelocityScale
 
 # Create with list of transformers
-pipeline = Pipeline([
-    Transpose(5),
-    VelocityScale(factor=0.8),
-])
+pipeline = Pipeline(
+    [
+        Transpose(5),
+        VelocityScale(factor=0.8),
+    ]
+)
 
 # Or build incrementally
 pipeline = Pipeline()

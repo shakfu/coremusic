@@ -6,9 +6,9 @@ from coremusic.audio import AudioComponent, AudioComponentDescription
 
 # Create component description
 desc = AudioComponentDescription(
-    type='aufx',          # Effect
-    subtype='dely',       # Delay
-    manufacturer='appl',
+    type="aufx",  # Effect
+    subtype="dely",  # Delay
+    manufacturer="appl",
 )
 
 # Find component

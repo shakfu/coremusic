@@ -10,16 +10,16 @@ def detect_audio_format(filepath):
     with AudioFile(filepath) as audio:
         fmt = audio.format
 
-        if fmt.format_id == 'lpcm':
-            return 'Linear PCM (uncompressed)'
-        elif fmt.format_id == 'aac ':
-            return 'AAC (compressed)'
-        elif fmt.format_id == '.mp3':
-            return 'MP3 (compressed)'
-        elif fmt.format_id == 'alac':
-            return 'Apple Lossless (compressed)'
+        if fmt.format_id == "lpcm":
+            return "Linear PCM (uncompressed)"
+        elif fmt.format_id == "aac ":
+            return "AAC (compressed)"
+        elif fmt.format_id == ".mp3":
+            return "MP3 (compressed)"
+        elif fmt.format_id == "alac":
+            return "Apple Lossless (compressed)"
         else:
-            return f'Unknown format: {fmt.format_id}'
+            return f"Unknown format: {fmt.format_id}"
 
 
 print(detect_audio_format("audio.wav"))  # Linear PCM (uncompressed)
@@ -40,9 +40,7 @@ def check_format_properties(filepath):
 
         # Check if CD quality (44.1kHz, 16-bit stereo)
         is_cd_quality = (
-            fmt.sample_rate == 44100.0 and
-            fmt.bits_per_channel == 16 and
-            fmt.is_stereo
+            fmt.sample_rate == 44100.0 and fmt.bits_per_channel == 16 and fmt.is_stereo
         )
         print(f"CD Quality: {is_cd_quality}")
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Progress Tracking."""
 
+
 def process_chunk(chunk):
     pass
 
@@ -31,12 +32,14 @@ def process_with_progress(filepath, callback=None):
                 progress = processed / total
                 callback(progress)
 
+
 # Usage with progress bar
 def show_progress(progress):
     bar_length = 40
     filled = int(bar_length * progress)
-    bar = '=' * filled + '-' * (bar_length - filled)
-    print(f'\r[{bar}] {progress:.1%}', end='')
+    bar = "=" * filled + "-" * (bar_length - filled)
+    print(f"\r[{bar}] {progress:.1%}", end="")
+
 
 process_with_progress("audio.wav", callback=show_progress)
 print()  # New line after progress bar

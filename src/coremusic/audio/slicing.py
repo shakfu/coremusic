@@ -856,9 +856,7 @@ class SliceRecombinator:
         random_slices = random.choices(self.slices, k=num_slices)
         return self._concatenate_slices(random_slices, crossfade_duration, normalize)
 
-    def _recombine_reverse(
-        self, crossfade_duration: float, normalize: bool
-    ) -> NDArray:
+    def _recombine_reverse(self, crossfade_duration: float, normalize: bool) -> NDArray:
         """Recombine in reverse order."""
         return self._concatenate_slices(
             self.slices[::-1], crossfade_duration, normalize

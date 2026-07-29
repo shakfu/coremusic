@@ -7,7 +7,7 @@ import time
 from coremusic.audio.audiounit_host import AudioUnitPlugin
 
 # Load instrument plugin
-with AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu') as synth:
+with AudioUnitPlugin.from_name("DLSMusicDevice", component_type="aumu") as synth:
     # Play middle C
     synth.note_on(channel=0, note=60, velocity=100)
     time.sleep(1.0)

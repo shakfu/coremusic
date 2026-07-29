@@ -59,11 +59,11 @@ def load_audio_file(filepath):
         data, count = audio.read_packets(0, audio.packet_count)
 
         return {
-            'data': data,
-            'sample_rate': audio.format.sample_rate,
-            'channels': audio.format.channels_per_frame,
-            'bits_per_channel': audio.format.bits_per_channel,
-            'duration': audio.duration
+            "data": data,
+            "sample_rate": audio.format.sample_rate,
+            "channels": audio.format.channels_per_frame,
+            "bits_per_channel": audio.format.bits_per_channel,
+            "duration": audio.duration,
         }
 
 

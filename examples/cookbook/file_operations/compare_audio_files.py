@@ -12,16 +12,17 @@ def compare_audio_files(file1, file2):
         fmt2 = audio2.format
 
         comparison = {
-            'same_sample_rate': fmt1.sample_rate == fmt2.sample_rate,
-            'same_channels': fmt1.channels_per_frame == fmt2.channels_per_frame,
-            'same_bit_depth': fmt1.bits_per_channel == fmt2.bits_per_channel,
-            'same_format': fmt1.format_id == fmt2.format_id,
-            'same_duration': abs(audio1.duration - audio2.duration) < 0.01,
+            "same_sample_rate": fmt1.sample_rate == fmt2.sample_rate,
+            "same_channels": fmt1.channels_per_frame == fmt2.channels_per_frame,
+            "same_bit_depth": fmt1.bits_per_channel == fmt2.bits_per_channel,
+            "same_format": fmt1.format_id == fmt2.format_id,
+            "same_duration": abs(audio1.duration - audio2.duration) < 0.01,
         }
 
-        comparison['compatible'] = all(comparison.values())
+        comparison["compatible"] = all(comparison.values())
 
         return comparison
+
 
 # Usage
 result = compare_audio_files("audio.wav", "input.wav")

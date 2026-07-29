@@ -12,9 +12,12 @@ with AudioFile("audio.wav") as audio:
 
 # Good: nested context managers
 out_format = AudioFormat.pcm(44100.0, channels=2, bits=16)
-with AudioFile("input.wav") as input_file, ExtendedAudioFile.create(
-    "output.wav", capi.fourchar_to_int("WAVE"), out_format
-) as output_file:
+with (
+    AudioFile("input.wav") as input_file,
+    ExtendedAudioFile.create(
+        "output.wav", capi.fourchar_to_int("WAVE"), out_format
+    ) as output_file,
+):
     data, count = input_file.read_packets(0, 1024)
     output_file.write(count, data)
 

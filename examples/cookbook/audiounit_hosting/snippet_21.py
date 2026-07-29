@@ -18,7 +18,9 @@ with AudioUnitPlugin.from_name("AUMatrixReverb") as plugin:
     # 3. Pre-allocate buffers when possible
     for i in range(0, total_frames, chunk_size):
         frames_to_process = min(chunk_size, total_frames - i)
-        output = plugin.process(audio_data[i:i+frames_to_process],
-                               num_frames=frames_to_process,
-                               audio_format=fmt)
+        output = plugin.process(
+            audio_data[i : i + frames_to_process],
+            num_frames=frames_to_process,
+            audio_format=fmt,
+        )
 # --8<-- [end:example]

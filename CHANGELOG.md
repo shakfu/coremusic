@@ -22,6 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.2.8]
+
 ### Fixed
 
 - **Long-standing Link test flakiness traced to another Link peer on the machine** - the Ableton Link tests failed 3-6 times per run, with the failing test moving between runs. Link tempo is a property of the *shared session*, not of one participant, so any Link-enabled application on the network -- Max, Live, a hardware bridge -- joins the session a test creates and its tempo wins. Instrumentation showed `num_peers` going 0 to 1 mid-test with the tempo reverting at exactly that moment, and a session constructed as `LinkSession(bpm=99.0)` reporting 140.00014 on its first read: the constructor's `bpm` is only a proposal, and joining an existing session overrides it. Over 12 attempts a committed tempo survived 5 of 5 times with no peer present and was discarded 5 of 7 times with one present.

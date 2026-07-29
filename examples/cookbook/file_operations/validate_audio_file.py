@@ -55,6 +55,7 @@ def validate_audio_file(filepath, min_duration=0.1, max_duration=3600):
 
     return len(errors) == 0, errors
 
+
 # Usage
 is_valid, errors = validate_audio_file("audio.wav")
 if not is_valid:

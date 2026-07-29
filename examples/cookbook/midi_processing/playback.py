@@ -37,17 +37,18 @@ def playback_midi(filename, output_port, dest):
 
     for msg in messages:
         # Wait until scheduled time
-        target_time = start_time + msg['time']
+        target_time = start_time + msg["time"]
         wait_time = target_time - time.time()
 
         if wait_time > 0:
             time.sleep(wait_time)
 
         # Send message
-        data = bytes(msg['data'])
+        data = bytes(msg["data"])
         capi.midi_send_data(output_port, dest, data)
 
     print("Playback complete")
+
 
 # Setup playback
 client = capi.midi_client_create("Playback")

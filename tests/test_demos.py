@@ -34,8 +34,8 @@ def test_demos_exist():
 def test_demo_help(demo):
     """`--help` must work: it imports the module and builds the parser."""
     env = dict(os.environ)
-    env["PYTHONPATH"] = os.path.join(REPO_ROOT, "src") + os.pathsep + env.get(
-        "PYTHONPATH", ""
+    env["PYTHONPATH"] = (
+        os.path.join(REPO_ROOT, "src") + os.pathsep + env.get("PYTHONPATH", "")
     )
 
     result = subprocess.run(

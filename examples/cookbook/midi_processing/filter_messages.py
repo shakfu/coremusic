@@ -26,6 +26,7 @@ class MIDIFilter:
 
             print(f"MIDI: {[hex(b) for b in data]}")
 
+
 # Create filter that blocks notes but allows CC
 midi_filter = MIDIFilter(filter_notes=True, filter_cc=False)
 

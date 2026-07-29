@@ -531,7 +531,9 @@ class TestHumanize:
         """Same seed produces same results."""
         result1 = Humanize(timing=0.02, velocity=10, seed=42).transform(simple_sequence)
         result2 = Humanize(timing=0.02, velocity=10, seed=42).transform(simple_sequence)
-        for e1, e2 in zip(result1.tracks[0].events, result2.tracks[0].events, strict=True):
+        for e1, e2 in zip(
+            result1.tracks[0].events, result2.tracks[0].events, strict=True
+        ):
             assert e1.time == e2.time
             assert e1.data2 == e2.data2
 

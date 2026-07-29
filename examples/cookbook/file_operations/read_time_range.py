@@ -23,6 +23,7 @@ def read_time_range(filepath, start_seconds, duration_seconds):
         data, count = audio.read_packets(start_frame, frame_count)
         return data
 
+
 # Usage: read 1 second starting at 1 second
 data = read_time_range("audio.wav", start_seconds=1.0, duration_seconds=1.0)
 # --8<-- [end:example]

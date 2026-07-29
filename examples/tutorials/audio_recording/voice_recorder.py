@@ -47,15 +47,16 @@ class VoiceRecorder:
             while recorder.is_recording():
                 recorder.run_loop(0.1)
                 elapsed = recorder.get_recorded_duration()
-                print(f"  Recording... {elapsed:.1f}s", end='\r')
+                print(f"  Recording... {elapsed:.1f}s", end="\r")
         except KeyboardInterrupt:
             pass
 
         recorder.stop()
         recorder.save_to_file(str(output_path))
 
-        print(f"\nRecorded {recorder.get_recorded_duration():.1f}s "
-              f"to {output_path.name}")
+        print(
+            f"\nRecorded {recorder.get_recorded_duration():.1f}s to {output_path.name}"
+        )
         return output_path
 
     def list_recordings(self):

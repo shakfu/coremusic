@@ -21,7 +21,7 @@ def process_audio_with_effect(input_path, output_path, effect_name):
 
     with AudioUnitPlugin.from_name(effect_name, component_type="aufx") as plugin:
         for start in range(0, len(samples), block_frames):
-            block = samples[start:start + block_frames]
+            block = samples[start : start + block_frames]
             if len(block) < block_frames:
                 # The plugin wants full blocks; pad the tail
                 block = np.pad(block, ((0, block_frames - len(block)), (0, 0)))
@@ -31,11 +31,9 @@ def process_audio_with_effect(input_path, output_path, effect_name):
 
     result = np.concatenate(processed_blocks)
 
-    out_format = AudioFormat.pcm(
-        sample_rate, channels=channels, bits=32, is_float=True
-    )
+    out_format = AudioFormat.pcm(sample_rate, channels=channels, bits=32, is_float=True)
     with ExtendedAudioFile.create(
-        output_path, capi.fourchar_to_int('WAVE'), out_format
+        output_path, capi.fourchar_to_int("WAVE"), out_format
     ) as output:
         output.write(len(result) // channels, result.tobytes())
 

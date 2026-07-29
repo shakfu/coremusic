@@ -26,6 +26,7 @@ def audio_to_numpy(filepath):
 
         return samples, fmt.sample_rate
 
+
 # Usage
 samples, sample_rate = audio_to_numpy("audio.wav")
 print(f"Shape: {samples.shape}, Sample rate: {sample_rate}Hz")

@@ -28,7 +28,7 @@ def process_multiple_files(input_files, output_path):
         # Open output file
         output = stack.enter_context(
             ExtendedAudioFile.create(
-                output_path, capi.fourchar_to_int('WAVE'), out_format
+                output_path, capi.fourchar_to_int("WAVE"), out_format
             )
         )
 

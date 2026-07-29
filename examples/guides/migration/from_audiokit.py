@@ -36,7 +36,7 @@ input_data = bytes(512 * 2 * 4)  # 512 stereo frames of float32 silence
 
 # Load a reverb AudioUnit
 with AudioUnitPlugin.from_name("AUMatrixReverb") as reverb:
-    reverb['Dry/Wet Mix'] = 50.0
+    reverb["Dry/Wet Mix"] = 50.0
 
     # Process audio
     output = reverb.process(input_data)

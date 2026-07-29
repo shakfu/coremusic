@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Read File in Chunks."""
 
+
 def process_chunk(chunk):
     pass
 
@@ -20,6 +21,7 @@ def read_audio_chunks(filepath, chunk_size=4096):
             data, count = audio.read_packets(current, to_read)
             yield data
             current += count
+
 
 # Usage
 for chunk in read_audio_chunks("audio.wav"):

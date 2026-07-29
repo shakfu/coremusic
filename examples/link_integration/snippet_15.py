@@ -31,7 +31,7 @@ with link.LinkSession(bpm=120.0) as session:
             channel=9,  # MIDI drum channel
             note=note,
             velocity=100,
-            duration=0.9
+            duration=0.9,
         )
 
     # Start both audio and MIDI
@@ -46,9 +46,12 @@ with link.LinkSession(bpm=120.0) as session:
         timing = player.get_link_timing(quantum=4.0)
         progress = player.get_progress()
 
-        print(f"Beat: {timing['beat']:7.2f} | "
-              f"Audio: {progress*100:5.1f}% | "
-              f"Tempo: {timing['tempo']:6.1f} BPM", end='\r')
+        print(
+            f"Beat: {timing['beat']:7.2f} | "
+            f"Audio: {progress * 100:5.1f}% | "
+            f"Tempo: {timing['tempo']:6.1f} BPM",
+            end="\r",
+        )
 
         time.sleep(0.5)
 

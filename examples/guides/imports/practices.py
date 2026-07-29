@@ -11,7 +11,7 @@ capi.audio_file_close(file_id)
 
 # Constants are exposed as get_* functions
 property_id = capi.get_audio_file_property_data_format()
-format_id = capi.fourchar_to_int('lpcm')
+format_id = capi.fourchar_to_int("lpcm")
 # --8<-- [end:functional]
 
 # --8<-- [start:specific]

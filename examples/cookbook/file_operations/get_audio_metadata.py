@@ -15,18 +15,19 @@ def get_audio_metadata(filepath):
         fmt = audio.format
 
         metadata = {
-            'filename': path.name,
-            'file_size': path.stat().st_size,
-            'duration': audio.duration,
-            'sample_rate': fmt.sample_rate,
-            'channels': fmt.channels_per_frame,
-            'bit_depth': fmt.bits_per_channel,
-            'format_id': fmt.format_id,
-            'frame_count': audio.packet_count,
-            'bitrate': (fmt.sample_rate * fmt.bytes_per_frame * 8) / 1000
+            "filename": path.name,
+            "file_size": path.stat().st_size,
+            "duration": audio.duration,
+            "sample_rate": fmt.sample_rate,
+            "channels": fmt.channels_per_frame,
+            "bit_depth": fmt.bits_per_channel,
+            "format_id": fmt.format_id,
+            "frame_count": audio.packet_count,
+            "bitrate": (fmt.sample_rate * fmt.bytes_per_frame * 8) / 1000,
         }
 
         return metadata
+
 
 # Usage
 metadata = get_audio_metadata("audio.wav")

@@ -25,8 +25,7 @@ with link.LinkSession(bpm=120.0) as session:
     # Run for 10 seconds
     for _i in range(20):
         state = session.capture_app_session_state()
-        print(f"Tempo: {state.tempo:6.1f} BPM | "
-              f"Peers: {session.num_peers}", end='\r')
+        print(f"Tempo: {state.tempo:6.1f} BPM | Peers: {session.num_peers}", end="\r")
         time.sleep(0.5)
 
     # Stop clock

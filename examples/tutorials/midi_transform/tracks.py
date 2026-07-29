@@ -25,14 +25,11 @@ merged = TrackMerge(name="Combined").transform(sequence)
 from coremusic.midi.transform import Arpeggiate
 
 # Arpeggiate upward
-arp_up = Arpeggiate(
-    pattern='up',
-    note_duration=0.1
-).transform(sequence)
+arp_up = Arpeggiate(pattern="up", note_duration=0.1).transform(sequence)
 
 # Available patterns: 'up', 'down', 'up_down', 'down_up', 'random'
-arp_down = Arpeggiate(pattern='down', note_duration=0.1).transform(sequence)
-arp_random = Arpeggiate(
-    pattern='random', note_duration=0.1, seed=42
-).transform(sequence)
+arp_down = Arpeggiate(pattern="down", note_duration=0.1).transform(sequence)
+arp_random = Arpeggiate(pattern="random", note_duration=0.1, seed=42).transform(
+    sequence
+)
 # --8<-- [end:arpeggio]

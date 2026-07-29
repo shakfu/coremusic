@@ -16,12 +16,12 @@ with link.LinkSession(bpm=120.0) as session:
 
     # Create a 4-beat pattern
     pattern = [
-        (0.0, 60, 100),   # Beat 0: C4
-        (0.5, 62, 80),    # Beat 0.5: D4
-        (1.0, 64, 100),   # Beat 1: E4
-        (2.0, 67, 100),   # Beat 2: G4
-        (3.0, 65, 100),   # Beat 3: F4
-        (3.5, 64, 80),    # Beat 3.5: E4
+        (0.0, 60, 100),  # Beat 0: C4
+        (0.5, 62, 80),  # Beat 0.5: D4
+        (1.0, 64, 100),  # Beat 1: E4
+        (2.0, 67, 100),  # Beat 2: G4
+        (3.0, 65, 100),  # Beat 3: F4
+        (3.5, 64, 80),  # Beat 3.5: E4
     ]
 
     # Schedule pattern for multiple bars
@@ -34,7 +34,7 @@ with link.LinkSession(bpm=120.0) as session:
                 channel=0,
                 note=note,
                 velocity=velocity,
-                duration=0.4
+                duration=0.4,
             )
 
     print(f"Scheduled {num_bars} bars of pattern")

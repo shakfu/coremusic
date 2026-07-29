@@ -125,7 +125,8 @@ These modules are not installed as part of coremusic. To use them:
 1. Add the examples directory to your Python path:
    ```python
    import sys
-   sys.path.insert(0, '/path/to/coremusic/extras')
+
+   sys.path.insert(0, "/path/to/coremusic/extras")
    ```
 
 2. Import the modules:

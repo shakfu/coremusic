@@ -115,9 +115,7 @@ def check_numpy_available() -> None:
     try:
         import numpy as np  # noqa: F401
     except ImportError as e:
-        raise ImportError(
-            "NumPy is required. Install with: pip install numpy"
-        ) from e
+        raise ImportError("NumPy is required. Install with: pip install numpy") from e
 
 
 def check_matplotlib_available() -> None:

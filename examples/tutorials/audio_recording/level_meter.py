@@ -46,10 +46,10 @@ print("=" * 50)
 deadline = time.monotonic() + 1.0
 while time.monotonic() < deadline:
     meter_width = 20
-    left_bar = '|' * int(levels[0] * meter_width)
-    right_bar = '|' * int(levels[1] * meter_width)
+    left_bar = "|" * int(levels[0] * meter_width)
+    right_bar = "|" * int(levels[1] * meter_width)
 
-    sys.stdout.write(f'\rL:{left_bar:<20} R:{right_bar:<20}')
+    sys.stdout.write(f"\rL:{left_bar:<20} R:{right_bar:<20}")
     sys.stdout.flush()
     time.sleep(0.05)
 

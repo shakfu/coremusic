@@ -26,12 +26,10 @@ from coremusic.midi.transform import EventTypeFilter
 from coremusic.midi.utilities import MIDIStatus
 
 # Keep only note events
-notes_only = EventTypeFilter(
-    keep=[MIDIStatus.NOTE_ON, MIDIStatus.NOTE_OFF]
-).transform(sequence)
+notes_only = EventTypeFilter(keep=[MIDIStatus.NOTE_ON, MIDIStatus.NOTE_OFF]).transform(
+    sequence
+)
 
 # Remove control changes
-no_cc = EventTypeFilter(
-    remove=[MIDIStatus.CONTROL_CHANGE]
-).transform(sequence)
+no_cc = EventTypeFilter(remove=[MIDIStatus.CONTROL_CHANGE]).transform(sequence)
 # --8<-- [end:events]

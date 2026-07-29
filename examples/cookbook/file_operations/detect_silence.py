@@ -21,7 +21,7 @@ def detect_silence(filepath, threshold=0.01, min_duration=0.5):
         samples = np.frombuffer(data, dtype=dtype)
 
         # Normalize to [-1, 1]
-        max_value = 2**(fmt.bits_per_channel - 1)
+        max_value = 2 ** (fmt.bits_per_channel - 1)
         samples = samples.astype(np.float32) / max_value
 
         # Calculate RMS in windows
@@ -33,7 +33,7 @@ def detect_silence(filepath, threshold=0.01, min_duration=0.5):
         silence_start = 0
 
         for i in range(num_windows):
-            window = samples[i * window_size:(i + 1) * window_size]
+            window = samples[i * window_size : (i + 1) * window_size]
             rms = np.sqrt(np.mean(window**2))
 
             if rms < threshold:
@@ -51,6 +51,7 @@ def detect_silence(filepath, threshold=0.01, min_duration=0.5):
                     in_silence = False
 
         return silent_regions
+
 
 # Usage
 silent_regions = detect_silence("audio.wav")

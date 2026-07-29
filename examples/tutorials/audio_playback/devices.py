@@ -44,6 +44,8 @@ def play_to_device(filepath, device_name):
     finally:
         if previous is not None:
             AudioDeviceManager.set_default_output_device(previous)
+
+
 # --8<-- [end:select]
 
 # --8<-- [start:volume]

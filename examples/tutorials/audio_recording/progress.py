@@ -33,9 +33,9 @@ def record_with_progress(output_path, duration):
 
             bar_width = 40
             filled = int(bar_width * progress)
-            bar = '=' * filled + '-' * (bar_width - filled)
+            bar = "=" * filled + "-" * (bar_width - filled)
 
-            sys.stdout.write(f'\r[{bar}] {elapsed:.1f}s')
+            sys.stdout.write(f"\r[{bar}] {elapsed:.1f}s")
             sys.stdout.flush()
 
     except KeyboardInterrupt:

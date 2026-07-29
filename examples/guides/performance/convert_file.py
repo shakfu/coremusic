@@ -10,13 +10,14 @@ from coremusic.audio import AudioFile
 
 def convert_file(input_path):
     """Convert single file"""
-    output_path = input_path.with_suffix('.mp3')
+    output_path = input_path.with_suffix(".mp3")
 
     with AudioFile(str(input_path)) as audio:
         format = audio.format
         # Conversion logic...
 
     return output_path
+
 
 def batch_convert(input_dir, num_workers=4):
     """Convert all files in directory"""
@@ -26,6 +27,7 @@ def batch_convert(input_dir, num_workers=4):
         results = executor.map(convert_file, files)
 
     return list(results)
+
 
 # Convert 100 files using 4 cores
 results = batch_convert("audio_files/", num_workers=4)

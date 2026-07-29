@@ -5,7 +5,7 @@
 from coremusic import capi
 
 # Convert FourCC string to integer
-format_int = capi.fourchar_to_int('lpcm')
+format_int = capi.fourchar_to_int("lpcm")
 
 # Convert integer back to FourCC string
 format_str = capi.int_to_fourchar(format_int)

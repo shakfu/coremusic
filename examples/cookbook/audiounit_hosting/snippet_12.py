@@ -17,7 +17,7 @@ output1 = chain.process(audio_chunk1)
 
 # Insert plugin in the middle
 chain.insert_plugin(1, "AUDelay")
-chain.configure_plugin(1, {'Delay Time': 0.3})
+chain.configure_plugin(1, {"Delay Time": 0.3})
 
 # Process more audio with new chain
 output2 = chain.process(audio_chunk2)

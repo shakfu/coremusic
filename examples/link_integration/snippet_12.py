@@ -37,7 +37,7 @@ with link.LinkSession(bpm=120.0) as session:
         # Show which beat we're on
         beat_num = int(beat) % 4
         indicators = ["●" if i == beat_num else "○" for i in range(4)]
-        print(f"{' '.join(indicators)}  Beat: {beat:7.2f}", end='\r')
+        print(f"{' '.join(indicators)}  Beat: {beat:7.2f}", end="\r")
 
         time.sleep(0.5)
 

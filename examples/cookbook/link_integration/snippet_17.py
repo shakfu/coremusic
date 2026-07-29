@@ -7,6 +7,7 @@ import threading
 from coremusic import link
 
 with link.LinkSession(bpm=120.0) as session:
+
     def audio_thread():
         """This runs on audio thread"""
         # Capture state on audio thread for low latency

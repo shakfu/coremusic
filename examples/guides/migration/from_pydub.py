@@ -30,15 +30,15 @@ with AudioFile("input.wav") as audio:
     audio_format = audio.format
 
 # Volume adjustment
-samples *= 3.16   # +10 dB
-samples *= 0.56   # -5 dB
+samples *= 3.16  # +10 dB
+samples *= 0.56  # -5 dB
 
 # Slicing: AudioSlicer finds musical boundaries rather than cutting blindly
 slicer = AudioSlicer("input.wav")
 slices = slicer.detect_slices()
 
 # Export
-out_format = capi.fourchar_to_int('WAVE')
+out_format = capi.fourchar_to_int("WAVE")
 float_format = audio_format.pcm(
     audio_format.sample_rate,
     channels=audio_format.channels_per_frame,

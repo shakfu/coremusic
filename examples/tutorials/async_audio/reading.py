@@ -57,10 +57,10 @@ async def analyze_file(filepath):
     """Analyze a single audio file."""
     async with AsyncAudioFile(filepath) as audio:
         return {
-            'path': str(filepath),
-            'duration': audio.duration,
-            'sample_rate': audio.format.sample_rate,
-            'channels': audio.format.channels_per_frame
+            "path": str(filepath),
+            "duration": audio.duration,
+            "sample_rate": audio.format.sample_rate,
+            "channels": audio.format.channels_per_frame,
         }
 
 
@@ -77,7 +77,7 @@ async def main():
 
     results = await analyze_multiple_files(wav_files)
 
-    total_duration = sum(r['duration'] for r in results)
+    total_duration = sum(r["duration"] for r in results)
     for r in results:
         print(f"  {r['path']}: {r['duration']:.2f}s")
     print(f"Total: {total_duration:.2f}s")

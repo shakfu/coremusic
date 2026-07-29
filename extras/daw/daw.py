@@ -341,9 +341,7 @@ class Clip:
         >>> midi_clip = Clip(MIDIClip(), clip_type="midi")  # MIDI clip
     """
 
-    def __init__(
-        self, source: str | Path | MIDIClip | Any, clip_type: str = "audio"
-    ):
+    def __init__(self, source: str | Path | MIDIClip | Any, clip_type: str = "audio"):
         """Initialize clip.
 
         Args:

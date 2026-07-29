@@ -110,9 +110,7 @@ def _resolve_note(note: NoteLike) -> tuple[int, int | None]:
     return _check("note", note, 127), None
 
 
-def note_on(
-    note: NoteLike, velocity: int | None = None, *, channel: int = 0
-) -> bytes:
+def note_on(note: NoteLike, velocity: int | None = None, *, channel: int = 0) -> bytes:
     """Build a Note On message.
 
     A velocity of 0 is a Note Off by convention; :func:`note_off` is clearer.

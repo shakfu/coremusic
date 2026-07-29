@@ -47,7 +47,7 @@ class AudioProcessor:
 
         blocks = []
         for start in range(0, len(samples), self.BLOCK_FRAMES):
-            block = samples[start:start + self.BLOCK_FRAMES]
+            block = samples[start : start + self.BLOCK_FRAMES]
             if len(block) < self.BLOCK_FRAMES:
                 block = np.pad(block, ((0, self.BLOCK_FRAMES - len(block)), (0, 0)))
             out = self.chain.process(block.tobytes(), num_frames=self.BLOCK_FRAMES)
@@ -59,7 +59,7 @@ class AudioProcessor:
             sample_rate, channels=channels, bits=32, is_float=True
         )
         with ExtendedAudioFile.create(
-            output_path, capi.fourchar_to_int('WAVE'), out_format
+            output_path, capi.fourchar_to_int("WAVE"), out_format
         ) as output:
             output.write(len(result) // channels, result.tobytes())
 
@@ -75,7 +75,9 @@ class AudioProcessor:
 def main():
     if len(sys.argv) < 3:
         print("Usage: python audio_processor.py <input.wav> <output.wav> [effects...]")
-        print("Example: python audio_processor.py in.wav out.wav AUDelay AUMatrixReverb")
+        print(
+            "Example: python audio_processor.py in.wav out.wav AUDelay AUMatrixReverb"
+        )
         sys.exit(1)
 
     input_file = sys.argv[1]

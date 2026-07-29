@@ -17,13 +17,15 @@ with link.LinkSession(bpm=120.0) as session:
     # Monitor beats during playback
     while player.is_playing():
         timing = player.get_link_timing(quantum=4.0)
-        beat = timing['beat']
+        beat = timing["beat"]
 
         # Visual beat indicator
         indicator = "●" if int(beat) % 4 == 0 else "○"
 
-        print(f"{indicator} Beat: {beat:7.2f} | "
-              f"Tempo: {timing['tempo']:6.1f} BPM", end='\r')
+        print(
+            f"{indicator} Beat: {beat:7.2f} | Tempo: {timing['tempo']:6.1f} BPM",
+            end="\r",
+        )
 
         time.sleep(0.1)
 

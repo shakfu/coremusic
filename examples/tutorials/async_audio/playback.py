@@ -49,7 +49,7 @@ async def monitor_playback(duration):
     """Report progress while something else plays."""
     elapsed = 0.0
     while elapsed < duration:
-        print(f"Playing: {elapsed:.1f}s / {duration:.1f}s", end='\r')
+        print(f"Playing: {elapsed:.1f}s / {duration:.1f}s", end="\r")
         await asyncio.sleep(0.1)
         elapsed += 0.1
     print()

@@ -23,6 +23,7 @@ def is_format_supported(filepath):
     except Exception as e:
         return False, f"Error: {e}"
 
+
 # Usage
 supported, message = is_format_supported("audio.wav")
 print(message)

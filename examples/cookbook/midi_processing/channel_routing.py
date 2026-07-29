@@ -29,6 +29,7 @@ class ChannelRouter:
                 data[0] = (status & 0xF0) | self.output_channel
                 capi.midi_send_data(self.output_port, self.dest, bytes(data))
 
+
 # Route channel 0 -> channel 1
 client = capi.midi_client_create("Channel Router")
 output_port = capi.midi_output_port_create(client, "Output")

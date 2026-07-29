@@ -17,7 +17,7 @@ input_data = bytes(512 * 2 * 4)
 from coremusic.audio.audiounit_host import AudioUnitPlugin
 
 with AudioUnitPlugin.from_name("AUDelay") as plugin:
-    plugin['Delay Time'] = 0.5
+    plugin["Delay Time"] = 0.5
     output = plugin.process(input_data)
 # --8<-- [end:load-plugin]
 

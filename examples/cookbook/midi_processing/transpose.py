@@ -31,6 +31,7 @@ class Transposer:
             # Forward the (possibly modified) message
             capi.midi_send_data(self.output_port, self.dest, bytes(data))
 
+
 # Transpose up one octave
 client = capi.midi_client_create("Transposer")
 output_port = capi.midi_output_port_create(client, "Output")

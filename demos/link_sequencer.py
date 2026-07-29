@@ -91,9 +91,7 @@ def make_link_generator(
     return generate
 
 
-def print_timeline(
-    session: link.LinkSession, quantum: float, duration: float
-) -> None:
+def print_timeline(session: link.LinkSession, quantum: float, duration: float) -> None:
     """Fallback: show the live Link timeline without producing audio."""
     clock = session.clock
     print("No audio output; showing Link timeline (Ctrl-C to stop):")

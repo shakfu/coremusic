@@ -6,7 +6,7 @@ import time
 
 from coremusic.audio.audiounit_host import AudioUnitPlugin
 
-with AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu') as synth:
+with AudioUnitPlugin.from_name("DLSMusicDevice", component_type="aumu") as synth:
     synth.note_on(channel=0, note=60, velocity=100)
 
     # Volume fade (CC 7)

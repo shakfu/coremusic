@@ -17,8 +17,8 @@ class AudioCache:
     def _get_file_hash(self, filepath):
         """Get MD5 hash of file."""
         hasher = hashlib.md5()
-        with open(filepath, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), b''):
+        with open(filepath, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
                 hasher.update(chunk)
         return hasher.hexdigest()
 
@@ -32,6 +32,7 @@ class AudioCache:
                 self._cache[file_hash] = data
 
         return self._cache[file_hash]
+
 
 # Usage
 cache = AudioCache()

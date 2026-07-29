@@ -23,6 +23,7 @@ def process_audio_chunks(filepath, chunk_size=1024):
 
             current_frame += count
 
+
 def process_audio_data(data):
     """Process audio data chunk."""
     # Your processing logic here

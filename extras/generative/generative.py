@@ -706,9 +706,7 @@ class MarkovGenerator(Generator):
     def config(self, value: MarkovConfig):
         self._config = value
 
-    def train(
-        self, sequence: list[int | Note], order: int | None = None
-    ) -> None:
+    def train(self, sequence: list[int | Note], order: int | None = None) -> None:
         """Train transition matrix from a sequence.
 
         Args:

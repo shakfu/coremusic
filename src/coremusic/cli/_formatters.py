@@ -93,8 +93,6 @@ def output_table(
     for row in rows:
         # A row may be shorter than the header list; the last cell is
         # appended separately below, so truncation here is intended.
-        parts = [
-            truncate(c, w) for c, w in zip(row[:-1], widths[:-1], strict=False)
-        ]
+        parts = [truncate(c, w) for c, w in zip(row[:-1], widths[:-1], strict=False)]
         parts.append(str(row[-1]) if len(row) > len(widths) - 1 else str(row[-1]))
         print("  ".join(parts))

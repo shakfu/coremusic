@@ -14,9 +14,9 @@ with AudioUnitChain() as chain:
     chain.add_plugin("AUMatrixReverb")
 
     # Configure each plugin
-    chain.configure_plugin(0, {'Cutoff Frequency': 200.0})
-    chain.configure_plugin(1, {'Delay Time': 0.5, 'Feedback': 30.0})
-    chain.configure_plugin(2, {'Dry/Wet Mix': 40.0})
+    chain.configure_plugin(0, {"Cutoff Frequency": 200.0})
+    chain.configure_plugin(1, {"Delay Time": 0.5, "Feedback": 30.0})
+    chain.configure_plugin(2, {"Dry/Wet Mix": 40.0})
 
     # Process audio through entire chain
     output = chain.process(input_audio, num_frames=1024)

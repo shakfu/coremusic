@@ -44,7 +44,7 @@ with AudioFile("audio.wav") as audio:
     samples = audio.read_as_numpy()
 
 with AudioUnitPlugin.from_name("AUMatrixReverb") as reverb:
-    reverb['Dry/Wet Mix'] = 40.0
+    reverb["Dry/Wet Mix"] = 40.0
     block = bytes(512 * 2 * 4)  # one block of float32 stereo silence
     processed = reverb.process(block)
     print(f"processed {len(processed)} bytes")

@@ -20,7 +20,7 @@ with AudioFile("input.wav") as audio:
 
 with ExtendedAudioFile.create(
     "output.wav",
-    capi.fourchar_to_int('WAVE'),
+    capi.fourchar_to_int("WAVE"),
     out_format,
 ) as output:
     output.write(len(samples), samples.tobytes())

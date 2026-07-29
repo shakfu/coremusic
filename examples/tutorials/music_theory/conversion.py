@@ -5,8 +5,8 @@
 from coremusic.music.theory import midi_to_note_name, note_name_to_midi
 
 # Name to MIDI
-midi = note_name_to_midi('C', 4)  # 60
-midi = note_name_to_midi('A', 4)  # 69
+midi = note_name_to_midi("C", 4)  # 60
+midi = note_name_to_midi("A", 4)  # 69
 
 # MIDI to name, as a single string with the octave
 name = midi_to_note_name(60)  # 'C4'

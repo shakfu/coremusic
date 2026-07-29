@@ -8,9 +8,11 @@ from coremusic import capi
 
 incoming: queue.SimpleQueue = queue.SimpleQueue()
 
+
 def midi_callback(data: bytes, host_time: int) -> None:
     # Hand off immediately; do the real work on your own thread.
     incoming.put((host_time, data))
+
 
 client = capi.midi_client_create("MIDI Input")
 input_port = capi.midi_input_port_create(client, "Input", midi_callback)

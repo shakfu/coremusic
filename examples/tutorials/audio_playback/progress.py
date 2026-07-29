@@ -37,13 +37,13 @@ def play_with_progress(filepath):
         # Display progress bar
         bar_width = 40
         filled = int(bar_width * progress)
-        bar = '=' * filled + '-' * (bar_width - filled)
+        bar = "=" * filled + "-" * (bar_width - filled)
 
-        sys.stdout.write(f'\r[{bar}] {current_time:.1f}s / {duration:.1f}s')
+        sys.stdout.write(f"\r[{bar}] {current_time:.1f}s / {duration:.1f}s")
         sys.stdout.flush()
         time.sleep(0.1)
 
-    print('\nDone!')
+    print("\nDone!")
 
 
 play_with_progress("audio.wav")

@@ -157,11 +157,15 @@ def _broad_swallowing_handlers() -> set[tuple[str, str]]:
             # version of this check that only looked at the bare-name form.
             broad = (
                 exc is None
-                or (isinstance(exc, ast.Name) and exc.id in ("Exception", "BaseException"))
+                or (
+                    isinstance(exc, ast.Name)
+                    and exc.id in ("Exception", "BaseException")
+                )
                 or (
                     isinstance(exc, ast.Tuple)
                     and any(
-                        isinstance(e, ast.Name) and e.id in ("Exception", "BaseException")
+                        isinstance(e, ast.Name)
+                        and e.id in ("Exception", "BaseException")
                         for e in exc.elts
                     )
                 )

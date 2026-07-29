@@ -29,9 +29,12 @@ with link.LinkSession(bpm=120.0) as session:
         timing = player.get_link_timing(quantum=4.0)
         progress = player.get_progress()
 
-        print(f"Beat: {timing['beat']:7.2f} | "
-              f"Phase: {timing['phase']:4.2f} | "
-              f"Progress: {progress*100:5.1f}%", end='\r')
+        print(
+            f"Beat: {timing['beat']:7.2f} | "
+            f"Phase: {timing['phase']:4.2f} | "
+            f"Progress: {progress * 100:5.1f}%",
+            end="\r",
+        )
 
         time.sleep(0.5)
 

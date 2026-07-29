@@ -28,7 +28,7 @@ def record_audio(output_path, duration_seconds):
         # arrive, because capture is driven from this thread.
         while recorder.is_recording():
             recorder.run_loop(0.1)
-            print(f"Recording: {recorder.get_recorded_duration():.1f}s", end='\r')
+            print(f"Recording: {recorder.get_recorded_duration():.1f}s", end="\r")
     except KeyboardInterrupt:
         print("\nStopped early")
 

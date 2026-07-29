@@ -11,6 +11,7 @@ def read_audio_file(filepath):
         data, count = audio.read_packets(0, audio.packet_count)
         return data, audio.format
 
+
 # Usage
 audio_data, format_info = read_audio_file("audio.wav")
 print(f"Read {len(audio_data)} bytes")

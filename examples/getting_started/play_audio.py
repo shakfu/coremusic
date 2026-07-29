@@ -35,7 +35,7 @@ def play_audio(filepath):
     # Wait for playback to complete
     while player.is_playing():
         progress = player.get_progress()
-        print(f"Progress: {progress:.1%}", end='\r')
+        print(f"Progress: {progress:.1%}", end="\r")
         time.sleep(0.1)
 
     print("\nPlayback complete!")

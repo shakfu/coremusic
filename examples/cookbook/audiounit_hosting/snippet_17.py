@@ -6,12 +6,12 @@ import time
 
 from coremusic.audio.audiounit_host import AudioUnitPlugin
 
-with AudioUnitPlugin.from_name("DLSMusicDevice", component_type='aumu') as synth:
+with AudioUnitPlugin.from_name("DLSMusicDevice", component_type="aumu") as synth:
     # Setup different instruments on different channels
-    synth.program_change(channel=0, program=0)   # Piano
+    synth.program_change(channel=0, program=0)  # Piano
     synth.program_change(channel=1, program=48)  # Strings
     synth.program_change(channel=2, program=56)  # Trumpet
-    synth.program_change(channel=9, program=0)   # Drums (always channel 9)
+    synth.program_change(channel=9, program=0)  # Drums (always channel 9)
 
     # Play multi-channel arrangement
     synth.note_on(channel=0, note=60, velocity=90)  # Piano: C

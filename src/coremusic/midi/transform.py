@@ -580,10 +580,10 @@ class VelocityCurve(MIDITransformer):
 
     CURVES: dict[str, Callable[[float], float]] = {
         "linear": lambda x: x,
-        "log": lambda x: (x**0.5),  # Square root for softer feel
-        "exp": lambda x: (x**2),  # Square for more dynamic
-        "soft": lambda x: (x**0.7),
-        "hard": lambda x: (x**1.5),
+        "log": lambda x: x**0.5,  # Square root for softer feel
+        "exp": lambda x: x**2,  # Square for more dynamic
+        "soft": lambda x: x**0.7,
+        "hard": lambda x: x**1.5,
     }
 
     def __init__(

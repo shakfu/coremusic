@@ -42,7 +42,7 @@ def resample_manually(input_path, output_path, target_sample_rate=48000.0):
         input_file.client_format = out_format
 
         with ExtendedAudioFile.create(
-            output_path, capi.fourchar_to_int('WAVE'), out_format
+            output_path, capi.fourchar_to_int("WAVE"), out_format
         ) as output_file:
             chunk_size = 8192
             while True:

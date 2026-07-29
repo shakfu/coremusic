@@ -10,8 +10,8 @@ with AudioUnitChain() as chain:
     chain.add_plugin("AUDelay")
     chain.add_plugin("AUMatrixReverb")
 
-    chain.configure_plugin(0, {'Delay Time': 0.25})
-    chain.configure_plugin(1, {'Dry/Wet Mix': 40.0})
+    chain.configure_plugin(0, {"Delay Time": 0.25})
+    chain.configure_plugin(1, {"Dry/Wet Mix": 40.0})
 
     # Mix settings:
     # 0.0 = 100% dry (original signal)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Generator-Based Streaming."""
 
+
 def process_chunk(chunk):
     pass
 
@@ -24,6 +25,7 @@ def stream_audio(filepath, chunk_size=4096):
 
             yield data
             current += count
+
 
 # Usage
 for chunk in stream_audio("audio.wav"):

@@ -23,15 +23,13 @@ def apply_fades(input_path, output_path, fade_in=0.5, fade_out=0.5):
 
     # Apply fades
     audio[:fade_in_frames] *= np.linspace(0, 1, fade_in_frames)[:, np.newaxis]
-    audio[len(audio) - fade_out_frames:] *= (
-        np.linspace(1, 0, fade_out_frames)[:, np.newaxis]
-    )
+    audio[len(audio) - fade_out_frames :] *= np.linspace(1, 0, fade_out_frames)[
+        :, np.newaxis
+    ]
 
-    out_format = AudioFormat.pcm(
-        sample_rate, channels=channels, bits=32, is_float=True
-    )
+    out_format = AudioFormat.pcm(sample_rate, channels=channels, bits=32, is_float=True)
     with ExtendedAudioFile.create(
-        output_path, capi.fourchar_to_int('WAVE'), out_format
+        output_path, capi.fourchar_to_int("WAVE"), out_format
     ) as output_file:
         output_file.write(len(audio), audio.tobytes())
 

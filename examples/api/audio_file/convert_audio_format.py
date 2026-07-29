@@ -20,7 +20,7 @@ def convert_audio_format(input_path, output_path, target_format):
 
     # Write to output file
     with ExtendedAudioFile.create(
-        output_path, capi.fourchar_to_int('WAVE'), target_format
+        output_path, capi.fourchar_to_int("WAVE"), target_format
     ) as output_audio:
         output_audio.write(len(converted) // target_format.bytes_per_frame, converted)
 

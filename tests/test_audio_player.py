@@ -107,6 +107,7 @@ def test_audio_player_play_method():
 
     print("✓ Both play() and start() methods work correctly!")
 
+
 def test_module_test_error():
     error_code = capi.test_error()
     assert error_code

@@ -22,7 +22,7 @@ def merge_audio_files(input_files, output_path):
     )
 
     with ExtendedAudioFile.create(
-        output_path, capi.fourchar_to_int('WAVE'), out_format
+        output_path, capi.fourchar_to_int("WAVE"), out_format
     ) as output_file:
         for input_path in input_files:
             with AudioFile(str(input_path)) as input_file:

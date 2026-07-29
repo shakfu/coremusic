@@ -491,7 +491,9 @@ class TestMusicPlayerResourceManagement:
                 time = capi.music_player_get_time(player)
                 assert time == float(i)
         finally:
-            for i, (player, sequence) in enumerate(zip(players, sequences, strict=True)):
+            for i, (player, sequence) in enumerate(
+                zip(players, sequences, strict=True)
+            ):
                 try:
                     capi.music_player_set_sequence(player, 0)
                     capi.dispose_music_sequence(sequence)

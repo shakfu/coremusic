@@ -16,7 +16,7 @@ from coremusic.exceptions import AudioFileError
 
 def format_bytes(num_bytes):
     """Format bytes as human-readable string."""
-    for unit in ['B', 'KB', 'MB', 'GB']:
+    for unit in ["B", "KB", "MB", "GB"]:
         if num_bytes < 1024.0:
             return f"{num_bytes:.2f} {unit}"
         num_bytes /= 1024.0
@@ -71,7 +71,7 @@ def inspect_audio_file(filepath):
                 2: "Stereo",
                 4: "Quadraphonic",
                 6: "5.1 Surround",
-                8: "7.1 Surround"
+                8: "7.1 Surround",
             }.get(fmt.channels_per_frame, f"{fmt.channels_per_frame}-channel")
             print(f"  Channel Type: {channel_type}")
 

@@ -15,15 +15,17 @@ from coremusic.audio import AudioFile
 
 # Write tags to a CAF file
 with AudioFile("song.caf", writable=True) as af:
-    af.set_metadata({
-        "title": "My Song",
-        "artist": "Artist Name",
-        "album": "Album Name",
-        "genre": "Electronic",
-        "year": "2026",
-        "track number": "3",
-        "comments": "Mixed in mono",
-    })
+    af.set_metadata(
+        {
+            "title": "My Song",
+            "artist": "Artist Name",
+            "album": "Album Name",
+            "genre": "Electronic",
+            "year": "2026",
+            "track number": "3",
+            "comments": "Mixed in mono",
+        }
+    )
 
 # Read them back
 with AudioFile("song.caf") as af:

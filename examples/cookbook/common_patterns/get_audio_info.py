@@ -12,11 +12,12 @@ def get_audio_info(filepath):
     """Get cached audio file information."""
     with AudioFile(filepath) as audio:
         return {
-            'duration': audio.duration,
-            'sample_rate': audio.format.sample_rate,
-            'channels': audio.format.channels_per_frame,
-            'frame_count': audio.packet_count
+            "duration": audio.duration,
+            "sample_rate": audio.format.sample_rate,
+            "channels": audio.format.channels_per_frame,
+            "frame_count": audio.packet_count,
         }
+
 
 # First call: reads file
 info1 = get_audio_info("audio.wav")

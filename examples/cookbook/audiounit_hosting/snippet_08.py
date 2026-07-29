@@ -11,7 +11,7 @@ with AudioUnitPlugin.from_name("AUDelay") as plugin:
         sample_rate=48000.0,
         channels=2,
         sample_format=PluginAudioFormat.INT16,
-        interleaved=True
+        interleaved=True,
     )
 
     # Set plugin to use this format

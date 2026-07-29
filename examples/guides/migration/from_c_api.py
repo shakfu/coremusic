@@ -23,8 +23,7 @@ file_id = capi.audio_file_open_url("audio.wav")
 
 # Get format
 format_data = capi.audio_file_get_property(
-    file_id,
-    capi.get_audio_file_property_data_format()
+    file_id, capi.get_audio_file_property_data_format()
 )
 
 # Read
@@ -49,9 +48,9 @@ unit.dispose()
 from coremusic import capi
 
 desc = {
-    'type': capi.fourchar_to_int('auou'),
-    'subtype': capi.fourchar_to_int('def '),
-    'manufacturer': capi.fourchar_to_int('appl'),
+    "type": capi.fourchar_to_int("auou"),
+    "subtype": capi.fourchar_to_int("def "),
+    "manufacturer": capi.fourchar_to_int("appl"),
 }
 
 comp = capi.audio_component_find_next(desc)

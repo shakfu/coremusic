@@ -391,9 +391,7 @@ class Note:
         return float(440.0 * (2.0 ** ((self.midi - 69) / 12.0)))
 
     @classmethod
-    def from_midi(
-        cls, midi: int, velocity: int = 100, use_flats: bool = False
-    ) -> Note:
+    def from_midi(cls, midi: int, velocity: int = 100, use_flats: bool = False) -> Note:
         """Create Note from MIDI number.
 
         Args:
@@ -1638,9 +1636,7 @@ class RhythmPattern:
         )
 
     @classmethod
-    def swing_eighths(
-        cls, count: int = 8, swing_ratio: float = 2 / 3
-    ) -> RhythmPattern:
+    def swing_eighths(cls, count: int = 8, swing_ratio: float = 2 / 3) -> RhythmPattern:
         """Create swung eighth note pattern.
 
         Args:

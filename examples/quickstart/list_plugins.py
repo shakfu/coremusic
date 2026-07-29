@@ -10,6 +10,6 @@ for unit in units[:10]:
     print(f"{unit['name']} ({unit['type']})")
 
 # List effect names only
-effects = get_audiounit_names(filter_type='aufx')
+effects = get_audiounit_names(filter_type="aufx")
 print(f"{len(effects)} effects installed")
 # --8<-- [end:example]
