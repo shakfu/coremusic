@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Comprehensive tests for advanced AudioUnit OO API features."""
 
+import struct
+
 import pytest
 
+from coremusic import capi
 from coremusic.audio import AudioFormat, AudioUnit
+from coremusic.constants import AudioUnitProperty
 from coremusic.exceptions import AudioUnitError
 
 
@@ -129,19 +133,32 @@ class TestAudioUnitProperties:
             unit.dispose()
 
     def test_latency_property(self):
-        """Test latency property"""
+        """Test latency reports what the unit reports.
+
+        `assert latency >= 0.0` is satisfied by a property hardwired to 0.0, so
+        it cannot tell a working implementation from a broken one. Comparing
+        against the raw property read can, without depending on a value that
+        varies by machine.
+        """
         unit = AudioUnit.default_output()
         try:
             unit.initialize()
 
             latency = unit.latency
             assert isinstance(latency, float)
-            assert latency >= 0.0
+
+            raw = capi.audio_unit_get_property(
+                unit.object_id,
+                AudioUnitProperty.LATENCY,
+                capi.get_audio_unit_scope_global(),
+                0,
+            )
+            assert latency == pytest.approx(struct.unpack("<d", raw[:8])[0])
 
         finally:
             unit.dispose()
 
-    def test_cpu_load_property(self):
+    def test_cpu_load_property(self, monkeypatch):
         """Test CPU load property"""
         unit = AudioUnit.default_output()
         try:
@@ -150,6 +167,25 @@ class TestAudioUnitProperties:
             cpu_load = unit.cpu_load
             assert isinstance(cpu_load, float)
             assert 0.0 <= cpu_load <= 1.0
+
+            # That bound is also satisfied by a property stuck at 0.0, and
+            # CoreAudio refuses kAudioUnitProperty_CPULoad on some output units
+            # -- where the wrapper's documented fallback *is* 0.0, so comparing
+            # values cannot distinguish the two. Observe that the property
+            # actually asks CoreAudio: a hardwired one never would.
+            asked = []
+            real_get = capi.audio_unit_get_property
+
+            def spy(unit_id, prop, scope, element):
+                asked.append(prop)
+                return real_get(unit_id, prop, scope, element)
+
+            monkeypatch.setattr(capi, "audio_unit_get_property", spy)
+            second = unit.cpu_load
+            assert AudioUnitProperty.CPU_LOAD in asked, (
+                "cpu_load did not read kAudioUnitProperty_CPULoad"
+            )
+            assert second == cpu_load
 
         finally:
             unit.dispose()
@@ -162,8 +198,17 @@ class TestAudioUnitProperties:
 
             max_frames = unit.max_frames_per_slice
             assert isinstance(max_frames, int)
-            # Default is typically 512 or 1024, but may vary
-            assert max_frames >= 0
+
+            # `>= 0` is true of a property hardwired to 0. Compare against the
+            # raw read, and assert the unit reports a usable slice size.
+            raw = capi.audio_unit_get_property(
+                unit.object_id,
+                AudioUnitProperty.MAXIMUM_FRAMES_PER_SLICE,
+                capi.get_audio_unit_scope_global(),
+                0,
+            )
+            assert max_frames == struct.unpack("<L", raw[:4])[0]
+            assert max_frames > 0
 
         finally:
             unit.dispose()
@@ -194,8 +239,20 @@ class TestAudioUnitParameters:
 
             params = unit.get_parameter_list("global")
             assert isinstance(params, list)
-            # Default output may have no parameters
-            assert len(params) >= 0
+
+            # `len(params) >= 0` is true of any list, including one a stubbed
+            # method returns. Compare against the raw property instead; the
+            # default output unit may legitimately expose no parameters.
+            raw = capi.audio_unit_get_property(
+                unit.object_id,
+                AudioUnitProperty.PARAMETER_LIST,
+                capi.get_audio_unit_scope_global(),
+                0,
+            )
+            expected = list(
+                struct.unpack(f"<{len(raw) // 4}L", raw[: len(raw) // 4 * 4])
+            )
+            assert params == expected
 
         finally:
             unit.dispose()
@@ -206,9 +263,26 @@ class TestAudioUnitParameters:
         try:
             unit.initialize()
 
-            for scope in ["global", "input", "output"]:
+            scope_ids = {
+                "global": capi.get_audio_unit_scope_global(),
+                "input": capi.get_audio_unit_scope_input(),
+                "output": capi.get_audio_unit_scope_output(),
+            }
+            for scope, scope_id in scope_ids.items():
                 params = unit.get_parameter_list(scope)
                 assert isinstance(params, list)
+
+                # isinstance alone passes against a stub returning []. Each
+                # scope must agree with its own raw read.
+                try:
+                    raw = capi.audio_unit_get_property(
+                        unit.object_id, AudioUnitProperty.PARAMETER_LIST, scope_id, 0
+                    )
+                except RuntimeError:
+                    assert params == [], f"{scope}: refused property must give []"
+                    continue
+                n = len(raw) // 4
+                assert params == list(struct.unpack(f"<{n}L", raw[: n * 4]))
 
         finally:
             unit.dispose()

@@ -9,6 +9,7 @@ Constants can be imported directly:
 """
 
 import os
+import subprocess
 import time
 
 import pytest
@@ -540,3 +541,67 @@ def temp_audio_file(tmp_path):
     path = tmp_path / "test_audio.wav"
     yield str(path)
     # Cleanup happens automatically with tmp_path
+
+
+# ============================================================================
+# Ableton Link Fixtures
+# ============================================================================
+
+
+def _external_link_peer_present() -> bool:
+    """Whether another Ableton Link application is running on this machine.
+
+    Link tempo belongs to the shared session, not to one participant. Any
+    Link-enabled application -- Max, Live, a hardware bridge -- joins the
+    session a test creates, and the session's tempo wins, so a test that
+    commits a tempo and reads it back is overruled.
+
+    Detection is by open UDP port rather than by Link's own peer count.
+    Creating a probe session and waiting for `num_peers` to rise is what this
+    originally did, and it is unreliable: peer discovery took longer than a
+    350ms window in 4 of 5 attempts, so the guard silently did not fire and the
+    tests failed anyway. Checking who holds Link's port is deterministic --
+    5 of 5 in the same comparison -- because it does not depend on discovery
+    having completed.
+
+    Measured impact of a peer being present: over 12 attempts a committed tempo
+    survived 5 of 5 times with no peer, and was discarded 5 of 7 times with one.
+    """
+    try:
+        result = subprocess.run(
+            ["lsof", "-nP", "-iUDP:20808"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False  # cannot tell; assume clear rather than skip everything
+
+    mine = str(os.getpid())
+    for line in result.stdout.splitlines()[1:]:
+        fields = line.split()
+        if len(fields) > 1 and fields[1] != mine:
+            return True
+    return False
+
+
+@pytest.fixture(scope="session")
+def link_peer_present():
+    """Cached one-shot check, so each test does not re-run lsof."""
+    return _external_link_peer_present()
+
+
+@pytest.fixture
+def exclusive_link(link_peer_present):
+    """Skip a test that needs sole control of the Link session tempo.
+
+    Request this from any test that commits a tempo (or a beat/phase derived
+    from one) and then asserts on the value it committed.
+    """
+    if link_peer_present:
+        pytest.skip(
+            "another Ableton Link peer is on the network (e.g. Max or Live); "
+            "Link tempo is shared session state, so a committed tempo is not "
+            "this process's to assert on. Quit other Link-enabled apps to run "
+            "these tests."
+        )

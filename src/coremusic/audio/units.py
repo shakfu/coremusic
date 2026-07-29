@@ -80,9 +80,7 @@ class AudioComponent(capi.CoreAudioObject):
         self._description = description
 
     @classmethod
-    def find_next(
-        cls, description: AudioComponentDescription
-    ) -> AudioComponent | None:
+    def find_next(cls, description: AudioComponentDescription) -> AudioComponent | None:
         """Find the next matching audio component"""
         try:
             result = capi.audio_component_find_next(description.to_dict())
@@ -396,8 +394,8 @@ class AudioUnit(capi.CoreAudioObject):
         self._ensure_not_disposed()
         try:
             data = self.get_property(
-                12, capi.get_audio_unit_scope_global(), 0
-            )  # kAudioUnitProperty_Latency = 12
+                AudioUnitProperty.LATENCY, capi.get_audio_unit_scope_global(), 0
+            )
             if len(data) >= 8:
                 result: float = struct.unpack("<d", data[:8])[0]
                 return result
@@ -411,8 +409,8 @@ class AudioUnit(capi.CoreAudioObject):
         self._ensure_not_disposed()
         try:
             data = self.get_property(
-                6, capi.get_audio_unit_scope_global(), 0
-            )  # kAudioUnitProperty_CPULoad = 6
+                AudioUnitProperty.CPU_LOAD, capi.get_audio_unit_scope_global(), 0
+            )
             if len(data) >= 4:
                 result: float = struct.unpack("<f", data[:4])[0]
                 return result
@@ -426,8 +424,10 @@ class AudioUnit(capi.CoreAudioObject):
         self._ensure_not_disposed()
         try:
             data = self.get_property(
-                14, capi.get_audio_unit_scope_global(), 0
-            )  # kAudioUnitProperty_MaximumFramesPerSlice = 14
+                AudioUnitProperty.MAXIMUM_FRAMES_PER_SLICE,
+                capi.get_audio_unit_scope_global(),
+                0,
+            )
             if len(data) >= 4:
                 result: int = struct.unpack("<L", data[:4])[0]
                 return result
@@ -442,8 +442,11 @@ class AudioUnit(capi.CoreAudioObject):
         try:
             data = struct.pack("<L", frames)
             self.set_property(
-                14, capi.get_audio_unit_scope_global(), 0, data
-            )  # kAudioUnitProperty_MaximumFramesPerSlice = 14
+                AudioUnitProperty.MAXIMUM_FRAMES_PER_SLICE,
+                capi.get_audio_unit_scope_global(),
+                0,
+                data,
+            )
         except Exception as e:
             raise AudioUnitError(f"Failed to set max frames per slice: {e}") from e
 
@@ -468,9 +471,7 @@ class AudioUnit(capi.CoreAudioObject):
             raise AudioUnitError(f"Invalid scope: {scope}")
 
         try:
-            data = self.get_property(
-                3, scope_val, 0
-            )  # kAudioUnitProperty_ParameterList = 3
+            data = self.get_property(AudioUnitProperty.PARAMETER_LIST, scope_val, 0)
             # Data is an array of UInt32 parameter IDs
             param_count = len(data) // 4
             if param_count > 0:

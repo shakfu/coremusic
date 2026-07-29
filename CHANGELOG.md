@@ -22,6 +22,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Fixed
+
+- **Long-standing Link test flakiness traced to another Link peer on the machine** - the Ableton Link tests failed 3-6 times per run, with the failing test moving between runs. Link tempo is a property of the *shared session*, not of one participant, so any Link-enabled application on the network -- Max, Live, a hardware bridge -- joins the session a test creates and its tempo wins. Instrumentation showed `num_peers` going 0 to 1 mid-test with the tempo reverting at exactly that moment, and a session constructed as `LinkSession(bpm=99.0)` reporting 140.00014 on its first read: the constructor's `bpm` is only a proposal, and joining an existing session overrides it. Over 12 attempts a committed tempo survived 5 of 5 times with no peer present and was discarded 5 of 7 times with one present.
+
+  The ten tests that commit a tempo and assert on it now request a `exclusive_link` fixture, which probes once per session and skips with an explanatory message rather than asserting something the process does not control. On a machine with no Link peers they run as before.
+
+  Three plausible explanations were tested and ruled out: that `time.sleep(0.1)` was too short (in isolation the first read after a commit is already correct, 40 of 40, and a bounded poll did not help); that sessions leaked between tests (instrumentation found zero live `LinkSession` objects at the start of every test); and that a stale peer process from an earlier run was responsible.
+
+
+### Changed
+
+- **11 tests strengthened that passed regardless of whether the code worked** - found by mutation sweep: each of 54 scalar properties was stubbed to a hardcoded default, then tests naming that behaviour were checked for whether they still passed. `test_latency_property` asserted `latency >= 0.0`, which a property hardwired to `0.0` satisfies; `test_get_parameter_list_default_output` asserted `len(params) >= 0`, true of any list; `test_audio_file_metadata_read` asserted `metadata is None or isinstance(metadata, dict)`, true of every possible value; `test_audio_file_metadata_read_returns_dict` guarded its loop with `if metadata is not None`, so for the WAV fixture the loop never ran. Each strengthened test was re-checked against the same mutation and now fails as it should.
+
+  Where the true value differs from the stub, the fix is to compare the wrapper against the raw `capi` read. Where it does not -- an idle graph really does report 0.0 CPU load, the default device really is not hidden -- no value comparison can separate a working property from a hardwired one, so those tests observe that the property calls into CoreAudio.
+
+  `MIDIEndpoint.dropped` is left as is: distinguishing a working counter from a hardwired zero would require forcing a buffer overflow, which makes for a fragile test.
+
+### Added
+
+- **Coverage for `AUGraph.max_cpu_load`**, which had no test naming it and nothing that detected it being stubbed.
+
+
+### Changed
+
+- **The last five magic AudioUnit property IDs replaced with named constants** - `AudioUnit.latency`, `cpu_load`, `max_frames_per_slice` (getter and setter) and `get_parameter_list` passed bare integers with the C name in a trailing comment. The four `sample_rate` sites were converted in 0.2.7; these were missed because the survey that found them used a line-based grep, which cannot see a call wrapped across lines. An AST scan finds them, and `src/coremusic` now has none left.
+
+  Verified behaviour-preserving rather than assumed: `audio_unit_get_property` returns byte-identical data for each property whether given the enum member or the old literal.
+
+### Added
+
+- **`AudioUnitProperty.CPU_LOAD`** (`kAudioUnitProperty_CPULoad`) - the only one of the five with no existing enum member. Its value came from a compiled probe rather than being typed, and it is now among the 206 constants `tests/test_constants_integrity.py` verifies against the macOS SDK.
+
+
 ## [0.2.7]
 
 ### Changed

@@ -57,7 +57,7 @@ class TestLinkAudioPlayerIntegration:
         assert 0.0 <= timing["phase"] < 4.0
         assert not timing["is_playing"]
 
-    def test_link_timing_updates(self):
+    def test_link_timing_updates(self, exclusive_link):
         """Test that Link timing values update over time"""
         session = link.LinkSession(bpm=120.0)
         session.enabled = True
@@ -87,7 +87,7 @@ class TestLinkAudioPlayerIntegration:
             f"(wall={wall_elapsed:.4f}s)"
         )
 
-    def test_link_tempo_changes_visible_in_player(self):
+    def test_link_tempo_changes_visible_in_player(self, exclusive_link):
         """Test that tempo changes in Link are visible through AudioPlayer"""
         session = link.LinkSession(bpm=120.0)
         session.enabled = True
@@ -110,7 +110,7 @@ class TestLinkAudioPlayerIntegration:
         timing2 = player.get_link_timing()
         assert timing2["tempo"] == pytest.approx(140.0, abs=0.1)
 
-    def test_link_transport_state_visible_in_player(self):
+    def test_link_transport_state_visible_in_player(self, exclusive_link):
         """Test that transport state changes are visible through AudioPlayer"""
         session = link.LinkSession(bpm=120.0)
         session.enabled = True

@@ -126,19 +126,46 @@ class TestAudioFile:
         assert disposed == [amen_wav_path]
 
     def test_audio_file_metadata_read(self, amen_wav_path):
-        """Test reading info dictionary metadata from a WAV file"""
+        """Test metadata reports what CoreAudio reports.
+
+        `metadata is None or isinstance(metadata, dict)` is true of every
+        possible value, including the None a broken property would return. The
+        raw comparison distinguishes "this file has no info dictionary" from
+        "the property is not working".
+        """
         with AudioFile(amen_wav_path) as audio_file:
             metadata = audio_file.metadata
-            # WAV files may or may not have metadata depending on the file
             assert metadata is None or isinstance(metadata, dict)
 
-    def test_audio_file_metadata_read_returns_dict(self, amen_wav_path):
-        """Test that metadata returns a dict with string keys"""
-        with AudioFile(amen_wav_path) as audio_file:
+            try:
+                expected = capi.audio_file_read_info_dictionary(audio_file.object_id)
+            except RuntimeError:
+                expected = None  # no info dictionary for this format
+            assert metadata == expected
+
+    def test_audio_file_metadata_read_returns_dict(self, amen_wav_path, tmp_path):
+        """Test that metadata keys come back as strings.
+
+        Guarding the loop with `if metadata is not None` made this vacuous for
+        any file without an info dictionary -- which includes the WAV fixture,
+        so the loop never ran. Use a CAF with known tags so there is something
+        to check.
+        """
+        import subprocess
+
+        caf_path = str(tmp_path / "tagged.caf")
+        subprocess.run(
+            ["afconvert", "-f", "caff", "-d", "LEI16", amen_wav_path, caf_path],
+            check=True,
+        )
+        with AudioFile(caf_path, writable=True) as af:
+            af.set_metadata({"title": "Key Type Check", "artist": "Tester"})
+
+        with AudioFile(caf_path) as audio_file:
             metadata = audio_file.metadata
-            if metadata is not None:
-                for key in metadata:
-                    assert isinstance(key, str)
+            assert metadata, "expected the tags just written to be readable"
+            assert all(isinstance(k, str) for k in metadata)
+            assert metadata["title"] == "Key Type Check"
 
     def test_audio_file_metadata_write_requires_writable(self, amen_wav_path):
         """Test that set_metadata raises when file is not writable"""

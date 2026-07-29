@@ -5,6 +5,7 @@ Tests for AudioDevice and AudioDeviceManager classes
 
 import pytest
 
+from coremusic import capi
 from coremusic.audio import AudioDevice, AudioDeviceManager
 
 
@@ -106,7 +107,7 @@ class TestAudioDevice:
         # Default device should be alive
         assert is_alive is True
 
-    def test_audio_device_is_hidden(self):
+    def test_audio_device_is_hidden(self, monkeypatch):
         """Test is_hidden property"""
         device = AudioDeviceManager.get_default_output_device()
         assert device is not None
@@ -115,6 +116,23 @@ class TestAudioDevice:
         assert isinstance(is_hidden, bool)
         # Default device should not be hidden
         assert is_hidden is False
+
+        # `is False` is also satisfied by a property hardwired to False, and
+        # comparing against the raw read does not help either: the real device
+        # genuinely is not hidden, so the true value and the stub value
+        # coincide. Observe that the property actually asks CoreAudio.
+        asked = []
+        real_get = capi.audio_object_get_property_data
+
+        def spy(obj_id, selector, scope, element):
+            asked.append(selector)
+            return real_get(obj_id, selector, scope, element)
+
+        monkeypatch.setattr(capi, "audio_object_get_property_data", spy)
+        assert device.is_hidden is is_hidden
+        assert capi.get_audio_device_property_is_hidden() in asked, (
+            "is_hidden did not read kAudioDevicePropertyIsHidden"
+        )
 
     def test_audio_device_stream_configuration_output(self):
         """Test getting output stream configuration with parsed channel count"""

@@ -138,10 +138,29 @@ class TestVirtualDestination:
         assert destination.pending == 0
 
     def test_pending_and_dropped(self, client):
+        """The counters must track buffered packets, not just read as zero.
+
+        Asserting `pending == 0` on a freshly created destination is satisfied
+        by counters hardwired to 0, so it cannot tell a working implementation
+        from a broken one. Send real traffic and watch the count move.
+        """
         destination = client.create_virtual_destination("cm-test-counters-dest")
+        output_port = client.create_output_port("cm-test-counters-out")
 
         assert destination.pending == 0
         assert destination.dropped == 0
+
+        output_port.send_data(destination, NOTE_ON_E4)
+
+        deadline = time.monotonic() + DELIVERY_TIMEOUT
+        while destination.pending == 0 and time.monotonic() < deadline:
+            time.sleep(0.05)
+        assert destination.pending == 1, "buffered packet was not counted"
+        assert destination.dropped == 0
+
+        # Draining returns the packet and clears the counter.
+        assert [data for _ts, data in destination.poll()] == [NOTE_ON_E4]
+        assert destination.pending == 0
 
     def test_disposed_with_client(self):
         cli = make_client("cm-test-dispose-client")

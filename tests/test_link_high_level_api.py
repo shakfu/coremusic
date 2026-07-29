@@ -35,7 +35,7 @@ class TestLinkContextManager:
             assert sess is session
             assert isinstance(sess, link.LinkSession)
 
-    def test_context_manager_with_operations(self):
+    def test_context_manager_with_operations(self, exclusive_link):
         """Test performing operations within context manager"""
         with link.LinkSession(bpm=120.0) as session:
             # Should be enabled
@@ -222,7 +222,7 @@ class TestLinkUsagePatterns:
                 assert tempo > 0
                 time.sleep(0.01)
 
-    def test_beat_tracking_pattern(self):
+    def test_beat_tracking_pattern(self, exclusive_link):
         """Test beat tracking pattern"""
         with link.LinkSession(bpm=120.0) as session:
             clock = session.clock
@@ -242,7 +242,7 @@ class TestLinkUsagePatterns:
             for i in range(1, len(beats)):
                 assert beats[i] > beats[i - 1]
 
-    def test_transport_control_pattern(self):
+    def test_transport_control_pattern(self, exclusive_link):
         """Test transport control pattern"""
         with link.LinkSession(bpm=120.0) as session:
             session.start_stop_sync_enabled = True
@@ -270,7 +270,7 @@ class TestLinkUsagePatterns:
             state = session.capture_app_session_state()
             assert not state.is_playing
 
-    def test_tempo_change_pattern(self):
+    def test_tempo_change_pattern(self, exclusive_link):
         """Test tempo change pattern"""
         with link.LinkSession(bpm=120.0) as session:
             # Change tempo

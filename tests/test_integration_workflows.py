@@ -481,7 +481,7 @@ class TestLinkSessionSynchronization:
         finally:
             session.enabled = False
 
-    def test_link_tempo_synchronization(self):
+    def test_link_tempo_synchronization(self, exclusive_link):
         """Test: Change tempo -> Verify synchronized across session state"""
         session = link.LinkSession(bpm=120.0)
         session.enabled = True
@@ -513,7 +513,7 @@ class TestLinkSessionSynchronization:
         finally:
             session.enabled = False
 
-    def test_link_transport_synchronization(self):
+    def test_link_transport_synchronization(self, exclusive_link):
         """Test: Start/stop transport -> Verify synchronized state"""
         session = link.LinkSession(bpm=120.0)
         session.enabled = True
@@ -549,7 +549,7 @@ class TestLinkSessionSynchronization:
         finally:
             session.enabled = False
 
-    def test_link_beat_quantization(self):
+    def test_link_beat_quantization(self, exclusive_link):
         """Test: Request beat at specific time with quantization"""
         session = link.LinkSession(bpm=120.0)
         session.enabled = True
@@ -578,7 +578,7 @@ class TestLinkSessionSynchronization:
         finally:
             session.enabled = False
 
-    def test_link_audio_player_integration(self):
+    def test_link_audio_player_integration(self, exclusive_link):
         """Test: AudioPlayer with Link session for synchronized playback"""
         session = link.LinkSession(bpm=120.0)
         session.enabled = True
@@ -616,7 +616,7 @@ class TestLinkSessionSynchronization:
         finally:
             session.enabled = False
 
-    def test_link_multiple_session_sync(self):
+    def test_link_multiple_session_sync(self, exclusive_link):
         """Test: Multiple components sharing Link session for synchronization"""
         session = link.LinkSession(bpm=120.0)
         session.enabled = True

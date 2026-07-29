@@ -71,6 +71,11 @@ class TestAUGraphFunctionalAPI:
             max_load = capi.au_graph_get_max_cpu_load(graph_id)
             assert isinstance(max_load, float)
             assert 0.0 <= max_load <= 1.0
+
+            # Note: an idle graph legitimately reports 0.0 for both, so these
+            # bounds cannot distinguish a working reader from one stuck at 0.0.
+            # The OO test (test_au_graph_cpu_load_properties) covers that by
+            # observing that the properties call through to CoreAudio.
         finally:
             capi.au_graph_dispose(graph_id)
 
@@ -172,7 +177,7 @@ class TestAUGraphOO:
         finally:
             graph.dispose()
 
-    def test_au_graph_cpu_load_properties(self):
+    def test_au_graph_cpu_load_properties(self, monkeypatch):
         """Test CPU load properties"""
         graph = AUGraph()
         try:
@@ -182,6 +187,22 @@ class TestAUGraphOO:
             max_load = graph.max_cpu_load
             assert isinstance(max_load, float)
             assert 0.0 <= max_load <= 1.0
+
+            # An idle graph reports 0.0, which the bounds above accept from a
+            # hardwired property too -- and comparing against the raw call does
+            # not separate them either, because the true value is also 0.0.
+            # Observe instead that each property forwards to CoreAudio.
+            called = []
+            for fn_name in ("au_graph_get_cpu_load", "au_graph_get_max_cpu_load"):
+                real = getattr(capi, fn_name)
+                monkeypatch.setattr(
+                    capi,
+                    fn_name,
+                    lambda gid, _r=real, _n=fn_name: (called.append(_n), _r(gid))[1],
+                )
+            assert graph.cpu_load == cpu_load
+            assert graph.max_cpu_load == max_load
+            assert called == ["au_graph_get_cpu_load", "au_graph_get_max_cpu_load"]
         finally:
             graph.dispose()
 

@@ -164,7 +164,7 @@ class TestSessionState:
         assert isinstance(tempo, float)
         assert tempo == pytest.approx(120.0, abs=0.1)
 
-    def test_session_state_set_tempo(self):
+    def test_session_state_set_tempo(self, exclusive_link):
         """Test setting tempo in session state"""
         session = link.LinkSession(bpm=120.0)
         session.enabled = True
@@ -226,7 +226,7 @@ class TestSessionState:
         # Should start as not playing
         assert not state.is_playing
 
-    def test_session_state_set_is_playing(self):
+    def test_session_state_set_is_playing(self, exclusive_link):
         """Test setting transport playing state"""
         session = link.LinkSession(bpm=120.0)
         session.enabled = True
@@ -253,7 +253,7 @@ class TestSessionState:
         state3 = session.capture_app_session_state()
         assert not state3.is_playing
 
-    def test_session_state_time_for_is_playing(self):
+    def test_session_state_time_for_is_playing(self, exclusive_link):
         """Test getting time when transport state changed"""
         session = link.LinkSession(bpm=120.0)
         session.enabled = True
@@ -271,7 +271,7 @@ class TestSessionState:
         assert isinstance(change_time, int)
         assert change_time > 0
 
-    def test_session_state_request_beat_at_time(self):
+    def test_session_state_request_beat_at_time(self, exclusive_link):
         """Test requesting beat at time"""
         session = link.LinkSession(bpm=120.0)
         session.enabled = True
@@ -315,7 +315,7 @@ class TestTwoLinkSessions:
         session1.enabled = False
         session2.enabled = False
 
-    def test_two_sessions_sync_tempo(self):
+    def test_two_sessions_sync_tempo(self, exclusive_link):
         """Test that two sessions synchronize tempo"""
         session1 = link.LinkSession(bpm=120.0)
         session2 = link.LinkSession(bpm=120.0)

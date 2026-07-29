@@ -25,6 +25,7 @@ class AudioUnitProperty(IntEnum):
     STREAM_FORMAT = 8  # kAudioUnitProperty_StreamFormat
     ELEMENT_COUNT = 11  # kAudioUnitProperty_ElementCount
     LATENCY = 12  # kAudioUnitProperty_Latency
+    CPU_LOAD = 6  # kAudioUnitProperty_CPULoad
     MAXIMUM_FRAMES_PER_SLICE = 14  # kAudioUnitProperty_MaximumFramesPerSlice
     SET_EXTERNAL_BUFFER = 15  # kAudioUnitProperty_SetExternalBuffer
     GET_UI_COMPONENT_LIST = 18  # kAudioUnitProperty_GetUIComponentList
