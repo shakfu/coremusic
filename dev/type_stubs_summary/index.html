@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1991,6 +1991,13 @@
 <h1 id="coremusic-type-stubs-completion-summary">CoreMusic Type Stubs - Completion Summary<a class="headerlink" href="#coremusic-type-stubs-completion-summary" title="Permanent link">&para;</a></h1>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <p>Comprehensive <code>.pyi</code> type stub files have been created for the <strong>coremusic</strong> package, providing complete type hints for all modules and enabling excellent IDE autocomplete and static type checking with mypy.</p>
+<blockquote>
+<p><strong>Historical.</strong> This note predates the 0.2.3 package reorganisation. The
+<code>objects.pyi</code> stub described below is gone: the object layer moved into
+<code>src/coremusic/audio/</code> and <code>src/coremusic/midi/</code>, which are annotated inline
+and marked with <code>py.typed</code>. Only <code>capi.pyi</code> and <code>__init__.pyi</code> remain as
+separate stubs, for the Cython extension.</p>
+</blockquote>
 <h2 id="created-files">Created Files<a class="headerlink" href="#created-files" title="Permanent link">&para;</a></h2>
 <h3 id="1-srccoremusic__init__pyi-2-kb">1. <code>src/coremusic/__init__.pyi</code> (2 KB)<a class="headerlink" href="#1-srccoremusic__init__pyi-2-kb" title="Permanent link">&para;</a></h3>
 <ul>
@@ -2351,7 +2358,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

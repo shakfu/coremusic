@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1975,6 +1975,14 @@
 <p><strong>Status:</strong> Deferred - Implementation complete, refactoring pending
 <strong>Date:</strong> October 2025</p>
 <p>This document analyzes the potential refactoring of existing error handling code to use the new decorator pattern implemented in <code>src/coremusic/os_status.py</code>.</p>
+<blockquote>
+<p><strong>Historical.</strong> This note predates the 0.2.3 package reorganisation, which
+dissolved the flat modules into domain subpackages: <code>objects.py</code> into
+<code>audio/</code> and <code>midi/</code>, <code>utilities.py</code> into <code>audio/utilities.py</code>,
+<code>audiounit_host.py</code> into <code>audio/</code>, and <code>link_midi.py</code> into <code>midi/link.py</code>.
+Paths below are as they were when it was written.
+The error-handling sites counted under <code>objects.py</code> are now spread across <code>src/coremusic/audio/</code> and <code>src/coremusic/midi/</code>.</p>
+</blockquote>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <p>New error handling decorators have been implemented and tested (64/64 tests passing):</p>
 <ul>
@@ -2483,7 +2491,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

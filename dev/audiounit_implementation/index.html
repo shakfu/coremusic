@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1887,10 +1887,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-low-level-c-api-demo-testsdemosaudiounit_browser_demopy" class="md-nav__link">
+  <a href="#1-low-level-c-api-demo-audiounit_browser_demopy-removed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Low-Level C API Demo (tests/demos/audiounit_browser_demo.py)
+        1. Low-Level C API Demo (audiounit_browser_demo.py, removed)
       
     </span>
   </a>
@@ -1898,10 +1898,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-high-level-pythonic-api-demo-testsdemosaudiounit_highlevel_demopy" class="md-nav__link">
+  <a href="#2-high-level-pythonic-api-demo-audiounit_highlevel_demopy-removed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. High-Level Pythonic API Demo (tests/demos/audiounit_highlevel_demo.py)
+        2. High-Level Pythonic API Demo (audiounit_highlevel_demo.py, removed)
       
     </span>
   </a>
@@ -1909,10 +1909,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-instrument-plugin-midi-demo-testsdemosaudiounit_instrument_demopy" class="md-nav__link">
+  <a href="#3-instrument-plugin-midi-demo-audiounit_instrument_demopy-removed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Instrument Plugin MIDI Demo (tests/demos/audiounit_instrument_demo.py)
+        3. Instrument Plugin MIDI Demo (audiounit_instrument_demo.py, removed)
       
     </span>
   </a>
@@ -2508,6 +2508,12 @@
 <p>Production-ready AudioUnit plugin hosting system for CoreMusic.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <p>CoreMusic now includes a <strong>complete AudioUnit plugin hosting system</strong> that enables Python applications to discover, load, and control AudioUnit plugins with both low-level C API access and high-level Pythonic wrappers.</p>
+<blockquote>
+<p><strong>Historical.</strong> This note predates the 0.2.3 package reorganisation. The host
+described below is now <code>src/coremusic/audio/audiounit_host.py</code>, imported from
+<code>coremusic.audio.audiounit_host</code>. Paths below are as they were when it was
+written.</p>
+</blockquote>
 <h2 id="what-was-built">What Was Built<a class="headerlink" href="#what-was-built" title="Permanent link">&para;</a></h2>
 <h3 id="1-low-level-c-api-bindings-srccoremusiccapipyx">1. Low-Level C API Bindings (<code>src/coremusic/capi.pyx</code>)<a class="headerlink" href="#1-low-level-c-api-bindings-srccoremusiccapipyx" title="Permanent link">&para;</a></h3>
 <p>Complete C API wrappers for AudioUnit plugin hosting:</p>
@@ -2651,7 +2657,15 @@
 <li>Error handling and validation</li>
 </ul>
 <h2 id="demo-applications">Demo Applications<a class="headerlink" href="#demo-applications" title="Permanent link">&para;</a></h2>
-<h3 id="1-low-level-c-api-demo-testsdemosaudiounit_browser_demopy">1. Low-Level C API Demo (<code>tests/demos/audiounit_browser_demo.py</code>)<a class="headerlink" href="#1-low-level-c-api-demo-testsdemosaudiounit_browser_demopy" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Historical.</strong> The three demo scripts below were removed in <code>fb50106</code>, and
+the <code>tests/demos/</code> directory that held them has since been removed too. What
+they showed now lives in <code>examples/cookbook/audiounit_hosting/</code> and
+<code>examples/tutorials/effects_processing/</code> (both executed by the test suite),
+in <code>demos/host_au_chain.py</code> and <code>demos/render_midi_to_wav.py</code>, and in the
+<code>coremusic plugin</code> CLI commands.</p>
+</blockquote>
+<h3 id="1-low-level-c-api-demo-audiounit_browser_demopy-removed">1. Low-Level C API Demo (<code>audiounit_browser_demo.py</code>, removed)<a class="headerlink" href="#1-low-level-c-api-demo-audiounit_browser_demopy-removed" title="Permanent link">&para;</a></h3>
 <p>Interactive plugin browser demonstrating:</p>
 <ul>
 <li>Plugin discovery across all categories</li>
@@ -2667,7 +2681,7 @@
 <li>Preset browsing</li>
 <li>Plugin detail viewer</li>
 </ul>
-<h3 id="2-high-level-pythonic-api-demo-testsdemosaudiounit_highlevel_demopy">2. High-Level Pythonic API Demo (<code>tests/demos/audiounit_highlevel_demo.py</code>)<a class="headerlink" href="#2-high-level-pythonic-api-demo-testsdemosaudiounit_highlevel_demopy" title="Permanent link">&para;</a></h3>
+<h3 id="2-high-level-pythonic-api-demo-audiounit_highlevel_demopy-removed">2. High-Level Pythonic API Demo (<code>audiounit_highlevel_demo.py</code>, removed)<a class="headerlink" href="#2-high-level-pythonic-api-demo-audiounit_highlevel_demopy-removed" title="Permanent link">&para;</a></h3>
 <p>6 interactive demonstrations (effect plugins):</p>
 <ol>
 <li><strong>Plugin Discovery</strong> - Browse plugins by category</li>
@@ -2683,7 +2697,7 @@
 <li>Complete workflow examples</li>
 <li>Best practices demonstration</li>
 </ul>
-<h3 id="3-instrument-plugin-midi-demo-testsdemosaudiounit_instrument_demopy">3. Instrument Plugin MIDI Demo (<code>tests/demos/audiounit_instrument_demo.py</code>)<a class="headerlink" href="#3-instrument-plugin-midi-demo-testsdemosaudiounit_instrument_demopy" title="Permanent link">&para;</a></h3>
+<h3 id="3-instrument-plugin-midi-demo-audiounit_instrument_demopy-removed">3. Instrument Plugin MIDI Demo (<code>audiounit_instrument_demo.py</code>, removed)<a class="headerlink" href="#3-instrument-plugin-midi-demo-audiounit_instrument_demopy-removed" title="Permanent link">&para;</a></h3>
 <p>8 interactive demonstrations (MIDI instruments):</p>
 <ol>
 <li><strong>Discover Instruments</strong> - Browse 62 instrument plugins</li>
@@ -3329,7 +3343,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

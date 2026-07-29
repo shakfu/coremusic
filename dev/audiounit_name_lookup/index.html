@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1980,6 +1980,14 @@
 <h1 id="audiounit-name-based-lookup-implementation">AudioUnit Name-Based Lookup Implementation<a class="headerlink" href="#audiounit-name-based-lookup-implementation" title="Permanent link">&para;</a></h1>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <p>In response to the question "What about loading or referring to AudioUnits by name, for example 'AUDelay', which an Apple AU and always available?", I've implemented comprehensive name-based AudioUnit discovery for CoreMusic.</p>
+<blockquote>
+<p><strong>Historical.</strong> This note predates the 0.2.3 package reorganisation, which
+dissolved the flat modules into domain subpackages: <code>objects.py</code> into
+<code>audio/</code> and <code>midi/</code>, <code>utilities.py</code> into <code>audio/utilities.py</code>,
+<code>audiounit_host.py</code> into <code>audio/</code>, and <code>link_midi.py</code> into <code>midi/link.py</code>.
+Paths below are as they were when it was written.
+<code>find_audio_unit_by_name()</code>, <code>list_available_audio_units()</code>, <code>get_audiounit_names()</code>, and <code>AudioEffectsChain</code> now live in <code>src/coremusic/audio/utilities.py</code>, and are imported from <code>coremusic.audio</code> rather than the top-level package.</p>
+</blockquote>
 <h2 id="what-was-implemented">What Was Implemented<a class="headerlink" href="#what-was-implemented" title="Permanent link">&para;</a></h2>
 <h3 id="1-low-level-c-api-wrappers-srccoremusiccapipyx">1. Low-Level C API Wrappers (<code>src/coremusic/capi.pyx</code>)<a class="headerlink" href="#1-low-level-c-api-wrappers-srccoremusiccapipyx" title="Permanent link">&para;</a></h3>
 <p>Added two new functions wrapping CoreAudio's AudioComponent APIs:</p>
@@ -2238,7 +2246,7 @@
 <li><code>AudioEffectsChain.add_effect_by_name()</code> - Convenience method</li>
 <li><code>src/coremusic/__init__.py</code> - Exported 3 new functions</li>
 <li><code>tests/test_utilities.py</code> - Added 11 comprehensive tests (+120 lines)</li>
-<li><code>tests/demos/demo_utilities.py</code> - Added Example 10 (+50 lines)</li>
+<li><code>tests/demos/demo_utilities.py</code> - Added Example 10 (+50 lines) (file removed in <code>fb50106</code>; the directory was removed later)</li>
 </ul>
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <p>[x] <strong>Complete implementation</strong> of name-based AudioUnit lookup matching your C++ pattern
@@ -2319,7 +2327,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

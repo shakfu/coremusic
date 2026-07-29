@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2055,15 +2055,15 @@
 <p>Import from the subpackage that owns the domain:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Object-oriented API, one subpackage per domain</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioFile</span><span class="p">,</span> <span class="n">AudioFormat</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.midi</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIDIClient</span><span class="p">,</span> <span class="n">MusicSequence</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioPlayer</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioPlayer</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.midi</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIDIClient</span><span class="p">,</span> <span class="n">MusicSequence</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">player</span> <span class="o">=</span> <span class="n">AudioPlayer</span><span class="p">()</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">audio</span> <span class="o">=</span> <span class="n">AudioFile</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">sequence</span> <span class="o">=</span> <span class="n">MusicSequence</span><span class="p">()</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Functional C API (for performance)</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic.capi</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">capi</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="kn">import</span> <span class="n">capi</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">file_id</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">audio_file_open_url</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">capi</span><span class="o">.</span><span class="n">audio_file_close</span><span class="p">(</span><span class="n">file_id</span><span class="p">)</span>
@@ -2141,6 +2141,8 @@ something comes from.</p>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Or from the module that defines them</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio.async_io</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncAudioFile</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">AsyncAudioFile</span><span class="p">,</span> <span class="n">AsyncAudioQueue</span><span class="p">)</span>
 </code></pre></div>
 <p>Analysis:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -2216,10 +2218,11 @@ something comes from.</p>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="n">transposed</span> <span class="o">=</span> <span class="n">transpose</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
 </code></pre></div>
 <p>Ableton Link integration:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.midi.link</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinkMIDIClock</span><span class="p">,</span> <span class="n">LinkMIDISequencer</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># The submodule is also reachable from the package</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.midi</span><span class="w"> </span><span class="kn">import</span> <span class="n">link</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># The submodule is reachable from the package, or by its full path</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.midi</span><span class="w"> </span><span class="kn">import</span> <span class="n">link</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.midi.link</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinkMIDIClock</span><span class="p">,</span> <span class="n">LinkMIDISequencer</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">MIDI_CLOCK</span><span class="p">,</span> <span class="n">LinkMIDIClock</span><span class="p">,</span> <span class="n">LinkMIDISequencer</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="music-theory">Music Theory<a class="headerlink" href="#music-theory" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.music.theory</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chord</span><span class="p">,</span> <span class="n">ChordType</span><span class="p">,</span> <span class="n">Note</span><span class="p">,</span> <span class="n">Scale</span><span class="p">,</span> <span class="n">ScaleType</span>
@@ -2238,17 +2241,16 @@ something comes from.</p>
 </code></pre></div>
 <h2 id="utilities">Utilities<a class="headerlink" href="#utilities" title="Permanent link">&para;</a></h2>
 <p>SciPy-backed DSP (requires <code>coremusic[analysis]</code>):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.utils.scipy</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>    <span class="n">SCIPY_AVAILABLE</span><span class="p">,</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="n">apply_lowpass_filter</span><span class="p">,</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="n">compute_spectrum</span><span class="p">,</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="n">resample_audio</span><span class="p">,</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="p">)</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="c1"># Or as a module, which is handy for the availability flag</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic.utils.scipy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">spu</span>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SciPy available: </span><span class="si">{</span><span class="n">spu</span><span class="o">.</span><span class="n">SCIPY_AVAILABLE</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Individual helpers, or the module itself - handy for the availability flag</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic.utils.scipy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">spu</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.utils.scipy</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="n">SCIPY_AVAILABLE</span><span class="p">,</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="n">apply_lowpass_filter</span><span class="p">,</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">compute_spectrum</span><span class="p">,</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>    <span class="n">resample_audio</span><span class="p">,</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="p">)</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SciPy available: </span><span class="si">{</span><span class="n">spu</span><span class="o">.</span><span class="n">SCIPY_AVAILABLE</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 <p>FourCC conversion:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.utils.fourcc</span><span class="w"> </span><span class="kn">import</span> <span class="n">fourcc_to_int</span><span class="p">,</span> <span class="n">fourcc_to_str</span>
@@ -2256,7 +2258,7 @@ something comes from.</p>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">fourcc_to_int</span><span class="p">(</span><span class="s2">&quot;lpcm&quot;</span><span class="p">),</span> <span class="n">fourcc_to_str</span><span class="p">(</span><span class="mi">1819304813</span><span class="p">))</span>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="c1"># The same conversion exists in the functional API</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic.capi</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">capi</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="kn">import</span> <span class="n">capi</span>
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">capi</span><span class="o">.</span><span class="n">fourchar_to_int</span><span class="p">(</span><span class="s2">&quot;lpcm&quot;</span><span class="p">),</span> <span class="n">capi</span><span class="o">.</span><span class="n">int_to_fourchar</span><span class="p">(</span><span class="mi">1819304813</span><span class="p">))</span>
 </code></pre></div>
@@ -2285,7 +2287,7 @@ something comes from.</p>
 <p>Every CoreAudio and CoreMIDI call is available from <code>coremusic.capi</code>. The
 object layer is built on it, and the two interoperate: objects expose their
 underlying id through <code>object_id</code>, and functions that take an id accept it.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">coremusic.capi</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">capi</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="kn">import</span> <span class="n">capi</span>
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="c1"># Direct C function calls</span>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="n">file_id</span> <span class="o">=</span> <span class="n">capi</span><span class="o">.</span><span class="n">audio_file_open_url</span><span class="p">(</span><span class="s2">&quot;audio.wav&quot;</span><span class="p">)</span>
@@ -2298,9 +2300,7 @@ underlying id through <code>object_id</code>, and functions that take an id acce
 </code></pre></div>
 <h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
 <p><strong>Import what you use, from where it lives.</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioFile</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioAnalyzer</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.midi</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIDIClient</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>
 </code></pre></div>
 <p><strong>Do not use wildcard imports.</strong> They pull in a large namespace and hide where
 a name came from:</p>
@@ -2314,8 +2314,6 @@ coremusic:</p>
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>
 <a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic</span><span class="w"> </span><span class="kn">import</span> <span class="n">link</span>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioFile</span>
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.midi</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIDIClient</span>
 </code></pre></div>
 <h2 id="optional-dependencies">Optional Dependencies<a class="headerlink" href="#optional-dependencies" title="Permanent link">&para;</a></h2>
 <p>Some modules need extras. Import them anyway - each exposes a flag rather than
@@ -2346,10 +2344,12 @@ failing at import time:</p>
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">NUMPY_AVAILABLE</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="k">if</span> <span class="n">NUMPY_AVAILABLE</span><span class="p">:</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>    <span class="o">...</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">NUMPY_AVAILABLE</span><span class="p">,</span> <span class="n">AudioFile</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.audio.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioAnalyzer</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coremusic.midi</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIDIClient</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="k">if</span> <span class="n">NUMPY_AVAILABLE</span><span class="p">:</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="o">...</span>
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <p><strong><code>ModuleNotFoundError: No module named 'coremusic'</code></strong> - the package is not
@@ -2428,7 +2428,7 @@ for another Python version. In a checkout, rebuild with <code>make build</code>.
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
