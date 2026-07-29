@@ -22,6 +22,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+### Fixed
+
+- **52 wrong values in `coremusic.constants`** - the enum layer restated CoreAudio constants as hand-typed integers, and 42% of those carrying a FourCC comment did not encode the FourCC they documented. Several decoded to byte sequences that are not valid FourCC at all (`'nsr\xf2'`, `'q_u`'`, `'fn`j'`), so they were never transcribed from any header. Anyone using the documented enum API rather than the `capi.get_*` getters passed a wrong property ID to CoreAudio: `ExtendedAudioFileProperty.FILE_LENGTH_FRAMES` raised `Unknown error code -66561`, and `AudioDeviceProperty.NOMINAL_SAMPLE_RATE` - off by 126 in its last byte - raised `kAudioCodecUnknownPropertyError`.
+
+  Values are no longer typed by hand. Each enum member is mapped to the name of the C constant it stands for, a C probe printing all 228 is compiled against the macOS SDK, and its output is what appears in the source. A name that does not exist in the SDK fails to compile, which is how the fabricated constants below were found rather than guessed at. Every constant now carries its C name in a trailing comment, so the mapping is auditable from the source alone.
+
+  Corrections were not limited to FourCC typos: `AudioUnitProperty.OFFLINE_RENDER` was 55 rather than 37, `CHANNEL_MAP` was 33 - colliding with `PARAMETER_STRING_FROM_VALUE` - rather than 2002, and the three offline `AudioUnitRenderActionFlags` were each shifted one bit position.
+
+- **`AudioFileStream.ready_to_produce_packets` always returned `False`** - it called `capi.audio_file_stream_get_property_ready_to_produce_packets`, which does not exist in the compiled extension. The resulting `AttributeError` was caught by an enclosing `except Exception: return False`, so the property reported "not ready" for every stream in every state. `capi.pyi` declared the function, so mypy could not see the error, and the test asserted only `not ready` on an empty stream - true whether or not the implementation worked. The property now uses the generic `audio_file_stream_get_property` and narrows its handler to `except RuntimeError` so coding errors propagate.
+
+- **CoreAudio handles leaked when objects were garbage collected** - `CoreAudioObject` documented automatic resource management, but `__dealloc__` could only reach the `cdef` `_dispose_internal`, which a Python subclass cannot override. Every subclass `dispose()` was therefore skipped at collection time, leaking the underlying handle unless the caller used `with` or `close()`. Measured at one file descriptor per unclosed `AudioFile`. Release now happens in `__del__` (`tp_finalize`), which runs before deallocation and does normal method lookup, so subclass overrides are reached; `__dealloc__` remains as a backstop. Explicit `with`/`close()` is still preferred, since audio hardware should be released at a predictable point.
+
+- **12 phantom declarations in `capi.pyi`** - names the stub promised that the compiled module does not export. Calls to them raise `AttributeError` at runtime while mypy reports the code as clean.
+
+### Removed
+
+- **`MIDIObjectProperty`** - a 26-member `IntEnum` of CoreMIDI property IDs describing an API that does not exist. CoreMIDI keys properties by `CFStringRef`, not integer FourCC; the library's own `coremidi.pxd` already declares the correct `MIDIObjectGetStringProperty` and `MIDIObjectGetIntegerProperty` signatures and uses them. The enum could not be passed to any CoreMIDI call, had no call sites, and no test coverage.
+
+- **8 fabricated constants naming no SDK symbol** - `AudioFileProperty.DATA_SIZE` and `DATA_IS_BIG_ENDIAN`; `AudioFormatID.GSM610` and `ADPCM_IMA_WAV` (WAV format tags, not `AudioFormatID`s); `AudioFormatID.MPEG4_AAC_LD_V2` and `MPEG4_AAC_HE_V2_SBR`; `AudioObjectProperty.DEVICE_NAME_IN_OWNER_USER_INTERFACE` and `CLASS_NAME`.
+
+### Added
+
+- **`tests/test_constants_integrity.py`** - reconciles the enum layer against the compiled getters and the SDK, the check that was missing. Four layers: FourCC comments must round-trip their integer; enum members must equal the `capi.get_*` getter naming the same constant (36 pairs, up from the 4 checked previously); all 205 annotated constants are verified against a probe compiled at test time (marked `slow`, skipped where no compiler or SDK is present); and `capi.pyi` must not declare names the extension lacks. A fifth test guards the parser the others depend on. Verified to fail, not merely to pass: corrupting one constant by a single digit fails three checks independently.
+
+- **`tests/test_resource_release.py`** - covers the subclass-dispatch regression directly and measures descriptor counts across 50 unclosed `AudioFile` opens.
+
+- **10 real constants** replacing removed fabrications or filling gaps the compiled getters already exposed - `AudioFileProperty.IS_OPTIMIZED` and `MAGIC_COOKIE_DATA`; `AudioObjectProperty.MODEL_NAME`, `SERIAL_NUMBER`, `FIRMWARE_VERSION`; `AudioDeviceProperty.STREAM_CONFIGURATION`, `VOLUME_SCALAR`, `MUTE`, `IS_HIDDEN`, `PREFERRED_CHANNELS_FOR_STEREO`.
+
+### Changed
+
+- **`AudioQueueParameter.VolumeRampTime` renamed to `VOLUME_RAMP_TIME`** to match the UPPER_SNAKE_CASE of every other member. The old name is kept as an enum alias, so existing callers are unaffected.
+
+- **`AudioUnit.sample_rate` uses `AudioUnitProperty.SAMPLE_RATE`** instead of a bare literal `2` explained by a trailing comment, at four call sites.
+
+
 ## [0.2.6]
 
 ### Added

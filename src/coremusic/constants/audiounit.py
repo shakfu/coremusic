@@ -1,4 +1,8 @@
-"""AudioUnit constants."""
+"""AudioUnit constants.
+
+Every value here is the value of the named macOS SDK constant given in the
+trailing comment; see ``tests/test_constants_integrity.py``.
+"""
 
 from enum import IntEnum
 
@@ -14,6 +18,7 @@ __all__ = [
 class AudioUnitProperty(IntEnum):
     """AudioUnit property IDs (AudioUnitPropertyID)"""
 
+    CLASS_INFO = 0  # kAudioUnitProperty_ClassInfo
     SAMPLE_RATE = 2  # kAudioUnitProperty_SampleRate
     PARAMETER_LIST = 3  # kAudioUnitProperty_ParameterList
     PARAMETER_INFO = 4  # kAudioUnitProperty_ParameterInfo
@@ -21,6 +26,12 @@ class AudioUnitProperty(IntEnum):
     ELEMENT_COUNT = 11  # kAudioUnitProperty_ElementCount
     LATENCY = 12  # kAudioUnitProperty_Latency
     MAXIMUM_FRAMES_PER_SLICE = 14  # kAudioUnitProperty_MaximumFramesPerSlice
+    SET_EXTERNAL_BUFFER = 15  # kAudioUnitProperty_SetExternalBuffer
+    GET_UI_COMPONENT_LIST = 18  # kAudioUnitProperty_GetUIComponentList
+    AUDIO_CHANNEL_LAYOUT = 19  # kAudioUnitProperty_AudioChannelLayout
+    TAIL_TIME = 20  # kAudioUnitProperty_TailTime
+    BYPASS_EFFECT = 21  # kAudioUnitProperty_BypassEffect
+    LAST_RENDER_ERROR = 22  # kAudioUnitProperty_LastRenderError
     SET_RENDER_CALLBACK = 23  # kAudioUnitProperty_SetRenderCallback
     FACTORY_PRESETS = 24  # kAudioUnitProperty_FactoryPresets
     RENDER_QUALITY = 26  # kAudioUnitProperty_RenderQuality
@@ -28,19 +39,12 @@ class AudioUnitProperty(IntEnum):
     IN_PLACE_PROCESSING = 29  # kAudioUnitProperty_InPlaceProcessing
     ELEMENT_NAME = 30  # kAudioUnitProperty_ElementName
     COCOAUI = 31  # kAudioUnitProperty_CocoaUI
-    CHANNEL_MAP = 33  # kAudioUnitProperty_ChannelMap
-    AUDIO_CHANNEL_LAYOUT = 19  # kAudioUnitProperty_AudioChannelLayout
-    TAIL_TIME = 20  # kAudioUnitProperty_TailTime
-    BYPASS_EFFECT = 21  # kAudioUnitProperty_BypassEffect
-    LAST_RENDER_ERROR = 22  # kAudioUnitProperty_LastRenderError
-    SET_EXTERNAL_BUFFER = 15  # kAudioUnitProperty_SetExternalBuffer
-    GET_UI_COMPONENT_LIST = 18  # kAudioUnitProperty_GetUIComponentList
-    METER_CLIPPING = 1634755187  # 'clip'
-    PRESENT_PRESET = 1886547818  # 'pset'
-    OFFLINE_RENDER = 55  # kAudioUnitProperty_OfflineRender
     PARAMETER_STRING_FROM_VALUE = 33  # kAudioUnitProperty_ParameterStringFromValue
-    PARAMETER_CLUMP_NAME = 34  # kAudioUnitProperty_ParameterClumpName
-    CLASS_INFO = 0  # kAudioUnitProperty_ClassInfo (for presets)
+    PARAMETER_CLUMP_NAME = 35  # kAudioUnitProperty_ParameterClumpName
+    PRESENT_PRESET = 36  # kAudioUnitProperty_PresentPreset
+    OFFLINE_RENDER = 37  # kAudioUnitProperty_OfflineRender
+    METER_CLIPPING = 3011  # kAudioUnitProperty_MeterClipping
+    CHANNEL_MAP = 2002  # kAudioOutputUnitProperty_ChannelMap
 
 
 class AudioUnitScope(IntEnum):
@@ -69,9 +73,9 @@ class AudioUnitRenderActionFlags(IntEnum):
     PRE_RENDER = 4  # kAudioUnitRenderAction_PreRender
     POST_RENDER = 8  # kAudioUnitRenderAction_PostRender
     OUTPUT_IS_SILENCE = 16  # kAudioUnitRenderAction_OutputIsSilence
-    OFFLINE_RENDER = 32  # kAudioOfflineUnitRenderAction_Render
-    OFFLINE_COMPLETE = 64  # kAudioOfflineUnitRenderAction_Complete
-    OFFLINE_PREFLIGHT = 128  # kAudioOfflineUnitRenderAction_Preflight
+    OFFLINE_PREFLIGHT = 32  # kAudioOfflineUnitRenderAction_Preflight
+    OFFLINE_RENDER = 64  # kAudioOfflineUnitRenderAction_Render
+    OFFLINE_COMPLETE = 128  # kAudioOfflineUnitRenderAction_Complete
     POST_RENDER_ERROR = 256  # kAudioUnitRenderAction_PostRenderError
     DO_NOT_CHECK_RENDER_ARGS = 512  # kAudioUnitRenderAction_DoNotCheckRenderArgs
 

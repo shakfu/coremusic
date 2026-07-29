@@ -817,7 +817,7 @@ def setup_link_with_audio_unit(audio_unit, link_session):
     # Query sample rate
     sample_rate = cm.audio_unit_get_property(
         audio_unit.unit_id,
-        cm.get_audio_unit_property_sample_rate(),
+        cm.constants.AudioUnitProperty.SAMPLE_RATE,
         cm.get_audio_unit_scope_output(),
         0
     )

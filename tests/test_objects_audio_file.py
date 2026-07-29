@@ -102,10 +102,28 @@ class TestAudioFile:
             _ = audio_file.format
 
     def test_audio_file_automatic_disposal(self, amen_wav_path):
-        """Test AudioFile automatic disposal on object deletion"""
-        audio_file = AudioFile(amen_wav_path)
+        """Test AudioFile releases its handle when collected.
+
+        Asserting nothing after `del` (as this test previously did) passes
+        whether or not disposal happens. Observing the dispose call is the
+        point; see tests/test_resource_release.py for the descriptor-level check.
+        """
+        import gc
+
+        disposed = []
+
+        class ObservedAudioFile(AudioFile):
+            def dispose(self) -> None:
+                if not self.is_disposed:
+                    disposed.append(self._path)
+                super().dispose()
+
+        audio_file = ObservedAudioFile(amen_wav_path)
         audio_file.open()
         del audio_file
+        gc.collect()
+
+        assert disposed == [amen_wav_path]
 
     def test_audio_file_metadata_read(self, amen_wav_path):
         """Test reading info dictionary metadata from a WAV file"""
@@ -253,13 +271,20 @@ class TestAudioFileStream:
             stream.close()
 
     def test_audio_file_stream_ready_to_produce_packets_property(self):
-        """Test ready_to_produce_packets property"""
+        """Test ready_to_produce_packets flips to True once a header is parsed.
+
+        Asserting only `not ready` on an empty stream passes even when the
+        property is hardwired to False, which is how a broken implementation
+        survived here previously. The transition is the part worth testing.
+        """
+        wav = Path(__file__).parent / "data" / "wav" / "amen.wav"
         stream = AudioFileStream()
         stream.open()
         try:
-            ready = stream.ready_to_produce_packets
-            assert isinstance(ready, bool)
-            assert not ready
+            assert stream.ready_to_produce_packets is False
+
+            stream.parse_bytes(wav.read_bytes()[:65536])
+            assert stream.ready_to_produce_packets is True
         finally:
             stream.close()
 

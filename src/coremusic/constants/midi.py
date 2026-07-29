@@ -4,7 +4,6 @@ from enum import IntEnum
 
 __all__ = [
     "MIDIControlChange",
-    "MIDIObjectProperty",
     "MIDIStatus",
 ]
 
@@ -61,34 +60,3 @@ class MIDIControlChange(IntEnum):
     ALL_SOUND_OFF = 120
     RESET_ALL_CONTROLLERS = 121
     ALL_NOTES_OFF = 123
-
-
-class MIDIObjectProperty(IntEnum):
-    """MIDI object property IDs"""
-
-    NAME = 1851878757  # 'name'
-    MANUFACTURER = 1835101813  # 'manu'
-    MODEL = 1836016748  # 'modl'
-    UNIQUE_ID = 1970170212  # 'unid'
-    DEVICE_ID = 1684632436  # 'devd'
-    RECEIVE_CHANNELS = 1919247470  # 'rch#'
-    TRANSMIT_CHANNELS = 1919894126  # 'tch#'
-    MAX_SYSEX_SPEED = 1937204832  # 'sxsp'
-    ADVANCE_SCHEDULE_TIME_MUSC = 1634953321  # 'adv '
-    IS_EMBEDDED_ENTITY = 1701737824  # 'emb '
-    IS_BROADCAST = 1651470944  # 'bdc '
-    SINGLE_REALTIME_ENTITY = 1835365985  # 'srte'
-    CONNECTION_UNIQUE_ID = 1668048225  # 'cuid'
-    OFFLINE = 1869636966  # 'offl'
-    PRIVATE = 1886548070  # 'priv'
-    DRIVER_OWNER = 1685808750  # 'down'
-    NAME_CONFIGURATION = 1852008291  # 'ncfg'
-    IMAGE = 1768846393  # 'imag'
-    DRIVER_DEVICE_EDITOR_APP = 1684104552  # 'deap'
-    CAN_ROUTE = 1919051621  # 'rout'
-    IS_MIXER = 1835626093  # 'mixr'
-    IS_SAMPLER = 1935764595  # 'smpl'
-    IS_EFFECT_UNIT = 1701209701  # 'ef x'
-    MAX_RECEIVE_CHANNELS = 1919904357  # 'rxc '
-    MAX_TRANSMIT_CHANNELS = 1920234597  # 'txc '
-    IS_DRUM_MACHINE = 1685220205  # 'drum'

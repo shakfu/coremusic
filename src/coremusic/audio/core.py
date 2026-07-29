@@ -691,16 +691,24 @@ class AudioFileStream(capi.CoreAudioObject):
 
     @property
     def ready_to_produce_packets(self) -> bool:
-        """Check if the stream is ready to produce packets"""
+        """Whether enough of the stream has been parsed to start producing packets.
+
+        False until the parser has seen the header, so callers feeding a stream
+        incrementally can poll this to know when ``parse_bytes`` has yielded a
+        usable format.
+        """
         self._ensure_not_disposed()
         if not self._is_open:
             return False
         try:
-            return capi.audio_file_stream_get_property_ready_to_produce_packets(
-                self.object_id
+            value = capi.audio_file_stream_get_property(
+                self.object_id,
+                capi.get_audio_file_stream_property_ready_to_produce_packets(),
             )
-        except Exception:
+        except RuntimeError:
+            # CoreAudio reports the property as absent until the header parses.
             return False
+        return bool(value)
 
     def parse_bytes(self, data: bytes) -> None:
         """Parse audio data bytes from a streaming source

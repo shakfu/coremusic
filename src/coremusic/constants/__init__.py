@@ -55,7 +55,7 @@ from coremusic.constants.audiounit import (
     AudioUnitScope,
 )
 from coremusic.constants.device import AudioDeviceProperty, AudioObjectProperty
-from coremusic.constants.midi import MIDIControlChange, MIDIObjectProperty, MIDIStatus
+from coremusic.constants.midi import MIDIControlChange, MIDIStatus
 from coremusic.constants.queue import AudioQueueParameter, AudioQueueProperty
 
 __all__ = [
@@ -86,5 +86,4 @@ __all__ = [
     # MIDI
     "MIDIStatus",
     "MIDIControlChange",
-    "MIDIObjectProperty",
 ]

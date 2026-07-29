@@ -13,6 +13,7 @@ import struct
 from typing import Any
 
 from coremusic import capi
+from coremusic.constants import AudioUnitProperty
 from coremusic.exceptions import AudioUnitError
 
 from .core import AudioFormat
@@ -326,8 +327,8 @@ class AudioUnit(capi.CoreAudioObject):
         self._ensure_not_disposed()
         try:
             data = self.get_property(
-                2, capi.get_audio_unit_scope_global(), 0
-            )  # kAudioUnitProperty_SampleRate = 2
+                AudioUnitProperty.SAMPLE_RATE, capi.get_audio_unit_scope_global(), 0
+            )
             if len(data) >= 8:
                 result: float = struct.unpack("<d", data[:8])[0]
                 return result
@@ -348,22 +349,35 @@ class AudioUnit(capi.CoreAudioObject):
         # Try input scope first (for output units, input scope is configurable before init)
         try:
             self.set_property(
-                2, capi.get_audio_unit_scope_input(), 0, data
-            )  # kAudioUnitProperty_SampleRate = 2
+                AudioUnitProperty.SAMPLE_RATE,
+                capi.get_audio_unit_scope_input(),
+                0,
+                data,
+            )
             return
         except Exception:
             pass
 
         # Try output scope (may work after initialization)
         try:
-            self.set_property(2, capi.get_audio_unit_scope_output(), 0, data)
+            self.set_property(
+                AudioUnitProperty.SAMPLE_RATE,
+                capi.get_audio_unit_scope_output(),
+                0,
+                data,
+            )
             return
         except Exception:
             pass
 
         # Try global scope as fallback
         try:
-            self.set_property(2, capi.get_audio_unit_scope_global(), 0, data)
+            self.set_property(
+                AudioUnitProperty.SAMPLE_RATE,
+                capi.get_audio_unit_scope_global(),
+                0,
+                data,
+            )
             return
         except Exception:
             pass

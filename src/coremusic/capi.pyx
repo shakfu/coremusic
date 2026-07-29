@@ -1947,7 +1947,7 @@ def audio_queue_dispose(long queue_id, bint immediate=True):
 #   - AudioUnitRenderActionFlags, AudioUnitParameterUnit
 #   - AudioQueueProperty, AudioQueueParameter
 #   - AudioObjectProperty, AudioDeviceProperty
-#   - MIDIStatus, MIDIControlChange, MIDIObjectProperty
+#   - MIDIStatus, MIDIControlChange
 #
 # ============================================================================
 
@@ -8767,8 +8767,20 @@ def get_midi_thru_connection_max_endpoints():
 cdef class CoreAudioObject:
     """Base class for all CoreAudio objects with automatic resource management
 
-    This is the only Cython extension class, providing __dealloc__ for automatic
-    cleanup. All other classes are implemented as pure Python classes.
+    This is the only Cython extension class. All other classes are implemented
+    as pure Python classes deriving from it.
+
+    Resource release happens in ``__del__`` rather than ``__dealloc__``.
+    ``__dealloc__`` can only reach the ``cdef`` ``_dispose_internal``, which a
+    Python subclass cannot override, so subclass cleanup written as a
+    ``dispose()`` override was never reached at collection time and every
+    CoreAudio handle leaked unless the caller used ``with`` or ``close()``.
+    ``__del__`` maps to ``tp_finalize``, which runs before deallocation and
+    does normal method lookup, so the subclass override is found.
+
+    Explicit cleanup via ``with`` or ``close()`` is still preferred: audio
+    hardware should be released at a predictable point, not whenever the
+    collector happens to run.
     """
 
     cdef long _object_id
@@ -8778,8 +8790,23 @@ cdef class CoreAudioObject:
         self._object_id = 0
         self._is_disposed = False
 
+    def __del__(self):
+        """Release the underlying resource when the object is finalized.
+
+        Dispatches to ``dispose()`` so subclass overrides run. Finalizers must
+        not raise, and this one can run during interpreter shutdown when module
+        globals are already torn down, so every failure is swallowed -- an
+        undisposed handle is preferable to an error at an arbitrary point in an
+        unrelated thread.
+        """
+        try:
+            if not self._is_disposed:
+                self.dispose()
+        except Exception:
+            pass
+
     def __dealloc__(self):
-        """Automatic cleanup when object is garbage collected"""
+        """Final backstop; __del__ has normally already released the resource."""
         if not self._is_disposed:
             self._dispose_internal()
 
