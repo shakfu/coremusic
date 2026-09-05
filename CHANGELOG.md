@@ -22,6 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.2.9]
+
 ### Fixed
 
 - **Shell completion advertised commands the CLI does not have, and omitted ones it does** - the completion scripts carried their own hand-maintained copy of the command names, which had drifted from the argparse registrations. `devices` was offered where the CLI registers `device`; the whole `midi` subcommand set was stale (`devices`, `input`, `output`, `file`, `record` offered against the real `list`, `info`, `play`, `quantize`, `receive`, `monitor`, `send`, `panic`); `analyze` was missing `levels`, `mfcc`, `rms`, and `silence`; `plugin` was missing `chain`; `device` was missing `default` and `monitor`. The zsh and fish generators held a second hardcoded list on top of that, omitting `doctor` and `completion` entirely.
@@ -31,7 +33,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   The bash generator's `midi` file-completion branch tested `${words[2]} == "file"`, a subcommand that no longer exists, so no MIDI file was ever completed; it now tests the subcommands that take a path.
 
 - **`docs/guides/cli.md` documented `coremusic devices`** - the command is `device`. The guide also omitted `doctor` and `completion`, which now have sections.
-
 
 ## [0.2.8]
 
