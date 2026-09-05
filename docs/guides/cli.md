@@ -37,12 +37,14 @@ All commands support these global options:
 | Command | Description |
 |---------|-------------|
 | `audio` | Audio file operations (info, play, record, duration, metadata) |
-| `device` | Audio device management (list, info, volume, mute, set-default, monitor) |
+| `device` | Audio device management (list, default, info, volume, mute, set-default, monitor) |
 | `plugin` | AudioUnit plugin discovery and processing (list, find, info, params, process, chain, render) |
 | `analyze` | Audio analysis (levels, tempo, key, spectrum, loudness, onsets) |
 | `convert` | Audio conversion (file, batch, normalize, trim) |
 | `midi` | MIDI operations (list, info, play, quantize, receive, monitor, send, panic) |
 | `sequence` | MIDI sequence operations (info, play, tracks) |
+| `doctor` | Diagnose the coremusic installation and environment |
+| `completion` | Generate shell completion scripts (bash, zsh, fish) |
 
 ## Audio Command
 
@@ -95,33 +97,33 @@ coremusic audio metadata song.caf --set title="My Song" artist="Me"
    Show audio file metadata and tags. Use `--set` with `key=value` pairs to write
    metadata (file must support writing, e.g. CAF or AIFF).
 
-## Devices Command
+## Device Command
 
 Audio device discovery, management, and control.
 
 ```bash
 # List all audio devices
-coremusic devices list
+coremusic device list
 
 # Show default input/output devices
-coremusic devices default
-coremusic devices default --input
-coremusic devices default --output
+coremusic device default
+coremusic device default --input
+coremusic device default --output
 
 # Show detailed device information
-coremusic devices info "Built-in Output"
+coremusic device info "Built-in Output"
 
 # Get/set device volume (0.0-1.0)
-coremusic devices volume "MacBook Pro Speakers"
-coremusic devices volume "MacBook Pro Speakers" 0.5
+coremusic device volume "MacBook Pro Speakers"
+coremusic device volume "MacBook Pro Speakers" 0.5
 
 # Get/set device mute state
-coremusic devices mute "MacBook Pro Speakers"
-coremusic devices mute "MacBook Pro Speakers" on
+coremusic device mute "MacBook Pro Speakers"
+coremusic device mute "MacBook Pro Speakers" on
 
 # Set default device
-coremusic devices set-default "External Headphones" --output
-coremusic devices set-default "USB Microphone" --input
+coremusic device set-default "External Headphones" --output
+coremusic device set-default "USB Microphone" --input
 
 # Monitor device changes (connect/disconnect, volume, sample rate)
 coremusic device monitor
@@ -495,6 +497,49 @@ coremusic sequence play song.mid --device 1
    - `--device`, `-d` - MIDI output device index (default: 0)
    - `--tempo`, `-t` - Override tempo in BPM
 
+## Doctor Command
+
+Diagnose the coremusic installation and environment.
+
+```bash
+# Run all diagnostics
+coremusic doctor
+
+# Machine-readable report
+coremusic --json doctor
+```
+
+Reports the coremusic and Python versions, the platform, which optional
+dependencies (numpy, scipy, matplotlib) are installed, and whether the audio,
+plugin, and MIDI subsystems are accessible.
+
+## Completion Command
+
+Generate shell completion scripts. Command and subcommand names are read from
+the CLI parser, so the scripts stay in sync with the installed version.
+
+```bash
+# Bash: add to ~/.bashrc
+eval "$(coremusic completion bash)"
+
+# Zsh: add to ~/.zshrc
+eval "$(coremusic completion zsh)"
+
+# Fish: add to ~/.config/fish/config.fish
+coremusic completion fish | source
+```
+
+To install to a file instead:
+
+```bash
+coremusic completion bash > /etc/bash_completion.d/coremusic
+coremusic completion zsh > ~/.zfunc/_coremusic
+coremusic completion fish > ~/.config/fish/completions/coremusic.fish
+```
+
+`shell`
+   Shell type: `bash`, `zsh`, or `fish`.
+
 ## JSON Output
 
 All commands support `--json` for machine-readable output:
@@ -504,7 +549,7 @@ All commands support `--json` for machine-readable output:
 coremusic --json audio info song.wav
 
 # List devices as JSON
-coremusic --json devices list
+coremusic --json device list
 
 # List plugins as JSON
 coremusic --json plugin list --type effect

@@ -18,8 +18,8 @@ def get_version() -> str:
         return __version__
 
 
-def main(argv: list[str] | None = None) -> int:
-    """Entry point for CLI."""
+def build_parser() -> argparse.ArgumentParser:
+    """Build the full CLI parser with every command registered."""
     parser = argparse.ArgumentParser(
         prog="coremusic",
         description="CoreMusic - Python bindings for Apple CoreAudio.",
@@ -54,6 +54,12 @@ def main(argv: list[str] | None = None) -> int:
     doctor.register(subparsers)
     completion.register(subparsers)
 
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Entry point for CLI."""
+    parser = build_parser()
     args = parser.parse_args(argv)
 
     if args.command is None:

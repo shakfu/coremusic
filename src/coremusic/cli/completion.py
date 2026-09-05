@@ -2,6 +2,10 @@
 
 This module provides shell completion scripts for bash, zsh, and fish.
 
+Command and subcommand names are read from the argparse parser built by
+``coremusic.cli.main.build_parser`` so the generated scripts cannot drift from
+the registered CLI.
+
 Usage:
     # Bash (add to ~/.bashrc)
     eval "$(coremusic completion bash)"
@@ -22,29 +26,86 @@ from __future__ import annotations
 
 import argparse
 
-# Commands and their subcommands for completion
-COMMANDS = {
-    "audio": ["play", "record", "info", "duration", "metadata"],
-    "devices": ["list", "info", "volume", "mute", "set-default"],
-    "plugin": ["list", "find", "info", "params", "process", "render", "preset"],
-    "analyze": ["tempo", "key", "spectrum", "loudness", "onsets", "peak"],
-    "convert": ["file", "batch", "normalize", "trim"],
-    "midi": ["devices", "input", "output", "file", "record"],
-    "sequence": ["info", "play", "tracks"],
-    "doctor": [],
-}
-
 # Common options
 GLOBAL_OPTIONS = ["--help", "--version", "--json"]
+
+# Top-level commands whose positional arguments are audio or MIDI file paths
+FILE_COMMANDS = ["audio", "analyze", "convert", "sequence"]
+
+# Subcommands of `midi` that take a MIDI file path
+MIDI_FILE_SUBCOMMANDS = ["info", "play", "quantize"]
+
+FILE_PATTERNS = ["wav", "aiff", "aif", "mp3", "m4a", "caf", "flac", "mid", "midi"]
+
+
+def _subparser_action(
+    parser: argparse.ArgumentParser,
+) -> argparse._SubParsersAction[argparse.ArgumentParser] | None:
+    """Return the subparser action of a parser, or None if it has no subcommands."""
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            return action
+    return None
+
+
+def _choice_help(
+    action: argparse._SubParsersAction[argparse.ArgumentParser], name: str
+) -> str:
+    """Return the help text argparse recorded for one subparser choice."""
+    for choice_action in action._choices_actions:
+        if choice_action.dest == name:
+            return choice_action.help or ""
+    return ""
+
+
+def get_command_tree() -> dict[str, tuple[str, dict[str, str]]]:
+    """Introspect the CLI parser for command names, help text, and subcommands.
+
+    Returns a mapping of command name to a ``(help, subcommands)`` pair, where
+    ``subcommands`` maps subcommand name to its help text.
+    """
+    from .main import build_parser
+
+    action = _subparser_action(build_parser())
+    if action is None:  # pragma: no cover - the CLI always has subcommands
+        return {}
+
+    tree: dict[str, tuple[str, dict[str, str]]] = {}
+    for name, subparser in action.choices.items():
+        sub_action = _subparser_action(subparser)
+        subs: dict[str, str] = {}
+        if sub_action is not None:
+            subs = {
+                sub_name: _choice_help(sub_action, sub_name)
+                for sub_name in sub_action.choices
+            }
+        tree[name] = (_choice_help(action, name), subs)
+    return tree
+
+
+def _escape_zsh(text: str) -> str:
+    """Escape text for use inside a zsh completion description."""
+    return text.replace("\\", "\\\\").replace(":", "\\:").replace("]", "\\]")
+
+
+def _escape_fish(text: str) -> str:
+    """Escape text for use inside a fish single-quoted description."""
+    return text.replace("\\", "\\\\").replace("'", "\\'")
 
 
 def get_bash_completion() -> str:
     """Generate bash completion script."""
-    commands = " ".join(COMMANDS.keys())
+    tree = get_command_tree()
+    commands = " ".join(tree)
     subcommands = "\n".join(
-        f'        {cmd}) COMPREPLY=($(compgen -W "{" ".join(subs)}" -- "$cur")) ;;'
-        for cmd, subs in COMMANDS.items()
+        f'                {cmd}) COMPREPLY=($(compgen -W "{" ".join(subs)}" -- "$cur")) ;;'
+        for cmd, (_, subs) in tree.items()
+        if subs
     )
+    file_commands = "|".join(FILE_COMMANDS)
+    midi_file_subs = " ".join(MIDI_FILE_SUBCOMMANDS)
+    # bash extglob alternation uses "|"; zsh brace expansion uses ","
+    patterns = "|".join(FILE_PATTERNS)
 
     return f"""# Bash completion for coremusic
 # Add to ~/.bashrc: eval "$(coremusic completion bash)"
@@ -54,7 +115,7 @@ _coremusic_completion() {{
     _init_completion || return
 
     local commands="{commands}"
-    local global_opts="--help --version --json"
+    local global_opts="{" ".join(GLOBAL_OPTIONS)}"
 
     case ${{cword}} in
         1)
@@ -69,11 +130,11 @@ _coremusic_completion() {{
         *)
             # File completion for audio/midi file arguments
             case "${{words[1]}}" in
-                audio|analyze|convert|sequence)
-                    _filedir '@(wav|aiff|aif|mp3|m4a|caf|flac|mid|midi)'
+                {file_commands})
+                    _filedir '@({patterns})'
                     ;;
                 midi)
-                    if [[ "${{words[2]}}" == "file" ]]; then
+                    if [[ " {midi_file_subs} " == *" ${{words[2]}} "* ]]; then
                         _filedir '@(mid|midi)'
                     fi
                     ;;
@@ -91,10 +152,26 @@ complete -F _coremusic_completion coremusic
 
 def get_zsh_completion() -> str:
     """Generate zsh completion script."""
-    cmd_cases = "\n".join(
-        f'            {cmd}) _values "subcommand" {" ".join(subs)} ;;'
-        for cmd, subs in COMMANDS.items()
+    tree = get_command_tree()
+    command_list = "\n".join(
+        f'                "{cmd}:{_escape_zsh(help_text)}"'
+        for cmd, (help_text, _) in tree.items()
     )
+    cmd_cases = "\n".join(
+        f'            {cmd}) _values "subcommand" {values} ;;'
+        for cmd, values in (
+            (
+                cmd,
+                " ".join(
+                    f"'{sub}[{_escape_zsh(sub_help)}]'"
+                    for sub, sub_help in subs.items()
+                ),
+            )
+            for cmd, (_, subs) in tree.items()
+            if subs
+        )
+    )
+    patterns = ",".join(FILE_PATTERNS)
 
     return f"""#compdef coremusic
 # Zsh completion for coremusic
@@ -114,13 +191,7 @@ _coremusic() {{
     case "$state" in
         command)
             local commands=(
-                "audio:Audio file operations"
-                "devices:Audio device management"
-                "plugin:AudioUnit plugin operations"
-                "analyze:Audio analysis commands"
-                "convert:Audio conversion commands"
-                "midi:MIDI operations"
-                "sequence:MIDI sequence operations"
+{command_list}
             )
             _describe "command" commands
             ;;
@@ -134,7 +205,7 @@ _coremusic() {{
 
 # Audio file patterns for completion
 zstyle ':completion:*:*:coremusic:*' file-patterns \\
-    '*.{{wav,aiff,aif,mp3,m4a,caf,flac,mid,midi}}:audio-files:audio files' \\
+    '*.{{{patterns}}}:audio-files:audio files' \\
     '*(-/):directories:directories'
 
 _coremusic "$@"
@@ -143,6 +214,8 @@ _coremusic "$@"
 
 def get_fish_completion() -> str:
     """Generate fish completion script."""
+    tree = get_command_tree()
+
     lines = [
         "# Fish completion for coremusic",
         "# Add to ~/.config/fish/config.fish: coremusic completion fish | source",
@@ -159,88 +232,31 @@ def get_fish_completion() -> str:
         "# Main commands",
     ]
 
-    cmd_descriptions = {
-        "audio": "Audio file operations",
-        "devices": "Audio device management",
-        "plugin": "AudioUnit plugin operations",
-        "analyze": "Audio analysis commands",
-        "convert": "Audio conversion commands",
-        "midi": "MIDI operations",
-        "sequence": "MIDI sequence operations",
-    }
-
-    for cmd, desc in cmd_descriptions.items():
+    for cmd, (help_text, _) in tree.items():
         lines.append(
-            f"complete -c coremusic -n '__fish_use_subcommand' -a {cmd} -d '{desc}'"
+            f"complete -c coremusic -n '__fish_use_subcommand' "
+            f"-a {cmd} -d '{_escape_fish(help_text)}'"
         )
 
     lines.append("")
     lines.append("# Subcommands")
 
-    subcmd_descriptions = {
-        "audio": {
-            "play": "Play an audio file",
-            "record": "Record audio",
-            "info": "Show file info",
-            "duration": "Get file duration",
-            "metadata": "Show file metadata",
-        },
-        "devices": {
-            "list": "List audio devices",
-            "info": "Show device info",
-            "volume": "Get/set volume",
-            "mute": "Get/set mute state",
-            "set-default": "Set default device",
-        },
-        "plugin": {
-            "list": "List plugins",
-            "find": "Find plugin by name",
-            "info": "Show plugin info",
-            "params": "List parameters",
-            "process": "Process audio",
-            "render": "Render MIDI",
-            "preset": "Preset operations",
-        },
-        "analyze": {
-            "tempo": "Detect tempo",
-            "key": "Detect key",
-            "spectrum": "Analyze spectrum",
-            "loudness": "Measure loudness",
-            "onsets": "Detect onsets",
-            "peak": "Get peak level",
-        },
-        "convert": {
-            "file": "Convert a file",
-            "batch": "Batch convert",
-            "normalize": "Normalize audio",
-            "trim": "Trim audio",
-        },
-        "midi": {
-            "devices": "List MIDI devices",
-            "input": "MIDI input operations",
-            "output": "MIDI output operations",
-            "file": "MIDI file operations",
-            "record": "Record MIDI",
-        },
-        "sequence": {
-            "info": "Show sequence info",
-            "play": "Play sequence",
-            "tracks": "List tracks",
-        },
-    }
-
-    for cmd, subs in subcmd_descriptions.items():
-        for sub, desc in subs.items():
+    for cmd, (_, subs) in tree.items():
+        for sub, sub_help in subs.items():
             lines.append(
                 f"complete -c coremusic -n '__fish_seen_subcommand_from {cmd}' "
-                f"-a {sub} -d '{desc}'"
+                f"-a {sub} -d '{_escape_fish(sub_help)}'"
             )
 
     lines.append("")
     lines.append("# File completion for specific commands")
     lines.append(
-        "complete -c coremusic -n '__fish_seen_subcommand_from audio analyze convert sequence' "
+        f"complete -c coremusic -n '__fish_seen_subcommand_from {' '.join(FILE_COMMANDS)}' "
         "-F -d 'Audio file'"
+    )
+    lines.append(
+        f"complete -c coremusic -n '__fish_seen_subcommand_from {' '.join(MIDI_FILE_SUBCOMMANDS)}' "
+        "-F -d 'MIDI file'"
     )
 
     return "\n".join(lines)

@@ -36,7 +36,7 @@ Meaningful improvements, moderate effort.
 ### New CLI Commands
 
 - [x] `coremusic audio metadata --set title="X" artist="Y"` -- CLI write path for `set_metadata`
-- [ ] `coremusic doctor` -- diagnose installation (optional deps, hardware access, available frameworks)
+- [x] `coremusic doctor` -- diagnose installation (optional deps, hardware access, available frameworks)
 - [ ] `coremusic analyze batch *.wav --output results.csv` -- batch analysis with structured export
 
 ### Build
