@@ -7,7 +7,9 @@ Thank you for your interest in contributing to CoreMusic! This document provides
 ### System Requirements
 
 - **macOS** (required - CoreMusic uses Apple's CoreAudio/CoreMIDI frameworks)
+
 - **Python 3.11+** (supports 3.11, 3.12, 3.13, 3.14)
+
 - **Xcode Command Line Tools** (for C/C++ compilation)
 
 ```bash
@@ -17,7 +19,9 @@ xcode-select --install
 ### Development Tools
 
 - **uv** - Fast Python package manager (recommended)
+
 - **CMake** - Build system for Cython extensions
+
 - **Git** - Version control
 
 ```bash
@@ -98,8 +102,11 @@ make docs-serve    # Serve docs locally at http://localhost:8000
 ### Python
 
 - Follow [PEP 8](https://pep8.org/) style guide
+
 - Use type hints for all public functions and methods
+
 - Maximum line length: 88 characters (ruff default)
+
 - Use double quotes for strings
 
 ### Formatting
@@ -169,8 +176,7 @@ coremusic/
 
 ### Where new code goes
 
-Four directories hold runnable code that is not the library itself. Pick by
-what the code is *for*:
+Four directories hold runnable code that is not the library itself. Pick by what the code is *for*:
 
 | If it is... | Put it in | Kept honest by |
 |---|---|---|
@@ -179,9 +185,7 @@ what the code is *for*:
 | a utility or experiment that is not part of the package | `extras/` | its own module in `tests/` |
 | a test | `tests/` | `make test` |
 
-The rule exists because `tests/demos/` once held three dozen scripts that
-nothing ran, and half of them had silently stopped working. Anything in these
-directories should be executed by something.
+The rule exists because `tests/demos/` once held three dozen scripts that nothing ran, and half of them had silently stopped working. Anything in these directories should be executed by something.
 
 ## Making Changes
 
@@ -196,7 +200,9 @@ git checkout -b fix/your-bug-fix
 ### 2. Make Your Changes
 
 - Write clear, concise commit messages
+
 - Add tests for new functionality
+
 - Update documentation if needed
 
 ### 3. Run Quality Checks
@@ -208,8 +214,11 @@ make qa
 ### 4. Submit a Pull Request
 
 - Push your branch to your fork
+
 - Open a pull request against `main`
+
 - Fill out the PR template
+
 - Wait for CI checks to pass
 
 ## Testing Guidelines
@@ -217,13 +226,17 @@ make qa
 ### Writing Tests
 
 - Use pytest for all tests
+
 - Place tests in `tests/` directory
+
 - Name test files `test_*.py`
+
 - Name test functions `test_*`
 
 ### Test Categories
 
 - **Fast tests**: Run by default with `make test`
+
 - **Slow tests**: Marked with `@pytest.mark.slow`, run with `make test-all`
 
 ```python
@@ -257,10 +270,15 @@ def test_with_audio_file(test_audio_file):
 When reporting issues, please include:
 
 1. **macOS version** (`sw_vers`)
+
 2. **Python version** (`python --version`)
+
 3. **CoreMusic version** (`coremusic --version`)
+
 4. **Steps to reproduce**
+
 5. **Expected vs actual behavior**
+
 6. **Error messages/tracebacks**
 
 ## License

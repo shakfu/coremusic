@@ -1,8 +1,6 @@
 # CoreMusic: Python bindings for Apple CoreAudio
 
-[![PyPI version](https://badge.fury.io/py/coremusic.svg)](https://badge.fury.io/py/coremusic)
-[![License](https://img.shields.io/github/license/shakfu/coremusic.svg)](https://github.com/shakfu/coremusic/blob/main/LICENSE)
-[![Documentation](https://img.shields.io/badge/docs-shakfu.github.io%2Fcoremusic-blue)](https://shakfu.github.io/coremusic/)
+[![PyPI version](https://badge.fury.io/py/coremusic.svg)](https://badge.fury.io/py/coremusic) [![License](https://img.shields.io/github/license/shakfu/coremusic.svg)](https://github.com/shakfu/coremusic/blob/main/LICENSE) [![Documentation](https://img.shields.io/badge/docs-shakfu.github.io%2Fcoremusic-blue)](https://shakfu.github.io/coremusic/)
 
 A zero-dependency music development toolkit for macOS providing Python access to Apple's CoreAudio and CoreMIDI frameworks via Cython. Offers both functional (C-style) and object-oriented (Pythonic) APIs with automatic resource management.
 
@@ -198,9 +196,7 @@ plugins = list_plugins(type='effect')
 
 ### Runnable demos
 
-The [`demos/`](demos/) directory has small, self-contained scripts:
-host an AudioUnit effect chain, render MIDI to WAV, play a real-time tone, and
-run an Ableton Link-synced step sequencer. See [`demos/README.md`](demos/README.md).
+The [`demos/`](demos/) directory has small, self-contained scripts: host an AudioUnit effect chain, render MIDI to WAV, play a real-time tone, and run an Ableton Link-synced step sequencer. See [`demos/README.md`](demos/README.md).
 
 ```bash
 python demos/host_au_chain.py         # WAV -> effect chain -> WAV
@@ -348,8 +344,11 @@ with link.LinkSession(bpm=120.0) as session:
 Pythonic wrappers with automatic resource management:
 
 - Context managers (`with` statements) for automatic cleanup
+
 - Type-safe classes instead of integer IDs
+
 - Properties, iteration, operators
+
 - IDE autocompletion and type hints
 
 ```python
@@ -363,7 +362,9 @@ from coremusic.constants import AudioFileProperty, AudioFormatID
 Direct access to CoreAudio C functions for maximum control:
 
 - Direct mapping to CoreAudio C APIs
+
 - Fine-grained resource management
+
 - Familiar for CoreAudio developers
 
 ```python
@@ -405,10 +406,7 @@ make test           # Fast tests
 make test-all       # All tests, including the documentation examples
 ```
 
-Every code example in the documentation is a runnable program under
-[`examples/`](examples/), included into the docs rather than copied. `make
-test-all` executes all of them, so a snippet that no longer runs fails the
-build. See [`examples/README.md`](examples/README.md).
+Every code example in the documentation is a runnable program under [`examples/`](examples/), included into the docs rather than copied. `make test-all` executes all of them, so a snippet that no longer runs fails the build. See [`examples/README.md`](examples/README.md).
 
 ## Documentation
 
@@ -423,19 +421,25 @@ build. See [`examples/README.md`](examples/README.md).
 Step-by-step guides for common tasks:
 
 - **[Audio Playback](https://shakfu.github.io/coremusic/tutorials/audio_playback/)**: Simple to advanced playback, looping, streaming, effects
+
 - **[Audio Recording](https://shakfu.github.io/coremusic/tutorials/audio_recording/)**: Recording from input devices, monitoring, formats
+
 - **[MIDI Basics](https://shakfu.github.io/coremusic/tutorials/midi_basics/)**: Devices, messages, sending/receiving MIDI
+
 - **[Effects Processing](https://shakfu.github.io/coremusic/tutorials/effects_processing/)**: AudioUnit effects chains, parameters, presets
 
 ### Reference
 
 - **[CLI Reference](https://shakfu.github.io/coremusic/guides/cli/)**: Full command-line interface documentation
+
 - **[Link Integration Guide](https://shakfu.github.io/coremusic/link_integration/)**: Ableton Link with CoreAudio/CoreMIDI
 
 ## Resources
 
 - [AudioToolbox Documentation](https://developer.apple.com/documentation/AudioToolbox)
+
 - [AudioUnit Programming Guide](https://developer.apple.com/library/archive/documentation/MusicAudio/Conceptual/AudioUnitProgrammingGuide/Introduction/Introduction.html)
+
 - [Ableton Link](https://github.com/Ableton/link)
 
 ## License
