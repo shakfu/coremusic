@@ -379,7 +379,7 @@ Both APIs interoperate - OO objects expose underlying IDs when needed.
 
 ## Architecture
 
-```
+```text
 src/coremusic/
   __init__.py          # Package entry
   capi.pyx/pxd         # Cython bindings to CoreAudio/CoreMIDI

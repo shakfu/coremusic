@@ -152,7 +152,7 @@ uv run pre-commit run --all-files
 
 ## Project Structure
 
-```
+```text
 coremusic/
   src/coremusic/
     __init__.py          # package entry (version only)

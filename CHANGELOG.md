@@ -44,7 +44,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
   Three plausible explanations were tested and ruled out: that `time.sleep(0.1)` was too short (in isolation the first read after a commit is already correct, 40 of 40, and a bounded poll did not help); that sessions leaked between tests (instrumentation found zero live `LinkSession` objects at the start of every test); and that a stale peer process from an earlier run was responsible.
 
-
 ### Changed
 
 - **11 tests strengthened that passed regardless of whether the code worked** - found by mutation sweep: each of 54 scalar properties was stubbed to a hardcoded default, then tests naming that behaviour were checked for whether they still passed. `test_latency_property` asserted `latency >= 0.0`, which a property hardwired to `0.0` satisfies; `test_get_parameter_list_default_output` asserted `len(params) >= 0`, true of any list; `test_audio_file_metadata_read` asserted `metadata is None or isinstance(metadata, dict)`, true of every possible value; `test_audio_file_metadata_read_returns_dict` guarded its loop with `if metadata is not None`, so for the WAV fixture the loop never ran. Each strengthened test was re-checked against the same mutation and now fails as it should.
@@ -57,7 +56,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 - **Coverage for `AUGraph.max_cpu_load`**, which had no test naming it and nothing that detected it being stubbed.
 
-
 ### Changed
 
 - **The last five magic AudioUnit property IDs replaced with named constants** - `AudioUnit.latency`, `cpu_load`, `max_frames_per_slice` (getter and setter) and `get_parameter_list` passed bare integers with the C name in a trailing comment. The four `sample_rate` sites were converted in 0.2.7; these were missed because the survey that found them used a line-based grep, which cannot see a call wrapped across lines. An AST scan finds them, and `src/coremusic` now has none left.
@@ -67,7 +65,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ### Added
 
 - **`AudioUnitProperty.CPU_LOAD`** (`kAudioUnitProperty_CPULoad`) - the only one of the five with no existing enum member. Its value came from a compiled probe rather than being typed, and it is now among the 206 constants `tests/test_constants_integrity.py` verifies against the macOS SDK.
-
 
 ## [0.2.7]
 
@@ -1424,6 +1421,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
     - E minor arpeggio pattern with bell-like tones for effects demo
 
 - **Constants Export** - All constant enum classes from `coremusic.constants` are now exported directly from the main `coremusic` package for convenience:
+
   ```python
   # Now you can do:
   import coremusic as cm
@@ -1437,6 +1435,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ### Deprecated
 
 - **Legacy Constant Getter Functions** - The `get_*` functions in `coremusic.capi` (e.g., `get_audio_format_linear_pcm()`) are now deprecated in favor of the enum classes in `coremusic.constants`. The getter functions remain for backward compatibility but new code should use the enum classes:
+
   ```python
   # Deprecated:
   capi.get_audio_file_property_data_format()
@@ -2465,12 +2464,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
   ```
 
   **Before (cryptic numeric codes):**
-  ```
+
+  ```text
   RuntimeError: AudioFileOpenURL failed with status: -43
   ```
 
   **After (human-readable with suggestion):**
-  ```
+
+  ```text
   AudioFileError: Failed to open audio file: kAudioFileFileNotFoundError: File not found.
   Verify the file path exists and is spelled correctly
   ```
@@ -2584,6 +2585,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
     - No breaking changes - existing code continues to work
 
   - **Example Usage**:
+
     ```python
     # Static API (no initialization, lightweight)
     silence = AudioAnalyzer.detect_silence("audio.wav", threshold_db=-40)
@@ -2594,6 +2596,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
     beat_info = analyzer.detect_beats()
     key, mode = analyzer.detect_key()
     ```
+
   - **Migration**: Tests updated to import from `coremusic.audio.analysis`
 
   - **Verification**: All 1022 tests passing, type checking successful
