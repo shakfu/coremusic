@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from coremusic.audio import AudioBuffer, AudioFormat
+from coremusic.audio import AudioBuffer, AudioFile, AudioFormat
 from coremusic.audio.async_io import (
     AsyncAudioFile,
     AsyncAudioQueue,
@@ -359,3 +359,64 @@ class TestAsyncIntegration:
             assert result["duration"] > 0
             assert result["sample_rate"] == 44100.0
             assert result["channels"] == 2
+
+
+class TestAsyncChunkBounds:
+    """Chunk generators must not read past total_packets."""
+
+    @pytest.mark.asyncio
+    async def test_bytes_generator_stops_at_total_packets(self, amen_wav_path):
+        async with AsyncAudioFile(amen_wav_path) as audio:
+            frame_size = audio.format.bytes_per_frame
+            total = sum(
+                [
+                    len(chunk) // frame_size
+                    async for chunk in audio.read_chunks_async(
+                        chunk_size=4096, total_packets=10
+                    )
+                ]
+            )
+
+        assert total == 10
+
+    @pytest.mark.asyncio
+    async def test_bytes_generator_chunks_the_last_partial_read(self, amen_wav_path):
+        async with AsyncAudioFile(amen_wav_path) as audio:
+            frame_size = audio.format.bytes_per_frame
+            sizes = [
+                len(chunk) // frame_size
+                async for chunk in audio.read_chunks_async(
+                    chunk_size=1000, total_packets=2500
+                )
+            ]
+
+        assert sizes == [1000, 1000, 500]
+
+    @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
+    @pytest.mark.asyncio
+    async def test_numpy_generator_stops_at_total_packets(self, amen_wav_path):
+        async with AsyncAudioFile(amen_wav_path) as audio:
+            sizes = [
+                len(chunk)
+                async for chunk in audio.read_chunks_numpy_async(
+                    chunk_size=1000, total_packets=2500
+                )
+            ]
+
+        assert sizes == [1000, 1000, 500]
+
+    @pytest.mark.asyncio
+    async def test_unbounded_read_covers_the_whole_file(self, amen_wav_path):
+        with AudioFile(amen_wav_path) as source:
+            expected = source.packet_count
+
+        async with AsyncAudioFile(amen_wav_path) as audio:
+            frame_size = audio.format.bytes_per_frame
+            total = sum(
+                [
+                    len(chunk) // frame_size
+                    async for chunk in audio.read_chunks_async(chunk_size=4096)
+                ]
+            )
+
+        assert total == expected

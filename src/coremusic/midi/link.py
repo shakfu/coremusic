@@ -52,6 +52,14 @@ MIDI_STOP = 0xFC  # Stop
 # MIDI timing constants
 MIDI_CLOCKS_PER_QUARTER_NOTE = 24
 
+# Clocks one pass of the clock thread may emit back to back. Anything still
+# owed is carried to the next pass rather than dropped.
+_MAX_CLOCK_BURST = 10
+
+# Backlog past which catching up is pointless and the clock jumps to the
+# current Link position instead.
+_CLOCK_RESYNC_THRESHOLD = MIDI_CLOCKS_PER_QUARTER_NOTE * 4
+
 
 @dataclass
 class MIDIEvent:
@@ -119,7 +127,8 @@ class LinkMIDIClock:
         self.running = False
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
-        self._last_beat = 0.0
+        # Clocks emitted since the thread latched onto Link, or None until it has.
+        self._last_clock_count: int | None = None
 
     def start(self) -> None:
         """Start sending MIDI clock messages
@@ -133,6 +142,7 @@ class LinkMIDIClock:
         self._send_realtime_message(MIDI_START)
 
         self.running = True
+        self._last_clock_count = None
         self._stop_event.clear()
         self._thread = threading.Thread(target=self._clock_thread, daemon=True)
         self._thread.start()
@@ -172,6 +182,40 @@ class LinkMIDIClock:
         except FRAMEWORK_ERRORS as e:
             print(f"Error sending MIDI message: {e}")
 
+    def _advance_clock(self, current_clock_count: int) -> int:
+        """Send the clocks owed up to a Link position.
+
+        Args:
+            current_clock_count: Clocks elapsed at the current Link beat
+
+        Returns:
+            Number of clock messages sent on this pass
+        """
+        if self._last_clock_count is None:
+            # First pass: adopt the current position without emitting the
+            # clocks that elapsed before the thread started.
+            self._last_clock_count = current_clock_count
+            return 0
+
+        clocks_to_send = current_clock_count - self._last_clock_count
+
+        if clocks_to_send < 0 or clocks_to_send > _CLOCK_RESYNC_THRESHOLD:
+            # Link was repositioned, or the thread fell so far behind that
+            # catching up would flood the port.
+            print(
+                f"Link clock: position moved {clocks_to_send} clocks, resynchronizing"
+            )
+            self._last_clock_count = current_clock_count
+            return 0
+
+        sent = min(clocks_to_send, _MAX_CLOCK_BURST)
+        for _ in range(sent):
+            self._send_realtime_message(MIDI_CLOCK)
+        # Count what was sent, not where Link is, so the remainder of a burst
+        # goes out on the next pass instead of being discarded.
+        self._last_clock_count += sent
+        return sent
+
     def _clock_thread(self) -> None:
         """Clock thread that sends MIDI clock messages
 
@@ -194,15 +238,8 @@ class LinkMIDIClock:
                 # Calculate how many clocks should have been sent
                 # 24 clocks per beat (quarter note)
                 current_clock_count = int(current_beat * MIDI_CLOCKS_PER_QUARTER_NOTE)
-                last_clock_count = int(self._last_beat * MIDI_CLOCKS_PER_QUARTER_NOTE)
 
-                # Send any missed clocks
-                clocks_to_send = current_clock_count - last_clock_count
-                if clocks_to_send > 0:
-                    for _ in range(min(clocks_to_send, 10)):  # Limit burst to 10
-                        self._send_realtime_message(MIDI_CLOCK)
-
-                self._last_beat = current_beat
+                self._advance_clock(current_clock_count)
 
             # Broad: top of a worker-thread loop. A thread that dies on an unexpected
             # error stops the clock silently, which is worse than continuing.

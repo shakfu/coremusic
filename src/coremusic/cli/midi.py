@@ -432,19 +432,23 @@ def cmd_send(args: argparse.Namespace) -> int:
                 raise CLIError(f"Note must be 0-127, got {args.note}")
             if not 0 <= args.velocity <= 127:
                 raise CLIError(f"Velocity must be 0-127, got {args.velocity}")
+            if args.duration < 0:
+                raise CLIError(f"Duration must be >= 0, got {args.duration}")
 
             # Note on
             note_on_data = note_on(args.note, args.velocity, channel=args.channel)
+            note_off_data = note_off(args.note, channel=args.channel)
             capi.midi_send_data(port_id, dest_id, note_on_data, 0)
             messages_sent.append(f"Note On: {args.note} vel={args.velocity}")
 
-            # Wait for duration
-            time.sleep(args.duration)
-
-            # Note off
-            note_off_data = note_off(args.note, channel=args.channel)
-            capi.midi_send_data(port_id, dest_id, note_off_data, 0)
-            messages_sent.append(f"Note Off: {args.note}")
+            try:
+                # Wait for duration
+                time.sleep(args.duration)
+            finally:
+                # An interrupt during the wait must still release the note, or
+                # the instrument sustains it after the process exits.
+                capi.midi_send_data(port_id, dest_id, note_off_data, 0)
+                messages_sent.append(f"Note Off: {args.note}")
 
         # Send CC
         if args.cc is not None:

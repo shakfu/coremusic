@@ -173,7 +173,14 @@ class AsyncAudioFile:
 
         # If total_packets not specified, read until we get no data
         while True:
+            # Never ask for more than the caller requested, or the last chunk
+            # would overshoot total_packets.
             remaining = chunk_size
+            if total_packets is not None:
+                remaining = min(remaining, start_packet + total_packets - current_packet)
+                if remaining <= 0:
+                    break
+
             chunk_data, actual_count = await asyncio.to_thread(
                 self._audio_file.read_packets, current_packet, remaining
             )
@@ -186,13 +193,6 @@ class AsyncAudioFile:
 
             # Yield control to event loop
             await asyncio.sleep(0)
-
-            # Stop if we've read the requested number of packets
-            if (
-                total_packets is not None
-                and current_packet >= start_packet + total_packets
-            ):
-                break
 
     if NUMPY_AVAILABLE:
 
@@ -242,7 +242,16 @@ class AsyncAudioFile:
             current_packet = start_packet
 
             while True:
+                # Never ask for more than the caller requested, or the last
+                # chunk would overshoot total_packets.
                 remaining = chunk_size
+                if total_packets is not None:
+                    remaining = min(
+                        remaining, start_packet + total_packets - current_packet
+                    )
+                    if remaining <= 0:
+                        break
+
                 try:
                     chunk = await asyncio.to_thread(
                         self._audio_file.read_as_numpy,
@@ -252,23 +261,16 @@ class AsyncAudioFile:
                 except FRAMEWORK_ERRORS:
                     break
 
-                if chunk.size == 0:
+                if len(chunk) == 0:
                     break
 
                 yield chunk
-                # Calculate how many packets we actually read
-                # This is approximate - depends on format
-                current_packet += remaining
+                # Advance by the frames returned, not the frames asked for, so
+                # a short read does not skip the packets it did not deliver.
+                current_packet += len(chunk)
 
                 # Yield control to event loop
                 await asyncio.sleep(0)
-
-                # Stop if we've read the requested number of packets
-                if (
-                    total_packets is not None
-                    and current_packet >= start_packet + total_packets
-                ):
-                    break
 
     def __repr__(self) -> str:
         return f"AsyncAudioFile({self._path})"

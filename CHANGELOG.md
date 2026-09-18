@@ -22,6 +22,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [Unreleased]
 
+## [0.2.10]
+
+### Fixed
+
+- **Packed 24-bit audio decoded as noise, and 8-bit WAV samples came back inverted** - `MMapAudioFile.read_as_numpy()` mapped 16- and 32-bit signed samples and fell back to `int8` for everything else, so three-byte samples lost their boundaries. `AudioFile.read_as_numpy()` read the same files as `int32`, which holds only when the stream pads each sample to four bytes, and raised `buffer size must be a multiple of element size` when the byte count did not divide by four. Packed 24-bit now widens to `int32`, keeping the original -8388608..8388607 range rather than scaling to full int32.
+
+  The mmap WAV parser flagged every PCM stream signed, so 8-bit files -- which WAV stores unsigned -- read 128 as -128. Flags now follow the depth, and the mmap reader shares the dtype ladder instead of carrying its own, which also fixes big-endian AIFF being read as little-endian.
+
+- **A refused `MMapAudioFile.open()` kept the descriptor and the mapping** - `open()` created the mapping before parsing the header and left both in place when parsing raised. CPython's refcounting releases them as soon as the object is dropped, so the transient `MMapAudioFile(path).open()` and `with` forms never leaked; a caller that retains the object across a failed open leaked two descriptors per attempt. Cleanup is now explicit rather than a property of the interpreter.
+
+- **`trim_audio()` with an empty range wrote the rest of the file** - `packet_count or 999999999` sent a zero-length request down the read-to-end path, so `trim_audio(src, dst, 1.0, 1.0)` wrote everything from 1.0s onward. An empty range now produces a header-only file. Negative and reversed ranges are rejected against the time arguments instead of surfacing as a packet-count error.
+
+- **Async chunk readers overran `total_packets`** - both generators requested a full `chunk_size` on every pass, so a 10-packet request with the default 4096-packet chunk yielded 4096 packets and stopped. The NumPy generator also advanced its cursor by the frames requested rather than the frames returned, so a short read skipped the packets it had not delivered.
+
+- **The zero-crossing slicer missed the nearest crossing at the start of a file** - the crossings index into the search segment, and the selection compared them against the window width rather than the boundary's offset inside it. Those agree everywhere except where `max(0, ...)` clips the window at sample 0, so the first boundary snapped to the crossing nearest 10ms in and trimmed the head of the audio. Interior boundaries were never affected.
+
+- **MIDI format-0 files were written with several tracks** - `save()` wrote every track whatever the requested format, producing a format-0 header over multiple `MTrk` chunks. Format 0 holds exactly one track, so a multi-track save is now refused; merging was rejected because it would silently fold several tracks' channel assignments into one.
+
+- **MIDI event times were wrong after a tempo change** - the loader timed each event with the tempo it had seen so far and applied a tempo change only after stamping the event that carried it, so in a file that doubles tempo at beat 1 the note at beat 2 loaded at 0.5s instead of 0.75s. `self.tempo` was an instance attribute reused across tracks, so a format-1 file -- where the tempo map lives in track 0 and governs all the rest -- timed track 1 with whatever tempo track 0 happened to end on. Ticks now convert through a tempo map collected across every track, and `MIDISequence.tempo` reports the file's initial tempo rather than the last one parsed.
+
+- **`Chord.inversion()` changed the chord's quality** - it computed the rotated notes, discarded them, and built a new chord rooted on the rotated bass, so the first inversion of C major was E-G#-B rather than E-G-C. `Chord` now carries an `inversion_number` and `get_notes()` rotates and octave-shifts the chord's own pitches. Callers reading `.root` of an inverted chord get the chord's root, not its bass note; the bass is `get_notes()[0]`.
+
+- **`coremusic midi send` could leave a note sounding** - Note Off followed an unguarded `time.sleep()`, so Ctrl-C during the wait, or a negative `--duration` raising out of `sleep`, skipped it and left the instrument sustaining after the process exited. Note Off now goes out from a `finally`, and a negative duration is rejected before Note On is sent.
+
+- **`coremusic convert batch` exited 0 after every file failed** - the command counted errors, printed them and returned success, so a script could not distinguish a converted directory from an empty one. It now exits nonzero when any file failed.
+
+- **`coremusic device set-default` exited 0 after failing to change the device** - an `AudioDeviceError` was reported in the JSON result but not in the exit status. The status now reflects whether either requested change succeeded.
+
+- **Link MIDI clock discarded every clock past a ten-message burst** - the worker capped catch-up at ten messages and then advanced its position to the current Link beat, so a 200ms scheduling delay at 120 BPM dropped 14 of the 24 owed clocks and receivers counting clocks fell permanently behind. The position now advances by the messages actually sent, carrying the remainder to the next pass. A backlog beyond four beats, or a backwards jump from a repositioned timeline, resynchronizes and reports the discontinuity instead of flooding the port.
+
 ## [0.2.9]
 
 ### Fixed

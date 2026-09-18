@@ -424,9 +424,13 @@ class AudioSlicer:
                 zero_crossings = np.where(np.diff(np.sign(segment)))[0]
 
                 if len(zero_crossings) > 0:
-                    # Choose closest zero crossing
+                    # Choose the crossing closest to the ideal boundary. The
+                    # crossings index into segment, so the comparison needs the
+                    # boundary's offset within it, which is not search_window
+                    # once start_search has been clamped at the file start.
+                    ideal_offset = ideal_sample - start_search
                     closest_idx = zero_crossings[
-                        np.argmin(np.abs(zero_crossings - search_window))
+                        np.argmin(np.abs(zero_crossings - ideal_offset))
                     ]
                     actual_sample = start_search + closest_idx
                 else:

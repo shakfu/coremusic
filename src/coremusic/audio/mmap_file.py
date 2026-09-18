@@ -24,6 +24,7 @@ except ImportError:
         import numpy as np
 
 from ..buffer_utils import AudioStreamBasicDescription
+from .core import pcm_bytes_to_numpy
 
 
 class MMapAudioFile:
@@ -91,11 +92,19 @@ class MMapAudioFile:
         # Open file for reading
         self._file = open(self.path, "rb")
 
-        # Create memory mapping
-        self._mmap = mmap.mmap(self._file.fileno(), 0, access=mmap.ACCESS_READ)
+        try:
+            # Create memory mapping
+            self._mmap = mmap.mmap(self._file.fileno(), 0, access=mmap.ACCESS_READ)
 
-        # Parse file format
-        self._parse_format()
+            # Parse file format
+            self._parse_format()
+        except BaseException:
+            # A malformed or unsupported file must not keep the descriptor and
+            # the mapping alive; only the interpreter's refcounting would
+            # release them, and not at all while the caller holds this object.
+            self.close()
+            raise
+
         self._is_open = True
 
         return self
@@ -158,7 +167,8 @@ class MMapAudioFile:
 
                 # Determine format flags
                 if audio_format == 1:  # PCM
-                    format_flags = 0x0C  # signed integer | packed
+                    # WAV stores 8-bit PCM unsigned and everything wider signed.
+                    format_flags = 0x08 if bits_per_sample <= 8 else 0x0C
                 elif audio_format == 3:  # IEEE float
                     format_flags = 0x09  # float | packed
                 else:
@@ -350,25 +360,8 @@ class MMapAudioFile:
         # Read raw data
         data = self.read_frames(start_frame, num_frames)
 
-        # Determine dtype from format
-        dtype: Any
-        if self.format.is_float:
-            if self.format.bits_per_channel == 32:
-                dtype = np.float32
-            else:
-                dtype = np.float64
-        elif self.format.is_signed_integer:
-            if self.format.bits_per_channel == 16:
-                dtype = np.int16
-            elif self.format.bits_per_channel == 32:
-                dtype = np.int32
-            else:
-                dtype = np.int8
-        else:
-            raise ValueError(f"Unsupported format: {self.format}")
-
         # Convert to NumPy array
-        samples = np.frombuffer(data, dtype=dtype)
+        samples = pcm_bytes_to_numpy(data, self.format)
 
         # Reshape for channels
         if self.format.channels_per_frame > 1:

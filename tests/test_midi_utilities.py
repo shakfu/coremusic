@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests for MIDI utilities module."""
 
+import struct
 import sys
 from pathlib import Path
 
@@ -621,3 +622,100 @@ class TestIntegration:
         assert results[0][1].data1 == 72  # Transposed
         assert results[1][0] == "synth2"
         assert results[1][1].data2 == 70  # Velocity scaled
+
+
+def _vlq(value):
+    """Encode a MIDI variable-length quantity."""
+    out = bytearray([value & 0x7F])
+    value >>= 7
+    while value:
+        out.insert(0, (value & 0x7F) | 0x80)
+        value >>= 7
+    return bytes(out)
+
+
+def _tempo_event(delta_ticks, bpm):
+    return _vlq(delta_ticks) + b"\xff\x51\x03" + int(60_000_000 / bpm).to_bytes(3, "big")
+
+
+def _write_midi(path, ppq, tracks, format_type=1):
+    """Write a Standard MIDI File from raw track bodies."""
+    data = b"MThd" + struct.pack(">IHHH", 6, format_type, len(tracks), ppq)
+    for body in tracks:
+        body = body + _vlq(0) + b"\xff\x2f\x00"  # End of track
+        data += b"MTrk" + struct.pack(">I", len(body)) + body
+    path.write_bytes(data)
+    return path
+
+
+class TestMIDIFileFormat0:
+    """Format 0 holds exactly one track, so a multi-track save must be refused."""
+
+    def test_multi_track_as_format_0_is_rejected(self, tmp_path):
+        seq = MIDISequence()
+        seq.add_track("one").add_note(0.0, 60, 100, 0.5)
+        seq.add_track("two").add_note(0.0, 64, 100, 0.5)
+
+        with pytest.raises(ValueError, match="exactly one track"):
+            seq.save(str(tmp_path / "bad.mid"), MIDIFileFormat.SINGLE_TRACK)
+
+    def test_single_track_writes_one_chunk(self, tmp_path):
+        seq = MIDISequence()
+        seq.add_track("solo").add_note(0.0, 60, 100, 0.5)
+
+        out = tmp_path / "ok.mid"
+        seq.save(str(out), MIDIFileFormat.SINGLE_TRACK)
+
+        raw = out.read_bytes()
+        format_type, num_tracks, _ = struct.unpack(">HHH", raw[8:14])
+        assert format_type == 0
+        assert num_tracks == 1
+        assert raw.count(b"MTrk") == 1
+
+
+class TestMIDITempoChanges:
+    """Event times must follow the tempo map, not the last tempo seen."""
+
+    def test_events_after_a_tempo_change(self, tmp_path):
+        # 120 BPM for one beat, then 240 BPM.
+        track = (
+            _tempo_event(0, 120.0)
+            + _vlq(0)
+            + b"\x90\x3c\x64"  # Note On at tick 0    -> 0.00s
+            + _vlq(480)
+            + b"\x80\x3c\x00"  # Note Off at tick 480 -> 0.50s
+            + _tempo_event(0, 240.0)
+            + _vlq(480)
+            + b"\x90\x3e\x64"  # Note On at tick 960  -> 0.75s
+        )
+        path = _write_midi(tmp_path / "tempo.mid", 480, [track], format_type=0)
+
+        events = MIDISequence.load(str(path)).tracks[0].events
+        assert [round(e.time, 4) for e in events] == [0.0, 0.5, 0.75]
+
+    def test_tempo_map_applies_across_tracks(self, tmp_path):
+        # Format 1: tempo lives in track 0 and governs the events in track 1.
+        tempo_track = _tempo_event(0, 120.0) + _tempo_event(480, 240.0)
+        note_track = (
+            _vlq(0)
+            + b"\x90\x3c\x64"  # tick 0    -> 0.00s
+            + _vlq(960)
+            + b"\x90\x3e\x64"  # tick 960  -> 0.75s
+        )
+        path = _write_midi(tmp_path / "two.mid", 480, [tempo_track, note_track])
+
+        sequence = MIDISequence.load(str(path))
+        events = sequence.tracks[1].events
+        assert [round(e.time, 4) for e in events] == [0.0, 0.75]
+        # The reported tempo is the file's initial tempo, not the last one read.
+        assert sequence.tempo == pytest.approx(120.0)
+
+    def test_tempo_does_not_leak_between_tracks(self, tmp_path):
+        # Track 0 ends at 240 BPM; track 1 carries no tempo of its own and must
+        # still be timed from the start of the tempo map.
+        tempo_track = _tempo_event(0, 120.0) + _tempo_event(1920, 240.0)
+        note_track = _vlq(480) + b"\x90\x3c\x64"  # tick 480 -> 0.5s at 120 BPM
+        path = _write_midi(tmp_path / "leak.mid", 480, [tempo_track, note_track])
+
+        events = MIDISequence.load(str(path)).tracks[1].events
+        assert [round(e.time, 4) for e in events] == [0.5]

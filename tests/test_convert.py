@@ -325,6 +325,26 @@ class TestCmdBatch:
         with pytest.raises(CLIError):
             self._run(_batch_args(indir, outdir, output_format="mp3"))
 
+    def test_failed_conversion_exits_nonzero(self, tmp_path):
+        """A batch that converted nothing must not report success."""
+        indir = tmp_path / "in"
+        indir.mkdir()
+        (indir / "broken.wav").write_bytes(b"RIFF....WAVEnot-really-audio")
+        outdir = tmp_path / "out"
+
+        assert self._run(_batch_args(indir, outdir, output_format="flac")) != 0
+
+    def test_partial_failure_exits_nonzero(self, tmp_path):
+        """One bad file among good ones still fails the batch."""
+        indir = tmp_path / "in"
+        indir.mkdir()
+        _make_wav(indir / "good.wav")
+        (indir / "broken.wav").write_bytes(b"RIFF....WAVEnot-really-audio")
+        outdir = tmp_path / "out"
+
+        assert self._run(_batch_args(indir, outdir, output_format="flac")) != 0
+        assert (outdir / "good.flac").exists()
+
 
 # ============================================================================
 # CLI cmd_convert

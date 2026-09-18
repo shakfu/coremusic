@@ -18,6 +18,7 @@ from coremusic.audio.utilities import (
     get_audiounit_names,
     list_available_audio_units,
     parse_audio_stream_basic_description,
+    trim_audio,
 )
 from coremusic.base import NUMPY_AVAILABLE
 
@@ -591,3 +592,53 @@ class TestParseAudioStreamBasicDescription:
             assert asbd["format_flags"] == fmt.format_flags
             assert asbd["channels_per_frame"] == fmt.channels_per_frame
             assert asbd["bits_per_channel"] == fmt.bits_per_channel
+
+
+class TestTrimAudioRange:
+    """trim_audio must honour the requested range exactly."""
+
+    @pytest.fixture
+    def source_wav(self, tmp_path):
+        import math
+        import struct
+        import wave
+
+        path = tmp_path / "source.wav"
+        with wave.open(str(path), "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(44100)
+            w.writeframes(
+                b"".join(
+                    struct.pack("<h", int(10000 * math.sin(i / 50)))
+                    for i in range(44100 * 3)
+                )
+            )
+        return path
+
+    def test_empty_range_writes_no_audio(self, source_wav, tmp_path):
+        """A zero-length range must not fall through to read-to-end."""
+        import wave
+
+        out = tmp_path / "empty.wav"
+        trim_audio(str(source_wav), str(out), start_time=1.0, end_time=1.0)
+
+        with wave.open(str(out)) as w:
+            assert w.getnframes() == 0
+
+    def test_requested_range_length(self, source_wav, tmp_path):
+        import wave
+
+        out = tmp_path / "half.wav"
+        trim_audio(str(source_wav), str(out), start_time=1.0, end_time=1.5)
+
+        with wave.open(str(out)) as w:
+            assert w.getnframes() == 22050
+
+    def test_negative_start_rejected(self, source_wav, tmp_path):
+        with pytest.raises(ValueError, match="start_time"):
+            trim_audio(str(source_wav), str(tmp_path / "x.wav"), -1.0, 1.0)
+
+    def test_reversed_range_rejected(self, source_wav, tmp_path):
+        with pytest.raises(ValueError, match="end_time"):
+            trim_audio(str(source_wav), str(tmp_path / "x.wav"), 2.0, 1.0)

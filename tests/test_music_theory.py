@@ -473,16 +473,40 @@ class TestChord:
         chord = Chord(Note("C", 4), ChordType.MAJOR)
         inv1 = chord.inversion(1)
 
-        # E is now the bass
-        assert inv1.root.name == "E"
+        # E is now the bass, and C moves an octave up: E-G-C, still C major
+        assert inv1.get_midi_notes() == [64, 67, 72]
+        assert inv1.get_notes()[0].name == "E"
 
     def test_chord_inversion_second(self):
         """Test second inversion."""
         chord = Chord(Note("C", 4), ChordType.MAJOR)
         inv2 = chord.inversion(2)
 
-        # G is now the bass
-        assert inv2.root.name == "G"
+        # G is now the bass: G-C-E
+        assert inv2.get_midi_notes() == [67, 72, 76]
+        assert inv2.get_notes()[0].name == "G"
+
+    def test_chord_inversion_preserves_pitch_classes(self):
+        """Inverting revoices the chord, it does not change its quality."""
+        chord = Chord(Note("C", 4), ChordType.MAJOR_7)
+        expected = sorted(midi % 12 for midi in chord.get_midi_notes())
+
+        for n in range(1, 5):
+            inverted = chord.inversion(n)
+            assert sorted(m % 12 for m in inverted.get_midi_notes()) == expected
+            assert inverted.chord_type is ChordType.MAJOR_7
+
+    def test_chord_inversion_wraps_past_the_note_count(self):
+        """An inversion beyond the note count wraps back to root position."""
+        chord = Chord(Note("C", 4), ChordType.MAJOR)
+
+        assert chord.inversion(3).get_midi_notes() == chord.get_midi_notes()
+
+    def test_chord_inversion_survives_transpose(self):
+        """Transposing keeps the voicing, shifting every note."""
+        inverted = Chord(Note("C", 4), ChordType.MAJOR).inversion(1)
+
+        assert inverted.transpose(2).get_midi_notes() == [66, 69, 74]
 
     def test_chord_transpose(self):
         """Test transposing chord."""

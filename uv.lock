@@ -421,7 +421,7 @@ wheels = [
 
 [[package]]
 name = "coremusic"
-version = "0.2.9"
+version = "0.2.10"
 source = { editable = "." }
 
 [package.optional-dependencies]

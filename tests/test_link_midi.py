@@ -314,3 +314,59 @@ class TestModuleExports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+class TestLinkMIDIClockCatchUp:
+    """Clocks owed beyond one burst must be delivered, not discarded."""
+
+    @pytest.fixture
+    def clock(self):
+        session = link.LinkSession(bpm=120.0)
+        clock = link_midi.LinkMIDIClock(session, midi_port=1, midi_destination=1)
+        clock.sent = []
+        clock._send_realtime_message = clock.sent.append
+        return clock
+
+    def test_first_pass_latches_without_sending(self, clock):
+        """Clocks elapsed before the thread started are not replayed."""
+        assert clock._advance_clock(500) == 0
+        assert clock.sent == []
+
+    def test_burst_is_capped(self, clock):
+        clock._advance_clock(0)
+
+        assert clock._advance_clock(24) == link_midi._MAX_CLOCK_BURST
+
+    def test_backlog_is_carried_not_dropped(self, clock):
+        """A one-beat stall owes 24 clocks; every one must go out."""
+        clock._advance_clock(0)
+
+        total = 0
+        for _ in range(10):
+            total += clock._advance_clock(24)
+
+        assert total == 24
+        assert len(clock.sent) == 24
+        assert all(message == link_midi.MIDI_CLOCK for message in clock.sent)
+
+    def test_steady_state_sends_each_clock_once(self, clock):
+        clock._advance_clock(0)
+        for count in range(1, 49):
+            clock._advance_clock(count)
+
+        assert len(clock.sent) == 48
+
+    def test_large_gap_resynchronizes(self, clock):
+        """Past the resync threshold the clock jumps instead of flooding."""
+        clock._advance_clock(0)
+
+        assert clock._advance_clock(link_midi._CLOCK_RESYNC_THRESHOLD + 1) == 0
+        assert clock.sent == []
+        assert clock._advance_clock(link_midi._CLOCK_RESYNC_THRESHOLD + 2) == 1
+
+    def test_backwards_jump_resynchronizes(self, clock):
+        """A repositioned Link timeline must not stall the clock."""
+        clock._advance_clock(100)
+
+        assert clock._advance_clock(10) == 0
+        assert clock._advance_clock(11) == 1

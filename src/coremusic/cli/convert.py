@@ -9,7 +9,13 @@ from coremusic.exceptions import FRAMEWORK_ERRORS
 
 from ._formatters import output_json
 from ._mappings import FORMAT_NAMES, get_format_display, get_format_id
-from ._utils import EXIT_SUCCESS, CLIError, print_help_default, require_file
+from ._utils import (
+    EXIT_ERROR,
+    EXIT_SUCCESS,
+    CLIError,
+    print_help_default,
+    require_file,
+)
 
 # convert_audio_file raises ValueError for an unsupported or unwritable
 # format. For one file in a batch that is a per-file result, not a reason to
@@ -553,7 +559,7 @@ def cmd_batch(args: argparse.Namespace) -> int:
             for filename, error_msg in errors:
                 print(f"  {filename}: {error_msg}")
 
-    return EXIT_SUCCESS
+    return EXIT_ERROR if error_count else EXIT_SUCCESS
 
 
 def cmd_normalize(args: argparse.Namespace) -> int:

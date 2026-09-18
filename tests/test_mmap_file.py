@@ -214,5 +214,109 @@ class TestMMapAudioFilePerformance:
             assert isinstance(data, np.ndarray)
 
 
+def _write_wav(path, sample_width, frames, channels=1, rate=44100):
+    import wave
+
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(channels)
+        w.setsampwidth(sample_width)
+        w.setframerate(rate)
+        w.writeframes(frames)
+    return path
+
+
+class TestSampleDepthDecoding:
+    """Sample bytes must be decoded at their real depth and signedness."""
+
+    def test_packed_24_bit_samples(self, tmp_path):
+        """Three-byte samples widen to int32 keeping their value."""
+        values = [0, 1, -1, 8_388_607, -8_388_608, 1_234_567]
+        raw = b"".join((v & 0xFFFFFF).to_bytes(3, "little") for v in values)
+        path = _write_wav(tmp_path / "pcm24.wav", 3, raw)
+
+        with MMapAudioFile(path) as audio:
+            assert audio.format.bits_per_channel == 24
+            assert audio.read_as_numpy(0, len(values)).tolist() == values
+
+    def test_8_bit_wav_is_unsigned(self, tmp_path):
+        """WAV stores 8-bit PCM unsigned; reading it signed inverts every sample."""
+        values = [0, 64, 128, 200, 255]
+        path = _write_wav(tmp_path / "pcm8.wav", 1, bytes(values))
+
+        with MMapAudioFile(path) as audio:
+            samples = audio.read_as_numpy(0, len(values))
+
+        assert samples.dtype == np.uint8
+        assert samples.tolist() == values
+
+    def test_matches_audio_file_reader(self, tmp_path):
+        """The mmap reader and AudioFile must agree on the same bytes."""
+        from coremusic.audio import AudioFile
+
+        raw = b"".join(
+            (v & 0xFFFFFF).to_bytes(3, "little") for v in range(-5000, 5000, 137)
+        )
+        path = _write_wav(tmp_path / "both24.wav", 3, raw)
+
+        with MMapAudioFile(path) as mapped:
+            from_mmap = mapped.read_as_numpy()
+        with AudioFile(str(path)) as opened:
+            from_file = opened.read_as_numpy()
+
+        assert from_mmap.tolist() == from_file.tolist()
+
+
+class TestFailedOpenReleasesResources:
+    """A refused open must not keep the descriptor or the mapping alive."""
+
+    def _open_fd_count(self):
+        import os
+
+        return len(os.listdir("/dev/fd"))
+
+    def test_unsupported_format_closes_everything(self, tmp_path):
+        path = tmp_path / "not-audio.bin"
+        path.write_bytes(b"XXXXyyyyZZZZ" + b"\x00" * 100)
+
+        audio = MMapAudioFile(path)
+        with pytest.raises(ValueError):
+            audio.open()
+
+        assert audio._file is None
+        assert audio._mmap is None
+        assert not audio._is_open
+
+    def test_repeated_failures_do_not_leak(self, tmp_path):
+        """Held references are the case refcounting does not cover."""
+        path = tmp_path / "not-audio.bin"
+        path.write_bytes(b"XXXXyyyyZZZZ" + b"\x00" * 100)
+
+        before = self._open_fd_count()
+        held = []
+        for _ in range(40):
+            audio = MMapAudioFile(path)
+            held.append(audio)
+            with pytest.raises(ValueError):
+                audio.open()
+
+        assert self._open_fd_count() == before
+
+    def test_empty_file_closes_the_descriptor(self, tmp_path):
+        """mmap refuses a zero-length file, before any parsing happens."""
+        path = tmp_path / "empty.wav"
+        path.write_bytes(b"")
+
+        audio = MMapAudioFile(path)
+        with pytest.raises(ValueError):
+            audio.open()
+
+        assert audio._file is None
+
+    def test_a_valid_file_still_opens(self):
+        with MMapAudioFile(TEST_FILE) as audio:
+            assert audio._is_open
+            assert audio.frame_count > 0
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

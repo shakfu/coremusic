@@ -687,6 +687,10 @@ class AudioFormatPresets:
 # ============================================================================
 
 
+# Packet count that means "read every remaining packet".
+_READ_TO_END = 999999999
+
+
 def trim_audio(
     input_path: str,
     output_path: str,
@@ -719,6 +723,13 @@ def trim_audio(
             f"trim to .wav/.aiff/.caf, or use convert to encode."
         )
 
+    if start_time < 0:
+        raise ValueError(f"start_time must be >= 0, got {start_time}")
+    if end_time is not None and end_time < start_time:
+        raise ValueError(
+            f"end_time ({end_time}) must be >= start_time ({start_time})"
+        )
+
     with AudioFile(input_path) as input_file:
         format = input_file.format
         sample_rate = format.sample_rate
@@ -730,12 +741,14 @@ def trim_audio(
             end_packet = int(end_time * sample_rate)
             packet_count = end_packet - start_packet
         else:
-            packet_count = None  # Read to end
+            packet_count = _READ_TO_END
 
-        # Read trimmed data
-        data, actual_count = input_file.read_packets(
-            start_packet, packet_count or 999999999
-        )
+        # Read trimmed data. An empty range is a valid request, so it must not
+        # fall through to the read-to-end sentinel.
+        if packet_count == 0:
+            data, actual_count = b"", 0
+        else:
+            data, actual_count = input_file.read_packets(start_packet, packet_count)
 
         # Write to output file, honoring the requested container.
         output_ext_file = ExtendedAudioFile.create(
@@ -744,7 +757,10 @@ def trim_audio(
             format,
         )
         try:
-            output_ext_file.write(actual_count, data)
+            # An empty range still produces a file, but ExtAudioFile rejects a
+            # zero-frame write, so only the header is emitted.
+            if actual_count:
+                output_ext_file.write(actual_count, data)
         finally:
             output_ext_file.close()
 

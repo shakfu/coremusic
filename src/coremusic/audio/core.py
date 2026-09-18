@@ -53,6 +53,105 @@ __all__ = [
 _COMPRESSED_FORMAT_IDS = frozenset({"aac ", "alac", "flac"})
 
 
+def _bytes_per_channel(format: Any) -> int:
+    """Bytes one channel's sample occupies, or 0 when the format omits the size."""
+    if format.channels_per_frame <= 0 or format.bytes_per_frame <= 0:
+        return 0
+    return int(format.bytes_per_frame // format.channels_per_frame)
+
+
+def is_packed_int24(format: Any) -> bool:
+    """True when 24-bit samples are stored in three bytes rather than padded."""
+    return format.bits_per_channel == 24 and _bytes_per_channel(format) == 3
+
+
+def _decode_packed_int24(data: bytes, big_endian: bool) -> NDArray[Any]:
+    """Widen three-byte PCM samples to int32, keeping the 24-bit value range."""
+    usable = len(data) - len(data) % 3
+    raw = np.frombuffer(data[:usable], dtype=np.uint8).reshape(-1, 3)
+    if big_endian:
+        raw = raw[:, ::-1]
+    value = (
+        raw[:, 0].astype(np.int32)
+        | (raw[:, 1].astype(np.int32) << 8)
+        | (raw[:, 2].astype(np.int32) << 16)
+    )
+    # Bit 23 is the sign bit; fold the unsigned reading back into two's complement.
+    return np.where(value >= 0x800000, value - 0x1000000, value).astype(np.int32)
+
+
+def pcm_numpy_dtype(format: Any) -> np.dtype[Any]:
+    """NumPy dtype for a linear PCM format description.
+
+    Args:
+        format: AudioFormat or AudioStreamBasicDescription
+
+    Returns:
+        NumPy dtype matching depth, signedness and byte order
+
+    Raises:
+        ImportError: If NumPy is not available
+        ValueError: If the format is not PCM, or is packed 24-bit, which has no
+            NumPy dtype -- decode it with pcm_bytes_to_numpy() instead
+    """
+    if not NUMPY_AVAILABLE:
+        raise ImportError("NumPy is not available. Install numpy to use this feature.")
+
+    if not format.is_pcm:
+        raise ValueError(
+            f"Cannot convert non-PCM format '{format.format_id}' to NumPy dtype"
+        )
+
+    is_float = bool(format.format_flags & LinearPCMFormatFlag.IS_FLOAT)
+    is_signed = bool(format.format_flags & LinearPCMFormatFlag.IS_SIGNED_INTEGER)
+    # CoreAudio describes byte order in the flags; without the dtype byte order
+    # a big-endian stream would be read as little-endian.
+    byte_order = ">" if format.format_flags & LinearPCMFormatFlag.IS_BIG_ENDIAN else "<"
+
+    if is_float:
+        if format.bits_per_channel == 32:
+            return np.dtype(byte_order + "f4")
+        elif format.bits_per_channel == 64:
+            return np.dtype(byte_order + "f8")
+        raise ValueError(f"Unsupported float bit depth: {format.bits_per_channel}")
+
+    # 8-bit PCM is unsigned unless flagged signed, which is the CoreAudio
+    # convention. At 16 bits and above unsigned PCM does not occur in practice,
+    # so an unflagged format is read as signed rather than reinterpreting real
+    # samples as unsigned and corrupting them.
+    if format.bits_per_channel == 8:
+        return np.dtype("i1" if is_signed else "u1")
+    elif format.bits_per_channel == 16:
+        return np.dtype(byte_order + "i2")
+    elif format.bits_per_channel == 24:
+        if is_packed_int24(format):
+            raise ValueError(
+                "Packed 24-bit PCM has no NumPy dtype; decode it with "
+                "pcm_bytes_to_numpy()"
+            )
+        # Otherwise the stream pads each sample out to four bytes.
+        return np.dtype(byte_order + "i4")
+    elif format.bits_per_channel == 32:
+        return np.dtype(byte_order + "i4")
+    raise ValueError(f"Unsupported integer bit depth: {format.bits_per_channel}")
+
+
+def pcm_bytes_to_numpy(data: bytes, format: Any) -> NDArray[Any]:
+    """Decode interleaved PCM bytes into a flat NumPy sample array.
+
+    Args:
+        data: Raw interleaved sample bytes
+        format: AudioFormat or AudioStreamBasicDescription describing the bytes
+
+    Returns:
+        Flat NumPy array of samples, not yet split by channel
+    """
+    if is_packed_int24(format):
+        big_endian = bool(format.format_flags & LinearPCMFormatFlag.IS_BIG_ENDIAN)
+        return _decode_packed_int24(data, big_endian)
+    return np.frombuffer(data, dtype=pcm_numpy_dtype(format))
+
+
 class AudioFormat:
     """Pythonic representation of AudioStreamBasicDescription"""
 
@@ -272,53 +371,7 @@ class AudioFormat:
             ImportError: If NumPy is not available
             ValueError: If format cannot be converted to NumPy dtype
         """
-        if not NUMPY_AVAILABLE:
-            raise ImportError(
-                "NumPy is not available. Install numpy to use this feature."
-            )
-
-        # Handle PCM formats
-        if self.is_pcm:
-            is_float = bool(self.format_flags & LinearPCMFormatFlag.IS_FLOAT)
-            is_signed = bool(self.format_flags & LinearPCMFormatFlag.IS_SIGNED_INTEGER)
-            # CoreAudio describes byte order in the flags; without the dtype
-            # byte order a big-endian stream would be read as little-endian.
-            byte_order = (
-                ">" if self.format_flags & LinearPCMFormatFlag.IS_BIG_ENDIAN else "<"
-            )
-
-            if is_float:
-                if self.bits_per_channel == 32:
-                    return np.dtype(byte_order + "f4")
-                elif self.bits_per_channel == 64:
-                    return np.dtype(byte_order + "f8")
-                else:
-                    raise ValueError(
-                        f"Unsupported float bit depth: {self.bits_per_channel}"
-                    )
-            else:
-                # 8-bit PCM is unsigned unless flagged signed, which is the
-                # CoreAudio convention. At 16 bits and above unsigned PCM does
-                # not occur in practice, so an unflagged format is read as
-                # signed rather than reinterpreting real samples as unsigned
-                # and corrupting them.
-                if self.bits_per_channel == 8:
-                    return np.dtype("i1" if is_signed else "u1")
-                elif self.bits_per_channel == 16:
-                    return np.dtype(byte_order + "i2")
-                elif self.bits_per_channel == 24:
-                    # 24-bit audio is typically padded to 32-bit
-                    return np.dtype(byte_order + "i4")
-                elif self.bits_per_channel == 32:
-                    return np.dtype(byte_order + "i4")
-                else:
-                    raise ValueError(
-                        f"Unsupported integer bit depth: {self.bits_per_channel}"
-                    )
-        else:
-            raise ValueError(
-                f"Cannot convert non-PCM format '{self.format_id}' to NumPy dtype"
-            )
+        return pcm_numpy_dtype(self)
 
     def __repr__(self) -> str:
         return (
@@ -489,16 +542,17 @@ class AudioFile(capi.CoreAudioObject):
                 else:
                     raise AudioFileError("Cannot determine packet count")
 
-            # Read the raw audio data
-            data_bytes, actual_count = capi.audio_file_read_packets(
-                self.object_id, start_packet, packet_count
-            )
-
-            # Get NumPy dtype from format
-            dtype = format.to_numpy_dtype()
+            # Read the raw audio data. A file with no frames is valid, but
+            # AudioFileReadPackets rejects a zero packet count.
+            if packet_count <= 0:
+                data_bytes = b""
+            else:
+                data_bytes, _actual_count = capi.audio_file_read_packets(
+                    self.object_id, start_packet, packet_count
+                )
 
             # Convert bytes to NumPy array
-            audio_data = np.frombuffer(data_bytes, dtype=dtype)
+            audio_data = pcm_bytes_to_numpy(data_bytes, format)
 
             # Reshape for multi-channel audio
             # Audio data is typically interleaved: L R L R L R ...

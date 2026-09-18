@@ -797,18 +797,20 @@ class Chord:
     Attributes:
         root: Root note of the chord
         chord_type: Type of chord (interval pattern)
+        inversion_number: Notes moved from the bottom to the top, an octave up
 
     Example:
         >>> chord = Chord(Note('C', 4), ChordType.MAJOR_7)
         >>> chord.get_midi_notes()
         [60, 64, 67, 71]
         >>>
-        >>> chord.inversion(1)
-        Chord with E as bass note
+        >>> chord.inversion(1).get_midi_notes()
+        [64, 67, 71, 72]
     """
 
     root: Note
     chord_type: ChordType
+    inversion_number: int = 0
 
     @property
     def intervals(self) -> tuple[int, ...]:
@@ -817,17 +819,27 @@ class Chord:
         return result
 
     def get_notes(self) -> list[Note]:
-        """Get all notes in the chord.
+        """Get all notes in the chord, lowest first.
 
         Returns:
-            List of Notes
+            List of Notes, rotated and octave-shifted by inversion_number
         """
         notes = []
         for interval in self.intervals:
             midi = self.root.midi + interval
             if 0 <= midi <= 127:
                 notes.append(Note.from_midi(midi, self.root.velocity))
-        return notes
+
+        if not notes or not self.inversion_number:
+            return notes
+
+        n = self.inversion_number % len(notes)
+        raised = [
+            Note.from_midi(note.midi + 12, note.velocity)
+            for note in notes[:n]
+            if note.midi + 12 <= 127
+        ]
+        return notes[n:] + raised
 
     def get_midi_notes(self) -> list[int]:
         """Get MIDI note numbers in the chord.
@@ -840,25 +852,20 @@ class Chord:
     def inversion(self, n: int) -> Chord:
         """Get chord inversion.
 
+        The chord keeps its own pitches; only their order and octaves change.
+        For voicings that reorder the intervals freely, use get_voicing().
+
         Args:
             n: Inversion number (0=root, 1=first, 2=second, etc.)
 
         Returns:
-            New Chord representing the inversion
+            New Chord voiced with the nth note in the bass
 
-        Note:
-            Returns a chord with reordered intervals, not a truly new voicing.
-            For more complex voicings, use get_voicing().
+        Example:
+            >>> Chord(Note('C', 4), ChordType.MAJOR).inversion(1).get_midi_notes()
+            [64, 67, 72]
         """
-        notes = self.get_notes()
-        if n >= len(notes):
-            n = n % len(notes)
-
-        # Rotate notes and adjust octaves
-        rotated = notes[n:] + [Note.from_midi(note.midi + 12) for note in notes[:n]]
-
-        # Create new chord from lowest note
-        return Chord(rotated[0], self.chord_type)
+        return Chord(self.root, self.chord_type, n)
 
     def get_voicing(self, voicing: list[int]) -> list[Note]:
         """Get specific voicing of the chord.
@@ -899,7 +906,7 @@ class Chord:
             Transposed chord
         """
         new_root = self.root.transpose(semitones)
-        return Chord(new_root, self.chord_type)
+        return Chord(new_root, self.chord_type, self.inversion_number)
 
     @classmethod
     def from_symbol(cls, symbol: str, octave: int = 4) -> Chord:
@@ -957,6 +964,11 @@ class Chord:
         return len(self.intervals)
 
     def __repr__(self) -> str:
+        if self.inversion_number:
+            return (
+                f"Chord({self.root}, {self.chord_type.name}, "
+                f"inversion={self.inversion_number})"
+            )
         return f"Chord({self.root}, {self.chord_type.name})"
 
     def __str__(self) -> str:

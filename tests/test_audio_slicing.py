@@ -1081,3 +1081,54 @@ class TestAudioFileGeneration:
         assert post_path.exists()
         # Verify normalization
         assert np.max(np.abs(result)) <= 1.0
+
+
+@pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
+class TestZeroCrossingSnapping:
+    """Boundaries snap to the crossing nearest the ideal position."""
+
+    def _slicer(self, data, sample_rate=44100.0):
+        slicer = AudioSlicer("unused.wav")
+        slicer._audio_data = data
+        slicer._sample_rate = sample_rate
+        return slicer
+
+    def _boundaries(self, slices, sample_rate=44100.0):
+        return [round(s.start * sample_rate) for s in slices] + [
+            round(slices[-1].end * sample_rate)
+        ]
+
+    def test_first_boundary_takes_the_nearest_crossing(self):
+        """At the file start the search window is clipped on the left.
+
+        Comparing crossings against the window width rather than the boundary's
+        offset inside it would pick the far crossing at 429.
+        """
+        data = np.ones(44100, dtype=np.float32)
+        data[4:430] = -1.0  # crossings at 3 and 429, both within 10ms of sample 0
+        data[22050:22060] = -1.0  # a crossing at the interior boundary
+
+        slices = self._slicer(data)._detect_zero_crossing_slices(target_slices=2)
+
+        assert self._boundaries(slices)[0] == 3
+
+    def test_interior_boundary_is_unbiased(self):
+        """An unclipped window must still pick the nearer of two crossings."""
+        data = np.ones(44100, dtype=np.float32)
+        # Crossings at 21700 (350 before the boundary) and 22300 (250 after).
+        data[21701:21711] = -1.0
+        data[22301:22311] = -1.0
+
+        slices = self._slicer(data)._detect_zero_crossing_slices(target_slices=2)
+
+        assert self._boundaries(slices)[1] == 22300
+
+    def test_snapping_off_keeps_ideal_boundaries(self):
+        data = np.ones(44100, dtype=np.float32)
+        data[4:430] = -1.0
+
+        slices = self._slicer(data)._detect_zero_crossing_slices(
+            target_slices=2, snap_to_zero=False
+        )
+
+        assert self._boundaries(slices) == [0, 22050, 44100]

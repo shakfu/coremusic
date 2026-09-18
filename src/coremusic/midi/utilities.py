@@ -436,6 +436,12 @@ class MIDISequence:
             filename: Output file path
             format: MIDI file format (0=single track, 1=multi track, 2=multi song)
         """
+        if format == MIDIFileFormat.SINGLE_TRACK and len(self.tracks) != 1:
+            raise ValueError(
+                f"MIDI format 0 holds exactly one track, got {len(self.tracks)}; "
+                f"save as MULTI_TRACK or merge the tracks first"
+            )
+
         path = Path(filename)
         path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -540,7 +546,12 @@ class MIDISequence:
                 f"Loading MIDI file: format={format_type}, tracks={num_tracks}, ppq={division}"
             )
 
-            # Parse MTrk chunks
+            # Parse MTrk chunks. Tempo changes are collected across every
+            # track first, because in format 1 they live in track 0 but apply
+            # to all of them.
+            tempo_map: list[tuple[int, float]] = []
+            scanned: list[tuple[MIDITrack, list[tuple[int, int, int, int, int]]]] = []
+
             for track_num in range(num_tracks):
                 chunk_type = f.read(4)
                 if chunk_type != b"MTrk":
@@ -552,10 +563,53 @@ class MIDISequence:
 
                 # Parse track (simplified - just extract note events)
                 track = sequence.add_track(f"Track {track_num + 1}")
-                sequence._parse_track_data(track, track_data)
+                scanned.append(
+                    (track, sequence._scan_track_data(track, track_data, tempo_map))
+                )
+
+            tempo_map.sort(key=lambda change: change[0])
+            for track, raw_events in scanned:
+                for ticks, status, channel, data1, data2 in raw_events:
+                    track.events.append(
+                        MIDIEvent(
+                            sequence._ticks_to_seconds(ticks, tempo_map),
+                            status,
+                            channel,
+                            data1,
+                            data2,
+                        )
+                    )
+
+            if tempo_map:
+                sequence.tempo = tempo_map[0][1]
 
         logger.info(f"Loaded MIDI file: {filename}")
         return sequence
+
+    def _ticks_to_seconds(
+        self, ticks: int, tempo_map: list[tuple[int, float]]
+    ) -> float:
+        """Convert an absolute tick position to seconds through a tempo map.
+
+        Args:
+            ticks: Absolute tick position from the start of the file
+            tempo_map: Tempo changes as (tick, BPM), sorted by tick
+
+        Returns:
+            Wall-clock position in seconds
+        """
+        seconds = 0.0
+        tempo = self.tempo
+        previous_tick = 0
+
+        for change_tick, change_tempo in tempo_map:
+            if change_tick >= ticks:
+                break
+            seconds += (change_tick - previous_tick) / self.ppq * (60.0 / tempo)
+            previous_tick = change_tick
+            tempo = change_tempo
+
+        return seconds + (ticks - previous_tick) / self.ppq * (60.0 / tempo)
 
     def _parse_track_data(self, track: MIDITrack, data: bytes) -> None:
         """Parse track data and add events to track.
@@ -564,9 +618,40 @@ class MIDISequence:
             track: Track to add events to
             data: Track data bytes
         """
+        tempo_map: list[tuple[int, float]] = []
+        raw_events = self._scan_track_data(track, data, tempo_map)
+        tempo_map.sort(key=lambda change: change[0])
+        for ticks, status, channel, data1, data2 in raw_events:
+            track.events.append(
+                MIDIEvent(
+                    self._ticks_to_seconds(ticks, tempo_map),
+                    status,
+                    channel,
+                    data1,
+                    data2,
+                )
+            )
+
+    def _scan_track_data(
+        self,
+        track: MIDITrack,
+        data: bytes,
+        tempo_map: list[tuple[int, float]],
+    ) -> list[tuple[int, int, int, int, int]]:
+        """Parse one track chunk into tick-stamped events.
+
+        Args:
+            track: Track whose name meta events update
+            data: Track data bytes
+            tempo_map: Collects this track's tempo changes as (tick, BPM)
+
+        Returns:
+            Events as (ticks, status, channel, data1, data2)
+        """
         pos = 0
         current_ticks = 0
         running_status = 0
+        events: list[tuple[int, int, int, int, int]] = []
 
         def read_variable_length() -> int:
             nonlocal pos
@@ -607,9 +692,6 @@ class MIDISequence:
                 status = status_byte & 0xF0
                 channel = status_byte & 0x0F
 
-            # Convert ticks to seconds
-            time_seconds = current_ticks / (self.ppq * (self.tempo / 60.0))
-
             # Parse different message types
             if status == 0xFF:  # Meta event
                 if pos >= len(data):
@@ -622,7 +704,7 @@ class MIDISequence:
                     microseconds = (
                         (data[pos] << 16) | (data[pos + 1] << 8) | data[pos + 2]
                     )
-                    self.tempo = 60_000_000 / microseconds
+                    tempo_map.append((current_ticks, 60_000_000 / microseconds))
                 elif meta_type == 0x03:  # Track name
                     track.name = data[pos : pos + length].decode(
                         "utf-8", errors="ignore"
@@ -637,8 +719,7 @@ class MIDISequence:
                 data2 = data[pos + 1]
                 pos += 2
 
-                event = MIDIEvent(time_seconds, status, channel, data1, data2)
-                track.events.append(event)
+                events.append((current_ticks, status, channel, data1, data2))
 
             elif status in (0xC0, 0xD0):  # One-byte messages
                 if pos >= len(data):
@@ -646,12 +727,13 @@ class MIDISequence:
                 data1 = data[pos]
                 pos += 1
 
-                event = MIDIEvent(time_seconds, status, channel, data1, 0)
-                track.events.append(event)
+                events.append((current_ticks, status, channel, data1, 0))
 
             else:
                 # Unknown status, skip
                 pos += 1
+
+        return events
 
     @property
     def duration(self) -> float:

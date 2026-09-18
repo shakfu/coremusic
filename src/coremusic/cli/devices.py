@@ -8,7 +8,7 @@ from typing import Any
 from coremusic.exceptions import FRAMEWORK_ERRORS
 
 from ._formatters import output_json, output_table
-from ._utils import EXIT_SUCCESS, DeviceNotFoundError, print_help_default
+from ._utils import EXIT_ERROR, EXIT_SUCCESS, DeviceNotFoundError, print_help_default
 
 
 def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
@@ -373,7 +373,8 @@ def cmd_set_default(args: argparse.Namespace) -> int:
     if args.json:
         output_json(results)
 
-    return EXIT_SUCCESS
+    failed = [name for name, result in results.items() if not result["success"]]
+    return EXIT_ERROR if failed else EXIT_SUCCESS
 
 
 def cmd_mute(args: argparse.Namespace) -> int:
