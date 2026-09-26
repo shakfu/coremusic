@@ -42,15 +42,6 @@ jobs:
           --cov-report=term-missing \
           --cov-report=html
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-coremusic
-        fail_ci_if_error: false
-      continue-on-error: true
-
     - name: Upload coverage HTML report
       uses: actions/upload-artifact@v7
       with:

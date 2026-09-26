@@ -214,12 +214,6 @@ make release
    - Required reviewers
    - Deployment branches (e.g., only `main`)
 
-### 4. Configure Codecov (Optional)
-1. Go to [codecov.io](https://codecov.io)
-2. Add repository
-3. Copy upload token
-4. Add as `CODECOV_TOKEN` secret in repository settings
-
 ### 5. Enable GitHub Pages (Optional)
 1. Settings → Pages
 2. Source: GitHub Actions
